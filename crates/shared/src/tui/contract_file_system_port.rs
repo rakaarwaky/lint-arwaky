@@ -11,5 +11,4 @@ pub trait IFileSystemPort: Send + Sync {
     fn parent_directory(&self, path: &FilePath) -> Option<FilePath>;
     fn file_size_human(&self, bytes: &ByteCount) -> DisplayContent;
     fn path_components(&self, path: &FilePath) -> Vec<FilePath>;
-    fn write_file(&self, path: &str, content: &str) -> bool;
 }

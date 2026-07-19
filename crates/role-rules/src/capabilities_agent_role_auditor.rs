@@ -17,48 +17,14 @@ use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentRoleChecker {}
 
-#[async_trait::async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
-impl IAgentRoleChecker for AgentRoleChecker {
-    fn check_container(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_orchestrator(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_lifecycle(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_file_size_limit(
-        &self,
-        source: &SourceContentVO,
-        max_lines: usize,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_file_size_limit(source, max_lines, violations);
-    }
-    fn check_any_type_annotation(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_any_type_annotation(source, violations);
+impl Default for AgentRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -112,8 +78,38 @@ impl AgentRoleChecker {
     }
 }
 
-impl Default for AgentRoleChecker {
-    fn default() -> Self {
-        Self::new()
+impl IAgentRoleChecker for AgentRoleChecker {
+    fn check_container(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_orchestrator(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_lifecycle(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_file_size_limit(
+        &self,
+        source: &SourceContentVO,
+        max_lines: usize,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_file_size_limit(source, max_lines, violations);
+    }
+    fn check_any_type_annotation(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_any_type_annotation(source, violations);
     }
 }

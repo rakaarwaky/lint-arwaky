@@ -10,10 +10,8 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::AppState;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct PathScreen;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl PathScreen {
     pub fn new() -> Self {
         Self
@@ -74,7 +72,6 @@ impl PathScreen {
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for PathScreen {
     fn default() -> Self {
         Self::new()

@@ -30,7 +30,6 @@ struct RenderViews {
     status: StatusComponent,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl RenderViews {
     fn new() -> Self {
         Self {
@@ -44,12 +43,10 @@ impl RenderViews {
     }
 }
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TuiCommandSurface {
     tui_aggregate: Arc<dyn ITuiAggregate>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl TuiCommandSurface {
     pub fn new(tui_aggregate: Arc<dyn ITuiAggregate>) -> Self {
         Self { tui_aggregate }

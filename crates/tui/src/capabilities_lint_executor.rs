@@ -8,8 +8,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -22,33 +20,11 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use std::sync::Arc;
-
-fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    let mut dir = std::path::Path::new(path).to_path_buf();
-    if !dir.is_absolute() {
-        dir = std::env::current_dir().ok()?.join(&dir);
-    }
-    if dir.is_file() {
-        dir.pop();
-    }
-    loop {
-        if dir.join("Cargo.toml").exists()
-            || dir.join("crates").is_dir()
-            || dir.join("packages").is_dir()
-            || dir.join("modules").is_dir()
-        {
-            return Some(dir);
-        }
-        if !dir.pop() {
-            return None;
-        }
-    }
-}
 
 fn is_binary_available(b: &str) -> bool {
     std::process::Command::new("sh")
@@ -90,7 +66,6 @@ pub fn discover_adapters() -> Vec<AdapterInfo> {
     list
 }
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
@@ -106,15 +81,10 @@ pub struct LintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
-    formatter: Arc<dyn IReportFormatterProtocol>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl LintExecutor {
-    pub fn new(
-        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-        formatter: Arc<dyn IReportFormatterProtocol>,
-    ) -> Self {
+    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self {
             code_analysis,
             fix_orchestrator: None,
@@ -130,7 +100,6 @@ impl LintExecutor {
             naming_orchestrator: None,
             role_orchestrator: None,
             multi_project_orchestrator: None,
-            formatter,
         }
     }
 
@@ -211,42 +180,32 @@ impl LintExecutor {
         self
     }
 
-    pub fn format_results(&self, results: &LintResultList) -> DisplayContent {
-        self.formatter.format_results(results)
+    pub fn format_results(&self, results: &LintResultList) -> String {
+        ReportFormatterHelper::format_results(results)
     }
 
-    pub fn format_doctor_report(
-        &self,
+    fn format_doctor_report(
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        self.formatter.format_doctor_report(diagnostics)
+        ReportFormatterHelper::format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(protocol) => {
-                let rt = match tokio::runtime::Runtime::new() {
-                    Ok(rt) => rt,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Failed to create runtime: {}",
-                            e
-                        ));
-                    }
-                };
-                let languages = rt.block_on(protocol.detect_languages());
+                let languages = protocol.detect_languages();
                 let mut created = Vec::new();
                 let mut skipped = Vec::new();
                 let mut errors = Vec::new();
                 for lang in languages.iter() {
                     let lang_str = lang.value();
                     let config_path = format!("lint_arwaky.config.{}.yaml", lang_str);
-                    if rt.block_on(protocol.file_exists(&config_path)) {
+                    if protocol.file_exists(&config_path) {
                         skipped.push(config_path);
                         continue;
                     }
                     let template = protocol.get_config_template(lang_str);
-                    match rt.block_on(protocol.write_config_file(&config_path, template)) {
+                    match protocol.write_config_file(&config_path, template) {
                         Ok(desc) => {
                             created
                                 .push(format!("{} ({}) — {}", config_path, lang_str, desc.value));
@@ -278,19 +237,14 @@ impl LintExecutor {
         }
     }
 
-    pub fn format_dependency_report(
-        &self,
-        path: &str,
-        report: &DependencyReport,
-    ) -> LintExecutionResult {
-        self.formatter.format_dependency_report(path, report)
+    fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
+        ReportFormatterHelper::format_dependency_report(path, report)
     }
 
-    pub fn format_config_result(
-        &self,
+    fn format_config_result(
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        self.formatter.format_config_result(result)
+        ReportFormatterHelper::format_config_result(result)
     }
 }
 
@@ -315,15 +269,20 @@ impl LintExecutor {
 
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
                 let scan_root =
-                    find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
-                let all_source_files: Vec<FilePath> =
-                    code_analysis::collect_all_source_files(&scan_root);
+                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+                        .unwrap_or_else(|| std::path::PathBuf::from(path));
+                let all_source_files: Vec<String> =
+                    shared::common::collect_all_source_files(&scan_root)
+                        .iter()
+                        .map(|f| f.value.clone())
+                        .collect();
 
                 for ws in &workspaces {
                     // Dynamically build the orchestrators/linters using ws.config!
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             ws.config.clone(),
+                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container =
                         naming_rules::root_naming_rules_container::NamingContainer::new(
@@ -343,7 +302,7 @@ impl LintExecutor {
                     let mut ws_results = Vec::new();
 
                     // 1. AES code analysis
-                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path);
+                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
                     ws_results.extend(aes_results.values);
 
                     // 2. Naming rules audit (AES101-102)
@@ -372,13 +331,10 @@ impl LintExecutor {
                         (&self.orphan_aggregate, &self.layer_detector)
                     {
                         if !all_source_files.is_empty() {
-                            let scan_root_fp =
-                                FilePath::new(scan_root.to_string_lossy().to_string())
-                                    .unwrap_or_default();
                             let orphan_results = orphan_agg.check_orphans(
                                 layer_det.as_ref(),
                                 &all_source_files,
-                                &scan_root_fp,
+                                &scan_root.to_string_lossy(),
                             );
                             ws_results.extend(orphan_results);
                         }
@@ -407,16 +363,14 @@ impl LintExecutor {
                 let count = all_results.len();
                 let results = LintResultList::new(all_results);
                 let output = self.format_results(&results);
-                return LintExecutionResult::success(output.value, count);
+                return LintExecutionResult::success(output, count);
             }
         }
 
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
-        let fp =
-            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
-        let aes_results = self.code_analysis.run_code_analysis(&fp);
+        let aes_results = self.code_analysis.run_code_analysis(path);
         all_results.extend(aes_results.values);
 
         let rt = match tokio::runtime::Runtime::new() {
@@ -470,11 +424,9 @@ impl LintExecutor {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
-            let file_fps: Vec<FilePath> = source_files;
-            if !file_fps.is_empty() {
-                let root_fp = FilePath::new(path.to_string()).unwrap_or_default();
-                let orphan_results =
-                    orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
+            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+            if !file_strs.is_empty() {
+                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
                 all_results.extend(orphan_results);
             }
         }
@@ -482,20 +434,17 @@ impl LintExecutor {
         let count = all_results.len();
         let results = LintResultList::new(all_results);
         let output = self.format_results(&results);
-        LintExecutionResult::success(output.value, count)
+        LintExecutionResult::success(output, count)
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        let fp =
-            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
-        let results = self.code_analysis.run_code_analysis(&fp);
+        let results = self.code_analysis.run_code_analysis(path);
         let count = results.len();
-        let output = self.formatter.format_results(&results);
+        let output = ReportFormatterHelper::format_results(&results);
         LintExecutionResult {
-            output: output.value,
+            output,
             violation_count: count,
             success: count == 0,
         }
@@ -520,9 +469,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                    .unwrap_or_default();
-                let results = self.code_analysis.run_code_analysis(&fp);
+                let results = self.code_analysis.run_code_analysis(path);
                 let count_before = results.len();
                 let output = format!("[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.", mode, path, count_before, path);
                 LintExecutionResult {
@@ -535,9 +482,7 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
-        let fp =
-            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
-        let results = self.code_analysis.run_code_analysis(&fp);
+        let results = self.code_analysis.run_code_analysis(path);
         let score = self.code_analysis.calc_score(&results.values);
         let has_critical = self.code_analysis.check_critical(&results.values);
         let pass = score >= flags.threshold as f64 && !has_critical;
@@ -562,9 +507,10 @@ impl ILintExecutorProtocol for LintExecutor {
         ) {
             (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
                 // Resolve workspace root like CLI does
-                let scan_root = find_workspace_root(path)
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or_else(|| path.to_string());
+                let scan_root =
+                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -577,8 +523,8 @@ impl ILintExecutorProtocol for LintExecutor {
                         ));
                     }
                 };
-                let file_fps: Vec<FilePath> = source_files;
-                if file_fps.is_empty() {
+                let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+                if file_strs.is_empty() {
                     return LintExecutionResult::success(
                         format!(
                             "Orphan detection for {}\nNo source files found in {}.",
@@ -587,13 +533,12 @@ impl ILintExecutorProtocol for LintExecutor {
                         0,
                     );
                 }
-                let root_fp = FilePath::new(scan_root.clone()).unwrap_or_default();
-                let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
+                let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, &scan_root);
                 let count = results.len();
                 let mut output = format!(
                     "Orphan detection for {}\nScanned {} files in {}\n",
                     path,
-                    file_fps.len(),
+                    file_strs.len(),
                     scan_root
                 );
                 if results.is_empty() {
@@ -691,18 +636,15 @@ impl ILintExecutorProtocol for LintExecutor {
     fn duplicates(&self, path: &str) -> LintExecutionResult {
         let analyzer =
             code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
-        let scan_root = find_workspace_root(path)
+        let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let source_files = match self
-            .scanner_provider
-            .as_ref()
-            .map(|s| s.scan_directory(&dir_path))
-            .unwrap_or(Ok(Default::default()))
-        {
+        let scanner =
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
+        let source_files = match scanner.scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
@@ -747,7 +689,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 match rt.block_on(maintenance.run_dependency_report(&fp)) {
-                    Ok(report) => self.format_dependency_report(path, &report),
+                    Ok(report) => Self::format_dependency_report(path, &report),
                     Err(e) => LintExecutionResult::failure(format!(
                         "Dependency scan for {}\nError: {}",
                         path, e
@@ -774,10 +716,10 @@ impl ILintExecutorProtocol for LintExecutor {
                     }
                 };
                 let diagnostics = rt.block_on(maintenance.diagnose_toolchain());
-                self.format_doctor_report(&diagnostics)
+                Self::format_doctor_report(&diagnostics)
             }
             None => {
-                let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
+                let output = "Environment Diagnostics:\nUse CLI `lint-arwaky-cli maintenance doctor` for full environment check.\nRequired: Rust toolchain, Python 3.8+, Node.js 18+".to_string();
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -790,16 +732,7 @@ impl ILintExecutorProtocol for LintExecutor {
     fn install(&self, _flags: &ActionFlags) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(protocol) => {
-                let rt = match tokio::runtime::Runtime::new() {
-                    Ok(rt) => rt,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Failed to create runtime: {}",
-                            e
-                        ));
-                    }
-                };
-                let language = rt.block_on(protocol.detect_language());
+                let language = protocol.detect_language();
                 let lang_str = &language.value;
                 let mut output = format!(
                     "Adapter dependency installation.\nDetected language: {}\n",
@@ -835,7 +768,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let output = "Adapter dependency installation.\nUse CLI `lint-arwaky-cli install` to install all adapter dependencies.".to_string();
+                let output = "Adapter dependency installation.\nUse CLI `lint-arwaky-cli setup install` to install all adapter dependencies.".to_string();
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -869,7 +802,7 @@ impl ILintExecutorProtocol for LintExecutor {
             }
             None => {
                 let output = format!(
-                    "MCP Configuration for client: {}.\n  Use CLI `lint-arwaky-cli mcp-config --client {}` to print config.",
+                    "MCP Configuration for client: {}.\n  Use CLI `lint-arwaky-cli setup mcp-config --client {}` to print config.",
                     flags.mcp_client, flags.mcp_client
                 );
                 LintExecutionResult::success(output, 0)
@@ -895,7 +828,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 let project_root =
                     shared::common::taxonomy_path_vo::FilePath::new(cwd).unwrap_or_default();
                 let result = rt.block_on(orchestrator.load_project_config(&project_root));
-                self.format_config_result(&result)
+                Self::format_config_result(&result)
             }
             None => {
                 let output = "Active Configuration\nSource: embedded (built-in defaults)\nNo config orchestrator configured. Use CLI `lint-arwaky-cli config-show`.".to_string();

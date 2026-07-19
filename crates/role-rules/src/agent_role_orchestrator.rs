@@ -33,29 +33,12 @@ use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
     config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ignored_paths: Vec<String>,
 }
 
-#[async_trait]
-impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
-        let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, &mut results);
-        results
-    }
-
-    fn name(&self) -> &str {
-        "role-rules"
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl RoleOrchestrator {
     pub fn new(
         aggregate: Arc<dyn IRoleAggregate>,
@@ -97,7 +80,12 @@ impl RoleOrchestrator {
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
     ///   - root: no role checks (pure DI wiring)
-    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
+    pub fn run_all_role_checks(
+        &self,
+        files: &[String],
+        max_lines: usize,
+        violations: &mut Vec<LintResult>,
+    ) {
         // Global gate: skip all role checks if architecture checker is disabled
         if !self.config.enabled.value {
             return;
@@ -122,13 +110,16 @@ impl RoleOrchestrator {
                 Err(_) => continue,
             };
             let content_vo = ContentString::new(content);
-            let language = fp.language().as_str().to_string();
+            let detector =
+                shared::common::taxonomy_language_detector_helper::LanguageDetector::new();
+            let language = detector.detect(&fp).as_str().to_string();
             let source_vo = SourceContentVO::new(fp, content_vo, &language);
 
             // Dispatch based on layer prefix — each layer has its own checker protocol
             match prefix {
-                "agent" if self.config.is_rule_enabled("AES405") => {
+                "agent" => {
                     let checker = self.aggregate.agent();
+                    checker.check_file_size_limit(&source_vo, max_lines, violations);
                     checker.check_any_type_annotation(&source_vo, violations);
                     if filename.contains("_container") {
                         checker.check_container(&source_vo, violations);
@@ -139,7 +130,7 @@ impl RoleOrchestrator {
                     }
                 }
                 "root" => {} // Root layer (di containers, entries) has no role rules
-                "surfaces" | "surface" if self.config.is_rule_enabled("AES406") => {
+                "surfaces" | "surface" => {
                     let checker = self.aggregate.surface();
                     checker.check_fn_count_limit(&source_vo, violations);
                     // Classify surface type for more specific checks
@@ -160,11 +151,11 @@ impl RoleOrchestrator {
                         checker.check_passive_surface(&source_vo, violations);
                     }
                 }
-                "infrastructure" | "infra" if self.config.is_rule_enabled("AES404") => {
+                "infrastructure" | "infra" => {
                     let checker = self.aggregate.infrastructure();
                     checker.check_port_implementation(&source_vo, violations);
                 }
-                "contract" if self.config.is_rule_enabled("AES402") => {
+                "contract" => {
                     let checker = self.aggregate.contract();
                     if filename.contains("_port") {
                         violations.extend(checker.check_port(&source_vo));
@@ -172,18 +163,18 @@ impl RoleOrchestrator {
                         violations.extend(checker.check_protocol(&source_vo));
                     }
                 }
-                "capabilities" | "capability" if self.config.is_rule_enabled("AES403") => {
+                "capabilities" | "capability" => {
                     let checker = self.aggregate.capabilities();
                     checker.check_capability_routing(&source_vo, "capabilities", violations);
                 }
-                "taxonomy" if self.config.is_rule_enabled("AES401") => {
+                "taxonomy" => {
                     let checker = self.aggregate.taxonomy();
                     checker.check_entity(&source_vo, violations);
                     checker.check_error(&source_vo, violations);
                     checker.check_event(&source_vo, violations);
                     checker.check_constant(&source_vo, violations);
                 }
-                _ => {} // Unknown/disabled prefix — skip
+                _ => {} // Unknown prefix — skip (handled by other crates)
             }
         }
     }
@@ -227,6 +218,21 @@ impl RoleOrchestrator {
     }
 }
 
+#[async_trait]
+impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        let files = self.collect_files(target);
+        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        self.run_all_role_checks(&file_strings, 500, &mut results);
+        results
+    }
+
+    fn name(&self) -> &str {
+        "role-rules"
+    }
+}
+
 pub struct RoleAggregateImpl {
     taxonomy: Arc<dyn ITaxonomyRoleChecker>,
     contract: Arc<dyn IContractRoleChecker>,
@@ -234,28 +240,6 @@ pub struct RoleAggregateImpl {
     capabilities: Arc<dyn ICapabilitiesRoleChecker>,
     surface: Arc<dyn ISurfaceRoleChecker>,
     agent: Arc<dyn IAgentRoleChecker>,
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
-impl IRoleAggregate for RoleAggregateImpl {
-    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
-        self.taxonomy.as_ref()
-    }
-    fn contract(&self) -> &dyn IContractRoleChecker {
-        self.contract.as_ref()
-    }
-    fn infrastructure(&self) -> &dyn IInfrastructureRoleChecker {
-        self.infrastructure.as_ref()
-    }
-    fn capabilities(&self) -> &dyn ICapabilitiesRoleChecker {
-        self.capabilities.as_ref()
-    }
-    fn surface(&self) -> &dyn ISurfaceRoleChecker {
-        self.surface.as_ref()
-    }
-    fn agent(&self) -> &dyn IAgentRoleChecker {
-        self.agent.as_ref()
-    }
 }
 
 impl RoleAggregateImpl {
@@ -275,5 +259,26 @@ impl RoleAggregateImpl {
             surface,
             agent,
         }
+    }
+}
+
+impl IRoleAggregate for RoleAggregateImpl {
+    fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
+        self.taxonomy.as_ref()
+    }
+    fn contract(&self) -> &dyn IContractRoleChecker {
+        self.contract.as_ref()
+    }
+    fn infrastructure(&self) -> &dyn IInfrastructureRoleChecker {
+        self.infrastructure.as_ref()
+    }
+    fn capabilities(&self) -> &dyn ICapabilitiesRoleChecker {
+        self.capabilities.as_ref()
+    }
+    fn surface(&self) -> &dyn ISurfaceRoleChecker {
+        self.surface.as_ref()
+    }
+    fn agent(&self) -> &dyn IAgentRoleChecker {
+        self.agent.as_ref()
     }
 }

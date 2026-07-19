@@ -21,8 +21,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -32,17 +30,46 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use shared::external_lint::taxonomy_external_lint_helper::{
+    default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
+};
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct BanditAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
-    utility: Arc<dyn IExternalLintUtilityPort>,
     bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl BanditAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "bandit".to_string(),
+        }
+    }
+
+    fn map_severity(&self, severity: &str) -> Severity {
+        match severity {
+            "HIGH" => Severity::HIGH,
+            "MEDIUM" => Severity::MEDIUM,
+            "LOW" => Severity::LOW,
+            _ => Severity::MEDIUM,
+        }
+    }
+}
+
 #[async_trait]
 impl ILinterAdapterPort for BanditAdapter {
     fn name(&self) -> AdapterName {
@@ -51,7 +78,7 @@ impl ILinterAdapterPort for BanditAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !self.utility.has_python_files(path).value {
+        if !has_python_files(path) {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -64,18 +91,10 @@ impl ILinterAdapterPort for BanditAdapter {
             "json".to_string(),
             "--exit-zero".to_string(),
         ];
-        let working_dir = self.utility.default_working_dir(path);
+        let working_dir = default_working_dir(path);
 
-        let response = self
-            .utility
-            .exec_cmd_adapter(
-                self.executor.as_ref(),
-                PatternList::new(cmd),
-                working_dir,
-                Timeout::new(120.0),
-                self.name(),
-            )
-            .await?;
+        let response =
+            exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
 
         let stdout = &response.stdout;
         let parsed: Value = match serde_json::from_str(stdout) {
@@ -137,39 +156,6 @@ impl ILinterAdapterPort for BanditAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.utility.noop_apply_fix().await
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl BanditAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "bandit".to_string(),
-        }
-    }
-
-    fn map_severity(&self, severity: &str) -> Severity {
-        match severity {
-            "HIGH" => Severity::HIGH,
-            "MEDIUM" => Severity::MEDIUM,
-            "LOW" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        }
+        noop_apply_fix().await
     }
 }

@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
-use shared::common::taxonomy_common_vo::bool;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
@@ -12,15 +12,30 @@ use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 use tokio::sync::broadcast;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct NotifyWatchProvider {
     watcher: Mutex<Option<notify_debouncer_mini::Debouncer<RecommendedWatcher>>>,
     tx: broadcast::Sender<WatchEvent>,
     ignore_patterns: Mutex<Vec<String>>,
 }
 
+impl Default for NotifyWatchProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NotifyWatchProvider {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
+    }
+}
+
 #[async_trait::async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
 impl IWatchProviderPort for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
         let path_str = config.path.value.clone();
@@ -105,29 +120,11 @@ impl IWatchProviderPort for NotifyWatchProvider {
         Ok(())
     }
 
-    async fn is_available(&self) -> bool {
-        bool::new(cfg!(feature = "watch"))
+    async fn is_available(&self) -> BooleanVO {
+        BooleanVO::new(cfg!(feature = "watch"))
     }
 
     fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
         self.tx.subscribe()
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl NotifyWatchProvider {
-    pub fn new() -> Self {
-        let (tx, _) = broadcast::channel(256);
-        Self {
-            watcher: Mutex::new(None),
-            tx,
-            ignore_patterns: Mutex::new(Vec::new()),
-        }
-    }
-}
-
-impl Default for NotifyWatchProvider {
-    fn default() -> Self {
-        Self::new()
     }
 }

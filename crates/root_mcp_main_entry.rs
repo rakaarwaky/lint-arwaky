@@ -36,8 +36,6 @@ async fn main() -> anyhow::Result<()> {
         scanner_provider: container.scanner_provider,
         external_lint: container.external_lint,
         role_orchestrator: container.role_orchestrator,
-        maintenance_orchestrator: container.maintenance_orchestrator,
-        git_hooks_aggregate: container.git_hooks_aggregate,
     });
 
     // Start serving the MCP protocol over standard I/O.

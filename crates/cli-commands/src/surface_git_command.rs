@@ -10,17 +10,14 @@ use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct GitCommandsSurface {}
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for GitCommandsSurface {
     fn default() -> Self {
         Self::new()
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl GitCommandsSurface {
     pub fn new() -> Self {
         Self {}
@@ -61,7 +58,7 @@ pub async fn handle_git_diff(
 
     let mut total_violations = 0;
     for f in &files {
-        let results = code_analysis_linter.run_code_analysis_path(f);
+        let results = code_analysis_linter.run_code_analysis_path(&f.value);
         let fv = results.len();
         total_violations += fv;
         if fv > 0 {

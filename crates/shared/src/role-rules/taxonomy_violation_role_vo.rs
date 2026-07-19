@@ -59,21 +59,6 @@ fn write_violation(
                         constant from the taxonomy layer."
             )
         }
-        AesRoleViolation::ForbiddenInheritance { trait_name, reason } => {
-            let why = resolve_why(
-                reason,
-                format!(
-                    "'{trait_name}' is from a forbidden source layer. Contracts must not \
-                     inherit from forbidden source layers."
-                ),
-            );
-            write!(
-                f,
-                "AES013 FORBIDDEN_INHERITANCE: '{trait_name}' implemented from forbidden source.\n\
-                        WHY? {why}\n\
-                        FIX: Remove the inheritance or use a valid contract port/protocol instead."
-            )
-        }
         AesRoleViolation::ContractPrimitive { reason } => {
             let default = format!(
                 "Contracts must enforce value object boundaries to prevent primitive obsession. \
@@ -311,11 +296,6 @@ pub enum AesRoleViolation {
     },
     PrimitiveUsage {
         primitive: SymbolName,
-        reason: Option<LintMessage>,
-    },
-    // AES013 — Contract forbidden inheritance
-    ForbiddenInheritance {
-        trait_name: SymbolName,
         reason: Option<LintMessage>,
     },
     // AES402 — Contract primitive

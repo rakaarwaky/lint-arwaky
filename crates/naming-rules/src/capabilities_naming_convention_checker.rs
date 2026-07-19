@@ -1,12 +1,14 @@
+// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
+use crate::taxonomy_naming_utility::get_stem;
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -20,60 +22,18 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
 static NAMING_REGEX: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
 
-// ─── Block 2: Public Contract ─────────────────────────────
-#[async_trait]
-impl INamingCheckerProtocol for NamingConventionChecker {
-    // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
-    async fn check_file_naming(
-        &self,
-        analyzer: &dyn ILayerDetectionProtocol,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        // Step 1: Iterate over each file path in the checklist.
-        for f in &files.values {
-            let f_str = f.to_string();
-            // Step 2: Extract the raw filename from the path.
-            let filename = match f.rsplit('/').next() {
-                Some(name) => name,
-                None => &f_str,
-            };
-            // Step 3: Determine the architectural layer for the file.
-            let layer_name = analyzer.detect_layer(f, root_dir);
-            let layer = layer_name.clone();
-            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
-            // Step 5: Execute the naming checker function.
-            self.check_file_naming(
-                &f_str,
-                filename,
-                &layer,
-                def.as_ref(),
-                analyzer.config(),
-                &mut results.values,
-            );
-        }
-    }
-
-    async fn check_domain_suffixes(
-        &self,
-        _analyzer: &dyn ILayerDetectionProtocol,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for naming convention checker
+impl Default for NamingConventionChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl NamingConventionChecker {
     pub fn new() -> Self {
         Self {}
@@ -134,57 +94,52 @@ impl NamingConventionChecker {
 
         // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
-            let stem_str = fp.stem();
-            let stem = &stem_str;
+            let stem = get_stem(filename).unwrap_or_default();
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
             // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
             if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
-                if _config.is_rule_enabled("AES102") {
-                    let allowed: Vec<String> = LAYER_PREFIXES
-                        .iter()
-                        .map(|p| p.trim_end_matches('_').to_string())
-                        .collect();
-                    violations.push(Self::make_result(
-                        file,
-                        "AES102",
-                        NamingViolation::UnknownPrefix {
-                            prefix: actual_prefix.clone(),
-                            allowed,
-                            reason: Some(LintMessage::new(format!(
-                                "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
-                                 Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
-                                 Likely causes: typo in the prefix name, or the file is in the wrong directory.",
-                                actual_prefix, LAYER_PREFIXES.len()
-                            ))),
-                        }
-                        .to_string(),
-                        Severity::HIGH,
-                    ));
-                }
-                return;
-            }
-
-            // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
-            let stem = fp.stem();
-            if _config.is_rule_enabled("AES101") {
+                let allowed: Vec<String> = LAYER_PREFIXES
+                    .iter()
+                    .map(|p| p.trim_end_matches('_').to_string())
+                    .collect();
                 violations.push(Self::make_result(
                     file,
-                    "AES101",
-                    NamingViolation::NamingConvention {
-                        min_words: 2,
-                        separator: "_".to_string(),
+                    "AES102",
+                    NamingViolation::UnknownPrefix {
+                        prefix: actual_prefix.clone(),
+                        allowed,
                         reason: Some(LintMessage::new(format!(
-                            "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
-                             the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
-                             lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
-                            file, stem
+                            "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
+                             Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
+                             Likely causes: typo in the prefix name, or the file is in the wrong directory.",
+                            actual_prefix, LAYER_PREFIXES.len()
                         ))),
                     }
                     .to_string(),
                     Severity::HIGH,
                 ));
+                return;
             }
+
+            // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
+            let stem = get_stem(filename).unwrap_or_default();
+            violations.push(Self::make_result(
+                file,
+                "AES101",
+                NamingViolation::NamingConvention {
+                    min_words: 2,
+                    separator: "_".to_string(),
+                    reason: Some(LintMessage::new(format!(
+                        "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
+                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
+                         lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
+                        file, stem
+                    ))),
+                }
+                .to_string(),
+                Severity::HIGH,
+            ));
             return;
         }
 
@@ -197,12 +152,9 @@ impl NamingConventionChecker {
 
         // Step 4: Validate the file stem pattern using a regular expression.
         // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
-        let stem_str = fp.stem();
-        let stem = &stem_str;
+        let stem = get_stem(filename).unwrap_or_default();
 
-        if _config.is_rule_enabled("AES101")
-            && NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem))
-        {
+        if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
             violations.push(Self::make_result(
                 file,
                 "AES101",
@@ -224,8 +176,49 @@ impl NamingConventionChecker {
     }
 }
 
-impl Default for NamingConventionChecker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait]
+impl INamingCheckerProtocol for NamingConventionChecker {
+    // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
+    async fn check_file_naming(
+        &self,
+        analyzer: &dyn INamingAnalyzerProtocol,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        // Step 1: Iterate over each file path in the checklist.
+        for f in &files.values {
+            let f_str = f.to_string();
+            // Step 2: Extract the raw filename from the path.
+            let filename = match f.rsplit('/').next() {
+                Some(name) => name,
+                None => &f_str,
+            };
+            // Step 3: Determine the architectural layer for the file.
+            let layer = analyzer.detect_layer(f, root_dir);
+            // Step 4: Fetch layer-specific definition properties.
+            let def = layer
+                .as_ref()
+                .and_then(|l| analyzer.layer_map().values.get(l));
+            // Step 5: Execute the naming checker function.
+            self.check_file_naming(
+                &f_str,
+                filename,
+                &layer,
+                def,
+                analyzer.config(),
+                &mut results.values,
+            );
+        }
+    }
+
+    async fn check_domain_suffixes(
+        &self,
+        _analyzer: &dyn INamingAnalyzerProtocol,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        // No-op for naming convention checker
     }
 }

@@ -14,10 +14,20 @@ use shared::tui::contract_file_system_port::IFileSystemPort;
 use shared::tui::taxonomy_file_entry_vo::FileEntry;
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileSystemAdapter;
 
-// ─── Block 2: Public Contract (domain port ONLY) ──────────
+impl FileSystemAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for FileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IFileSystemPort for FileSystemAdapter {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry> {
         let dir_path = Path::new(path.value());
@@ -99,22 +109,5 @@ impl IFileSystemPort for FileSystemAdapter {
                     .and_then(|s| FilePath::new(s.to_string()).ok())
             })
             .collect()
-    }
-
-    fn write_file(&self, path: &str, content: &str) -> bool {
-        std::fs::write(path, content).is_ok()
-    }
-}
-
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for FileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl FileSystemAdapter {
-    pub fn new() -> Self {
-        Self
     }
 }

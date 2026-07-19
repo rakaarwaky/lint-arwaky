@@ -9,9 +9,9 @@
 // INamingCheckerProtocol trait but are configured with different rules.
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -27,63 +27,21 @@ use std::sync::Arc;
 ///   - analyzer: provides layer configuration and detection
 ///   - fs: filesystem access for walking directories
 ///   - ignored_patterns: paths to skip during file collection
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-    analyzer: Arc<dyn ILayerDetectionProtocol>,
+    analyzer: Arc<dyn INamingAnalyzerProtocol>,
     fs: Arc<dyn INamingFileSystemPort>,
     ignored_patterns: PatternList,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-#[async_trait]
-impl INamingRunnerAggregate for NamingOrchestrator {
-    /// Run both naming convention checks (AES101 + AES102) on the target.
-    ///
-    /// Orchestration flow:
-    ///   1. Walk target directory (via fs port, skipping ignored paths)
-    ///   2. Filter to source files only
-    ///   3. Run naming_convention_checker.check_file_naming (AES102)
-    ///   4. Run suffix_prefix_checker.check_domain_suffixes (AES101)
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
-        let config = self.analyzer.config();
-        if !config.enabled.value {
-            return Vec::new();
-        }
-
-        let mut results = LintResultList::new(Vec::new());
-        let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
-        let files = Self::filter_source_files(&all_files);
-        let root_dir = target;
-
-        if config.is_rule_enabled("AES101") || config.is_rule_enabled("AES102") {
-            self.naming_convention_checker
-                .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
-                .await;
-        }
-        if config.is_rule_enabled("AES102") {
-            self.suffix_prefix_checker
-                .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
-                .await;
-        }
-
-        results.values
-    }
-
-    fn name(&self) -> &str {
-        "naming-rules"
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl NamingOrchestrator {
     /// Constructor: builds the orchestrator with injected dependencies.
     /// Pre-processes ignored patterns from config (normalize paths).
     pub fn new(
         naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
         suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-        analyzer: Arc<dyn ILayerDetectionProtocol>,
+        analyzer: Arc<dyn INamingAnalyzerProtocol>,
         fs: Arc<dyn INamingFileSystemPort>,
     ) -> Self {
         let config = analyzer.config();
@@ -125,5 +83,35 @@ impl NamingOrchestrator {
             .cloned()
             .collect();
         FilePathList::new(filtered)
+    }
+}
+
+#[async_trait]
+impl INamingRunnerAggregate for NamingOrchestrator {
+    /// Run both naming convention checks (AES101 + AES102) on the target.
+    ///
+    /// Orchestration flow:
+    ///   1. Walk target directory (via fs port, skipping ignored paths)
+    ///   2. Filter to source files only
+    ///   3. Run naming_convention_checker.check_file_naming (AES102)
+    ///   4. Run suffix_prefix_checker.check_domain_suffixes (AES101)
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = LintResultList::new(Vec::new());
+        let all_files = self.fs.walk(target, Some(&self.ignored_patterns)).await;
+        let files = Self::filter_source_files(&all_files);
+        let root_dir = target;
+
+        self.naming_convention_checker
+            .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
+            .await;
+        self.suffix_prefix_checker
+            .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
+            .await;
+
+        results.values
+    }
+
+    fn name(&self) -> &str {
+        "naming-rules"
     }
 }

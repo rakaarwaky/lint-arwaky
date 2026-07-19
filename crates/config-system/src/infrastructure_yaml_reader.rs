@@ -5,55 +5,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_port::IConfigReaderPort;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ConfigYamlReader;
 
-// ─── Block 2: Public Contract ─────────────────────────────
-#[async_trait]
-impl IConfigReaderPort for ConfigYamlReader {
-    async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
-        let filename = Self::config_filename(language);
-        let mut current = std::path::PathBuf::from(&project_root.value);
-        if current.is_relative() {
-            if let Ok(cwd) = std::env::current_dir() {
-                current = cwd.join(current);
-            }
-        }
-        let mut depth = 0;
-
-        while !current.as_os_str().is_empty() && depth < 5 {
-            let candidate = current.join(&filename);
-            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
-                return Some(ConfigSource::new(
-                    language,
-                    candidate.to_string_lossy().to_string(),
-                    content,
-                ));
-            }
-
-            if let Some(parent) = current.parent() {
-                current = parent.to_path_buf();
-            } else {
-                break;
-            }
-            depth += 1;
-        }
-
-        Self::read_any(language).await
-    }
-
-    async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
-        let mut found = Vec::new();
-        for lang in &["rust", "python", "typescript"] {
-            if let Some(config) = self.read_config(project_root, lang).await {
-                found.push((lang.to_string(), config.path.to_string()));
-            }
-        }
-        found
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ConfigYamlReader {
     pub fn new() -> Self {
         Self
@@ -104,5 +57,44 @@ impl ConfigYamlReader {
 impl Default for ConfigYamlReader {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[async_trait]
+impl IConfigReaderPort for ConfigYamlReader {
+    async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
+        let filename = Self::config_filename(language);
+        let mut current = std::path::PathBuf::from(&project_root.value);
+        let mut depth = 0;
+
+        while !current.as_os_str().is_empty() && depth < 2 {
+            let candidate = current.join(&filename);
+            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
+                return Some(ConfigSource::new(
+                    language,
+                    candidate.to_string_lossy().to_string(),
+                    content,
+                ));
+            }
+
+            if let Some(parent) = current.parent() {
+                current = parent.to_path_buf();
+            } else {
+                break;
+            }
+            depth += 1;
+        }
+
+        Self::read_any(language).await
+    }
+
+    async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
+        let mut found = Vec::new();
+        for lang in &["rust", "python", "typescript"] {
+            if let Some(config) = self.read_config(project_root, lang).await {
+                found.push((lang.to_string(), config.path.to_string()));
+            }
+        }
+        found
     }
 }

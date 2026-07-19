@@ -1,8 +1,6 @@
 use async_trait::async_trait;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::project_setup::contract_filesystem_maintenance_port::FileEntry;
-use shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort;
+use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_protocol::{
     ISetupInstallerPort, ISetupManagementProtocol,
 };
@@ -25,41 +23,8 @@ impl ISetupInstallerPort for MockInstaller {
     }
 }
 
-struct MockFsPort;
-
-#[async_trait]
-impl IFileSystemMaintenancePort for MockFsPort {
-    async fn read_file(&self, _path: &FilePath) -> Result<String, String> {
-        Err("not found".to_string())
-    }
-    async fn write_file(&self, _path: &FilePath, _content: &str) -> Result<(), String> {
-        Ok(())
-    }
-    async fn create_dir_all(&self, _path: &FilePath) -> Result<(), String> {
-        Ok(())
-    }
-    async fn path_exists(&self, _path: &FilePath) -> bool {
-        std::path::Path::new(_path.value()).exists()
-    }
-    async fn file_exists(&self, _path: &FilePath) -> bool {
-        std::path::Path::new(_path.value()).exists()
-    }
-    async fn walk_py_files(&self, _dir: &FilePath) -> Vec<FilePath> {
-        Vec::new()
-    }
-    async fn find_cache_dirs(&self, _dir: &FilePath, _cache_names: &[&str]) -> Vec<FilePath> {
-        Vec::new()
-    }
-    async fn remove_dir_all(&self, _path: &FilePath) -> Result<(), String> {
-        Ok(())
-    }
-    async fn list_dir(&self, _dir: &FilePath) -> Vec<FileEntry> {
-        Vec::new()
-    }
-}
-
 fn make_processor() -> SetupManagementProcessor {
-    SetupManagementProcessor::new(Arc::new(MockInstaller), Arc::new(MockFsPort))
+    SetupManagementProcessor::new(Arc::new(MockInstaller))
 }
 
 #[test]
@@ -117,15 +82,13 @@ fn test_which_mcp_binary_returns_non_empty() {
     assert!(!binary.value.is_empty());
 }
 
-#[tokio::test]
-async fn test_write_config_file() {
+#[test]
+fn test_write_config_file() {
     let proc = make_processor();
     let dir = std::env::temp_dir().join("lint_arwaky_test_setup");
     let _ = std::fs::create_dir_all(&dir);
     let path = dir.join("test_config.yaml");
-    let result = proc
-        .write_config_file(&path.to_string_lossy(), "rules:\n  aes001: enabled\n")
-        .await;
+    let result = proc.write_config_file(&path.to_string_lossy(), "rules:\n  aes001: enabled\n");
     assert!(result.is_ok());
     let desc = result.unwrap();
     assert!(desc.value.contains("wrote"));
@@ -133,20 +96,20 @@ async fn test_write_config_file() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-#[tokio::test]
-async fn test_detect_language_rust() {
+#[test]
+fn test_detect_language_rust() {
     let proc = make_processor();
     if std::path::Path::new("crates").exists() {
-        let lang = proc.detect_language().await;
+        let lang = proc.detect_language();
         assert_eq!(lang.value, "rust");
     }
 }
 
-#[tokio::test]
-async fn test_file_exists() {
+#[test]
+fn test_file_exists() {
     let proc = make_processor();
-    assert!(proc.file_exists("Cargo.toml").await);
-    assert!(!proc.file_exists("nonexistent_file_xyz.txt").await);
+    assert!(proc.file_exists("Cargo.toml"));
+    assert!(!proc.file_exists("nonexistent_file_xyz.txt"));
 }
 
 #[test]

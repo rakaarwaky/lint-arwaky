@@ -16,10 +16,6 @@ impl DisplayContent {
     pub fn value(&self) -> &str {
         &self.value
     }
-
-    pub fn contains(&self, pattern: &str) -> bool {
-        self.value.contains(pattern)
-    }
 }
 
 impl From<String> for DisplayContent {

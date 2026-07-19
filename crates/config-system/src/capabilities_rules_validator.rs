@@ -4,10 +4,20 @@ use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::config_system::taxonomy_validation_vo::ValidationResult;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ConfigRulesValidator;
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl Default for ConfigRulesValidator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ConfigRulesValidator {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
 impl IConfigValidatorProtocol for ConfigRulesValidator {
     fn is_adapter_enabled(&self, config: &ProjectConfig, adapter_name: &AdapterName) -> bool {
         for adapter in &config.adapters {
@@ -37,18 +47,5 @@ impl IConfigValidatorProtocol for ConfigRulesValidator {
         } else {
             ValidationResult::fail(&errors.join(" | "))
         }
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ConfigRulesValidator {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for ConfigRulesValidator {
-    fn default() -> Self {
-        Self::new()
     }
 }

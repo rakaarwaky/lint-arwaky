@@ -24,13 +24,11 @@ use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementOrchestrator {
     protocol: Arc<dyn ISetupManagementProtocol>,
 }
 
 #[async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
 impl SetupManagementAggregate for SetupManagementOrchestrator {
     fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
         SuccessStatus::new(true)
@@ -88,38 +86,37 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         self.protocol.install_javascript_adapters(sudo).await
     }
 
-    async fn detect_language(
+    fn detect_language(
         &self,
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
-        self.protocol.detect_language().await
+        self.protocol.detect_language()
     }
 
-    async fn detect_languages(&self) -> ProjectLanguagesVO {
-        self.protocol.detect_languages().await
+    fn detect_languages(&self) -> ProjectLanguagesVO {
+        self.protocol.detect_languages()
     }
 
     fn get_config_template(&self, language: &str) -> &'static str {
         self.protocol.get_config_template(language)
     }
 
-    async fn write_config_file(
+    fn write_config_file(
         &self,
         filename: &str,
         content: &str,
     ) -> shared::project_setup::WriteConfigResult {
-        self.protocol.write_config_file(filename, content).await
+        self.protocol.write_config_file(filename, content)
     }
 
-    async fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
-        self.protocol.create_global_config_dir().await
+    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
+        self.protocol.create_global_config_dir()
     }
 
-    async fn file_exists(&self, path: &str) -> bool {
-        self.protocol.file_exists(path).await
+    fn file_exists(&self, path: &str) -> bool {
+        self.protocol.file_exists(path)
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupManagementOrchestrator {
     pub fn new(protocol: Arc<dyn ISetupManagementProtocol>) -> Self {
         Self { protocol }

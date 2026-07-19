@@ -1,8 +1,6 @@
 // PURPOSE: Module declarations for auto-fix (fix processor, orchestrator, container)
 pub mod capabilities_fix_processor;
-mod infrastructure_symbol_adapter;
 pub use capabilities_fix_processor::LintFixProcessor;
 pub mod agent_fix_orchestrator;
 pub use agent_fix_orchestrator::FixOrchestrator;
-pub mod infrastructure_file_adapter;
 pub mod root_auto_fix_container;

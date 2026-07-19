@@ -1,3 +1,4 @@
+pub mod contract_naming_analyzer_protocol;
 pub mod contract_naming_checker_protocol;
 pub mod contract_naming_filesystem_port;
 pub mod contract_naming_runner_aggregate;

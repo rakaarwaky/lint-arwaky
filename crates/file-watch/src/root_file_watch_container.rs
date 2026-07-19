@@ -5,20 +5,12 @@ use crate::agent_watch_orchestrator::WatchOrchestrator;
 use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::infrastructure_notify_provider::NotifyWatchProvider;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 
-// Block 1: struct Definition
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileWatchContainer {
     provider: Arc<NotifyWatchProvider>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-// (No trait impl — root container is wiring only)
-
-// Block 3: constructors & public API
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileWatchContainer {
     pub fn new() -> Self {
         Self {
@@ -31,16 +23,11 @@ impl FileWatchContainer {
     }
 
     pub fn orchestrator(&self, linter: Arc<dyn ICodeAnalysisAggregate>) -> Arc<WatchOrchestrator> {
-        let change_analyzer: Arc<dyn IChangeAnalyzerProtocol> = Arc::new(ChangeAnalyzer::new());
-        Arc::new(WatchOrchestrator::new(
-            self.provider(),
-            linter,
-            change_analyzer,
-        ))
+        let _wire_cap = ChangeAnalyzer::new();
+        Arc::new(WatchOrchestrator::new(self.provider(), linter))
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for FileWatchContainer {
     fn default() -> Self {
         Self::new()

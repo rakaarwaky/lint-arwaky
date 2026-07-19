@@ -7,7 +7,7 @@
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::bool;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -23,7 +23,6 @@ use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
-use tui_lint_arwaky::capabilities_report_formatter::ReportFormatterHelper;
 
 // ---------------------------------------------------------------------------
 // Minimal mocks (config_show does not invoke code analysis)
@@ -118,7 +117,7 @@ impl IConfigOrchestrationAggregate for MockConfigOrchestratorRich {
             },
         ];
         let config = ArchitectureConfig {
-            enabled: bool::new(true),
+            enabled: BooleanVO::new(true),
             layers,
             rules,
             ..Default::default()
@@ -167,7 +166,7 @@ impl IConfigOrchestrationAggregate for MockConfigOrchestratorEmpty {
 
 #[test]
 fn config_show_with_orchestrator_returns_rules_and_layers() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis), Arc::new(ReportFormatterHelper))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis))
         .with_config(Arc::new(MockConfigOrchestratorRich));
     let result: LintExecutionResult = executor.config_show();
 
@@ -209,7 +208,7 @@ fn config_show_with_orchestrator_returns_rules_and_layers() {
 
 #[test]
 fn config_show_with_orchestrator_empty_config_shows_warnings() {
-    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis), Arc::new(ReportFormatterHelper))
+    let executor = LintExecutor::new(Arc::new(MockCodeAnalysis))
         .with_config(Arc::new(MockConfigOrchestratorEmpty));
     let result: LintExecutionResult = executor.config_show();
 

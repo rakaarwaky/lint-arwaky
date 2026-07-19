@@ -7,7 +7,6 @@ use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_filesystem_error::FileSystemError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::import_rules::taxonomy_import_utility::{filepath_or_default, os_str_to_str};
 use shared::mcp_server::taxonomy_action_vo::ActionName;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;
@@ -16,12 +15,35 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
 
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct OSFileSystemAdapter;
+/// Returns the inner `FilePath` if `result` is `Ok`, otherwise returns `FilePath::default()`.
+/// Private helper — uses `Result::match` to avoid inline match patterns.
+fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
+    result.unwrap_or_default()
+}
 
-// ─── Block 2: Public Contract ─────────────────────────────
-#[async_trait]
-impl IFileSystemPort for OSFileSystemAdapter {
+/// Returns the inner `FilePath` if `result` is `Ok`, otherwise clones `fallback`.
+fn filepath_or_clone(
+    result: Result<FilePath, impl std::fmt::Debug>,
+    fallback: &FilePath,
+) -> FilePath {
+    match result {
+        Ok(fp) => fp,
+        Err(_) => fallback.clone(),
+    }
+}
+
+/// Returns the `&str` slice from an `OsStr` option, falling back to `""`.
+fn os_str_to_str(opt: Option<&std::ffi::OsStr>) -> &str {
+    opt.and_then(|o| o.to_str()).map_or("", |s| s)
+}
+
+pub struct OSFileSystemAdapter {}
+
+impl OSFileSystemAdapter {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {
         if dir.is_file() {
             if let Ok(fp) = FilePath::new(dir.to_string_lossy().to_string()) {
@@ -44,7 +66,16 @@ impl IFileSystemPort for OSFileSystemAdapter {
             }
         }
     }
+}
 
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[async_trait]
+impl IFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = match ignored_patterns {
@@ -69,7 +100,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         let s = Path::new(&start.value);
         p.strip_prefix(s).ok().map_or_else(
             || path.clone(),
-            |rel| filepath_or_default(FilePath::new(rel.to_string_lossy().to_string())),
+            |rel| filepath_or_clone(FilePath::new(rel.to_string_lossy().to_string()), path),
         )
     }
 
@@ -93,7 +124,7 @@ impl IFileSystemPort for OSFileSystemAdapter {
         let p = Path::new(&path.value);
         p.parent().map_or_else(
             || path.clone(),
-            |parent| filepath_or_default(FilePath::new(parent.to_string_lossy().to_string())),
+            |parent| filepath_or_clone(FilePath::new(parent.to_string_lossy().to_string()), path),
         )
     }
 
@@ -158,18 +189,5 @@ impl IFileSystemPort for OSFileSystemAdapter {
                 ActionName::new("read"),
             )),
         }
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl OSFileSystemAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for OSFileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
     }
 }

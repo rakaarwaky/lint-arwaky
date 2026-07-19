@@ -18,10 +18,20 @@ use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRo
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct InfrastructureRoleChecker {}
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl Default for InfrastructureRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl InfrastructureRoleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     fn check_port_implementation(
         &self,
@@ -30,7 +40,7 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     ) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_info_vo::LanguageInfo::new(source);
+        let li = crate::taxonomy_language_helper::detect_language(source);
 
         if li.is_rs {
             self._check_rust(file, content, violations);
@@ -42,12 +52,7 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl InfrastructureRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     fn _check_rust(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let has_import = content.contains("use ")
             && (content.contains("_port::") || content.contains("_protocol::"));
@@ -91,7 +96,7 @@ impl InfrastructureRoleChecker {
             return;
         }
         let has_impl = content.contains("class ")
-            && (content.contains("_port") || content.contains("_protocol"));
+            && (content.contains("(_port") || content.contains("(_protocol"));
         if !has_impl {
             violations.push(LintResult::new_arch(
                 file,
@@ -126,11 +131,5 @@ impl InfrastructureRoleChecker {
                 AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
             ));
         }
-    }
-}
-
-impl Default for InfrastructureRoleChecker {
-    fn default() -> Self {
-        Self::new()
     }
 }

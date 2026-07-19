@@ -11,6 +11,20 @@
 //   - Skips files that don't end in .ts or .tsx
 //   - All tsc errors are reported as HIGH severity
 
+use regex::Regex;
+use std::sync::OnceLock;
+fn tsc_pattern1() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
+fn tsc_pattern2() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -18,8 +32,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -30,18 +42,28 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use regex::Regex;
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
-use std::sync::OnceLock;
+use shared::external_lint::taxonomy_external_lint_helper::{
+    canonicalize_path, exec_cmd_scan, noop_apply_fix, resolve_js_cmd,
+    resolve_js_working_dir as resolve_working_dir,
+};
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
-    utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl TSCAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+        }
+    }
+}
+
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TSCAdapter {
     fn name(&self) -> AdapterName {
@@ -57,42 +79,38 @@ impl ILinterAdapterPort for TSCAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = self.utility.resolve_js_working_dir(path);
-        let abs_path = self.utility.canonicalize_path(path_str);
+        let wd = resolve_working_dir(path);
+        let abs_path = canonicalize_path(path_str);
 
         let mut args = vec![
             "--noEmit".to_string(),
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        if abs_path.value != "." && abs_path.value != "./" {
-            args.push(abs_path.value);
+        if abs_path != "." && abs_path != "./" {
+            args.push(abs_path);
         }
 
-        let cmd = self
-            .utility
-            .resolve_js_cmd("tsc", PatternList::new(args), &wd);
+        let cmd = resolve_js_cmd("tsc", args, &wd.value);
 
-        let response = self
-            .utility
-            .exec_cmd_scan(
-                self.executor.as_ref(),
-                cmd,
-                wd.clone(),
-                Timeout::new(60.0),
-                Some(self.name()),
-                path,
-            )
-            .await?;
+        let response = exec_cmd_scan(
+            self.executor.as_ref(),
+            cmd,
+            wd.clone(),
+            60.0,
+            Some(self.name()),
+            path,
+        )
+        .await?;
 
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
 
-        let pattern1 = match Self::tsc_pattern1() {
+        let pattern1 = match tsc_pattern1() {
             Some(r) => r,
             None => return Ok(LintResultList::new(vec![])),
         };
-        let pattern2 = match Self::tsc_pattern2() {
+        let pattern2 = match tsc_pattern2() {
             Some(r) => r,
             None => return Ok(LintResultList::new(vec![])),
         };
@@ -144,33 +162,6 @@ impl ILinterAdapterPort for TSCAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.utility.noop_apply_fix().await
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl TSCAdapter {
-    pub fn tsc_pattern1() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
-            .as_ref()
-    }
-
-    pub fn tsc_pattern2() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
-            .as_ref()
-    }
-
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-        }
+        noop_apply_fix().await
     }
 }

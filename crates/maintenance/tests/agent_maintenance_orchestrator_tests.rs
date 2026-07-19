@@ -7,7 +7,7 @@ use std::fs;
 
 #[tokio::test]
 async fn test_stats_returns_non_negative() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let path = FilePath::new(
         std::env::current_dir()
             .unwrap()
@@ -30,7 +30,7 @@ async fn test_stats_counts_python_files() {
     fs::write(dir.join("test_b.py"), "def test_x(): pass").unwrap();
     fs::write(dir.join("readme.txt"), "hello").unwrap();
 
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
     let stats = orch.stats(&path).await;
     assert_eq!(stats.python_files.value, 2);
@@ -41,28 +41,28 @@ async fn test_stats_counts_python_files() {
 
 #[tokio::test]
 async fn test_doctor_returns_result() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let result = orch.doctor().await;
     assert_eq!(result.python_version.value, "3.12");
 }
 
 #[tokio::test]
 async fn test_clean_does_not_panic() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     // clean is idempotent — removing non-existent cache dirs is a no-op
     orch.clean().await;
 }
 
 #[tokio::test]
 async fn test_cancel_does_not_panic() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let job_id = JobId::new("test-job".to_string());
     orch.cancel(job_id).await;
 }
 
 #[tokio::test]
 async fn test_diagnose_toolchain_via_orchestrator() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let diag = orch.diagnose_toolchain().await;
     assert!(!diag.rust_tools.is_empty(), "should have rust tools");
     assert!(!diag.python_tools.is_empty(), "should have python tools");
@@ -73,7 +73,7 @@ async fn test_diagnose_toolchain_via_orchestrator() {
 
 #[tokio::test]
 async fn test_security_scan_via_orchestrator_for_nonexistent_path() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let path = FilePath::new("/nonexistent_test_path_xyz".to_string()).unwrap_or_default();
     let report = orch.run_security_scan(&path).await;
     // No lockfile → falls through to Python bandit, which won't find /nonexistent path
@@ -83,7 +83,7 @@ async fn test_security_scan_via_orchestrator_for_nonexistent_path() {
 
 #[tokio::test]
 async fn test_dependency_report_via_orchestrator_fails_for_nonexistent() {
-    let orch = MaintenanceCommandsOrchestrator::default();
+    let orch = MaintenanceCommandsOrchestrator::new();
     let path = FilePath::new("/nonexistent_path_xyz".to_string()).unwrap_or_default();
     let result = orch.run_dependency_report(&path).await;
     assert!(result.is_err(), "expected error for nonexistent path");

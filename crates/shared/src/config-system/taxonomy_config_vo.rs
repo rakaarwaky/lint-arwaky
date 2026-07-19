@@ -1,7 +1,7 @@
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_vo::bool;
+use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
@@ -14,10 +14,6 @@ use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-fn default_rule_enabled() -> bool {
-    bool::new(true)
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
 pub struct ArchitectureRule {
@@ -26,8 +22,6 @@ pub struct ArchitectureRule {
     pub rule_type: ErrorCode,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
-    #[serde(default = "default_rule_enabled")]
-    pub enabled: bool,
     #[serde(default)]
     pub allowed: PatternList,
     #[serde(default)]
@@ -48,24 +42,22 @@ pub struct ArchitectureRule {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(default)]
 pub struct ArchitectureConfig {
-    pub enabled: bool,
+    pub enabled: BooleanVO,
     pub layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
     pub rules: Vec<ArchitectureRule>,
     pub naming: NamingConfig,
     pub ignored_paths: FilePathList,
-    pub mandatory_class_definition: bool,
-    pub ignored_rules: PatternList,
+    pub mandatory_class_definition: BooleanVO,
 }
 
 impl ArchitectureConfig {
     pub fn new(
-        enabled: bool,
+        enabled: BooleanVO,
         layers: std::collections::HashMap<LayerNameVO, LayerDefinition>,
         rules: Vec<ArchitectureRule>,
         naming: NamingConfig,
         ignored_paths: FilePathList,
-        mandatory_class_definition: bool,
-        ignored_rules: PatternList,
+        mandatory_class_definition: BooleanVO,
     ) -> Self {
         Self {
             enabled,
@@ -74,29 +66,19 @@ impl ArchitectureConfig {
             naming,
             ignored_paths,
             mandatory_class_definition,
-            ignored_rules,
         }
-    }
-
-    pub fn is_rule_enabled(&self, rule_code: &str) -> bool {
-        self.rules
-            .iter()
-            .find(|r| r.name.value == rule_code)
-            .map(|r| r.enabled.value)
-            .unwrap_or(true)
     }
 }
 
 impl Default for ArchitectureConfig {
     fn default() -> Self {
         Self {
-            enabled: bool::new(true),
+            enabled: BooleanVO::new(true),
             layers: HashMap::new(),
             rules: Vec::new(),
             naming: NamingConfig::new(Count::new(2)),
             ignored_paths: FilePathList { values: vec![] },
-            mandatory_class_definition: bool::new(false),
-            ignored_rules: PatternList::default(),
+            mandatory_class_definition: BooleanVO::new(false),
         }
     }
 }
@@ -105,10 +87,6 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
     if let Some(arch_val) = raw.get("architecture") {
         let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        if let Some(ignored_rules_val) = raw.get("ignored_rules") {
-            let ignored_json = serde_json::to_value(ignored_rules_val).unwrap_or_default();
-            arch_json["ignored_rules"] = ignored_json;
-        }
         // Extract layers from rules (first rule containing "layers" key) if not at top-level
         if arch_json.get("layers").is_none() {
             if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
@@ -298,12 +276,7 @@ static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
 
 pub fn default_aes_config() -> ArchitectureConfig {
     DEFAULT_RUST_CONFIG
-        .get_or_init(|| {
-            parse_config_yaml(include_str!(concat!(
-                env!("OUT_DIR"),
-                "/lint_arwaky.config.rust.yaml"
-            )))
-        })
+        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
         .clone()
 }
 
@@ -312,18 +285,14 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
         "rust" => default_aes_config(),
         "python" => DEFAULT_PYTHON_CONFIG
             .get_or_init(|| {
-                parse_config_yaml(include_str!(concat!(
-                    env!("OUT_DIR"),
-                    "/lint_arwaky.config.python.yaml"
-                )))
+                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
             })
             .clone(),
         "javascript" | "typescript" => DEFAULT_TS_CONFIG
             .get_or_init(|| {
-                parse_config_yaml(include_str!(concat!(
-                    env!("OUT_DIR"),
-                    "/lint_arwaky.config.javascript.yaml"
-                )))
+                parse_config_yaml(include_str!(
+                    "../../../../lint_arwaky.config.javascript.yaml"
+                ))
             })
             .clone(),
         _ => {

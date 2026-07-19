@@ -19,36 +19,8 @@ use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use crate::surface_check_command::{CheckCommandsSurface, OrchestratorFactory};
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
-///
-/// Priority: multi-crate workspace markers (`crates/`, `packages/`, `modules/`) are
-/// checked FIRST. Only if none are found do we fall back to a standalone `Cargo.toml`.
-/// This prevents `crates/shared/Cargo.toml` from being mistaken for the workspace root
-/// when the actual workspace root is several levels above.
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    let mut dir = std::path::Path::new(path).to_path_buf();
-    if !dir.is_absolute() {
-        dir = std::env::current_dir().ok()?.join(&dir);
-    }
-    if dir.is_file() {
-        dir.pop();
-    }
-    let mut cargo_toml_candidate: Option<std::path::PathBuf> = None;
-    loop {
-        // Prefer workspace-root markers (multi-crate directories)
-        if dir.join("crates").is_dir()
-            || dir.join("packages").is_dir()
-            || dir.join("modules").is_dir()
-        {
-            return Some(dir);
-        }
-        // Remember the first Cargo.toml we see as a fallback for standalone projects
-        if cargo_toml_candidate.is_none() && dir.join("Cargo.toml").exists() {
-            cargo_toml_candidate = Some(dir.clone());
-        }
-        if !dir.pop() {
-            return cargo_toml_candidate;
-        }
-    }
+    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
 }
 
 /// check = self-lint (AES analysis on current project, same algorithm as scan)

@@ -11,7 +11,7 @@ pub enum AesOrphanViolation {
     ContractOrphan {
         suffix: String,
         trait_name: String,
-        target_layer: String,
+        target_layer: &'static str,
         reason: Option<LintMessage>,
     },
     CapabilitiesOrphan {
@@ -61,78 +61,16 @@ impl fmt::Display for AesOrphanViolation {
             } => {
                 let why = match reason.as_ref() {
                     Some(r) => r.to_string(),
-                    None => match suffix.as_str() {
-                        "port" => format!(
-                            "Contract port '{}' failed 3 modular checks:\n\
-                             1. IMPLEMENT: Not implemented by any infrastructure_* file \
-                             (no adapter provides the outbound interface via `impl Trait for Type`)\n\
-                             2. CALL: Not called by any orchestrator, container, capabilities, or surface \
-                             (no file uses `TraitName::method()` or imports the trait)\n\
-                             3. WIRE: Not wired in any DI container \
-                             (no `Arc::new(Type::new())` or constructor injection)\n\
-                             Without implement + call + wire, the port is dead code.",
-                            trait_name
-                        ),
-                        "protocol" => format!(
-                            "Contract protocol '{}' failed 3 modular checks:\n\
-                             1. IMPLEMENT: Not implemented by any capabilities_* file \
-                             (no checker/analyzer provides the inbound interface via `impl Trait for Type`)\n\
-                             2. CALL: Not called by any orchestrator, container, capabilities, or surface \
-                             (no file uses `TraitName::method()` or imports the trait)\n\
-                             3. WIRE: Not wired in any DI container \
-                             (no `Arc::new(Type::new())` or constructor injection)\n\
-                             Without implement + call + wire, the protocol is dead code.",
-                            trait_name
-                        ),
-                        "aggregate" => format!(
-                            "Contract aggregate '{}' failed 3 modular checks:\n\
-                             1. IMPLEMENT: Not implemented by any agent_*_orchestrator.rs file \
-                             (no orchestrator coordinates this workflow via `impl Trait for Type`)\n\
-                             2. CALL: Not called by any surface_* file \
-                             (no surface invokes this aggregate's methods)\n\
-                             3. WIRE: Not wired in any root_*_container.rs \
-                             (no `Arc::new(Type::new())` or constructor injection)\n\
-                             Without implement + call + wire, the orchestration logic is dead code.",
-                            trait_name
-                        ),
-                        _ => format!(
-                            "Contract '{}' is not implemented by any {} file.",
-                            trait_name, target_layer
-                        ),
-                    },
+                    None => format!(
+                        "Contract {} '{}' is not implemented by any {} file.",
+                        suffix, trait_name, target_layer
+                    ),
                 };
                 let fix = match suffix.as_str() {
-                    "port" => format!(
-                        "1. IMPLEMENT: Create infrastructure_<name>_<suffix>.rs with `impl {} for Type` \
-                         — the adapter uses the port's interface to interact with external systems.\n\
-                         2. CALL: Import and use the trait in agent_*_orchestrator.rs \
-                         — call `trait_name::method()` or reference the trait.\n\
-                         3. WIRE: Pass `Arc::new(Type::new())` to the orchestrator constructor \
-                         in root_*_container.rs.",
-                        trait_name
-                    ),
-                    "protocol" => format!(
-                        "1. IMPLEMENT: Create capabilities_<name>_<suffix>.rs with `impl {} for Type` \
-                         — the capability uses the protocol's interface to process domain logic.\n\
-                         2. CALL: Import and use the trait in agent_*_orchestrator.rs \
-                         — call `trait_name::method()` or reference the trait.\n\
-                         3. WIRE: Pass `Arc::new(Type::new())` to the orchestrator constructor \
-                         in root_*_container.rs.",
-                        trait_name
-                    ),
-                    "aggregate" => format!(
-                        "1. IMPLEMENT: Add `impl {} for Type` in agent_*_orchestrator.rs \
-                         — the orchestrator coordinates the workflow.\n\
-                         2. CALL: Import and use the aggregate in a surface_* file \
-                         — call `aggregate::execute()` or reference the trait.\n\
-                         3. WIRE: Pass `Arc::new(Type::new())` to the surface constructor \
-                         in root_*_container.rs.",
-                        trait_name
-                    ),
-                    _ => format!(
-                        "Implement '{}' in the appropriate layer.",
-                        trait_name
-                    ),
+                    "port" => format!("Implement '{}' in an infrastructure_* file, or wire it in agent_*_orchestrator.rs if already implemented.", trait_name),
+                    "protocol" => format!("Implement '{}' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.", trait_name),
+                    "aggregate" => format!("Import and use '{}' in a surface_* file or root_*_container.rs.", trait_name),
+                    _ => format!("Implement '{}' in the appropriate layer.", trait_name),
                 };
                 write!(
                     f,

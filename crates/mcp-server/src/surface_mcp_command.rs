@@ -8,16 +8,14 @@ use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
 use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
-use crate::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct LintArwakyMcpServer {
     agent: Arc<dyn IMcpServerAggregate>,
     tool_router: ToolRouter<Self>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl LintArwakyMcpServer {
     pub fn new(agent: Arc<dyn IMcpServerAggregate>) -> Self {
         Self {
@@ -28,7 +26,6 @@ impl LintArwakyMcpServer {
 }
 
 #[tool_handler]
-// ─── Block 2: Public Contract ─────────────────────────────
 impl ServerHandler for LintArwakyMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
@@ -49,9 +46,7 @@ impl ServerHandler for LintArwakyMcpServer {
 
 #[tool_router]
 impl LintArwakyMcpServer {
-    #[tool(
-        description = "Execute any CLI command. This is the primary tool. Args: {\"action\": \"scan\", \"args\": {\"path\": \"/absolute/path/to/project\"}} — path MUST be absolute."
-    )]
+    #[tool(description = "Execute any CLI command. This is the primary tool.")]
     async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
         self.agent.execute_command(args).await
     }

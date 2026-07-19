@@ -12,8 +12,6 @@ use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggrega
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-// Block 1: struct Definition
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CliContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -27,10 +25,6 @@ pub struct CliContainer {
     pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-// (No trait impl — root container is wiring only)
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl CliContainer {
     pub fn new_default() -> Self {
         let import_container =
@@ -66,8 +60,9 @@ impl CliContainer {
         let orphan_orchestrator = orphan_container.analyzer();
         let layer_detector = orphan_container.layer_detector();
 
-        let scanner_provider: Arc<dyn IScannerProviderPort> =
-            Arc::new(code_analysis::FileCollectorProvider::new());
+        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+        );
 
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.multi_project_orchestrator();
@@ -100,7 +95,7 @@ impl CliContainer {
             orphan_orchestrator: self.orphan_orchestrator.clone(),
             layer_detector: self.layer_detector.clone(),
             language_detector: Arc::new(
-                shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
+                crate::infrastructure_language_detector::CliLanguageDetector::new(),
             ),
         }
     }

@@ -10,12 +10,16 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_duration_vo::Timeout;
 use tokio::process::Command;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct StdioClient {
     timeout: Duration,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl StdioClient {
+    pub fn new(timeout: Duration) -> Self {
+        Self { timeout }
+    }
+}
+
 #[async_trait]
 impl ICommandExecutorPort for StdioClient {
     async fn execute_command(
@@ -66,12 +70,5 @@ impl ICommandExecutorPort for StdioClient {
 
     async fn health_check(&self) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::new())
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl StdioClient {
-    pub fn new(timeout: Duration) -> Self {
-        Self { timeout }
     }
 }

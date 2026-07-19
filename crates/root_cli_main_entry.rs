@@ -13,13 +13,15 @@ use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::CodeDuplicationAnalyzer;
+use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
+use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::contract_system_port::IFileSystemPort;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
@@ -41,7 +43,7 @@ fn make_check_context(
         orphan_orchestrator: container.orphan_orchestrator.clone(),
         layer_detector: layer_detector.clone(),
         language_detector: Arc::new(
-            shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
+            cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
         ),
     }
 }
@@ -56,18 +58,22 @@ fn main() -> ExitCode {
     // precise layer matching in check/scan/orphan commands. This is
     // different from the orphan detector's prefix-based detection.
     let aes_config = default_aes_config();
+    let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
+    let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
     let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-        Arc::new(LayerDetectionAnalyzer::new(aes_config));
+        Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
 
     // ── Phase 2: Create per-project factory (for `scan` command) ─────
     // The scan command discovers workspace members and runs all linters
     // on each one independently. This factory creates a fresh
     // CheckContext for each member project with per-project config.
     let ext_lint_clone = container.external_lint.clone();
+    let layer_det_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
                 config.clone(),
+                Arc::new(NullSourceParser),
             );
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             import_container.analyzer(),
@@ -84,20 +90,20 @@ fn main() -> ExitCode {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
 
-        let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-            Arc::new(LayerDetectionAnalyzer::new(config.clone()));
-
         surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
             import_orchestrator: import_container.orchestrator(),
             naming_orchestrator: naming_container.orchestrator(),
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
-            scanner_provider: Arc::new(code_analysis::FileCollectorProvider::new()),
+            scanner_provider: Arc::new(
+                shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(
+                ),
+            ),
             orphan_orchestrator: orphan_container.analyzer(),
-            layer_detector,
+            layer_detector: layer_det_clone.clone(),
             language_detector: Arc::new(
-                shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
+                cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
             ),
         }
     });
@@ -119,17 +125,10 @@ fn main() -> ExitCode {
     // ── Phase 4: Parse CLI arguments ──────────────────────────────────
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
-        return run_default_check(".", container.code_analysis_linter.clone());
+        return run_default_check(".");
     }
 
-    use clap::{CommandFactory, FromArgMatches};
-    let mut cmd = <Cli as CommandFactory>::command();
-    cmd = cmd.version(env!("CARGO_PKG_VERSION"));
-    let matches = match cmd.try_get_matches_from(&raw_args) {
-        Ok(m) => m,
-        Err(e) => e.exit(),
-    };
-    let cli = match <Cli as FromArgMatches>::from_arg_matches(&matches) {
+    let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
         Ok(c) => c,
         Err(e) => e.exit(),
     };
@@ -141,74 +140,15 @@ fn main() -> ExitCode {
             path,
             git_diff,
             format,
-        } => {
-            let root_path = path.clone().unwrap_or_else(|| ".".to_string());
-            let fp = shared::common::taxonomy_path_vo::FilePath::new(root_path).unwrap_or_default();
-
-            let config_container =
-                config_system::root_config_system_container::ConfigContainer::new();
-            let config_orchestrator = config_container.orchestrator();
-            let rt = match tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-            {
-                Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
-            };
-            let config_result = rt.block_on(config_orchestrator.load_project_config(&fp));
-            let loaded_config = config_result.config;
-
-            let import_container =
-                import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                    loaded_config.clone(),
-                );
-            let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-                import_container.analyzer(),
-            );
-            let role_container =
-                role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                    loaded_config.clone(),
-                );
-            let analyzer = import_container.analyzer();
-            let arch_linter =
-                code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
-                    analyzer.clone(),
-                )
-                .code_analysis_linter();
-
-            let orphan_container =
-                orphan_detector::root_orphan_detector_container::OrphanContainer::new();
-
-            let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(
-                import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
-                    loaded_config.clone(),
-                ),
-            );
-
-            let ctx = surface_check_command::CheckContext {
-                code_analysis_linter: arch_linter,
-                import_orchestrator: import_container.orchestrator(),
-                naming_orchestrator: naming_container.orchestrator(),
-                external_lint: container.external_lint.clone(),
-                role_orchestrator: role_container.orchestrator(),
-                scanner_provider: container.scanner_provider.clone(),
-                orphan_orchestrator: orphan_container.analyzer(),
-                layer_detector,
-                language_detector: Arc::new(
-                    shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
-                ),
-            };
-
-            surface_check_action::handle_check(
-                path,
-                git_diff,
-                ctx,
-                filter,
-                Some(container.git_aggregate.clone()),
-                loaded_config,
-                format,
-            )
-        }
+        } => surface_check_action::handle_check(
+            path,
+            git_diff,
+            make_check_context(&container, &layer_detector),
+            filter,
+            Some(container.git_aggregate.clone()),
+            shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
+            format,
+        ),
         Commands::Scan {
             path,
             member,
@@ -300,12 +240,7 @@ fn main() -> ExitCode {
         Commands::Duplicates { path } => {
             let dup_analyzer = CodeDuplicationAnalyzer::new();
             let fs_adapter = OSFileSystemAdapter::new();
-            let violations = dup_analyzer.handle_duplicates(
-                path.map(|p| {
-                    shared::common::taxonomy_path_vo::FilePath::new(p).unwrap_or_default()
-                }),
-                &fs_adapter,
-            );
+            let violations = dup_analyzer.handle_duplicates(path, &fs_adapter);
             if violations.is_empty() {
                 println!("No duplicate code blocks detected.");
             } else {
@@ -390,11 +325,11 @@ fn main() -> ExitCode {
                 }
             }
         }
-        Commands::Init => {
+        Commands::Init { global } => {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
             let setup_orchestrator = setup_container.aggregate();
-            cli_commands::surface_setup_command::handle_init(setup_orchestrator)
+            cli_commands::surface_setup_command::handle_init(setup_orchestrator, global)
         }
         Commands::Install { sudo } => {
             let setup_container =
@@ -434,13 +369,11 @@ fn main() -> ExitCode {
 }
 
 // run_default_check: Self-lint shortcut when no subcommand is provided.
-fn run_default_check(project_root: &str, linter: Arc<dyn ICodeAnalysisAggregate>) -> ExitCode {
+fn run_default_check(project_root: &str) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     use std::collections::BTreeMap;
 
-    let root_fp = shared::common::taxonomy_path_vo::FilePath::new(project_root.to_string())
-        .unwrap_or_default();
-    let results = linter.run_code_analysis_path(&root_fp);
+    let results = lint_path(project_root);
 
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

@@ -25,16 +25,16 @@ pub trait ISetupManagementProtocol: Send + Sync {
     async fn install_python_adapters(&self) -> SuccessStatus;
     async fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
     /// Detect the dominant programming language of the current project.
-    async fn detect_language(&self) -> ProjectLanguageVO;
+    fn detect_language(&self) -> ProjectLanguageVO;
     /// Detect ALL languages present in the current project.
-    async fn detect_languages(&self) -> ProjectLanguagesVO;
+    fn detect_languages(&self) -> ProjectLanguagesVO;
     fn get_config_template(&self, language: &str) -> &'static str;
     /// Write a configuration file to disk. Returns a description of the
     /// operation on success, or a structured `SetupError` on failure.
-    async fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
+    fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
     /// Create the global config directory and return its path.
-    async fn create_global_config_dir(&self) -> CreateConfigDirResult;
-    async fn file_exists(&self, path: &str) -> bool;
+    fn create_global_config_dir(&self) -> CreateConfigDirResult;
+    fn file_exists(&self, path: &str) -> bool;
 }
 
 /// AES402: `Result<(), String>` is replaced with `Result<(), SetupError>`

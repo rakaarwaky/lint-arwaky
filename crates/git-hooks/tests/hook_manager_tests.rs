@@ -1,6 +1,5 @@
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_git_file_check_port::IGitFileCheckPort;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffStatus, HookIgnoreUpdateVO};
@@ -22,23 +21,8 @@ impl IHookManagerPort for MockAdapter {
     }
 }
 
-struct MockFileCheck;
-
-#[async_trait::async_trait]
-impl IGitFileCheckPort for MockFileCheck {
-    async fn path_exists(&self, path: &FilePath) -> bool {
-        std::path::Path::new(path.value()).exists()
-    }
-    async fn is_file(&self, path: &FilePath) -> bool {
-        std::path::Path::new(path.value()).is_file()
-    }
-    async fn is_dir(&self, path: &FilePath) -> bool {
-        std::path::Path::new(path.value()).is_dir()
-    }
-}
-
 fn make_manager() -> HookManager {
-    HookManager::new(Arc::new(MockAdapter), Arc::new(MockFileCheck))
+    HookManager::new(Arc::new(MockAdapter))
 }
 
 #[test]
@@ -112,7 +96,7 @@ fn update_ignore_rule_removes_rule() {
 }
 
 #[test]
-fn update_ignore_rule_missing_config_returns_add() {
+fn update_ignore_rule_missing_config_returns_error() {
     let manager = make_manager();
     let request = HookIgnoreUpdateVO {
         config_path: "/nonexistent/path/config.yaml".to_string(),
@@ -120,8 +104,7 @@ fn update_ignore_rule_missing_config_returns_add() {
         remove: false,
     };
     let result = manager.update_ignore_rule(request);
-    assert!(result.value().contains("Added"));
-    assert!(result.value().contains("AES101"));
+    assert!(result.value().contains("Config file not found"));
 }
 
 // ─── get_diff_data ─────────────────────────────────────────────────────────

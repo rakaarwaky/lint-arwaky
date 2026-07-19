@@ -183,7 +183,7 @@ impl fmt::Display for AesImportViolation {
             AesImportViolation::ImportIntentViolation {
                 source_layer,
                 import_type,
-                intent,
+                intent: _,
                 reason,
             } => {
                 let default_why = format!(
@@ -198,7 +198,7 @@ impl fmt::Display for AesImportViolation {
                     f,
                     "AES204 IMPORT_INTENT: '{}' import in layer '{}' violates its intended purpose.\n\
                         WHY? {why}\n\
-                        FIX: {intent}",
+                        FIX: Use imported symbols in real logic, not only in dummy functions or stubs",
                     import_type, source_layer
                 )
             }

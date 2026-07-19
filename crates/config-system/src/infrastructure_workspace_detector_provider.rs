@@ -3,18 +3,23 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::contract_workspace_detector_port::WorkspaceType;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WorkspaceDetector;
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl WorkspaceDetector {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for WorkspaceDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IWorkspaceDetectorPort for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
-        let mut path_buf = std::path::Path::new(&path.value).to_path_buf();
-        if path_buf.is_relative() {
-            if let Ok(cwd) = std::env::current_dir() {
-                path_buf = cwd.join(path_buf);
-            }
-        }
+        let path_buf = std::path::Path::new(&path.value).to_path_buf();
 
         // 1. Check for explicit language markers in the workspace directory itself
         if path_buf.join("Cargo.toml").exists() {
@@ -44,7 +49,7 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
         // 3. Walk up parent chain looking for config files (fallback, max 2 levels)
         let mut current = path_buf;
         let mut depth = 0;
-        while !current.as_os_str().is_empty() && depth < 5 {
+        while !current.as_os_str().is_empty() && depth < 2 {
             if current.join("Cargo.toml").exists() {
                 return WorkspaceType::Rust;
             }
@@ -73,18 +78,5 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
         ["crates", "packages", "modules"]
             .iter()
             .any(|dir| root.join(dir).is_dir())
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl WorkspaceDetector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for WorkspaceDetector {
-    fn default() -> Self {
-        Self::new()
     }
 }

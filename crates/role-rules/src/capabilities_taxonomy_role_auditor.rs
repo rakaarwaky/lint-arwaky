@@ -23,59 +23,26 @@ use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct TaxonomyRoleChecker {}
-
-#[async_trait::async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
-impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-        self.check_vo()
-    }
-    fn check_entity(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_entity(source, violations);
-    }
-    fn check_error(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_error(source, violations);
-    }
-    fn check_event(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_event(source, violations);
-    }
-    fn check_constant(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_constant(source, violations);
+fn has_suffix(file: &str, suffix: &str) -> bool {
+    let path = Path::new(file);
+    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+        stem.ends_with(suffix)
+    } else {
+        false
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+pub struct TaxonomyRoleChecker {}
+
+impl Default for TaxonomyRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    /// Check if a file path ends with the given suffix (on the filename stem).
-    pub fn has_suffix(file: &str, suffix: &str) -> bool {
-        let path = Path::new(file);
-        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-            stem.ends_with(suffix)
-        } else {
-            false
-        }
     }
 
     const RUST_PRIMITIVES: &'static [&'static str] = &[
@@ -126,7 +93,7 @@ impl TaxonomyRoleChecker {
     fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_info_vo::LanguageInfo::new(source);
+        let li = crate::taxonomy_language_helper::detect_language(source);
         let primitives: &[&str] = match li.lang {
             DetLang::Rust => Self::RUST_PRIMITIVES,
             DetLang::Python => Self::PY_PRIMITIVES,
@@ -249,21 +216,21 @@ impl TaxonomyRoleChecker {
     }
 
     pub fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_entity") {
+        if !has_suffix(source.file_path.value(), "_entity") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_error") {
+        if !has_suffix(source.file_path.value(), "_error") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_event") {
+        if !has_suffix(source.file_path.value(), "_event") {
             return;
         }
         Self::scan_primitives(source, violations);
@@ -320,8 +287,36 @@ impl TaxonomyRoleChecker {
     }
 }
 
-impl Default for TaxonomyRoleChecker {
-    fn default() -> Self {
-        Self::new()
+impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
+    fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
+        self.check_vo()
+    }
+    fn check_entity(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_entity(source, violations);
+    }
+    fn check_error(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_error(source, violations);
+    }
+    fn check_event(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_event(source, violations);
+    }
+    fn check_constant(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_constant(source, violations);
     }
 }

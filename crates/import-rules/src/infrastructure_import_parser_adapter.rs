@@ -4,9 +4,11 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
-use shared::import_rules::taxonomy_import_constant::LAYER_PREFIXES;
-use shared::import_rules::taxonomy_import_utility::parse_import_lines_helper;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
+use shared::import_rules::taxonomy_path_helper;
+use shared::import_rules::{
+    taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
+};
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
@@ -18,21 +20,31 @@ thread_local! {
     static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
 }
 
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct ImportParserAdapter;
+pub fn clear_file_cache() {
+    FILE_CACHE.with(|c| c.borrow_mut().clear());
+}
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl IImportParserPort for ImportParserAdapter {
-    /// Extract layer from filename prefix — inline implementation.
-    fn extract_layer_from_prefix(&self, segment: &str) -> Option<LayerNameVO> {
-        for &(prefix, layer) in LAYER_PREFIXES {
-            if segment.starts_with(prefix) {
-                return Some(LayerNameVO::new(layer));
-            }
-        }
-        None
+/// Returns `s` if `opt` is `Some`, otherwise returns `""`.
+/// Private helper — uses `Option::map_or` to avoid inline match patterns.
+fn str_or_empty(opt: Option<&str>) -> &str {
+    opt.map_or("", |s| s)
+}
+
+pub struct ImportParserAdapter {}
+
+impl ImportParserAdapter {
+    pub fn new() -> Self {
+        Self {}
     }
+}
 
+impl Default for ImportParserAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IImportParserPort for ImportParserAdapter {
     /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")
     /// into layer + suffix matches. Returns (`LayerNameVO`, `Vec<Identity>`).
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
@@ -164,7 +176,7 @@ impl IImportParserPort for ImportParserAdapter {
                         .trim();
                     return Some(Identity::new(cleaned.to_string()));
                 }
-                let first_token = rest.split_whitespace().next().unwrap_or("");
+                let first_token = str_or_empty(rest.split_whitespace().next());
                 return Some(Identity::new(first_token.to_string()));
             }
         }
@@ -184,9 +196,9 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn extract_layer_from_import(&self, segment: &Identity) -> Option<LayerNameVO> {
         let segment_str = segment.value();
-        // Strategy 1: Prefix-based — reuse canonical helper
-        if let Some(layer) = self.extract_layer_from_prefix(segment_str) {
-            return Some(layer);
+        // Strategy 1: Prefix-based — reuse canonical helper (avoids duplicating PREFIX_MAP)
+        if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(segment_str) {
+            return Some(LayerNameVO::new(layer));
         }
         // Strategy 2: Direct segment match — bare layer names without underscore suffix
         match segment_str {
@@ -216,38 +228,7 @@ impl IImportParserPort for ImportParserAdapter {
     }
 
     fn extract_import_modules(&self, content: &str) -> Vec<SymbolName> {
-        let mut modules = Vec::new();
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if let Some(rest) = trimmed.strip_prefix("from ") {
-                if let Some(module) = rest.split_whitespace().next() {
-                    modules.push(SymbolName::new(module));
-                }
-            } else if trimmed.starts_with("import ") {
-                if let Some(pos) = trimmed.rfind(" from ") {
-                    let module_part = trimmed[pos + 6..].trim();
-                    let cleaned = module_part
-                        .trim_end_matches(';')
-                        .trim_matches(|c: char| c == '\'' || c == '"' || c == '`' || c == ';')
-                        .trim();
-                    modules.push(SymbolName::new(cleaned));
-                } else if let Some(rest) = trimmed.strip_prefix("import ") {
-                    if rest.contains('"') || rest.contains('\'') || rest.contains('`') {
-                        let cleaned = rest
-                            .trim_end_matches(';')
-                            .trim_matches(|c: char| c == '\'' || c == '"' || c == '`' || c == ';')
-                            .trim();
-                        modules.push(SymbolName::new(cleaned));
-                    } else if let Some(first_token) = rest.split_whitespace().next() {
-                        modules.push(SymbolName::new(first_token.trim_end_matches(',')));
-                    }
-                }
-            } else if let Some(rest) = trimmed.strip_prefix("use ") {
-                let module = rest.trim_end_matches(';');
-                modules.push(SymbolName::new(module));
-            }
-        }
-        modules
+        taxonomy_parser_helper::extract_import_modules(content)
     }
 
     fn get_language_from_path(&self, path: &str) -> LanguageVO {
@@ -256,57 +237,62 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn get_dummy_function_ranges(
         &self,
-        _lines: &[&str],
-        _lang: LanguageVO,
+        lines: &[&str],
+        lang: LanguageVO,
     ) -> Vec<(LineNumber, LineNumber)> {
-        vec![]
+        taxonomy_dummy_helper::dummy_function_ranges(lines, lang)
     }
 
     fn get_imported_symbols(
         &self,
-        _lines: &[&str],
-        _lang: LanguageVO,
+        lines: &[&str],
+        lang: LanguageVO,
     ) -> Vec<(SymbolName, LineNumber)> {
-        vec![]
+        taxonomy_dummy_helper::imported_symbols(lines, lang)
     }
 
-    fn get_dummy_impl_traits_with_lines(&self, _lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
-        vec![]
+    fn get_dummy_impl_traits_with_lines(&self, lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+        taxonomy_dummy_helper::dummy_impl_traits_with_lines(lines)
     }
 
     fn is_symbol_used_real(
         &self,
-        _lines: &[&str],
-        _symbol: &str,
-        _dummy_ranges: &[(LineNumber, LineNumber)],
-        _dummy_impl_traits: &[String],
+        lines: &[&str],
+        symbol: &str,
+        dummy_ranges: &[(LineNumber, LineNumber)],
+        dummy_impl_traits: &[String],
     ) -> bool {
-        false
+        // Convert VO ranges to (usize, usize) for the underlying helper
+        let converted: Vec<(usize, usize)> = dummy_ranges
+            .iter()
+            .map(|(s, e)| (s.value() as usize, e.value() as usize))
+            .collect();
+        taxonomy_dummy_helper::symbol_used_real(lines, symbol, &converted, dummy_impl_traits)
     }
 
-    fn detect_cycle_edges(&self, _edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        vec![]
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
+        taxonomy_cycle_helper::detect_cycle_edges(edges)
     }
 
-    fn extract_imported_aliases(&self, _content: &str) -> HashMap<Identity, Identity> {
-        HashMap::new()
+    fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
+        taxonomy_unused_helper::extract_imported_aliases(content)
     }
 
-    fn extract_exported_symbols(&self, _content: &str) -> HashSet<Identity> {
-        HashSet::new()
+    fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity> {
+        taxonomy_unused_helper::extract_exported_symbols(content)
     }
 
     fn extract_used_symbols(
         &self,
-        _content: &str,
-        _imported_aliases: &HashMap<Identity, Identity>,
+        content: &str,
+        imported_aliases: &HashMap<Identity, Identity>,
     ) -> HashSet<Identity> {
-        HashSet::new()
+        taxonomy_unused_helper::extract_used_symbols(content, imported_aliases)
     }
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
         let pos_opt = content.lines().position(|l| {
-            let first_part = alias.split('.').next().unwrap_or("");
+            let first_part = str_or_empty(alias.split('.').next());
             l.trim().contains(&format!("import {}", alias))
                 || l.trim().contains(&format!("from {} import", first_part))
         });
@@ -316,28 +302,84 @@ impl IImportParserPort for ImportParserAdapter {
         };
         LineNumber::new(line as i64)
     }
-    fn extract_rust_js_imports(&self, _content: &str) -> Vec<(SymbolName, LineNumber)> {
-        vec![]
+    fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {
+        taxonomy_unused_helper::extract_rust_js_imports(content)
     }
 
-    fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
-        false
+    fn is_name_used(&self, name: &str, content: &str, exclude_line: LineNumber) -> bool {
+        taxonomy_unused_helper::is_name_used(name, content, exclude_line.value() as usize)
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ImportParserAdapter {
-    pub fn new() -> Self {
-        Self
+/// Helper function to parse import lines from content, decoupled from any struct method call rules
+fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> {
+    let mut result = Vec::new();
+    let lines: Vec<&str> = content.lines().collect();
+    let mut i = 0;
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
+        if trimmed.starts_with("import ")
+            || trimmed.starts_with("from ")
+            || trimmed.starts_with("extern crate ")
+        {
+            result.push((
+                LineNumber::new((i + 1) as i64),
+                LineContentVO::new(lines[i].to_string()),
+            ));
+            i += 1;
+            continue;
+        }
+        if trimmed.starts_with("use ")
+            || trimmed.starts_with("pub use ")
+            || trimmed.starts_with("pub(crate) use ")
+        {
+            let mut combined = lines[i].to_string();
+            if combined.contains('{') && !combined.contains('}') {
+                let start = i;
+                i += 1;
+                while i < lines.len() {
+                    let part = lines[i].trim().to_string();
+                    combined.push_str(&format!(" {}", part));
+                    if part.contains('}') || combined.ends_with(';') {
+                        break;
+                    }
+                    i += 1;
+                }
+                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                result.push((
+                    LineNumber::new((start + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
+            } else if !combined.ends_with(';') {
+                while i + 1 < lines.len() {
+                    let next = lines[i + 1].trim();
+                    if next.starts_with("use ")
+                        || next.starts_with("pub use ")
+                        || next.starts_with("pub(crate) use ")
+                        || next.is_empty()
+                    {
+                        break;
+                    }
+                    combined.push_str(&format!(" {}", next));
+                    if next.ends_with(';') {
+                        i += 1;
+                        break;
+                    }
+                    i += 1;
+                }
+                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                result.push((
+                    LineNumber::new((i + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
+            } else {
+                result.push((
+                    LineNumber::new((i + 1) as i64),
+                    LineContentVO::new(combined),
+                ));
+            }
+        }
+        i += 1;
     }
-
-    pub fn clear_file_cache() {
-        FILE_CACHE.with(|c| c.borrow_mut().clear());
-    }
-}
-
-impl Default for ImportParserAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
+    result
 }

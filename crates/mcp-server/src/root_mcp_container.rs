@@ -5,15 +5,11 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-// Block 1: struct Definition
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -23,16 +19,8 @@ pub struct McpContainer {
     pub scanner_provider: Arc<dyn IScannerProviderPort>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-// (No trait impl — root container is wiring only)
-
-// Block 3: constructors & public API
-// ─── Block 3: Constructors & Helpers ──────────────────────
-// ─── Block 2: Public Contract ─────────────────────────────
 impl McpContainer {
     pub fn new_default() -> Self {
         let import_container =
@@ -62,8 +50,9 @@ impl McpContainer {
         let orphan_orchestrator = orphan_container.analyzer();
         let layer_detector = orphan_container.layer_detector();
 
-        let scanner_provider: Arc<dyn IScannerProviderPort> =
-            Arc::new(code_analysis::FileCollectorProvider::new());
+        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
+            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
+        );
 
         let ext_container =
             external_lint::root_external_lint_container::ExternalLintContainer::new_default();
@@ -71,13 +60,6 @@ impl McpContainer {
 
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();
         let role_orchestrator = role_container.orchestrator();
-
-        let maintenance_container =
-            maintenance::root_maintenance_container::MaintenanceContainer::new();
-        let maintenance_orchestrator = maintenance_container.orchestrator();
-
-        let git_hooks_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
-        let git_hooks_aggregate = git_hooks_container.aggregate();
 
         Self {
             code_analysis_linter,
@@ -88,8 +70,6 @@ impl McpContainer {
             scanner_provider,
             external_lint,
             role_orchestrator,
-            maintenance_orchestrator,
-            git_hooks_aggregate,
         }
     }
 }

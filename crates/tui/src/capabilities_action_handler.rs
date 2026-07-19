@@ -15,13 +15,11 @@ use std::sync::Arc;
 
 /// ActionHandler — pure state machine for TUI interaction.
 /// Owns the filesystem adapter and lint executor, bridging UI events to backend operations.
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ActionHandler {
     fs_port: Arc<dyn IFileSystemPort>,
     lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ActionHandler {
     pub fn new(
         fs_port: Arc<dyn IFileSystemPort>,
@@ -368,11 +366,10 @@ impl ActionHandler {
             return;
         }
 
-        let path = "lint-results.txt";
-        if self.fs_port.write_file(path, text) {
-            state.set_status("Saved to lint-results.txt");
-        } else {
-            state.set_status("Save failed");
+        let path = std::path::Path::new("lint-results.txt");
+        match std::fs::write(path, text) {
+            Ok(()) => state.set_status("Saved to lint-results.txt"),
+            Err(e) => state.set_status(format!("Save failed: {e}")),
         }
     }
 
@@ -457,14 +454,13 @@ impl ActionHandler {
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl IActionHandlerProtocol for ActionHandler {
     fn handle(&self, state: &mut AppState, event: TuiEvent) {
         ActionHandler::handle(self, state, event);
     }
 
-    fn load_directory(&self, state: &mut AppState, path: &FilePath) {
-        ActionHandler::load_directory(self, state, &path.value);
+    fn load_directory(&self, state: &mut AppState, path: &str) {
+        ActionHandler::load_directory(self, state, path);
     }
 
     fn load_preview(&self, state: &mut AppState) {

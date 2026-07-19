@@ -17,45 +17,22 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderPort>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
-    change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl IWatchAggregate for WatchOrchestrator {
-    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
-                std::process::exit(1);
-            }
-        };
-        rt.block_on(self.run_async(config, running))
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderPort>,
         linter: Arc<dyn ICodeAnalysisAggregate>,
-        change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
     ) -> Self {
-        Self {
-            provider,
-            linter,
-            change_analyzer,
-        }
+        Self { provider, linter }
     }
 
     pub async fn run_async(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
@@ -66,7 +43,7 @@ impl WatchOrchestrator {
         println!();
 
         // Initial full lint
-        let results = self.linter.run_code_analysis_path(&config.path);
+        let results = self.linter.run_code_analysis_path(&path);
         let score = self.linter.calc_score(&results);
         println!("[initial] {} violations, score {:.1}", results.len(), score);
 
@@ -81,10 +58,8 @@ impl WatchOrchestrator {
         while running.load(Ordering::SeqCst) {
             tokio::select! {
                 Ok(event) = rx.recv() => {
-                    let lintable = self.change_analyzer.filter_lintable(vec![event.clone()]);
-                    if let Some(event) = lintable.into_iter().next() {
-                        let event_fp = FilePath::new(event.path.clone()).unwrap_or_default();
-                        let lint_results = self.linter.run_code_analysis_path(&event_fp);
+                    if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
+                        let lint_results = self.linter.run_code_analysis_path(&event.path);
                         let lint_score = self.linter.calc_score(&lint_results);
                         println!(
                             "[change] {} | {} violations, score {:.1}",
@@ -101,5 +76,18 @@ impl WatchOrchestrator {
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
         ExitCode::SUCCESS
+    }
+}
+
+impl IWatchAggregate for WatchOrchestrator {
+    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+                std::process::exit(1);
+            }
+        };
+        rt.block_on(self.run_async(config, running))
     }
 }

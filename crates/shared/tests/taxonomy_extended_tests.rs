@@ -314,8 +314,9 @@ fn primitive_violation_list_methods() {
 
 #[test]
 fn collect_all_source_files_nonexistent_dir() {
-    let files =
-        code_analysis::collect_all_source_files(std::path::Path::new("/nonexistent_path_xyz_999"));
+    let files = shared_lint_arwaky::common::infrastructure_file_collector_provider::collect_all_source_files(
+        std::path::Path::new("/nonexistent_path_xyz_999"),
+    );
     assert!(files.is_empty(), "nonexistent dir should return empty");
 }
 
@@ -323,7 +324,7 @@ fn collect_all_source_files_nonexistent_dir() {
 fn file_collector_provider_scan_nonexistent() {
     use shared_lint_arwaky::common::contract_scanner_provider_port::IScannerProviderPort;
     use shared_lint_arwaky::common::taxonomy_path_vo::DirectoryPath;
-    let provider = code_analysis::FileCollectorProvider::new();
+    let provider = shared_lint_arwaky::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
     let path = DirectoryPath::new("/nonexistent_xyz").unwrap();
     let result = provider.scan_directory(&path).unwrap();
     assert!(result.is_empty());
@@ -332,7 +333,7 @@ fn file_collector_provider_scan_nonexistent() {
 #[test]
 fn file_collector_provider_get_ignored_files() {
     use shared_lint_arwaky::common::contract_scanner_provider_port::IScannerProviderPort;
-    let provider = code_analysis::FileCollectorProvider::new();
+    let provider = shared_lint_arwaky::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
     let ignored = provider.get_ignored_files();
     assert!(ignored.values.is_empty());
 }
@@ -348,7 +349,7 @@ fn file_collector_provider_scan_temp_dir_with_source_files() {
     std::fs::write(dir.join("lib.py"), "def foo(): pass").unwrap();
     std::fs::write(dir.join("readme.txt"), "not a source file").unwrap();
 
-    let provider = code_analysis::FileCollectorProvider::new();
+    let provider = shared_lint_arwaky::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
     let path = DirectoryPath::new(dir.to_string_lossy().to_string()).unwrap();
     let result = provider.scan_directory(&path).unwrap();
     assert_eq!(result.len(), 2, "should find 2 source files (.rs, .py)");
@@ -368,7 +369,7 @@ fn file_collector_provider_scans_recursively() {
     std::fs::write(dir.join("nested/child.ts"), "let x = 1").unwrap();
     std::fs::write(dir.join("nested/deep/deep.js"), "console.log('hi')").unwrap();
 
-    let provider = code_analysis::FileCollectorProvider::new();
+    let provider = shared_lint_arwaky::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
     let path = DirectoryPath::new(dir.to_string_lossy().to_string()).unwrap();
     let result = provider.scan_directory(&path).unwrap();
     assert_eq!(result.len(), 3, "should find 3 source files across subdirs");
@@ -386,7 +387,7 @@ fn file_collector_provider_skips_tests_dir() {
     std::fs::write(dir.join("main.rs"), "fn main() {}").unwrap();
     std::fs::write(dir.join("tests/test_mod.rs"), "fn test() {}").unwrap();
 
-    let provider = code_analysis::FileCollectorProvider::new();
+    let provider = shared_lint_arwaky::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
     let path = DirectoryPath::new(dir.to_string_lossy().to_string()).unwrap();
     let result = provider.scan_directory(&path).unwrap();
     assert_eq!(result.len(), 1, "should skip tests/ dir, only find main.rs");
@@ -402,7 +403,7 @@ fn file_collector_provider_skips_tests_dir() {
 fn collect_all_source_files_empty_dir() {
     let dir = std::env::temp_dir().join("lint_arwaky_empty_coll");
     let _ = std::fs::create_dir_all(&dir);
-    let files = code_analysis::collect_all_source_files(&dir);
+    let files = shared_lint_arwaky::common::infrastructure_file_collector_provider::collect_all_source_files(&dir);
     assert!(files.is_empty());
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -413,7 +414,7 @@ fn collect_all_source_files_with_rs_files() {
     let _ = std::fs::create_dir_all(&dir);
     std::fs::write(dir.join("a.rs"), "fn a() {}").unwrap();
     std::fs::write(dir.join("b.py"), "def b(): pass").unwrap();
-    let files = code_analysis::collect_all_source_files(&dir);
+    let files = shared_lint_arwaky::common::infrastructure_file_collector_provider::collect_all_source_files(&dir);
     assert_eq!(files.len(), 2, "should find both .rs and .py files");
     let _ = std::fs::remove_dir_all(&dir);
 }

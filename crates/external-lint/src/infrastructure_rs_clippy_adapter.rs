@@ -39,18 +39,29 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
-    utility: Arc<dyn IExternalLintUtilityPort>,
     _bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl RustLinterAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            _bin_path: bin_path,
+        }
+    }
+}
+
 #[async_trait]
 impl ILinterAdapterPort for RustLinterAdapter {
     fn name(&self) -> AdapterName {
@@ -59,7 +70,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = self.utility.resolve_cargo_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -185,7 +196,7 @@ impl ILinterAdapterPort for RustLinterAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = self.utility.resolve_cargo_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let cmd = vec![
             "cargo".to_string(),
             "clippy".to_string(),
@@ -202,22 +213,5 @@ impl ILinterAdapterPort for RustLinterAdapter {
             )
             .await;
         Ok(ComplianceStatus::new(true))
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl RustLinterAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            _bin_path: bin_path,
-        }
     }
 }

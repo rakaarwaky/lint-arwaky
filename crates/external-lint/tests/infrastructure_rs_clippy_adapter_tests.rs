@@ -5,12 +5,10 @@ use async_trait::async_trait;
 use external_lint_lint_arwaky::infrastructure_rs_clippy_adapter::RustLinterAdapter;
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::{bool, PatternList};
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 // ---------------------------------------------------------------------------
 // Mock executor that returns a canned clippy JSON output
@@ -45,105 +43,6 @@ impl ICommandExecutorPort for MockClippyExecutor {
     }
 }
 
-struct MockExternalLintUtilityPort;
-
-#[async_trait]
-impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
-    fn canonicalize_path(&self, path_str: &str) -> FilePath {
-        FilePath::new(path_str.to_string()).unwrap_or_default()
-    }
-    fn default_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn has_python_files(&self, _path: &FilePath) -> bool {
-        bool::new(true)
-    }
-    fn has_py_in_dir(&self, _dir: &DirectoryPath) -> bool {
-        bool::new(true)
-    }
-    fn is_in_path(&self, _executable: &str) -> bool {
-        bool::new(true)
-    }
-    fn resolve_js_cmd(
-        &self,
-        executable: &str,
-        args: PatternList,
-        _working_dir: &FilePath,
-    ) -> PatternList {
-        let mut cmd = vec![executable.to_string()];
-        cmd.extend(args.values);
-        PatternList::new(cmd)
-    }
-    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    async fn exec_cmd_scan(
-        &self,
-        _executor: &dyn ICommandExecutorPort,
-        args: PatternList,
-        _working_dir: FilePath,
-        _timeout_secs: Timeout,
-        _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
-        _path: &FilePath,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
-    {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
-    }
-    async fn exec_cmd_adapter(
-        &self,
-        _executor: &dyn ICommandExecutorPort,
-        args: PatternList,
-        _working_dir: FilePath,
-        _timeout_secs: Timeout,
-        _adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
-    {
-        let mut meta = std::collections::HashMap::new();
-        meta.insert("protocol".into(), serde_json::Value::String("Stdio".into()));
-        Ok(ResponseData {
-            value: None,
-            stdout: args.values.join(" "),
-            stderr: String::new(),
-            returncode: 0,
-            metadata: meta,
-        })
-    }
-    async fn js_apply_fix(
-        &self,
-        _executor: &dyn ICommandExecutorPort,
-        _path: &FilePath,
-        _tool: &str,
-        _fix_arg: &str,
-    ) -> Result<
-        ComplianceStatus,
-        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
-    > {
-        Ok(ComplianceStatus::new(true))
-    }
-    async fn noop_apply_fix(
-        &self,
-    ) -> Result<
-        ComplianceStatus,
-        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
-    > {
-        Ok(ComplianceStatus::new(true))
-    }
-}
-
 struct IdentityPathNorm;
 
 impl IPathNormalizationPort for IdentityPathNorm {
@@ -167,7 +66,6 @@ fn make_adapter(output: &str, stderr: &str, exit_code: i32) -> RustLinterAdapter
             exit_code,
         }),
         Arc::new(IdentityPathNorm),
-        Arc::new(MockExternalLintUtilityPort),
         None,
     )
 }

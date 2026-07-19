@@ -7,10 +7,8 @@ use ratatui::layout::Rect;
 use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::AppState;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct HelpScreen;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl HelpScreen {
     pub fn new() -> Self {
         Self
@@ -26,7 +24,6 @@ impl HelpScreen {
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for HelpScreen {
     fn default() -> Self {
         Self::new()

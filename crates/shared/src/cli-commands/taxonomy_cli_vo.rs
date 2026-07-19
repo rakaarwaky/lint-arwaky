@@ -119,7 +119,11 @@ pub enum Commands {
     Adapters,
 
     /// Create default config
-    Init,
+    Init {
+        /// Install default configs to ~/.config/lint-arwaky/ (XDG config dir)
+        #[arg(long)]
+        global: bool,
+    },
 
     /// Install linter adapter dependencies
     Install {

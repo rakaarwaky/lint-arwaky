@@ -29,7 +29,6 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::common::taxonomy_source_vo::ContentString;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
@@ -56,7 +55,9 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    dir_path.collect_source_files(root_dir, ignored)
+    shared::common::taxonomy_file_collector_helper::collect_source_files(
+        root_dir, dir_path, ignored,
+    )
 }
 
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
@@ -162,20 +163,18 @@ impl CodeAnalysisOrchestrator {
         let mut entries: Vec<(String, String)> = Vec::new();
 
         // Scan Cargo.toml for workspace clippy allow bypass (AES304)
-        if config.is_rule_enabled("AES304") {
-            let root_path = Path::new(root_dir);
-            let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
-            cargo_candidates.push(root_path.join("Cargo.toml"));
-            if let Some(parent) = root_path.parent() {
-                cargo_candidates.push(parent.join("Cargo.toml"));
-            }
-            for cargo_path in &cargo_candidates {
-                if cargo_path.exists() {
-                    if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
-                        self.container
-                            .bypass_checker()
-                            .check_cargo_toml(&ContentString::new(cargo_content), &mut violations);
-                    }
+        let root_path = Path::new(root_dir);
+        let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
+        cargo_candidates.push(root_path.join("Cargo.toml"));
+        if let Some(parent) = root_path.parent() {
+            cargo_candidates.push(parent.join("Cargo.toml"));
+        }
+        for cargo_path in &cargo_candidates {
+            if cargo_path.exists() {
+                if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
+                    self.container
+                        .bypass_checker()
+                        .check_cargo_toml(&cargo_content, &mut violations);
                 }
             }
         }
@@ -192,31 +191,19 @@ impl CodeAnalysisOrchestrator {
             entries.push((file.clone(), c.clone()));
 
             // Layer-independent checks (run on ALL files)
-            if config.is_rule_enabled("AES304") {
-                self.container.bypass_checker().check_bypass_comments(
-                    &FilePath::new(file.to_string()).unwrap_or_default(),
-                    &ContentString::new(c.clone()),
-                    &mut violations,
-                );
-            }
-            if config.is_rule_enabled("AES303") {
-                self.container
-                    .dead_inheritance_checker()
-                    .check_dead_inheritance(
-                        &FilePath::new(file.to_string()).unwrap_or_default(),
-                        &ContentString::new(c.clone()),
-                        &mut violations,
-                    );
-            }
+            self.container
+                .bypass_checker()
+                .check_bypass_comments(file, &c, &mut violations);
+            self.container
+                .dead_inheritance_checker()
+                .check_dead_inheritance(file, &c, &mut violations);
 
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                 continue;
             }
 
             // Layer detection
-            let fp = FilePath::new(file.to_string()).unwrap_or_default();
-            let rdp = FilePath::new(root_dir.to_string()).unwrap_or_default();
-            let layer = match self.container.detect_layer(&fp, &rdp) {
+            let layer = match self.container.detect_layer(file, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
@@ -229,45 +216,31 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer-dependent checks (code-analysis only)
-            if config.is_rule_enabled("AES301") || config.is_rule_enabled("AES302") {
-                self.container.line_checker().check_line_counts(
-                    &fp,
-                    Some(&def),
-                    &ContentString::new(c.clone()),
-                    &mut violations,
-                );
-            }
+            self.container
+                .line_checker()
+                .check_line_counts(file, Some(def), &c, &mut violations);
 
             // Mandatory class definition check (AES303)
-            if config.is_rule_enabled("AES303") {
-                self.container
-                    .class_checker()
-                    .check_mandatory_class_definition(
-                        &FilePath::new(file.to_string()).unwrap_or_default(),
-                        Some(&def),
-                        &ContentString::new(c.clone()),
-                        &mut violations,
-                    );
-            }
+            self.container
+                .class_checker()
+                .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
-        if config.is_rule_enabled("AES305") {
-            let min_dup_lines: usize = 5;
-            let threshold_pct: f64 = 50.0;
-            let dup_violations = self
-                .container
-                .duplication_checker()
-                .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);
-            for (file_path, dv) in dup_violations {
-                violations.push(LintResult::new_arch(
-                    &file_path,
-                    0,
-                    "AES305",
-                    Severity::HIGH,
-                    dv.to_string(),
-                ));
-            }
+        let min_dup_lines: usize = 5;
+        let threshold_pct: f64 = 50.0;
+        let dup_violations = self
+            .container
+            .duplication_checker()
+            .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);
+        for (file_path, dv) in dup_violations {
+            violations.push(LintResult::new_arch(
+                &file_path,
+                0,
+                "AES305",
+                Severity::HIGH,
+                dv.to_string(),
+            ));
         }
 
         violations
@@ -293,16 +266,16 @@ impl CodeAnalysisOrchestrator {
 }
 
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
-    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root.value()))
+    fn run_code_analysis(&self, project_root: &str) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root))
     }
 
-    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_scan(src_dir.value()))
+    fn run_code_analysis_dir(&self, src_dir: &str) -> LintResultList {
+        LintResultList::new(self.run_scan(src_dir))
     }
 
-    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.run_self_lint(path.value())
+    fn run_code_analysis_path(&self, path: &str) -> Vec<LintResult> {
+        self.run_self_lint(path)
     }
 
     fn calc_score(&self, results: &[LintResult]) -> f64 {
@@ -313,8 +286,8 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
         has_critical(results)
     }
 
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
-        self.format_report(&results.values, project_root.value())
+    fn format_report(&self, results: &LintResultList, project_root: &str) -> String {
+        self.format_report(&results.values, project_root)
     }
 
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {

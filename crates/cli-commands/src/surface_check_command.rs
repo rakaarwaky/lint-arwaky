@@ -19,7 +19,7 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -30,7 +30,6 @@ use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
 /// CheckContext — DI container struct holding all analysis subsystems.
 /// Defined in the surfaces layer because surfaces are the primary consumers.
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CheckContext {
     pub code_analysis_linter:
         Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
@@ -66,8 +65,6 @@ pub struct CheckCommandsSurface {
     pub factory: Option<OrchestratorFactory>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-// ─── Block 2: Public Contract ─────────────────────────────
 impl CheckCommandsSurface {
     pub fn new(ctx: CheckContext) -> Self {
         Self {
@@ -155,7 +152,7 @@ impl CheckCommandsSurface {
                 orphan_orchestrator: oo.clone(),
                 layer_detector: ld.clone(),
                 language_detector: Arc::new(
-                    shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
+                    crate::infrastructure_language_detector::CliLanguageDetector::new(),
                 ),
             })
         });
@@ -170,7 +167,7 @@ impl CheckCommandsSurface {
         let mut all_results = Vec::new();
 
         // 1. Run AES analysis (same algorithm for check and scan)
-        let aes_results = code_analysis_linter.run_code_analysis(&path_obj);
+        let aes_results = code_analysis_linter.run_code_analysis(path);
         all_results.extend(aes_results.values);
 
         // 2-5. Run async linter groups concurrently
@@ -188,8 +185,12 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
-        let orphan_results =
-            self.run_orphan_detection_pass(path, &ctx.orphan_orchestrator, &ctx.layer_detector);
+        let orphan_results = self.run_orphan_detection_pass(
+            path,
+            &self.scanner_provider,
+            &self.orphan_orchestrator,
+            &self.layer_detector,
+        );
         all_results.extend(orphan_results);
 
         let violation_count = self.filter_and_display_results(
@@ -207,36 +208,24 @@ impl CheckCommandsSurface {
     }
 
     /// Run orphan detection pass — scans workspace for cross-folder import graph.
-    ///
-    /// Uses `code_analysis::collect_all_source_files_raw` to collect ALL source files
-    /// from the workspace root, not just the scan directory. This is critical for
-    /// cross-crate orphan detection: contracts defined in `shared/` may be implemented
-    /// in `auto-fix/`, `git-hooks/`, `maintenance/`, etc., and the orphan graph must
-    /// span all workspace members to correctly identify reachability.
     fn run_orphan_detection_pass(
         &self,
         path: &str,
+        scanner_provider: &Arc<
+            dyn shared::common::contract_scanner_provider_port::IScannerProviderPort,
+        >,
         orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
         layer_detector: &Arc<dyn ILayerDetectionAggregate>,
     ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
-        let orphan_scan_root_str = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
-
-        // Collect ALL source files from workspace root for cross-crate orphan detection
-        // This fixes false positives where contracts in shared/ are implemented in
-        // other crates (auto-fix, git-hooks, maintenance, etc.)
-        let orphan_files: Vec<FilePath> = if let Some(ref root) = scan_root {
-            code_analysis::collect_all_source_files_raw(root)
-        } else {
-            Vec::new()
+        let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
+        let source_files = match scanner_provider.scan_directory(&dir_path) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
         };
-        let orphan_scan_root_fp =
-            FilePath::new(orphan_scan_root_str.to_string()).unwrap_or_default();
-        orphan_orchestrator.check_orphans(
-            layer_detector.as_ref(),
-            &orphan_files,
-            &orphan_scan_root_fp,
-        )
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        orphan_orchestrator.check_orphans(layer_detector.as_ref(), &file_strs, orphan_scan_root)
     }
 
     /// Filter results to the target path and display the report.
@@ -250,15 +239,10 @@ impl CheckCommandsSurface {
     ) -> usize {
         let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
         let cwd = crate::surface_common_command::current_dir();
-        let config = self.layer_detector.config();
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
                 .filter(|r| {
-                    let rule_code = r.code.to_string();
-                    if config.ignored_rules.values.contains(&rule_code) {
-                        return false;
-                    }
                     let abs_path = cwd.join(&r.file.value);
                     r.code.code() == code
                         && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
@@ -268,10 +252,6 @@ impl CheckCommandsSurface {
             all_results
                 .into_iter()
                 .filter(|r| {
-                    let rule_code = r.code.to_string();
-                    if config.ignored_rules.values.contains(&rule_code) {
-                        return false;
-                    }
                     let abs_path = cwd.join(&r.file.value);
                     abs_path.to_string_lossy().starts_with(&canonical_scan_path)
                 })
@@ -281,8 +261,7 @@ impl CheckCommandsSurface {
         match format {
             Format::Text => {
                 let results_list = LintResultList::new(filtered_results);
-                let path_fp = FilePath::new(path.to_string()).unwrap_or_default();
-                println!("{}", reporter.format_report(&results_list, &path_fp));
+                println!("{}", reporter.format_report(&results_list, path));
             }
             Format::Json => {
                 let json = serde_json::to_string_pretty(&filtered_results)
@@ -311,7 +290,7 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let all_files: Vec<String> = code_analysis::collect_all_source_files_raw(&scan_root)
+        let all_files: Vec<String> = shared::common::collect_all_source_files_raw(&scan_root)
             .iter()
             .map(|f| f.value.clone())
             .collect();
@@ -325,18 +304,10 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection with workspace root
-        let orphan_files: Vec<FilePath> = all_files
-            .into_iter()
-            .filter_map(|s| FilePath::new(s).ok())
-            .collect();
-        let scan_root_fp = match FilePath::new(scan_root.to_string_lossy().to_string()) {
-            Ok(fp) => fp,
-            Err(_) => FilePath::default(),
-        };
         let all_results = self.orphan_orchestrator.check_orphans(
             self.layer_detector.as_ref(),
-            &orphan_files,
-            &scan_root_fp,
+            &all_files,
+            &scan_root.to_string_lossy(),
         );
 
         // Filter results for the specific file — canonicalize for robust comparison
@@ -410,13 +381,9 @@ impl CheckCommandsSurface {
         let all_workspaces = workspaces.clone();
 
         if workspaces.is_empty() {
-            // No workspaces discovered — fall back to single-scan mode and load config dynamically
-            let config_container =
-                config_system::root_config_system_container::ConfigContainer::new();
-            let config_orchestrator = config_container.orchestrator();
-            let config_result = rt.block_on(config_orchestrator.load_project_config(&path_obj));
-            let loaded_config = config_result.config;
-            return self.scan(path, filter, loaded_config, format);
+            // No workspaces discovered — fall back to single-scan mode
+            let default_config = ArchitectureConfig::default();
+            return self.scan(path, filter, default_config, format);
         }
 
         // Filter to specific member if requested
@@ -456,8 +423,11 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<FilePath> =
-            code_analysis::collect_all_source_files_raw(&scan_root);
+        let all_source_files: Vec<String> =
+            shared::common::collect_all_source_files_raw(&scan_root)
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         let multi = workspaces.len() > 1;
         if multi {
@@ -471,6 +441,13 @@ impl CheckCommandsSurface {
 
         let mut global_all_results = Vec::new();
 
+        // Hoist orphan detection before per-workspace loop (#107 P1 #7)
+        let _orphan_results_all = self.orphan_orchestrator.check_orphans(
+            self.layer_detector.as_ref(),
+            &all_source_files,
+            &scan_root.to_string_lossy(),
+        );
+
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {
                 Some(name) => name.to_string_lossy(),
@@ -481,35 +458,25 @@ impl CheckCommandsSurface {
             let mut all_results = Vec::new();
 
             // Determine dynamic orchestrators based on detected language config
-            let (
-                code_analysis_linter,
-                naming_orchestrator,
-                import_orchestrator,
-                role_orchestrator,
-                orphan_orchestrator,
-                layer_detector,
-            ) = if let Some(ref factory) = self.factory {
-                let ctx = factory(ws.config.clone());
-                (
-                    ctx.code_analysis_linter,
-                    ctx.naming_orchestrator,
-                    ctx.import_orchestrator,
-                    ctx.role_orchestrator,
-                    ctx.orphan_orchestrator,
-                    ctx.layer_detector,
-                )
-            } else {
-                (
-                    self.code_analysis_linter.clone(),
-                    self.naming_orchestrator.clone(),
-                    self.import_orchestrator.clone(),
-                    self.role_orchestrator.clone(),
-                    self.orphan_orchestrator.clone(),
-                    self.layer_detector.clone(),
-                )
-            };
+            let (code_analysis_linter, naming_orchestrator, import_orchestrator, role_orchestrator) =
+                if let Some(ref factory) = self.factory {
+                    let ctx = factory(ws.config.clone());
+                    (
+                        ctx.code_analysis_linter,
+                        ctx.naming_orchestrator,
+                        ctx.import_orchestrator,
+                        ctx.role_orchestrator,
+                    )
+                } else {
+                    (
+                        self.code_analysis_linter.clone(),
+                        self.naming_orchestrator.clone(),
+                        self.import_orchestrator.clone(),
+                        self.role_orchestrator.clone(),
+                    )
+                };
 
-            let aes_results = code_analysis_linter.run_code_analysis(&ws.path);
+            let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
             all_results.extend(aes_results.values);
 
             let (naming_results, import_results, external_results, role_results) =
@@ -536,10 +503,6 @@ impl CheckCommandsSurface {
                 all_results
                     .into_iter()
                     .filter(|r| {
-                        let rule_code = r.code.to_string();
-                        if ws.config.ignored_rules.values.contains(&rule_code) {
-                            return false;
-                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
                             && ws_canonical
@@ -552,10 +515,6 @@ impl CheckCommandsSurface {
                 all_results
                     .into_iter()
                     .filter(|r| {
-                        let rule_code = r.code.to_string();
-                        if ws.config.ignored_rules.values.contains(&rule_code) {
-                            return false;
-                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
                             .as_ref()
@@ -565,23 +524,11 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
-            let scan_root_fp =
-                FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
-            let member_orphans = orphan_orchestrator.check_orphans(
-                layer_detector.as_ref(),
-                &all_source_files,
-                &scan_root_fp,
-            );
-
             // Filter orphan results to this workspace member's path
             let filtered_orphans: Vec<_> = if let Some(code) = filter {
-                member_orphans
-                    .into_iter()
+                _orphan_results_all
+                    .iter()
                     .filter(|r| {
-                        let rule_code = r.code.to_string();
-                        if ws.config.ignored_rules.values.contains(&rule_code) {
-                            return false;
-                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
                             && ws_canonical
@@ -589,21 +536,19 @@ impl CheckCommandsSurface {
                                 .map(|c| abs_path.starts_with(c))
                                 .unwrap_or(true)
                     })
+                    .cloned()
                     .collect()
             } else {
-                member_orphans
-                    .into_iter()
+                _orphan_results_all
+                    .iter()
                     .filter(|r| {
-                        let rule_code = r.code.to_string();
-                        if ws.config.ignored_rules.values.contains(&rule_code) {
-                            return false;
-                        }
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
                             .unwrap_or(true)
                     })
+                    .cloned()
                     .collect()
             };
 
@@ -638,7 +583,7 @@ impl CheckCommandsSurface {
                         let results_list = LintResultList::new(member_results.clone());
                         print!(
                             "{}",
-                            code_analysis_linter.format_report(&results_list, &ws.path)
+                            code_analysis_linter.format_report(&results_list, &ws.path.value)
                         );
                     }
                     Format::Json => {

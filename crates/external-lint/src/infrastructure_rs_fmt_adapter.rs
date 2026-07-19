@@ -33,9 +33,8 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterPort.
 ///
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
@@ -43,11 +42,23 @@ use shared::external_lint::contract_external_lint_utility_port::IExternalLintUti
 pub struct RustFmtAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
-    utility: Arc<dyn IExternalLintUtilityPort>,
     _bin_path: Option<FilePath>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl RustFmtAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            _bin_path: bin_path,
+        }
+    }
+}
+
 #[async_trait]
 impl ILinterAdapterPort for RustFmtAdapter {
     fn name(&self) -> AdapterName {
@@ -58,7 +69,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
         let mut results = Vec::new();
 
         // Find the Cargo.toml parent to use as working directory — resolves workspace roots
-        let working_dir = self.utility.resolve_cargo_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -141,7 +152,7 @@ impl ILinterAdapterPort for RustFmtAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = self.utility.resolve_cargo_working_dir(path);
+        let working_dir = resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self
             .executor
@@ -152,22 +163,5 @@ impl ILinterAdapterPort for RustFmtAdapter {
             )
             .await;
         Ok(ComplianceStatus::new(true))
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl RustFmtAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            _bin_path: bin_path,
-        }
     }
 }

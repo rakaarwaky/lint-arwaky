@@ -1,35 +1,21 @@
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::find_workspace_root;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::contract_mcp_server_aggregate::IMcpServerAggregate;
-use mcp_server_lint_arwaky::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use mcp_server_lint_arwaky::taxonomy_mcp_tool_args_vo::{
+    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
+};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
-use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::taxonomy_workspace_helper::find_workspace_root;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::mcp_server::taxonomy_action_vo::JobId;
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::project_setup::taxonomy_doctor_vo::{
-    DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
-};
-use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
@@ -69,13 +55,6 @@ impl IImportRunnerAggregate for MockDeps {
     fn name(&self) -> &str {
         unreachable!()
     }
-    fn is_ignored(&self, _: &std::path::Path) -> bool {
-        false
-    }
-    fn collect_files(&self, _: &FilePath) -> FilePathList {
-        FilePathList { values: Vec::new() }
-    }
-    fn walk_dir(&self, _: &std::path::Path, _: &mut Vec<FilePath>, _: bool) {}
 }
 
 #[async_trait::async_trait]
@@ -105,22 +84,22 @@ impl IOrphanAggregate for MockDeps {
         _: &[String],
         _: &str,
     ) -> Vec<LintResult> {
-        Vec::new()
+        unreachable!()
     }
 }
 
 impl ILayerDetectionAggregate for MockDeps {
     fn detect_layer(&self, _: &str, _: &str) -> Option<String> {
-        None
+        unreachable!()
     }
     fn get_layer_def(
         &self,
         _: &str,
     ) -> Option<shared::common::taxonomy_definition_vo::LayerDefinition> {
-        None
+        unreachable!()
     }
     fn get_orphan_entry_points(&self) -> Vec<String> {
-        Vec::new()
+        unreachable!()
     }
     fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
         unreachable!()
@@ -135,10 +114,10 @@ impl IScannerProviderPort for MockDeps {
         shared::common::taxonomy_paths_vo::FilePathList,
         shared::common::taxonomy_filesystem_error::FileSystemError,
     > {
-        Ok(shared::common::taxonomy_paths_vo::FilePathList { values: Vec::new() })
+        unreachable!()
     }
     fn get_ignored_files(&self) -> shared::common::taxonomy_paths_vo::FilePathList {
-        shared::common::taxonomy_paths_vo::FilePathList { values: Vec::new() }
+        unreachable!()
     }
 }
 
@@ -162,84 +141,6 @@ impl IRoleRunnerAggregate for MockDeps {
     }
 }
 
-struct MockDiffProtocol;
-#[async_trait::async_trait]
-impl IDiffProtocol for MockDiffProtocol {
-    async fn run_git_diff_check(&self, _: &FilePath) -> LintResultList {
-        unreachable!()
-    }
-    async fn get_diff(&self, _: &FilePath) -> GitDiffResultVO {
-        unreachable!()
-    }
-    async fn get_changed_files(&self, _: &FilePath, _: &str) -> FilePathList {
-        unreachable!()
-    }
-    async fn get_default_branch(&self, _: &FilePath) -> String {
-        unreachable!()
-    }
-}
-
-struct MockHookProtocol;
-#[async_trait::async_trait]
-impl IHookProtocol for MockHookProtocol {
-    async fn install_pre_commit(&self, _: &FilePath) -> Result<SuccessStatus, GitHookError> {
-        Ok(SuccessStatus::new(true))
-    }
-    async fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
-        Ok(SuccessStatus::new(true))
-    }
-    fn get_hook_manager_identity(&self) -> Identity {
-        unreachable!()
-    }
-    async fn initialize_config(&self, _: &str) -> DescriptionVO {
-        unreachable!()
-    }
-    fn update_ignore_rule(&self, _: HookIgnoreUpdateVO) -> DescriptionVO {
-        unreachable!()
-    }
-    async fn get_diff_data(&self, _: &str, _: &str) -> GitDiffDataVO {
-        unreachable!()
-    }
-}
-
-#[async_trait::async_trait]
-impl MaintenanceCommandsAggregate for MockDeps {
-    async fn stats(&self, _: &FilePath) -> MaintenanceStatsVO {
-        unreachable!()
-    }
-    async fn clean(&self) {
-        unreachable!()
-    }
-    async fn update(&self) {
-        unreachable!()
-    }
-    async fn doctor(&self) -> DoctorResultVO {
-        unreachable!()
-    }
-    async fn cancel(&self, _: JobId) {
-        unreachable!()
-    }
-    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        unreachable!()
-    }
-    async fn run_security_scan(&self, _: &FilePath) -> SecurityScanReport {
-        unreachable!()
-    }
-    async fn run_dependency_report(&self, _: &FilePath) -> Result<DependencyReport, String> {
-        unreachable!()
-    }
-}
-
-#[async_trait::async_trait]
-impl GitHooksAggregate for MockDeps {
-    fn diff_protocol(&self) -> &dyn IDiffProtocol {
-        &MockDiffProtocol
-    }
-    fn hook_protocol(&self) -> &dyn IHookProtocol {
-        &MockHookProtocol
-    }
-}
-
 fn make_orchestrator() -> McpServerOrchestrator {
     let deps = McpServerDependencies {
         code_analysis_linter: Arc::new(MockDeps),
@@ -250,8 +151,6 @@ fn make_orchestrator() -> McpServerOrchestrator {
         scanner_provider: Arc::new(MockDeps),
         external_lint: Arc::new(MockDeps),
         role_orchestrator: Arc::new(MockDeps),
-        maintenance_orchestrator: Arc::new(MockDeps),
-        git_hooks_aggregate: Arc::new(MockDeps),
     };
     McpServerOrchestrator::new(deps)
 }
@@ -546,14 +445,10 @@ async fn execute_config_show_returns_success() {
 #[tokio::test]
 async fn execute_orphan_with_path() {
     let orch = make_orchestrator();
-    let cwd = std::env::current_dir()
-        .unwrap()
-        .to_string_lossy()
-        .to_string();
-    let params = make_exec_params("orphan", Some(&cwd));
+    let params = make_exec_params("orphan", Some("/some/path"));
     let output = orch.execute_command(params).await;
     let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
     assert_eq!(parsed["status"].as_str(), Some("success"));
     assert_eq!(parsed["action"].as_str(), Some("orphan"));
-    assert_eq!(parsed["path"].as_str(), Some(cwd.as_str()));
+    assert_eq!(parsed["path"].as_str(), Some("/some/path"));
 }

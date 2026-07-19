@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
@@ -25,26 +25,17 @@ use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
 use std::sync::Arc;
 
 /// Business logic for generating setup and configuration artifacts.
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementProcessor {
     installer: Arc<dyn ISetupInstallerPort>,
-    fs_port: Arc<
-        dyn shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort,
-    >,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupManagementProcessor {
-    pub fn new(
-        installer: Arc<dyn ISetupInstallerPort>,
-        fs_port: Arc<dyn shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort>,
-    ) -> Self {
-        Self { installer, fs_port }
+    pub fn new(installer: Arc<dyn ISetupInstallerPort>) -> Self {
+        Self { installer }
     }
 }
 
 #[async_trait::async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
 impl ISetupManagementProtocol for SetupManagementProcessor {
     /// Generate .env content for the lint-arwaky environment.
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO {
@@ -161,8 +152,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         SuccessStatus::new(res.is_ok())
     }
 
-    async fn detect_language(&self) -> ProjectLanguageVO {
-        let langs = self.detect_languages().await;
+    fn detect_language(&self) -> ProjectLanguageVO {
+        let langs = self.detect_languages();
         langs
             .values
             .into_iter()
@@ -170,54 +161,25 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
             .unwrap_or_else(|| ProjectLanguageVO::new("rust"))
     }
 
-    async fn detect_languages(&self) -> ProjectLanguagesVO {
+    fn detect_languages(&self) -> ProjectLanguagesVO {
         let mut found_rust = false;
         let mut found_python = false;
         let mut found_javascript = false;
 
         // Phase 1: Marker-based detection (fast, no filesystem scan)
-        if self
-            .fs_port
-            .path_exists(&FilePath::new("crates").unwrap())
-            .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("Cargo.toml").unwrap())
-                .await
-        {
+        if std::path::Path::new("crates").exists() || std::path::Path::new("Cargo.toml").exists() {
             found_rust = true;
         }
-        if self
-            .fs_port
-            .path_exists(&FilePath::new("packages").unwrap())
-            .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("modules").unwrap())
-                .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("pyproject.toml").unwrap())
-                .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("setup.py").unwrap())
-                .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("requirements.txt").unwrap())
-                .await
+        if std::path::Path::new("packages").exists()
+            || std::path::Path::new("modules").exists()
+            || std::path::Path::new("pyproject.toml").exists()
+            || std::path::Path::new("setup.py").exists()
+            || std::path::Path::new("requirements.txt").exists()
         {
             found_python = true;
         }
-        if self
-            .fs_port
-            .path_exists(&FilePath::new("package.json").unwrap())
-            .await
-            || self
-                .fs_port
-                .path_exists(&FilePath::new("tsconfig.json").unwrap())
-                .await
+        if std::path::Path::new("package.json").exists()
+            || std::path::Path::new("tsconfig.json").exists()
         {
             found_javascript = true;
         }
@@ -225,14 +187,13 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         // Phase 2: File-extension scan (shallow, depth-limited)
         if !(found_rust && found_python && found_javascript) {
             self.scan_source_extensions(
-                &FilePath::new(".").unwrap(),
+                std::path::Path::new("."),
                 0,
                 4,
                 &mut found_rust,
                 &mut found_python,
                 &mut found_javascript,
-            )
-            .await;
+            );
         }
 
         let mut langs = Vec::new();
@@ -260,16 +221,12 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         }
     }
 
-    async fn write_config_file(
+    fn write_config_file(
         &self,
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        let fp = FilePath::new(filename.to_string()).map_err(|e| SetupError::io(e))?;
-        self.fs_port
-            .write_file(&fp, content)
-            .await
-            .map_err(|e| SetupError::io(e))?;
+        std::fs::write(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,
@@ -277,25 +234,16 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         )))
     }
 
-    async fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
+    fn create_global_config_dir(&self) -> Result<std::path::PathBuf, SetupError> {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
             .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
-        let fp = FilePath::new(config_dir.to_string_lossy().to_string())
-            .map_err(|e| SetupError::io(e))?;
-        self.fs_port
-            .create_dir_all(&fp)
-            .await
-            .map_err(|e| SetupError::io(e))?;
+        std::fs::create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(config_dir)
     }
 
-    async fn file_exists(&self, path: &str) -> bool {
-        let fp = match FilePath::new(path) {
-            Ok(p) => p,
-            Err(_) => return false,
-        };
-        self.fs_port.file_exists(&fp).await
+    fn file_exists(&self, path: &str) -> bool {
+        std::path::Path::new(path).exists()
     }
 }
 
@@ -303,9 +251,9 @@ impl SetupManagementProcessor {
     /// Walk the directory tree (depth-limited) looking for source file extensions.
     /// Sets the corresponding `found_*` flag to `true` when a match is found.
     /// Skips hidden dirs, `target/`, `node_modules/`, and `vendor/` for speed.
-    async fn scan_source_extensions(
+    fn scan_source_extensions(
         &self,
-        dir: &FilePath,
+        dir: &std::path::Path,
         depth: usize,
         max_depth: usize,
         found_rust: &mut bool,
@@ -315,10 +263,13 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let entries = self.fs_port.list_dir(dir).await;
-        for entry in &entries {
-            let path = std::path::Path::new(entry.path.value());
-            if entry.is_dir {
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')
                     || name == "target"
@@ -330,15 +281,14 @@ impl SetupManagementProcessor {
                 {
                     continue;
                 }
-                Box::pin(self.scan_source_extensions(
-                    &entry.path,
+                self.scan_source_extensions(
+                    &path,
                     depth + 1,
                     max_depth,
                     found_rust,
                     found_python,
                     found_javascript,
-                ))
-                .await;
+                );
                 if *found_rust && *found_python && *found_javascript {
                     return;
                 }

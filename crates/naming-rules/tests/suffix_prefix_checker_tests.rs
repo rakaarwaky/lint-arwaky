@@ -1,4 +1,5 @@
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::taxonomy_naming_utility::{get_stem, get_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_layer_vo::LayerNameVO;
@@ -78,43 +79,37 @@ fn is_entry_point_rejects_regular_file() {
 }
 
 // ---------------------------------------------------------------------------
-// stem / suffix (via FilePath VO)
+// get_stem / get_suffix (via taxonomy_naming_utility)
 // ---------------------------------------------------------------------------
 
 #[test]
 fn get_stem_removes_extension() {
-    let fp = FilePath::new("checker.rs".to_string()).unwrap();
-    assert_eq!(fp.stem(), "checker");
+    assert_eq!(get_stem("checker.rs"), Some("checker"));
 }
 
 #[test]
 fn get_stem_handles_no_extension() {
-    let fp = FilePath::new("checker".to_string()).unwrap();
-    assert_eq!(fp.stem(), "checker");
+    assert_eq!(get_stem("checker"), Some("checker"));
 }
 
 #[test]
 fn get_stem_handles_multiple_dots() {
-    let fp = FilePath::new("my.test.file.rs".to_string()).unwrap();
-    assert_eq!(fp.stem(), "my.test.file");
+    assert_eq!(get_stem("my.test.file.rs"), Some("my.test.file"));
 }
 
 #[test]
 fn get_suffix_returns_last_underscore_part() {
-    let fp = FilePath::new("capabilities_checker.rs".to_string()).unwrap();
-    assert_eq!(fp.suffix(), "checker");
+    assert_eq!(get_suffix("capabilities_checker"), Some("checker"));
 }
 
 #[test]
-fn get_suffix_no_underscore_returns_empty() {
-    let fp = FilePath::new("checker.rs".to_string()).unwrap();
-    assert_eq!(fp.suffix(), "");
+fn get_suffix_no_underscore_returns_none() {
+    assert_eq!(get_suffix("checker"), None);
 }
 
 #[test]
 fn get_suffix_single_underscore() {
-    let fp = FilePath::new("_checker.rs".to_string()).unwrap();
-    assert_eq!(fp.suffix(), "checker");
+    assert_eq!(get_suffix("_checker"), Some("checker"));
 }
 
 // ---------------------------------------------------------------------------

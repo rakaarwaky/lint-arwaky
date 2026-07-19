@@ -4,13 +4,8 @@ use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
-
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::common::taxonomy_source_vo::ContentString;
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     fn is_taxonomy_orphan(
@@ -29,7 +24,7 @@ pub trait IContractOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
-        all_files: &[FilePath],
+        all_files: &[String],
     ) -> OrphanIndicatorResult;
 }
 
@@ -56,7 +51,7 @@ pub trait IAgentOrphanProtocol: Send + Sync {
         &self,
         f: &FilePath,
         root_dir: &FilePath,
-        all_files: &[FilePath],
+        all_files: &[String],
     ) -> OrphanIndicatorResult;
 }
 
@@ -67,20 +62,4 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
         alive_files: &ReachabilityResult,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult;
-}
-
-pub trait IOrphanFileCachePort: Send + Sync {
-    fn read_cached(&self, path: &FilePath) -> ContentString;
-    fn read_dir(&self, dir_path: &FilePath) -> Vec<FilePath>;
-    fn path_exists(&self, path: &FilePath) -> bool;
-    fn is_symlink(&self, path: &FilePath) -> bool;
-    fn clear_cache(&self);
-}
-
-pub trait IOrphanFilenameExtractorProtocol: Send + Sync {
-    fn file_basename(&self, fp: &FilePath) -> Identity;
-    fn file_stem(&self, fp: &FilePath) -> Identity;
-    fn file_suffix(&self, fp: &FilePath) -> Identity;
-    fn extract_struct_names(&self, content: &ContentString) -> Vec<SymbolName>;
-    fn extract_trait_names(&self, content: &ContentString) -> Vec<SymbolName>;
 }

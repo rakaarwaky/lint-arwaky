@@ -7,10 +7,20 @@ use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::taxonomy_common_error::ErrorMessage;
 use std::path::Path;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ConfigParserProvider {}
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl Default for ConfigParserProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ConfigParserProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 impl IConfigParserPort for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = Path::new(&path.value);
@@ -81,18 +91,5 @@ impl IConfigParserPort for ConfigParserProvider {
         } else {
             Ok(None)
         }
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ConfigParserProvider {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Default for ConfigParserProvider {
-    fn default() -> Self {
-        Self::new()
     }
 }

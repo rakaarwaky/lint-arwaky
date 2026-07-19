@@ -12,8 +12,8 @@ use crate::common::taxonomy_severity_vo::Severity;
 pub struct BooleanVO {
     pub value: bool,
 }
-BooleanVO {
-impl 
+
+impl BooleanVO {
     pub fn new(value: bool) -> Self {
         Self { value }
     }

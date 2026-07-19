@@ -5,14 +5,10 @@ use async_trait::async_trait;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_filesystem_error::FileSystemError;
-use crate::common::taxonomy_language_detector_utility;
 use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_naming_list_vo;
-use crate::common::taxonomy_parser_error;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::common::taxonomy_value_object_generator_vo;
 use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
 
 /// Abstract interface for file system operations.
@@ -38,11 +34,4 @@ pub trait IFileSystemPort: Send + Sync {
     async fn get_basename(&self, path: &FilePath) -> Identity;
     async fn path_join(&self, parts: &[Identity]) -> FilePath;
     async fn read_file(&self, path: &FilePath) -> Result<ContentString, FileSystemError>;
-    /// Recursive directory walker helper.
-    fn walk_recursive(
-        &self,
-        dir: &std::path::Path,
-        ignored: &[String],
-        results: &mut Vec<FilePath>,
-    );
 }

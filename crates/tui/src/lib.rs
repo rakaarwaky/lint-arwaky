@@ -1,7 +1,6 @@
 // PURPOSE: Module declarations for the TUI crate (ratatui-based terminal UI)
 pub mod capabilities_action_handler;
 pub mod capabilities_lint_executor;
-pub mod capabilities_report_formatter;
 
 pub mod infrastructure_file_system_adapter;
 

@@ -8,7 +8,6 @@
 // tasks internally. The caller provides a FilePath target (file or dir).
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 
 /// IImportRunnerAggregate — aggregate port for import-rules orchestration.
@@ -22,10 +21,4 @@ pub trait IImportRunnerAggregate: Send + Sync {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult>;
     /// Human-readable name for this orchestrator ("import-rules").
     fn name(&self) -> &str;
-    /// Check if a path should be skipped during file collection.
-    fn is_ignored(&self, p: &std::path::Path) -> bool;
-    /// Walk target path and collect source files.
-    fn collect_files(&self, target: &FilePath) -> FilePathList;
-    /// Recursive directory walker. Filters to source code files only.
-    fn walk_dir(&self, dir: &std::path::Path, files: &mut Vec<FilePath>, is_subdir: bool);
 }

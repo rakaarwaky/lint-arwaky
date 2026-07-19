@@ -15,23 +15,14 @@ use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesRoleChecker {}
 
-#[async_trait::async_trait]
-// ─── Block 2: Public Contract ─────────────────────────────
-impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
-    fn check_capability_routing(
-        &self,
-        source: &SourceContentVO,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        self.check_capability_routing(source, layer, violations);
+impl Default for CapabilitiesRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl CapabilitiesRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -48,7 +39,7 @@ impl CapabilitiesRoleChecker {
         }
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_info_vo::LanguageInfo::new(source);
+        let li = crate::taxonomy_language_helper::detect_language(source);
 
         if li.is_rs {
             self._check_rust_routing(file, content, violations);
@@ -262,8 +253,13 @@ impl CapabilitiesRoleChecker {
     }
 }
 
-impl Default for CapabilitiesRoleChecker {
-    fn default() -> Self {
-        Self::new()
+impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
+    fn check_capability_routing(
+        &self,
+        source: &SourceContentVO,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.check_capability_routing(source, layer, violations);
     }
 }

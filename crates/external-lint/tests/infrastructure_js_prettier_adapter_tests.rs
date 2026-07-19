@@ -6,12 +6,10 @@ use external_lint_lint_arwaky::infrastructure_js_prettier_adapter::PrettierAdapt
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
-use shared::common::taxonomy_common_vo::{bool, PatternList};
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 struct MockPrettierExecutor {
     stdout: String,
@@ -42,110 +40,6 @@ impl ICommandExecutorPort for MockPrettierExecutor {
     }
 }
 
-struct MockExternalLintUtilityPort;
-
-#[async_trait]
-impl IExternalLintUtilityPort for MockExternalLintUtilityPort {
-    fn canonicalize_path(&self, path_str: &str) -> FilePath {
-        FilePath::new(path_str.to_string()).unwrap_or_default()
-    }
-    fn default_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn has_python_files(&self, _path: &FilePath) -> bool {
-        bool::new(true)
-    }
-    fn has_py_in_dir(&self, _dir: &DirectoryPath) -> bool {
-        bool::new(true)
-    }
-    fn is_in_path(&self, _executable: &str) -> bool {
-        bool::new(true)
-    }
-    fn resolve_js_cmd(
-        &self,
-        executable: &str,
-        args: PatternList,
-        _working_dir: &FilePath,
-    ) -> PatternList {
-        let mut cmd = vec![executable.to_string()];
-        cmd.extend(args.values);
-        PatternList::new(cmd)
-    }
-    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    async fn exec_cmd_scan(
-        &self,
-        executor: &dyn ICommandExecutorPort,
-        args: PatternList,
-        working_dir: FilePath,
-        timeout_secs: Timeout,
-        _adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
-        path: &FilePath,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
-    {
-        // Actually call the executor so the mock's stdout/stderr/exit_code are respected
-        executor
-            .execute_command(args, working_dir, Some(timeout_secs))
-            .await
-            .map_err(|e| {
-                shared::code_analysis::taxonomy_operation_error::LinterOperationError::Scan(
-                    shared::common::taxonomy_adapter_error::ScanError::new(
-                        path.clone(),
-                        shared::common::taxonomy_common_error::ErrorMessage::new(e.to_string()),
-                    ),
-                )
-            })
-    }
-    async fn exec_cmd_adapter(
-        &self,
-        executor: &dyn ICommandExecutorPort,
-        args: PatternList,
-        working_dir: FilePath,
-        timeout_secs: Timeout,
-        adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
-    ) -> Result<ResponseData, shared::code_analysis::taxonomy_operation_error::LinterOperationError>
-    {
-        executor
-            .execute_command(args, working_dir, Some(timeout_secs))
-            .await
-            .map_err(|e| {
-                shared::code_analysis::taxonomy_operation_error::LinterOperationError::Adapter(
-                    shared::common::taxonomy_adapter_error::AdapterError::new(
-                        adapter_name,
-                        shared::common::taxonomy_common_error::ErrorMessage::new(e.to_string()),
-                    ),
-                )
-            })
-    }
-    async fn js_apply_fix(
-        &self,
-        _executor: &dyn ICommandExecutorPort,
-        _path: &FilePath,
-        _tool: &str,
-        _fix_arg: &str,
-    ) -> Result<
-        ComplianceStatus,
-        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
-    > {
-        Ok(ComplianceStatus::new(true))
-    }
-    async fn noop_apply_fix(
-        &self,
-    ) -> Result<
-        ComplianceStatus,
-        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
-    > {
-        Ok(ComplianceStatus::new(true))
-    }
-}
-
 struct IdentityPathNorm;
 impl IPathNormalizationPort for IdentityPathNorm {
     fn normalize_path(&self, path: FilePath) -> FilePath {
@@ -164,7 +58,6 @@ fn make_adapter(stdout: &str, stderr: &str, exit_code: i32) -> PrettierAdapter {
             exit_code,
         }),
         Arc::new(IdentityPathNorm),
-        Arc::new(MockExternalLintUtilityPort),
     )
 }
 

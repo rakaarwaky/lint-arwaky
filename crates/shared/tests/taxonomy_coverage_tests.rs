@@ -8,16 +8,23 @@ use shared_lint_arwaky::code_analysis::taxonomy_violation_code_analysis_vo::Lang
 use shared_lint_arwaky::common::taxonomy_common_error::ErrorMessage;
 use shared_lint_arwaky::common::taxonomy_common_vo::Count;
 use shared_lint_arwaky::common::taxonomy_common_vo::Score;
-
+use shared_lint_arwaky::common::taxonomy_layer_vo::Identity;
 use shared_lint_arwaky::common::taxonomy_layer_vo::LayerNameVO;
 use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
 use shared_lint_arwaky::common::taxonomy_name_vo::SymbolName;
 use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
 use shared_lint_arwaky::common::taxonomy_paths_vo::FilePathList;
 use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_lint_arwaky::import_rules::taxonomy_unused_helper::extract_exported_symbols;
+use shared_lint_arwaky::import_rules::taxonomy_unused_helper::extract_imported_aliases;
+use shared_lint_arwaky::import_rules::taxonomy_unused_helper::extract_rust_js_imports;
+use shared_lint_arwaky::import_rules::taxonomy_unused_helper::extract_used_symbols;
+use shared_lint_arwaky::import_rules::taxonomy_unused_helper::is_name_used;
 use shared_lint_arwaky::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared_lint_arwaky::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO;
 use shared_lint_arwaky::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use shared_lint_arwaky::orphan_detector::taxonomy_orphan_utility::extract_struct_names;
+use shared_lint_arwaky::orphan_detector::taxonomy_orphan_utility::extract_trait_names;
 use shared_lint_arwaky::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared_lint_arwaky::project_setup::taxonomy_doctor_vo::DoctorResultVO;
 use shared_lint_arwaky::project_setup::taxonomy_setup_contract_vo::McpBinaryNameVO;
@@ -42,6 +49,197 @@ use shared_lint_arwaky::tui::taxonomy_state_vo::AppState;
 use shared_lint_arwaky::tui::taxonomy_state_vo::PanelFocus;
 use shared_lint_arwaky::tui::taxonomy_state_vo::PreviewMode;
 use std::collections::HashMap;
+
+// ============================================================================
+// taxonomy_unused_helper.rs (150 uncovered lines)
+// ============================================================================
+
+#[test]
+fn test_extract_imported_aliases_rust_simple() {
+    let content = "use std::collections::HashMap;\nfn main() {}\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(aliases.contains_key(&Identity::new("HashMap")));
+    assert_eq!(
+        aliases.get(&Identity::new("HashMap")).unwrap().value(),
+        "std::collections::HashMap"
+    );
+}
+
+#[test]
+fn test_extract_imported_aliases_rust_braced() {
+    let content = "use std::collections::{HashMap, BTreeMap};\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(aliases.contains_key(&Identity::new("HashMap")));
+    assert!(aliases.contains_key(&Identity::new("BTreeMap")));
+}
+
+#[test]
+fn test_extract_imported_aliases_rust_trait_skipped() {
+    let content = "use std::fmt::Display;\nuse crate::traits::MyProtocol;\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(!aliases.contains_key(&Identity::new("Display")));
+    assert!(!aliases.contains_key(&Identity::new("MyProtocol")));
+}
+
+#[test]
+fn test_extract_imported_aliases_rust_crate_skipped() {
+    let content = "use crate::my_module::MyStruct;\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(!aliases.contains_key(&Identity::new("MyStruct")));
+}
+
+#[test]
+fn test_extract_imported_aliases_python_from_import() {
+    let content = "from collections import defaultdict, OrderedDict\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(aliases.contains_key(&Identity::new("defaultdict")));
+    assert!(aliases.contains_key(&Identity::new("OrderedDict")));
+}
+
+#[test]
+fn test_extract_imported_aliases_python_import_direct() {
+    let content = "import os, sys\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(aliases.contains_key(&Identity::new("os")));
+    assert!(aliases.contains_key(&Identity::new("sys")));
+}
+
+#[test]
+fn test_extract_imported_aliases_cfg_test_skipped() {
+    let content = "#[cfg(test)]\nuse test_only::Mock;\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(!aliases.contains_key(&Identity::new("Mock")));
+}
+
+#[test]
+fn test_extract_imported_aliases_with_alias() {
+    let content = "use std::collections::HashMap as Map;\n";
+    let aliases = extract_imported_aliases(content);
+    assert!(aliases.contains_key(&Identity::new("Map")));
+}
+
+#[test]
+fn test_extract_exported_symbols_all() {
+    let content = "__all__ = ['foo', 'bar', 'baz']\n";
+    let exported = extract_exported_symbols(content);
+    assert!(exported.contains(&Identity::new("foo")));
+    assert!(exported.contains(&Identity::new("bar")));
+    assert!(exported.contains(&Identity::new("baz")));
+    assert!(!exported.contains(&Identity::new("qux")));
+}
+
+#[test]
+fn test_extract_exported_symbols_no_match() {
+    let content = "fn main() {}\n";
+    let exported = extract_exported_symbols(content);
+    assert!(exported.is_empty());
+}
+
+#[test]
+fn test_extract_used_symbols_basic_match() {
+    let content = "use serde::Serialize;\n\nfn process() {\n    let s: Serialize = ...;\n}\n";
+    let mut aliases = HashMap::new();
+    aliases.insert(
+        Identity::new("Serialize"),
+        Identity::new("serde::Serialize"),
+    );
+    let used = extract_used_symbols(content, &aliases);
+    assert!(used.contains(&Identity::new("Serialize")));
+}
+
+#[test]
+fn test_extract_used_symbols_no_match() {
+    let content = "use std::collections::HashMap;\nfn main() { let x = 42; }\n";
+    let mut aliases = HashMap::new();
+    aliases.insert(
+        Identity::new("HashMap"),
+        Identity::new("std::collections::HashMap"),
+    );
+    let used = extract_used_symbols(content, &aliases);
+    assert!(!used.contains(&Identity::new("HashMap")));
+}
+
+#[test]
+fn test_extract_rust_js_imports_rust_simple() {
+    let content = "use std::collections::HashMap;\nfn main() {}\n";
+    let imports = extract_rust_js_imports(content);
+    assert!(!imports.iter().any(|(n, _)| n.value() == "HashMap"));
+}
+
+#[test]
+fn test_extract_rust_js_imports_js() {
+    let content = "import { helper_fn } from './my_module';\nhelper_fn();\n";
+    let imports = extract_rust_js_imports(content);
+    assert!(imports.iter().any(|(n, _)| n.value() == "helper_fn"));
+}
+
+#[test]
+fn test_extract_rust_js_imports_trait_skipped() {
+    let content = "use crate::protocol::MyProtocol;\nfn main() {}\n";
+    let imports = extract_rust_js_imports(content);
+    assert!(!imports.iter().any(|(n, _)| n.value() == "MyProtocol"));
+}
+
+#[test]
+fn test_is_name_used_derive_macro_true() {
+    assert!(is_name_used("Serialize", "fn main() {}", 0));
+    assert!(is_name_used("Deserialize", "fn main() {}", 0));
+    assert!(is_name_used("Clone", "fn main() {}", 0));
+    assert!(is_name_used("Debug", "fn main() {}", 0));
+    assert!(is_name_used("async_trait", "fn main() {}", 0));
+}
+
+#[test]
+fn test_is_name_used_trait_true() {
+    assert!(is_name_used("MyProtocol", "use MyProtocol;", 0));
+    assert!(is_name_used("MyPort", "use MyPort;", 0));
+}
+
+#[test]
+fn test_is_name_used_in_content() {
+    let content = "use foo::Bar;\nfn main() { let b = Bar::new(); }\n";
+    assert!(is_name_used("Bar", content, 0));
+}
+
+#[test]
+fn test_is_name_used_not_in_content() {
+    let content = "use foo::Bar;\nfn main() {}\n";
+    assert!(!is_name_used("Bar", content, 0));
+}
+
+// ============================================================================
+// taxonomy_orphan_utility.rs (26 uncovered lines)
+// ============================================================================
+
+#[test]
+fn test_extract_struct_names_basic() {
+    let content = "pub struct MyStruct {}\nstruct PrivateStruct;\nfn main() {}\n";
+    let names = extract_struct_names(content);
+    assert!(names.contains(&"MyStruct".to_string()));
+    assert!(names.contains(&"PrivateStruct".to_string()));
+}
+
+#[test]
+fn test_extract_struct_names_empty() {
+    let content = "fn main() {}\n";
+    let names = extract_struct_names(content);
+    assert!(names.is_empty());
+}
+
+#[test]
+fn test_extract_trait_names_basic() {
+    let content = "pub trait MyTrait {}\ntrait PrivateTrait;\n";
+    let names = extract_trait_names(content);
+    assert!(names.contains(&"MyTrait".to_string()));
+    assert!(names.contains(&"PrivateTrait".to_string()));
+}
+
+#[test]
+fn test_extract_trait_names_empty() {
+    let content = "fn main() {}\n";
+    let names = extract_trait_names(content);
+    assert!(names.is_empty());
+}
 
 // ============================================================================
 // taxonomy_orphan_contract_vo.rs (18 uncovered lines)
@@ -109,7 +307,7 @@ fn test_aes_orphan_violation_contract_orphan_port() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "port".to_string(),
         trait_name: "MyPort".to_string(),
-        target_layer: "infrastructure".to_string(),
+        target_layer: "infrastructure",
         reason: None,
     };
     let msg = v.to_string();
@@ -124,7 +322,7 @@ fn test_aes_orphan_violation_contract_orphan_protocol() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "protocol".to_string(),
         trait_name: "MyProtocol".to_string(),
-        target_layer: "capabilities".to_string(),
+        target_layer: "capabilities",
         reason: None,
     };
     let msg = v.to_string();
@@ -137,7 +335,7 @@ fn test_aes_orphan_violation_contract_orphan_aggregate() {
     let v = AesOrphanViolation::ContractOrphan {
         suffix: "aggregate".to_string(),
         trait_name: "MyAgg".to_string(),
-        target_layer: "surface".to_string(),
+        target_layer: "surface",
         reason: None,
     };
     let msg = v.to_string();

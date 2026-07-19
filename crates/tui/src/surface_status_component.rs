@@ -9,10 +9,8 @@ use ratatui::widgets::Paragraph;
 use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::AppState;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct StatusComponent;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl StatusComponent {
     pub fn new() -> Self {
         Self
@@ -95,7 +93,6 @@ impl StatusComponent {
     }
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for StatusComponent {
     fn default() -> Self {
         Self::new()

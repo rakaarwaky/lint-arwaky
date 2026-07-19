@@ -10,13 +10,23 @@ use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ConfigLoadingOrchestrator {
     workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
     config_reader: Arc<dyn IConfigReaderPort>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+impl ConfigLoadingOrchestrator {
+    pub fn new(
+        workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
+        config_reader: Arc<dyn IConfigReaderPort>,
+    ) -> Self {
+        Self {
+            workspace_detector,
+            config_reader,
+        }
+    }
+}
+
 #[async_trait]
 impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
     fn workspace_detector(&self) -> Arc<dyn IWorkspaceDetectorPort> {
@@ -58,19 +68,6 @@ impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
                 let source = ConfigSource::new(language, "embedded", "");
                 ConfigResult::new(config, source, warnings)
             }
-        }
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ConfigLoadingOrchestrator {
-    pub fn new(
-        workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
-        config_reader: Arc<dyn IConfigReaderPort>,
-    ) -> Self {
-        Self {
-            workspace_detector,
-            config_reader,
         }
     }
 }

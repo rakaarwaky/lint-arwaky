@@ -12,9 +12,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
+use shared::taxonomy_definition_vo::LayerDefinition;
 
 pub struct ArchLineChecker {}
 
@@ -33,13 +31,11 @@ impl ArchLineChecker {
 impl ILineCheckerProtocol for ArchLineChecker {
     fn check_line_counts(
         &self,
-        file: &FilePath,
+        file: &str,
         definition: Option<&LayerDefinition>,
-        content: &ContentString,
+        content: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        let file = file.value();
-        let content = content.value();
         let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
             Some(name) => name.to_string(),
             None => return,

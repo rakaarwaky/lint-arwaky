@@ -9,54 +9,11 @@ use shared::config_system::taxonomy_config_vo::parse_config_yaml;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
 pub struct MultiProjectOrchestrator {
     workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
     config_reader: Arc<dyn IConfigReaderPort>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-#[async_trait]
-impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
-    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
-        let root_path = std::path::Path::new(&root.value);
-        let workspaces = Self::scan_workspace_dirs(root_path);
-
-        if workspaces.is_empty() {
-            eprintln!(
-                "Warning: No AES-compliant workspace members (crates/, packages/, or modules/) found in '{}'. \
-                This system mandates a multi-module structure. Please refactor your project.",
-                root.value
-            );
-            return Vec::new();
-        }
-
-        let futures = workspaces.iter().map(|ws| {
-            let ws = ws.clone();
-            let detector = self.workspace_detector.clone();
-            let reader = self.config_reader.clone();
-            async move {
-                let ws_type = detector.detect(&ws);
-                let language = ws_type.as_str();
-                let config = match reader.read_config(&ws, language).await {
-                    Some(source) => {
-                        let mut parsed = parse_config_yaml(&source.raw_content);
-                        if parsed.layers.is_empty() {
-                            parsed.layers = default_config_for_language(language).layers;
-                        }
-                        parsed
-                    }
-                    None => default_config_for_language(language),
-                };
-                WorkspaceInfo::new(ws, language.to_string(), config)
-            }
-        });
-
-        join_all(futures).await
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl MultiProjectOrchestrator {
     pub fn new(
         workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
@@ -141,25 +98,46 @@ impl MultiProjectOrchestrator {
                 results.extend(Self::collect_subdirs(&dir_path));
             }
         }
-        if !results.is_empty() {
-            return results;
+        results
+    }
+}
+
+#[async_trait]
+impl MultiProjectOrchestratorAggregate for MultiProjectOrchestrator {
+    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
+        let root_path = std::path::Path::new(&root.value);
+        let workspaces = Self::scan_workspace_dirs(root_path);
+
+        if workspaces.is_empty() {
+            eprintln!(
+                "Warning: No AES-compliant workspace members (crates/, packages/, or modules/) found in '{}'. \
+                This system mandates a multi-module structure. Please refactor your project.",
+                root.value
+            );
+            return Vec::new();
         }
 
-        // Case 4: walk up the directory tree to find the workspace member
-        // e.g. crates/shared/src/import-rules -> crates/shared
-        let mut current = root;
-        while let Some(parent) = current.parent() {
-            if let Some(parent_name) = parent.file_name() {
-                let parent_str = parent_name.to_string_lossy();
-                if workspace_dirs.contains(&parent_str.as_ref()) && current.is_dir() {
-                    if let Ok(fp) = FilePath::new(current.to_string_lossy().to_string()) {
-                        return vec![fp];
+        let futures = workspaces.iter().map(|ws| {
+            let ws = ws.clone();
+            let detector = self.workspace_detector.clone();
+            let reader = self.config_reader.clone();
+            async move {
+                let ws_type = detector.detect(&ws);
+                let language = ws_type.as_str();
+                let config = match reader.read_config(&ws, language).await {
+                    Some(source) => {
+                        let mut parsed = parse_config_yaml(&source.raw_content);
+                        if parsed.layers.is_empty() {
+                            parsed.layers = default_config_for_language(language).layers;
+                        }
+                        parsed
                     }
-                }
+                    None => default_config_for_language(language),
+                };
+                WorkspaceInfo::new(ws, language.to_string(), config)
             }
-            current = parent;
-        }
+        });
 
-        Vec::new()
+        join_all(futures).await
     }
 }
