@@ -39,7 +39,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         let mut js_tools = vec![self.check_tool_status("node", false).await];
 
-        let eslint_local = self.fs.file_exists("node_modules/.bin/eslint").await;
+        let eslint_local = self
+            .fs
+            .file_exists(&FilePath::new("node_modules/.bin/eslint").unwrap_or_default())
+            .await;
         let eslint_status = if eslint_local {
             ToolStatus {
                 name: "eslint (local)".to_string(),
@@ -53,7 +56,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         };
         js_tools.push(eslint_status);
 
-        let prettier_local = self.fs.file_exists("node_modules/.bin/prettier").await;
+        let prettier_local = self
+            .fs
+            .file_exists(&FilePath::new("node_modules/.bin/prettier").unwrap_or_default())
+            .await;
         let prettier_status = if prettier_local {
             ToolStatus {
                 name: "prettier (local)".to_string(),
@@ -67,7 +73,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         };
         js_tools.push(prettier_status);
 
-        let tsc_local = self.fs.file_exists("node_modules/.bin/tsc").await;
+        let tsc_local = self
+            .fs
+            .file_exists(&FilePath::new("node_modules/.bin/tsc").unwrap_or_default())
+            .await;
         let tsc_status = if tsc_local {
             ToolStatus {
                 name: "tsc (local)".to_string(),
@@ -98,13 +107,17 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     }
 
     async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        let root = &project_path.value;
-        let cargo_lock = format!("{}/Cargo.lock", root);
+        let cargo_lock_fp =
+            FilePath::new(format!("{}/Cargo.lock", project_path.value())).unwrap_or_default();
 
-        if self.fs.file_exists(&cargo_lock).await {
+        if self.fs.file_exists(&cargo_lock_fp).await {
             let output = self
                 .tool_executor
-                .run_tool_in_dir("cargo", &["audit", "--json"], root)
+                .run_tool_in_dir(
+                    "cargo",
+                    &["audit", "--json"],
+                    project_path,
+                )
                 .await;
             if !output.success {
                 return SecurityScanReport {
@@ -119,7 +132,11 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         let output = self
             .tool_executor
-            .run_tool_in_dir("bandit", &["-r", "--format", "json", "."], root)
+            .run_tool_in_dir(
+                "bandit",
+                &["-r", "--format", "json", "."],
+                project_path,
+            )
             .await;
         if !output.success && output.stdout.is_empty() {
             return SecurityScanReport {

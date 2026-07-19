@@ -32,13 +32,12 @@ pub struct MaintenanceCommandsOrchestrator {
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        let root = &project_path.value;
-        let py_files = self.fs.walk_py_files(root).await;
+        let py_files = self.fs.walk_py_files(project_path).await;
         let py_count = py_files.len() as i64;
         let test_count = py_files
             .iter()
             .filter(|f| {
-                std::path::Path::new(f)
+                std::path::Path::new(f.value())
                     .file_name()
                     .map(|n| n.to_string_lossy().starts_with("test_"))
                     .unwrap_or_default()
@@ -69,8 +68,8 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
                 "__pycache__",
                 ".lint_arwaky_cache",
             ];
-            let cwd_str = cwd.to_string_lossy().to_string();
-            let found_dirs = self.fs.find_cache_dirs(&cwd_str, &cache_dirs).await;
+            let cwd_fp = FilePath::new(cwd.to_string_lossy().to_string()).unwrap_or_default();
+            let found_dirs = self.fs.find_cache_dirs(&cwd_fp, &cache_dirs).await;
             for entry in found_dirs {
                 let _ = self.fs.remove_dir_all(&entry).await;
             }
@@ -105,9 +104,9 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
             "lint_arwaky.config.yaml",
             "pyproject.toml",
         ] {
-            if self.fs.file_exists(cfg).await {
-                if let Ok(fp) = FilePath::new(cfg.to_string()) {
-                    config_found_paths.push(fp);
+            if let Ok(cfg_fp) = FilePath::new((*cfg).to_string()) {
+                if self.fs.file_exists(&cfg_fp).await {
+                    config_found_paths.push(cfg_fp);
                 }
             }
         }

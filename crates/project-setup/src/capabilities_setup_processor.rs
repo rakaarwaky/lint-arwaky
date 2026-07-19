@@ -288,7 +288,11 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     async fn file_exists(&self, path: &str) -> bool {
-        self.fs_port.file_exists(path).await
+        let fp = match FilePath::new(path) {
+            Ok(p) => p,
+            Err(_) => return false,
+        };
+        self.fs_port.file_exists(&fp).await
     }
 }
 
@@ -298,7 +302,7 @@ impl SetupManagementProcessor {
     /// Skips hidden dirs, `target/`, `node_modules/`, and `vendor/` for speed.
     async fn scan_source_extensions(
         &self,
-        dir: &str,
+        dir: &FilePath,
         depth: usize,
         max_depth: usize,
         found_rust: &mut bool,
@@ -310,7 +314,7 @@ impl SetupManagementProcessor {
         }
         let entries = self.fs_port.list_dir(dir).await;
         for entry in &entries {
-            let path = std::path::Path::new(&entry.path);
+            let path = std::path::Path::new(entry.path.value());
             if entry.is_dir {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')
