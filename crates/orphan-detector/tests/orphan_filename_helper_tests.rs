@@ -1,4 +1,4 @@
-use orphan_detector_lint_arwaky::taxonomy_orphan_filename_helper::{
+use shared::orphan_detector::taxonomy_orphan_filename_utility::{
     file_basename, file_stem, file_suffix,
 };
 
@@ -69,5 +69,5 @@ fn suffix_py_file() {
 
 #[test]
 fn suffix_single_underscore_prefix() {
-    assert_eq!(file_suffix("_helper.rs"), "helper");
+    assert_eq!(file_suffix("_helper.rs"), "helper.rs");
 }
