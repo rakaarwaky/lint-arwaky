@@ -47,9 +47,9 @@ impl CapabilitiesOrphanAnalyzer {
         }
 
         let stem = self.extractor.file_stem(f).value;
-        let content = self.cache.read_cached(f).value;
+        let content = self.cache.read_cached(f);
 
-        if !content.is_empty() {
+        if !content.value.is_empty() {
             let mut identifiers: Vec<String> = Vec::new();
             identifiers.extend(
                 self.extractor

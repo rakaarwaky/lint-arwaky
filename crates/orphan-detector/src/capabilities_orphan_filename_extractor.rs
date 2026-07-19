@@ -1,5 +1,6 @@
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_filename_regex_utility::{struct_re, trait_re};
 use shared::taxonomy_layer_vo::Identity;
@@ -21,10 +22,10 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
         Identity::new(fp.suffix())
     }
 
-    fn extract_struct_names(&self, content: &str) -> Vec<SymbolName> {
+    fn extract_struct_names(&self, content: &ContentString) -> Vec<SymbolName> {
         let mut names = Vec::new();
         if let Some(re) = struct_re() {
-            for cap in re.captures_iter(content) {
+            for cap in re.captures_iter(&content.value) {
                 let name = cap[1].to_string();
                 if name != "Self" && !name.is_empty() {
                     names.push(SymbolName::new(name));
@@ -34,10 +35,10 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
         names
     }
 
-    fn extract_trait_names(&self, content: &str) -> Vec<SymbolName> {
+    fn extract_trait_names(&self, content: &ContentString) -> Vec<SymbolName> {
         let mut names = Vec::new();
         if let Some(re) = trait_re() {
-            for cap in re.captures_iter(content) {
+            for cap in re.captures_iter(&content.value) {
                 names.push(SymbolName::new(cap[1].to_string()));
             }
         }

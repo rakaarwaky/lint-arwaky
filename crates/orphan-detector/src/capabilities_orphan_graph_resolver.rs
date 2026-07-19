@@ -14,10 +14,6 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// IMPORTS FROM TAXONOMY UTILITY
-// ═══════════════════════════════════════════════════════════════════════════════
-
 use shared::orphan_detector::taxonomy_graph_regex_utility::{
     import_re, inh_re, plain_mod_re, pub_mod_path_re,
 };
@@ -133,51 +129,47 @@ impl OrphanGraphResolver {
         src_dir: &std::path::Path,
         importing_file: &str,
     ) -> Option<String> {
-            let mut current = src_dir.to_path_buf();
-            // Deepest module file resolved so far (returned if a deeper segment is
-            // a non-module item like a function/type).
-            let mut last_resolved: Option<String> = None;
-            for seg in segments {
-                // Use &str joins — `Path::join(&String)` does not reliably resolve to
-                // `AsRef<Path>` the way `&str` does, which previously produced wrong
-                // (non-existent) candidate paths and false orphans.
-                let normalized = seg.replace('-', "_");
-                let candidate_file = current.join(format!("{normalized}.rs"));
-                let candidate_mod = current.join(&normalized).join("mod.rs");
-                if candidate_file.is_file() {
-                    let p = candidate_file.to_string_lossy().to_string();
-                    if p != importing_file {
-                        last_resolved = Some(p.clone());
-                    }
-                    last_resolved = last_resolved.or(Some(p));
-                    current = current.join(&normalized);
-                    continue;
-                } else if candidate_mod.is_file() {
-                    let p = candidate_mod.to_string_lossy().to_string();
-                    if p != importing_file {
-                        last_resolved = Some(p);
-                    }
-                    current = current.join(&normalized);
-                    continue;
-                } else {
-                    // No such file/dir at this level — this segment (and anything
-                    // after it) is a non-module item. Return the deepest module
-                    // resolved so far.
-                    return last_resolved;
+        let mut current = src_dir.to_path_buf();
+        // Deepest module file resolved so far (returned if a deeper segment is
+        // a non-module item like a function/type).
+        //
+        // NOTE: candidate paths are built with `format!` + `Path::new(&str)`
+        // rather than `Path::join(&String)`. `Path::join` with a `&String`
+        // argument does not reliably resolve to `AsRef<Path>` and silently
+        // produced non-existent candidate paths, which caused leaf modules to
+        // never be linked and produced false AES501/AES502 orphans.
+        let mut last_resolved: Option<String> = None;
+        for seg in segments {
+            let normalized = seg.replace('-', "_");
+            let file_cand = format!("{}/{}.rs", current.display(), normalized);
+            let mod_cand = format!("{}/{}/mod.rs", current.display(), normalized);
+            if Path::new(&file_cand).is_file() {
+                if file_cand != importing_file {
+                    last_resolved = Some(file_cand.clone());
                 }
+                last_resolved = last_resolved.or(Some(file_cand.clone()));
+                current = PathBuf::from(&file_cand);
+                continue;
+            } else if Path::new(&mod_cand).is_file() {
+                if mod_cand != importing_file {
+                    last_resolved = Some(mod_cand.clone());
+                }
+                current = PathBuf::from(&mod_cand);
+                continue;
+            } else {
+                return last_resolved;
             }
-            // All segments resolved inside directory modules; final mod.rs.
-            let final_mod = current.join("mod.rs");
-            if final_mod.is_file() {
-                let p = final_mod.to_string_lossy().to_string();
-                return if p != importing_file {
-                    Some(p)
-                } else {
-                    last_resolved
-                };
-            }
-            last_resolved
         }
+        let final_mod = format!("{}/mod.rs", current.display());
+        if Path::new(&final_mod).is_file() {
+            return if final_mod != importing_file {
+                Some(final_mod)
+            } else {
+                last_resolved
+            };
+        }
+        last_resolved
+    }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();

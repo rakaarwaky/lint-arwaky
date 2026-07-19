@@ -52,8 +52,8 @@ impl InfrastructureOrphanAnalyzer {
         // Check if wired in any container
         let stem = self.extractor.file_stem(f).value;
 
-        let content = self.cache.read_cached(f).value;
-        if !content.is_empty() {
+        let content = self.cache.read_cached(f);
+        if !content.value.is_empty() {
             let mut identifiers: Vec<String> = Vec::new();
             identifiers.extend(
                 self.extractor

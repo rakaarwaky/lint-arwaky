@@ -26,9 +26,9 @@ impl IOrphanFileCachePort for OrphanFileCache {
         })
     }
 
-    fn read_dir(&self, dir_path: &str) -> Vec<String> {
+    fn read_dir(&self, dir_path: &FilePath) -> Vec<String> {
         let mut entries = Vec::new();
-        if let Ok(read_dir) = fs::read_dir(dir_path) {
+        if let Ok(read_dir) = fs::read_dir(dir_path.value()) {
             for entry in read_dir.flatten() {
                 if let Some(s) = entry.path().to_str() {
                     entries.push(s.to_string());
@@ -38,12 +38,12 @@ impl IOrphanFileCachePort for OrphanFileCache {
         entries
     }
 
-    fn path_exists(&self, path: &str) -> bool {
-        std::path::Path::new(path).exists()
+    fn path_exists(&self, path: &FilePath) -> bool {
+        std::path::Path::new(&path.value).exists()
     }
 
-    fn is_symlink(&self, path: &str) -> bool {
-        std::fs::symlink_metadata(path)
+    fn is_symlink(&self, path: &FilePath) -> bool {
+        std::fs::symlink_metadata(&path.value)
             .map(|m| m.file_type().is_symlink())
             .unwrap_or(false)
     }
