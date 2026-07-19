@@ -19,6 +19,7 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
@@ -154,44 +155,46 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             for file in files.iter() {
                 let file_path = file.value();
                 if let Ok(content) = std::fs::read_to_string(file_path) {
+                    let file_fp = FilePath::new(file_path.to_string()).unwrap_or_default();
+                    let content_cs = ContentString::new(content.clone());
                     self.intent.check_dummy_imports(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
                     self.intent.check_dummy_functions(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
                     self.intent.check_dummy_impls(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
                     self.intent.check_taxonomy_intent(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
                     self.intent.check_layer_contract_intent(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,
                     );
                     self.intent.check_surface_logic(
-                        file_path,
-                        &content,
+                        &file_fp,
+                        &content_cs,
                         &mut results.values,
                         self.analyzer.as_ref(),
                         &root_dir,

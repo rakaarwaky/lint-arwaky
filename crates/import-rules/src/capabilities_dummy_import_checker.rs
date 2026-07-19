@@ -3,6 +3,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
@@ -27,14 +28,14 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     }
     fn check_dummy_imports(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = self.parser.get_language_from_path(file);
+        let lines: Vec<&str> = content.value().lines().collect();
+        let lang = self.parser.get_language_from_path(file.value());
 
         let dummy_ranges = self.parser.get_dummy_function_ranges(&lines, lang);
         let dummy_impl_traits: Vec<String> = self
@@ -44,7 +45,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             .map(|(trait_name, _)| trait_name.value().to_string())
             .collect();
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => "any".to_string(),
@@ -62,7 +63,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             }
 
             violations.push(LintResult::new_arch(
-                file,
+                file.value(),
                 line_no.value() as usize,
                 "AES204",
                 Severity::HIGH,
@@ -88,16 +89,16 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
     fn check_dummy_functions(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = self.parser.get_language_from_path(file);
+        let lines: Vec<&str> = content.value().lines().collect();
+        let lang = self.parser.get_language_from_path(file.value());
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => "any".to_string(),
@@ -107,7 +108,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             let start_us = start.value() as usize;
             let _end_us = end.value() as usize;
             violations.push(LintResult::new_arch(
-                file,
+                file.value(),
                 start_us,
                 "AES204",
                 Severity::HIGH,
@@ -130,15 +131,15 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
     fn check_dummy_impls(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
+        let lines: Vec<&str> = content.value().lines().collect();
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => "any".to_string(),
@@ -148,7 +149,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             let trait_name_str = trait_name.value().to_string();
             let start_us = start.value() as usize;
             violations.push(LintResult::new_arch(
-                file,
+                file.value(),
                 start_us,
                 "AES204",
                 Severity::HIGH,
@@ -181,16 +182,16 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
     fn check_taxonomy_intent(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = self.parser.get_language_from_path(file);
+        let lines: Vec<&str> = content.value().lines().collect();
+        let lang = self.parser.get_language_from_path(file.value());
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let _layer_name = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => "any".to_string(),
@@ -280,7 +281,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
             if has_taxonomy_import {
                 violations.push(LintResult::new_arch(
-                    file,
+                    file.value(),
                     dummy_function_line,
                     "AES204",
                     Severity::HIGH,
@@ -306,16 +307,16 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
     fn check_layer_contract_intent(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = self.parser.get_language_from_path(file);
+        let lines: Vec<&str> = content.value().lines().collect();
+        let lang = self.parser.get_language_from_path(file.value());
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let layer = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => return,
@@ -410,7 +411,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
                         .unwrap_or(1);
 
                     violations.push(LintResult::new_arch(
-                        file,
+                        file.value(),
                         class_line,
                         "AES204",
                         Severity::HIGH,
@@ -472,7 +473,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
                         .unwrap_or(1);
 
                     violations.push(LintResult::new_arch(
-                        file,
+                        file.value(),
                         error_line,
                         "AES204",
                         Severity::HIGH,
@@ -496,16 +497,16 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
 
     fn check_surface_logic(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = self.parser.get_language_from_path(file);
+        let lines: Vec<&str> = content.value().lines().collect();
+        let lang = self.parser.get_language_from_path(file.value());
 
-        let file_path = filepath_or_default(FilePath::new(file.to_string()));
+        let file_path = filepath_or_default(Ok::<FilePath, String>(file.clone()));
         let layer = match analyzer.detect_layer(&file_path, root_dir) {
             Some(l) => l.value,
             None => return,
@@ -538,7 +539,7 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
             for pattern in &logic_patterns {
                 if trimmed.contains(pattern) {
                     violations.push(LintResult::new_arch(
-                        file,
+                        file.value(),
                         i + 1,
                         "AES204",
                         Severity::MEDIUM,

@@ -62,14 +62,14 @@ Create and validate TypeScript **capabilities layer** files following clean arch
 - **All data types in shared** — no interfaces/types/enums may be defined outside shared/taxonomy
 - **Fields must use DI** — class fields should receive protocol interfaces via constructor
 - **Helper methods stay in layer** — helper methods that support the class remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions MUST be extracted to `*_utility.ts` modules in shared/taxonomy
+- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.ts` modules in shared/taxonomy
 - **No module-level `export function` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.ts`
 
 ### Helper vs Utility Decision (The Ultimate Boundary)
 
-The boundary is not just about `this`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single-Domain vs. Multi-Domain Reuse**.
+The boundary is not just about `this`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single Consumer vs. Multi Consumer Reuse**.
 
-> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple features/domains use it, or only this one?"
+> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple capabilities/infrastructures use it, or only this one class?"
 
 #### 🟢 Keep as Private Helper in Capabilities (Block 3)
 Keep if the function contains **Domain Knowledge** or meets ANY of these:
@@ -77,14 +77,14 @@ Keep if the function contains **Domain Knowledge** or meets ANY of these:
 2. **Needs Instance State**: Accesses `this.field` or `static` fields.
 3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
 4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class.
-5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
+5. **Single Consumer Only**: Function only serves ONE capability/infrastructure class and won't be reused by other classes.
 
 #### 🔴 Extract to Utility (`*_utility.ts`)
 Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
 1. **Stateless**: No `this`, no class-level state access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
-3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
-4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* capabilities/infrastructures could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
 
 #### I/O Blocker (CRITICAL)
 
@@ -97,7 +97,7 @@ A function can be stateless but STILL **cannot** be extracted to taxonomy if it 
 **Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
 
 ```typescript
-function hasCrateSelfImport(filePath: string): boolean {
+function readConfig(filePath: string): string | null {
     // Stateless ✓ (no this)
     // But uses fs.readFileSync() ✗ (I/O)
     // → CANNOT extract to taxonomy utility
@@ -662,8 +662,8 @@ Function found in capabilities file?
 - [ ] Helper methods are in Block 3 (`private` methods).
 - [ ] Constructors receive protocol interfaces via `constructor`.
 - [ ] **No module-level `export function`** exists outside the class in capabilities files.
-- [ ] **No stateless `static` method** (zero class dependency) remains in class — extracted to `*_utility.ts`.
-- [ ] Stateless utilities exist in their own `*_utility.ts` files in shared/taxonomy.
+- [ ] **No stateless `static` method** (zero class dependency) that serves MULTIPLE capabilities/infrastructures remains in class — extracted to `*_utility.ts`.
+- [ ] Stateless utilities that serve MULTIPLE capabilities/infrastructures exist in their own `*_utility.ts` files in shared/taxonomy.
 - [ ] **1 file = 1 class** — no multiple classes in one file.
 - [ ] All interfaces/types imported from shared/taxonomy (none defined locally).
 - [ ] Constructor fields use protocol interfaces, not concrete types.
@@ -905,7 +905,7 @@ Encountered cross-import violation in capabilities?
 - ❌ **Using concrete types as constructor fields**: Constructor should receive protocol interfaces, not concrete implementations.
 - ❌ **Putting helper methods in the interface**: This violates encapsulation and forces all implementors to write boilerplate.
 - ❌ **Mixing Block 2 and Block 3**: Do not interleave protocol methods and helper methods. Keep them in separate sections.
-- ❌ **Placing utilities in class body**: Stateless functions MUST be extracted to standalone `*_utility.ts` modules.
+- ❌ **Placing utilities in class body**: Stateless functions that serve MULTIPLE capabilities/infrastructures MUST be extracted to standalone `*_utility.ts` modules.
 - ❌ **Creating "God Protocols"**: If a protocol has >10 methods or mixes unrelated concerns, split it into multiple protocols.
 - ❌ **Multiple classes in one file**: Each file should have exactly ONE class. Use `consolidate-files-typescript` if merging multiple files.
 - ❌ **Placing utility methods (`toString`, `toJSON`, `equals`) in Block 2**: Block 2 is RESERVED for protocol method implementations ONLY. Utility methods belong in Block 3.

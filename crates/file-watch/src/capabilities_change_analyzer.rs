@@ -1,4 +1,5 @@
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
@@ -16,18 +17,24 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
         deduped.into_values().collect()
     }
 
-    fn is_lintable(&self, path: &str) -> bool {
+    fn is_lintable(&self, path: &FilePath) -> bool {
         let lintable_exts = [
             ".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".json", ".css", ".md",
             ".toml", ".yaml", ".yml",
         ];
-        lintable_exts.iter().any(|ext| path.ends_with(ext))
+        lintable_exts.iter().any(|ext| path.value().ends_with(ext))
     }
 
     fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
         events
             .into_iter()
-            .filter(|e| self.is_lintable(&e.path))
+            .filter(|e| {
+                if let Ok(fp) = FilePath::new(e.path.clone()) {
+                    self.is_lintable(&fp)
+                } else {
+                    false
+                }
+            })
             .collect()
     }
 }

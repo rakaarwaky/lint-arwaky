@@ -59,13 +59,13 @@ Create and validate Rust **capabilities layer** files following clean architectu
 - **All data classes in shared** — no structs/enums/consts with data may be defined outside `shared/folder-name/taxonomy_`.
 - **Fields must use DI** — impl struct fields should be `Arc<dyn Trait>` objects, not concrete types.
 - **Helper functions stay in layer** — helper methods that support the impl struct remain in the file.
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) should be extracted to `*file_name_utility.rs` modules in `shared/folder-name/taxonomy_`.
+- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) that serve MULTIPLE capabilities/infrastructures should be extracted to `*file_name_utility.rs` modules in `shared/folder-name/taxonomy_`.
 
 ### Helper vs Utility Decision (The Ultimate Boundary)
 
-The boundary is not just about `&self`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single-Domain vs. Multi-Domain Reuse**.
+The boundary is not just about `&self`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single Consumer vs. Multi Consumer Reuse**.
 
-> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple features/domains use it, or only this one?"
+> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple capabilities/infrastructures use it, or only this one class?"
 
 #### 🟢 Keep as Private Helper in Capabilities (Block 3)
 Keep if the function contains **Domain Knowledge** or meets ANY of these:
@@ -73,14 +73,14 @@ Keep if the function contains **Domain Knowledge** or meets ANY of these:
 2. **Needs Instance State**: Accesses `self.field` or `static` fields.
 3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
 4. **Factory Method**: `new()`, builders — specific to instantiating this class.
-5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
+5. **Single Consumer Only**: Function only serves ONE capability/infrastructure class and won't be reused by other classes.
 
 #### 🔴 Extract to Utility (`*_utility.rs`)
 Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
 1. **Stateless**: No `&self`, no struct field access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
-3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
-4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* capabilities/infrastructures could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
 
 #### ⚠️ I/O Blocker (CRITICAL)
 A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
@@ -357,8 +357,8 @@ Run `cargo check` to confirm no violations.
 - [ ] Trait contains **only** public/contract methods (no private helpers).
 - [ ] Private helpers are in Block 3 (`impl Struct`).
 - [ ] Constructors (`new`, builders) are in Block 3.
-- [ ] No free functions (no `&self`) remain in Block 3 — extracted to `*_utility.rs` modules.
-- [ ] Stateless utilities exist in their own `*_utility.rs` files in shared/taxonomy.
+- [ ] No free functions (no `&self`) that serve MULTIPLE capabilities/infrastructures remain in Block 3 — extracted to `*_utility.rs` modules.
+- [ ] Stateless utilities that serve MULTIPLE capabilities/infrastructures exist in their own `*_utility.rs` files in shared/taxonomy.
 - [ ] Generic trait methods include `where Self: Sized`.
 - [ ] **1 file = 1 impl struct** — no multiple structs in one file.
 - [ ] All data classes imported from shared/taxonomy (none defined locally).
@@ -572,7 +572,7 @@ awk '/^impl (Default|Clone|Debug|Display)/{std=NR} /^impl I[A-Z].*Protocol/{prot
 - ❌ **Using concrete types as fields**: Impl struct fields should always be `Arc<dyn Trait>` (DI), never concrete implementations.
 - ❌ **Putting private helpers in the trait**: This violates encapsulation and forces all implementors to write boilerplate.
 - ❌ **Mixing Block 2 and Block 3**: Do not interleave trait methods and private helpers. Keep them in separate `impl` blocks.
-- ❌ **Placing utilities in Block 3**: Stateless free functions (no `&self`) MUST be extracted to standalone `*_utility.rs` modules. They do NOT belong in the impl block.
+- ❌ **Placing utilities in Block 3**: Stateless free functions (no `&self`) that serve MULTIPLE capabilities/infrastructures MUST be extracted to standalone `*_utility.rs` modules. They do NOT belong in the impl block.
 - ❌ **Creating "God Traits"**: If a trait has >10 methods or mixes unrelated concerns, split it into multiple traits.
 - ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the trait.
 - ❌ **Placing `new()` in the trait impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).

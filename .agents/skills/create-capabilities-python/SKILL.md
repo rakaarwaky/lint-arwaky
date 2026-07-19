@@ -62,14 +62,14 @@ Create and validate Python **capabilities layer** files following clean architec
 - **All data classes in shared** — no dataclasses/Enums may be defined outside shared/taxonomy
 - **Fields must use DI** — class fields should receive protocol interfaces via constructor
 - **Helper methods stay in layer** — helper methods that support the class remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions (no `self`, no `cls`) MUST be extracted to `*_utility.py` modules in shared/taxonomy
+- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions (no `self`, no `cls`) that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.py` modules in shared/taxonomy
 - **No module-level `def` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.py`
 
 ### Helper vs Utility Decision (The Ultimate Boundary)
 
-The boundary is not just about `self`/`cls`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)**.
+The boundary is not just about `self`/`cls`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single Consumer vs. Multi Consumer Reuse**.
 
-> **The Litmus Test:** "Does this function know about specific business rules (e.g., AES violations, layer mappings), or is it just a blind data manipulator?"
+> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple capabilities/infrastructures use it, or only this one class?"
 
 #### 🟢 Keep as Private Helper in Capabilities (Block 3)
 Keep if the function contains **Domain Knowledge** or meets ANY of these:
@@ -77,14 +77,14 @@ Keep if the function contains **Domain Knowledge** or meets ANY of these:
 2. **Needs Instance State**: Accesses `self.field` or class variables.
 3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
 4. **Factory Method**: `create_default()`, `from_config()`, `from_dict()` — specific to instantiating this class.
-5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
+5. **Single Consumer Only**: Function only serves ONE capability/infrastructure class and won't be reused by other classes.
 
 #### 🔴 Extract to Utility (`*_utility.py`)
 Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
 1. **Stateless**: No `self`, no `cls`, no class-level state access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
-3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
-4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* capabilities/infrastructures could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
 
 #### I/O Blocker (CRITICAL)
 
@@ -97,9 +97,9 @@ A function can be stateless but STILL **cannot** be extracted to taxonomy if it 
 **Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
 
 ```python
-def has_crate_self_import(file_path: str) -> bool:
+def read_config(file_path: str) -> str | None:
     # Stateless ✓ (no self, no cls)
-    # But uses open() / read_dir ✗ (I/O)
+    # But uses open() ✗ (I/O)
     # → CANNOT extract to taxonomy utility
     # → Keep in capabilities layer
 ```
@@ -630,8 +630,8 @@ Function found in capabilities file?
 - [ ] Helper methods are in Block 3.
 - [ ] Constructors receive protocol interfaces via `__init__`.
 - [ ] **No module-level `def` functions** exist outside the class in capabilities files.
-- [ ] **No stateless `@staticmethod`** (zero class dependency) remains in class — extracted to `*_utility.py`.
-- [ ] Stateless utilities exist in their own `*_utility.py` files in shared/taxonomy.
+- [ ] **No stateless `@staticmethod`** (zero class dependency) that serves MULTIPLE capabilities/infrastructures remains in class — extracted to `*_utility.py`.
+- [ ] Stateless utilities that serve MULTIPLE capabilities/infrastructures exist in their own `*_utility.py` files in shared/taxonomy.
 - [ ] **1 file = 1 class** — no multiple classes in one file.
 - [ ] All dataclasses imported from shared/taxonomy (none defined locally).
 - [ ] Constructor fields use protocol interfaces, not concrete types.
@@ -880,7 +880,7 @@ Encountered cross-import violation in capabilities?
 - ❌ **Using concrete types as constructor fields**: Constructor should receive protocol interfaces, not concrete implementations.
 - ❌ **Putting helper methods in the protocol**: This violates encapsulation and forces all implementors to write boilerplate.
 - ❌ **Mixing Block 2 and Block 3**: Do not interleave protocol methods and helper methods. Keep them in separate sections.
-- ❌ **Placing utilities in class body**: Stateless functions (no `self`) MUST be extracted to standalone `*_utility.py` modules.
+- ❌ **Placing utilities in class body**: Stateless functions (no `self`) that serve MULTIPLE capabilities/infrastructures MUST be extracted to standalone `*_utility.py` modules.
 - ❌ **Creating "God Protocols"**: If a protocol has >10 methods or mixes unrelated concerns, split it into multiple protocols.
 - ❌ **Multiple classes in one file**: Each file should have exactly ONE class. Use `consolidate-files-python` if merging multiple files.
 - ❌ **Placing dunder methods (`__repr__`, `__str__`, `__eq__`) in Block 2**: Block 2 is RESERVED for protocol method implementations ONLY. Dunders are utilities and belong in Block 3.

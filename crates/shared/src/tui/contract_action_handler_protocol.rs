@@ -1,3 +1,4 @@
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::tui::taxonomy_scan_update_vo::ScanUpdate;
 use crate::tui::taxonomy_state_vo::AppState;
 use crate::tui::taxonomy_tui_event::TuiEvent;
@@ -5,7 +6,7 @@ use std::sync::mpsc::Receiver;
 
 pub trait IActionHandlerProtocol: Send + Sync {
     fn handle(&self, state: &mut AppState, event: TuiEvent);
-    fn load_directory(&self, state: &mut AppState, path: &str);
+    fn load_directory(&self, state: &mut AppState, path: &FilePath);
     fn load_preview(&self, state: &mut AppState);
     /// Poll for file watch events and update state. Call every event loop tick.
     fn poll_watch(&self, state: &mut AppState);

@@ -105,7 +105,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
         let mut results: Vec<LintResult> = Vec::new();
         // Build comprehensive context — bridge &[String] -> &[OrphanFileListVO].
-        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(
+            files.iter().map(|p| p.value.clone()).collect(),
+        );
         let context: GraphAnalysisContext = self
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
@@ -120,6 +122,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let entry_points = self
             .resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
+
+        // Prepare file strings for _evaluate_layer
+        let file_strs: Vec<String> = files.iter().map(|p| p.value.clone()).collect();
 
         // Evaluate each file: alive (reachable) vs orphan (unreachable)
         for f in files {
@@ -155,12 +160,14 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(layer_str.value());
+            let all_files_strs: Vec<String> = files.iter().map(|p| p.value.clone()).collect();
+            let alive_strs: Vec<String> = entry_points.values.iter().map(|p| p.clone()).collect();
             let res = self._evaluate_layer(
                 f.value(),
                 &context,
-                &entry_points.values,
+                &alive_strs,
                 &layer_vo,
-                &file_strs,
+                &all_files_strs,
                 root_dir.value(),
             );
 

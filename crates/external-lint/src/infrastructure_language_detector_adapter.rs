@@ -6,6 +6,7 @@
 use std::path::Path;
 
 use async_trait::async_trait;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_language_detector_port::{
     DetectedLanguages, IExternalLintLanguageDetectorPort,
@@ -32,9 +33,9 @@ impl IExternalLintLanguageDetectorPort for ExternalLintLanguageDetectorAdapter {
         }
 
         DetectedLanguages {
-            has_rs,
-            has_py,
-            has_js,
+            has_rs: BooleanVO::new(has_rs),
+            has_py: BooleanVO::new(has_py),
+            has_js: BooleanVO::new(has_js),
         }
     }
 }

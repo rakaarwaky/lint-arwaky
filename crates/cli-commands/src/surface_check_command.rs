@@ -170,7 +170,7 @@ impl CheckCommandsSurface {
         let mut all_results = Vec::new();
 
         // 1. Run AES analysis (same algorithm for check and scan)
-        let aes_results = code_analysis_linter.run_code_analysis(path);
+        let aes_results = code_analysis_linter.run_code_analysis(&path_obj);
         all_results.extend(aes_results.values);
 
         // 2-5. Run async linter groups concurrently
@@ -234,9 +234,13 @@ impl CheckCommandsSurface {
             Vec::new()
         };
 
+        let orphan_files: Vec<FilePath> = all_source_files
+            .into_iter()
+            .filter_map(|s| FilePath::new(s).ok())
+            .collect();
         orphan_orchestrator.check_orphans(
             layer_detector.as_ref(),
-            &all_source_files,
+            &orphan_files,
             orphan_scan_root,
         )
     }
@@ -283,7 +287,8 @@ impl CheckCommandsSurface {
         match format {
             Format::Text => {
                 let results_list = LintResultList::new(filtered_results);
-                println!("{}", reporter.format_report(&results_list, path));
+                let path_fp = FilePath::new(path.to_string()).unwrap_or_default();
+                println!("{}", reporter.format_report(&results_list, &path_fp));
             }
             Format::Json => {
                 let json = serde_json::to_string_pretty(&filtered_results)

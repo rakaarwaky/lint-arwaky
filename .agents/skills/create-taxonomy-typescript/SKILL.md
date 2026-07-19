@@ -155,14 +155,16 @@ A function belongs in `*_utility.ts` ONLY if it meets ALL of these:
 
 1. **Stateless**: No `this` context, no class field access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
-3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules, AES violations, or layer mappings. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules or domain-specific validation logic. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
 
-If a stateless function contains **Domain Knowledge** (e.g., knows about specific business rules, layer mappings, or domain-specific validation logic), it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
+If a stateless function contains **Domain Knowledge** OR only serves **ONE capability/infrastructure class**, it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
 
 ```typescript
-// ✅ GOOD: Dumb Tool (Domain-Agnostic)
+// ✅ GOOD: Dumb Tool (Domain-Agnostic, Multi-Consumer Reusable)
 export function extractTraitName(content: string): string | null {
     // Just regex, doesn't know what a "trait" means in domain context
+    // Multiple capabilities/infrastructures can use this
     // ...
 }
 
@@ -175,6 +177,13 @@ export function getTargetLayerFromSuffix(suffix: string): string {
         case 'protocol': return 'capabilities';
         default: return 'unknown';
     }
+}
+
+// ❌ BAD: Single Consumer Only
+export function formatImportViolation(rule: ImportRule): string {
+    // Only used by one capability class, not reusable by others
+    // This belongs in capabilities as a private helper!
+    return `Import rule violation: ${rule.pattern}`;
 }
 ```
 
@@ -296,7 +305,7 @@ Run TypeScript compiler to confirm no violations.
 - [ ] **All interfaces in shared/taxonomy** — no interfaces/types defined in layer files.
 - [ ] **Taxonomy file naming follows strict suffixes** — `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
 - [ ] **Taxonomy files import only from taxonomy** — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- [ ] **Utility functions in `*_utility.ts`** — standalone functions extracted to modules.
+- [ ] **Utility functions in `*_utility.ts` are purely domain-agnostic AND serve MULTIPLE capabilities/infrastructures** — functions containing business rules OR serving only ONE class stay in capabilities as private helpers.
 - [ ] **Layer files import data types from taxonomy** — not defined locally.
 - [ ] **Domain's `index.ts` exports new taxonomy modules** — `export { ... } from './taxonomy_<name>'`.
 - [ ] **Value Objects are immutable** — readonly properties by default.
@@ -443,6 +452,7 @@ const file = fs.createWriteStream(MANIFEST_FILENAME);
 - ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
 - ❌ **Forgetting to register new taxonomy modules in index.ts**: Every `taxonomy_*.ts` file must have a corresponding `export { ... } from './taxonomy_<name>'` in the domain's `index.ts`.
 - ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.ts`.
-- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `this` context) MUST be extracted to `*_utility.ts` modules in shared/taxonomy.
+- ❌ **Placing Single-Consumer functions in Utility files**: If a function only serves ONE capability/infrastructure class, it belongs in capabilities as a private helper, NOT in `*_utility.ts`.
+- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `this` context) that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.ts` modules in shared/taxonomy.
 - ❌ **Creating multiple data types with different names for the same concept**: Consolidate into a single taxonomy file.
 - ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.

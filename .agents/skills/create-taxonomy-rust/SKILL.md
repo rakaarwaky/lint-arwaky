@@ -163,14 +163,16 @@ A function belongs in `*_utility.rs` ONLY if it meets ALL of these:
 
 1. **Stateless**: No `&self`, no struct field access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
-3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules, AES violations, or layer mappings. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules or domain-specific validation logic. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
 
-If a stateless function contains **Domain Knowledge** (e.g., knows about specific business rules, layer mappings, or domain-specific validation logic), it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
+If a stateless function contains **Domain Knowledge** OR only serves **ONE capability/infrastructure class**, it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
 
 ```rust
-// ✅ GOOD: Dumb Tool (Domain-Agnostic)
+// ✅ GOOD: Dumb Tool (Domain-Agnostic, Multi-Consumer Reusable)
 pub fn extract_trait_name(content: &str) -> Option<String> {
     // Just regex, doesn't know what a "trait" means in domain context
+    // Multiple capabilities/infrastructures can use this
     // ...
 }
 
@@ -183,6 +185,13 @@ pub fn get_target_layer_from_suffix(suffix: &str) -> &str {
         "protocol" => "capabilities",
         _ => "unknown"
     }
+}
+
+// ❌ BAD: Single Consumer Only
+pub fn format_import_violation(rule: &ImportRule) -> String {
+    // Only used by one capability class, not reusable by others
+    // This belongs in capabilities as a private helper!
+    format!("Import rule violation: {}", rule.pattern)
 }
 ```
 
@@ -305,7 +314,7 @@ Run `cargo check` to confirm no violations.
 - [ ] **All dataclasses in shared/taxonomy** — no structs/enums with data defined in layer files.
 - [ ] **Taxonomy file naming follows strict suffixes** — `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
 - [ ] **Taxonomy files import only from taxonomy** — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- [ ] **Utility functions in `*_utility.rs` are purely domain-agnostic** — functions containing business rules (e.g., layer mappings) stay in capabilities as private helpers.
+- [ ] **Utility functions in `*_utility.rs` are purely domain-agnostic AND serve MULTIPLE capabilities/infrastructures** — functions containing business rules OR serving only ONE class stay in capabilities as private helpers.
 - [ ] **Layer files import dataclasses from taxonomy** — not defined locally.
 - [ ] **Domain's `mod.rs` exports new taxonomy modules** — `pub mod taxonomy_<name>`.
 - [ ] **Value Objects have `new()`, `value()`, `Display`, `From<T>` implementations**.
@@ -446,7 +455,8 @@ let file = std::fs::File::create(MANIFEST_FILENAME);
 - ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
 - ❌ **Forgetting to register new taxonomy modules in mod.rs**: Every `taxonomy_*.rs` file must have a corresponding `pub mod` in the domain's `mod.rs`.
 - ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.rs`.
-- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `&self`) MUST be extracted to `*_utility.rs` modules in shared/taxonomy.
+- ❌ **Placing Single-Consumer functions in Utility files**: If a function only serves ONE capability/infrastructure class, it belongs in capabilities as a private helper, NOT in `*_utility.rs`.
+- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `&self`) that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.rs` modules in shared/taxonomy.
 - ❌ **Creating multiple dataclasses with different names for the same concept**: Consolidate into a single taxonomy file.
 - ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.
 

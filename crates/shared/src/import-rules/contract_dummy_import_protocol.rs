@@ -3,6 +3,7 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
 use crate::taxonomy_layer_vo::Identity;
 
 /// Unified Contract / Port for the AES204 rule (Dummy Import Checker).
@@ -16,8 +17,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_dummy_imports(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
@@ -25,8 +26,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_dummy_functions(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
@@ -34,8 +35,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_dummy_impls(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
@@ -43,8 +44,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_taxonomy_intent(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
@@ -52,8 +53,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_layer_contract_intent(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
@@ -61,8 +62,8 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
 
     fn check_surface_logic(
         &self,
-        file: &str,
-        content: &str,
+        file: &FilePath,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,

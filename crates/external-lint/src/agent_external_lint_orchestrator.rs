@@ -31,11 +31,9 @@ pub struct ExternalLintOrchestrator {
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {
         let detected = self.language_detector.detect_languages(path).await;
-        let adapter_names = self.selector.select_adapters(
-            BooleanVO::new(detected.has_rs),
-            BooleanVO::new(detected.has_py),
-            BooleanVO::new(detected.has_js),
-        );
+        let adapter_names =
+            self.selector
+                .select_adapters(detected.has_rs, detected.has_py, detected.has_js);
 
         let mut futures = Vec::new();
         for name in &adapter_names {
