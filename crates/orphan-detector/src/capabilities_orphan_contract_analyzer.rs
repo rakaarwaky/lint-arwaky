@@ -4,8 +4,9 @@ use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
-use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::contract_orphan_protocol::{
+    IContractOrphanProtocol, IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
+};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -23,7 +24,7 @@ const LAYER_CAPABILITIES: &str = "capabilities";
 const LAYER_AGENT: &str = "agent";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STATIC REGEXES (LazyLock)
+// STATIC REGEXES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 fn re_contract_rust() -> Option<&'static Regex> {
@@ -62,6 +63,7 @@ fn re_interface() -> Option<&'static Regex> {
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: Arc<dyn IOrphanFileCachePort>,
 }
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
@@ -74,8 +76,26 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         _inheritance_map: &InheritanceMap,
         all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
-        let cache = FileCache::build(all_files, root_dir, self.extractor.as_ref());
-        is_contract_orphan(f, &cache, self.extractor.as_ref())
+        let search_files = build_search_files(all_files, root_dir);
+        let mut contents: HashMap<String, String> = HashMap::new();
+        let mut basenames: HashMap<String, String> = HashMap::new();
+
+        for path in &search_files {
+            if contents.contains_key(path) {
+                continue;
+            }
+            let fp = FilePath {
+                value: path.clone(),
+            };
+            let content = self.cache.read_cached(&fp).value;
+            if !content.is_empty() {
+                contents.insert(path.clone(), content.clone());
+                let basename = self.extractor.file_basename(&fp).value;
+                basenames.insert(path.clone(), basename);
+            }
+        }
+
+        is_contract_orphan(f, &contents, &basenames, self.extractor.as_ref())
     }
 }
 
@@ -86,58 +106,17 @@ impl Default for ContractOrphanAnalyzer {
             extractor: Arc::new(
                 crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
             ),
+            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
         }
     }
 }
 
 impl ContractOrphanAnalyzer {
-    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
-        Self { extractor }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPER STRUCT — FileCache (tightly coupled to ContractOrphanAnalyzer)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-pub struct FileCache {
-    pub contents: HashMap<String, Arc<str>>,
-    pub basenames: HashMap<String, String>,
-}
-
-impl FileCache {
-    pub fn build(
-        all_files: &[FilePath],
-        root_dir: &FilePath,
-        extractor: &dyn IOrphanFilenameExtractorProtocol,
+    pub fn new(
+        extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+        cache: Arc<dyn IOrphanFileCachePort>,
     ) -> Self {
-        let search_files = build_search_files(all_files, root_dir);
-        let mut contents = HashMap::new();
-        let mut basenames = HashMap::new();
-
-        for path in &search_files {
-            if contents.contains_key(path) {
-                continue;
-            }
-            match std::fs::read_to_string(path) {
-                Ok(c) => {
-                    contents.insert(path.clone(), Arc::from(c.as_str()));
-                    let basename = extractor
-                        .file_basename(&FilePath {
-                            value: path.clone(),
-                        })
-                        .value;
-                    basenames.insert(path.clone(), basename);
-                }
-                Err(e) => {
-                    eprintln!("[WARN] Failed to read {}: {}", path, e);
-                }
-            }
-        }
-        Self {
-            contents,
-            basenames,
-        }
+        Self { extractor, cache }
     }
 }
 
@@ -147,14 +126,15 @@ impl FileCache {
 
 pub fn is_contract_orphan(
     f: &FilePath,
-    cache: &FileCache,
+    contents: &HashMap<String, String>,
+    basenames: &HashMap<String, String>,
     extractor: &dyn IOrphanFilenameExtractorProtocol,
 ) -> OrphanIndicatorResult {
     let fp = f.value();
     let suffix = extractor.file_suffix(f).value;
 
-    let content = match cache.contents.get(fp) {
-        Some(c) => c.as_ref(),
+    let content = match contents.get(fp) {
+        Some(c) => c.as_str(),
         None => return not_orphan(),
     };
 
@@ -170,8 +150,7 @@ pub fn is_contract_orphan(
         _ => return not_orphan(),
     };
 
-    // Check 1: trait not implemented
-    if !check_implemented(cache, &trait_name, target_prefix) {
+    if !check_implemented(contents, basenames, &trait_name, target_prefix) {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -183,8 +162,9 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 2: port/protocol not called
-    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL) && !check_called(cache, &trait_name) {
+    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL)
+        && !check_called(contents, basenames, &trait_name)
+    {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -196,8 +176,9 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 3: port/protocol not wired
-    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL) && !check_wired(cache, &trait_name) {
+    if (suffix == SUFFIX_PORT || suffix == SUFFIX_PROTOCOL)
+        && !check_wired(contents, basenames, &trait_name)
+    {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -209,8 +190,7 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 4: aggregate not called
-    if suffix == SUFFIX_AGGREGATE && !check_called(cache, &trait_name) {
+    if suffix == SUFFIX_AGGREGATE && !check_called(contents, basenames, &trait_name) {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -222,8 +202,7 @@ pub fn is_contract_orphan(
         );
     }
 
-    // Check 5: aggregate not wired
-    if suffix == SUFFIX_AGGREGATE && !check_wired(cache, &trait_name) {
+    if suffix == SUFFIX_AGGREGATE && !check_wired(contents, basenames, &trait_name) {
         return orphan_result(
             &suffix,
             &trait_name,
@@ -239,15 +218,20 @@ pub fn is_contract_orphan(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MODULAR DETECTION: IMPLEMENT / CALL / WIRE
+// MODULAR DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -> bool {
+fn check_implemented(
+    contents: &HashMap<String, String>,
+    basenames: &HashMap<String, String>,
+    trait_name: &str,
+    target_prefix: &str,
+) -> bool {
     let rust_impl_pattern = format!("impl {} for", trait_name);
     let re_trait = word_boundary_re(trait_name);
 
-    for (path, content) in &cache.contents {
-        let bn = match cache.basenames.get(path) {
+    for (path, content) in contents {
+        let bn = match basenames.get(path) {
             Some(b) => b.as_str(),
             None => continue,
         };
@@ -270,11 +254,15 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
     false
 }
 
-fn check_called(cache: &FileCache, trait_name: &str) -> bool {
+fn check_called(
+    contents: &HashMap<String, String>,
+    basenames: &HashMap<String, String>,
+    trait_name: &str,
+) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
-    for (path, content) in &cache.contents {
-        let bn = match cache.basenames.get(path) {
+    for (path, content) in contents {
+        let bn = match basenames.get(path) {
             Some(b) => b.as_str(),
             None => continue,
         };
@@ -299,11 +287,15 @@ fn check_called(cache: &FileCache, trait_name: &str) -> bool {
     false
 }
 
-fn check_wired(cache: &FileCache, trait_name: &str) -> bool {
+fn check_wired(
+    contents: &HashMap<String, String>,
+    basenames: &HashMap<String, String>,
+    trait_name: &str,
+) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
-    for (path, content) in &cache.contents {
-        let bn = match cache.basenames.get(path) {
+    for (path, content) in contents {
+        let bn = match basenames.get(path) {
             Some(b) => b.as_str(),
             None => continue,
         };
@@ -329,10 +321,10 @@ fn check_wired(cache: &FileCache, trait_name: &str) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RUST DETECTION
+// LANGUAGE DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -> bool {
+fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -> bool {
     content.contains(rust_impl_pattern)
         || content.lines().any(|ln| {
             let t = ln.trim();
@@ -340,7 +332,7 @@ pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -
         })
 }
 
-pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
+fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
@@ -358,7 +350,7 @@ pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
+fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
     let lines: Vec<&str> = content.lines().collect();
     for (i, line) in lines.iter().enumerate() {
         let t = line.trim();
@@ -382,11 +374,7 @@ pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PYTHON DETECTION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
+fn has_py_impl(content: &str, trait_name: &str) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with('#') {
@@ -399,7 +387,7 @@ pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
     false
 }
 
-pub fn has_py_call(content: &str, re_trait: &Regex) -> bool {
+fn has_py_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with('#') {
@@ -415,7 +403,7 @@ pub fn has_py_call(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-pub fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
+fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with('#') {
@@ -428,11 +416,7 @@ pub fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPESCRIPT DETECTION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-pub fn has_ts_impl(content: &str, trait_name: &str) -> bool {
+fn has_ts_impl(content: &str, trait_name: &str) -> bool {
     let re = word_boundary_re(trait_name);
     for line in content.lines() {
         let t = line.trim();
@@ -446,7 +430,7 @@ pub fn has_ts_impl(content: &str, trait_name: &str) -> bool {
     false
 }
 
-pub fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
+fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") {
@@ -462,7 +446,7 @@ pub fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
+fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") {
@@ -479,40 +463,20 @@ pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub fn word_boundary_re(trait_name: &str) -> Regex {
+fn word_boundary_re(trait_name: &str) -> Regex {
     let pattern = format!(r"\b{}\b", regex::escape(trait_name));
-    match Regex::new(&pattern) {
-        Ok(re) => re,
-        Err(_) => never_match_regex(),
-    }
+    Regex::new(&pattern).unwrap_or_else(|_| never_match_regex())
 }
 
 fn never_match_regex() -> Regex {
-    match Regex::new("") {
-        Ok(re) => re,
-        Err(_) => {
-            std::process::abort();
-        }
-    }
+    Regex::new("").unwrap_or_default()
 }
 
-pub fn not_orphan() -> OrphanIndicatorResult {
+fn not_orphan() -> OrphanIndicatorResult {
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
 }
 
-pub fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String> {
-    let mut search_files: Vec<String> = all_files.iter().map(|fp| fp.value().to_string()).collect();
-    let root_path = std::path::Path::new(root_dir.value());
-    for ws_dir in &["crates", "packages", "modules"] {
-        let ws_path = root_path.join(ws_dir);
-        if ws_path.exists() {
-            collect_source_files(&ws_path, &mut search_files);
-        }
-    }
-    search_files
-}
-
-pub fn orphan_result(
+fn orphan_result(
     suffix: &str,
     trait_name: &str,
     target_prefix: &str,
@@ -531,11 +495,52 @@ pub fn orphan_result(
     )
 }
 
+fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String> {
+    let mut search_files: Vec<String> = all_files.iter().map(|fp| fp.value().to_string()).collect();
+    let root_path = std::path::Path::new(root_dir.value());
+    for ws_dir in &["crates", "packages", "modules"] {
+        let ws_path = root_path.join(ws_dir);
+        if ws_path.exists() {
+            collect_source_files(&ws_path, &mut search_files);
+        }
+    }
+    search_files
+}
+
+fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
+    let meta = match std::fs::symlink_metadata(dir) {
+        Ok(m) => m,
+        Err(_) => return,
+    };
+    if meta.file_type().is_symlink() {
+        return;
+    }
+
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = entry.file_name().to_string_lossy().to_string();
+                if name == "target" || name == ".git" || name == "node_modules" {
+                    continue;
+                }
+                collect_source_files(&path, files);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                    if let Some(s) = path.to_str() {
+                        files.push(s.to_string());
+                    }
+                }
+            }
+        }
+    }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TRAIT NAME EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-pub fn strip_comments(content: &str, ext: &str) -> String {
+fn strip_comments(content: &str, ext: &str) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_block_comment = false;
 
@@ -598,7 +603,7 @@ pub fn strip_comments(content: &str, ext: &str) -> String {
     result
 }
 
-pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<String> {
+fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<String> {
     let ext = std::path::Path::new(file_path)
         .extension()
         .and_then(|e| e.to_str())
@@ -626,34 +631,5 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
             .or_else(|| re_interface().and_then(|re| re.captures(&code)))
             .map(|caps| caps[1].to_string()),
         _ => None,
-    }
-}
-
-pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
-    let meta = match std::fs::symlink_metadata(dir) {
-        Ok(m) => m,
-        Err(_) => return,
-    };
-    if meta.file_type().is_symlink() {
-        return;
-    }
-
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                if name == "target" || name == ".git" || name == "node_modules" {
-                    continue;
-                }
-                collect_source_files(&path, files);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                    if let Some(s) = path.to_str() {
-                        files.push(s.to_string());
-                    }
-                }
-            }
-        }
     }
 }

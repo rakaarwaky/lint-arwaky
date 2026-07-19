@@ -43,6 +43,7 @@ impl OrphanContainer {
             Arc::new(
                 crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(
                     extractor.clone(),
+                    cache.clone(),
                 ),
             ),
             Arc::new(
@@ -66,6 +67,7 @@ impl OrphanContainer {
             Arc::new(
                 crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(
                     extractor.clone(),
+                    cache.clone(),
                 ),
             ),
         ));

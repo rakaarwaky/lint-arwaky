@@ -130,11 +130,7 @@ impl AgentOrphanAnalyzer {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPER FUNCTIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-fn extract_aggregate_traits(content: &str) -> Vec<String> {
+pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     let mut traits = Vec::new();
 
     if let Some(re) = re_impl_generic() {

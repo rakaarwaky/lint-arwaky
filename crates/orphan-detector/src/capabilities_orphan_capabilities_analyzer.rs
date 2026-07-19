@@ -52,87 +52,140 @@ impl CapabilitiesOrphanAnalyzer {
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
-        is_infra_cap_orphan(f, root_dir, alive_files, &self.extractor, &self.cache)
-    }
-}
+        let is_reachable = alive_files.paths.contains(f);
+        if is_reachable {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
 
-pub fn is_infra_cap_orphan(
-    f: &FilePath,
-    root_dir: &FilePath,
-    alive_files: &ReachabilityResult,
-    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: &Arc<dyn IOrphanFileCachePort>,
-) -> OrphanIndicatorResult {
-    let is_reachable = alive_files.paths.contains(f);
-    if is_reachable {
-        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-    }
+        let stem = self.extractor.file_stem(f).value;
+        let content = self.cache.read_cached(f).value;
 
-    // Check if wired in any container
-    let fp = f.value();
-    let stem = extractor.file_stem(f).value;
+        if !content.is_empty() {
+            let mut identifiers: Vec<String> = Vec::new();
+            identifiers.extend(
+                self.extractor
+                    .extract_struct_names(&content)
+                    .into_iter()
+                    .map(|sn| sn.value),
+            );
+            identifiers.extend(
+                self.extractor
+                    .extract_trait_names(&content)
+                    .into_iter()
+                    .map(|sn| sn.value),
+            );
+            identifiers.push(stem.clone());
 
-    if !fp.is_empty() {
-        let content = cache.read_cached(f).value;
-        let mut identifiers: Vec<String> = Vec::new();
-        identifiers.extend(
-            extractor
-                .extract_struct_names(&content)
-                .into_iter()
-                .map(|sn| sn.value),
-        );
-        identifiers.extend(
-            extractor
-                .extract_trait_names(&content)
-                .into_iter()
-                .map(|sn| sn.value),
-        );
-        identifiers.push(stem.clone());
+            let pascal_stem: String = stem
+                .split('_')
+                .filter(|s| !s.is_empty())
+                .map(|s| {
+                    let mut c = s.chars();
+                    match c.next() {
+                        Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                        None => String::new(),
+                    }
+                })
+                .collect();
+            identifiers.push(pascal_stem);
 
-        let pascal_stem: String = stem
-            .split('_')
-            .filter(|s| !s.is_empty())
-            .map(|s| {
-                let mut c = s.chars();
-                match c.next() {
-                    Some(f) => f.to_uppercase().to_string() + c.as_str(),
-                    None => String::new(),
-                }
-            })
-            .collect();
-        identifiers.push(pascal_stem);
-
-        // Search for container files in workspace root
-        let root = std::path::Path::new(root_dir.value());
-        if let Ok(workspace_root) = find_workspace_root(root) {
-            if let Ok(wired) = check_wired_in_container(&workspace_root, &identifiers) {
-                if wired {
+            let root = std::path::Path::new(root_dir.value());
+            if let Some(workspace_root) = self.find_workspace_root(root) {
+                if self.check_wired_in_container(&workspace_root, &identifiers) {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
             }
         }
+
+        OrphanIndicatorResult::new(
+            true,
+            AesOrphanViolation::CapabilitiesOrphan {
+                stem,
+                reason: Some("Not reachable from any entry point.".into()),
+            }
+            .to_string(),
+            Severity::MEDIUM,
+        )
     }
 
-    OrphanIndicatorResult::new(
-        true,
-        AesOrphanViolation::CapabilitiesOrphan {
-            stem,
-            reason: Some("Not reachable from any entry point.".into()),
+    fn find_workspace_root(&self, start: &std::path::Path) -> Option<std::path::PathBuf> {
+        let member_dirs = ["crates", "packages", "modules"];
+        let mut current = start.to_path_buf();
+        loop {
+            let has_cargo = current.join("Cargo.toml").exists();
+            let has_package_json = current.join("package.json").exists();
+            let has_pyproject = current.join("pyproject.toml").exists();
+            let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
+
+            if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
+                return Some(current);
+            }
+
+            if !current.pop() {
+                return None;
+            }
         }
-        .to_string(),
-        Severity::MEDIUM,
-    )
+    }
+
+    fn check_wired_in_container(
+        &self,
+        workspace_root: &std::path::Path,
+        identifiers: &[String],
+    ) -> bool {
+        for dir_name in &["crates", "packages", "modules"] {
+            let dir = workspace_root.join(dir_name);
+            if dir.is_dir() && self.check_dir_containers(&dir, identifiers) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn check_dir_containers(&self, dir: &std::path::Path, identifiers: &[String]) -> bool {
+        let entries = self.cache.read_dir(dir.to_str().unwrap_or(""));
+        for entry_path in &entries {
+            let path = std::path::Path::new(entry_path);
+            if path.is_dir() {
+                if self.check_dir_containers(path, identifiers) {
+                    return true;
+                }
+            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                if name.ends_with("_container.rs")
+                    || name.ends_with("_container.py")
+                    || name.ends_with("_container.ts")
+                    || name.ends_with("_container.js")
+                    || name.ends_with("_entry.rs")
+                    || name.ends_with("_entry.py")
+                    || name.ends_with("_entry.ts")
+                    || name.ends_with("_entry.js")
+                {
+                    let fp = FilePath {
+                        value: entry_path.clone(),
+                    };
+                    let content = self.cache.read_cached(&fp).value;
+                    for id in identifiers {
+                        if content.contains(id) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        false
+    }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC HELPERS (used by other analyzers)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
     let member_dirs = ["crates", "packages", "modules"];
     let mut current = start.to_path_buf();
     loop {
-        let has_cargo = current.join("Cargo.toml").exists() && current.join("Cargo.toml").is_file();
-        let has_package_json =
-            current.join("package.json").exists() && current.join("package.json").is_file();
-        let has_pyproject =
-            current.join("pyproject.toml").exists() && current.join("pyproject.toml").is_file();
+        let has_cargo = current.join("Cargo.toml").exists();
+        let has_package_json = current.join("package.json").exists();
+        let has_pyproject = current.join("pyproject.toml").exists();
         let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
 
         if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
@@ -196,97 +249,20 @@ fn check_dir_containers(
     Ok(false)
 }
 
-pub fn is_infra_cap_orphan_raw_wired(is_wired: bool, is_reachable: bool) -> OrphanIndicatorResult {
-    let orphan = !is_wired && !is_reachable;
-    OrphanIndicatorResult::new(
-        orphan,
-        "Not wired in container and unreachable.".into(),
-        Severity::MEDIUM,
-    )
-}
-
-/// Extract public struct names from Rust file content.
-pub fn is_infra_cap_orphan_raw(
-    f: &FilePath,
-    all_files: &[String],
-    is_reachable: bool,
-    extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
-) -> OrphanIndicatorResult {
-    let fp = f.value();
-    let _basename = extractor.file_basename(f).value;
-    let stem = extractor.file_stem(f).value;
-
-    let content = std::fs::read_to_string(fp).unwrap_or_default();
-    let mut identifiers: Vec<String> = Vec::new();
-    identifiers.extend(
-        extractor
-            .extract_struct_names(&content)
-            .into_iter()
-            .map(|sn| sn.value),
-    );
-    identifiers.extend(
-        extractor
-            .extract_trait_names(&content)
-            .into_iter()
-            .map(|sn| sn.value),
-    );
-    identifiers.push(stem.clone());
-
-    let pascal_stem: String = stem
-        .split('_')
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let mut c = s.chars();
-            match c.next() {
-                Some(f) => f.to_uppercase().to_string() + c.as_str(),
-                None => String::new(),
-            }
-        })
-        .collect();
-    identifiers.push(pascal_stem);
-
-    let mut is_wired = false;
-    for cf in all_files {
-        let cb = extractor
-            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
-            .value;
-        let csuffix = extractor
-            .file_suffix(&shared::common::taxonomy_path_vo::FilePath { value: cb.clone() })
-            .value;
-        if csuffix != "container" {
-            continue;
-        }
-        if let Ok(c) = std::fs::read_to_string(cf) {
-            for id in &identifiers {
-                if c.contains(id) {
-                    is_wired = true;
-                    break;
-                }
-            }
-            if is_wired {
-                break;
-            }
-        }
-    }
-
-    is_infra_cap_orphan_raw_wired(is_wired, is_reachable)
-}
-
 pub fn check_capabilities_orphan(
     fp: &str,
     _basename: &str,
     files: &[String],
     violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: &Arc<dyn IOrphanFileCachePort>,
 ) {
     let stem = extractor
-        .file_stem(&shared::common::taxonomy_path_vo::FilePath {
+        .file_stem(&FilePath {
             value: fp.to_string(),
         })
         .value;
 
-    // Utility/helper files contain standalone functions — no class/trait to wire.
-    // They don't need container wiring; they are imported directly by callers.
     let suffix = match stem.rfind('_') {
         Some(pos) => &stem[pos + 1..],
         None => "",
@@ -295,7 +271,11 @@ pub fn check_capabilities_orphan(
         return;
     }
 
-    let content = std::fs::read_to_string(fp).unwrap_or_default();
+    let content = cache
+        .read_cached(&FilePath {
+            value: fp.to_string(),
+        })
+        .value;
 
     let mut identifiers: Vec<String> = Vec::new();
     identifiers.extend(
@@ -328,24 +308,21 @@ pub fn check_capabilities_orphan(
     let mut wired = false;
     for cf in files {
         let cb = extractor
-            .file_basename(&shared::common::taxonomy_path_vo::FilePath { value: cf.clone() })
+            .file_basename(&FilePath { value: cf.clone() })
             .value;
-        let csuffix = extractor
-            .file_suffix(&shared::common::taxonomy_path_vo::FilePath { value: cb.clone() })
-            .value;
+        let csuffix = extractor.file_suffix(&FilePath { value: cb.clone() }).value;
         if csuffix != "container" {
             continue;
         }
-        if let Ok(c) = std::fs::read_to_string(cf) {
-            for id in &identifiers {
-                if c.contains(id) {
-                    wired = true;
-                    break;
-                }
-            }
-            if wired {
+        let cf_content = cache.read_cached(&FilePath { value: cf.clone() }).value;
+        for id in &identifiers {
+            if cf_content.contains(id) {
+                wired = true;
                 break;
             }
+        }
+        if wired {
+            break;
         }
     }
     if !wired {

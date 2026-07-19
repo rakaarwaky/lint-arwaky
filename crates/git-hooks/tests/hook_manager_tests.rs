@@ -24,8 +24,15 @@ impl IHookManagerPort for MockAdapter {
 
 struct MockFileCheck;
 
+#[async_trait::async_trait]
 impl IGitFileCheckPort for MockFileCheck {
-    fn file_exists(&self, _path: &FilePath) -> bool {
+    async fn path_exists(&self, _path: &str) -> bool {
+        false
+    }
+    async fn is_file(&self, _path: &str) -> bool {
+        false
+    }
+    async fn is_dir(&self, _path: &str) -> bool {
         false
     }
 }
