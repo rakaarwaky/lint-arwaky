@@ -7,10 +7,12 @@ use shared::git_hooks::contract_git_file_check_port::IGitFileCheckPort;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 
 // Block 1: struct Definition
 pub struct GitContainer {
     aggregate: Arc<dyn GitHooksAggregate>,
+    hook_management: Arc<dyn HookManagementOrchestratorAggregate>,
 }
 
 // ─── Block 2: Public Contract ─────────────────────────────
@@ -20,6 +22,10 @@ pub struct GitContainer {
 impl GitContainer {
     pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {
         self.aggregate.clone()
+    }
+
+    pub fn hook_management(&self) -> Arc<dyn HookManagementOrchestratorAggregate> {
+        self.hook_management.clone()
     }
 
     pub fn new(
@@ -34,15 +40,19 @@ impl GitContainer {
             crate::capabilities_hook_manager::HookManager::new(hook_adapter.clone(), file_check),
         );
 
-        let aggregate: Arc<dyn GitHooksAggregate> = Arc::new(
-            crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
-                diff_protocol,
-                hook_protocol,
-                hook_adapter,
-            ),
+        let orchestrator = crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
+            diff_protocol,
+            hook_protocol,
+            hook_adapter,
         );
 
-        Self { aggregate }
+        let aggregate: Arc<dyn GitHooksAggregate> = Arc::new(orchestrator.clone());
+        let hook_management: Arc<dyn HookManagementOrchestratorAggregate> = Arc::new(orchestrator);
+
+        Self {
+            aggregate,
+            hook_management,
+        }
     }
 
     pub fn new_default() -> Self {

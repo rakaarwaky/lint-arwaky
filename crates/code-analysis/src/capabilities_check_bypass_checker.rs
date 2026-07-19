@@ -24,6 +24,8 @@ use shared::code_analysis::taxonomy_bypass_utility::{
     classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
     matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
 };
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
 
@@ -206,9 +208,9 @@ impl BypassChecker {
 
 // Block 2: impl Trait for Struct (Public Contract)
 impl IBypassCheckerProtocol for BypassChecker {
-    fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_cargo_toml(&self, content: &ContentString, violations: &mut Vec<LintResult>) {
         let mut in_clippy_section = false;
-        for (i, line) in content.lines().enumerate() {
+        for (i, line) in content.value.lines().enumerate() {
             let t = line.trim();
             if t.starts_with("[workspace.lints.clippy]") || t.starts_with("[lints.clippy]") {
                 in_clippy_section = true;
@@ -235,7 +237,14 @@ impl IBypassCheckerProtocol for BypassChecker {
         }
     }
 
-    fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_bypass_comments(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let file = file.value();
+        let content = content.value();
         let content_lower = content.to_lowercase();
         let has_bypass_token = self
             .forbidden_bypass_lower

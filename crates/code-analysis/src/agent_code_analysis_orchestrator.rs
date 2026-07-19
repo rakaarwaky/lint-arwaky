@@ -29,6 +29,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
@@ -173,7 +174,7 @@ impl CodeAnalysisOrchestrator {
                     if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
                         self.container
                             .bypass_checker()
-                            .check_cargo_toml(&cargo_content, &mut violations);
+                            .check_cargo_toml(&ContentString::new(cargo_content), &mut violations);
                     }
                 }
             }
@@ -194,7 +195,11 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES304") {
                 self.container
                     .bypass_checker()
-                    .check_bypass_comments(file, &c, &mut violations);
+                    .check_bypass_comments(
+                        &FilePath::new(file.to_string()).unwrap_or_default(),
+                        &ContentString::new(c),
+                        &mut violations,
+                    );
             }
             if config.is_rule_enabled("AES303") {
                 self.container

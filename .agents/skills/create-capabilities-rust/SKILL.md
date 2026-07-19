@@ -152,7 +152,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
         violations: &mut Vec<LintResult>,
     ) {
         let basename = std::path::Path::new(file).file_name().and_then(|f| f.to_str()).unwrap_or("");
-      
+    
         // ✅ BENAR: Menggunakan utility function yang di-import, bukan method internal
         if is_barrel_file(basename) {
             return;

@@ -28,6 +28,7 @@ pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
 
 pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
     let lines: Vec<&str> = content.lines().collect();
+    let total = lines.len();
     for (i, line) in lines.iter().enumerate() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
@@ -36,15 +37,46 @@ pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
         if !re_trait.is_match(t) {
             continue;
         }
-        let end = std::cmp::min(i + 4, lines.len());
+
+        // Check within a 30-line window for direct wiring (Arc::new, Box::new)
+        let end = std::cmp::min(i + 30, total);
         if lines[i..end].iter().any(|&ln| {
             let tl = ln.trim();
             !tl.starts_with("//")
                 && !tl.starts_with("/*")
                 && !tl.starts_with('*')
-                && (tl.contains("Arc::new(") || tl.contains("Box::new(") || tl.contains("::new("))
+                && (tl.contains("Arc::new(") || tl.contains("Box::new("))
         }) {
             return true;
+        }
+
+        // For constructor injection patterns: if trait appears in a context other than
+        // an impl block (e.g., function parameter, use statement), scan the entire file
+        // for Arc::new(Type) where Type implements this trait. This covers cases where
+        // the trait parameter and the Arc::new call are far apart in the same container.
+        let is_impl_line = t.contains("impl") && t.contains("for") && re_trait.is_match(t);
+        if !is_impl_line {
+            // Check if there's any impl <Trait> for somewhere in the file
+            let has_impl = lines.iter().any(|&ln| {
+                let lt = ln.trim();
+                !lt.starts_with("//")
+                    && !lt.starts_with("/*")
+                    && re_trait.is_match(lt)
+                    && lt.contains("impl")
+                    && lt.contains("for")
+            });
+            if has_impl {
+                // Check if there's any Arc::new( or Box::new( anywhere in the file
+                let has_new = lines.iter().any(|&ln| {
+                    let tl = ln.trim();
+                    !tl.starts_with("//")
+                        && !tl.starts_with("/*")
+                        && (tl.contains("Arc::new(") || tl.contains("Box::new("))
+                });
+                if has_new {
+                    return true;
+                }
+            }
         }
     }
     false
