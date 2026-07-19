@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-typescript
-description: "Create and validate capabilities layer files following AES rules: 3-block structure, one class per file, protocol contracts, zero I/O."
-version: 1.2.0
+description: "Create and validate TypeScript capabilities layer files following AES rules: pure domain behavior, zero I/O, 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
+version: 1.3.0
 category: refactoring
 tags:
   [
@@ -10,11 +10,15 @@ tags:
     capability,
     protocol,
     structure,
+    aes402,
     aes403,
     aes404,
     3-block-structure,
     di,
-    utility-extraction,
+    vo,
+    error-handling,
+    magic-constant,
+    imports,
   ]
 triggers:
   - "create capability typescript"
@@ -23,8 +27,7 @@ triggers:
   - "create protocol typescript"
   - "capability missing protocol typescript"
   - "check capabilities typescript"
-  - "extract utility typescript"
-  - "free function typescript"
+  - "audit capabilities typescript"
 dependencies: []
 related:
   - create-infrastructure-typescript
@@ -35,124 +38,398 @@ related:
   - fix-capability-structure-typescript
   - create-missing-protocols-typescript
 ---
+
 # create-capabilities-typescript
 
 ## Purpose
 
-Create and validate TypeScript **capabilities layer** files following clean architecture rules. Ensures capabilities contain zero I/O, implement protocol interfaces, follow the 3-Block Structure, use DI for all fields, and extract stateless free functions to taxonomy utility modules.
+Create and validate TypeScript **capabilities layer** files following clean architecture / AES rules.
+
+A capabilities file must contain **pure domain behavior**:
+
+- no I/O,
+- no infrastructure detail,
+- no agent detail,
+- no locally defined domain data structures,
+- one implementation class per file,
+- one domain protocol interface as the public contract,
+- strict 3-block structure,
+- dependency injection for service collaborators,
+- shared VOs for domain data.
+
+---
+
+## Definition of Done
+
+A capabilities file is considered valid when:
+
+1. It contains exactly **ONE implementation class**.
+2. The class implements exactly **ONE domain protocol interface**.
+3. Block 2 contains **ONLY** the domain protocol method implementations.
+4. Utility methods, static factories, and private helpers are placed in Block 3.
+5. The file contains **zero I/O** and zero side-effecting infrastructure calls.
+6. The file does **not** define domain data structures locally.
+7. Service dependencies use DI via protocol interfaces.
+8. Value/configuration fields use shared VOs, not raw primitives.
+9. Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+10. Domain-specific helpers may remain inside the implementation file.
+11. `npx tsc --noEmit` passes.
+
+---
 
 ## Rules
 
 ### Layer Boundaries (AES)
 
-**Capabilities Layer (`capabilities_*.ts`)**
+#### Capabilities Layer (`capabilities_*.ts`)
 
-| Allowed                               | Forbidden                                        |
-| ------------------------------------- | ------------------------------------------------ |
-| Computation, validation, calculation  | File I/O (`fs.`, `readFile`, `writeFile`)  |
-| Data transformation, business rules   | Network calls (`fetch`, `axios`, `http`)     |
-| Domain logic, domain model definition | Database operations (`sqlite3`, `pg`)        |
-| Interface implementation              | Direct import from `infrastructure_*`          |
-|                                       | Direct import from `agent_*`                   |
-|                                       | Direct import from `capabilities_*` (self)     |
+| Allowed                                      | Forbidden                                             |
+| -------------------------------------------- | ----------------------------------------------------- |
+| Computation, validation, calculation         | File I/O (`fs.`, `readFile`, `writeFile`)             |
+| Data transformation, business rules          | Network calls (`fetch`, `axios`, `http`)              |
+| Domain behavior using shared models          | Database operations (`sqlite3`, `pg`)                 |
+| Interface implementation                     | Direct stdout/stderr printing                         |
+| Private helpers supporting the impl class    | Direct environment/system-clock/global-state mutation |
+| Calling injected port/protocol traits        | Direct import from `infrastructure_*`                 |
+|                                              | Direct import from `agent_*`                          |
+|                                              | Direct dependency on concrete `capabilities_*` modules |
+|                                              | Locally defined domain data structures                |
 
-### Structural Rules (All Layers)
+Capabilities may depend on:
 
-- **1 file = 1 class** — each capabilities file contains exactly ONE main class
-- **All data types in shared** — no interfaces/types/enums may be defined outside shared/taxonomy
-- **Fields must use DI** — class fields should receive protocol interfaces via constructor
-- **Helper methods stay in layer** — helper methods that support the class remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.ts` modules in shared/taxonomy
-- **No module-level `export function` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.ts`
+- `shared/*`
+- taxonomy VOs
+- taxonomy constants
+- taxonomy utilities
+- protocol/port interfaces
 
-### Helper vs Utility Decision (The Ultimate Boundary)
+Capabilities must not depend on concrete infrastructure or concrete agent implementations.
 
-The boundary is not just about `this`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single Consumer vs. Multi Consumer Reuse**.
+---
 
-> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple capabilities/infrastructures use it, or only this one class?"
+### Structural Rules
 
-#### 🟢 Keep as Private Helper in Capabilities (Block 3)
-Keep if the function contains **Domain Knowledge** or meets ANY of these:
-1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific domain violation codes).
-2. **Needs Instance State**: Accesses `this.field` or `static` fields.
-3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
-4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class.
-5. **Single Consumer Only**: Function only serves ONE capability/infrastructure class and won't be reused by other classes.
+#### 1. One implementation class per file
 
-#### 🔴 Extract to Utility (`*_utility.ts`)
-Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
-1. **Stateless**: No `this`, no class-level state access.
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
-3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* capabilities/infrastructures could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
-4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
-
-#### I/O Blocker (CRITICAL)
-
-A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
-
-- `fs.readFileSync()`, `fs.promises.readFile()`, `open()`
-- `fetch()`, `axios`, `http` (network)
-- `sqlite3`, `pg`, `mysql2` (database)
-
-**Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
+Each capabilities file contains exactly ONE main implementation class.
 
 ```typescript
-function readConfig(filePath: string): string | null {
-    // Stateless ✓ (no this)
-    // But uses fs.readFileSync() ✗ (I/O)
-    // → CANNOT extract to taxonomy utility
-    // → Keep in capabilities layer
+export class CapabilitiesOrphanAnalyzer {
+    // ...
 }
 ```
 
-### The 3-Block Structure
+Do not define multiple service classes in the same file.
 
-Every implementation file MUST follow this exact order **within the class body**:
+---
+
+#### 2. Only the implementation class may be defined in the layer file
+
+A capabilities file may define the implementation class only.
+
+Domain data structures MUST live in `shared/<domain>/taxonomy_*`.
+
+Forbidden in capabilities files:
+
+```typescript
+interface OrphanResult {
+    isOrphan: boolean;
+    reason: string;
+}
+```
+
+Allowed:
+
+```typescript
+import { OrphanResult } from '../shared/orphan_detector/taxonomy_orphan_result_vo';
+```
+
+---
+
+#### 3. Service dependencies must use DI
+
+Fields that represent collaborators, services, adapters, or ports MUST use protocol interfaces.
+
+```typescript
+export class CapabilitiesOrphanAnalyzer {
+    constructor(
+        private readonly extractor: IOrphanFilenameExtractorProtocol,
+        private readonly cache: IOrphanFileCachePort,
+    ) {}
+}
+```
+
+Do not use concrete service types:
+
+```typescript
+export class CapabilitiesOrphanAnalyzer {
+    constructor(private readonly extractor: FilenameExtractor) {} // BAD: concrete dependency
+}
+```
+
+---
+
+#### 4. Value/configuration fields must use shared VOs
+
+Fields that represent domain values, configuration, identifiers, paths, names, thresholds, etc. should use shared VOs.
+
+```typescript
+export class FrameExporter {
+    constructor(private readonly outputDir: OutputDirectory) {} // shared VO
+}
+```
+
+Avoid raw primitives for domain values:
+
+```typescript
+export class FrameExporter {
+    constructor(private readonly outputDir: string) {} // BAD: primitive domain value
+}
+```
+
+---
+
+### Helper vs Utility Decision
+
+The boundary is not only about `this`.
+
+The real question is:
+
+> Does this function know about specific business/domain rules, or is it just a blind reusable tool?
+>
+> AND
+>
+> Is it used only by this class, or by multiple modules?
+
+---
+
+#### Keep as Private Helper in Block 3
+
+Keep the function inside the capabilities file if ANY of these is true:
+
+1. It contains business/domain rules.
+2. It knows AES-specific patterns, layer names, suffixes, violation codes, or taxonomy conventions.
+3. It accesses `this.field` or instance state.
+4. It is tightly coupled to this capability only.
+5. It is a factory method such as `static create()` or `static from()`.
+6. It is stateless but only used by this one class and is domain-specific.
+
+Example:
+
+```typescript
+class ContractRoleChecker {
+    private resolveScope(scope: string): [string, string[]] {
+        // Domain-specific parsing logic.
+        // Even without `this`, this can remain a private helper
+        // if only this checker uses it.
+        ...
+    }
+}
+```
+
+---
+
+#### Extract to Utility (`*_utility.ts`)
+
+Extract the function to shared taxonomy utility ONLY if ALL of these are true:
+
+1. Stateless: no `this`, no class field access.
+2. Pure: input A always produces output B.
+3. No side effects: no I/O, no network, no database, no global mutation.
+4. Domain-agnostic: does not know business rules.
+5. Reusable: useful for multiple capabilities/infrastructures/modules.
+
+Example:
+
+```typescript
+// shared/code_analysis/taxonomy_string_utility.ts
+export function matchWholeToken(haystack: string, needle: string): boolean {
+    // generic token matching
+    ...
+}
+```
+
+---
+
+#### I/O Blocker
+
+A function may be stateless, but if it performs I/O, it MUST NOT become a taxonomy utility.
+
+It also MUST NOT stay in capabilities.
+
+```typescript
+// BAD in capabilities layer
+function readConfig(filePath: string): string | null {
+    return fs.readFileSync(filePath, 'utf-8'); // I/O
+}
+```
+
+Correct placement:
+
+```typescript
+// infrastructure_config_reader.ts
+export class FileSystemConfigReader implements IConfigReaderPort {
+    read(filePath: FilePath): Result<ConfigContent, ConfigReadError> {
+        try {
+            const raw = fs.readFileSync(filePath.value(), 'utf-8');
+            return Ok(ConfigContent.new(raw));
+        } catch (e) {
+            return Err(new ConfigReadError.Io(e));
+        }
+    }
+}
+```
+
+Rule:
+
+```text
+Stateless + I/O = infrastructure/port implementation
+NOT taxonomy utility
+NOT capabilities layer
+```
+
+---
+
+## The 3-Block Structure
+
+Every implementation file MUST follow this order **within the class body**:
 
 1. **Block 1 — Class Definition & Constructor**
-   - `export class <Type> implements I<Name>Protocol {` declaration
-   - `constructor(...)` with DI fields (protocol interfaces)
-   - Private field declarations (`private readonly _field: IProtocol`)
+2. **Block 2 — Domain Protocol Method Implementation**
+3. **Block 3 — Utility Methods, Factories, and Private Helpers**
 
-2. **Block 2 — Protocol Methods** (Public Contract)
-   - Methods that satisfy the `I<Name>Protocol` interface signatures.
-   - Contains **ONLY** the domain protocol methods.
-   - **NO** utility methods (`toString()`, `toJSON()`, `equals()`) here.
-   - **NO** static factory methods (`create()`, `from()`, `of()`) here.
-   - **NO** `private` helper methods here.
+---
 
-3. **Block 3 — Utility Methods, Factories & Helpers**
-   - Utility/serialization methods: `toString()`, `toJSON()`, `valueOf()`, `equals()`
-   - Symbol methods: `[Symbol.iterator]()`, `[Symbol.toPrimitive]()`
-   - Static factory methods: `static create()`, `static from()`, `static of()`
-   - `private` helper methods that use `this`
-   - `private static` helpers that use class-level state
+### Block 1 — Class Definition & Constructor
 
-**CRITICAL:** Block 2 is **RESERVED** for domain protocol methods ONLY. Utility methods (`toString()`, `toJSON()`, `equals()`) and static factory methods belong in **Block 3** because they are utilities/constructors, not the public domain contract.
-
-**CRITICAL:** Stateless free functions (no `this`, no class-level state) MUST be extracted OUT of the class into their own `*_utility.ts` modules in shared/taxonomy. They do NOT belong in Block 3, Block 2, or at module level in capabilities files.
-
-#### Method Placement Decision Rule
-
+```typescript
+export class ArchLineChecker implements ILineCheckerProtocol {
+    constructor() {}
+}
 ```
+
+Or with dependencies:
+
+```typescript
+export class CapabilitiesOrphanAnalyzer implements ILineCheckerProtocol {
+    constructor(
+        private readonly extractor: IOrphanFilenameExtractorProtocol,
+        private readonly cache: IOrphanFileCachePort,
+        private readonly policy: OrphanAnalysisPolicy,
+    ) {}
+}
+```
+
+---
+
+### Block 2 — Public Contract
+
+Block 2 is RESERVED for the domain protocol methods ONLY.
+
+```typescript
+export class ArchLineChecker implements ILineCheckerProtocol {
+    checkLineCounts(
+        file: FilePath,
+        definition: LayerDefinition | null,
+        source: SourceContentVO,
+        violations: LintResult[],
+    ): void {
+        // domain behavior
+        ...
+    }
+}
+```
+
+Do NOT put these in Block 2:
+
+```typescript
+toString(): string
+toJSON(): object
+valueOf(): unknown
+equals(other: unknown): boolean
+[Symbol.iterator](): Iterator<...>
+static create(): ArchLineChecker
+static from(...): ArchLineChecker
+private helper(...): ...
+```
+
+Those belong in Block 3.
+
+---
+
+### Block 3 — Utility Methods, Factories, and Helpers
+
+Block 3 contains:
+
+- Utility/serialization methods: `toString()`, `toJSON()`, `valueOf()`, `equals()`
+- Symbol methods: `[Symbol.iterator]()`, `[Symbol.toPrimitive]()`
+- Static factory methods: `static create()`, `static from()`, `static of()`
+- `private` helper methods that use `this`
+- `private static` helpers that use class-level state
+
+```typescript
+export class ArchLineChecker implements ILineCheckerProtocol {
+    toString(): string {
+        return 'ArchLineChecker()';
+    }
+
+    equals(other: unknown): boolean {
+        return other instanceof ArchLineChecker;
+    }
+
+    static create(): ArchLineChecker {
+        return new ArchLineChecker();
+    }
+
+    private resolveThreshold(layer: string): number {
+        // private helper
+        ...
+    }
+}
+```
+
+---
+
+### Utility Functions Do Not Belong in Block 3
+
+If a function is:
+
+- stateless,
+- pure,
+- domain-agnostic,
+- and reusable across multiple modules,
+
+then extract it to shared utility.
+
+```typescript
+import { isBarrelFile } from '../shared/code_analysis/taxonomy_line_checker_utility';
+```
+
+But if the function is domain-specific and only used by this class, it may remain in Block 3.
+
+---
+
+### Method Placement Decision Rule
+
+```text
 Method / function found in a capabilities file?
   │
   ├─ Module-level export function (outside class)?
   │   └─ YES → EXTRACT to *_utility.ts (ALWAYS forbidden in capabilities)
   │
-  ├─ Defined in the I<Name>Protocol interface?
-  │   └─ YES → Block 2 (Protocol Methods)
+  ├─ Is it defined in the I<Name>Protocol interface?
+  │   └─ YES → Block 2
   │
-  ├─ Utility/serialization method? (toString, toJSON, valueOf, equals)
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a utility/serialization method? (toString, toJSON, valueOf, equals)
+  │   └─ YES → Block 3
   │
-  ├─ Symbol method? ([Symbol.iterator], [Symbol.toPrimitive])
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a Symbol method? ([Symbol.iterator], [Symbol.toPrimitive])
+  │   └─ YES → Block 3
   │
-  ├─ Static factory method? (static create, static from, static of)
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a static factory method? (static create, static from, static of)
+  │   └─ YES → Block 3
   │
-  ├─ Static method?
+  ├─ Is it a static method?
   │   ├─ Uses class-level state (static fields)?
   │   │   └─ YES → Block 3 (keep as private static)
   │   ├─ Tightly coupled to class semantics?
@@ -160,63 +437,42 @@ Method / function found in a capabilities file?
   │   └─ Pure logic, no class dependency?
   │       └─ YES → EXTRACT to *_utility.ts
   │
-  └─ Private instance method (uses this)?
-      └─ YES → Block 3 (Private Helpers)
+  └─ Is it a private instance method using this?
+      └─ YES → Block 3
 ```
 
-#### Example: Correct 3-Block Order
+---
+
+## Example: Correct 3-Block Structure
 
 ```typescript
-import { LintResult } from '../shared/code_analysis/taxonomy_result_vo';
-import { Severity } from '../shared/code_analysis/taxonomy_severity_vo';
+import { FilePath } from '../shared/code_analysis/taxonomy_file_path_vo';
+import { LayerDefinition } from '../shared/code_analysis/taxonomy_layer_definition_vo';
 import { ILineCheckerProtocol } from '../shared/code_analysis/contract_line_checker_protocol';
-import { LayerDefinition } from '../shared/taxonomy_definition_vo';
-import { isBarrelFile, countLines } from '../shared/code_analysis/taxonomy_line_checker_utility';
+import { isBarrelFile } from '../shared/code_analysis/taxonomy_line_checker_utility';
+import { LintResult } from '../shared/code_analysis/taxonomy_lint_result_vo';
+import { SourceContentVO } from '../shared/code_analysis/taxonomy_source_vo';
 
 
 // ─── Block 1: Class Definition & Constructor ──────────────
 export class ArchLineChecker implements ILineCheckerProtocol {
-    constructor() {
-        // stateless — no DI fields needed
-    }
+    constructor() {}
 
 
-    // ─── Block 2: Protocol Methods (domain contract ONLY) ─
+    // ─── Block 2: Public Contract (domain protocol ONLY) ──
     checkLineCounts(
-        file: string,
+        file: FilePath,
         definition: LayerDefinition | null,
-        content: string,
+        source: SourceContentVO,
         violations: LintResult[],
     ): void {
-        const basename = file.split('/').pop() ?? '';
+        const basename = file.basename();
 
         if (isBarrelFile(basename)) {
             return;
         }
 
-        if (definition === null) {
-            return;
-        }
-
-        if (definition.exceptions.values.includes(basename)) {
-            return;
-        }
-
-        const count = countLines(content);
-
-        if (definition.codeAnalysis.minLines.value > 0 && count < definition.codeAnalysis.minLines.value) {
-            violations.push(LintResult.newArch(
-                file, 0, 'AES302', Severity.HIGH,
-                `File too short (min: ${definition.codeAnalysis.minLines.value}).`,
-            ));
-        }
-
-        if (definition.codeAnalysis.maxLines.value > 0 && count > definition.codeAnalysis.maxLines.value) {
-            violations.push(LintResult.newArch(
-                file, 0, 'AES301', Severity.HIGH,
-                `File too large (max: ${definition.codeAnalysis.maxLines.value}).`,
-            ));
-        }
+        // Remaining domain logic...
     }
 
 
@@ -232,94 +488,167 @@ export class ArchLineChecker implements ILineCheckerProtocol {
     static create(): ArchLineChecker {
         return new ArchLineChecker();
     }
+
+    private isLayerRelevant(definition: LayerDefinition): boolean {
+        // Private helper specific to this checker.
+        return true;
+    }
 }
 ```
 
-#### Example: Extracted Utility Module
+---
+
+## Protocol Rules
+
+### AES403 — Capability Must Implement Protocol Interface
+
+Every capability class MUST implement a domain protocol interface.
 
 ```typescript
-// shared/code_analysis/taxonomy_line_checker_utility.ts
-/**
- * Stateless utility functions for line-count checking logic.
- */
-
-export const BARREL_FILES: readonly string[] = ['__init__.py', 'mod.rs', 'index.ts'] as const;
-
-export function isBarrelFile(basename: string): boolean {
-    return BARREL_FILES.includes(basename);
-}
-
-export function countLines(content: string): number {
-    return content.split('\n').length;
-}
-
-export function normalizePath(path: string): string {
-    return path.trim().toLowerCase();
+export class CapabilitiesOrphanAnalyzer implements IOrphanCheckerProtocol {
+    // public contract
+    ...
 }
 ```
 
-### Protocol Rules
+---
 
-- **Every capability class MUST implement a protocol interface** (AES403)
-- **Protocol MUST define methods for all public methods**
-- **Protocol contains ONLY public/contract methods** — no helper methods
-- **Helper methods stay in Block 3** (`private` methods)
-- **Constructors in Block 1** — `constructor` receives protocol interfaces
-- **Utility methods (`toString`, `toJSON`, `equals`) in Block 3**
-- **Static factory methods (`create`, `from`, `of`) in Block 3**
-- **Stateless `static` methods (no class dependency) → extract to `*_utility.ts`**
+### Protocol file naming
 
-## The Fundamental Question
+| Layer          | File Pattern            | Protocol File                       | Protocol Name           |
+| -------------- | ----------------------- | ----------------------------------- | ----------------------- |
+| Capabilities   | `capabilities_*.ts`   | `contract_<name>_protocol.ts`     | `I<Name>Protocol`     |
+| Infrastructure | `infrastructure_*.ts` | `contract_<name>_port.ts`         | `I<Name>Port`         |
+| Agents         | `agent_*.ts`          | `contract_<name>_aggregate.ts`    | `I<Name>Aggregate`    |
 
-> **"Is this file pure business logic?"**
+---
 
-If yes → **`capabilities_*.ts` + implement protocol interface**
-If no (has I/O) → **split into infrastructure layer instead**
+### Protocol content rules
 
-> **"Does this function need the class?"**
+The protocol interface MUST contain only public domain contract methods.
 
-If no (`this` / class state unused) AND serves MULTIPLE capabilities/infrastructures → **extract to `*_utility.ts` in shared/taxonomy**
-If yes OR serves only ONE class → **keep in Block 3**
+Good:
 
-## Naming Convention
+```typescript
+export interface ILineCheckerProtocol {
+    checkLineCounts(
+        file: FilePath,
+        definition: LayerDefinition | null,
+        source: SourceContentVO,
+        violations: LintResult[],
+    ): void;
+}
+```
 
-| Layer                    | File Pattern            | Interface File                     | Interface Name        |
-| ------------------------ | ----------------------- | ---------------------------------- | --------------------- |
-| **Capabilities**   | `capabilities_*.ts`   | `contract_<name>_protocol.ts`    | `I<Name>Protocol`   |
-| **Infrastructure** | `infrastructure_*.ts` | `contract_<name>_port.ts`        | `I<Name>Port`       |
-| **Agents**         | `agent_*.ts`          | `contract_<name>_aggregate.ts`   | `I<Name>Aggregate`  |
-| **Utility**        | `taxonomy_<name>_utility.ts` | —                            | — (free functions)  |
+Bad:
+
+```typescript
+export interface ILineCheckerProtocol {
+    checkLineCounts(...): void;
+
+    privateHelper(): void; // BAD: helper in interface
+}
+```
+
+---
+
+### Constructors are not protocol methods
+
+`constructor` and static factory methods MUST stay in Block 1 / Block 3.
+
+Bad:
+
+```typescript
+export interface ILineCheckerProtocol {
+    create(): ILineCheckerProtocol; // BAD
+}
+```
+
+Good:
+
+```typescript
+export class ArchLineChecker implements ILineCheckerProtocol {
+    static create(): ArchLineChecker {
+        return new ArchLineChecker();
+    }
+}
+```
+
+---
 
 ## Detection Patterns
 
 ### BAD: Capability Without Interface (AES403)
 
 ```typescript
-// BAD: No interface implementation
-class FrameComposer {
-    composeFrame(): void { ... }
-}
-```
-
-### BAD: Mixed Logic in Capabilities
-
-```typescript
-// BAD: I/O in capabilities layer
-class MyCapability {
-    process() {
-        const content = fs.readFileSync("file.txt");  // ← FORBIDDEN
+export class FrameComposer {
+    composeFrame(): void {
+        // public behavior without protocol interface
+        ...
     }
 }
 ```
 
-### BAD: Interface in Layer File
+Fix:
 
 ```typescript
-// BAD: Domain data defined in capabilities layer
+export class FrameComposer implements IFrameComposerProtocol {
+    composeFrame(): void {
+        // contract implementation
+        ...
+    }
+}
+```
+
+---
+
+### BAD: I/O in Capabilities (AES404)
+
+```typescript
+export class MyCapability {
+    process(): void {
+        const content = fs.readFileSync('file.txt', 'utf-8'); // FORBIDDEN
+    }
+}
+```
+
+Fix:
+
+Move I/O to infrastructure or port implementation.
+
+```typescript
+// infrastructure_source_reader.ts
+export class FileSystemSourceReader implements ISourceReaderPort {
+    read(path: FilePath): Result<SourceContentVO, SourceReadError> {
+        try {
+            const raw = fs.readFileSync(path.value(), 'utf-8');
+            return Ok(SourceContentVO.new(path, raw));
+        } catch (e) {
+            return Err(new SourceReadError.Io(e));
+        }
+    }
+}
+```
+
+Capabilities receives already-loaded data:
+
+```typescript
+export class ImportChecker implements IImportCheckerProtocol {
+    check(source: SourceContentVO): LintResult[] {
+        // pure analysis
+        return [];
+    }
+}
+```
+
+---
+
+### BAD: Interface Defined in Layer File
+
+```typescript
 interface OrphanResult {  // ← INTERFACE — should be in shared/taxonomy
     isOrphan: boolean;
     reason: string;
-    severity: string;
 }
 
 class CapabilitiesOrphanAnalyzer {
@@ -327,10 +656,47 @@ class CapabilitiesOrphanAnalyzer {
 }
 ```
 
+Fix:
+
+Move to shared taxonomy:
+
+```typescript
+// shared/orphan_detector/taxonomy_orphan_result_vo.ts
+export interface OrphanResult {
+    readonly isOrphan: OrphanFlag;
+    readonly reason: OrphanReason;
+}
+```
+
+Then import it:
+
+```typescript
+import { OrphanResult } from '../shared/orphan_detector/taxonomy_orphan_result_vo';
+```
+
+---
+
+### BAD: Concrete Service Field
+
+```typescript
+export class CapabilitiesOrphanAnalyzer {
+    constructor(private readonly extractor: FilenameExtractor) {} // BAD
+}
+```
+
+Fix:
+
+```typescript
+export class CapabilitiesOrphanAnalyzer {
+    constructor(private readonly extractor: IOrphanFilenameExtractorProtocol) {}
+}
+```
+
+---
+
 ### BAD: Utility Methods in Block 2
 
 ```typescript
-// BAD: toString / equals mixed in with protocol methods
 export class ArchLineChecker implements ILineCheckerProtocol {
     constructor() {}
 
@@ -348,573 +714,505 @@ export class ArchLineChecker implements ILineCheckerProtocol {
 }
 ```
 
-### BAD: Module-Level Free Function in Capabilities File
+Fix:
 
 ```typescript
-// BAD: Free function outside class in capabilities file
-// capabilities_line_checker.ts
-
-export function normalizePath(path: string): string {   // ← FREE FUNCTION — extract to utility
-    return path.trim().toLowerCase();
-}
-
-export function countLines(content: string): number {   // ← FREE FUNCTION — extract to utility
-    return content.split('\n').length;
-}
-
 export class ArchLineChecker implements ILineCheckerProtocol {
-    checkLineCounts(...): void {
-        const normalized = normalizePath(file);
+    constructor() {}
+
+    checkLineCounts(...): void {            // ← Block 2: protocol method
         ...
     }
-}
-```
 
-### BAD: Stateless Static Method That Should Be Extracted
-
-```typescript
-// BAD: static method with zero class dependency — belongs in utility
-export class ArchLineChecker implements ILineCheckerProtocol {
-
-    static normalizePath(path: string): string {    // ← no this, no class state, pure logic
-        return path.trim().toLowerCase();
+    toString(): string {                    // ← Block 3: utility method
+        return 'ArchLineChecker()';
     }
 
-    static isBarrelFile(name: string): boolean {    // ← no this, no class state, pure logic
-        return ['__init__.py', 'mod.rs'].includes(name);
-    }
-
-    checkLineCounts(...): void {
-        if (ArchLineChecker.isBarrelFile(basename)) {   // ← could be a free function
-            return;
-        }
+    equals(other: unknown): boolean {       // ← Block 3
+        return other instanceof ArchLineChecker;
     }
 }
 ```
 
-### GOOD: Class with Shared Data
+---
+
+### GOOD: Capability with DI and Shared VO
 
 ```typescript
-// GOOD: All data from shared, fields use DI
-import { OrphanIndicatorResult } from '../shared/code_analysis/taxonomy_analysis';
-import { IOrphanFilenameExtractorProtocol } from '../contract/orphan_protocol';
+import { OrphanAnalysisPolicy } from '../shared/orphan_detector/taxonomy_orphan_analysis_policy_vo';
+import { IOrphanFileCachePort } from '../shared/orphan_detector/contract_orphan_file_cache_port';
+import { IOrphanFilenameExtractorProtocol } from '../shared/orphan_detector/contract_orphan_filename_extractor_protocol';
+import { ICapabilitiesOrphanProtocol } from '../shared/orphan_detector/contract_capabilities_orphan_protocol';
 
-export class CapabilitiesOrphanAnalyzer {
+export class CapabilitiesOrphanAnalyzer implements ICapabilitiesOrphanProtocol {
     constructor(
-        private readonly extractor: IOrphanFilenameExtractorProtocol,  // ← DI via interface
+        private readonly extractor: IOrphanFilenameExtractorProtocol,
+        private readonly cache: IOrphanFileCachePort,
+        private readonly policy: OrphanAnalysisPolicy,
     ) {}
 }
 ```
 
-### GOOD: Correct 3-Block with Utility Methods
-
-```typescript
-// GOOD: Protocol methods in Block 2, utility + factories in Block 3
-export class ArchLineChecker implements ILineCheckerProtocol {
-
-    constructor() {}                                   // Block 1: constructor
-
-    checkLineCounts(...): void { ... }                 // Block 2: protocol method ONLY
-
-    toString(): string {                               // Block 3: utility method
-        return 'ArchLineChecker()';
-    }
-
-    static create(): ArchLineChecker {                 // Block 3: factory
-        return new ArchLineChecker();
-    }
-
-    private resolveThreshold(layer: string): number {  // Block 3: private helper
-        return this._config.getThreshold(layer);
-    }
-}
-```
-
-### GOOD: Extracted to Taxonomy Utility
-
-```typescript
-// GOOD: shared/code_analysis/taxonomy_line_checker_utility.ts
-
-export const BARREL_FILES: readonly string[] = ['__init__.py', 'mod.rs', 'index.ts'] as const;
-
-export function isBarrelFile(basename: string): boolean {
-    return BARREL_FILES.includes(basename);
-}
-
-export function countLines(content: string): number {
-    return content.split('\n').length;
-}
-```
-
-```typescript
-// GOOD: capabilities_line_checker.ts (consumer)
-
-import { isBarrelFile, countLines } from '../shared/code_analysis/taxonomy_line_checker_utility';
-
-export class ArchLineChecker implements ILineCheckerProtocol {
-
-    checkLineCounts(...): void {
-        if (isBarrelFile(basename)) {       // ← imported from utility
-            return;
-        }
-        const count = countLines(content);  // ← imported from utility
-        ...
-    }
-}
-```
+---
 
 ## Workflow
 
-### Step 1: Analyze File
+### Step 1: Analyze File Responsibility
 
-Read file and check for mixed responsibilities. Ask: **"Is this code in the right layer?"**
+Read the file and ask:
 
-- If it has I/O → **MOVE to Infrastructure** (AES404)
-- If pure business logic → continue to Step 2
+> Is this pure domain behavior?
 
-### Step 2: Check for Missing Interface (AES403)
+If yes → keep as capabilities.
 
-Does the capability class implement a protocol interface? If no → create one.
+If no → move I/O or side-effecting code to infrastructure.
 
-```bash
-# Find capabilities without interface implementations
-grep -rn "^export class \|^class " packages/*/src/capabilities_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    class=$(echo "$line" | grep -oP 'class \K[a-zA-Z_]+')
-    grep -q "implements.*Protocol" "$file" || echo "MISSING: $file has $class without interface"
-done
-```
+Examples of code that must move out of capabilities:
 
-### Step 3: Create Interface File (if missing)
+- `fs.*`, `readFile`, `writeFile`
+- `fetch`, `axios`, `http`
+- `sqlite3`, `pg`
+- direct `console.log`
+- environment mutation
+- system clock access
+- global state mutation
 
-Create `contract_<name>_protocol.ts` in the shared package with interface methods.
+---
 
-**Interface location:**
+### Step 2: Check Missing Interface (AES403)
 
-| Package    | Interface Path                                             |
-| ---------- | ---------------------------------------------------------- |
-| compositor | `packages/shared/src/compositor/contract_*_protocol.ts`  |
-| animator   | `packages/shared/src/animator/contract_*_protocol.ts`    |
-| scripting  | `packages/shared/src/scripting/contract_*_protocol.ts`   |
+Does the capability class implement a protocol interface?
+
+If no:
+
+1. create `contract_<name>_protocol.ts`
+2. define `I<Name>Protocol`
+3. move public domain method signatures into the interface
+4. make the class implement the interface
+
+---
+
+### Step 3: Create Interface File if Missing
+
+Create interface file in the appropriate shared domain folder.
+
+Examples:
+
+| Package        | Protocol Path                                                  |
+| -------------- | -------------------------------------------------------------- |
+| import-rules   | `packages/shared/src/import_rules/contract_*_protocol.ts`    |
+| code-analysis  | `packages/shared/src/code_analysis/contract_*_protocol.ts`   |
+| orphan-detector| `packages/shared/src/orphan_detector/contract_*_protocol.ts` |
+
+Register the module in the relevant `index.ts`.
+
+---
 
 ### Step 4: Enforce 3-Block Structure
 
-Reorganize into strict 3-block order within the class body:
+Reorganize the file into:
 
-1. `export class <Type> implements I<Name>Protocol` + `constructor` (class definition with DI fields)
-2. Interface method implementations (**domain protocol methods ONLY**)
-3. Utility methods (`toString`, `toJSON`, `equals`), static factories (`create`, `from`), `private` helpers
+1. class definition + `constructor`
+2. domain protocol method implementations
+3. utility methods, static factories, private helpers
+
+---
 
 ### Step 5: Verify Class Discipline
 
-- **1 file = 1 class** — no multiple classes in one file
-- **All interfaces/types in shared/taxonomy** — domain types must be imported, not defined locally
-- **Fields use interfaces** — constructor receives protocol interfaces, not concrete types
-- **No standalone functions remain in Block 3** — extract to `*_utility.ts` modules
+Check:
 
-### Step 6: Extract Free Functions to Utility
+- exactly one implementation class
+- no local domain data interfaces/types
+- no local enums/VOs/DTOs/constants
+- service fields use protocol interfaces
+- value fields use shared VOs
 
-Scan the file for functions that have **no `this` / class-state dependency**:
+---
 
-```bash
-# Find module-level export functions (outside class) — ALWAYS forbidden
-grep -n "^export function \|^function " packages/*/src/capabilities_*.ts
+### Step 6: Verify Helper vs Utility Boundary
 
-# Find static methods inside class
-grep -n "static " packages/*/src/capabilities_*.ts
+For each helper/function:
 
-# Find standalone exported constants that may belong in utility
-grep -n "^export const " packages/*/src/capabilities_*.ts
+```text
+Does it know domain rules?
+├─ YES → keep as helper in Block 3
+└─ NO
+   Is it stateless, pure, and reusable by multiple modules?
+   ├─ YES → extract to *_utility.ts
+   └─ NO → keep as helper in Block 3
 ```
 
-For each candidate, ask:
-
-| Question | YES → | NO → |
-|----------|-------|------|
-| Uses `this` or instance state? | Keep in Block 3 | Continue ↓ |
-| Uses class-level `static` fields? | Keep as `private static` in Block 3 | Continue ↓ |
-| Tightly coupled to class semantics (e.g., references class types)? | Keep as `static` in Block 3 | Continue ↓ |
-| Pure logic, deterministic, no side effects? | **Extract to `*_utility.ts`** | Keep in Block 3 |
-| Domain-agnostic (not specific to this class)? | **Extract to `*_utility.ts`** | Keep in Block 3 |
-
-**Extraction process:**
-
-1. Create `packages/shared/src/<domain>/taxonomy_<name>_utility.ts`
-2. Move function(s) to utility file with JSDoc comments
-3. Extract magic constants to `taxonomy_<name>_constant.ts` if needed
-4. Add import in capabilities file: `import { funcName } from '../shared/<domain>/taxonomy_<name>_utility';`
-5. Remove original function from capabilities file
-6. Export from `index.ts` barrel if needed
-7. Verify: `npx tsc --noEmit`
+---
 
 ### Step 7: Verify Layer Compliance
 
-Check forbidden imports and I/O patterns:
+Ensure no forbidden imports or I/O patterns.
 
-```bash
-# Check for I/O in capabilities
-grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/capabilities_*.ts
+---
 
-# Check for forbidden imports
-grep -n "infrastructure_\|agent_" packages/*/src/capabilities_*.ts
-```
+### Step 8: Verify Error Handling, VO, and Constants
 
-### Step 8: Verify
+Check:
 
-Run TypeScript compiler to confirm no violations.
+- no silent `?? ''` or `|| 0` error swallowing
+- fallible operations return descriptive error types or throw meaningful errors
+- check/analysis methods may return `LintResult[]`
+- domain data uses VOs
+- no magic constants
+
+---
+
+### Step 9: Verify Compilation
+
+Run:
 
 ```bash
 npx tsc --noEmit
 ```
 
-## Import Strategy
-
-When deciding where a function belongs:
-
-### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
-
-Use when the code is **stateless, pure logic** with no side effects:
-
-| Condition                                     | Example                                       |
-| --------------------------------------------- | --------------------------------------------- |
-| No `this`, no class state                     | `normalizePath(path: string): string`         |
-| All data via parameters                       | `countLines(content: string): number`         |
-| Deterministic, no side effects                | `isBarrelFile(name: string): boolean`         |
-
-```typescript
-// taxonomy_line_checker_utility.ts (SHARED / TAXONOMY)
-export function isBarrelFile(basename: string): boolean {
-    return BARREL_FILES.includes(basename);
-}
-
-// capabilities_line_checker.ts (CONSUMER)
-import { isBarrelFile } from '../shared/code_analysis/taxonomy_line_checker_utility';
-```
-
-### Option B: Keep as Instance/Static Method (Stateful or Side-Effectful)
-
-Use when the code requires **instance state, class state, or side effects**:
-
-| Condition                     | Example                                         |
-| ----------------------------- | ----------------------------------------------- |
-| Uses `this` / instance fields | `this._cache.get(key)`                          |
-| Uses class-level static state | `ArchLineChecker._registry[name]`               |
-| Has side effects / I/O        | File operations, logging with context           |
-| Tightly coupled to class semantics | References class-level types or constants  |
-
-```typescript
-// capabilities_line_checker.ts (STAYS IN CLASS — Block 3)
-export class ArchLineChecker implements ILineCheckerProtocol {
-    private static readonly _THRESHOLD_KEY = 'line_count';
-
-    constructor(private readonly _config: ICheckerConfigProtocol) {}
-
-    private resolveThreshold(layer: string): number {   // uses this → stays
-        return this._config.getThreshold(layer);
-    }
-
-    static fromRegistry(name: string): ArchLineChecker { // uses class state → stays
-        return ArchLineChecker._registry.get(name)!;
-    }
-}
-```
-
-### Decision Tree
-
-```
-Function found in capabilities file?
-  │
-  ├─ Module-level export function (outside class)?
-  │   └─ YES → EXTRACT to *_utility.ts (ALWAYS forbidden in capabilities)
-  │
-  ├─ Static method inside class?
-  │   ├─ Pure logic, no class dependency?
-  │   │   ├─ Serves MULTIPLE capabilities/infrastructures?
-  │   │   │   └─ YES → EXTRACT to *_utility.ts
-  │   │   │   └─ NO → Keep in Block 3 (Single Consumer)
-  │   │   └─ NO → Keep in Block 3
-  │   ├─ Factory (create, from, of)?
-  │   │   └─ YES → Keep in Block 3
-  │   ├─ Uses class-level static state?
-  │   │   └─ YES → Keep in Block 3
-  │   └─ Tightly coupled to class semantics?
-  │       └─ YES → Keep in Block 3
-  │
-  ├─ Instance method?
-  │   ├─ Defined in I<Name>Protocol interface?
-  │   │   └─ YES → Block 2
-  │   ├─ Utility method (toString, toJSON, equals)?
-  │   │   └─ YES → Block 3
-  │   └─ Private helper (uses this)?
-  │       └─ YES → Block 3
-  │
-  └─ Module-level export const (outside class)?
-      ├─ Domain constant?
-      │   └─ YES → EXTRACT to taxonomy_<name>_constant.ts
-      └─ Class-specific config?
-          └─ YES → Move inside class as private static readonly
-```
+---
 
 ## Verification Checklist
 
-- [ ] File follows the **3-Block Structure** (Class + `constructor` → Protocol Methods → Utility/Factories/Helpers).
-- [ ] **Block 2 contains ONLY protocol interface method implementations**. No utility methods (`toString`, `equals`), no static factories, no `private` helpers in Block 2.
-- [ ] **Utility methods** (`toString`, `toJSON`, `equals`, `valueOf`) and **static factories** (`create`, `from`, `of`) are in **Block 3**.
-- [ ] Capability class implements a protocol interface (AES403 resolved).
-- [ ] Interface contains **only** public/contract methods (no helper methods).
-- [ ] Helper methods are in Block 3 (`private` methods).
-- [ ] Constructors receive protocol interfaces via `constructor`.
-- [ ] **No module-level `export function`** exists outside the class in capabilities files.
-- [ ] **No stateless `static` method** (zero class dependency) that serves MULTIPLE capabilities/infrastructures remains in class — extracted to `*_utility.ts`.
-- [ ] Stateless utilities that serve MULTIPLE capabilities/infrastructures exist in their own `*_utility.ts` files in shared/taxonomy.
-- [ ] **1 file = 1 class** — no multiple classes in one file.
-- [ ] All interfaces/types imported from shared/taxonomy (none defined locally).
-- [ ] Constructor fields use protocol interfaces, not concrete types.
-- [ ] **Zero I/O** in capabilities layer (no fs, no network, no database).
-- [ ] No forbidden imports (no infrastructure\_\_, no agent\_\_).
-- [ ] Interface module is registered in the shared package's `index.ts`.
-- [ ] Utility module is registered in the shared package's `index.ts`.
-- [ ] `npx tsc --noEmit` passes without errors.
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `constructor`.
+- [ ] Block 2 contains ONLY the domain protocol method implementations.
+- [ ] Block 3 contains utility methods, factories, and private helpers.
+- [ ] Capability class implements a protocol interface (AES403).
+- [ ] Interface contains only public domain contract methods.
+- [ ] Private helpers are not declared in the interface.
+- [ ] Constructors are not declared in the interface.
+- [ ] Utility methods are in Block 3.
+- [ ] Domain-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use protocol interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Zero I/O in capabilities layer (AES404).
+- [ ] No forbidden imports from `infrastructure_*`.
+- [ ] No forbidden imports from `agent_*`.
+- [ ] No direct dependency on concrete `capabilities_*` implementations.
+- [ ] Protocol module is registered in the shared package's `index.ts`.
+- [ ] `npx tsc --noEmit` passes.
 
-## Quick Commands
+---
 
-```bash
-# Verify 3-Block Structure order (rough check)
-grep -n "^export class\|^    [a-z]\|^    private \|^    static " packages/<package>/src/capabilities_*.ts
+## Error Handling Rules
 
-# Find capabilities without interface implementations
-grep -rn "^export class \|^class " packages/*/src/capabilities_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    class=$(echo "$line" | grep -oP 'class \K[a-zA-Z_]+')
-    grep -q "implements.*Protocol" "$file" || echo "MISSING: $file has $class without interface"
-done
+Capabilities error handling must be explicit.
 
-# Ensure interface does NOT contain helper methods
-grep -E "(helper|util|private|_)" packages/shared/src/contract_*_protocol.ts || echo "Clean: No helpers in interface"
+### Rule 1: Do not silently discard errors
 
-# Check for I/O in capabilities (AES404)
-grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/capabilities_*.ts
-
-# Check for interfaces/types defined in layer files
-grep -rn "^interface \|^type \|^enum " packages/*/src/ | grep -v "shared/" | grep capabilities
-
-# Check for concrete type fields (non-interface)
-grep -n "constructor" packages/*/src/capabilities_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    grep -A5 "constructor" "$file" | grep -v "I[A-Z].*:" || echo "NON-INTERFACE FIELD: $file"
-done
-
-# Find module-level free functions in capabilities files (ALWAYS forbidden)
-grep -n "^export function \|^function " packages/*/src/capabilities_*.ts
-
-# Find static methods that may need extraction (no class state)
-grep -n "static " packages/*/src/capabilities_*.ts | grep -v "private static\|static create\|static from\|static of"
-
-# Find module-level constants that should be in taxonomy
-grep -n "^export const " packages/*/src/capabilities_*.ts
-
-# Detect utility methods appearing BEFORE protocol methods (wrong block order)
-awk '
-    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
-    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!proto_line) proto_line = NR }
-    END { if (util_line && proto_line && util_line < proto_line) print "VIOLATION: utility method (line " util_line ") before protocol method (line " proto_line ")" }
-' packages/*/src/capabilities_*.ts
-
-# Check TypeScript
-npx tsc --noEmit
-
-# Find error swallowing patterns (?? '', || 0)
-grep -n "?? ''\|?? \"\"\||| 0\||| ''\||| \"\"" packages/*/src/capabilities_*.ts
-
-# Find magic constants (hardcoded literals)
-grep -n "[0-9]\+\.[0-9]\+" packages/*/src/capabilities_*.ts | grep -v "//\|const\|import" | head -20
-
-# Detect utility methods appearing BEFORE protocol methods (wrong block order)
-awk '
-    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
-    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!proto_line) proto_line = NR }
-    END { if (util_line && proto_line && util_line < proto_line) print "VIOLATION: utility method (line " util_line ") before protocol method (line " proto_line ")" }
-' packages/*/src/capabilities_*.ts
-```
-
-## Error Handling (from fix-error-handling)
-
-**Capabilities Layer Error Rules:**
-- **Never silently discard errors** with `?? ''` or `|| 0` in capabilities layer.
-- All public methods MUST return descriptive error types or throw meaningful errors.
-- IO errors (file read, network) → propagate with `throw` or return error result.
-- Logic errors (validation, parsing) → propagate with custom error type.
-
-### Silent Swallowing (Fix)
+Forbidden:
 
 ```typescript
-// [FORBIDDEN] Error silently discarded
-function filepathOrDefault(result: FilePath | undefined): FilePath {
-    return result ?? new FilePath('');  // Error thrown away
-}
+const value = result ?? '';
+```
 
-// [FORBIDDEN] Error detail lost
-try {
-    await cycleCheck();
-} catch (e) {
-    console.log(e);  // Debug logging loses context
+Forbidden:
+
+```typescript
+const value = result || 0;
+```
+
+---
+
+### Rule 2: Fallible operations should return `Result` or throw
+
+If a method represents an operation that can fail unexpectedly, return a result type or throw a meaningful error.
+
+```typescript
+function parseManifest(content: ManifestContent): Result<Manifest, ManifestParseError> {
+    // ...
+    ...
 }
 ```
 
-### Proper Patterns (Use)
+---
+
+### Rule 3: Check/analysis methods may return `LintResult[]`
+
+For linting/analysis use cases, violations are expected domain outcomes.
 
 ```typescript
-// [OK] Explicit error propagation
-function parseFile(path: FilePath): Result<Content, ParseError> {
-    try {
-        return Ok(fs.readFileSync(path.value()));
-    } catch (e) {
-        return Err(new ParseError(`Cannot read: ${e}`));
+function checkImports(source: SourceContentVO): LintResult[] {
+    const violations: LintResult[] = [];
+
+    // analysis logic
+
+    return violations;
+}
+```
+
+This is allowed.
+
+---
+
+### Rule 4: I/O errors belong to infrastructure/port implementations
+
+Bad in capabilities:
+
+```typescript
+function checkFile(path: FilePath): LintResult[] {
+    const content = fs.readFileSync(path.value(), 'utf-8'); // BAD: I/O in capabilities
+    return [];
+}
+```
+
+Good:
+
+```typescript
+// infrastructure_source_reader.ts
+export class FileSystemSourceReader implements ISourceReaderPort {
+    read(path: FilePath): Result<SourceContentVO, SourceReadError> {
+        try {
+            const raw = fs.readFileSync(path.value(), 'utf-8');
+            return Ok(SourceContentVO.new(path, raw));
+        } catch (e) {
+            return Err(new SourceReadError.Io(e));
+        }
     }
 }
+```
 
-// [OK] LintResult for check failures (not IO failures)
-function checkImports(...): LintResult[] {
-    const content = (() => {
-        try {
-            return fs.readFileSync(path);
-        } catch (e) {
-            return [LintResult.newArch(
-                'PARSE_ERROR', `Cannot read: ${e}`, path
-            )];
-        }
-    })();
-    // Import check failure -> LintResult (expected outcome)
+```typescript
+// capabilities_import_checker.ts
+export class ImportChecker implements IImportCheckerProtocol {
+    check(source: SourceContentVO): LintResult[] {
+        // pure analysis using already-read source
+        return [];
+    }
 }
 ```
 
-## Primitive-to-VO Replacement (from fix-primitive-to-vo)
+---
 
-**Capabilities Layer VO Rules:**
-- Entity fields MUST use VOs, not primitives (`string`, `number`, `boolean`).
-- Contract signatures MUST use VOs.
-- VOs MUST validate on construction.
+## Primitive-to-VO Replacement Rules (AES402)
+
+### General Rule
+
+Domain data MUST use shared VOs, not raw primitives.
+
+Bad:
 
 ```typescript
-// BEFORE (primitive)
 interface LintResult {
     filePath: string;
     line: number;
     severity: string;
 }
+```
 
-// AFTER (VO)
+Good:
+
+```typescript
 interface LintResult {
     filePath: FilePath;
     line: LineNumber;
-    severity: SeverityVO;
+    severity: Severity;
 }
 ```
 
-## Magic Constant Extraction (from fix-magic-constant)
+---
 
-**Capabilities Layer Constant Rules:**
-- NO hardcoded literals in capabilities layer.
-- All domain values MUST be named constants.
-- Constants MUST live in `taxonomy_*_constant.ts`.
+### Primitive Policy
+
+| Primitive   | Rule                                                                                |
+| ----------- | ----------------------------------------------------------------------------------- |
+| `string`    | Forbidden for domain fields and contract return values. Use VO.                     |
+| `number`    | Forbidden. Use domain VO.                                                           |
+| `boolean`   | Allowed for semantic toggles when no richer VO is needed.                           |
+
+Prefer VOs for:
+
+- file paths
+- symbol names
+- messages
+- line numbers
+- column numbers
+- severity
+- durations
+- counts
+- thresholds
+- identifiers
+
+---
+
+## Magic Constant Extraction Rules
+
+No hardcoded domain literals in capabilities.
+
+Bad:
 
 ```typescript
-// [FORBIDDEN] BEFORE
 function calculateDuration(): number {
-    return 0.5;  // magic
+    return 0.5;
 }
+```
 
-// [OK] AFTER
+Good:
+
+```typescript
 import { MIN_REVEAL_SECONDS } from '../shared/animator/taxonomy_animator_constant';
+
 function calculateDuration(): number {
     return MIN_REVEAL_SECONDS;
 }
 ```
 
-## Import Strategy (from fix-imports)
-
-When fixing cross-import violations in capabilities, choose the right approach:
-
-### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
-Use when the code is **stateless, pure logic** with no side effects:
-
-| Condition                                     | Example                                       |
-| --------------------------------------------- | --------------------------------------------- |
-| Pure function — no `this`, no class state     | `parsePath()`, `normalizeName()`              |
-| Stateless — all data via parameters           | `computeDistance(a: Point, b: Point)`         |
-| No side effects — deterministic output        | `sanitizeString(input: string): string`       |
-
-```typescript
-// taxonomy_path_utility.ts (TAXONOMY LAYER)
-export function parsePath(path: string): string | null {
-    return path.startsWith('/') ? path.slice(1) : null;
-}
-
-// capabilities_timeline_processor.ts (CONSUMER)
-import { parsePath, normalizeName } from '../shared/taxonomy_path_utility'; // ALLOWED: taxonomy import
-```
-
-### Option B: Dependency Injection via Interfaces (Port/Protocol Pattern)
-Use when the code requires **state, side effects, or layer-specific behavior**:
-
-| Condition                     | Example                                         |
-| ----------------------------- | ----------------------------------------------- |
-| Needs `this` / class state    | Class with fields for data/mutation              |
-| Has side effects / I/O        | File operations, network calls, DB queries       |
-| Layer-specific implementation | Adapter that depends on concrete infrastructure |
-
-```typescript
-// 1. Define interface in CONTRACT layer
-// contract_frame_exporter_protocol.ts
-export interface IFrameExporterProtocol {
-    export(frame: Frame): string;
-}
-
-// 2. Capability implements the interface
-// capabilities_frame_exporter.ts
-export class FrameExporter implements IFrameExporterProtocol {
-    constructor(private outputDir: string) {}
-    export(frame: Frame): string {
-        return `${this.outputDir}/${frame.id}.png`;
-    }
-}
-
-// 3. Consumer receives via DI (knows only the interface)
-// capabilities_timeline_processor.ts
-export class TimelineProcessor {
-    constructor(private exporter: IFrameExporterProtocol) {} // via DI, not direct import
-}
-```
-
-## Decision Tree: Which Option to Choose?
+Constants MUST live in:
 
 ```text
-Encountered cross-import violation in capabilities?
-  │
-  ├─ Does the code need this / class state?
-  │   └─ YES → Option B: Dependency Injection
-  │
-  ├─ Does the code have side effects (I/O, file, network)?
-  │   └─ YES → Option B: Dependency Injection
-  │
-  └─ Is it pure, stateless, no this?
-      └─ YES → Option A: Extract to Taxonomy Utility
+taxonomy_*_constant.ts
 ```
 
-## Common Mistakes (AVOID)
+---
 
-- ❌ **Putting I/O in capabilities**: File I/O, network calls, and database operations MUST be in infrastructure layer.
-- ❌ **Defining interfaces/types in layer files**: Domain data must be in shared/taxonomy. Only the class belongs in layer files.
-- ❌ **Using concrete types as constructor fields**: Constructor should receive protocol interfaces, not concrete implementations.
-- ❌ **Putting helper methods in the interface**: This violates encapsulation and forces all implementors to write boilerplate.
-- ❌ **Mixing Block 2 and Block 3**: Do not interleave protocol methods and helper methods. Keep them in separate sections.
-- ❌ **Placing utilities in class body**: Stateless functions that serve MULTIPLE capabilities/infrastructures MUST be extracted to standalone `*_utility.ts` modules.
-- ❌ **Creating "God Protocols"**: If a protocol has >10 methods or mixes unrelated concerns, split it into multiple protocols.
-- ❌ **Multiple classes in one file**: Each file should have exactly ONE class. Use `consolidate-files-typescript` if merging multiple files.
-- ❌ **Placing utility methods (`toString`, `toJSON`, `equals`) in Block 2**: Block 2 is RESERVED for protocol method implementations ONLY. Utility methods belong in Block 3.
-- ❌ **Placing static factories (`create`, `from`, `of`) before protocol methods**: Factories are constructors and belong in Block 3, after protocol methods.
-- ❌ **Leaving module-level `export function` in capabilities files**: Free functions outside the class MUST be extracted to `*_utility.ts` in shared/taxonomy. No exceptions.
-- ❌ **Keeping stateless `static` methods in class**: If a `static` method uses no `this`, no class-level state, and is not a factory, it belongs in `*_utility.ts`, not in the class body.
-- ❌ **Defining `export const` at module level in capabilities files**: Domain constants MUST live in `taxonomy_<name>_constant.ts` in shared/taxonomy.
-- ❌ **Placing `constructor` in Block 2**: Constructor is part of Block 1 (class definition), not a protocol method.
-- ❌ **Placing `toString`/`toJSON` before protocol methods**: Utility methods belong in Block 3, after protocol methods.
+## Import Strategy
+
+When fixing cross-import violations in capabilities, choose one of these options.
+
+---
+
+### Option A: Extract to Taxonomy Utility
+
+Use when the code is:
+
+- stateless,
+- pure,
+- domain-agnostic,
+- reusable by multiple modules.
+
+Example:
+
+```typescript
+// shared/code_analysis/taxonomy_path_utility.ts
+export function normalizeRelativePath(path: string): string | null {
+    return path.startsWith('/') ? path.slice(1) : null;
+}
+```
+
+Consumer:
+
+```typescript
+import { normalizeRelativePath } from '../shared/code_analysis/taxonomy_path_utility';
+```
+
+---
+
+### Option B: Dependency Injection via Port/Protocol Interface
+
+Use when the code needs:
+
+- state,
+- collaborators,
+- side effects,
+- infrastructure behavior,
+- layer-specific implementation.
+
+Example:
+
+```typescript
+// contract_output_path_builder_protocol.ts
+export interface IOutputPathBuilderProtocol {
+    buildFramePath(frame: Frame): FrameOutputPath;
+}
+```
+
+```typescript
+// capabilities_frame_exporter.ts
+export class FrameExporter implements IFrameExporterProtocol {
+    constructor(private readonly pathBuilder: IOutputPathBuilderProtocol) {}
+
+    export(frame: Frame): FrameOutputPath {
+        return this.pathBuilder.buildFramePath(frame);
+    }
+}
+```
+
+The capability depends only on the protocol, not on concrete infrastructure.
+
+---
+
+## Decision Tree
+
+```text
+Found reusable code in capabilities?
+  │
+  ├─ Does it know business/domain rules?
+  │   └─ YES → keep as private helper in Block 3
+  │
+  ├─ Does it need this or class state?
+  │   └─ YES → keep as helper/method in Block 3
+  │
+  ├─ Does it perform I/O or side effects?
+  │   └─ YES → move to infrastructure/port implementation
+  │
+  └─ Is it stateless, pure, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility
+```
+
+---
+
+## Quick Commands
+
+These commands are rough heuristic checks. Final validation should use `npx tsc --noEmit` or AST-based tooling.
+
+```bash
+# Check possible I/O in capabilities (AES404)
+grep -n "fs\.\|readFile\|writeFile\|fetch\|axios\|sqlite3\|pg" packages/*/src/capabilities_*.ts
+
+# Check forbidden imports
+grep -n "^\s*from\s+.*infrastructure_\|^\s*from\s+.*agent_" packages/*/src/capabilities_*.ts
+
+# List classes in capabilities files
+grep -n "^export class " packages/*/src/capabilities_*.ts
+
+# List protocol interface implementations
+grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
+
+# Find error swallowing patterns
+grep -n "?? ''\|?? \"\"\||| 0\||| ''\||| \"\"" packages/*/src/capabilities_*.ts
+
+# Find possible magic numbers
+grep -n "[0-9]\+\.[0-9]\+" packages/*/src/capabilities_*.ts | grep -v "//\|const\|import" | head -20
+
+# Check TypeScript
+npx tsc --noEmit
+```
+
+---
+
+### Check Wrong Block Order
+
+```bash
+awk '
+    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
+    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!proto_line) proto_line = NR }
+    END { if (util_line && proto_line && util_line < proto_line) print "VIOLATION: utility method (line " util_line ") before protocol method (line " proto_line ")" }
+' packages/*/src/capabilities_*.ts
+```
+
+---
+
+## Common Mistakes
+
+- Putting I/O in capabilities.
+- Defining domain data interfaces/types in capabilities files.
+- Using concrete service types as constructor fields.
+- Using raw primitives for domain value fields.
+- Putting private helpers in the protocol interface.
+- Putting constructors in the protocol interface.
+- Placing utility methods before the domain protocol methods.
+- Mixing Block 2 and Block 3 responsibilities.
+- Keeping reusable, domain-agnostic utility functions inside Block 3.
+- Extracting domain-specific single-consumer helpers to shared utility too early.
+- Creating god interfaces with too many unrelated methods.
+- Multiple implementation classes in one file.
+- Direct dependency on concrete capabilities implementations.
+- Silent error swallowing with `?? ''` or `|| 0`.
+- Magic constants in capabilities logic.

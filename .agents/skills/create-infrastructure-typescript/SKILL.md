@@ -1,7 +1,7 @@
 ---
 name: create-infrastructure-typescript
-description: "Create and validate infrastructure layer files following AES rules: 3-block structure, one class per file, port contracts, zero business logic."
-version: 1.1.0
+description: "Create and validate TypeScript infrastructure layer files following AES rules: I/O and external integration only, zero business logic, 3-block structure, one class per file, port interface contracts, DI for service dependencies, and shared VOs for domain data."
+version: 1.3.0
 category: refactoring
 tags:
   [
@@ -13,7 +13,10 @@ tags:
     aes404,
     3-block-structure,
     di,
-    utility-extraction,
+    vo,
+    error-handling,
+    magic-constant,
+    imports,
   ]
 triggers:
   - "create infrastructure typescript"
@@ -21,9 +24,8 @@ triggers:
   - "fix infrastructure structure typescript"
   - "create port typescript"
   - "infrastructure missing port typescript"
-  - "verify infrastructure typescript"
-  - "extract utility typescript"
-  - "free function typescript"
+  - "check infrastructure typescript"
+  - "audit infrastructure typescript"
 dependencies: []
 related:
   - create-capabilities-typescript
@@ -31,129 +33,391 @@ related:
   - enforce-1-class-per-file-typescript
   - trait-consolidation-typescript
   - module_logic_validator-typescript
-  - fix-capability-structure-typescript
-  - create-missing-protocols-typescript
+  - fix-infrastructure-structure-typescript
+  - create-missing-ports-typescript
 ---
 
 # create-infrastructure-typescript
 
 ## Purpose
 
-Create and validate TypeScript **infrastructure layer** files following clean architecture rules. Ensures infrastructure contains zero business logic, implement port interfaces, follow the 3-Block Structure, use DI for all fields, and extract stateless free functions to taxonomy utility modules.
+Create and validate TypeScript **infrastructure layer** files following clean architecture / AES rules.
+
+An infrastructure file must contain **I/O and external system integration only**:
+
+- file system access,
+- network calls,
+- database access,
+- external API calls,
+- environment/system integration,
+- technical mapping,
+- serialization/deserialization,
+- error mapping,
+- adapter implementation for port interfaces.
+
+Infrastructure MUST NOT contain business logic.
+
+---
+
+## Definition of Done
+
+An infrastructure file is considered valid when:
+
+1. It contains exactly **ONE implementation class**.
+2. The class implements exactly **ONE domain port interface**.
+3. Block 2 contains **ONLY** the port interface method implementations.
+4. Utility methods, static factories, and private helpers are placed in Block 3.
+5. The file contains **zero business logic**.
+6. The file does **not** define domain data structures locally.
+7. Service dependencies use DI via port interfaces.
+8. Value/configuration fields use shared VOs, not raw primitives.
+9. Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+10. Adapter-specific helpers may remain inside the implementation file.
+11. I/O errors are propagated explicitly.
+12. `npx tsc --noEmit` passes.
+
+---
 
 ## Rules
 
 ### Layer Boundaries (AES)
 
-**Infrastructure Layer (`infrastructure_*.ts`)**
+#### Infrastructure Layer (`infrastructure_*.ts`)
 
-| Allowed                                      | Forbidden                                        |
-| -------------------------------------------- | ------------------------------------------------ |
-| File I/O (`fs.`, `readFile`, `writeFile`)    | Business rules                                   |
-| Network calls (`fetch`, `axios`, `http`)     | Domain logic                                     |
-| Database operations (`sqlite3`, `pg`)        | Calculations (should be in capabilities)         |
-| External API calls                           | Direct import from `agent_*`                     |
-| Interface implementation                     | Direct import from `capabilities_*`              |
+| Allowed                                             | Forbidden                                             |
+| --------------------------------------------------- | ----------------------------------------------------- |
+| File I/O (`fs.`, `readFile`, `writeFile`)           | Business rules                                        |
+| Network calls (`fetch`, `axios`, `http`)            | Domain logic                                          |
+| Database operations (`sqlite3`, `pg`)               | Domain calculations                                   |
+| External API calls                                  | Domain validation that decides business correctness   |
+| Environment/system access via controlled adapter    | Direct import from concrete `agent_*` modules         |
+| Serialization/deserialization                       | Direct import from concrete `capabilities_*` modules  |
+| Technical mapping (DTO ↔ VO)                        | Locally defined domain data structures                |
+| Error mapping from external libraries               | Raw primitives for domain values in public contracts  |
+| Port interface implementation                       | Silent error swallowing                               |
+| Private helpers supporting the adapter              |                                                       |
 
-### Structural Rules (All Layers)
+Infrastructure may depend on:
 
-- **1 file = 1 class** — each infrastructure file contains exactly ONE main class
-- **All data types in shared** — no interfaces/types/enums may be defined outside shared/taxonomy
-- **Fields must use DI** — class fields should receive port interfaces via constructor
-- **Helper methods stay in layer** — helper methods that support the class remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions MUST be extracted to `*_utility.ts` modules in shared/taxonomy
-- **No module-level `export function` in infrastructure files** — free functions outside the class are forbidden; extract to `*_utility.ts`
+- `shared/*`
+- taxonomy VOs
+- taxonomy constants
+- taxonomy utilities
+- port interfaces
+- protocol interfaces defined in shared, when required by the adapter contract
 
-### Helper vs Utility Decision (The Litmus Test)
+Infrastructure must not depend on concrete capabilities or concrete agent implementations.
 
-> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
-> - If **YES** → **Extract to Utility File**.
-> - If **NO** (needs `this`, class state, or class context) → **Keep as Private Helper**.
+---
 
-#### When to Extract to Utility (`*_utility.ts`)
+### Structural Rules
 
-Extract if **ALL** conditions are met:
+#### 1. One implementation class per file
 
-1. **Stateless**: No `this`, no class-level state access
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
-3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
-
-#### When to Keep as Private Helper (Block 3)
-
-Keep if **ANY** condition is met:
-
-1. **Needs Instance State**: Accesses `this.field`
-2. **Needs Class State**: Accesses `static` fields
-3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
-4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class
-
-#### I/O Blocker (CRITICAL)
-
-A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
-
-- `fs.readFileSync()`, `fs.promises.readFile()`, `open()`
-- `fetch()`, `axios`, `http` (network)
-- `sqlite3`, `pg`, `mysql2` (database)
-
-**Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
+Each infrastructure file contains exactly ONE main implementation class.
 
 ```typescript
-function readFileContent(path: string): string {
-    // Stateless ✓ (no this)
-    // But uses fs.readFileSync() ✗ (I/O)
-    // → CANNOT extract to taxonomy utility
-    // → Keep in infrastructure layer (this is correct — infra IS for I/O)
+export class FileSystemSourceReader {
+    // ...
 }
 ```
 
-### The 3-Block Structure
+Do not define multiple service classes in the same file.
 
-Every implementation file MUST follow this exact order **within the class body**:
+---
+
+#### 2. Only the implementation class may be defined in the layer file
+
+An infrastructure file may define the implementation class only.
+
+Domain data structures MUST live in `shared/<domain>/taxonomy_*`.
+
+Forbidden in infrastructure files:
+
+```typescript
+interface CacheEntry {
+    key: string;
+    value: string;
+}
+```
+
+Allowed:
+
+```typescript
+import { CacheEntry } from '../shared/cache/taxonomy_cache_entry_vo';
+```
+
+---
+
+#### 3. Service dependencies must use DI
+
+Fields that represent collaborators, adapters, clients, repositories, or ports MUST use port interfaces.
+
+```typescript
+export class OrphanFileCache {
+    constructor(private readonly store: IKeyValueStorePort) {}
+}
+```
+
+Do not use concrete service types:
+
+```typescript
+export class OrphanFileCache {
+    constructor(private readonly store: RedisKeyValueStore) {} // BAD: concrete dependency
+}
+```
+
+---
+
+#### 4. Value/configuration fields must use shared VOs
+
+Fields that represent domain values, configuration, identifiers, paths, timeouts, thresholds, etc. should use shared VOs.
+
+```typescript
+export class HttpManifestClient {
+    constructor(
+        private readonly baseUrl: BaseUrl,
+        private readonly timeout: TimeoutSeconds,
+    ) {}
+}
+```
+
+Avoid raw primitives for domain values:
+
+```typescript
+export class HttpManifestClient {
+    constructor(
+        private readonly baseUrl: string,  // BAD
+        private readonly timeout: number,  // BAD
+    ) {}
+}
+```
+
+---
+
+### Helper vs Utility Decision
+
+The boundary is not only about `this`.
+
+The real question is:
+
+> Does this function know about adapter-specific or domain-specific rules, or is it just a blind reusable tool?
+>
+> AND
+>
+> Is it used only by this class, or by multiple modules?
+
+---
+
+### When to Keep as Private Helper (Block 3)
+
+Keep the function inside the infrastructure file if ANY of these is true:
+
+1. It accesses `this.field` or instance state.
+2. It accesses adapter-specific static/state.
+3. It performs adapter-specific mapping.
+4. It maps external errors into port-specific errors.
+5. It knows infrastructure-specific configuration.
+6. It is tightly coupled to this adapter only.
+7. It is a factory method such as `static create()` or `static from()`.
+8. It is stateless but adapter-specific and only used by this class.
+
+Example:
+
+```typescript
+class FileSystemSourceReader {
+    private mapIoError(path: FilePath, err: Error): FileReadError {
+        return FileReadError.io(path, err);
+    }
+}
+```
+
+This helper is infrastructure-specific and may remain in Block 3.
+
+---
+
+### When to Extract to Utility (`*_utility.ts`)
+
+Extract the function to shared taxonomy utility ONLY if ALL of these are true:
+
+1. Stateless: no `this`, no class field access.
+2. Pure: input A always produces output B.
+3. No side effects: no I/O, no network, no database, no global mutation.
+4. Domain-agnostic: does not know business or adapter rules.
+5. Reusable: useful for multiple infrastructure/capabilities/modules.
+
+Example:
+
+```typescript
+// shared/common/taxonomy_string_utility.ts
+export function normalizeWhitespace(input: string): string {
+    return input.split(/\s+/).join(' ');
+}
+```
+
+---
+
+### I/O Blocker (CRITICAL)
+
+A function may be stateless, but if it performs I/O, it MUST NOT become a taxonomy utility.
+
+It belongs in infrastructure.
+
+```typescript
+function readFileContent(path: FilePath): Result<FileContent, FileReadError> {
+    try {
+        const raw = fs.readFileSync(path.value(), 'utf-8');
+        return Ok(FileContent.new(raw));
+    } catch (err) {
+        return Err(FileReadError.io(path, err));
+    }
+}
+```
+
+Rule:
+
+```text
+Stateless + I/O = infrastructure/port implementation
+NOT taxonomy utility
+NOT capabilities layer
+```
+
+---
+
+## The 3-Block Structure
+
+Every implementation file MUST follow this order **within the class body**:
 
 1. **Block 1 — Class Definition & Constructor**
-   - `export class <Type> implements I<Name>Port {` declaration
-   - `constructor(...)` with DI fields (port interfaces)
-   - Private field declarations (`private readonly _field: IPort`)
+2. **Block 2 — Port Interface Method Implementation**
+3. **Block 3 — Utility Methods, Factories, and Private Helpers**
 
-2. **Block 2 — Port Methods** (Public Contract)
-   - Methods that satisfy the `I<Name>Port` interface signatures.
-   - Contains **ONLY** the domain port methods.
-   - **NO** utility methods (`toString()`, `toJSON()`, `equals()`) here.
-   - **NO** static factory methods (`create()`, `from()`, `of()`) here.
-   - **NO** `private` helper methods here.
+---
 
-3. **Block 3 — Utility Methods, Factories & Helpers**
-   - Utility/serialization methods: `toString()`, `toJSON()`, `valueOf()`, `equals()`
-   - Symbol methods: `[Symbol.iterator]()`, `[Symbol.toPrimitive]()`
-   - Static factory methods: `static create()`, `static from()`, `static of()`
-   - `private` helper methods that use `this`
-   - `private static` helpers that use class-level state
+### Block 1 — Class Definition & Constructor
 
-**CRITICAL:** Block 2 is **RESERVED** for domain port methods ONLY. Utility methods (`toString()`, `toJSON()`, `equals()`) and static factory methods belong in **Block 3** because they are utilities/constructors, not the public domain contract.
-
-**CRITICAL:** Stateless free functions (no `this`, no class-level state) MUST be extracted OUT of the class into their own `*_utility.ts` modules in shared/taxonomy. They do NOT belong in Block 3, Block 2, or at module level in infrastructure files.
-
-#### Method Placement Decision Rule
-
+```typescript
+export class FileSystemSourceReader implements IFileReaderPort {
+    constructor() {}
+}
 ```
+
+Or with dependencies:
+
+```typescript
+export class OrphanFileCache implements IOrphanFileCachePort {
+    constructor(
+        private readonly store: IKeyValueStorePort,
+        private readonly policy: CachePolicy,
+    ) {}
+}
+```
+
+---
+
+### Block 2 — Public Contract
+
+Block 2 is RESERVED for the domain port interface methods ONLY.
+
+```typescript
+export class FileSystemSourceReader implements IFileReaderPort {
+    read(path: FilePath): Result<FileContent, FileReadError> {
+        // port implementation
+        ...
+    }
+}
+```
+
+Do NOT put these in Block 2:
+
+```typescript
+toString(): string
+toJSON(): object
+valueOf(): unknown
+equals(other: unknown): boolean
+[Symbol.iterator](): Iterator<...>
+static create(): FileSystemSourceReader
+static from(...): FileSystemSourceReader
+private helper(...): ...
+```
+
+Those belong in Block 3.
+
+---
+
+### Block 3 — Utility Methods, Factories, and Helpers
+
+Block 3 contains:
+
+- Utility/serialization methods: `toString()`, `toJSON()`, `valueOf()`, `equals()`
+- Symbol methods: `[Symbol.iterator]()`, `[Symbol.toPrimitive]()`
+- Static factory methods: `static create()`, `static from()`, `static of()`
+- `private` helper methods that use `this`
+- `private static` helpers that use class-level state
+
+```typescript
+export class FileSystemSourceReader implements IFileReaderPort {
+    toString(): string {
+        return 'FileSystemSourceReader()';
+    }
+
+    equals(other: unknown): boolean {
+        return other instanceof FileSystemSourceReader;
+    }
+
+    static create(): FileSystemSourceReader {
+        return new FileSystemSourceReader();
+    }
+
+    private ensureParentDir(path: FilePath): Result<void, FileWriteError> {
+        // private helper
+        ...
+    }
+}
+```
+
+---
+
+### Utility Functions Do Not Belong in Block 3
+
+If a function is:
+
+- stateless,
+- pure,
+- domain-agnostic,
+- and reusable across multiple modules,
+
+then extract it to shared utility.
+
+```typescript
+import { normalizeRelativePath } from '../shared/common/taxonomy_path_utility';
+```
+
+But if the function is adapter-specific or infrastructure-specific, it may remain in Block 3.
+
+---
+
+## Method Placement Decision Rule
+
+```text
 Method / function found in an infrastructure file?
   │
   ├─ Module-level export function (outside class)?
   │   └─ YES → EXTRACT to *_utility.ts (ALWAYS forbidden in infrastructure)
   │
-  ├─ Defined in the I<Name>Port interface?
-  │   └─ YES → Block 2 (Port Methods)
+  ├─ Is it defined in the I<Name>Port interface?
+  │   └─ YES → Block 2
   │
-  ├─ Utility/serialization method? (toString, toJSON, valueOf, equals)
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a utility/serialization method? (toString, toJSON, valueOf, equals)
+  │   └─ YES → Block 3
   │
-  ├─ Symbol method? ([Symbol.iterator], [Symbol.toPrimitive])
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a Symbol method? ([Symbol.iterator], [Symbol.toPrimitive])
+  │   └─ YES → Block 3
   │
-  ├─ Static factory method? (static create, static from, static of)
-  │   └─ YES → Block 3 (Utility Methods & Helpers)
+  ├─ Is it a static factory method? (static create, static from, static of)
+  │   └─ YES → Block 3
   │
-  ├─ Static method?
+  ├─ Is it a static method?
   │   ├─ Uses class-level state (static fields)?
   │   │   └─ YES → Block 3 (keep as private static)
   │   ├─ Tightly coupled to class semantics?
@@ -161,133 +425,234 @@ Method / function found in an infrastructure file?
   │   └─ Pure logic, no class dependency?
   │       └─ YES → EXTRACT to *_utility.ts
   │
-  └─ Private instance method (uses this)?
-      └─ YES → Block 3 (Private Helpers)
+  └─ Is it a private instance method using this?
+      └─ YES → Block 3
 ```
 
-#### Example: Correct 3-Block Order
+---
+
+## Example: Correct 3-Block Structure
 
 ```typescript
-import { FilePath } from '../shared/common/taxonomy_path';
-import { IFileReaderPort } from '../shared/common/contract_file_reader_port';
+import { FileContent } from '../shared/file_system/taxonomy_file_content_vo';
+import { FilePath } from '../shared/file_system/taxonomy_file_path_vo';
+import { FileReadError } from '../shared/file_system/taxonomy_file_read_error';
+import { IFileReaderPort } from '../shared/file_system/contract_file_reader_port';
 
 
 // ─── Block 1: Class Definition & Constructor ──────────────
-export class FileCacheAdapter implements IFileReaderPort {
-    constructor(
-        private readonly _cacheDir: FilePath,
-    ) {}
+export class FileSystemSourceReader implements IFileReaderPort {
+    constructor() {}
 
 
-    // ─── Block 2: Port Methods (domain contract ONLY) ─────
-    read(path: FilePath): string {
-        const fullPath = `${this._cacheDir.value}/${path.value}`;
-        return require('fs').readFileSync(fullPath, 'utf-8');
+    // ─── Block 2: Public Contract (domain port ONLY) ──────
+    read(path: FilePath): Result<FileContent, FileReadError> {
+        try {
+            const raw = fs.readFileSync(path.value(), 'utf-8');
+            return Ok(FileContent.new(raw));
+        } catch (err) {
+            return Err(FileReadError.io(path, err));
+        }
     }
 
 
     // ─── Block 3: Utility Methods, Factories & Helpers ────
     toString(): string {
-        return `FileCacheAdapter(cacheDir=${this._cacheDir.value})`;
+        return 'FileSystemSourceReader()';
     }
 
     equals(other: unknown): boolean {
-        return other instanceof FileCacheAdapter && this._cacheDir === other._cacheDir;
+        return other instanceof FileSystemSourceReader;
     }
 
-    static create(): FileCacheAdapter {
-        return new FileCacheAdapter(new FilePath('.cache'));
+    static create(): FileSystemSourceReader {
+        return new FileSystemSourceReader();
+    }
+
+    private isNotFound(err: Error): boolean {
+        return err instanceof FileNotFoundError;
     }
 }
 ```
 
-#### Example: Extracted Utility Module
+---
+
+## Port Rules
+
+### AES404 — Infrastructure Must Implement Port Interface
+
+Every infrastructure class MUST implement a port interface.
 
 ```typescript
-// shared/common/taxonomy_file_utility.ts
-/**
- * Stateless utility functions for file operations.
- */
-
-import * as fs from 'fs';
-import * as path from 'path';
-
-export function ensureParentDir(filePath: string): void {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-}
-
-export function normalizePath(filePath: string): string {
-    return path.normalize(filePath);
+export class FileSystemSourceReader implements IFileReaderPort {
+    // public contract
+    ...
 }
 ```
 
-### Port Rules
+---
 
-- **Every infrastructure class MUST implement a port interface**
-- **Port MUST define methods for all public methods**
-- **Port contains ONLY public/contract methods** — no helper methods
-- **Helper methods stay in Block 3** (`private` methods)
-- **Constructors in Block 1** — `constructor` receives port interfaces
-- **Utility methods (`toString`, `toJSON`, `equals`) in Block 3**
-- **Static factory methods (`create`, `from`, `of`) in Block 3**
-- **Stateless `static` methods (no class dependency) → extract to `*_utility.ts`**
+### Port file naming
+
+| Layer            | File Pattern            | Port File                         | Port Name             |
+| ---------------- | ----------------------- | --------------------------------- | --------------------- |
+| Capabilities     | `capabilities_*.ts`   | `contract_<name>_protocol.ts`   | `I<Name>Protocol`   |
+| Infrastructure   | `infrastructure_*.ts` | `contract_<name>_port.ts`       | `I<Name>Port`       |
+| Agents           | `agent_*.ts`          | `contract_<name>_aggregate.ts`  | `I<Name>Aggregate`  |
+
+---
+
+### Port content rules
+
+The port interface MUST contain only public contract methods.
+
+Good:
+
+```typescript
+export interface IFileReaderPort {
+    read(path: FilePath): Result<FileContent, FileReadError>;
+}
+```
+
+Bad:
+
+```typescript
+export interface IFileReaderPort {
+    read(path: FilePath): Result<FileContent, FileReadError>;
+
+    privateHelper(): void; // BAD: helper in interface
+}
+```
+
+---
+
+### Constructors are not port methods
+
+`constructor` and static factory methods MUST stay in Block 1 / Block 3.
+
+Bad:
+
+```typescript
+export interface IFileReaderPort {
+    create(): IFileReaderPort; // BAD
+}
+```
+
+Good:
+
+```typescript
+export class FileSystemSourceReader implements IFileReaderPort {
+    static create(): FileSystemSourceReader {
+        return new FileSystemSourceReader();
+    }
+}
+```
+
+---
+
+### Port methods should use shared VOs
+
+Port contracts should avoid raw primitives for domain values.
+
+Bad:
+
+```typescript
+export interface IFileReaderPort {
+    read(path: string): string;
+}
+```
+
+Good:
+
+```typescript
+export interface IFileReaderPort {
+    read(path: FilePath): Result<FileContent, FileReadError>;
+}
+```
+
+---
 
 ## The Fundamental Question
 
 > **"Is this file pure I/O or external system integration?"**
 
 If yes → **`infrastructure_*.ts` + implement port interface**
-If no (has business logic) → **split into capabilities layer instead**
 
-> **"Does this function need the class?"**
+If no, and it contains business logic → **move to capabilities layer**
 
-If no (`this` / class state unused) → **extract to `*_utility.ts` in shared/taxonomy**
-If yes → **keep in Block 3**
+---
 
 ## Naming Convention
 
-| Layer                    | File Pattern            | Interface File                     | Interface Name        |
-| ------------------------ | ----------------------- | ---------------------------------- | --------------------- |
-| **Capabilities**   | `capabilities_*.ts`   | `contract_<name>_protocol.ts`    | `I<Name>Protocol`   |
-| **Infrastructure** | `infrastructure_*.ts` | `contract_<name>_port.ts`        | `I<Name>Port`       |
-| **Agents**         | `agent_*.ts`          | `contract_<name>_aggregate.ts`   | `I<Name>Aggregate`  |
-| **Utility**        | `taxonomy_<name>_utility.ts` | —                            | — (free functions)  |
+| Layer            | File Pattern            | Port File                         | Port Name             |
+| ---------------- | ----------------------- | --------------------------------- | --------------------- |
+| Capabilities     | `capabilities_*.ts`   | `contract_<name>_protocol.ts`   | `I<Name>Protocol`   |
+| Infrastructure   | `infrastructure_*.ts` | `contract_<name>_port.ts`       | `I<Name>Port`       |
+| Agents           | `agent_*.ts`          | `contract_<name>_aggregate.ts`  | `I<Name>Aggregate`  |
+
+---
 
 ## Detection Patterns
 
 ### BAD: Infrastructure Without Port (AES404)
 
 ```typescript
-// BAD: No port implementation
-class FileCache {
-    read(): string { ... }
-}
-```
-
-### BAD: Business Logic in Infrastructure
-
-```typescript
-// BAD: Business logic in infrastructure layer
-class OrphanFileCache {
-    analyze(content: string): boolean {
-        // ← DOMAIN LOGIC — should be in capabilities
-        const isOrphan = content.includes("orphan");
-        return isOrphan;
+export class FileCache {
+    read(): string {
+        // public behavior without port interface
+        ...
     }
 }
 ```
 
-### BAD: Interface in Layer File
+Fix:
 
 ```typescript
-// BAD: Domain data defined in infrastructure layer
+export class FileCache implements IFileCachePort {
+    read(): string {
+        // contract implementation
+        ...
+    }
+}
+```
+
+---
+
+### BAD: Business Logic in Infrastructure
+
+```typescript
+export class OrphanFileCache {
+    analyze(content: FileContent): boolean {
+        // BAD: domain logic
+        return content.value.includes('orphan');
+    }
+}
+```
+
+Fix:
+
+Move analysis to capabilities.
+
+```typescript
+// capabilities_orphan_analyzer.ts
+export class OrphanAnalyzer implements IOrphanAnalyzerProtocol {
+    analyze(content: FileContent): OrphanAnalysisResult {
+        // domain logic here
+        ...
+    }
+}
+```
+
+Infrastructure should only load/save/cache data.
+
+---
+
+### BAD: Interface Defined in Layer File
+
+```typescript
 interface CacheEntry {  // ← INTERFACE — should be in shared/taxonomy
     key: string;
     value: string;
-    timestamp: number;
 }
 
 class OrphanFileCache {
@@ -295,10 +660,47 @@ class OrphanFileCache {
 }
 ```
 
+Fix:
+
+Move to shared taxonomy:
+
+```typescript
+// shared/cache/taxonomy_cache_entry_vo.ts
+export interface CacheEntry {
+    readonly key: CacheKey;
+    readonly value: CacheValue;
+}
+```
+
+Then import it:
+
+```typescript
+import { CacheEntry } from '../shared/cache/taxonomy_cache_entry_vo';
+```
+
+---
+
+### BAD: Concrete Service Field
+
+```typescript
+export class OrphanFileCache {
+    constructor(private readonly store: RedisKeyValueStore) {} // BAD
+}
+```
+
+Fix:
+
+```typescript
+export class OrphanFileCache {
+    constructor(private readonly store: IKeyValueStorePort) {}
+}
+```
+
+---
+
 ### BAD: Utility Methods in Block 2
 
 ```typescript
-// BAD: toString / equals mixed in with port methods
 export class FileCacheAdapter implements IFileReaderPort {
     constructor(private readonly _cacheDir: FilePath) {}
 
@@ -314,73 +716,46 @@ export class FileCacheAdapter implements IFileReaderPort {
 }
 ```
 
-### BAD: Module-Level Free Function in Infrastructure File
+Fix:
 
 ```typescript
-// BAD: Free function outside class in infrastructure file
-// infrastructure_file_adapter.ts
-
-export function ensureParentDir(filePath: string): void {   // ← FREE FUNCTION — extract to utility
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-}
-
-export function normalizePath(filePath: string): string {   // ← FREE FUNCTION — extract to utility
-    return path.normalize(filePath);
-}
-
 export class FileCacheAdapter implements IFileReaderPort {
-    read(path: FilePath): string {
-        const normalized = normalizePath(path.value);
-        ...
+    constructor(private readonly _cacheDir: FilePath) {}
+
+    read(path: FilePath): string { ... }    // ← Block 2: port method
+
+    toString(): string {                    // ← Block 3: utility method
+        return 'FileCacheAdapter()';
+    }
+
+    equals(other: unknown): boolean {       // ← Block 3
+        return other instanceof FileCacheAdapter;
     }
 }
 ```
 
-### BAD: Stateless Static Method That Should Be Extracted
+---
+
+### GOOD: Implementor with Shared Data and DI
 
 ```typescript
-// BAD: static method with zero class dependency — belongs in utility
-export class FileCacheAdapter implements IFileReaderPort {
+import { CachePolicy } from '../shared/cache/taxonomy_cache_policy_vo';
+import { IKeyValueStorePort } from '../shared/cache/contract_key_value_store_port';
+import { IOrphanFileCachePort } from '../shared/orphan_detector/contract_orphan_file_cache_port';
 
-    static normalizePath(filePath: string): string {    // ← no this, no class state, pure logic
-        return path.normalize(filePath);
-    }
-
-    static ensureParentDir(filePath: string): void {    // ← no this, no class state, pure logic
-        const dir = path.dirname(filePath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-    }
-
-    read(path: FilePath): string {
-        FileCacheAdapter.ensureParentDir(path.value);   // ← could be a free function
-        ...
-    }
-}
-```
-
-### GOOD: Class with Shared Data
-
-```typescript
-// GOOD: All data from shared, fields use DI
-import { FilePath } from '../shared/common/taxonomy_path';
-import { IFileReaderPort } from '../shared/common/contract_file_reader_port';
-
-export class FileCacheAdapter {
+export class OrphanFileCache implements IOrphanFileCachePort {
     constructor(
-        private readonly _cacheDir: FilePath,
+        private readonly store: IKeyValueStorePort,
+        private readonly policy: CachePolicy,
     ) {}
 }
 ```
 
+---
+
 ### GOOD: Correct 3-Block with Utility Methods
 
 ```typescript
-// GOOD: Port methods in Block 2, utility + factories in Block 3
 export class FileCacheAdapter implements IFileReaderPort {
 
     constructor(private readonly _cacheDir: FilePath) {}  // Block 1: constructor
@@ -401,311 +776,507 @@ export class FileCacheAdapter implements IFileReaderPort {
 }
 ```
 
-### GOOD: Extracted to Taxonomy Utility
-
-```typescript
-// GOOD: shared/common/taxonomy_file_utility.ts
-
-import * as fs from 'fs';
-import * as path from 'path';
-
-export function ensureParentDir(filePath: string): void {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-    }
-}
-
-export function normalizePath(filePath: string): string {
-    return path.normalize(filePath);
-}
-```
-
-```typescript
-// GOOD: infrastructure_file_adapter.ts (consumer)
-
-import { ensureParentDir, normalizePath } from '../shared/common/taxonomy_file_utility';
-
-export class FileCacheAdapter implements IFileReaderPort {
-
-    read(path: FilePath): string {
-        ensureParentDir(path.value);        // ← imported from utility
-        const normalized = normalizePath(path.value);  // ← imported from utility
-        ...
-    }
-}
-```
+---
 
 ## Workflow
 
-### Step 1: Analyze File
+### Step 1: Analyze File Responsibility
 
-Read file and check for mixed responsibilities. Ask: **"Is this code in the right layer?"**
+Read the file and ask:
 
-- If it has business logic → **MOVE to Capabilities** (AES404)
-- If pure I/O/external integration → continue to Step 2
+> Is this code pure I/O or external system integration?
+
+If yes → keep as infrastructure.
+
+If it contains business logic → move to capabilities.
+
+Examples of business logic that must move out of infrastructure:
+
+- deciding whether a file is orphan
+- calculating domain severity
+- validating business rules
+- computing domain metrics
+- interpreting domain meaning from content
+
+Technical mapping is still allowed:
+
+- DTO to VO mapping
+- serialization
+- deserialization
+- external error mapping
+- connection handling
+- retry mechanics
+- transport-level normalization
+
+---
 
 ### Step 2: Check for Missing Port
 
-Does the infrastructure class implement a port interface? If no → create one.
+Does the infrastructure class implement a port interface?
 
-```bash
-# Find infrastructure without port implementations
-grep -rn "^export class \|^class " packages/*/src/infrastructure_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    class=$(echo "$line" | grep -oP 'class \K[a-zA-Z_]+')
-    grep -q "implements.*Port" "$file" || echo "MISSING: $file has $class without port"
-done
-```
+If no:
 
-### Step 3: Create Port File (if missing)
+1. create `contract_<name>_port.ts`
+2. define `I<Name>Port`
+3. move public method signatures into the port
+4. make the class implement the port
 
-Create `contract_<name>_port.ts` in the shared package with interface methods.
+---
 
-**Port location:**
+### Step 3: Create Port File if Missing
 
-| Package    | Port Path                                             |
-| ---------- | ----------------------------------------------------- |
-| compositor | `packages/shared/src/compositor/contract_*_port.ts`  |
-| animator   | `packages/shared/src/animator/contract_*_port.ts`    |
-| scripting  | `packages/shared/src/scripting/contract_*_port.ts`   |
+Create port file in the appropriate shared domain folder.
+
+Examples:
+
+| Package        | Port Path                                                |
+| -------------- | -------------------------------------------------------- |
+| import-rules   | `packages/shared/src/import_rules/contract_*_port.ts`   |
+| code-analysis  | `packages/shared/src/code_analysis/contract_*_port.ts`  |
+| orphan-detector| `packages/shared/src/orphan_detector/contract_*_port.ts`|
+
+Register the module in the relevant `index.ts`.
+
+---
 
 ### Step 4: Enforce 3-Block Structure
 
-Reorganize into strict 3-block order within the class body:
+Reorganize the file into:
 
-1. `export class <Type> implements I<Name>Port` + `constructor` (class definition with DI fields)
-2. Interface method implementations (**domain port methods ONLY**)
-3. Utility methods (`toString`, `toJSON`, `equals`), static factories (`create`, `from`), `private` helpers
+1. class definition + `constructor`
+2. port interface method implementations
+3. utility methods, static factories, private helpers
+
+---
 
 ### Step 5: Verify Class Discipline
 
-- **1 file = 1 class** — no multiple classes in one file
-- **All interfaces/types in shared/taxonomy** — domain types must be imported, not defined locally
-- **Fields use interfaces** — constructor receives port interfaces, not concrete types
-- **No standalone functions remain in Block 3** — extract to `*_utility.ts` modules
+Check:
 
-### Step 6: Extract Free Functions to Utility
+- exactly one implementation class
+- no local domain data interfaces/types
+- no local enums/VOs/DTOs/constants
+- service fields use port interfaces
+- value fields use shared VOs
 
-Scan the file for functions that have **no `this` / class-state dependency**:
+---
 
-```bash
-# Find module-level export functions (outside class) — ALWAYS forbidden
-grep -n "^export function \|^function " packages/*/src/infrastructure_*.ts
+### Step 6: Verify Helper vs Utility Boundary
 
-# Find static methods inside class
-grep -n "static " packages/*/src/infrastructure_*.ts
+For each helper/function:
 
-# Find standalone exported constants that may belong in utility
-grep -n "^export const " packages/*/src/infrastructure_*.ts
+```text
+Does it know adapter-specific or infrastructure-specific details?
+├─ YES → keep as helper in Block 3
+└─ NO
+   Is it stateless, pure, and reusable by multiple modules?
+   ├─ YES → extract to *_utility.ts
+   └─ NO → keep as helper in Block 3
 ```
 
-For each candidate, ask:
-
-| Question | YES → | NO → |
-|----------|-------|------|
-| Uses `this` or instance state? | Keep in Block 3 | Continue ↓ |
-| Uses class-level `static` fields? | Keep as `private static` in Block 3 | Continue ↓ |
-| Tightly coupled to class semantics (e.g., references class types)? | Keep as `static` in Block 3 | Continue ↓ |
-| Pure logic, deterministic, no side effects? | **Extract to `*_utility.ts`** | Keep in Block 3 |
-| Domain-agnostic (not specific to this class)? | **Extract to `*_utility.ts`** | Keep in Block 3 |
-
-**Extraction process:**
-
-1. Create `packages/shared/src/<domain>/taxonomy_<name>_utility.ts`
-2. Move function(s) to utility file with JSDoc comments
-3. Extract magic constants to `taxonomy_<name>_constant.ts` if needed
-4. Add import in infrastructure file: `import { funcName } from '../shared/<domain>/taxonomy_<name>_utility';`
-5. Remove original function from infrastructure file
-6. Export from `index.ts` barrel if needed
-7. Verify: `npx tsc --noEmit`
+---
 
 ### Step 7: Verify Layer Compliance
 
-Check forbidden imports and business logic patterns:
+Ensure:
 
-```bash
-# Check for business logic in infrastructure
-grep -n "is_orphan\|analyze\|validate" packages/*/src/infrastructure_*.ts
+- no forbidden imports from concrete capabilities
+- no forbidden imports from concrete agents
+- no business logic
+- no domain calculations
+- no local domain data definitions
 
-# Check for forbidden imports
-grep -n "capabilities_\|agent_" packages/*/src/infrastructure_*.ts
-```
+---
 
-### Step 8: Verify
+### Step 8: Verify Error Handling, VO, and Constants
 
-Run TypeScript compiler to confirm no violations.
+Check:
+
+- no silent `?? ''` or `|| 0` error swallowing
+- fallible port methods return descriptive error types or throw meaningful errors
+- I/O errors are propagated
+- public contracts use shared VOs
+- no magic constants for domain values
+
+---
+
+### Step 9: Verify Compilation
+
+Run:
 
 ```bash
 npx tsc --noEmit
 ```
 
-## Import Strategy
-
-When deciding where a function belongs:
-
-### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
-
-Use when the code is **stateless, pure logic** with no side effects:
-
-| Condition                                     | Example                                       |
-| --------------------------------------------- | --------------------------------------------- |
-| No `this`, no class state                     | `normalizePath(filePath: string): string`     |
-| All data via parameters                       | `ensureParentDir(filePath: string): void`     |
-| Deterministic, no side effects                | `isAccessible(filePath: string): boolean`     |
-
-```typescript
-// taxonomy_file_utility.ts (SHARED / TAXONOMY)
-export function normalizePath(filePath: string): string {
-    return path.normalize(filePath);
-}
-
-// infrastructure_file_adapter.ts (CONSUMER)
-import { normalizePath } from '../shared/common/taxonomy_file_utility';
-```
-
-### Option B: Keep as Instance/Static Method (Stateful or Side-Effectful)
-
-Use when the code requires **instance state, class state, or side effects**:
-
-| Condition                     | Example                                         |
-| ----------------------------- | ----------------------------------------------- |
-| Uses `this` / instance fields | `this._cacheDir.value`                          |
-| Uses class-level static state | `FileCacheAdapter._registry[name]`              |
-| Has side effects / I/O        | File operations, logging with context           |
-| Tightly coupled to class semantics | References class-level types or constants  |
-
-```typescript
-// infrastructure_file_adapter.ts (STAYS IN CLASS — Block 3)
-export class FileCacheAdapter implements IFileReaderPort {
-    private static readonly _DEFAULT_CACHE_DIR = '.cache';
-
-    constructor(private readonly _cacheDir: FilePath) {}
-
-    private resolvePath(filePath: string): string {   // uses this → stays
-        return `${this._cacheDir.value}/${filePath}`;
-    }
-
-    static fromEnv(): FileCacheAdapter { // uses class state → stays
-        return new FileCacheAdapter(new FilePath(process.env.CACHE_DIR ?? FileCacheAdapter._DEFAULT_CACHE_DIR));
-    }
-}
-```
-
-### Decision Tree
-
-```
-Function found in infrastructure file?
-  │
-  ├─ Module-level export function (outside class)?
-  │   └─ YES → EXTRACT to *_utility.ts (ALWAYS forbidden in infrastructure)
-  │
-  ├─ Static method inside class?
-  │   ├─ Pure logic, no class dependency?
-  │   │   └─ YES → EXTRACT to *_utility.ts
-  │   ├─ Factory (create, from, of)?
-  │   │   └─ YES → Keep in Block 3
-  │   ├─ Uses class-level static state?
-  │   │   └─ YES → Keep in Block 3
-  │   └─ Tightly coupled to class semantics?
-  │       └─ YES → Keep in Block 3
-  │
-  ├─ Instance method?
-  │   ├─ Defined in I<Name>Port interface?
-  │   │   └─ YES → Block 2
-  │   ├─ Utility method (toString, toJSON, equals)?
-  │   │   └─ YES → Block 3
-  │   └─ Private helper (uses this)?
-  │       └─ YES → Block 3
-  │
-  └─ Module-level export const (outside class)?
-      ├─ Domain constant?
-      │   └─ YES → EXTRACT to taxonomy_<name>_constant.ts
-      └─ Class-specific config?
-          └─ YES → Move inside class as private static readonly
-```
+---
 
 ## Verification Checklist
 
-- [ ] File follows the **3-Block Structure** (Class + `constructor` → Port Methods → Utility/Factories/Helpers).
-- [ ] **Block 2 contains ONLY port interface method implementations**. No utility methods (`toString`, `equals`), no static factories, no `private` helpers in Block 2.
-- [ ] **Utility methods** (`toString`, `toJSON`, `equals`, `valueOf`) and **static factories** (`create`, `from`, `of`) are in **Block 3**.
-- [ ] Infrastructure class implements a port interface.
-- [ ] Interface contains **only** public/contract methods (no helper methods).
-- [ ] Helper methods are in Block 3 (`private` methods).
-- [ ] Constructors receive port interfaces via `constructor`.
-- [ ] **No module-level `export function`** exists outside the class in infrastructure files.
-- [ ] **No stateless `static` method** (zero class dependency) remains in class — extracted to `*_utility.ts`.
-- [ ] Stateless utilities exist in their own `*_utility.ts` files in shared/taxonomy.
-- [ ] **1 file = 1 class** — no multiple classes in one file.
-- [ ] All interfaces/types imported from shared/taxonomy (none defined locally).
-- [ ] Constructor fields use port interfaces, not concrete types.
-- [ ] **Zero business logic** in infrastructure layer (no domain rules, no calculations).
-- [ ] No forbidden imports (no capabilities\_\_, no agent\_\_).
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `constructor`.
+- [ ] Block 2 contains ONLY the port interface method implementations.
+- [ ] Block 3 contains utility methods, factories, and private helpers.
+- [ ] Infrastructure class implements a port interface (AES404).
+- [ ] Port contains only public contract methods.
+- [ ] Private helpers are not declared in the port.
+- [ ] Constructors are not declared in the port.
+- [ ] Utility methods are in Block 3.
+- [ ] Adapter-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use port interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Infrastructure contains zero business logic.
+- [ ] No forbidden imports from concrete `capabilities_*`.
+- [ ] No forbidden imports from concrete `agent_*`.
 - [ ] Port module is registered in the shared package's `index.ts`.
-- [ ] Utility module is registered in the shared package's `index.ts`.
-- [ ] `npx tsc --noEmit` passes without errors.
+- [ ] `npx tsc --noEmit` passes.
+
+---
+
+## Error Handling Rules
+
+Infrastructure error handling must be explicit.
+
+### Rule 1: Do not silently discard errors
+
+Forbidden:
+
+```typescript
+const content = fs.readFileSync(path.value(), 'utf-8') ?? '';
+```
+
+Forbidden:
+
+```typescript
+const value = result || 0;
+```
+
+Unless the value is genuinely optional and the default is an explicit domain/technical decision.
+
+---
+
+### Rule 2: Fallible port methods should return `Result` or throw
+
+If a port method can fail due to I/O, network, database, parsing, or validation, return a result type or throw a meaningful error.
+
+```typescript
+read(path: FilePath): Result<FileContent, FileReadError>;
+```
+
+---
+
+### Rule 3: Use descriptive error types
+
+Prefer custom error types from shared taxonomy.
+
+```typescript
+export class FileReadError extends Error {
+    constructor(
+        public readonly path: FilePath,
+        public readonly cause: Error,
+    ) {
+        super(`Failed to read ${path.value()}: ${cause.message}`);
+    }
+}
+```
+
+Avoid losing context:
+
+```typescript
+catch (e) {
+    return String(e); // BAD: context lost
+}
+```
+
+---
+
+### Rule 4: Infrastructure should not produce lint results directly
+
+Infrastructure should return data, errors, or VOs.
+
+Lint violations are usually domain/analysis outcomes and belong to capabilities.
+
+Bad:
+
+```typescript
+read(path: FilePath): LintResult[] {
+    // BAD: infrastructure deciding lint outcomes
+    ...
+}
+```
+
+Good:
+
+```typescript
+read(path: FilePath): Result<FileContent, FileReadError> {
+    // infrastructure returns data or error
+    ...
+}
+```
+
+Capabilities then decides whether an error becomes a lint violation.
+
+---
+
+### Proper Patterns
+
+```typescript
+// OK: explicit I/O error propagation
+read(path: FilePath): Result<FileContent, FileReadError> {
+    try {
+        const raw = fs.readFileSync(path.value(), 'utf-8');
+        return Ok(FileContent.new(raw));
+    } catch (err) {
+        return Err(FileReadError.io(path, err));
+    }
+}
+```
+
+```typescript
+// OK: optional config with explicit default constant
+timeout(): TimeoutSeconds {
+    return this.config.timeout() ?? DEFAULT_TIMEOUT_SECONDS;
+}
+```
+
+---
+
+## Primitive and VO Rules
+
+Infrastructure public contracts should use shared VOs for domain data.
+
+Bad:
+
+```typescript
+export interface IFileWriterPort {
+    write(path: string, content: string): void;
+}
+```
+
+Good:
+
+```typescript
+export interface IFileWriterPort {
+    write(path: FilePath, content: FileContent): Result<void, FileWriteError>;
+}
+```
+
+### Primitive Policy
+
+| Primitive  | Rule |
+| ---------- | ---- |
+| `string`   | Forbidden for domain fields and public contract values. Use VO. |
+| `number`   | Forbidden for domain values. Use VO. |
+| `boolean`  | Allowed for technical toggles when no richer VO is needed. |
+
+Prefer VOs for:
+
+- file paths
+- URLs
+- timeouts
+- durations
+- cache keys
+- cache values
+- query results
+- identifiers
+- messages
+
+---
+
+## Magic Constant Extraction Rules
+
+No hardcoded domain literals in infrastructure.
+
+Bad:
+
+```typescript
+save(): Result<void, FileWriteError> {
+    fs.writeFileSync('manifest.json', data); // BAD: magic string
+    return Ok(undefined);
+}
+```
+
+Good:
+
+```typescript
+import { MANIFEST_FILENAME } from '../shared/manifest/taxonomy_manifest_constant';
+
+save(): Result<void, FileWriteError> {
+    fs.writeFileSync(MANIFEST_FILENAME.value, data);
+    return Ok(undefined);
+}
+```
+
+Constants MUST live in:
+
+```text
+taxonomy_*_constant.ts
+```
+
+Technical defaults should also be named constants or come from configuration VOs.
+
+---
+
+## Import Strategy
+
+When fixing cross-import violations in infrastructure, choose one of these options.
+
+---
+
+### Option A: Extract to Taxonomy Utility
+
+Use when the code is:
+
+- stateless,
+- pure,
+- domain-agnostic,
+- reusable by multiple modules.
+
+Example:
+
+```typescript
+// shared/common/taxonomy_path_utility.ts
+export function normalizeRelativePath(path: string): string | null {
+    return path.startsWith('/') ? path.slice(1) : null;
+}
+```
+
+Consumer:
+
+```typescript
+import { normalizeRelativePath } from '../shared/common/taxonomy_path_utility';
+```
+
+---
+
+### Option B: Dependency Injection via Port Interface
+
+Use when the code needs:
+
+- state,
+- collaborators,
+- side effects,
+- I/O,
+- layer-specific implementation.
+
+Example:
+
+```typescript
+// contract_file_writer_port.ts
+export interface IFileWriterPort {
+    write(path: FilePath, content: FileContent): Result<void, FileWriteError>;
+}
+```
+
+```typescript
+// infrastructure_file_writer_adapter.ts
+export class FileWriterAdapter implements IFileWriterPort {
+    write(path: FilePath, content: FileContent): Result<void, FileWriteError> {
+        try {
+            fs.writeFileSync(path.value(), content.value());
+            return Ok(undefined);
+        } catch (err) {
+            return Err(FileWriteError.io(path, err));
+        }
+    }
+}
+```
+
+```typescript
+// consumer
+export class ReportPublisher {
+    constructor(private readonly writer: IFileWriterPort) {}
+}
+```
+
+The consumer depends only on the port interface, not on concrete infrastructure.
+
+---
+
+## Decision Tree
+
+```text
+Found reusable code in infrastructure?
+  │
+  ├─ Does it know adapter-specific or infrastructure-specific details?
+  │   └─ YES → keep as private helper in Block 3
+  │
+  ├─ Does it need this or class state?
+  │   └─ YES → keep as helper/method in Block 3
+  │
+  ├─ Does it perform I/O or side effects?
+  │   └─ YES → keep in infrastructure, not utility
+  │
+  └─ Is it stateless, pure, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility
+```
+
+---
 
 ## Quick Commands
 
+These commands are rough heuristic checks. Final validation should use `npx tsc --noEmit` or AST-based tooling.
+
 ```bash
-# Verify 3-Block Structure order (rough check)
-grep -n "^export class\|^    [a-z]\|^    private \|^    static " packages/<package>/src/infrastructure_*.ts
+# List classes in infrastructure files
+grep -n "^export class " packages/*/src/infrastructure_*.ts
 
-# Find infrastructure without port implementations
-grep -rn "^export class \|^class " packages/*/src/infrastructure_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    class=$(echo "$line" | grep -oP 'class \K[a-zA-Z_]+')
-    grep -q "implements.*Port" "$file" || echo "MISSING: $file has $class without port"
-done
+# List port interface implementations
+grep -n "implements I[A-Za-z0-9_]*Port" packages/*/src/infrastructure_*.ts
 
-# Ensure port does NOT contain helper methods
-grep -E "(helper|util|private|_)" packages/shared/src/contract_*_port.ts || echo "Clean: No helpers in port"
+# Check possible business logic keywords
+grep -n "is_orphan\|analyze\|validate\|calculate\|compute\|business" packages/*/src/infrastructure_*.ts
 
-# Check for business logic in infrastructure
-grep -n "is_orphan\|analyze\|validate\|business" packages/*/src/infrastructure_*.ts
+# Check forbidden imports
+grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*agent_" packages/*/src/infrastructure_*.ts
 
-# Check for interfaces/types defined in layer files
-grep -rn "^interface \|^type \|^enum " packages/*/src/ | grep -v "shared/" | grep infrastructure
+# Find error swallowing patterns
+grep -n "?? ''\|?? \"\"\||| 0\||| ''\||| \"\"" packages/*/src/infrastructure_*.ts
 
-# Check for concrete type fields (non-interface)
-grep -n "constructor" packages/*/src/infrastructure_*.ts | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    grep -A5 "constructor" "$file" | grep -v "I[A-Z].*:" || echo "NON-INTERFACE FIELD: $file"
-done
-
-# Find module-level free functions in infrastructure files (ALWAYS forbidden)
-grep -n "^export function \|^function " packages/*/src/infrastructure_*.ts
-
-# Find static methods that may need extraction (no class state)
-grep -n "static " packages/*/src/infrastructure_*.ts | grep -v "private static\|static create\|static from\|static of"
-
-# Find module-level constants that should be in taxonomy
-grep -n "^export const " packages/*/src/infrastructure_*.ts
-
-# Detect utility methods appearing BEFORE port methods (wrong block order)
-awk '
-    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
-    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!port_line) port_line = NR }
-    END { if (util_line && port_line && util_line < port_line) print "VIOLATION: utility method (line " util_line ") before port method (line " port_line ")" }
-' packages/*/src/infrastructure_*.ts
+# Find possible magic numbers
+grep -n "[0-9]\+\.[0-9]\+" packages/*/src/infrastructure_*.ts | grep -v "//\|const\|import" | head -20
 
 # Check TypeScript
 npx tsc --noEmit
 ```
 
-## Common Mistakes (AVOID)
+---
 
-- ❌ **Putting business logic in infrastructure**: Domain rules, calculations, and validation MUST be in capabilities layer.
-- ❌ **Defining interfaces/types in layer files**: Domain data must be in shared/taxonomy. Only the class belongs in layer files.
-- ❌ **Using concrete types as constructor fields**: Constructor should receive port interfaces, not concrete implementations.
-- ❌ **Putting helper methods in the port**: This violates encapsulation and forces all implementors to write boilerplate.
-- ❌ **Mixing Block 2 and Block 3**: Do not interleave port methods and helper methods. Keep them in separate sections.
-- ❌ **Placing utilities in class body**: Stateless functions MUST be extracted to standalone `*_utility.ts` modules.
-- ❌ **Creating "God Ports"**: If a port has >10 methods or mixes unrelated concerns, split it into multiple ports.
-- ❌ **Multiple classes in one file**: Each file should have exactly ONE class. Use `consolidate-files-typescript` if merging multiple files.
-- ❌ **Placing utility methods (`toString`, `toJSON`, `equals`) in Block 2**: Block 2 is RESERVED for port method implementations ONLY. Utility methods belong in Block 3.
-- ❌ **Placing static factories (`create`, `from`, `of`) before port methods**: Factories are constructors and belong in Block 3, after port methods.
-- ❌ **Leaving module-level `export function` in infrastructure files**: Free functions outside the class MUST be extracted to `*_utility.ts` in shared/taxonomy. No exceptions.
-- ❌ **Keeping stateless `static` methods in class**: If a `static` method uses no `this`, no class-level state, and is not a factory, it belongs in `*_utility.ts`, not in the class body.
-- ❌ **Defining `export const` at module level in infrastructure files**: Domain constants MUST live in `taxonomy_<name>_constant.ts` in shared/taxonomy.
+### Check Wrong Block Order
+
+```bash
+awk '
+    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
+    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!port_line) port_line = NR }
+    END { if (util_line && port_line && util_line < port_line) print "VIOLATION: utility method (line " util_line ") before port method (line " port_line ")" }
+' packages/*/src/infrastructure_*.ts
+```
+
+---
+
+## Common Mistakes
+
+- Putting business logic in infrastructure.
+- Putting domain calculations in infrastructure.
+- Putting domain validation in infrastructure.
+- Defining domain data interfaces/types in infrastructure files.
+- Using concrete service types as constructor fields.
+- Using raw primitives for domain value fields.
+- Exposing raw primitives in public port contracts when a VO exists.
+- Putting private helpers in the port interface.
+- Putting constructors in the port interface.
+- Placing utility methods before the port interface methods.
+- Mixing Block 2 and Block 3 responsibilities.
+- Keeping reusable, domain-agnostic utility functions inside Block 3.
+- Extracting adapter-specific helpers to shared utility too early.
+- Creating god ports with too many unrelated methods.
+- Multiple implementation classes in one file.
+- Direct dependency on concrete capabilities implementations.
+- Direct dependency on concrete agent implementations.
+- Silent error swallowing with `?? ''` or `|| 0`.
+- Magic constants in infrastructure logic.
+- Infrastructure returning lint results directly instead of returning data/errors to capabilities.

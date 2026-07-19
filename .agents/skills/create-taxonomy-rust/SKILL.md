@@ -1,7 +1,7 @@
 ---
 name: create-taxonomy-rust
-description: "Create and validate taxonomy layer files (shared/taxonomy) — all data classes, VOs, errors, constants, and stateless utilities must live here following strict naming conventions."
-version: 1.1.0
+description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, constants, and pure reusable utilities. Ensures domain data lives only in shared taxonomy and remains pure."
+version: 1.3.0
 category: refactoring
 tags:
   [
@@ -9,19 +9,24 @@ tags:
     aes,
     taxonomy,
     shared,
-    dataclass,
     vo,
     entity,
+    error,
+    event,
+    constant,
     utility,
-    structure,
+    aes201,
+    primitive-to-vo,
   ]
 triggers:
   - "create taxonomy rust"
   - "add taxonomy rust"
-  - "move to taxonomy rust"
-  - "dataclass in shared rust"
-  - "create value object rust"
-  - "create taxonomy entity rust"
+  - "move dataclass to taxonomy rust"
+  - "create vo rust"
+  - "create error taxonomy rust"
+  - "create constant taxonomy rust"
+  - "check taxonomy rust"
+  - "audit taxonomy rust"
 dependencies: []
 related:
   - create-capabilities-rust
@@ -29,124 +34,341 @@ related:
   - create-agent-rust
   - enforce-1-struct-per-file-rust
   - trait-consolidation-rust
-  - method_classifier-rust
+  - fix-primitive-to-vo
+  - fix-magic-constant
 ---
+
 # create-taxonomy-rust
 
 ## Purpose
 
-Create and validate Rust **taxonomy layer** files in `crates/shared/src/<domain>/`. This is where ALL data classes, value objects, errors, constants, and stateless utility functions MUST live. No domain structs may be defined in capabilities, infrastructure, agents, or surface layers.
+Create and validate Rust **taxonomy layer** files inside `crates/shared/src/<domain>/`.
 
-## Rules
+Taxonomy is the single source of truth for:
 
-### The Fundamental Question
+- value objects,
+- entities,
+- domain errors,
+- domain events,
+- constants,
+- pure reusable utility functions.
 
-> **"Is this struct a dataclass?"**
+No domain data structures may be defined in:
 
-- **Dataclass** (struct with domain data, DTOs, results, VOs) → **MUST be in shared/taxonomy**. Never in capabilities/infrastructure/agents/surface.
-- **Implementor** (struct that implements a trait, uses DI) → belongs in the layer file (`capabilities_*.rs`, `infrastructure_*.rs`, `agent_*.rs`).
+- capabilities,
+- infrastructure,
+- agents,
+- surface,
+- root/container layers.
 
-### Taxonomy Layer Structure
+Those layers must import domain data from shared taxonomy.
+
+---
+
+## Definition of Done
+
+A taxonomy change is considered valid when:
+
+1. Domain data structures live in `shared/taxonomy`.
+2. Taxonomy file naming uses the allowed strict suffixes.
+3. Taxonomy files do not import from capability, infrastructure, agent, surface, or root layers.
+4. Taxonomy files contain no I/O and no side effects.
+5. Utility functions in `*_utility.rs` are stateless, pure, domain-agnostic, and reusable.
+6. Value objects validate on construction.
+7. Public domain contracts use VOs instead of raw owned primitives.
+8. New taxonomy modules are registered in the relevant `mod.rs`.
+9. `cargo check -p shared` passes.
+
+---
+
+## The Fundamental Question
+
+> **“Is this struct/enum a dataclass or an implementor?”**
+
+### Dataclass
+
+A dataclass is a type that carries domain data.
+
+Examples:
+
+- value objects,
+- DTOs,
+- result objects,
+- domain entities,
+- domain errors,
+- domain events,
+- enums representing domain values.
+
+These MUST live in shared taxonomy.
+
+```rust
+pub struct OrphanAnalysisResult {
+    // domain data
+}
+```
+
+### Implementor
+
+An implementor is a struct that implements a trait and contains behavior, often with injected dependencies.
+
+Examples:
+
+- `capabilities_*.rs`
+- `infrastructure_*.rs`
+- `agent_*.rs`
+
+These stay in their layer files.
+
+```rust
+pub struct CapabilitiesOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
+```
+
+---
+
+## Taxonomy Layer Structure
+
+Use snake_case module directories.
 
 ```text
 crates/shared/src/
-├── lib.rs                    # Top-level module declarations
-├── common/                   # Cross-domain shared types
+├── lib.rs
+├── common/
 │   ├── mod.rs
-│   └── taxonomy_*.rs
-├── <domain>/                 # Domain-specific taxonomy
-│   ├── mod.rs                # Module exports for this domain
-│   ├── contract_*.rs         # Contract traits (port, protocol, aggregate)
-│   ├── taxonomy_*_vo.rs      # Value Objects
-│   ├── taxonomy_*_entity.rs  # Entity types
-│   ├── taxonomy_*_error.rs   # Error types
-│   ├── taxonomy_*_event.rs   # Event types
-│   ├── taxonomy_*_constant.rs# Static compile-time constants
-│   └── taxonomy_*_utility.rs # Stateless utility functions (Dumb Tools)
+│   ├── taxonomy_*_vo.rs
+│   ├── taxonomy_*_error.rs
+│   ├── taxonomy_*_constant.rs
+│   └── taxonomy_*_utility.rs
+│
+├── <domain>/
+│   ├── mod.rs
+│   ├── contract_*_protocol.rs
+│   ├── contract_*_port.rs
+│   ├── contract_*_aggregate.rs
+│   ├── taxonomy_*_vo.rs
+│   ├── taxonomy_*_entity.rs
+│   ├── taxonomy_*_error.rs
+│   ├── taxonomy_*_event.rs
+│   ├── taxonomy_*_constant.rs
+│   └── taxonomy_*_utility.rs
 ```
 
-### File Naming Convention
+Important:
 
-Taxonomy files follow strict naming patterns:
+- `contract_*.rs` files are NOT taxonomy files.
+- Contract traits may import taxonomy types.
+- Taxonomy files MUST NOT import contract traits.
 
-| Suffix        | Purpose                               | Allowed? | Example                                |
-| ------------- | ------------------------------------- | -------- | -------------------------------------- |
-| `_vo`       | Value Objects (wraps a single value)  | ✅ YES   | `taxonomy_import_rule_vo.rs`         |
-| `_entity`   | Domain entities with identity         | ✅ YES   | `taxonomy_analysis_entity.rs`        |
-| `_error`    | Error types (`thiserror::Error`)    | ✅ YES   | `taxonomy_config_error.rs`           |
-| `_event`    | Event/message types                   | ✅ YES   | `taxonomy_scan_event.rs`             |
-| `_constant` | Static compile-time constants         | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
-| `_utility`  | Stateless free functions (Dumb Tools) | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
+---
 
-**CRITICAL:** These suffixes are **strict** — only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed for `taxonomy_` prefixed files. No other suffixes.
+## File Naming Convention
 
-### Import Restrictions (AES201)
+Taxonomy files MUST use strict suffixes.
 
-Taxonomy files must remain **completely pure**:
+| Suffix        | Purpose                            | Example                                |
+| ------------- | ---------------------------------- | -------------------------------------- |
+| `_vo`       | Value objects and value-like enums | `taxonomy_file_path_vo.rs`           |
+| `_entity`   | Entities with identity             | `taxonomy_analysis_entity.rs`        |
+| `_error`    | Error types                        | `taxonomy_config_error.rs`           |
+| `_event`    | Event/message types                | `taxonomy_scan_event.rs`             |
+| `_constant` | Static compile-time constants      | `taxonomy_layer_names_constant.rs`   |
+| `_utility`  | Stateless pure reusable functions  | `taxonomy_symbol_renamer_utility.rs` |
 
-| Taxonomy Type                                            | Can Import From              | Cannot Import From                                              |
-| -------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------- |
-| **taxonomy (`_vo`)**                             | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
-| **taxonomy (`_entity`, `_error`, `_event`)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
-| **taxonomy (`_constant`)**                       | Nothing (pure static values) | Any external imports                                            |
-| **taxonomy (`_utility`)**                        | taxonomy types               | Non-taxonomy layers, I/O operations                             |
+Allowed taxonomy prefixes:
 
-### Dataclass Patterns
+```text
+taxonomy_*_vo.rs
+taxonomy_*_entity.rs
+taxonomy_*_error.rs
+taxonomy_*_event.rs
+taxonomy_*_constant.rs
+taxonomy_*_utility.rs
+```
 
-#### Value Objects (`_vo.rs`)
+No other taxonomy suffixes are allowed.
 
-Wrap a single value with type safety. **These VOs are MANDATORY for Contract signatures** to prevent primitive leakage.
+---
+
+## Purity and Import Restrictions (AES201)
+
+Taxonomy must remain pure and stable.
+
+### Allowed Dependencies
+
+| Taxonomy Type | May Import From                              | Must Not Import From                                                |
+| ------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `_vo`       | other taxonomy types, std, serde when needed | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_entity`   | other taxonomy types, std, serde when needed | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_error`    | other taxonomy types, std, thiserror         | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_event`    | other taxonomy types, std, serde when needed | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_constant` | only core/static values                      | external layer imports, I/O, functions                              |
+| `_utility`  | taxonomy types, pure std helpers             | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+
+Taxonomy may contain:
+
+- value validation,
+- domain invariants inside constructors,
+- pure transformations between taxonomy types.
+
+Taxonomy must not contain:
+
+- file I/O,
+- network calls,
+- database access,
+- environment mutation,
+- side effects,
+- business orchestration,
+- use-case logic,
+- layer-specific behavior.
+
+---
+
+## Dataclass Patterns
+
+### Value Objects (`_vo.rs`)
+
+A value object should wrap domain values with type safety and validation.
+
+Prefer private inner fields.
+
+Bad:
 
 ```rust
-// taxonomy_import_rule_vo.rs
-use serde::{Serialize, Deserialize};
-use std::fmt;
+pub struct FilePath {
+    pub value: String,
+}
+```
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+Good:
+
+```rust
+use crate::common::taxonomy_validation_error::ValidationError;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct FilePath(String);
+
+impl FilePath {
+    pub fn new(value: impl Into<String>) -> Result<Self, ValidationError> {
+        let value = value.into();
+
+        if value.trim().is_empty() {
+            return Err(ValidationError::empty("FilePath"));
+        }
+
+        Ok(Self(value))
+    }
+
+    pub fn value(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for FilePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+```
+
+For simple wrappers, macros may be used:
+
+```rust
+string_value_object!(SymbolName);
+u32_value_object!(LineNumber);
+bool_value_object!(OrphanFlag);
+```
+
+Macros should still support validation when the domain requires it.
+
+---
+
+### Composite Value Objects
+
+Composite VOs should use other VOs as fields, not raw primitives.
+
+Bad:
+
+```rust
 pub struct ImportRuleVO {
     pub pattern: String,
     pub message: String,
 }
+```
+
+Good:
+
+```rust
+use crate::import_rules::taxonomy_rule_pattern_vo::RulePattern;
+use crate::import_rules::taxonomy_rule_message_vo::RuleMessage;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImportRuleVO {
+    pattern: RulePattern,
+    message: RuleMessage,
+}
 
 impl ImportRuleVO {
-    pub fn new(pattern: String, message: String) -> Self {
-        Self { pattern, message }
+    pub fn new(pattern: RulePattern, message: RuleMessage) -> Self {
+        Self {
+            pattern,
+            message,
+        }
     }
 
-    pub fn value(&self) -> &str {
+    pub fn pattern(&self) -> &RulePattern {
         &self.pattern
     }
-}
 
-impl fmt::Display for ImportRuleVO {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.pattern)
+    pub fn message(&self) -> &RuleMessage {
+        &self.message
     }
 }
 ```
 
-#### Macro-Generated Value Objects
+---
 
-For simple wrappers, use macros:
+### Entities (`_entity.rs`)
+
+Entities represent domain objects with identity.
 
 ```rust
-// taxonomy_common_vo.rs
-string_value_object!(FieldName);      // wraps String
-primitive_value_object!(BooleanVO);   // wraps bool
-primitive_value_object!(SeverityVO);  // wraps u32
+use crate::code_analysis::taxonomy_symbol_id_vo::SymbolId;
+use crate::code_analysis::taxonomy_symbol_name_vo::SymbolName;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SymbolEntity {
+    id: SymbolId,
+    name: SymbolName,
+}
+
+impl SymbolEntity {
+    pub fn new(id: SymbolId, name: SymbolName) -> Self {
+        Self { id, name }
+    }
+
+    pub fn id(&self) -> &SymbolId {
+        &self.id
+    }
+
+    pub fn name(&self) -> &SymbolName {
+        &self.name
+    }
+}
 ```
 
-#### Error Types (`_error.rs`)
+---
 
-Use `thiserror::Error`:
+### Error Types (`_error.rs`)
+
+Use `thiserror::Error`.
+
+Prefer VO fields instead of raw public strings.
+
+Bad:
 
 ```rust
-// taxonomy_config_error.rs
-use thiserror::Error;
-use serde::{Serialize, Deserialize};
-use std::fmt;
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Error)]
+#[derive(Debug, thiserror::Error)]
 #[error("Config error: {key} - {message}")]
 pub struct ConfigError {
     pub key: String,
@@ -154,313 +376,701 @@ pub struct ConfigError {
 }
 ```
 
-#### Utility Functions (`_utility.rs`)
-
-Stateless free functions (no `&self`, no side effects) that act as **Dumb Tools**.
-
-**🚨 CRITICAL: The Ultimate Boundary for Utilities**
-A function belongs in `*_utility.rs` ONLY if it meets ALL of these:
-
-1. **Stateless**: No `&self`, no struct field access.
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
-3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules or domain-specific validation logic. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
-4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
-
-If a stateless function contains **Domain Knowledge** OR only serves **ONE capability/infrastructure class**, it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
+Good:
 
 ```rust
-// ✅ GOOD: Dumb Tool (Domain-Agnostic, Multi-Consumer Reusable)
-pub fn extract_trait_name(content: &str) -> Option<String> {
-    // Just regex, doesn't know what a "trait" means in domain context
-    // Multiple capabilities/infrastructures can use this
-    // ...
+use thiserror::Error;
+
+use crate::common::taxonomy_error_message_vo::ErrorMessage;
+use crate::config::taxonomy_config_key_vo::ConfigKey;
+
+#[derive(Debug, Error)]
+#[error("Config error for {key}: {message}")]
+pub struct ConfigError {
+    key: ConfigKey,
+    message: ErrorMessage,
 }
 
-// ❌ BAD: Domain Knowledge masquerading as utility
-pub fn get_target_layer_from_suffix(suffix: &str) -> &str {
-    // KNOWS business rules: port = infrastructure.
-    // This belongs in capabilities as a private helper!
+impl ConfigError {
+    pub fn new(key: ConfigKey, message: ErrorMessage) -> Self {
+        Self { key, message }
+    }
+
+    pub fn key(&self) -> &ConfigKey {
+        &self.key
+    }
+
+    pub fn message(&self) -> &ErrorMessage {
+        &self.message
+    }
+}
+```
+
+If an error wraps lower-level errors:
+
+```rust
+use thiserror::Error;
+
+use crate::file_system::taxonomy_file_path_vo::FilePath;
+
+#[derive(Debug, Error)]
+pub enum FileReadError {
+    #[error("Failed to read file: {0}")]
+    Io(FilePath, #[source] std::io::Error),
+
+    #[error("File content is invalid: {0}")]
+    Validation(FilePath),
+}
+```
+
+---
+
+### Event Types (`_event.rs`)
+
+Events represent something that happened in the domain.
+
+```rust
+use crate::scan::taxonomy_scan_id_vo::ScanId;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ScanCompletedEvent {
+    scan_id: ScanId,
+}
+
+impl ScanCompletedEvent {
+    pub fn new(scan_id: ScanId) -> Self {
+        Self { scan_id }
+    }
+
+    pub fn scan_id(&self) -> &ScanId {
+        &self.scan_id
+    }
+}
+```
+
+---
+
+### Constants (`_constant.rs`)
+
+Constants are pure static values.
+
+```rust
+/// Default frames per second for animation.
+pub const FPS_DEFAULT: f64 = 24.0;
+
+/// Minimum reveal time in seconds.
+pub const MIN_REVEAL_SECONDS: f64 = 0.5;
+
+/// Manifest filename.
+pub const MANIFEST_FILENAME: &str = "manifest.json";
+```
+
+Rules:
+
+- no functions,
+- no I/O,
+- no external layer imports,
+- no mutable state.
+
+Constants may be primitive scalars. Consumers should wrap domain-meaningful primitives into VOs when exposing them in public domain contracts.
+
+---
+
+## Utility Functions (`_utility.rs`)
+
+Utility files contain pure reusable tools.
+
+### The Ultimate Boundary
+
+A function belongs in `*_utility.rs` ONLY if ALL of these are true:
+
+1. Stateless: no `&self`, no struct field access.
+2. Pure: input A always produces output B.
+3. No side effects: no I/O, no randomness, no global mutation.
+4. Domain-agnostic: does not know business rules.
+5. Multi-consumer reusable: useful for multiple modules/layers.
+
+---
+
+### Good Utility Example
+
+```rust
+// taxonomy_token_utility.rs
+
+pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return false;
+    }
+
+    let is_ident_char = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
+
+    haystack
+        .match_indices(needle)
+        .any(|(i, _)| {
+            let before_ok = i == 0 || !is_ident_char(haystack.as_bytes()[i - 1]);
+            let after_ok = i + needle.len() == haystack.len()
+                || !is_ident_char(haystack.as_bytes()[i + needle.len()]);
+
+            before_ok && after_ok
+        })
+}
+```
+
+This is a dumb reusable tool.
+
+---
+
+### Bad Utility: Domain Knowledge
+
+```rust
+// BAD: knows AES layer mapping rules
+pub fn get_target_layer_from_suffix(suffix: &str) -> &'static str {
     match suffix {
         "port" => "infrastructure",
         "protocol" => "capabilities",
-        _ => "unknown"
+        _ => "unknown",
     }
 }
+```
 
-// ❌ BAD: Single Consumer Only
-pub fn format_import_violation(rule: &ImportRule) -> String {
-    // Only used by one capability class, not reusable by others
-    // This belongs in capabilities as a private helper!
-    format!("Import rule violation: {}", rule.pattern)
+This belongs in capabilities as a private helper.
+
+---
+
+### Bad Utility: Single Consumer Only
+
+```rust
+// BAD: only used by one checker
+pub fn format_import_violation(rule: &ImportRuleVO) -> String {
+    format!("Import rule violation: {}", rule.pattern())
 }
 ```
+
+If only one capability uses it, keep it as a private helper in that capability.
+
+---
+
+## Primitive-to-VO Rules
+
+Taxonomy is the layer that provides VO replacements for primitives.
+
+### General Rule
+
+Domain data MUST use VOs, not raw owned primitives.
+
+Bad:
+
+```rust
+pub struct LintResult {
+    pub file_path: String,
+    pub line: u32,
+    pub severity: String,
+}
+```
+
+Good:
+
+```rust
+use crate::code_analysis::taxonomy_file_path_vo::FilePath;
+use crate::code_analysis::taxonomy_line_number_vo::LineNumber;
+use crate::code_analysis::taxonomy_severity_vo::Severity;
+
+pub struct LintResult {
+    file_path: FilePath,
+    line: LineNumber,
+    severity: Severity,
+}
+```
+
+---
+
+### Primitive Policy
+
+This policy must stay consistent with capabilities and infrastructure skills.
+
+| Primitive            | Rule                                                                                |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `String`           | Forbidden for domain fields and public contract return values. Use VO.              |
+| `i32`, `i64`     | Forbidden for domain values. Use VO.                                                |
+| `u32`, `u64`     | Forbidden for domain values. Use VO.                                                |
+| `usize`, `isize` | Forbidden for domain values. Use VO.                                                |
+| `f32`, `f64`     | Forbidden for domain values. Use VO.                                                |
+| `char`             | Forbidden for domain values. Use VO.                                                |
+| `bool`             | Allowed for semantic toggles when no richer VO is needed.                           |
+| `&str`             | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
+
+Prefer VOs for:
+
+- file paths,
+- symbol names,
+- messages,
+- line numbers,
+- column numbers,
+- severity levels,
+- durations,
+- counts,
+- thresholds,
+- identifiers.
+
+---
+
+### VO Construction Rules
+
+VOs MUST validate on construction when the domain has invariants.
+
+Good:
+
+```rust
+impl LineNumber {
+    pub fn new(value: u32) -> Result<Self, ValidationError> {
+        if value == 0 {
+            return Err(ValidationError::positive("LineNumber"));
+        }
+
+        Ok(Self(value))
+    }
+}
+```
+
+If validation cannot fail, a simpler constructor may be used.
+
+---
+
+### Optional and Collection Primitives
+
+Bad:
+
+```rust
+pub struct RuleSet {
+    pub patterns: Vec<String>,
+    pub description: Option<String>,
+}
+```
+
+Good:
+
+```rust
+pub struct RuleSet {
+    patterns: PatternList,
+    description: Option<RuleDescription>,
+}
+```
+
+Use:
+
+- list VOs for collections,
+- optional VOs or `Option<VO>` when semantically optional.
+
+---
 
 ## Detection Patterns
 
-### BAD: Dataclass Defined in Layer File
+### BAD: Dataclass Defined in Capabilities
 
 ```rust
-// BAD: Domain data defined in capabilities layer
-pub struct OrphanResult {  // ← DATA CLASS — should be in shared/taxonomy
+// capabilities_orphan_analyzer.rs
+
+pub struct OrphanResult {
     is_orphan: bool,
     reason: String,
-    severity: Severity,
-}
-
-pub struct CapabilitiesOrphanAnalyzer {
-    result: OrphanResult,  // ← concrete type, not DI
 }
 ```
+
+Fix:
+
+Move to taxonomy.
+
+```rust
+// shared/orphan_detector/taxonomy_orphan_result_vo.rs
+pub struct OrphanResult {
+    is_orphan: OrphanFlag,
+    reason: OrphanReason,
+}
+```
+
+Then import:
+
+```rust
+use shared::orphan_detector::taxonomy_orphan_result_vo::OrphanResult;
+```
+
+---
 
 ### BAD: Dataclass Defined in Infrastructure
 
 ```rust
-// BAD: Domain data defined in infrastructure layer
-pub struct CacheEntry {  // ← DATA CLASS — should be in shared/taxonomy
+// infrastructure_file_cache.rs
+
+pub struct CacheEntry {
     key: String,
     value: String,
-    timestamp: u64,
 }
 ```
+
+Fix:
+
+```rust
+// shared/cache/taxonomy_cache_entry_vo.rs
+pub struct CacheEntry {
+    key: CacheKey,
+    value: CacheValue,
+}
+```
+
+---
+
+### BAD: Raw Primitive Fields in Taxonomy VO
+
+```rust
+pub struct ImportRuleVO {
+    pub pattern: String,
+    pub message: String,
+}
+```
+
+Fix:
+
+```rust
+pub struct ImportRuleVO {
+    pattern: RulePattern,
+    message: RuleMessage,
+}
+```
+
+---
+
+### BAD: Taxonomy Importing Layer Code
+
+```rust
+// taxonomy_orphan_vo.rs
+
+use crate::capabilities_orphan_analyzer::OrphanAnalyzer; // BAD
+```
+
+Taxonomy must not import from layers.
+
+---
+
+### BAD: Domain Rule Inside Utility
+
+```rust
+// taxonomy_layer_utility.rs
+
+pub fn is_port_trait_name(name: &str) -> bool {
+    name.ends_with("Port")
+}
+```
+
+If this knows AES naming conventions or layer rules, it is domain knowledge.
+
+It belongs in capabilities as a helper, not taxonomy utility.
+
+---
 
 ### GOOD: Dataclass in Taxonomy + Implementor with DI
 
 ```rust
-// GOOD: Dataclass in taxonomy
-// crates/shared/src/orphan-detector/taxonomy_analysis_vo.rs
-pub struct OrphanIndicatorResult {
-    is_orphan: bool,
-    reason: String,
-    severity: Severity,
-}
-
-// GOOD: Implementor imports from taxonomy
-// crates/orphan-detector/src/capabilities_orphan_analyzer.rs
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,  // ← DI
-    cache: Arc<dyn IOrphanFileCachePort>,                   // ← DI
+// shared/orphan_detector/taxonomy_orphan_analysis_result_vo.rs
+pub struct OrphanAnalysisResult {
+    is_orphan: OrphanFlag,
+    reason: OrphanReason,
 }
 ```
+
+```rust
+// capabilities_orphan_analyzer.rs
+use std::sync::Arc;
+
+use shared::orphan_detector::taxonomy_orphan_analysis_result_vo::OrphanAnalysisResult;
+use shared::orphan_detector::taxonomy_orphan_filename_extractor_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::taxonomy_orphan_file_cache_port::IOrphanFileCachePort;
+
+pub struct CapabilitiesOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: Arc<dyn IOrphanFileCachePort>,
+}
+```
+
+Service dependencies use DI.
+
+Value/result data comes from taxonomy.
+
+---
 
 ## Workflow
 
 ### Step 1: Identify the Dataclass
 
-When you find a struct in a layer file (capabilities/infrastructure/agent/surface), ask: **"Is this a dataclass or an implementor?"**
+When you find a struct or enum in a layer file, ask:
 
-- If it contains domain data, DTOs, results, or value wrappers → **dataclass → move to taxonomy**
-- If it implements a trait and uses DI → **implementor → stays in layer file**
+> Is this a dataclass or an implementor?
+
+If it carries domain data:
+
+- result object,
+- DTO,
+- VO,
+- entity,
+- error,
+- event,
+- enum,
+- constant,
+
+then move it to taxonomy.
+
+If it implements behavior via trait and uses DI, keep it in the layer file.
+
+---
 
 ### Step 2: Determine Taxonomy Domain
 
-Find the correct domain directory under `crates/shared/src/<domain>/`:
+Choose the correct domain directory under:
 
-| Domain              | Directory                       | Example Types                              |
-| ------------------- | ------------------------------- | ------------------------------------------ |
-| `common`          | `shared/src/common/`          | Cross-domain types (PathVO, BooleanVO)     |
-| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations       |
-| `code-analysis`   | `shared/src/code-analysis/`   | Analysis results, reachability, violations |
-| `import-rules`    | `shared/src/import-rules/`    | Import rules, violations, language types   |
-| `naming-rules`    | `shared/src/naming-rules/`    | Naming violations, patterns                |
+```text
+crates/shared/src/<domain>/
+```
+
+Examples:
+
+| Domain          | Directory                       | Example Types                         |
+| --------------- | ------------------------------- | ------------------------------------- |
+| common          | `shared/src/common/`          | cross-domain VOs, errors, utilities   |
+| orphan_detector | `shared/src/orphan_detector/` | orphan results, reasons, flags        |
+| code_analysis   | `shared/src/code_analysis/`   | analysis results, symbols, violations |
+| import_rules    | `shared/src/import_rules/`    | import rules, patterns, messages      |
+| naming_rules    | `shared/src/naming_rules/`    | naming violations, patterns           |
+
+If a type is used by multiple domains, put it in `common/`.
+
+---
 
 ### Step 3: Create or Update Taxonomy File
 
-**Option A: New taxonomy domain** — Create `<domain>/` directory with `mod.rs`, then add taxonomy files.
+Use the correct suffix:
 
-**Option B: Existing domain** — Add new file to existing domain directory.
+```text
+taxonomy_*_vo.rs
+taxonomy_*_entity.rs
+taxonomy_*_error.rs
+taxonomy_*_event.rs
+taxonomy_*_constant.rs
+taxonomy_*_utility.rs
+```
 
-**Naming:** Use the correct suffix (`_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`).
+Example:
 
 ```bash
-# Example: Create orphan result dataclass in taxonomy
-mkdir -p crates/shared/src/orphan-detector/
-# Create taxonomy_orphan_vo.rs
+mkdir -p crates/shared/src/orphan_detector
+touch crates/shared/src/orphan_detector/taxonomy_orphan_result_vo.rs
 ```
+
+---
 
 ### Step 4: Register Module
 
-Update the domain's `mod.rs` to export the new taxonomy module:
+Update the domain `mod.rs`.
 
 ```rust
-// shared/src/orphan-detector/mod.rs
-pub mod taxonomy_orphan_vo;  // ← Add this line
-pub mod taxonomy_analysis_vo;
+// shared/src/orphan_detector/mod.rs
+
+pub mod taxonomy_orphan_result_vo;
+pub mod taxonomy_orphan_reason_vo;
 pub mod contract_orphan_protocol;
+pub mod contract_orphan_file_cache_port;
 ```
+
+---
 
 ### Step 5: Update Imports in Layer Files
 
-Replace local dataclass definitions with imports from taxonomy:
+Before:
 
 ```rust
-// BEFORE (BAD): Local dataclass
 pub struct OrphanResult {
     is_orphan: bool,
     reason: String,
 }
-
-// AFTER (GOOD): Import from taxonomy
-use shared::orphan_detector::taxonomy_orphan_vo::OrphanResult;
 ```
 
-### Step 6: Verify
-
-Run `cargo check` to confirm no violations.
-
-## Verification Checklist
-
-- [ ] **All dataclasses in shared/taxonomy** — no structs/enums with data defined in layer files.
-- [ ] **Taxonomy file naming follows strict suffixes** — `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
-- [ ] **Taxonomy files import only from taxonomy** — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- [ ] **Utility functions in `*_utility.rs` are purely domain-agnostic AND serve MULTIPLE capabilities/infrastructures** — functions containing business rules OR serving only ONE class stay in capabilities as private helpers.
-- [ ] **Layer files import dataclasses from taxonomy** — not defined locally.
-- [ ] **Domain's `mod.rs` exports new taxonomy modules** — `pub mod taxonomy_<name>`.
-- [ ] **Value Objects have `new()`, `value()`, `Display`, `From<T>` implementations**.
-- [ ] **Error types use `thiserror::Error`** — with proper `Display` implementation.
-- [ ] **Constants are pure static values** — no external imports, no functions.
-- [ ] `cargo check -p shared` passes without warnings or errors.
-
-## Quick Commands
-
-```bash
-# Find dataclasses defined in layer files (not in shared/taxonomy)
-grep -rn "^pub struct" crates/<crate>/src/ | grep -v "shared/" | grep -v "impl\|trait\|fn "
-
-# Check for forbidden imports in taxonomy files
-grep -n "use crate::capabilities_\|use crate::infrastructure_\|use crate::agent_" crates/shared/src/*/taxonomy_*.rs
-
-# Find layer files with concrete type fields (non-DI) that might need taxonomy dataclasses
-grep -rn "^\s*[a-z_]*:" crates/<crate>/src/ | grep -v "Arc<dyn" | grep -v "shared/"
-
-# Verify taxonomy module exports are registered
-grep -n "^pub mod taxonomy_" crates/shared/src/*/mod.rs
-
-# Check for unregistered taxonomy files (exist on disk but not in mod.rs)
-ls crates/shared/src/<domain>/taxonomy_*.rs | while read f; do
-    basename=$(basename "$f" .rs)
-    grep -q "pub mod $basename" crates/shared/src/<domain>/mod.rs || echo "UNREGISTERED: $basename"
-done
-
-# Check for dataclasses in layer files that should be moved to taxonomy
-grep -rn "^pub struct" crates/<crate>/src/ | grep -v "shared/" | grep -v "impl\|trait" | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    struct=$(echo "$line" | grep -oP 'pub struct \K[a-zA-Z_]+')
-    echo "POSSIBLE DATACLASS: $file has $struct"
-done
-
-# Find magic constants in layer files (should be in taxonomy_constant)
-rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep -v "// " | head -20
-```
-
-## Naming Convention (from fix-naming)
-
-**All Layer File Naming:**
-
-| Layer                    | Pattern                    | Suffix                                     |
-| ------------------------ | -------------------------- | ------------------------------------------ |
-| **root**           | `root_*_container.rs`    | `_container`                             |
-| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`, `_utility`, etc. |
-| **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate`   |
-| **capabilities**   | `capabilities_*.rs`      | flexible                                   |
-| **infrastructure** | `infrastructure_*.rs`    | flexible                                   |
-| **agent**          | `agent_*.rs`             | `_orchestrator`                          |
-| **surface**        | `surface_*.rs`           | `_command`, `_controller`              |
-
-## Primitive-to-VO Patterns (from fix-primitive-to-vo)
-
-**Taxonomy Layer VO Creation Rules:**
-
-- Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`).
-- **Contract signatures MUST use VOs** — ALL primitives are FORBIDDEN in contract trait method signatures. The VOs created here are the mandatory replacements:
-  - `&str` / `String` → use `FilePath`, `SymbolName`, or domain-specific VO
-  - `bool` → use `BooleanVO`
-  - `i32`, `i64`, `u32`, `u64`, `f32`, `f64`, `usize`, `isize` → use domain-specific VO (`LineNumber`, `Count`, `Score`, etc.)
-  - `Vec<String>` → use `PatternList` or domain-specific list VO
-  - `Option<String>` → use domain-specific optional VO
-- VOs MUST validate on construction.
-- Use macros for simple wrappers: `string_value_object!`, `primitive_value_object!`.
+After:
 
 ```rust
-// BEFORE (primitive in layer file)
-pub struct LintResult {
-    pub file_path: String,   // ← primitive
-    pub line: u32,           // ← primitive
-    pub severity: String,    // ← primitive
-}
-
-// AFTER (VO in taxonomy)
-// crates/shared/src/import-rules/taxonomy_file_path_vo.rs
-pub struct FilePath(String);
-
-impl FilePath {
-    pub fn new(path: String) -> Self { Self(path) }
-    pub fn value(&self) -> &str { &self.0 }
-}
-
-// crates/shared/src/import-rules/taxonomy_line_number_vo.rs
-string_value_object!(LineNumber);  // wraps String/number
-
-// crates/shared/src/import-rules/taxonomy_severity_vo.rs
-primitive_value_object!(Severity);  // wraps u32
-
-pub struct LintResult {
-    pub file_path: FilePath,   // ← VO
-    pub line: LineNumber,      // ← VO
-    pub severity: Severity,    // ← VO
-}
-```
-
-## Magic Constant Definitions (from fix-magic-constant)
-
-**Taxonomy Layer Constant Rules:**
-
-- All domain values live in `taxonomy_*_constant.rs` files.
-- Constants are static compile-time values — no functions, no imports.
-- Used by agent, capabilities, and infrastructure layers.
-
-```rust
-// crates/shared/src/animator/taxonomy_animator_constant.rs
-/// Default frames per second for animation
-pub const FPS_DEFAULT: f64 = 24.0;
-
-/// Minimum reveal time in seconds
-pub const MIN_REVEAL_SECONDS: f64 = 0.5;
-
-/// Manifest filename constant
-pub const MANIFEST_FILENAME: &str = "manifest.json";
-```
-
-**Layer consumption:**
-
-```rust
-// Agent layer
-use crate::taxonomy_animator_constant::FPS_DEFAULT;
-let result = self.process(FPS_DEFAULT);
-
-// Capabilities layer
-use crate::taxonomy_animator_constant::MIN_REVEAL_SECONDS;
-fn calculate_duration(&self) -> f64 { MIN_REVEAL_SECONDS }
-
-// Infrastructure layer
-use crate::taxonomy_animator_constant::MANIFEST_FILENAME;
-let file = std::fs::File::create(MANIFEST_FILENAME);
-```
-
-## Common Mistakes (AVOID)
-
-- ❌ **Defining dataclasses in layer files**: Domain data must be in shared/taxonomy. Only the impl struct belongs in layer files.
-- ❌ **Importing non-taxonomy types into taxonomy files**: Taxonomy must remain completely pure — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
-- ❌ **Forgetting to register new taxonomy modules in mod.rs**: Every `taxonomy_*.rs` file must have a corresponding `pub mod` in the domain's `mod.rs`.
-- ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.rs`.
-- ❌ **Placing Single-Consumer functions in Utility files**: If a function only serves ONE capability/infrastructure class, it belongs in capabilities as a private helper, NOT in `*_utility.rs`.
-- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `&self`) that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.rs` modules in shared/taxonomy.
-- ❌ **Creating multiple dataclasses with different names for the same concept**: Consolidate into a single taxonomy file.
-- ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.
-
+use shared::orphan_detector::taxonomy_orphan_result_vo::OrphanResult;
 ```
 
 ---
+
+### Step 6: Verify Purity
+
+Check that taxonomy files do not import from:
+
+- capabilities,
+- infrastructure,
+- agents,
+- surface,
+- root containers,
+- contract traits.
+
+Also check that taxonomy utilities do not perform I/O.
+
+---
+
+### Step 7: Verify Primitive-to-VO Compliance
+
+Ensure:
+
+- no public raw `String` domain fields,
+- no numeric primitive domain fields,
+- VOs validate on construction,
+- contract traits use taxonomy VOs.
+
+---
+
+### Step 8: Verify Compilation
+
+```bash
+cargo check -p shared
+```
+
+---
+
+## Verification Checklist
+
+- [ ] All domain dataclasses live in shared/taxonomy.
+- [ ] No domain structs/enums with data are defined in layer files.
+- [ ] Taxonomy file naming uses allowed suffixes only.
+- [ ] Taxonomy files do not import from capabilities.
+- [ ] Taxonomy files do not import from infrastructure.
+- [ ] Taxonomy files do not import from agents.
+- [ ] Taxonomy files do not import from surface.
+- [ ] Taxonomy files do not import from root containers.
+- [ ] Taxonomy files do not import contract traits.
+- [ ] Taxonomy files contain no I/O.
+- [ ] Taxonomy utilities are stateless, pure, domain-agnostic, and multi-consumer.
+- [ ] Domain-specific stateless helpers are NOT forced into taxonomy utility.
+- [ ] Single-consumer helpers remain in their consuming layer.
+- [ ] Value objects validate on construction when invariants exist.
+- [ ] Single-value VOs expose safe constructors and accessors.
+- [ ] Composite VOs use other VOs instead of raw primitives.
+- [ ] Error types use `thiserror::Error`.
+- [ ] Constants are pure static values.
+- [ ] New taxonomy modules are registered in `mod.rs`.
+- [ ] `cargo check -p shared` passes.
+
+---
+
+## Quick Commands
+
+These commands are rough heuristic checks. Final validation should use `cargo check`, clippy, or AST-based tooling.
+
+```bash
+# Find possible dataclasses in layer files
+rg -n "^\s*pub struct|^\s*pub enum" crates/<crate>/src --glob '!**/shared/**'
+
+# Check forbidden imports in taxonomy files
+rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/shared/src/**/taxonomy_*.rs
+
+# Check possible I/O in taxonomy files
+rg -n "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/shared/src/**/taxonomy_*.rs
+
+# List registered taxonomy modules
+rg -n "^pub mod taxonomy_" crates/shared/src/*/mod.rs
+
+# Find magic constants in layer files
+rg "[0-9]+\.[0-9]+" crates/<crate>/src --glob '!**/shared/**'
+```
+
+---
+
+### Check Unregistered Taxonomy Files
+
+```bash
+for file in crates/shared/src/<domain>/taxonomy_*.rs; do
+  basename=$(basename "$file" .rs)
+
+  rg -q "^pub mod $basename;" crates/shared/src/<domain>/mod.rs \
+    || echo "UNREGISTERED: $basename"
+done
+```
+
+---
+
+## Naming Convention
+
+| Layer          | File Pattern                | Suffix                        |
+| -------------- | --------------------------- | ----------------------------- |
+| root           | `root_*_container.rs`     | `_container`                |
+| taxonomy       | `taxonomy_*_vo.rs`        | `_vo`                       |
+| taxonomy       | `taxonomy_*_entity.rs`    | `_entity`                   |
+| taxonomy       | `taxonomy_*_error.rs`     | `_error`                    |
+| taxonomy       | `taxonomy_*_event.rs`     | `_event`                    |
+| taxonomy       | `taxonomy_*_constant.rs`  | `_constant`                 |
+| taxonomy       | `taxonomy_*_utility.rs`   | `_utility`                  |
+| contract       | `contract_*_protocol.rs`  | `_protocol`                 |
+| contract       | `contract_*_port.rs`      | `_port`                     |
+| contract       | `contract_*_aggregate.rs` | `_aggregate`                |
+| capabilities   | `capabilities_*.rs`       | flexible                      |
+| infrastructure | `infrastructure_*.rs`     | flexible                      |
+| agent          | `agent_*.rs`              | `_orchestrator`             |
+| surface        | `surface_*.rs`            | `_command`, `_controller` |
+
+---
+
+## Magic Constant Definitions
+
+All domain constants MUST live in taxonomy constant files.
+
+```rust
+// crates/shared/src/animator/taxonomy_animator_constant.rs
+
+/// Default frames per second for animation.
+pub const FPS_DEFAULT: f64 = 24.0;
+
+/// Minimum reveal time in seconds.
+pub const MIN_REVEAL_SECONDS: f64 = 0.5;
+
+/// Manifest filename.
+pub const MANIFEST_FILENAME: &str = "manifest.json";
+```
+
+Layer consumption:
+
+```rust
+use shared::animator::taxonomy_animator_constant::FPS_DEFAULT;
+```
+
+```rust
+use shared::animator::taxonomy_animator_constant::MIN_REVEAL_SECONDS;
+```
+
+```rust
+use shared::animator::taxonomy_animator_constant::MANIFEST_FILENAME;
+```
+
+If a constant represents a domain value, wrap it in a VO at the consuming boundary when exposing it through public domain contracts.
+
+---
+
+## Common Mistakes
+
+- ❌ Defining dataclasses in layer files.
+- ❌ Defining domain enums in layer files.
+- ❌ Importing non-taxonomy layer types into taxonomy files.
+- ❌ Importing contract traits into taxonomy files.
+- ❌ Using wrong suffix for taxonomy files.
+- ❌ Forgetting to register taxonomy modules in `mod.rs`.
+- ❌ Putting domain knowledge into `*_utility.rs`.
+- ❌ Putting single-consumer helpers into `*_utility.rs`.
+- ❌ Keeping reusable domain-agnostic utilities inside layer files.
+- ❌ Exposing public raw `String` fields in VOs.
+- ❌ Exposing public numeric primitive fields in domain types.
+- ❌ Creating VOs without validation when domain invariants exist.
+- ❌ Duplicating taxonomy types across domains.
+- ❌ Putting cross-domain types in a specific domain instead of `common/`.
+- ❌ Creating taxonomy utility functions with I/O.
+- ❌ Treating every stateless function as utility.
+- ❌ Treating every concrete field as DI violation.
+- ❌ Forgetting that value fields may be shared VOs, while service fields must use DI.
+
+```
 
