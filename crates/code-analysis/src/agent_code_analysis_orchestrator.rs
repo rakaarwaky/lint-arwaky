@@ -202,7 +202,11 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES303") {
                 self.container
                     .dead_inheritance_checker()
-                    .check_dead_inheritance(file, &c, &mut violations);
+                    .check_dead_inheritance(
+                        &FilePath::new(file.to_string()).unwrap_or_default(),
+                        &ContentString::new(c.clone()),
+                        &mut violations,
+                    );
             }
 
             if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {

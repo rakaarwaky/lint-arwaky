@@ -9,7 +9,9 @@ use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_mandatory_utility::rust_declares_type;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 
 // Block 1: struct Definition
 pub struct MandatoryDefinitionChecker {}
@@ -18,11 +20,13 @@ pub struct MandatoryDefinitionChecker {}
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
         &self,
-        file: &str,
+        file: &FilePath,
         definition: Option<&LayerDefinition>,
-        content: &str,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
     ) {
+        let file = file.value();
+        let content = content.value();
         let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
             Some(name) => name.to_string(),
             None => return,
@@ -75,8 +79,13 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
 }
 
 impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
-    fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let lines: Vec<&str> = content.lines().collect();
+    fn check_dead_inheritance(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let lines: Vec<&str> = content.value.lines().collect();
         let mut i = 0;
         let mut in_test_module = false;
         while i < lines.len() {
@@ -106,7 +115,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 };
                 if !next_is_impl {
                     violations.push(LintResult::new_arch(
-                        file,
+                        file.value(),
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
@@ -119,7 +128,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             if t.starts_with("class ") || t.starts_with("class\t") {
                 if t.ends_with(": pass") || t.ends_with(":pass") {
                     violations.push(LintResult::new_arch(
-                        file,
+                        file.value(),
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
@@ -129,7 +138,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     let next = lines[i + 1].trim();
                     if next == "pass" || next == "..." || next == "Ellipsis" {
                         violations.push(LintResult::new_arch(
-                            file,
+                            file.value(),
                             i + 1,
                             "AES303",
                             Severity::MEDIUM,
@@ -140,7 +149,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             }
             if t.starts_with("class ") && t.ends_with("{}") {
                 violations.push(LintResult::new_arch(
-                    file,
+                    file.value(),
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,

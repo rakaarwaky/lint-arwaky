@@ -1,9 +1,20 @@
 ---
 name: create-taxonomy-rust
-description: "Create and validate taxonomy layer files (shared/taxonomy) — all data classes, VOs, errors, and utilities must live here following strict naming conventions."
-version: 1.0.0
+description: "Create and validate taxonomy layer files (shared/taxonomy) — all data classes, VOs, errors, constants, and stateless utilities must live here following strict naming conventions."
+version: 1.1.0
 category: refactoring
-tags: [rust, aes, taxonomy, shared, dataclass, vo, entity, utility, structure]
+tags:
+  [
+    rust,
+    aes,
+    taxonomy,
+    shared,
+    dataclass,
+    vo,
+    entity,
+    utility,
+    structure,
+  ]
 triggers:
   - "create taxonomy rust"
   - "add taxonomy rust"
@@ -37,7 +48,7 @@ Create and validate Rust **taxonomy layer** files in `crates/shared/src/<domain>
 
 ### Taxonomy Layer Structure
 
-```
+```text
 crates/shared/src/
 ├── lib.rs                    # Top-level module declarations
 ├── common/                   # Cross-domain shared types
@@ -50,21 +61,22 @@ crates/shared/src/
 │   ├── taxonomy_*_entity.rs  # Entity types
 │   ├── taxonomy_*_error.rs   # Error types
 │   ├── taxonomy_*_event.rs   # Event types
-│   └── taxonomy_*_utility.rs # Stateless utility functions
+│   ├── taxonomy_*_constant.rs# Static compile-time constants
+│   └── taxonomy_*_utility.rs # Stateless utility functions (Dumb Tools)
 ```
 
 ### File Naming Convention
 
 Taxonomy files follow strict naming patterns:
 
-| Suffix        | Purpose                              | Allowed? | Example                                |
-| ------------- | ------------------------------------ | -------- | -------------------------------------- |
-| `_vo`       | Value Objects (wraps a single value) | ✅ YES   | `taxonomy_import_rule_vo.rs`         |
-| `_entity`   | Domain entities with identity        | ✅ YES   | `taxonomy_analysis_entity.rs`        |
-| `_error`    | Error types (`thiserror::Error`)   | ✅ YES   | `taxonomy_config_error.rs`           |
-| `_event`    | Event/message types                  | ✅ YES   | `taxonomy_scan_event.rs`             |
-| `_constant` | Static compile-time constants        | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
-| `_utility`  | Stateless free functions             | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
+| Suffix        | Purpose                               | Allowed? | Example                                |
+| ------------- | ------------------------------------- | -------- | -------------------------------------- |
+| `_vo`       | Value Objects (wraps a single value)  | ✅ YES   | `taxonomy_import_rule_vo.rs`         |
+| `_entity`   | Domain entities with identity         | ✅ YES   | `taxonomy_analysis_entity.rs`        |
+| `_error`    | Error types (`thiserror::Error`)    | ✅ YES   | `taxonomy_config_error.rs`           |
+| `_event`    | Event/message types                   | ✅ YES   | `taxonomy_scan_event.rs`             |
+| `_constant` | Static compile-time constants         | ✅ YES   | `taxonomy_layer_names_constant.rs`   |
+| `_utility`  | Stateless free functions (Dumb Tools) | ✅ YES   | `taxonomy_symbol_renamer_utility.rs` |
 
 **CRITICAL:** These suffixes are **strict** — only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed for `taxonomy_` prefixed files. No other suffixes.
 
@@ -72,18 +84,18 @@ Taxonomy files follow strict naming patterns:
 
 Taxonomy files must remain **completely pure**:
 
-| Taxonomy Type                                                | Can Import From              | Cannot Import From                                              |
-| ------------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
-| **taxonomy(vo)**                                       | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
-| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
-| **taxonomy(constant)**                                 | Nothing (pure static values) | Any external imports                                            |
-| **taxonomy(utility)**                                  | taxonomy types               | Non-taxonomy layers                                             |
+| Taxonomy Type                                            | Can Import From              | Cannot Import From                                              |
+| -------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| **taxonomy (`_vo`)**                             | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
+| **taxonomy (`_entity`, `_error`, `_event`)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
+| **taxonomy (`_constant`)**                       | Nothing (pure static values) | Any external imports                                            |
+| **taxonomy (`_utility`)**                        | taxonomy types               | Non-taxonomy layers, I/O operations                             |
 
 ### Dataclass Patterns
 
 #### Value Objects (`_vo.rs`)
 
-Wrap a single value with type safety:
+Wrap a single value with type safety. **These VOs are MANDATORY for Contract signatures** to prevent primitive leakage.
 
 ```rust
 // taxonomy_import_rule_vo.rs
@@ -131,36 +143,46 @@ Use `thiserror::Error`:
 ```rust
 // taxonomy_config_error.rs
 use thiserror::Error;
+use serde::{Serialize, Deserialize};
+use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Error)]
+#[error("Config error: {key} - {message}")]
 pub struct ConfigError {
     pub key: String,
     pub message: String,
-}
-
-impl fmt::Display for ConfigError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Config error: {} - {}", self.key, self.message)
-    }
 }
 ```
 
 #### Utility Functions (`_utility.rs`)
 
-Stateless free functions (no `&self`, no side effects):
+Stateless free functions (no `&self`, no side effects) that act as **Dumb Tools**.
+
+**🚨 CRITICAL: The Ultimate Boundary for Utilities**
+A function belongs in `*_utility.rs` ONLY if it meets ALL of these:
+
+1. **Stateless**: No `&self`, no struct field access.
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
+3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules, AES violations, or layer mappings. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+
+If a stateless function contains **Domain Knowledge** (e.g., knows about specific business rules, layer mappings, or domain-specific validation logic), it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
 
 ```rust
-// taxonomy_symbol_renamer_utility.rs
-
-/// Stateless formatting utility — no &self needed
-pub fn format_bytes(bytes: u64) -> String {
-    // standalone, reusable across all layers
-    ...
+// ✅ GOOD: Dumb Tool (Domain-Agnostic)
+pub fn extract_trait_name(content: &str) -> Option<String> {
+    // Just regex, doesn't know what a "trait" means in domain context
+    // ...
 }
 
-/// Stateless math utility — no &self needed
-pub fn clamp(value: f64, min: f64, max: f64) -> f64 {
-    ...
+// ❌ BAD: Domain Knowledge masquerading as utility
+pub fn get_target_layer_from_suffix(suffix: &str) -> &str {
+    // KNOWS business rules: port = infrastructure.
+    // This belongs in capabilities as a private helper!
+    match suffix {
+        "port" => "infrastructure",
+        "protocol" => "capabilities",
+        _ => "unknown"
+    }
 }
 ```
 
@@ -283,7 +305,7 @@ Run `cargo check` to confirm no violations.
 - [ ] **All dataclasses in shared/taxonomy** — no structs/enums with data defined in layer files.
 - [ ] **Taxonomy file naming follows strict suffixes** — `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
 - [ ] **Taxonomy files import only from taxonomy** — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- [ ] **Utility functions in `*_utility.rs`** — free functions (no `&self`) extracted to standalone modules.
+- [ ] **Utility functions in `*_utility.rs` are purely domain-agnostic** — functions containing business rules (e.g., layer mappings) stay in capabilities as private helpers.
 - [ ] **Layer files import dataclasses from taxonomy** — not defined locally.
 - [ ] **Domain's `mod.rs` exports new taxonomy modules** — `pub mod taxonomy_<name>`.
 - [ ] **Value Objects have `new()`, `value()`, `Display`, `From<T>` implementations**.
@@ -327,30 +349,29 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep
 
 **All Layer File Naming:**
 
-| Layer                    | Pattern                    | Suffix                                   |
-| ------------------------ | -------------------------- | ---------------------------------------- |
-| **root**           | `root_*_container.rs`    | `_container`                           |
-| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`                   |
-| **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate` |
-| **capabilities**   | `capabilities_*.rs`      | flexible                                 |
-| **infrastructure** | `infrastructure_*.rs`    | flexible                                 |
-| **agent**          | `agent_*.rs`             | `_orchestrator`                        |
-| **surface**        | `surface_*.rs`           | `_command`, `_controller`            |
+| Layer                    | Pattern                    | Suffix                                     |
+| ------------------------ | -------------------------- | ------------------------------------------ |
+| **root**           | `root_*_container.rs`    | `_container`                             |
+| **taxonomy**       | `taxonomy_*_vo.rs`       | `_vo`, `_constant`, `_utility`, etc. |
+| **contract**       | `contract_*_protocol.rs` | `_protocol`, `_port`, `_aggregate`   |
+| **capabilities**   | `capabilities_*.rs`      | flexible                                   |
+| **infrastructure** | `infrastructure_*.rs`    | flexible                                   |
+| **agent**          | `agent_*.rs`             | `_orchestrator`                          |
+| **surface**        | `surface_*.rs`           | `_command`, `_controller`              |
 
 ## Primitive-to-VO Patterns (from fix-primitive-to-vo)
 
 **Taxonomy Layer VO Creation Rules:**
 
-- Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`)
-- Contract signatures MUST use VOs — ALL primitives are FORBIDDEN in contract trait method signatures:
-  - `&str` → use `FilePath`, `SymbolName`, or domain-specific VO
-  - `String` → use domain-specific VO
+- Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`).
+- **Contract signatures MUST use VOs** — ALL primitives are FORBIDDEN in contract trait method signatures. The VOs created here are the mandatory replacements:
+  - `&str` / `String` → use `FilePath`, `SymbolName`, or domain-specific VO
   - `bool` → use `BooleanVO`
   - `i32`, `i64`, `u32`, `u64`, `f32`, `f64`, `usize`, `isize` → use domain-specific VO (`LineNumber`, `Count`, `Score`, etc.)
   - `Vec<String>` → use `PatternList` or domain-specific list VO
   - `Option<String>` → use domain-specific optional VO
-- VOs MUST validate on construction
-- Use macros for simple wrappers: `string_value_object!`, `primitive_value_object!`
+- VOs MUST validate on construction.
+- Use macros for simple wrappers: `string_value_object!`, `primitive_value_object!`.
 
 ```rust
 // BEFORE (primitive in layer file)
@@ -386,9 +407,9 @@ pub struct LintResult {
 
 **Taxonomy Layer Constant Rules:**
 
-- All domain values live in `taxonomy_*_constant.rs` files
-- Constants are static compile-time values — no functions, no imports
-- Used by agent, capabilities, and infrastructure layers
+- All domain values live in `taxonomy_*_constant.rs` files.
+- Constants are static compile-time values — no functions, no imports.
+- Used by agent, capabilities, and infrastructure layers.
 
 ```rust
 // crates/shared/src/animator/taxonomy_animator_constant.rs
@@ -407,7 +428,7 @@ pub const MANIFEST_FILENAME: &str = "manifest.json";
 ```rust
 // Agent layer
 use crate::taxonomy_animator_constant::FPS_DEFAULT;
-let result = self.process(fps: FPS_DEFAULT);
+let result = self.process(FPS_DEFAULT);
 
 // Capabilities layer
 use crate::taxonomy_animator_constant::MIN_REVEAL_SECONDS;
@@ -424,6 +445,12 @@ let file = std::fs::File::create(MANIFEST_FILENAME);
 - ❌ **Importing non-taxonomy types into taxonomy files**: Taxonomy must remain completely pure — no imports from capabilities, infrastructure, agents, contracts, or surface.
 - ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
 - ❌ **Forgetting to register new taxonomy modules in mod.rs**: Every `taxonomy_*.rs` file must have a corresponding `pub mod` in the domain's `mod.rs`.
-- ❌ **Placing utility functions in layer files**: Stateless free functions (no `&self`) MUST be extracted to `*_utility.rs` modules in shared/taxonomy.
+- ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.rs`.
+- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `&self`) MUST be extracted to `*_utility.rs` modules in shared/taxonomy.
 - ❌ **Creating multiple dataclasses with different names for the same concept**: Consolidate into a single taxonomy file.
 - ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.
+
+```
+
+---
+

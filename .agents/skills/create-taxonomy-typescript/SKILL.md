@@ -1,9 +1,20 @@
 ---
 name: create-taxonomy-typescript
-description: "Create and validate taxonomy layer files (shared/taxonomy) — all data types, VOs, errors, and utilities must live here following strict naming conventions."
-version: 1.0.0
+description: "Create and validate taxonomy layer files (shared/taxonomy) — all data types, VOs, errors, constants, and utilities must live here following strict naming conventions."
+version: 1.1.0
 category: refactoring
-tags: [typescript, aes, taxonomy, shared, interface, vo, entity, utility, structure]
+tags:
+  [
+    typescript,
+    aes,
+    taxonomy,
+    shared,
+    dataclass,
+    vo,
+    entity,
+    utility,
+    structure,
+  ]
 triggers:
   - "create taxonomy typescript"
   - "add taxonomy typescript"
@@ -137,19 +148,33 @@ export class ConfigError extends Error {
 
 #### Utility Functions (`_utility.ts`)
 
-Stateless functions (no side effects):
+Stateless functions (no side effects) that act as **Dumb Tools**.
+
+**🚨 CRITICAL: The Ultimate Boundary for Utilities**
+A function belongs in `*_utility.ts` ONLY if it meets ALL of these:
+
+1. **Stateless**: No `this` context, no class field access.
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
+3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules, AES violations, or layer mappings. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
+
+If a stateless function contains **Domain Knowledge** (e.g., knows about specific business rules, layer mappings, or domain-specific validation logic), it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
 
 ```typescript
-// taxonomy_symbol_renamer_utility.ts
-
-/** Stateless formatting utility — no side effects needed */
-export function formatBytes(bytes: number): string {
-    return `${(bytes / 1024).toFixed(1)}KB`;
+// ✅ GOOD: Dumb Tool (Domain-Agnostic)
+export function extractTraitName(content: string): string | null {
+    // Just regex, doesn't know what a "trait" means in domain context
+    // ...
 }
 
-/** Stateless math utility — no side effects needed */
-export function clamp(value: number, minVal: number, maxVal: number): number {
-    return Math.max(minVal, Math.min(value, maxVal));
+// ❌ BAD: Domain Knowledge masquerading as utility
+export function getTargetLayerFromSuffix(suffix: string): string {
+    // KNOWS business rules: port = infrastructure.
+    // This belongs in capabilities as a private helper!
+    switch (suffix) {
+        case 'port': return 'infrastructure';
+        case 'protocol': return 'capabilities';
+        default: return 'unknown';
+    }
 }
 ```
 
@@ -314,12 +339,110 @@ grep -rn "^interface\|^type " packages/*/src/ | grep -v "shared/" | while read l
 done
 ```
 
+## Naming Convention (from fix-naming)
+
+**All Layer File Naming:**
+
+| Layer                    | Pattern                    | Suffix                                     |
+| ------------------------ | -------------------------- | ------------------------------------------ |
+| **root**           | `root_*_container.ts`    | `_container`                             |
+| **taxonomy**       | `taxonomy_*_vo.ts`       | `_vo`, `_constant`, `_utility`, etc. |
+| **contract**       | `contract_*_protocol.ts` | `_protocol`, `_port`, `_aggregate`   |
+| **capabilities**   | `capabilities_*.ts`      | flexible                                   |
+| **infrastructure** | `infrastructure_*.ts`    | flexible                                   |
+| **agent**          | `agent_*.ts`             | `_orchestrator`                          |
+| **surface**        | `surface_*.ts`           | `_command`, `_controller`              |
+
+## Primitive-to-VO Patterns (from fix-primitive-to-vo)
+
+**Taxonomy Layer VO Creation Rules:**
+
+- Entity fields MUST use VOs, not primitives (`string`, `number`, `boolean`).
+- **Contract signatures MUST use VOs** — ALL primitives are FORBIDDEN in contract method signatures. The VOs created here are the mandatory replacements:
+  - `string` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
+  - `number` → use domain-specific VO (e.g., `LineNumber`, `Count`, `Score`)
+  - `boolean` → use `BooleanVO`
+  - `string[]` → use domain-specific list VO (e.g., `PatternList`)
+  - `Record<string, T>` → use domain-specific VO
+- VOs MUST validate on construction.
+
+```typescript
+// BEFORE (primitive in layer file)
+interface LintResult {
+    filePath: string;   // ← primitive
+    line: number;       // ← primitive
+    severity: string;   // ← primitive
+}
+
+// AFTER (VO in taxonomy)
+// packages/shared/src/import-rules/taxonomy_file_path_vo.ts
+export class FilePath {
+    constructor(private readonly value: string) {}
+    value(): string { return this.value; }
+}
+
+// packages/shared/src/import-rules/taxonomy_line_number_vo.ts
+export class LineNumber {
+    constructor(private readonly value: number) {}
+    value(): number { return this.value; }
+}
+
+// packages/shared/src/import-rules/taxonomy_severity_vo.ts
+export class SeverityVO {
+    constructor(private readonly value: string) {}
+    value(): string { return this.value; }
+}
+
+interface LintResult {
+    filePath: FilePath;   // ← VO
+    line: LineNumber;     // ← VO
+    severity: SeverityVO; // ← VO
+}
+```
+
+## Magic Constant Definitions (from fix-magic-constant)
+
+**Taxonomy Layer Constant Rules:**
+
+- All domain values live in `taxonomy_*_constant.ts` files.
+- Constants are static compile-time values — no functions, no imports.
+- Used by agent, capabilities, and infrastructure layers.
+
+```typescript
+// packages/shared/src/animator/taxonomy_animator_constant.ts
+/** Default frames per second for animation */
+export const FPS_DEFAULT = 24.0;
+
+/** Minimum reveal time in seconds */
+export const MIN_REVEAL_SECONDS = 0.5;
+
+/** Manifest filename constant */
+export const MANIFEST_FILENAME = 'manifest.json';
+```
+
+**Layer consumption:**
+
+```typescript
+// Agent layer
+import { FPS_DEFAULT } from '../shared/animator/taxonomy_animator_constant';
+const result = this.process(FPS_DEFAULT);
+
+// Capabilities layer
+import { MIN_REVEAL_SECONDS } from '../shared/animator/taxonomy_animator_constant';
+function calculateDuration(): number { return MIN_REVEAL_SECONDS; }
+
+// Infrastructure layer
+import { MANIFEST_FILENAME } from '../shared/animator/taxonomy_animator_constant';
+const file = fs.createWriteStream(MANIFEST_FILENAME);
+```
+
 ## Common Mistakes (AVOID)
 
 - ❌ **Defining interfaces in layer files**: Domain data must be in shared/taxonomy. Only the class belongs in layer files.
 - ❌ **Importing non-taxonomy types into taxonomy files**: Taxonomy must remain completely pure — no imports from capabilities, infrastructure, agents, contracts, or surface.
 - ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
 - ❌ **Forgetting to register new taxonomy modules in index.ts**: Every `taxonomy_*.ts` file must have a corresponding `export { ... } from './taxonomy_<name>'` in the domain's `index.ts`.
-- ❌ **Placing utility functions in layer files**: Standalone functions MUST be extracted to `*_utility.ts` modules in shared/taxonomy.
+- ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.ts`.
+- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `this` context) MUST be extracted to `*_utility.ts` modules in shared/taxonomy.
 - ❌ **Creating multiple data types with different names for the same concept**: Consolidate into a single taxonomy file.
 - ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.
