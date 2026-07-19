@@ -29,6 +29,10 @@ fn cross_crate_use_links_to_leaf_module_file() {
         &shared_src.join("orphan-detector/mod.rs"),
         "pub mod taxonomy_orphan_result_utility;\n",
     );
+    eprintln!(
+        "[T] mod.rs exists={}",
+        shared_src.join("orphan-detector/mod.rs").exists()
+    );
     let consumer = base.join("crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs");
     write(
         &consumer,
