@@ -227,9 +227,9 @@ impl CodeAnalysisOrchestrator {
             // Layer-dependent checks (code-analysis only)
             if config.is_rule_enabled("AES301") || config.is_rule_enabled("AES302") {
                 self.container.line_checker().check_line_counts(
-                    file,
+                    &fp,
                     Some(&def),
-                    &c,
+                    &ContentString::new(c.clone()),
                     &mut violations,
                 );
             }
@@ -238,7 +238,12 @@ impl CodeAnalysisOrchestrator {
             if config.is_rule_enabled("AES303") {
                 self.container
                     .class_checker()
-                    .check_mandatory_class_definition(file, Some(&def), &c, &mut violations);
+                    .check_mandatory_class_definition(
+                        &FilePath::new(file.to_string()).unwrap_or_default(),
+                        Some(&def),
+                        &ContentString::new(c.clone()),
+                        &mut violations,
+                    );
             }
         }
 
