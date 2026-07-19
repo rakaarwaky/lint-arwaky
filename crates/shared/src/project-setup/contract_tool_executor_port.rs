@@ -1,4 +1,5 @@
 // PURPOSE: IToolExecutorPort — port trait for executing external tools and capturing output
+use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 pub struct ToolOutput {
@@ -10,7 +11,7 @@ pub struct ToolOutput {
 #[async_trait]
 pub trait IToolExecutorPort: Send + Sync {
     async fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput;
-    async fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &str) -> ToolOutput;
+    async fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &FilePath) -> ToolOutput;
     async fn tool_exists(&self, name: &str) -> bool;
-    async fn get_binary_path(&self) -> String;
+    async fn get_binary_path(&self) -> FilePath;
 }

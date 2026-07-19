@@ -39,7 +39,11 @@ fn cross_crate_use_links_to_leaf_module_file() {
         "use shared::orphan_detector::taxonomy_orphan_result_utility::mk_orphan_result;\n\
          pub fn run() { let _ = mk_orphan_result(); }\n",
     );
-    eprintln!("[T] leaf_path={:?} exists={}", leaf_path, leaf_path.exists());
+    eprintln!(
+        "[T] leaf_path={:?} exists={}",
+        leaf_path,
+        leaf_path.exists()
+    );
     eprintln!(
         "[T] orphan-detector dir exists={}",
         shared_src.join("orphan-detector").exists()

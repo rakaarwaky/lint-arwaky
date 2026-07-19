@@ -176,7 +176,10 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let mut found_javascript = false;
 
         // Phase 1: Marker-based detection (fast, no filesystem scan)
-        if self.fs_port.path_exists(&FilePath::new("crates").unwrap()).await
+        if self
+            .fs_port
+            .path_exists(&FilePath::new("crates").unwrap())
+            .await
             || self
                 .fs_port
                 .path_exists(&FilePath::new("Cargo.toml").unwrap())

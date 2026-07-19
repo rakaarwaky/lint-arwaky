@@ -113,11 +113,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         if self.fs.file_exists(&cargo_lock_fp).await {
             let output = self
                 .tool_executor
-                .run_tool_in_dir(
-                    "cargo",
-                    &["audit", "--json"],
-                    project_path,
-                )
+                .run_tool_in_dir("cargo", &["audit", "--json"], project_path)
                 .await;
             if !output.success {
                 return SecurityScanReport {
@@ -132,11 +128,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         let output = self
             .tool_executor
-            .run_tool_in_dir(
-                "bandit",
-                &["-r", "--format", "json", "."],
-                project_path,
-            )
+            .run_tool_in_dir("bandit", &["-r", "--format", "json", "."], project_path)
             .await;
         if !output.success && output.stdout.is_empty() {
             return SecurityScanReport {

@@ -1,4 +1,5 @@
 // PURPOSE: IGitCommandPort — port trait for executing git commands
+use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
 pub struct GitCommandOutput {
@@ -9,8 +10,8 @@ pub struct GitCommandOutput {
 
 #[async_trait]
 pub trait IGitCommandPort: Send + Sync {
-    async fn run_git(&self, args: &[&str], dir: &str) -> GitCommandOutput;
-    async fn symbolic_ref(&self, dir: &str) -> Option<String>;
-    async fn diff_name_only(&self, range: &str, dir: &str) -> Vec<String>;
-    async fn ls_files_modified(&self, dir: &str) -> Vec<String>;
+    async fn run_git(&self, args: &[&str], dir: &FilePath) -> GitCommandOutput;
+    async fn symbolic_ref(&self, dir: &FilePath) -> Option<String>;
+    async fn diff_name_only(&self, range: &str, dir: &FilePath) -> Vec<String>;
+    async fn ls_files_modified(&self, dir: &FilePath) -> Vec<String>;
 }

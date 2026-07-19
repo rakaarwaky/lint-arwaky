@@ -135,13 +135,18 @@ impl OrphanGraphResolver {
         importing_file: &str,
     ) -> Option<String> {
         let mut current = src_dir.to_path_buf();
-        eprintln!("[DBG-RMF] src_dir={src_dir:?} segments={segments:?}");
+        eprintln!("[DBG-RMF] src_dir={src_dir:?} current={current:?} segments={segments:?}");
         let mut last_resolved: Option<String> = None;
         for seg in segments {
             let normalized = seg.replace('-', "_");
             let candidate_file = current.join(format!("{}.rs", normalized));
             let candidate_mod = current.join(&normalized).join("mod.rs");
-            eprintln!("[DBG-RMF] seg={seg} file_exists={} mod_exists={}", candidate_file.is_file(), candidate_mod.is_file());
+            eprintln!(
+                "[DBG-RMF] seg={seg} file_exists={} mod_exists={} cand_mod={:?}",
+                candidate_file.is_file(),
+                candidate_mod.is_file(),
+                candidate_mod
+            );
             if candidate_file.is_file() {
                 let p = candidate_file.to_string_lossy().to_string();
                 if p != importing_file {
