@@ -272,7 +272,7 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        self.file_adapter.write_file(file_path, &result)
+        self.file_adapter.write_file(&path, &result)
     }
 
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
@@ -311,7 +311,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        self.file_adapter.write_file(file_path, &result)
+        self.file_adapter.write_file(&path, &result)
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {

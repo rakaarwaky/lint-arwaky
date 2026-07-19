@@ -38,7 +38,13 @@ pub fn check_implemented(
                 || bn.ends_with("_container.py")
                 || bn.ends_with("_container.ts")
                 || bn.ends_with("_container.js"));
-        if !is_target_layer && !is_container_impl {
+        // A contract is "implemented" if its `impl <Trait> for` appears in the
+        // intended target layer, OR in a taxonomy_ file (shared foundation often
+        // implements ports/protocols in a taxonomy_*_utility.rs), OR in a root_*
+        // DI container (adapters are frequently wired there). Previously only the
+        // target layer's files were considered, producing false AES502 orphans.
+        let is_taxonomy_impl = bn.starts_with("taxonomy_");
+        if !is_target_layer && !is_container_impl && !is_taxonomy_impl {
             continue;
         }
         if has_rust_impl(content, &rust_impl_pattern, &re_trait)
