@@ -1,0 +1,25 @@
+skill: create-taxonomy-python
+version: 1.3.0
+
+cases:
+  - id: good-01
+    type: good
+    description: "VO with validation and frozen dataclass"
+    expect: pass
+
+  - id: good-02
+    type: good
+    description: "Stateless utility function"
+    expect: pass
+
+  - id: bad-01
+    type: bad
+    description: "Dataclass defined in capabilities layer"
+    expect: fail
+    violation: AES201
+
+  - id: bad-02
+    type: bad
+    description: "Taxonomy importing layer code"
+    expect: fail
+    violation: AES201

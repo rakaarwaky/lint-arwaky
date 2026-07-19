@@ -1,0 +1,25 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `constructor`.
+- [ ] Block 2 contains ONLY the domain protocol method implementations.
+- [ ] Block 3 contains utility methods, factories, and private helpers.
+- [ ] Capability class implements a protocol interface (AES403).
+- [ ] Interface contains only public domain contract methods.
+- [ ] Private helpers are not declared in the interface.
+- [ ] Constructors are not declared in the interface.
+- [ ] Utility methods are in Block 3.
+- [ ] Domain-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use protocol interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Zero I/O in capabilities layer (AES404).
+- [ ] No forbidden imports from `infrastructure_*`.
+- [ ] No forbidden imports from `agent_*`.
+- [ ] No direct dependency on concrete `capabilities_*` implementations.
+- [ ] Protocol module is registered in the shared package's `index.ts`.
+- [ ] `npx tsc --noEmit` passes.

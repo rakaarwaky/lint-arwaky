@@ -1,0 +1,24 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `__init__`.
+- [ ] Block 2 contains ONLY the port ABC method implementations.
+- [ ] Block 3 contains dunder methods, factories, and private helpers.
+- [ ] Infrastructure class inherits a port ABC (AES404).
+- [ ] Port contains only public contract methods.
+- [ ] Private helpers are not declared in the port.
+- [ ] Constructors are not declared in the port.
+- [ ] Dunder methods are in Block 3.
+- [ ] Adapter-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.py`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use protocol interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Infrastructure contains zero business logic.
+- [ ] No forbidden imports from concrete `capabilities_*`.
+- [ ] No forbidden imports from concrete `agent_*`.
+- [ ] Port module is registered in the shared module's `__init__.py`.
+- [ ] `python -c "import <module>"` passes.

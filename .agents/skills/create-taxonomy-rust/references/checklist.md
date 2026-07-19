@@ -1,0 +1,22 @@
+# Verification Checklist
+
+- [ ] All domain dataclasses live in shared/taxonomy.
+- [ ] No domain structs/enums with data are defined in layer files.
+- [ ] Taxonomy file naming uses allowed suffixes only.
+- [ ] Taxonomy files do not import from capabilities.
+- [ ] Taxonomy files do not import from infrastructure.
+- [ ] Taxonomy files do not import from agents.
+- [ ] Taxonomy files do not import from surface.
+- [ ] Taxonomy files do not import from root containers.
+- [ ] Taxonomy files do not import contract traits.
+- [ ] Taxonomy files contain no I/O.
+- [ ] Taxonomy utilities are stateless, pure, domain-agnostic, and multi-consumer.
+- [ ] Domain-specific stateless helpers are NOT forced into taxonomy utility.
+- [ ] Single-consumer helpers remain in their consuming layer.
+- [ ] Value objects validate on construction when invariants exist.
+- [ ] Single-value VOs expose safe constructors and accessors.
+- [ ] Composite VOs use other VOs instead of raw primitives.
+- [ ] Error types use `thiserror::Error`.
+- [ ] Constants are pure static values.
+- [ ] New taxonomy modules are registered in `mod.rs`.
+- [ ] `cargo check -p shared` passes.
