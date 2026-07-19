@@ -300,7 +300,10 @@ fn main() -> ExitCode {
         Commands::Duplicates { path } => {
             let dup_analyzer = CodeDuplicationAnalyzer::new();
             let fs_adapter = OSFileSystemAdapter::new();
-            let violations = dup_analyzer.handle_duplicates(path, &fs_adapter);
+            let violations = dup_analyzer.handle_duplicates(
+                path.map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).unwrap_or_default()),
+                &fs_adapter,
+            );
             if violations.is_empty() {
                 println!("No duplicate code blocks detected.");
             } else {

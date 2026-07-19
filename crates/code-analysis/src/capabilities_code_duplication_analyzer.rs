@@ -20,6 +20,7 @@ use shared::code_analysis::taxonomy_target_utility::{
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 // Block 1: struct Definition
@@ -186,9 +187,10 @@ impl CodeDuplicationAnalyzer {
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,
-        path: Option<String>,
+        path: Option<FilePath>,
         _fs: &dyn IFileSystemPort,
     ) -> Vec<AesCodeAnalysisViolation> {
+        let path = path.map(|p| p.value);
         let root = resolve_target(path);
         let src = detect_source_dir(std::path::Path::new(&root));
         let config = default_aes_config();

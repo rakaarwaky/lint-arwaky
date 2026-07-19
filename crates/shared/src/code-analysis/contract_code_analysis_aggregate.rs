@@ -10,6 +10,7 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use crate::common::taxonomy_path_vo::FilePath;
 
 /// ICodeAnalysisAggregate — aggregate port for code-analysis orchestration.
 ///
@@ -22,17 +23,17 @@ use crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 ///   - Querying active rule configurations
 pub trait ICodeAnalysisAggregate: Send + Sync {
     /// Run complete AES analysis on a project root directory.
-    fn run_code_analysis(&self, project_root: &str) -> LintResultList;
+    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList;
     /// Run AES analysis on a specific source directory (e.g., crates/, src/).
-    fn run_code_analysis_dir(&self, src_dir: &str) -> LintResultList;
+    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList;
     /// Run analysis on an arbitrary path (file or directory).
-    fn run_code_analysis_path(&self, path: &str) -> Vec<LintResult>;
+    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult>;
     /// Calculate a quality score (0.0–100.0) from violation results.
     fn calc_score(&self, results: &[LintResult]) -> f64;
     /// Check if any CRITICAL violations exist in the results.
     fn check_critical(&self, results: &[LintResult]) -> bool;
     /// Format violations into a human-readable compliance report.
-    fn format_report(&self, results: &LintResultList, project_root: &str) -> String;
+    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String;
     /// Return list of currently active (enabled) rule configurations.
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO>;
 }
