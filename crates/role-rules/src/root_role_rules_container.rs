@@ -13,11 +13,16 @@ use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 
 use crate::agent_role_orchestrator::RoleAggregateImpl;
 
+// Block 1: struct Definition
 pub struct RoleContainer {
     aggregate: Arc<dyn IRoleAggregate>,
     config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl RoleContainer {
     pub fn new() -> Self {
         Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())

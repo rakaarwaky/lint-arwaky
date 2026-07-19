@@ -152,7 +152,7 @@ impl CheckCommandsSurface {
                 orphan_orchestrator: oo.clone(),
                 layer_detector: ld.clone(),
                 language_detector: Arc::new(
-                    crate::infrastructure_language_detector::CliLanguageDetector::new(),
+                    shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
                 ),
             })
         });

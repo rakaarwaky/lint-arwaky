@@ -31,6 +31,7 @@ pub mod contract_language_detector_port;
 pub mod contract_path_normalization_port;
 pub mod contract_scanner_provider_port;
 pub mod taxonomy_adapter_error;
+pub mod taxonomy_language_detector_utility;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_parser_error;

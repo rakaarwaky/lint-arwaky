@@ -41,7 +41,7 @@ fn make_check_context(
         orphan_orchestrator: container.orphan_orchestrator.clone(),
         layer_detector: layer_detector.clone(),
         language_detector: Arc::new(
-            cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+            shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
         ),
     }
 }
@@ -97,7 +97,7 @@ fn main() -> ExitCode {
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector,
             language_detector: Arc::new(
-                cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
             ),
         }
     });
@@ -195,7 +195,7 @@ fn main() -> ExitCode {
                 orphan_orchestrator: orphan_container.analyzer(),
                 layer_detector,
                 language_detector: Arc::new(
-                    cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                    shared::common::taxonomy_language_detector_utility::LanguageDetector::new(),
                 ),
             };
 
