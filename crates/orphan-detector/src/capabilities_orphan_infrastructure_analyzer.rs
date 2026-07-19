@@ -13,7 +13,19 @@ pub struct InfrastructureOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
+    fn is_infrastructure_orphan(
+        &self,
+        f: &FilePath,
+        root_dir: &FilePath,
+        alive_files: &ReachabilityResult,
+    ) -> OrphanIndicatorResult {
+        self.check_infrastructure_orphan(f, root_dir, alive_files)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for InfrastructureOrphanAnalyzer {
     fn default() -> Self {
         Self {
@@ -24,15 +36,12 @@ impl Default for InfrastructureOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl InfrastructureOrphanAnalyzer {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }
     }
-}
 
-impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
-    fn is_infrastructure_orphan(
+    fn check_infrastructure_orphan(
         &self,
         f: &FilePath,
         root_dir: &FilePath,

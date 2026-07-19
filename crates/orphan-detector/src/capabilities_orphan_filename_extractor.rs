@@ -23,20 +23,7 @@ fn trait_re() -> Option<&'static Regex> {
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanFilenameExtractor;
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl OrphanFilenameExtractor {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for OrphanFilenameExtractor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
     fn file_basename(&self, fp: &FilePath) -> Identity {
         Identity::new(fp.basename())
@@ -71,5 +58,18 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
             }
         }
         names
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for OrphanFilenameExtractor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl OrphanFilenameExtractor {
+    pub fn new() -> Self {
+        Self
     }
 }

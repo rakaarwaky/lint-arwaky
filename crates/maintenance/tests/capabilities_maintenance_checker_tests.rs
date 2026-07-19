@@ -1,10 +1,11 @@
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use std::fs;
 
 #[tokio::test]
 async fn test_diagnose_toolchain_returns_cargo() {
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let diag = checker.diagnose_toolchain().await;
     assert!(!diag.rust_tools.is_empty());
     let cargo = &diag.rust_tools[0];
@@ -14,7 +15,7 @@ async fn test_diagnose_toolchain_returns_cargo() {
 
 #[tokio::test]
 async fn test_diagnose_toolchain_has_git() {
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let diag = checker.diagnose_toolchain().await;
     let git = diag.vcs_tools.iter().find(|t| t.name == "git");
     assert!(git.is_some());
@@ -23,7 +24,7 @@ async fn test_diagnose_toolchain_has_git() {
 
 #[tokio::test]
 async fn test_diagnose_toolchain_returns_non_empty_sections() {
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let diag = checker.diagnose_toolchain().await;
     assert!(!diag.python_tools.is_empty());
     assert!(!diag.js_tools.is_empty());
@@ -31,7 +32,7 @@ async fn test_diagnose_toolchain_returns_non_empty_sections() {
 
 #[tokio::test]
 async fn test_dependency_report_no_lockfile() {
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let path = FilePath::new("/nonexistent_path".to_string()).unwrap_or_default();
     let result = checker.run_dependency_report(&path).await;
     assert!(result.is_err());
@@ -44,7 +45,7 @@ async fn test_dependency_report_with_requirements_txt() {
     let reqs = dir.join("requirements.txt");
     fs::write(&reqs, "requests==2.28.0\nflask>=2.0\n# comment\n").unwrap();
 
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
     let result = checker.run_dependency_report(&path).await;
     assert!(result.is_ok());
@@ -73,7 +74,7 @@ async fn test_dependency_report_with_cargo_lock() {
     )
     .unwrap();
 
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
     let result = checker.run_dependency_report(&path).await;
     assert!(result.is_ok());
@@ -100,7 +101,7 @@ async fn test_dependency_report_with_cargo_lock() {
 
 #[tokio::test]
 async fn test_security_scan_returns_report() {
-    let checker = MaintenanceChecker::new();
+    let checker = MaintenanceChecker::default();
     let path = FilePath::new("/nonexistent_path".to_string()).unwrap_or_default();
     let report = checker.run_security_scan(&path).await;
     assert_eq!(report.language, "Python");

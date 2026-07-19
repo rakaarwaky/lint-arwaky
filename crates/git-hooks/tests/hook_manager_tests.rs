@@ -1,5 +1,6 @@
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::git_hooks::contract_git_file_check_port::IGitFileCheckPort;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffStatus, HookIgnoreUpdateVO};
@@ -21,8 +22,16 @@ impl IHookManagerPort for MockAdapter {
     }
 }
 
+struct MockFileCheck;
+
+impl IGitFileCheckPort for MockFileCheck {
+    fn file_exists(&self, _path: &FilePath) -> bool {
+        false
+    }
+}
+
 fn make_manager() -> HookManager {
-    HookManager::new(Arc::new(MockAdapter))
+    HookManager::new(Arc::new(MockAdapter), Arc::new(MockFileCheck))
 }
 
 #[test]

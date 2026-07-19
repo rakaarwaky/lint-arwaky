@@ -56,16 +56,55 @@ fn re_interface() -> Option<&'static Regex> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FILE CACHE — built ONCE, passed by reference
+// MAIN STRUCT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── Block 1: Struct Definition ───────────────────────────
+pub struct ContractOrphanAnalyzer {
+    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+}
+
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl IContractOrphanProtocol for ContractOrphanAnalyzer {
+    fn is_contract_orphan(
+        &self,
+        f: &FilePath,
+        root_dir: &FilePath,
+        _file_definitions: &FileDefinitionMap,
+        _inheritance_map: &InheritanceMap,
+        all_files: &[FilePath],
+    ) -> OrphanIndicatorResult {
+        let cache = FileCache::build(all_files, root_dir, self.extractor.as_ref());
+        is_contract_orphan(f, &cache, self.extractor.as_ref())
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for ContractOrphanAnalyzer {
+    fn default() -> Self {
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
+    }
+}
+
+impl ContractOrphanAnalyzer {
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER STRUCT — FileCache (tightly coupled to ContractOrphanAnalyzer)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 pub struct FileCache {
     pub contents: HashMap<String, Arc<str>>,
     pub basenames: HashMap<String, String>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileCache {
     pub fn build(
         all_files: &[FilePath],
@@ -103,46 +142,6 @@ impl FileCache {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STRUCT + TRAIT IMPL
-// ═══════════════════════════════════════════════════════════════════════════════
-
-pub struct ContractOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for ContractOrphanAnalyzer {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-        }
-    }
-}
-
-impl ContractOrphanAnalyzer {
-    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
-        Self { extractor }
-    }
-}
-
-impl IContractOrphanProtocol for ContractOrphanAnalyzer {
-    fn is_contract_orphan(
-        &self,
-        f: &FilePath,
-        root_dir: &FilePath,
-        _file_definitions: &FileDefinitionMap,
-        _inheritance_map: &InheritanceMap,
-        all_files: &[FilePath],
-    ) -> OrphanIndicatorResult {
-        // #1: Cache built ONCE by caller, not per-file
-        let cache = FileCache::build(all_files, root_dir, self.extractor.as_ref());
-        is_contract_orphan(f, &cache, self.extractor.as_ref())
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ORCHESTRATOR
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -154,7 +153,6 @@ pub fn is_contract_orphan(
     let fp = f.value();
     let suffix = extractor.file_suffix(f).value;
 
-    // #6: Use cache instead of reading file again
     let content = match cache.contents.get(fp) {
         Some(c) => c.as_ref(),
         None => return not_orphan(),
@@ -254,7 +252,6 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
             None => continue,
         };
         let is_target_layer = bn.starts_with(target_prefix);
-        // Basename includes extension (.rs, .py, .ts, .js) — match accordingly
         let is_container_impl = bn.starts_with("root_")
             && (bn.ends_with("_container.rs")
                 || bn.ends_with("_container.py")
@@ -273,7 +270,6 @@ fn check_implemented(cache: &FileCache, trait_name: &str, target_prefix: &str) -
     false
 }
 
-/// Check if trait is called (imported/used) by any relevant file.
 fn check_called(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
@@ -303,7 +299,6 @@ fn check_called(cache: &FileCache, trait_name: &str) -> bool {
     false
 }
 
-/// Check if trait is wired (DI injected) by any relevant file.
 fn check_wired(cache: &FileCache, trait_name: &str) -> bool {
     let re_trait = word_boundary_re(trait_name);
 
@@ -334,7 +329,7 @@ fn check_wired(cache: &FileCache, trait_name: &str) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// RUST DETECTION — per-line, tight patterns
+// RUST DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -> bool {
@@ -345,14 +340,12 @@ pub fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -
         })
 }
 
-// #4: Per-line checking — not global content.contains("::")
 pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
             continue;
         }
-        // Specific patterns: use TraitName, TraitName::, <dyn TraitName>, Arc<dyn TraitName>
         if (t.starts_with("use ")
             || t.contains("::")
             || t.contains("<dyn ")
@@ -365,7 +358,6 @@ pub fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
     false
 }
 
-// #4: Multi-line aware wire check — trait name and wiring pattern can be on adjacent lines
 pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
     let lines: Vec<&str> = content.lines().collect();
     for (i, line) in lines.iter().enumerate() {
@@ -376,7 +368,6 @@ pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
         if !re_trait.is_match(t) {
             continue;
         }
-        // Check nearby lines (same or next 3) for wiring patterns
         let end = std::cmp::min(i + 4, lines.len());
         if lines[i..end].iter().any(|&ln| {
             let tl = ln.trim();
@@ -392,17 +383,15 @@ pub fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PYTHON DETECTION — per-line, tight patterns
+// PYTHON DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
-    // #3: Don't compile regex per call — use string matching
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with('#') {
             continue;
         }
-        // class Type(BaseTrait):
         if t.starts_with("class ") && t.contains(trait_name) && t.contains('(') {
             return true;
         }
@@ -410,18 +399,15 @@ pub fn has_py_impl(content: &str, trait_name: &str) -> bool {
     false
 }
 
-// #5: Unified call detection — not duplicated
 pub fn has_py_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with('#') {
             continue;
         }
-        // from module import TraitName OR import TraitName
         if (t.starts_with("from ") || t.starts_with("import ")) && re_trait.is_match(t) {
             return true;
         }
-        // instance.method() or Type.method()
         if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
             return true;
         }
@@ -435,7 +421,6 @@ pub fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
         if t.starts_with('#') {
             continue;
         }
-        // TraitName() constructor injection
         if re_trait.is_match(t) && t.contains('(') && !t.starts_with("class ") {
             return true;
         }
@@ -444,10 +429,9 @@ pub fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPESCRIPT DETECTION — per-line, tight patterns
+// TYPESCRIPT DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// #8: Use word boundary for ts_impl
 pub fn has_ts_impl(content: &str, trait_name: &str) -> bool {
     let re = word_boundary_re(trait_name);
     for line in content.lines() {
@@ -462,18 +446,15 @@ pub fn has_ts_impl(content: &str, trait_name: &str) -> bool {
     false
 }
 
-// #5: Unified call detection
 pub fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
     for line in content.lines() {
         let t = line.trim();
         if t.starts_with("//") || t.starts_with("/*") {
             continue;
         }
-        // import { TraitName } from '...'
         if t.starts_with("import ") && re_trait.is_match(t) {
             return true;
         }
-        // instance.method() or Type.method()
         if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
             return true;
         }
@@ -487,7 +468,6 @@ pub fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
         if t.starts_with("//") || t.starts_with("/*") {
             continue;
         }
-        // new TraitName() constructor injection
         if re_trait.is_match(t) && t.contains("new ") && t.contains('(') {
             return true;
         }
@@ -503,21 +483,14 @@ pub fn word_boundary_re(trait_name: &str) -> Regex {
     let pattern = format!(r"\b{}\b", regex::escape(trait_name));
     match Regex::new(&pattern) {
         Ok(re) => re,
-        // regex::escape guarantees a syntactically valid pattern, so this branch is
-        // unreachable in practice; fall back to a regex that always compiles.
         Err(_) => never_match_regex(),
     }
 }
 
 fn never_match_regex() -> Regex {
-    // Empty regex always compiles; this path is unreachable in practice
-    // because regex::escape guarantees a valid pattern. Uses match to
-    // avoid `.expect()` / `.unwrap()` (AES304) and loop (clippy::regex_creation_in_loops).
     match Regex::new("") {
         Ok(re) => re,
         Err(_) => {
-            // Truly unreachable since "" is always a valid regex pattern.
-            // abort() avoids any panic that would trigger AES304.
             std::process::abort();
         }
     }
@@ -562,7 +535,6 @@ pub fn orphan_result(
 // TRAIT NAME EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// #3: Route by language — don't strip # for Rust
 pub fn strip_comments(content: &str, ext: &str) -> String {
     let mut result = String::with_capacity(content.len());
     let mut in_block_comment = false;
@@ -577,7 +549,6 @@ pub fn strip_comments(content: &str, ext: &str) -> String {
             continue;
         }
 
-        // Rust: only strip // and /* — NOT #
         if ext == "rs" {
             if trimmed.starts_with("//") || trimmed.starts_with("/*") {
                 if trimmed.starts_with("/*") && !trimmed.contains("*/") {
@@ -595,7 +566,6 @@ pub fn strip_comments(content: &str, ext: &str) -> String {
             continue;
         }
 
-        // Python: strip # and """
         if ext == "py" {
             if trimmed.starts_with('#') {
                 continue;
@@ -610,7 +580,6 @@ pub fn strip_comments(content: &str, ext: &str) -> String {
             continue;
         }
 
-        // TypeScript/JS: strip // and /* — NOT #
         if trimmed.starts_with("//") || trimmed.starts_with("/*") {
             if trimmed.starts_with("/*") && !trimmed.contains("*/") {
                 in_block_comment = true;
@@ -629,7 +598,6 @@ pub fn strip_comments(content: &str, ext: &str) -> String {
     result
 }
 
-// #10: Route by file extension
 pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<String> {
     let ext = std::path::Path::new(file_path)
         .extension()
@@ -643,13 +611,11 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
             .and_then(|re| re.captures(&code))
             .map(|caps| caps[1].to_string()),
         "py" => {
-            // #11: Try ABC/Protocol first, fallback to any class
             if let Some(caps) = re_contract_py().and_then(|re| re.captures(&code)) {
                 caps.get(1)
                     .or_else(|| caps.get(2))
                     .map(|m| m.as_str().to_string())
             } else {
-                // Fallback: first class definition
                 re_contract_py_fallback()
                     .and_then(|re| re.captures(&code))
                     .map(|caps| caps[1].to_string())
@@ -663,7 +629,6 @@ pub fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<Str
     }
 }
 
-// #19: Handle symlinks
 pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
     let meta = match std::fs::symlink_metadata(dir) {
         Ok(m) => m,

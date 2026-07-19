@@ -17,7 +17,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -57,30 +56,7 @@ pub struct ArchOrphanAnalyzer {
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl ArchOrphanAnalyzer {
-    pub fn new(
-        resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-        taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
-        contract_analyzer: Arc<dyn IContractOrphanProtocol>,
-        capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
-        agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
-        surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
-    ) -> Self {
-        Self {
-            resolver,
-            taxonomy_analyzer,
-            contract_analyzer,
-            capabilities_analyzer,
-            infrastructure_analyzer,
-            agent_analyzer,
-            surfaces_analyzer,
-        }
-    }
-}
-
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Public Contract (domain aggregate ONLY) ─────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         // Bridge the raw &[String] parameter from IOrphanAggregate into the
@@ -133,8 +109,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let entry_points = self
             .resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
-        let alive_files_set: Vec<String> =
-            self._trace_reachability(&entry_points.values, &context.import_graph);
 
         // Evaluate each file: alive (reachable) vs orphan (unreachable)
         for f in files {
@@ -173,8 +147,14 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
-            let res =
-                self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
+            let res = self._evaluate_layer(
+                f,
+                &context,
+                &entry_points.values,
+                &layer_vo,
+                files,
+                root_dir,
+            );
 
             // If the layer-specific protocol confirms orphan status, emit the appropriate AES code
             if res.is_orphan {
@@ -195,7 +175,44 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for ArchOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new(
+            Arc::new(crate::capabilities_orphan_graph_resolver::OrphanGraphResolver::new(
+                Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()),
+            )),
+            Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()))),
+            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()))),
+            Arc::new(crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()), Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()))),
+            Arc::new(crate::capabilities_orphan_infrastructure_analyzer::InfrastructureOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()))),
+            Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),
+            Arc::new(crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()))),
+        )
+    }
+}
+
 impl ArchOrphanAnalyzer {
+    pub fn new(
+        resolver: Arc<dyn IOrphanGraphResolverProtocol>,
+        taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
+        contract_analyzer: Arc<dyn IContractOrphanProtocol>,
+        capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
+        infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
+        agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
+        surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    ) -> Self {
+        Self {
+            resolver,
+            taxonomy_analyzer,
+            contract_analyzer,
+            capabilities_analyzer,
+            infrastructure_analyzer,
+            agent_analyzer,
+            surfaces_analyzer,
+        }
+    }
+
     /// Build a LintResult from orphan analysis output.
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
@@ -219,28 +236,7 @@ impl ArchOrphanAnalyzer {
         }
     }
 
-    /// BFS traversal of the import graph to find all reachable (alive) files.
-    /// Starting from entry points, follows imports to find all transitive dependencies.
-    fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> Vec<String> {
-        use std::collections::VecDeque;
-
-        let mut reachable: std::collections::HashSet<String> =
-            entry_points.iter().cloned().collect();
-        let mut queue: VecDeque<String> = entry_points.iter().cloned().collect();
-
-        while let Some(current) = queue.pop_front() {
-            if let Some(neighbors) = graph.mapping.get(&current) {
-                for neighbor in neighbors {
-                    if reachable.insert(neighbor.clone()) {
-                        queue.push_back(neighbor.clone());
-                    }
-                }
-            }
-        }
-
-        reachable.into_iter().collect()
-    }
-
+    /// Evaluate layer-specific orphan detection via dispatched protocols.
     fn _evaluate_layer(
         &self,
         f: &str,

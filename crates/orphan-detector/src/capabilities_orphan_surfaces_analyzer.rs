@@ -18,7 +18,19 @@ pub struct SurfacesOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
+    fn is_surface_orphan(
+        &self,
+        f: &FilePath,
+        alive_files: &ReachabilityResult,
+        definition: Option<&LayerDefinition>,
+    ) -> OrphanIndicatorResult {
+        self.check_surface_orphan(f, alive_files, definition)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {
         Self {
@@ -29,15 +41,12 @@ impl Default for SurfacesOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SurfacesOrphanAnalyzer {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }
     }
-}
 
-impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
-    fn is_surface_orphan(
+    fn check_surface_orphan(
         &self,
         f: &FilePath,
         alive_files: &ReachabilityResult,

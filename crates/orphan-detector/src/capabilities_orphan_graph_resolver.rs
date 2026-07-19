@@ -20,17 +20,7 @@ pub struct OrphanGraphResolver {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for OrphanGraphResolver {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-        }
-    }
-}
-
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
     fn build_graph_context(
         &self,
@@ -105,39 +95,17 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
     }
 }
 
-/// Cached regexes (Perf 1): compiled once via OnceLock.
-static PUB_MOD_PATH_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static PLAIN_MOD_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static IMPORT_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static INH_RE: OnceLock<Option<Regex>> = OnceLock::new();
-
-fn pub_mod_path_re() -> Option<&'static Regex> {
-    PUB_MOD_PATH_RE
-        .get_or_init(|| {
-            Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok()
-        })
-        .as_ref()
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for OrphanGraphResolver {
+    fn default() -> Self {
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
+    }
 }
 
-fn plain_mod_re() -> Option<&'static Regex> {
-    PLAIN_MOD_RE
-        .get_or_init(|| Regex::new(r"(?:pub\s+)?mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
-        .as_ref()
-}
-
-fn import_re() -> Option<&'static Regex> {
-    IMPORT_RE
-        .get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
-        .as_ref()
-}
-
-fn inh_re() -> Option<&'static Regex> {
-    INH_RE
-        .get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-        .as_ref()
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl OrphanGraphResolver {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }

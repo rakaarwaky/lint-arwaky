@@ -14,7 +14,19 @@ pub struct CapabilitiesOrphanAnalyzer {
     cache: Arc<dyn IOrphanFileCachePort>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
+    fn is_capabilities_orphan(
+        &self,
+        f: &FilePath,
+        root_dir: &FilePath,
+        alive_files: &ReachabilityResult,
+    ) -> OrphanIndicatorResult {
+        self.check_capabilities_orphan(f, root_dir, alive_files)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
         Self {
@@ -26,7 +38,6 @@ impl Default for CapabilitiesOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
 impl CapabilitiesOrphanAnalyzer {
     pub fn new(
         extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
@@ -34,10 +45,8 @@ impl CapabilitiesOrphanAnalyzer {
     ) -> Self {
         Self { extractor, cache }
     }
-}
 
-impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
-    fn is_capabilities_orphan(
+    fn check_capabilities_orphan(
         &self,
         f: &FilePath,
         root_dir: &FilePath,

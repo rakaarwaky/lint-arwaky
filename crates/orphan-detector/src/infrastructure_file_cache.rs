@@ -12,20 +12,7 @@ thread_local! {
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanFileCache;
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for OrphanFileCache {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl OrphanFileCache {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
+// ─── Block 2: Public Contract (domain port ONLY) ──────────
 impl IOrphanFileCachePort for OrphanFileCache {
     fn read_cached(&self, path: &FilePath) -> ContentString {
         FILE_CACHE.with(|cache| -> ContentString {
@@ -41,5 +28,18 @@ impl IOrphanFileCachePort for OrphanFileCache {
 
     fn clear_cache(&self) {
         FILE_CACHE.with(|c| c.borrow_mut().clear());
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for OrphanFileCache {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl OrphanFileCache {
+    pub fn new() -> Self {
+        Self
     }
 }

@@ -14,23 +14,6 @@ pub struct TaxonomyOrphanAnalyzer {
 }
 
 // ─── Block 2: Public Contract ─────────────────────────────
-impl Default for TaxonomyOrphanAnalyzer {
-    fn default() -> Self {
-        Self {
-            extractor: Arc::new(
-                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
-            ),
-        }
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl TaxonomyOrphanAnalyzer {
-    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
-        Self { extractor }
-    }
-}
-
 impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     fn is_taxonomy_orphan(
         &self,
@@ -42,6 +25,27 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         is_taxonomy_orphan(f, root_dir, definition, inbound_links, &self.extractor)
     }
 }
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl Default for TaxonomyOrphanAnalyzer {
+    fn default() -> Self {
+        Self {
+            extractor: Arc::new(
+                crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
+            ),
+        }
+    }
+}
+
+impl TaxonomyOrphanAnalyzer {
+    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
+        Self { extractor }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRIVATE HELPERS (I/O — cannot be extracted to taxonomy utility)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /// Fallback: check if any sibling .rs file in the same directory imports this module via `crate::` path.
 /// The graph resolver doesn't always track crate:: imports within the same crate.
@@ -74,7 +78,7 @@ fn has_crate_self_import(file_path: &str) -> bool {
     false
 }
 
-pub fn is_taxonomy_orphan(
+fn is_taxonomy_orphan(
     f: &FilePath,
     _root: &FilePath,
     _def: Option<&LayerDefinition>,
@@ -163,79 +167,4 @@ pub fn is_taxonomy_orphan(
         .to_string(),
         Severity::LOW,
     )
-}
-
-pub fn check_taxonomy_orphan(
-    fp: &str,
-    basename: &str,
-    files: &[String],
-    violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-) {
-    let stem = basename
-        .replace(".rs", "")
-        .replace(".py", "")
-        .replace(".ts", "")
-        .replace(".js", "");
-    let suffix = match stem.rfind('_') {
-        Some(pos) => &stem[pos + 1..],
-        None => "",
-    };
-
-    let is_utility_or_helper = matches!(suffix, "utility" | "helper");
-
-    let mut imported = false;
-    for cf in files {
-        // FIX: Skip self to avoid false negatives where the file matches its own stem
-        if cf == fp {
-            continue;
-        }
-        let cb = match cf.split('/').next_back() {
-            Some(b) => b,
-            None => continue,
-        };
-
-        if is_utility_or_helper {
-            // utility/helper: can be imported directly by any layer, no contract needed
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                if c.contains(&stem) {
-                    imported = true;
-                    break;
-                }
-            }
-        } else {
-            // vo, entity, error, event, constant: must be imported via contract layer
-            if !cb.starts_with("contract_") {
-                continue;
-            }
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                if c.contains(&stem) {
-                    imported = true;
-                    break;
-                }
-            }
-        }
-    }
-    if !imported {
-        let category = if is_utility_or_helper {
-            "utility"
-        } else {
-            "vo"
-        };
-        let reason = if is_utility_or_helper {
-            format!("Taxonomy '{}' is not imported by any file.", stem)
-        } else {
-            format!("Taxonomy '{}' is not imported by any contract.", stem)
-        };
-        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
-            fp,
-            &AesOrphanViolation::TaxonomyOrphan {
-                stem: stem.clone(),
-                category,
-                reason: Some(reason.into()),
-            }
-            .to_string(),
-            Severity::LOW,
-            "AES501",
-        ));
-    }
 }

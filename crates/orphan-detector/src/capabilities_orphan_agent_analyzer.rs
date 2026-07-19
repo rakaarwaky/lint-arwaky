@@ -10,20 +10,7 @@ use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentOrphanAnalyzer {}
 
-// ─── Block 2: Public Contract ─────────────────────────────
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-// ─── Block 3: Constructors & Helpers ──────────────────────
-impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     fn is_agent_orphan(
         &self,
@@ -31,6 +18,23 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         _root_dir: &FilePath,
         all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
+        self.check_agent_orphan(f, all_files)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+
+    fn check_agent_orphan(&self, f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
         is_agent_orphan_raw(f, all_files)
     }
 }

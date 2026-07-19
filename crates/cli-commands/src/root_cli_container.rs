@@ -30,9 +30,7 @@ pub struct CliContainer {
 // ─── Block 2: Public Contract ─────────────────────────────
 // (No trait impl — root container is wiring only)
 
-// Block 3: constructors & public API
 // ─── Block 3: Constructors & Helpers ──────────────────────
-// ─── Block 2: Public Contract ─────────────────────────────
 impl CliContainer {
     pub fn new_default() -> Self {
         let import_container =
