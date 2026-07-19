@@ -218,10 +218,10 @@ impl LintFixProcessor {
     }
 
     fn fix_bypass_comments_impl(&self, file_path: &FilePath, line: u32) -> bool {
-        if !self.file_adapter.path_exists(file_path.value()) {
+        if !self.file_adapter.path_exists(file_path) {
             return false;
         }
-        let content = match self.file_adapter.read_file(file_path.value()) {
+        let content = match self.file_adapter.read_file(file_path) {
             Some(c) => c,
             None => return false,
         };
@@ -278,14 +278,14 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        self.file_adapter.write_file(file_path.value(), &result)
+        self.file_adapter.write_file(file_path, &result)
     }
 
     fn fix_unused_import_impl(&self, file_path: &FilePath, line: u32) -> bool {
-        if !self.file_adapter.path_exists(file_path.value()) {
+        if !self.file_adapter.path_exists(file_path) {
             return false;
         }
-        let content = match self.file_adapter.read_file(file_path.value()) {
+        let content = match self.file_adapter.read_file(file_path) {
             Some(c) => c,
             None => return false,
         };
@@ -313,7 +313,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        self.file_adapter.write_file(file_path.value(), &result)
+        self.file_adapter.write_file(file_path, &result)
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {

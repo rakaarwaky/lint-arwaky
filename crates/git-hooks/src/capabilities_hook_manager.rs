@@ -40,7 +40,11 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if self.file_check.path_exists(&config_file).await {
+        let fp = match FilePath::new(&config_file) {
+            Ok(p) => p,
+            Err(_) => return DescriptionVO::new(format!("INVALID_PATH:{}", config_file)),
+        };
+        if self.file_check.path_exists(&fp).await {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
@@ -52,10 +56,12 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let p1_exists = self.file_check.path_exists(path1).await;
-        let p2_exists = self.file_check.path_exists(path2).await;
-        let p1_is_file = self.file_check.is_file(path1).await;
-        let p2_is_file = self.file_check.is_file(path2).await;
+        let fp1 = FilePath::new(path1).unwrap_or_default();
+        let fp2 = FilePath::new(path2).unwrap_or_default();
+        let p1_exists = self.file_check.path_exists(&fp1).await;
+        let p2_exists = self.file_check.path_exists(&fp2).await;
+        let p1_is_file = self.file_check.is_file(&fp1).await;
+        let p2_is_file = self.file_check.is_file(&fp2).await;
 
         let status = match (p1_exists && p2_exists, p1_is_file && p2_is_file) {
             (false, _) => {

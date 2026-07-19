@@ -95,7 +95,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             self.check_tool_status("jj", false).await,
         ];
 
-        let binary_path = self.tool_executor.get_binary_path().await;
+        let binary_path = self
+            .tool_executor
+            .get_binary_path()
+            .await
+            .value()
+            .to_string();
 
         ToolchainDiagnostics {
             rust_tools,

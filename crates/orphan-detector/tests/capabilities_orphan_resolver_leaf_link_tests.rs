@@ -43,6 +43,22 @@ fn cross_crate_use_links_to_leaf_module_file() {
 
     let ctx = resolver.build_graph_context(&files, root.to_str().unwrap());
 
+    let leaf_content = std::fs::read_to_string(&leaf).unwrap_or_default();
+    let consumer_content = std::fs::read_to_string(&consumer).unwrap_or_default();
+    eprintln!(
+        "[DBG] leaf content len={} consumer content len={} root={:?}",
+        leaf_content.len(),
+        consumer_content.len(),
+        root
+    );
+    eprintln!("[DBG] inbound keys: {}", ctx.inbound_links.mapping.len());
+    eprintln!(
+        "[DBG] import_graph keys: {}",
+        ctx.import_graph.mapping.len()
+    );
+    eprintln!("[DBG] FULL inbound_links = {:?}", ctx.inbound_links);
+    eprintln!("[DBG] FULL import_graph = {:?}", ctx.import_graph);
+
     let leaf_str = leaf.to_string_lossy().to_string();
     let inbound = ctx.inbound_links.mapping.get(&leaf_str);
 

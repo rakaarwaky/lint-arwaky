@@ -62,7 +62,7 @@ impl DiffChecker {
 
     async fn resolve_default_branch(&self, project_path: &FilePath) -> String {
         self.git_command
-            .symbolic_ref(&project_path.value)
+            .symbolic_ref(project_path)
             .await
             .unwrap_or_else(|| "main".to_string())
     }
@@ -80,10 +80,7 @@ impl DiffChecker {
             "master...HEAD".to_string(),
         ];
         for variant in &variants {
-            let files = self
-                .git_command
-                .diff_name_only(variant, &project_path.value)
-                .await;
+            let files = self.git_command.diff_name_only(variant, project_path).await;
             for file_str in &files {
                 if let Ok(fp) = FilePath::new(file_str.clone()) {
                     changed_set.insert(fp);
@@ -94,10 +91,7 @@ impl DiffChecker {
             }
         }
         if changed_set.is_empty() {
-            let files = self
-                .git_command
-                .diff_name_only("HEAD", &project_path.value)
-                .await;
+            let files = self.git_command.diff_name_only("HEAD", project_path).await;
             for file_str in &files {
                 if let Ok(fp) = FilePath::new(file_str.clone()) {
                     changed_set.insert(fp);
@@ -105,10 +99,7 @@ impl DiffChecker {
             }
         }
         if changed_set.is_empty() {
-            let files = self
-                .git_command
-                .ls_files_modified(&project_path.value)
-                .await;
+            let files = self.git_command.ls_files_modified(project_path).await;
             for file_str in &files {
                 if let Ok(fp) = FilePath::new(file_str.clone()) {
                     changed_set.insert(fp);

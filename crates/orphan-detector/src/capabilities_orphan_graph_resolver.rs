@@ -140,6 +140,14 @@ impl OrphanGraphResolver {
             let normalized = seg.replace('-', "_");
             let candidate_file = current.join(format!("{}.rs", normalized));
             let candidate_mod = current.join(&normalized).join("mod.rs");
+            if crate_name == "shared" && (normalized.contains("orphan_result") || normalized == "orphan_detector") {
+                eprintln!(
+                    "[DBG-RMF] seg={seg} current={current:?} file={} mod={} cand_mod={:?}",
+                    candidate_file.is_file(),
+                    candidate_mod.is_file(),
+                    candidate_mod
+                );
+            }
             if candidate_file.is_file() {
                 let p = candidate_file.to_string_lossy().to_string();
                 if p != importing_file {
@@ -519,9 +527,11 @@ impl OrphanGraphResolver {
                         // taxonomy/contract module files appeared to have zero inbound
                         // links and were falsely flagged as AES501/AES502 orphans.
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            if let Some(resolved) =
-                                self.resolve_module_file(crate_name, &segments, src_dir, f)
-                            {
+                            let rmf = self.resolve_module_file(crate_name, &segments, src_dir, f);
+                            if crate_name == "shared" {
+                                eprintln!("[DBG-X] rest={rest:?} segments={segments:?} rmf={rmf:?} src_dir={src_dir:?}");
+                            }
+                            if let Some(resolved) = rmf {
                                 import_graph
                                     .entry(f.clone())
                                     .or_default()
