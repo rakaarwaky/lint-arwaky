@@ -13,7 +13,6 @@ pub struct OrphanContainer {
 // ─── Block 2: Public Contract ─────────────────────────────
 // (No trait impl )
 
-
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for OrphanContainer {
     fn default() -> Self {
