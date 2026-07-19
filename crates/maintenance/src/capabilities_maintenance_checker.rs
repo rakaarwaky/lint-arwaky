@@ -153,12 +153,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         &self,
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
-        let root = &project_path.value;
+        let base = project_path.value();
 
-        let cargo_lock = format!("{}/Cargo.lock", root);
+        let cargo_lock = FilePath::new(format!("{}/Cargo.lock", base)).unwrap_or_default();
         if self.fs.file_exists(&cargo_lock).await {
             let content = self.fs.read_file(&cargo_lock).await?;
-            let cargo_toml = format!("{}/Cargo.toml", root);
+            let cargo_toml = FilePath::new(format!("{}/Cargo.toml", base)).unwrap_or_default();
             let direct_deps = if self.fs.file_exists(&cargo_toml).await {
                 let toml_content = self.fs.read_file(&cargo_toml).await.unwrap_or_default();
                 parse_cargo_toml_direct_deps(&toml_content)
@@ -168,13 +168,13 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             return Ok(parse_cargo_lock(&content, &direct_deps));
         }
 
-        let pyproject = format!("{}/pyproject.toml", root);
+        let pyproject = FilePath::new(format!("{}/pyproject.toml", base)).unwrap_or_default();
         if self.fs.file_exists(&pyproject).await {
             let content = self.fs.read_file(&pyproject).await?;
             return Ok(parse_pyproject(&content));
         }
 
-        let reqs = format!("{}/requirements.txt", root);
+        let reqs = FilePath::new(format!("{}/requirements.txt", base)).unwrap_or_default();
         if self.fs.file_exists(&reqs).await {
             let content = self.fs.read_file(&reqs).await?;
             return Ok(parse_requirements(&content));

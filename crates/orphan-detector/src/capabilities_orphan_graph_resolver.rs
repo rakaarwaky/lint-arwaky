@@ -135,21 +135,18 @@ impl OrphanGraphResolver {
         importing_file: &str,
     ) -> Option<String> {
         let mut current = src_dir.to_path_buf();
-        // Deepest module file resolved so far (returned if a deeper segment is
-        // a non-module item like a function/type).
+        eprintln!("[DBG-RMF] src_dir={src_dir:?} segments={segments:?}");
         let mut last_resolved: Option<String> = None;
         for seg in segments {
             let normalized = seg.replace('-', "_");
             let candidate_file = current.join(format!("{}.rs", normalized));
             let candidate_mod = current.join(&normalized).join("mod.rs");
+            eprintln!("[DBG-RMF] seg={seg} file_exists={} mod_exists={}", candidate_file.is_file(), candidate_mod.is_file());
             if candidate_file.is_file() {
                 let p = candidate_file.to_string_lossy().to_string();
                 if p != importing_file {
                     last_resolved = Some(p.clone());
                 }
-                // A file module is a leaf; deeper segments (functions/types)
-                // do not change the resolved module. Keep it and continue
-                // scanning so trailing items are tolerated.
                 last_resolved = last_resolved.or(Some(p));
                 current = current.join(&normalized);
                 continue;
@@ -158,13 +155,9 @@ impl OrphanGraphResolver {
                 if p != importing_file {
                     last_resolved = Some(p);
                 }
-                // Segment is a directory module; descend for the next segment.
                 current = current.join(&normalized);
                 continue;
             } else {
-                // No such file/dir at this level — this segment (and anything
-                // after it) is a non-module item. Return the deepest module
-                // resolved so far.
                 return last_resolved;
             }
         }
@@ -520,23 +513,18 @@ impl OrphanGraphResolver {
                     if !segments.is_empty() {
                         // Bug 3: no ./ prefix — store resolved paths verbatim
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            // Resolve the FULL import path (all segments) to the real
-                            // leaf module file, not just the top-level domain directory.
-                            // e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
-                            // must link to
-                            // `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`,
-                            // NOT only `crates/shared/src/orphan-detector/mod.rs`.
-                            // Previously only the leading segment was resolved, so leaf
-                            // taxonomy/contract module files appeared to have zero inbound
-                            // links and were falsely flagged as AES501/AES502 orphans.
+                            eprintln!("[DBG] ext-import f={f} crate={crate_name} rest={rest}");
                             if let Some(resolved) =
                                 self.resolve_module_file(crate_name, &segments, src_dir, f)
                             {
+                                eprintln!("[DBG]   resolved -> {resolved}");
                                 import_graph
                                     .entry(f.clone())
                                     .or_default()
                                     .push(resolved.clone());
                                 inbound_links.entry(resolved).or_default().push(f.clone());
+                            } else {
+                                eprintln!("[DBG]   resolve_module_file returned None");
                             }
                         }
                         continue;

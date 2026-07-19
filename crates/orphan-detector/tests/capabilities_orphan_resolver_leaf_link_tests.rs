@@ -23,21 +23,22 @@ fn cross_crate_use_links_to_leaf_module_file() {
     let _ = std::fs::remove_dir_all(&base);
 
     let shared_src = base.join("crates/shared/src");
-    // The consumed leaf module (exactly the kind false-flagged as AES501).
-    write(
-        &shared_src.join("orphan-detector/taxonomy_orphan_result_utility.rs"),
-        "pub fn mk_orphan_result() {}\n",
-    );
+    let leaf_path = shared_src.join("orphan-detector/taxonomy_orphan_result_utility.rs");
+    write(&leaf_path, "pub fn mk_orphan_result() {}\n");
     write(
         &shared_src.join("orphan-detector/mod.rs"),
         "pub mod taxonomy_orphan_result_utility;\n",
     );
-    // A consumer in a DIFFERENT crate that imports the leaf module.
     let consumer = base.join("crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs");
     write(
         &consumer,
         "use shared::orphan_detector::taxonomy_orphan_result_utility::mk_orphan_result;\n\
          pub fn run() { let _ = mk_orphan_result(); }\n",
+    );
+    eprintln!("[T] leaf_path={:?} exists={}", leaf_path, leaf_path.exists());
+    eprintln!(
+        "[T] orphan-detector dir exists={}",
+        shared_src.join("orphan-detector").exists()
     );
 
     let resolver = OrphanGraphResolver::new(
@@ -63,7 +64,7 @@ fn cross_crate_use_links_to_leaf_module_file() {
         .join("orphan-detector/taxonomy_orphan_result_utility.rs")
         .to_string_lossy()
         .to_string();
-    let inbound = ctx.inbound.mapping.get(&leaf);
+    let inbound = ctx.inbound_links.mapping.get(&leaf);
 
     assert!(
         inbound.is_some_and(|v| !v.is_empty()),
