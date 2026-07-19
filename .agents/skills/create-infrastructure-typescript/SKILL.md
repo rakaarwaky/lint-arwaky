@@ -64,6 +64,48 @@ Create and validate TypeScript **infrastructure layer** files following clean ar
 - **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions MUST be extracted to `*_utility.ts` modules in shared/taxonomy
 - **No module-level `export function` in infrastructure files** — free functions outside the class are forbidden; extract to `*_utility.ts`
 
+### Helper vs Utility Decision (The Litmus Test)
+
+> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
+> - If **YES** → **Extract to Utility File**.
+> - If **NO** (needs `this`, class state, or class context) → **Keep as Private Helper**.
+
+#### When to Extract to Utility (`*_utility.ts`)
+
+Extract if **ALL** conditions are met:
+
+1. **Stateless**: No `this`, no class-level state access
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
+3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
+
+#### When to Keep as Private Helper (Block 3)
+
+Keep if **ANY** condition is met:
+
+1. **Needs Instance State**: Accesses `this.field`
+2. **Needs Class State**: Accesses `static` fields
+3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
+4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class
+
+#### I/O Blocker (CRITICAL)
+
+A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
+
+- `fs.readFileSync()`, `fs.promises.readFile()`, `open()`
+- `fetch()`, `axios`, `http` (network)
+- `sqlite3`, `pg`, `mysql2` (database)
+
+**Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
+
+```typescript
+function readFileContent(path: string): string {
+    // Stateless ✓ (no this)
+    // But uses fs.readFileSync() ✗ (I/O)
+    // → CANNOT extract to taxonomy utility
+    // → Keep in infrastructure layer (this is correct — infra IS for I/O)
+}
+```
+
 ### The 3-Block Structure
 
 Every implementation file MUST follow this exact order **within the class body**:

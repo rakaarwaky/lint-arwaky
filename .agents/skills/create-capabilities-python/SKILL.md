@@ -65,6 +65,47 @@ Create and validate Python **capabilities layer** files following clean architec
 - **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions (no `self`, no `cls`) MUST be extracted to `*_utility.py` modules in shared/taxonomy
 - **No module-level `def` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.py`
 
+### Helper vs Utility Decision (The Litmus Test)
+
+> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
+> - If **YES** → **Extract to Utility File**.
+> - If **NO** (needs `self`, `cls`, or class context) → **Keep as Private Helper**.
+
+#### When to Extract to Utility (`*_utility.py`)
+
+Extract if **ALL** conditions are met:
+
+1. **Stateless**: No `self`, no `cls`, no class-level state access
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
+3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
+
+#### When to Keep as Private Helper (Block 3)
+
+Keep if **ANY** condition is met:
+
+1. **Needs Instance State**: Accesses `self.field`
+2. **Needs Class State**: Accesses class variables or `cls` attributes
+3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
+4. **Factory Method**: `create_default()`, `from_config()`, `from_dict()` — specific to instantiating this class
+
+#### I/O Blocker (CRITICAL)
+
+A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
+
+- `open()`, `read()`, `write()`, `pathlib.Path.read_text()`
+- `requests`, `urllib`, `httpx` (network)
+- `sqlite3`, `psycopg2`, `sqlalchemy` (database)
+
+**Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
+
+```python
+def has_crate_self_import(file_path: str) -> bool:
+    # Stateless ✓ (no self, no cls)
+    # But uses open() / read_dir ✗ (I/O)
+    # → CANNOT extract to taxonomy utility
+    # → Keep in capabilities layer
+```
+
 ### The 3-Block Structure
 
 Every implementation file MUST follow this exact order **within the class body**:
