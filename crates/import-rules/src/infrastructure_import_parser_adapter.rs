@@ -4,6 +4,8 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::import_rules::taxonomy_import_constant::LAYER_PREFIXES;
+use shared::import_rules::taxonomy_import_utility::parse_import_lines_helper;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
@@ -37,16 +39,7 @@ impl Default for ImportParserAdapter {
 impl IImportParserPort for ImportParserAdapter {
     /// Extract layer from filename prefix — inline implementation.
     fn extract_layer_from_prefix(&self, segment: &str) -> Option<LayerNameVO> {
-        const PREFIX_MAP: &[(&str, &str)] = &[
-            ("taxonomy_", "taxonomy"),
-            ("contract_", "contract"),
-            ("capabilities_", "capabilities"),
-            ("infrastructure_", "infrastructure"),
-            ("agent_", "agent"),
-            ("surface_", "surfaces"),
-            ("root_", "root"),
-        ];
-        for &(prefix, layer) in PREFIX_MAP {
+        for &(prefix, layer) in LAYER_PREFIXES {
             if segment.starts_with(prefix) {
                 return Some(LayerNameVO::new(layer));
             }
@@ -344,77 +337,4 @@ impl IImportParserPort for ImportParserAdapter {
     fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
         false
     }
-}
-
-/// Helper function to parse import lines from content, decoupled from any struct method call rules
-fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> {
-    let mut result = Vec::new();
-    let lines: Vec<&str> = content.lines().collect();
-    let mut i = 0;
-    while i < lines.len() {
-        let trimmed = lines[i].trim();
-        if trimmed.starts_with("import ")
-            || trimmed.starts_with("from ")
-            || trimmed.starts_with("extern crate ")
-        {
-            result.push((
-                LineNumber::new((i + 1) as i64),
-                LineContentVO::new(lines[i].to_string()),
-            ));
-            i += 1;
-            continue;
-        }
-        if trimmed.starts_with("use ")
-            || trimmed.starts_with("pub use ")
-            || trimmed.starts_with("pub(crate) use ")
-        {
-            let mut combined = lines[i].to_string();
-            if combined.contains('{') && !combined.contains('}') {
-                let start = i;
-                i += 1;
-                while i < lines.len() {
-                    let part = lines[i].trim().to_string();
-                    combined.push_str(&format!(" {}", part));
-                    if part.contains('}') || combined.ends_with(';') {
-                        break;
-                    }
-                    i += 1;
-                }
-                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                result.push((
-                    LineNumber::new((start + 1) as i64),
-                    LineContentVO::new(combined),
-                ));
-            } else if !combined.ends_with(';') {
-                while i + 1 < lines.len() {
-                    let next = lines[i + 1].trim();
-                    if next.starts_with("use ")
-                        || next.starts_with("pub use ")
-                        || next.starts_with("pub(crate) use ")
-                        || next.is_empty()
-                    {
-                        break;
-                    }
-                    combined.push_str(&format!(" {}", next));
-                    if next.ends_with(';') {
-                        i += 1;
-                        break;
-                    }
-                    i += 1;
-                }
-                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                result.push((
-                    LineNumber::new((i + 1) as i64),
-                    LineContentVO::new(combined),
-                ));
-            } else {
-                result.push((
-                    LineNumber::new((i + 1) as i64),
-                    LineContentVO::new(combined),
-                ));
-            }
-        }
-        i += 1;
-    }
-    result
 }

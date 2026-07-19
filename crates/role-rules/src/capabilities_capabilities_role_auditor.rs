@@ -17,9 +17,15 @@ use shared::taxonomy_source_vo::SourceContentVO;
 
 pub struct CapabilitiesRoleChecker {}
 
-impl Default for CapabilitiesRoleChecker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait::async_trait]
+impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
+    fn check_capability_routing(
+        &self,
+        source: &SourceContentVO,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.check_capability_routing(source, layer, violations);
     }
 }
 
@@ -253,13 +259,8 @@ impl CapabilitiesRoleChecker {
     }
 }
 
-impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
-    fn check_capability_routing(
-        &self,
-        source: &SourceContentVO,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        self.check_capability_routing(source, layer, violations);
+impl Default for CapabilitiesRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

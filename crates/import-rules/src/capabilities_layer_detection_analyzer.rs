@@ -15,6 +15,7 @@ use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
+use shared::import_rules::taxonomy_import_constant::LAYER_PREFIXES;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
@@ -331,17 +332,7 @@ impl LayerDetectionAnalyzer {
             .and_then(|s| s.to_str())
             .unwrap_or_default();
 
-        const PREFIX_MAP: &[(&str, &str)] = &[
-            ("taxonomy_", "taxonomy"),
-            ("contract_", "contract"),
-            ("capabilities_", "capabilities"),
-            ("infrastructure_", "infrastructure"),
-            ("agent_", "agent"),
-            ("surface_", "surfaces"),
-            ("root_", "root"),
-        ];
-
-        for &(prefix, layer) in PREFIX_MAP {
+        for &(prefix, layer) in LAYER_PREFIXES {
             if stem.starts_with(prefix) {
                 return Some(layer.to_string());
             }

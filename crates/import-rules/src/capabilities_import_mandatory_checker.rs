@@ -12,15 +12,13 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::taxonomy_import_constant::{PYTHON_ENTRY_FILES, RUST_ENTRY_FILES};
+use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
-
-fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.unwrap_or_default()
-}
 
 /// Enforces AES202 mandatory import rules — both layer-level and scope-level.
 ///
@@ -103,7 +101,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
-        if basename == "__init__.py" {
+        if PYTHON_ENTRY_FILES.contains(&basename) {
             return;
         }
         if definition.exceptions.values.contains(&basename.to_string()) {
@@ -169,7 +167,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
         // Step 2: Skip Rust entry files
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+        if RUST_ENTRY_FILES.contains(&basename) {
             return;
         }
         let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);

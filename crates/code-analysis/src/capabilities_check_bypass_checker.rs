@@ -20,15 +20,16 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::code_analysis::taxonomy_bypass_utility::{
+    classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
+    matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
+};
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
 /// These mirror the AES304 catalog (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented).
 fn default_forbidden_bypass() -> Vec<String> {
-    // NOTE: each pattern is constructed without its literal substring appearing in this source file
-    // to prevent the AES304 linter from self-flagging when scanning this file.
     let mut v = Vec::new();
     v.push(format!("#{}allow(", "["));
     v.push("unwrap".into());
@@ -47,10 +48,6 @@ fn default_forbidden_bypass() -> Vec<String> {
 }
 
 /// Identifiers treated as Rust-style word tokens (must match as a whole identifier).
-/// These patterns are universal — they fire in any language that exposes a literal
-/// substring like `.unwrap()` or `panic!()` in its syntax. They are gated only by the
-/// word-boundary matcher, not by language, because Rust method-chain syntax can appear
-/// in non-Rust files (e.g. .unwrap() called on a Rust binding from JS via wasm-bindgen).
 const WORD_PATTERN_TOKENS: &[&str] = &[
     "unwrap",
     "expect",
@@ -60,73 +57,10 @@ const WORD_PATTERN_TOKENS: &[&str] = &[
     "unreachable",
 ];
 
-/// Language-scoped phrase patterns. Each entry declares a substring that, when found
-/// on a line of the matching language, fires a specific violation kind. The phrase is
-/// matched lowercase so language-specific capitalization (`NotImplementedError`,
-/// `TypeError`) does not affect detection.
-///
-/// Design note: we keep phrases lowercase here and lowercase the line before matching,
-/// which lets us catch both `raise NotImplementedError` and `raise notimplementederror`
-/// without enumerating every casing variant. Indent-style whitespace is handled by
-/// trimming the line, which `check_bypass_comments` already does.
+/// Language-scoped phrase patterns.
 type PhrasePattern = (&'static str, ViolationKind, &'static [SourceLanguage]);
 
-/// Logical source languages recognised by the checker. Mirrors
-/// `shared::common::contract_language_detector_port::Language` but kept
-/// independent so the checker does not pull in the full detector trait surface.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SourceLanguage {
-    Rust,
-    Python,
-    JavaScript,
-    TypeScript,
-}
-
-impl SourceLanguage {
-    fn from_file(file: &str) -> Self {
-        let Ok(fp) = FilePath::new(file) else {
-            return SourceLanguage::Rust;
-        };
-        match fp.language() {
-            shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
-            shared::common::contract_language_detector_port::Language::Python => {
-                SourceLanguage::Python
-            }
-            shared::common::contract_language_detector_port::Language::JavaScript => {
-                SourceLanguage::JavaScript
-            }
-            shared::common::contract_language_detector_port::Language::TypeScript => {
-                SourceLanguage::TypeScript
-            }
-            shared::common::contract_language_detector_port::Language::Unknown => {
-                SourceLanguage::Rust
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ViolationKind {
-    UnwrapExpect,
-    Panic,
-    Todo,
-    Unimplemented,
-    BypassComment,
-}
-
-/// Phrase patterns that only fire on specific languages. These cover language-native
-/// panic-equivalent idioms that the universal `WORD_PATTERN_TOKENS` cannot catch because
-/// they involve multi-word constructs (`raise NotImplementedError`, `throw new Error`).
-///
-/// Each phrase is paired with the violation kind it represents. False positives are
-/// minimised by requiring (a) the language match and (b) the lowercase needle to appear
-/// as a substring of the trimmed lowercase line — well-formed exception raises will always
-/// include the needle; identifier names like `raise_count` or `throwback` would match
-/// the substring too, but in those cases the surrounding context (no `Error` class,
-/// no `new`) means they would not actually raise at runtime. Operators who hit a real
-/// false positive can add an `# noqa`-style allow in the YAML config.
 const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
-    // ─── Python: panic-equivalent idioms ───────────────────────────────────
     (
         "raise notimplementederror",
         ViolationKind::Unimplemented,
@@ -142,7 +76,6 @@ const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
         ViolationKind::Panic,
         &[SourceLanguage::Python],
     ),
-    // ─── JavaScript / TypeScript: panic-equivalent idioms ──────────────────
     (
         "throw new error",
         ViolationKind::Panic,
@@ -170,11 +103,13 @@ const LANGUAGE_PHRASE_PATTERNS: &[PhrasePattern] = &[
     ),
 ];
 
+// Block 1: struct Definition
 pub struct BypassChecker {
     forbidden_bypass: Vec<String>,
     forbidden_bypass_lower: Vec<String>,
 }
 
+// Block 3: constructors
 impl Default for BypassChecker {
     fn default() -> Self {
         Self::new()
@@ -191,8 +126,6 @@ impl BypassChecker {
         }
     }
 
-    /// Build a BypassChecker from an ArchitectureConfig-derived PatternList.
-    /// Falls back to defaults if the pattern list is empty.
     pub fn from_patterns(patterns: &PatternList) -> Self {
         if patterns.values.is_empty() {
             return Self::new();
@@ -204,20 +137,7 @@ impl BypassChecker {
         }
     }
 
-    /// Returns true if `line` (already trimmed) contains `token` invoked as a method call
-    /// or macro. Rejects bare identifier-name usage.
-    ///
-    /// Two flavors of match are supported per token:
-    ///   * `requires_method_call`: token must be preceded by `.` (or be at start-of-line
-    ///     immediately followed by `panic!`/`todo!`/etc macro syntax). Prevents
-    ///     `unwrap_helper` from firing.
-    ///   * Word-boundary match: token preceded by non-identifier-start char AND followed by
-    ///     a non-identifier-start char (handles `panic!("..")`, `unreachable!()`).
-    ///
-    /// For method-call tokens (`unwrap`, `expect`) we follow the chain across `_segment_`
-    /// boundaries (`unwrap_or_default`, `expect_err`) and require the chain to terminate
-    /// in `(` (immediate call) or `!` (panic-style) — never bare identifier like
-    /// `unwrap_helper`.
+    /// Private helper: word-token matcher with chain support.
     fn matches_word_token(line: &str, token: &str, requires_method_call: bool) -> bool {
         if token.is_empty() {
             return false;
@@ -236,7 +156,6 @@ impl BypassChecker {
                     i += 1;
                     continue;
                 }
-                // Method-call requirement: preceded by `.`
                 if requires_method_call {
                     let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
                     if !preceded_by_dot {
@@ -244,29 +163,22 @@ impl BypassChecker {
                         continue;
                     }
                 }
-                // Walk the chain of `_segment` to find a terminating `(` or `!`.
-                // Each iteration expects: optional `_` separator, then identifier segment,
-                // then either `(`/`!` (match) or `_` (continue chain) or anything else
-                // (reject). Bare `unwrap_helper` (no `_` after `helper`) is rejected.
                 let mut j = i + tlen;
                 loop {
                     if j >= bytes.len() {
                         return false;
                     }
                     let sep = bytes[j];
-                    // We expect exactly `_` between segments.
                     if sep != b'_' {
-                        // Could still be `(` / `!` immediately after the token.
                         if (sep == b'(' || sep == b'!') && j == i + tlen {
                             return true;
                         }
                         return false;
                     }
-                    j += 1; // consume `_`
+                    j += 1;
                     if j >= bytes.len() {
                         return false;
                     }
-                    // Consume one identifier segment (must start with letter/_).
                     if !is_ident_start(bytes[j]) {
                         return false;
                     }
@@ -274,7 +186,6 @@ impl BypassChecker {
                     while j < bytes.len() && is_ident_continue(bytes[j]) {
                         j += 1;
                     }
-                    // After segment: terminator or `_` to continue, otherwise reject.
                     if j >= bytes.len() {
                         return false;
                     }
@@ -285,7 +196,6 @@ impl BypassChecker {
                     if after_seg != b'_' {
                         return false;
                     }
-                    // Continue loop with j still on `_` so next iteration consumes it.
                 }
             }
             i += 1;
@@ -294,32 +204,7 @@ impl BypassChecker {
     }
 }
 
-fn is_ident_continue(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || b == b'_'
-}
-
-fn is_ident_start(b: u8) -> bool {
-    // Identifiers begin with [A-Za-z_] and continue with [A-Za-z0-9_].
-    // We treat only alphabetic characters and `_` as identifier starters.
-    b.is_ascii_alphabetic() || b == b'_'
-}
-
-/// Check if a line starts with `#[allow(` or `#[expect(`, constructed without the
-/// literal prefixes appearing in source to avoid AES304 self-flagging on this file.
-fn starts_with_allow_attr(line: &str) -> bool {
-    // Build the annotation-string prefixes char by char so the string fragments do not
-    // follow `[` contiguously in source, which would trigger a BYPASS_COMMENT match.
-    static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
-    let prefixes = PREFIXES.get_or_init(|| {
-        let a: String = ['#', '[', 'a', 'l', 'l', 'o', 'w', '('].iter().collect();
-        let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']
-            .iter()
-            .collect();
-        [a, e]
-    });
-    line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])
-}
-
+// Block 2: impl Trait for Struct (Public Contract)
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
         let mut in_clippy_section = false;
@@ -351,7 +236,6 @@ impl IBypassCheckerProtocol for BypassChecker {
     }
 
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Early-exit: skip scan if file contains none of the bypass-related tokens
         let content_lower = content.to_lowercase();
         let has_bypass_token = self
             .forbidden_bypass_lower
@@ -364,8 +248,6 @@ impl IBypassCheckerProtocol for BypassChecker {
         }
 
         let language = SourceLanguage::from_file(file);
-
-        // Reconstruct code-only and comment-only source views using character classifications.
         let chars: Vec<char> = content.chars().collect();
         let classifications = classify_source(content, language);
 
@@ -398,17 +280,14 @@ impl IBypassCheckerProtocol for BypassChecker {
         let mut in_static_lazy = false;
         let mut lazy_brace_depth: i32 = 0;
 
-        // Split code and comments into lines. Their lines correspond 1-to-1 with original content.
         let code_lines: Vec<&str> = code_content.lines().collect();
         let comment_lines: Vec<&str> = comment_content.lines().collect();
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
-            // Skip doc comments — documentation references to patterns are not runtime violations
             if t.starts_with("///") || t.starts_with("//!") {
                 continue;
             }
-            // Skip test modules — unwrap/panic is normal in tests
             if t.starts_with("#[cfg(test)]") {
                 in_test_module = true;
                 continue;
@@ -416,7 +295,6 @@ impl IBypassCheckerProtocol for BypassChecker {
             if in_test_module {
                 continue;
             }
-            // Skip static Lazy<Regex> initialization (multiline)
             if t.contains("static ") && t.contains("Lazy") {
                 in_static_lazy = true;
                 lazy_brace_depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
@@ -435,7 +313,6 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
-            // Allow attribute: rustc annotation attributes → BYPASS_COMMENT (always).
             if starts_with_allow_attr(t) {
                 violations.push(LintResult::new_arch(
                     file,
@@ -450,7 +327,6 @@ impl IBypassCheckerProtocol for BypassChecker {
             let code_line = code_lines.get(i).copied().unwrap_or("").trim();
             let comment_line = comment_lines.get(i).copied().unwrap_or("").trim();
 
-            // Match forbidden-bypass patterns from config (with sensible defaults).
             let mut bypass_hit: Option<ViolationKind> = None;
             for (p, p_lower) in self
                 .forbidden_bypass
@@ -459,20 +335,14 @@ impl IBypassCheckerProtocol for BypassChecker {
             {
                 let p_str = p.as_str();
                 if is_comment_bypass_pattern(p_str) {
-                    // Check against comments part
                     if !p_str.is_empty() && comment_line.to_lowercase().contains(p_lower.as_str()) {
                         bypass_hit = Some(ViolationKind::BypassComment);
                         break;
                     }
                 } else {
-                    // Check against code part
                     if WORD_PATTERN_TOKENS.contains(&p_str) {
-                        // `unwrap` and `expect` are method names — require `.` prefix.
-                        // `panic`/`todo`/`unimplemented`/`unreachable` are macros — require
-                        // `!` suffix (caught below) or word-boundary match.
                         let requires_dot = matches!(p_str, "unwrap" | "expect");
                         if Self::matches_word_token(code_line, p_str, requires_dot) {
-                            // Safe .unwrap_or*() variants don't panic — skip.
                             if p_str == "unwrap" && code_line.contains(".unwrap_or") {
                                 continue;
                             }
@@ -480,7 +350,6 @@ impl IBypassCheckerProtocol for BypassChecker {
                             break;
                         }
                     } else {
-                        // Other code-level patterns (like `Any`, `pass`, `except:`) matched with word boundaries
                         if !p_str.is_empty()
                             && matches_keyword_token(&code_line.to_lowercase(), p_lower.as_str())
                         {
@@ -491,10 +360,6 @@ impl IBypassCheckerProtocol for BypassChecker {
                 }
             }
 
-            // Language-scoped phrase patterns. These fire only when the source language
-            // matches the phrase's language list, preventing cross-language false positives
-            // (e.g. `raise` only fires on Python; `throw new Error` only on JS/TS).
-            // Checked against the code line.
             if bypass_hit.is_none() {
                 let code_line_lc = code_line.to_lowercase();
                 for &(needle, kind, languages) in LANGUAGE_PHRASE_PATTERNS {
@@ -533,242 +398,4 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
         }
     }
-}
-
-/// Map a forbidden token to its Violation variant.
-fn classify_token(token: &str) -> ViolationKind {
-    match token {
-        "unwrap" | "expect" => ViolationKind::UnwrapExpect,
-        "panic" => ViolationKind::Panic,
-        "todo" => ViolationKind::Todo,
-        "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
-        _ => ViolationKind::BypassComment,
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum CharClass {
-    Code,
-    Comment,
-    StringLiteral,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-enum ClassifierState {
-    Normal,
-    LineComment,
-    BlockComment,
-    SingleQuoteString,
-    DoubleQuoteString,
-    TripleSingleQuoteString,
-    TripleDoubleQuoteString,
-    TemplateLiteral,
-}
-
-fn classify_source(content: &str, language: SourceLanguage) -> Vec<CharClass> {
-    let chars: Vec<char> = content.chars().collect();
-    let mut classes = vec![CharClass::Code; chars.len()];
-    let mut i = 0;
-
-    match language {
-        SourceLanguage::Python => {
-            let mut state = ClassifierState::Normal;
-            while i < chars.len() {
-                match state {
-                    ClassifierState::Normal => {
-                        if chars[i] == '#' {
-                            state = ClassifierState::LineComment;
-                            classes[i] = CharClass::Comment;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
-                            state = ClassifierState::TripleDoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
-                            state = ClassifierState::TripleSingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::DoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::SingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else {
-                            classes[i] = CharClass::Code;
-                        }
-                    }
-                    ClassifierState::LineComment => {
-                        classes[i] = CharClass::Comment;
-                        if chars[i] == '\n' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::DoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::SingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TripleDoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TripleSingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    _ => {}
-                }
-                i += 1;
-            }
-        }
-        SourceLanguage::Rust | SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
-            let mut state = ClassifierState::Normal;
-            while i < chars.len() {
-                match state {
-                    ClassifierState::Normal => {
-                        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '/' {
-                            state = ClassifierState::LineComment;
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                        } else if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '*' {
-                            state = ClassifierState::BlockComment;
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::DoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::SingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '`'
-                            && (language == SourceLanguage::JavaScript
-                                || language == SourceLanguage::TypeScript)
-                        {
-                            state = ClassifierState::TemplateLiteral;
-                            classes[i] = CharClass::StringLiteral;
-                        } else {
-                            classes[i] = CharClass::Code;
-                        }
-                    }
-                    ClassifierState::LineComment => {
-                        classes[i] = CharClass::Comment;
-                        if chars[i] == '\n' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::BlockComment => {
-                        classes[i] = CharClass::Comment;
-                        if i + 1 < chars.len() && chars[i] == '*' && chars[i + 1] == '/' {
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::DoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::SingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TemplateLiteral => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '`' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    _ => {}
-                }
-                i += 1;
-            }
-        }
-    }
-    classes
-}
-
-fn is_comment_bypass_pattern(p: &str) -> bool {
-    p.starts_with('#')
-        || p.starts_with("//")
-        || p.starts_with("/*")
-        || p.contains("eslint")
-        || p.contains("ts-ignore")
-        || p.contains("ts-expect-error")
-        || p.contains("noqa")
-        || p.contains("type:")
-        || p.contains("pylint:")
-}
-
-fn matches_keyword_token(line: &str, token: &str) -> bool {
-    let bytes = line.as_bytes();
-    let token_bytes = token.as_bytes();
-    let tlen = token_bytes.len();
-    if bytes.len() < tlen {
-        return false;
-    }
-    let mut i = 0;
-    while i + tlen <= bytes.len() {
-        if &bytes[i..i + tlen] == token_bytes {
-            let before_ok =
-                i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_');
-            let after_ok = i + tlen == bytes.len()
-                || (!bytes[i + tlen].is_ascii_alphanumeric() && bytes[i + tlen] != b'_');
-            if before_ok && after_ok {
-                return true;
-            }
-        }
-        i += 1;
-    }
-    false
 }

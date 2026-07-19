@@ -12,6 +12,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::taxonomy_import_constant::RUST_ENTRY_FILES;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
@@ -165,7 +166,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         let basename = basename_identity.value();
 
         // Skip Rust entry files
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+        if RUST_ENTRY_FILES.contains(&basename) {
             return;
         }
 

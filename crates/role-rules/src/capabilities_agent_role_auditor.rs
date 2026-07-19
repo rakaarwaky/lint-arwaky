@@ -19,9 +19,40 @@ use shared::taxonomy_source_vo::SourceContentVO;
 
 pub struct AgentRoleChecker {}
 
-impl Default for AgentRoleChecker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait::async_trait]
+impl IAgentRoleChecker for AgentRoleChecker {
+    fn check_container(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_orchestrator(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_lifecycle(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_file_size_limit(
+        &self,
+        source: &SourceContentVO,
+        max_lines: usize,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_file_size_limit(source, max_lines, violations);
+    }
+    fn check_any_type_annotation(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_any_type_annotation(source, violations);
     }
 }
 
@@ -78,38 +109,8 @@ impl AgentRoleChecker {
     }
 }
 
-impl IAgentRoleChecker for AgentRoleChecker {
-    fn check_container(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_orchestrator(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_lifecycle(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_file_size_limit(
-        &self,
-        source: &SourceContentVO,
-        max_lines: usize,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_file_size_limit(source, max_lines, violations);
-    }
-    fn check_any_type_annotation(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_any_type_annotation(source, violations);
+impl Default for AgentRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

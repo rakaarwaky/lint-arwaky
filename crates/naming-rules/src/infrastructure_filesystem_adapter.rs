@@ -9,18 +9,6 @@ use shared::taxonomy_common_vo::PatternList;
 
 pub struct OSFileSystemAdapter {}
 
-impl OSFileSystemAdapter {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Default for OSFileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[async_trait]
 impl INamingFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
@@ -36,5 +24,17 @@ impl INamingFileSystemPort for OSFileSystemAdapter {
                 .filter_map(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
                 .collect(),
         }
+    }
+}
+
+impl OSFileSystemAdapter {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }

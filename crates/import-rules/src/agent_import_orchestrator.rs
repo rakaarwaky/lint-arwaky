@@ -25,6 +25,7 @@ use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenPr
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_constant::SOURCE_EXTENSIONS;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -123,10 +124,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     self.walk_dir(&path, files, true);
                 } else if path.is_file() {
                     if let Some(ext) = path.extension() {
-                        if matches!(
-                            ext.to_str(),
-                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                        ) {
+                        if ext.to_str().is_some_and(|e| SOURCE_EXTENSIONS.contains(&e)) {
                             if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
                                 files.push(fp);
                             }

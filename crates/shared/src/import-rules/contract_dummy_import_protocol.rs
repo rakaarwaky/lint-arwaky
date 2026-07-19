@@ -6,7 +6,7 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::taxonomy_layer_vo::Identity;
 
 /// Unified Contract / Port for the AES204 rule (Dummy Import Checker).
-/// This trait contains all AES204 sub-checks and helpers.
+/// This trait contains all AES204 sub-checks.
 pub trait IDummyImportCheckerProtocol: Send + Sync {
     // ─── Architectural Protocol Methods ───
 
@@ -67,6 +67,4 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         analyzer: &dyn ILayerDetectionProtocol,
         root_dir: &FilePath,
     );
-
-    fn python_class_inherits(&self, line: &str, agg_type: &str) -> bool;
 }

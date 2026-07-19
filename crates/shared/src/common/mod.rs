@@ -23,6 +23,7 @@ pub mod taxonomy_value_object_generator_vo;
 
 // from file-system/ (foundational, multi-feature)
 pub mod contract_system_port;
+pub mod taxonomy_file_utility;
 pub mod taxonomy_filesystem_error;
 
 // from source-parsing/ (foundational, multi-feature)

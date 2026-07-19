@@ -9,23 +9,20 @@
 //   7. For each file, calculate what % of its windows are shared
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
 
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::code_analysis::taxonomy_duplication_utility::{
+    build_violations, collect_file_entries, normalize_window, scan_duplicate_blocks,
+};
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
+// Block 1: struct Definition
 pub struct CodeDuplicationAnalyzer {}
 
-impl CodeDuplicationAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
+// Block 3: constructors
 impl Default for CodeDuplicationAnalyzer {
     fn default() -> Self {
         Self::new()
@@ -33,8 +30,11 @@ impl Default for CodeDuplicationAnalyzer {
 }
 
 impl CodeDuplicationAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     /// Legacy per-block duplication detection.
-    /// Kept for backward compatibility; prefer `check_file_similarity`.
     pub fn check_duplicates(
         &self,
         files: &[String],
@@ -47,10 +47,6 @@ impl CodeDuplicationAnalyzer {
     }
 
     /// File-level similarity analysis using pre-read entries.
-    /// Instead of one violation per sliding-window match, calculates what % of a file's
-    /// normalized windows also appear in other files. Only files exceeding `threshold_pct`
-    /// are flagged — one violation per file.
-    /// Returns (file_path, violation) tuples so the caller can attach the file path.
     pub fn check_file_similarity_entries(
         &self,
         entries: &[(String, String)],
@@ -61,7 +57,6 @@ impl CodeDuplicationAnalyzer {
             return Vec::new();
         }
 
-        // u32 String Interning (Fix 3.1): intern normalized window keys to u32 IDs
         let mut interner: HashMap<String, u32> = HashMap::new();
         let mut interned_keys: Vec<String> = Vec::new();
         let mut get_id = |key: String| -> u32 {
@@ -74,7 +69,6 @@ impl CodeDuplicationAnalyzer {
             id
         };
 
-        // Build global map: interned key id → Vec<(file_idx, line_number)>
         let mut global: HashMap<u32, Vec<(usize, usize)>> = HashMap::new();
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
@@ -88,7 +82,6 @@ impl CodeDuplicationAnalyzer {
             }
         }
 
-        // Identify keys that appear in 2+ different files
         let shared_ids: HashSet<u32> = global
             .iter()
             .filter(|(_, locs)| {
@@ -98,7 +91,6 @@ impl CodeDuplicationAnalyzer {
             .map(|(id, _)| *id)
             .collect();
 
-        // Build O(1) file_to_others map (Fix 3.2)
         let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
         for locs in global.values() {
             let unique: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
@@ -113,7 +105,6 @@ impl CodeDuplicationAnalyzer {
             }
         }
 
-        // Per-file similarity calculation
         let mut violations = Vec::new();
         for (fi, (file_path, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
@@ -170,7 +161,6 @@ impl CodeDuplicationAnalyzer {
     }
 
     /// File-level similarity analysis (legacy API — reads files internally).
-    /// Prefer `check_file_similarity_entries` to avoid double I/O.
     pub fn check_file_similarity(
         &self,
         files: &[String],
@@ -189,6 +179,7 @@ impl CodeDuplicationAnalyzer {
     }
 }
 
+// Block 2: impl Trait for Struct (Public Contract)
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,
@@ -196,7 +187,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         _fs: &dyn IFileSystemPort,
     ) -> Vec<AesCodeAnalysisViolation> {
         let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
-        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));
+        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
         let config = default_aes_config();
         let ignored_vec: Vec<String> = config
             .ignored_paths
@@ -235,98 +226,4 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .map(|(_, v)| v)
             .collect()
     }
-}
-
-/// Collect file entries: (PathBuf, content_string) for each lintable file.
-type FileEntry = (PathBuf, String);
-
-fn collect_file_entries(files: &[String]) -> Vec<FileEntry> {
-    let mut out = Vec::new();
-    for file_str in files {
-        let fp = match FilePath::new(file_str.clone()) {
-            Ok(f) => f,
-            Err(_) => continue,
-        };
-        if !fp.is_lintable() {
-            continue;
-        }
-        let content = match std::fs::read_to_string(&fp.value) {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-        out.push((PathBuf::from(&fp.value), content));
-    }
-    out
-}
-
-/// Normalize a single line: trim, keep only alphanumeric and whitespace.
-fn normalize_line(s: &str) -> String {
-    s.trim()
-        .chars()
-        .filter(|c| c.is_alphanumeric() || c.is_whitespace())
-        .collect()
-}
-
-/// Normalize a window of lines into a single hash key.
-fn normalize_window(window: &[&str]) -> String {
-    window
-        .iter()
-        .map(|s| normalize_line(s))
-        .collect::<Vec<_>>()
-        .join("|")
-}
-
-/// Slide a normalized `min_lines` window across each file and group identical windows.
-/// Returns one entry per duplicated block, each holding the (path, 1-indexed start_line)
-/// of every occurrence.
-fn scan_duplicate_blocks(entries: Vec<FileEntry>, min_lines: usize) -> Vec<Vec<(PathBuf, usize)>> {
-    let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
-    for (path, content) in entries {
-        let lines: Vec<&str> = content.lines().collect();
-        if lines.len() < min_lines {
-            continue;
-        }
-        for (idx, w) in lines.windows(min_lines).enumerate() {
-            let key = normalize_window(w);
-            blocks.entry(key).or_default().push((path.clone(), idx + 1));
-        }
-    }
-    blocks
-        .into_values()
-        .filter(|locs| locs.len() >= 2)
-        .collect()
-}
-
-/// Build violation list from duplicated blocks.
-fn build_violations(
-    blocks: &[Vec<(PathBuf, usize)>],
-    total_loc: usize,
-    min_dup_lines: usize,
-) -> Vec<AesCodeAnalysisViolation> {
-    if blocks.is_empty() || total_loc == 0 {
-        return Vec::new();
-    }
-    let dup_lines: usize = blocks.iter().map(|b| b.len() * min_dup_lines).sum();
-    let pct = dup_lines as f64 / total_loc as f64 * 100.0;
-    if pct < 10.0 {
-        return Vec::new();
-    }
-    let mut locations: Vec<String> = blocks
-        .iter()
-        .flat_map(|b| {
-            b.iter()
-                .map(|(path, line)| format!("{}:{}", path.display(), line))
-        })
-        .collect();
-    locations.sort();
-    locations.dedup();
-    vec![AesCodeAnalysisViolation::CodeDuplication {
-        reason: Some(LintMessage::new(format!(
-            "AES305: Duplicate block ({} lines) at {} — {:.1}% of total across {} occurrence(s).",
-            min_dup_lines,
-            locations.join(", "),
-            pct,
-            blocks.iter().map(|b| b.len()).sum::<usize>()
-        ))),
-    }]
 }

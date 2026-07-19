@@ -29,12 +29,6 @@ fn aes013_forbidden_inheritance(trait_name: &str) -> String {
 
 pub struct ContractRoleChecker {}
 
-impl Default for ContractRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 // ─── AES402 helper functions ──────────────────────────────────────────────
 //
 // These pure functions implement the trait-method-signature parser used by
@@ -442,6 +436,30 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
     false
 }
 
+#[async_trait::async_trait]
+impl IContractRoleChecker for ContractRoleChecker {
+    fn check_port(
+        &self,
+        source: &SourceContentVO,
+    ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
+        self.check_port(source)
+    }
+    fn check_protocol(
+        &self,
+        source: &SourceContentVO,
+    ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
+        self.check_protocol(source)
+    }
+    fn check_aggregate(
+        &self,
+        source: &SourceContentVO,
+        def: &shared::taxonomy_definition_vo::LayerDefinition,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_aggregate(source, def, violations);
+    }
+}
+
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -670,25 +688,8 @@ impl ContractRoleChecker {
     }
 }
 
-impl IContractRoleChecker for ContractRoleChecker {
-    fn check_port(
-        &self,
-        source: &SourceContentVO,
-    ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-        self.check_port(source)
-    }
-    fn check_protocol(
-        &self,
-        source: &SourceContentVO,
-    ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-        self.check_protocol(source)
-    }
-    fn check_aggregate(
-        &self,
-        source: &SourceContentVO,
-        def: &shared::taxonomy_definition_vo::LayerDefinition,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_aggregate(source, def, violations);
+impl Default for ContractRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

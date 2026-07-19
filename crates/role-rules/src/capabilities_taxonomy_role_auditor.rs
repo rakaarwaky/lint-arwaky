@@ -40,6 +40,41 @@ impl Default for TaxonomyRoleChecker {
     }
 }
 
+#[async_trait::async_trait]
+impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
+    fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
+        self.check_vo()
+    }
+    fn check_entity(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_entity(source, violations);
+    }
+    fn check_error(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_error(source, violations);
+    }
+    fn check_event(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_event(source, violations);
+    }
+    fn check_constant(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_constant(source, violations);
+    }
+}
+
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
         Self {}
@@ -284,39 +319,5 @@ impl TaxonomyRoleChecker {
                 ));
             }
         }
-    }
-}
-
-impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-        self.check_vo()
-    }
-    fn check_entity(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_entity(source, violations);
-    }
-    fn check_error(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_error(source, violations);
-    }
-    fn check_event(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_event(source, violations);
-    }
-    fn check_constant(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_constant(source, violations);
     }
 }

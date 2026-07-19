@@ -6,15 +6,12 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
-
-fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
-    result.unwrap_or_default()
-}
 
 pub struct DummyImportChecker {
     parser: Arc<dyn IImportParserPort>,

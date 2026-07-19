@@ -26,9 +26,48 @@ pub struct NamingConventionChecker {}
 static NAMING_REGEX: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
 
-impl Default for NamingConventionChecker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait]
+impl INamingCheckerProtocol for NamingConventionChecker {
+    // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
+    async fn check_file_naming(
+        &self,
+        analyzer: &dyn ILayerDetectionProtocol,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        // Step 1: Iterate over each file path in the checklist.
+        for f in &files.values {
+            let f_str = f.to_string();
+            // Step 2: Extract the raw filename from the path.
+            let filename = match f.rsplit('/').next() {
+                Some(name) => name,
+                None => &f_str,
+            };
+            // Step 3: Determine the architectural layer for the file.
+            let layer_name = analyzer.detect_layer(f, root_dir);
+            let layer = layer_name.clone();
+            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
+            // Step 5: Execute the naming checker function.
+            self.check_file_naming(
+                &f_str,
+                filename,
+                &layer,
+                def.as_ref(),
+                analyzer.config(),
+                &mut results.values,
+            );
+        }
+    }
+
+    async fn check_domain_suffixes(
+        &self,
+        _analyzer: &dyn ILayerDetectionProtocol,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        // No-op for naming convention checker
     }
 }
 
@@ -182,47 +221,8 @@ impl NamingConventionChecker {
     }
 }
 
-#[async_trait]
-impl INamingCheckerProtocol for NamingConventionChecker {
-    // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
-    async fn check_file_naming(
-        &self,
-        analyzer: &dyn ILayerDetectionProtocol,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        // Step 1: Iterate over each file path in the checklist.
-        for f in &files.values {
-            let f_str = f.to_string();
-            // Step 2: Extract the raw filename from the path.
-            let filename = match f.rsplit('/').next() {
-                Some(name) => name,
-                None => &f_str,
-            };
-            // Step 3: Determine the architectural layer for the file.
-            let layer_name = analyzer.detect_layer(f, root_dir);
-            let layer = layer_name.clone();
-            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
-            // Step 5: Execute the naming checker function.
-            self.check_file_naming(
-                &f_str,
-                filename,
-                &layer,
-                def.as_ref(),
-                analyzer.config(),
-                &mut results.values,
-            );
-        }
-    }
-
-    async fn check_domain_suffixes(
-        &self,
-        _analyzer: &dyn ILayerDetectionProtocol,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for naming convention checker
+impl Default for NamingConventionChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

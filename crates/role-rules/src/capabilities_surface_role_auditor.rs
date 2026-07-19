@@ -68,6 +68,37 @@ fn aes406_passive_violation_details(file: &str, details: &str) -> String {
     format!("AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
 }
 
+/// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
+pub fn is_in_surfaces(f: &FilePath) -> bool {
+    let path_str = f.to_string();
+    let basename = match path_str.rsplit('/').next() {
+        Some(s) => s,
+        None => &path_str,
+    };
+    let stem = match basename.rfind('.') {
+        Some(pos) => &basename[..pos],
+        None => basename,
+    };
+    if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
+        return true;
+    }
+    if let Some(parent) = path_str.rsplit('/').nth(1) {
+        if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
+            return true;
+        }
+    }
+    false
+}
+
+/// Check if the file is a barrel/init file.
+pub fn is_init(f: &FilePath) -> bool {
+    let path_str = f.to_string();
+    path_str.ends_with("__init__.py")
+        || path_str.ends_with("mod.rs")
+        || path_str.ends_with("index.ts")
+        || path_str.ends_with("index.js")
+}
+
 pub struct SurfaceRoleChecker {}
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
@@ -75,6 +106,35 @@ fn make_adapter(name: &str) -> Option<AdapterName> {
 impl Default for SurfaceRoleChecker {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[async_trait::async_trait]
+impl ISurfaceRoleChecker for SurfaceRoleChecker {
+    fn check_smart_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_utility_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_passive_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_fn_count_limit(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_fn_count_limit(source, violations);
     }
 }
 
@@ -574,66 +634,5 @@ impl SurfaceRoleChecker {
             enclosing_scope: None,
             related_locations: LocationList::new(),
         });
-    }
-}
-
-// --- helpers -----------------------------------------------------------------
-
-/// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
-pub fn is_in_surfaces(f: &FilePath) -> bool {
-    let path_str = f.to_string();
-    let basename = match path_str.rsplit('/').next() {
-        Some(s) => s,
-        None => &path_str,
-    };
-    let stem = match basename.rfind('.') {
-        Some(pos) => &basename[..pos],
-        None => basename,
-    };
-    if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
-        return true;
-    }
-    if let Some(parent) = path_str.rsplit('/').nth(1) {
-        if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
-            return true;
-        }
-    }
-    false
-}
-
-/// Check if the file is a barrel/init file.
-pub fn is_init(f: &FilePath) -> bool {
-    let path_str = f.to_string();
-    path_str.ends_with("__init__.py")
-        || path_str.ends_with("mod.rs")
-        || path_str.ends_with("index.ts")
-        || path_str.ends_with("index.js")
-}
-
-impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_utility_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_passive_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_fn_count_limit(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_fn_count_limit(source, violations);
     }
 }

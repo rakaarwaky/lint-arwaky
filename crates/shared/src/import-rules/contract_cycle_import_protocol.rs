@@ -4,7 +4,6 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
-use crate::common::taxonomy_common_vo::ErrorMessage;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -14,6 +13,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait ICycleImportProtocol: Send + Sync {
+    /// Scan all files for circular dependency cycles (AES205).
     fn scan(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -21,6 +21,8 @@ pub trait ICycleImportProtocol: Send + Sync {
         root_dir: &FilePath,
     ) -> Vec<LintResult>;
 
+    /// Adapter: converts ICycleImportProtocol parameters to internal `scan()` format
+    /// and appends results into the shared LintResultList.
     async fn check_cycles(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -29,39 +31,9 @@ pub trait ICycleImportProtocol: Send + Sync {
         results: &mut LintResultList,
     );
 
+    /// Detect cycle edges in a directed graph using DFS 3-coloring.
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName>;
 
+    /// Normalize a file/module name to its architectural layer name.
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO;
-
-    fn filepath_or_default(&self, result: Result<FilePath, ErrorMessage>) -> FilePath;
-
-    fn do_scan(
-        &self,
-        analyzer: &dyn ILayerDetectionProtocol,
-        files: &[FilePath],
-        root_dir: &FilePath,
-    ) -> Vec<LintResult>;
-
-    fn do_detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName>;
-
-    fn do_normalize_to_layer(&self, name: &str) -> LayerNameVO;
-
-    fn dfs_3color(
-        &self,
-        node: &LayerNameVO,
-        graph: &std::collections::HashMap<LayerNameVO, Vec<LayerNameVO>>,
-        color: &mut std::collections::HashMap<
-            LayerNameVO,
-            crate::import_rules::taxonomy_cycle_color_vo::Color,
-        >,
-        parent: &mut std::collections::HashMap<LayerNameVO, LayerNameVO>,
-        cycle_edges: &mut std::collections::HashSet<(LayerNameVO, LayerNameVO)>,
-    );
-
-    fn extract_cycle_nodes(
-        &self,
-        src: &LayerNameVO,
-        tgt: &LayerNameVO,
-        parent: &std::collections::HashMap<LayerNameVO, LayerNameVO>,
-    ) -> Option<Vec<LayerNameVO>>;
 }

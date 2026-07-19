@@ -13,48 +13,6 @@ pub struct NamingContainer {
     fs: Arc<dyn INamingFileSystemPort>,
 }
 
-impl NamingContainer {
-    pub fn new(analyzer: Arc<dyn ILayerDetectionProtocol>) -> Self {
-        let naming_convention_checker: Arc<dyn INamingCheckerProtocol> =
-            Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
-        let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
-            Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
-        let fs: Arc<dyn INamingFileSystemPort> =
-            Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        Self {
-            naming_convention_checker,
-            suffix_prefix_checker,
-            analyzer,
-            fs,
-        }
-    }
-
-    pub fn new_default() -> Self {
-        Self::new(Arc::new(DefaultLayerDetector))
-    }
-
-    pub fn naming_convention_checker(&self) -> &Arc<dyn INamingCheckerProtocol> {
-        &self.naming_convention_checker
-    }
-
-    pub fn suffix_prefix_checker(&self) -> &Arc<dyn INamingCheckerProtocol> {
-        &self.suffix_prefix_checker
-    }
-
-    pub fn analyzer(&self) -> Arc<dyn ILayerDetectionProtocol> {
-        self.analyzer.clone()
-    }
-
-    pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
-        Arc::new(crate::agent_naming_orchestrator::NamingOrchestrator::new(
-            self.naming_convention_checker.clone(),
-            self.suffix_prefix_checker.clone(),
-            self.analyzer.clone(),
-            self.fs.clone(),
-        ))
-    }
-}
-
 struct DefaultLayerDetector;
 impl ILayerDetectionProtocol for DefaultLayerDetector {
     fn config(&self) -> &ArchitectureConfig {
@@ -102,5 +60,47 @@ impl ILayerDetectionProtocol for DefaultLayerDetector {
         _parts: &[&str],
     ) -> shared::common::taxonomy_layer_vo::LayerNameVO {
         base_name.clone()
+    }
+}
+
+impl NamingContainer {
+    pub fn new(analyzer: Arc<dyn ILayerDetectionProtocol>) -> Self {
+        let naming_convention_checker: Arc<dyn INamingCheckerProtocol> =
+            Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
+        let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
+            Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
+        let fs: Arc<dyn INamingFileSystemPort> =
+            Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+        Self {
+            naming_convention_checker,
+            suffix_prefix_checker,
+            analyzer,
+            fs,
+        }
+    }
+
+    pub fn new_default() -> Self {
+        Self::new(Arc::new(DefaultLayerDetector))
+    }
+
+    pub fn naming_convention_checker(&self) -> &Arc<dyn INamingCheckerProtocol> {
+        &self.naming_convention_checker
+    }
+
+    pub fn suffix_prefix_checker(&self) -> &Arc<dyn INamingCheckerProtocol> {
+        &self.suffix_prefix_checker
+    }
+
+    pub fn analyzer(&self) -> Arc<dyn ILayerDetectionProtocol> {
+        self.analyzer.clone()
+    }
+
+    pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
+        Arc::new(crate::agent_naming_orchestrator::NamingOrchestrator::new(
+            self.naming_convention_checker.clone(),
+            self.suffix_prefix_checker.clone(),
+            self.analyzer.clone(),
+            self.fs.clone(),
+        ))
     }
 }

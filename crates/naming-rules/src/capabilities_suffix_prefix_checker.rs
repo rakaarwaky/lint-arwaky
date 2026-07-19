@@ -21,9 +21,38 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 #[derive(Clone)]
 pub struct SuffixPrefixChecker {}
 
-impl Default for SuffixPrefixChecker {
-    fn default() -> Self {
-        Self::new()
+#[async_trait]
+impl INamingCheckerProtocol for SuffixPrefixChecker {
+    async fn check_file_naming(
+        &self,
+        _analyzer: &dyn ILayerDetectionProtocol,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        // No-op for suffix/prefix checker
+    }
+
+    // Implement check_domain_suffixes from INamingCheckerProtocol trait to perform checks on multiple files.
+    async fn check_domain_suffixes(
+        &self,
+        analyzer: &dyn ILayerDetectionProtocol,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        // Step 1: Iterate over each file path in the checklist.
+        for f in &files.values {
+            let f_str = f.to_string();
+            // Step 2: Extract the raw filename from the path.
+            let filename = f.rsplit('/').next().unwrap_or(&f_str);
+            // Step 3: Determine the architectural layer for the file.
+            let layer_name = analyzer.detect_layer(f, root_dir);
+            let layer = layer_name.clone();
+            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
+            // Step 5: Execute the suffix checker function.
+            self.check_domain_suffixes(&f_str, filename, def.as_ref(), &layer, &mut results.values);
+        }
     }
 }
 
@@ -157,37 +186,8 @@ impl SuffixPrefixChecker {
     }
 }
 
-#[async_trait]
-impl INamingCheckerProtocol for SuffixPrefixChecker {
-    async fn check_file_naming(
-        &self,
-        _analyzer: &dyn ILayerDetectionProtocol,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for suffix/prefix checker
-    }
-
-    // Implement check_domain_suffixes from INamingCheckerProtocol trait to perform checks on multiple files.
-    async fn check_domain_suffixes(
-        &self,
-        analyzer: &dyn ILayerDetectionProtocol,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        // Step 1: Iterate over each file path in the checklist.
-        for f in &files.values {
-            let f_str = f.to_string();
-            // Step 2: Extract the raw filename from the path.
-            let filename = f.rsplit('/').next().unwrap_or(&f_str);
-            // Step 3: Determine the architectural layer for the file.
-            let layer_name = analyzer.detect_layer(f, root_dir);
-            let layer = layer_name.clone();
-            let def = layer_name.as_ref().and_then(|l| analyzer.get_layer_def(l));
-            // Step 5: Execute the suffix checker function.
-            self.check_domain_suffixes(&f_str, filename, def.as_ref(), &layer, &mut results.values);
-        }
+impl Default for SuffixPrefixChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

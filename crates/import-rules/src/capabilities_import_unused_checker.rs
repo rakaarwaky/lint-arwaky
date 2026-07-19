@@ -18,6 +18,7 @@ use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_constant::DERIVE_MACROS;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -42,28 +43,6 @@ impl UnusedImportRuleChecker {
 }
 
 static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
-
-// Known derive-macro imports that Rust compiler consumes implicitly.
-// These are never "used" as ordinary symbols — they're consumed by #[derive(...)]
-// attributes, so they must never be flagged as unused.
-const DERIVE_MACROS: &[&str] = &[
-    "async_trait",
-    "Serialize",
-    "Deserialize",
-    "Clone",
-    "Debug",
-    "Default",
-    "PartialEq",
-    "Eq",
-    "Hash",
-    "Ord",
-    "PartialOrd",
-    "Copy",
-    "EnumIter",
-    "Display",
-    "EnumString",
-    "AsRefStr",
-];
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn is_rust_trait_import(&self, name: &SymbolName) -> bool {
