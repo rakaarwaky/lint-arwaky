@@ -131,30 +131,32 @@ impl CapabilitiesOrphanAnalyzer {
     }
 
     fn check_dir_containers(&self, dir: &std::path::Path, identifiers: &[String]) -> bool {
-        let entries = self.cache.read_dir(dir.to_str().unwrap_or(""));
-        for entry_path in &entries {
-            let path = std::path::Path::new(entry_path);
-            if path.is_dir() {
-                if self.check_dir_containers(path, identifiers) {
-                    return true;
-                }
-            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_container.rs")
-                    || name.ends_with("_container.py")
-                    || name.ends_with("_container.ts")
-                    || name.ends_with("_container.js")
-                    || name.ends_with("_entry.rs")
-                    || name.ends_with("_entry.py")
-                    || name.ends_with("_entry.ts")
-                    || name.ends_with("_entry.js")
-                {
-                    let fp = FilePath {
-                        value: entry_path.clone(),
-                    };
-                    let content = self.cache.read_cached(&fp).value;
-                    for id in identifiers {
-                        if content.contains(id) {
-                            return true;
+        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or("")) {
+            let entries = self.cache.read_dir(&fp);
+            for entry_path in &entries {
+                let path = std::path::Path::new(entry_path);
+                if path.is_dir() {
+                    if self.check_dir_containers(path, identifiers) {
+                        return true;
+                    }
+                } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    if name.ends_with("_container.rs")
+                        || name.ends_with("_container.py")
+                        || name.ends_with("_container.ts")
+                        || name.ends_with("_container.js")
+                        || name.ends_with("_entry.rs")
+                        || name.ends_with("_entry.py")
+                        || name.ends_with("_entry.ts")
+                        || name.ends_with("_entry.js")
+                    {
+                        let fp = FilePath {
+                            value: entry_path.clone(),
+                        };
+                        let content = self.cache.read_cached(&fp).value;
+                        for id in identifiers {
+                            if content.contains(id) {
+                                return true;
+                            }
                         }
                     }
                 }

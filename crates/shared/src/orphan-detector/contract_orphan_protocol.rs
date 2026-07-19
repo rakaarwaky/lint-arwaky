@@ -70,9 +70,9 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
 
 pub trait IOrphanFileCachePort: Send + Sync {
     fn read_cached(&self, path: &FilePath) -> ContentString;
-    fn read_dir(&self, dir_path: &str) -> Vec<String>;
-    fn path_exists(&self, path: &str) -> bool;
-    fn is_symlink(&self, path: &str) -> bool;
+    fn read_dir(&self, dir_path: &FilePath) -> Vec<String>;
+    fn path_exists(&self, path: &FilePath) -> bool;
+    fn is_symlink(&self, path: &FilePath) -> bool;
     fn clear_cache(&self);
 }
 
@@ -80,6 +80,6 @@ pub trait IOrphanFilenameExtractorProtocol: Send + Sync {
     fn file_basename(&self, fp: &FilePath) -> Identity;
     fn file_stem(&self, fp: &FilePath) -> Identity;
     fn file_suffix(&self, fp: &FilePath) -> Identity;
-    fn extract_struct_names(&self, content: &str) -> Vec<SymbolName>;
-    fn extract_trait_names(&self, content: &str) -> Vec<SymbolName>;
+    fn extract_struct_names(&self, content: &ContentString) -> Vec<SymbolName>;
+    fn extract_trait_names(&self, content: &ContentString) -> Vec<SymbolName>;
 }

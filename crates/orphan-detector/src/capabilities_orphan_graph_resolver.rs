@@ -12,7 +12,7 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use shared::orphan_detector::taxonomy_graph_regex_utility::{
