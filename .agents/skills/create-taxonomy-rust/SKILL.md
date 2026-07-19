@@ -37,7 +37,6 @@ related:
   - fix-primitive-to-vo
   - fix-magic-constant
 ---
-
 # create-taxonomy-rust
 
 ## Purpose
@@ -1074,3 +1073,4 @@ If a constant represents a domain value, wrap it in a VO at the consuming bounda
 
 ```
 
+```

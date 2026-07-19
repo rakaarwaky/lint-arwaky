@@ -1,7 +1,7 @@
 ---
 name: create-taxonomy-typescript
-description: "Create and validate taxonomy layer files (shared/taxonomy) — all data types, VOs, errors, constants, and utilities must live here following strict naming conventions."
-version: 1.1.0
+description: "Create and validate TypeScript taxonomy layer files in shared taxonomy: VOs, entities, errors, events, constants, and pure reusable utilities. Ensures domain data lives only in shared taxonomy and remains pure."
+version: 1.3.0
 category: refactoring
 tags:
   [
@@ -9,19 +9,24 @@ tags:
     aes,
     taxonomy,
     shared,
-    dataclass,
     vo,
     entity,
+    error,
+    event,
+    constant,
     utility,
-    structure,
+    aes201,
+    primitive-to-vo,
   ]
 triggers:
   - "create taxonomy typescript"
   - "add taxonomy typescript"
-  - "move to taxonomy typescript"
-  - "interface in shared typescript"
-  - "create value object typescript"
-  - "create taxonomy entity typescript"
+  - "move dataclass to taxonomy typescript"
+  - "create vo typescript"
+  - "create error taxonomy typescript"
+  - "create constant taxonomy typescript"
+  - "check taxonomy typescript"
+  - "audit taxonomy typescript"
 dependencies: []
 related:
   - create-capabilities-typescript
@@ -29,116 +34,338 @@ related:
   - create-agent-typescript
   - enforce-1-class-per-file-typescript
   - interface-consolidation-typescript
-  - method_classifier-typescript
+  - fix-primitive-to-vo
+  - fix-magic-constant
 ---
 
 # create-taxonomy-typescript
 
 ## Purpose
 
-Create and validate TypeScript **taxonomy layer** files in `packages/shared/src/<domain>/`. This is where ALL data types, value objects, errors, constants, and stateless utility functions MUST live. No domain types may be defined in capabilities, infrastructure, agents, or surface layers.
+Create and validate TypeScript **taxonomy layer** files inside `packages/shared/src/<domain>/`.
 
-## Rules
+Taxonomy is the single source of truth for:
 
-### The Fundamental Question
+- value objects,
+- entities,
+- domain errors,
+- domain events,
+- constants,
+- pure reusable utility functions.
 
-> **"Is this a data type?"**
+No domain data structures may be defined in:
 
-- **Data type** (with domain data, DTOs, results, VOs) → **MUST be in shared/taxonomy**. Never in capabilities/infrastructure/agents/surface.
-- **Class** (that implements an interface, uses DI) → belongs in the layer file (`capabilities_*.ts`, `infrastructure_*.ts`, `agent_*.ts`).
+- capabilities,
+- infrastructure,
+- agents,
+- surface,
+- root/container layers.
 
-### Taxonomy Layer Structure
+Those layers must import domain data from shared taxonomy.
 
-```
-packages/shared/src/
-├── index.ts                 # Top-level module declarations
-├── common/                  # Cross-domain shared types
-│   ├── index.ts
-│   └── taxonomy_*.ts
-├── <domain>/                # Domain-specific taxonomy
-│   ├── index.ts             # Module exports for this domain
-│   ├── contract_*.ts        # Contract interfaces (port, protocol, aggregate)
-│   ├── taxonomy_*_vo.ts     # Value Objects
-│   ├── taxonomy_*_entity.ts # Entity types
-│   ├── taxonomy_*_error.ts  # Error types
-│   └── taxonomy_*_utility.ts# Stateless utility functions
-```
+---
 
-### File Naming Convention
+## Definition of Done
 
-Taxonomy files follow strict naming patterns:
+A taxonomy change is considered valid when:
 
-| Suffix      | Purpose                              | Allowed? | Example                              |
-| ----------- | ------------------------------------ | -------- | ------------------------------------ |
-| `_vo`       | Value Objects (wraps a single value) | ✅ YES   | `taxonomy_import_rule_vo.ts`         |
-| `_entity`   | Domain entities with identity        | ✅ YES   | `taxonomy_analysis_entity.ts`        |
-| `_error`    | Error types (`Error` class)          | ✅ YES   | `taxonomy_config_error.ts`           |
-| `_event`    | Event/message types                  | ✅ YES   | `taxonomy_scan_event.ts`             |
-| `_constant` | Static compile-time constants        | ✅ YES   | `taxonomy_layer_names_constant.ts`   |
-| `_utility`  | Stateless functions                  | ✅ YES   | `taxonomy_symbol_renamer_utility.ts` |
+1. Domain data structures live in `shared/taxonomy`.
+2. Taxonomy file naming uses the allowed strict suffixes.
+3. Taxonomy files do not import from capability, infrastructure, agent, surface, or root layers.
+4. Taxonomy files contain no I/O and no side effects.
+5. Utility functions in `*_utility.ts` are stateless, pure, domain-agnostic, and reusable.
+6. Value objects validate on construction.
+7. Public domain contracts use VOs instead of raw primitives.
+8. New taxonomy modules are registered in the relevant `index.ts`.
+9. `npx tsc --noEmit` passes.
 
-**CRITICAL:** These suffixes are **strict** — only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed for `taxonomy_` prefixed files. No other suffixes.
+---
 
-### Import Restrictions (AES201)
+## The Fundamental Question
 
-Taxonomy files must remain **completely pure**:
+> **"Is this a data type or an implementor?"**
 
-| Taxonomy Type                                          | Can Import From              | Cannot Import From                                              |
-| ------------------------------------------------------ | ---------------------------- | --------------------------------------------------------------- |
-| **taxonomy(vo)**                                       | Other taxonomy types         | agents, infrastructure, surfaces, contracts, capabilities, root |
-| **taxonomy(entity), taxonomy(error), taxonomy(event)** | taxonomy VOs/constants       | agents, infrastructure, surfaces, contracts, capabilities       |
-| **taxonomy(constant)**                                 | Nothing (pure static values) | Any external imports                                            |
-| **taxonomy(utility)**                                  | taxonomy types               | Non-taxonomy layers                                             |
+### Data Type
 
-### Data Type Patterns
+A data type is a type that carries domain data.
 
-#### Value Objects (`_vo.ts`)
+Examples:
 
-Wrap a single value with type safety:
+- value objects,
+- DTOs,
+- result objects,
+- domain entities,
+- domain errors,
+- domain events,
+- enums representing domain values.
+
+These MUST live in shared taxonomy.
 
 ```typescript
-// taxonomy_import_rule_vo.ts
-export class ImportRuleVO {
-    constructor(
-        private readonly pattern: string,
-        private readonly message: string
-    ) {}
+export interface OrphanAnalysisResult {
+    readonly isOrphan: boolean;
+    readonly reason: string;
+}
+```
 
-    value(): string {
-        return this.pattern;
+### Implementor
+
+An implementor is a class that implements an interface and contains behavior, often with injected dependencies.
+
+Examples:
+
+- `capabilities_*.ts`
+- `infrastructure_*.ts`
+- `agent_*.ts`
+
+These stay in their layer files.
+
+```typescript
+export class CapabilitiesOrphanAnalyzer {
+    constructor(private readonly extractor: IOrphanFilenameExtractorProtocol) {}
+}
+```
+
+---
+
+## Taxonomy Layer Structure
+
+Use snake_case module directories.
+
+```text
+packages/shared/src/
+├── index.ts
+├── common/
+│   ├── index.ts
+│   ├── taxonomy_*_vo.ts
+│   ├── taxonomy_*_error.ts
+│   ├── taxonomy_*_constant.ts
+│   └── taxonomy_*_utility.ts
+│
+├── <domain>/
+│   ├── index.ts
+│   ├── contract_*_protocol.ts
+│   ├── contract_*_port.ts
+│   ├── contract_*_aggregate.ts
+│   ├── taxonomy_*_vo.ts
+│   ├── taxonomy_*_entity.ts
+│   ├── taxonomy_*_error.ts
+│   ├── taxonomy_*_event.ts
+│   ├── taxonomy_*_constant.ts
+│   └── taxonomy_*_utility.ts
+```
+
+Important:
+
+- `contract_*.ts` files are NOT taxonomy files.
+- Contract interfaces may import taxonomy types.
+- Taxonomy files MUST NOT import contract interfaces.
+
+---
+
+## File Naming Convention
+
+Taxonomy files MUST use strict suffixes.
+
+| Suffix        | Purpose                            | Example                                |
+| ------------- | ---------------------------------- | -------------------------------------- |
+| `_vo`       | Value objects and value-like enums | `taxonomy_file_path_vo.ts`           |
+| `_entity`   | Entities with identity             | `taxonomy_analysis_entity.ts`        |
+| `_error`    | Error types                        | `taxonomy_config_error.ts`           |
+| `_event`    | Event/message types                | `taxonomy_scan_event.ts`             |
+| `_constant` | Static compile-time constants      | `taxonomy_layer_names_constant.ts`   |
+| `_utility`  | Stateless pure reusable functions  | `taxonomy_symbol_renamer_utility.ts` |
+
+Allowed taxonomy prefixes:
+
+```text
+taxonomy_*_vo.ts
+taxonomy_*_entity.ts
+taxonomy_*_error.ts
+taxonomy_*_event.ts
+taxonomy_*_constant.ts
+taxonomy_*_utility.ts
+```
+
+No other taxonomy suffixes are allowed.
+
+---
+
+## Purity and Import Restrictions (AES201)
+
+Taxonomy must remain pure and stable.
+
+### Allowed Dependencies
+
+| Taxonomy Type | May Import From                              | Must Not Import From                                                |
+| ------------- | -------------------------------------------- | ------------------------------------------------------------------- |
+| `_vo`       | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_entity`   | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_error`    | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_event`    | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| `_constant` | only core/static values                      | external layer imports, I/O, functions                              |
+| `_utility`  | taxonomy types, pure stdlib helpers         | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+
+Taxonomy may contain:
+
+- value validation,
+- domain invariants inside constructors,
+- pure transformations between taxonomy types.
+
+Taxonomy must not contain:
+
+- file I/O,
+- network calls,
+- database access,
+- environment mutation,
+- side effects,
+- business orchestration,
+- use-case logic,
+- layer-specific behavior.
+
+---
+
+## Data Type Patterns
+
+### Value Objects (`_vo.ts`)
+
+A value object should wrap domain values with type safety and validation.
+
+Prefer readonly properties.
+
+Bad:
+
+```typescript
+export class FilePath {
+    constructor(public value: string) {}
+}
+```
+
+Good:
+
+```typescript
+export class FilePath {
+    private readonly _value: string;
+
+    constructor(value: string) {
+        if (!value.trim()) {
+            throw new Error('FilePath cannot be empty');
+        }
+        this._value = value;
+    }
+
+    get value(): string {
+        return this._value;
+    }
+
+    toString(): string {
+        return this._value;
     }
 }
 ```
 
-#### Macro-Generated Value Objects
-
-For simple wrappers, use classes:
+For simple wrappers, classes may be used:
 
 ```typescript
-// taxonomy_common_vo.ts
 export class FieldNameVO {
-    constructor(private readonly value: string) {}
+    constructor(private readonly _value: string) {}
+    get value(): string { return this._value; }
 }
 
 export class BooleanVO {
-    constructor(private readonly value: boolean) {}
+    constructor(private readonly _value: boolean) {}
+    get value(): boolean { return this._value; }
 }
 
 export class SeverityVO {
-    constructor(private readonly value: number) {}
+    constructor(private readonly _value: number) {}
+    get value(): number { return this._value; }
 }
 ```
 
-#### Error Types (`_error.ts`)
+---
 
-Use TypeScript Error classes:
+### Composite Value Objects
+
+Composite VOs should use other VOs as fields, not raw primitives.
+
+Bad:
 
 ```typescript
-// taxonomy_config_error.ts
+export class ImportRuleVO {
+    constructor(
+        private readonly pattern: string,
+        private readonly message: string,
+    ) {}
+}
+```
+
+Good:
+
+```typescript
+export class ImportRuleVO {
+    private readonly _pattern: RulePattern;
+    private readonly _message: RuleMessage;
+
+    constructor(pattern: RulePattern, message: RuleMessage) {
+        if (!pattern.value.trim()) {
+            throw new Error('RulePattern cannot be empty');
+        }
+        this._pattern = pattern;
+        this._message = message;
+    }
+
+    get pattern(): RulePattern {
+        return this._pattern;
+    }
+
+    get message(): RuleMessage {
+        return this._message;
+    }
+}
+```
+
+---
+
+### Entities (`_entity.ts`)
+
+Entities represent domain objects with identity.
+
+```typescript
+export class SymbolEntity {
+    private readonly _id: SymbolId;
+    private readonly _name: SymbolName;
+
+    constructor(id: SymbolId, name: SymbolName) {
+        this._id = id;
+        this._name = name;
+    }
+
+    get id(): SymbolId {
+        return this._id;
+    }
+
+    get name(): SymbolName {
+        return this._name;
+    }
+}
+```
+
+---
+
+### Error Types (`_error.ts`)
+
+Use TypeScript Error classes.
+
+Prefer VO fields instead of raw public strings.
+
+Bad:
+
+```typescript
 export class ConfigError extends Error {
     constructor(
         public readonly key: string,
-        public readonly message: string
+        public readonly message: string,
     ) {
         super(`Config error: ${key} - ${message}`);
         this.name = 'ConfigError';
@@ -146,313 +373,684 @@ export class ConfigError extends Error {
 }
 ```
 
-#### Utility Functions (`_utility.ts`)
-
-Stateless functions (no side effects) that act as **Dumb Tools**.
-
-**🚨 CRITICAL: The Ultimate Boundary for Utilities**
-A function belongs in `*_utility.ts` ONLY if it meets ALL of these:
-
-1. **Stateless**: No `this` context, no class field access.
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O).
-3. **Domain-Agnostic / Reusable**: It does NOT know about specific business rules or domain-specific validation logic. It is a blind data manipulator (e.g., regex matching, string normalization, AST parsing).
-4. **Multi-Consumer Reusable**: Function serves multiple capabilities/infrastructures (could be same domain or cross-domain), not just one class.
-
-If a stateless function contains **Domain Knowledge** OR only serves **ONE capability/infrastructure class**, it MUST stay in the capabilities layer as a **Private Helper**, NOT extracted to taxonomy utility.
+Good:
 
 ```typescript
-// ✅ GOOD: Dumb Tool (Domain-Agnostic, Multi-Consumer Reusable)
-export function extractTraitName(content: string): string | null {
-    // Just regex, doesn't know what a "trait" means in domain context
-    // Multiple capabilities/infrastructures can use this
-    // ...
+export class ConfigError extends Error {
+    private readonly _key: ConfigKey;
+    private readonly _message: ErrorMessage;
+
+    constructor(key: ConfigKey, message: ErrorMessage) {
+        super(`Config error for ${key.value}: ${message.value}`);
+        this.name = 'ConfigError';
+        this._key = key;
+        this._message = message;
+    }
+
+    get key(): ConfigKey {
+        return this._key;
+    }
+
+    get message(): ErrorMessage {
+        return this._message;
+    }
+}
+```
+
+If an error wraps lower-level errors:
+
+```typescript
+export class FileReadError extends Error {
+    private readonly _path: FilePath;
+    private readonly _cause: Error;
+
+    constructor(path: FilePath, cause: Error) {
+        super(`Failed to read file ${path.value}: ${cause.message}`);
+        this.name = 'FileReadError';
+        this._path = path;
+        this._cause = cause;
+    }
+
+    get path(): FilePath {
+        return this._path;
+    }
+
+    get cause(): Error {
+        return this._cause;
+    }
+}
+```
+
+---
+
+### Event Types (`_event.ts`)
+
+Events represent something that happened in the domain.
+
+```typescript
+export class ScanCompletedEvent {
+    private readonly _scanId: ScanId;
+
+    constructor(scanId: ScanId) {
+        this._scanId = scanId;
+    }
+
+    get scanId(): ScanId {
+        return this._scanId;
+    }
+}
+```
+
+---
+
+### Constants (`_constant.ts`)
+
+Constants are pure static values.
+
+```typescript
+/** Default frames per second for animation. */
+export const FPS_DEFAULT: number = 24.0;
+
+/** Minimum reveal time in seconds. */
+export const MIN_REVEAL_SECONDS: number = 0.5;
+
+/** Manifest filename. */
+export const MANIFEST_FILENAME: string = 'manifest.json';
+```
+
+Rules:
+
+- no functions,
+- no I/O,
+- no external layer imports,
+- no mutable state.
+
+Constants may be primitive scalars. Consumers should wrap domain-meaningful primitives into VOs when exposing them in public domain contracts.
+
+---
+
+## Utility Functions (`_utility.ts`)
+
+Utility files contain pure reusable tools.
+
+### The Ultimate Boundary
+
+A function belongs in `*_utility.ts` ONLY if ALL of these are true:
+
+1. Stateless: no `this`, no class field access.
+2. Pure: input A always produces output B.
+3. No side effects: no I/O, no randomness, no global mutation.
+4. Domain-agnostic: does not know business rules.
+5. Multi-consumer reusable: useful for multiple modules/layers.
+
+---
+
+### Good Utility Example
+
+```typescript
+// taxonomy_token_utility.ts
+
+export function matchWholeToken(haystack: string, needle: string): boolean {
+    if (!needle) {
+        return false;
+    }
+
+    const pattern = new RegExp(`(?<!\\w)${escapeRegex(needle)}(?!\\w)`);
+    return pattern.test(haystack);
 }
 
-// ❌ BAD: Domain Knowledge masquerading as utility
+function escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+```
+
+This is a dumb reusable tool.
+
+---
+
+### Bad Utility: Domain Knowledge
+
+```typescript
+// BAD: knows AES layer mapping rules
 export function getTargetLayerFromSuffix(suffix: string): string {
-    // KNOWS business rules: port = infrastructure.
-    // This belongs in capabilities as a private helper!
     switch (suffix) {
         case 'port': return 'infrastructure';
         case 'protocol': return 'capabilities';
         default: return 'unknown';
     }
 }
+```
 
-// ❌ BAD: Single Consumer Only
-export function formatImportViolation(rule: ImportRule): string {
-    // Only used by one capability class, not reusable by others
-    // This belongs in capabilities as a private helper!
-    return `Import rule violation: ${rule.pattern}`;
+This belongs in capabilities as a private helper.
+
+---
+
+### Bad Utility: Single Consumer Only
+
+```typescript
+// BAD: only used by one checker
+export function formatImportViolation(rule: ImportRuleVO): string {
+    return `Import rule violation: ${rule.pattern.value}`;
 }
 ```
+
+If only one capability uses it, keep it as a private helper in that capability.
+
+---
+
+## Primitive-to-VO Rules
+
+Taxonomy is the layer that provides VO replacements for primitives.
+
+### General Rule
+
+Domain data MUST use VOs, not raw primitives.
+
+Bad:
+
+```typescript
+export interface LintResult {
+    filePath: string;
+    line: number;
+    severity: string;
+}
+```
+
+Good:
+
+```typescript
+export interface LintResult {
+    filePath: FilePath;
+    line: LineNumber;
+    severity: Severity;
+}
+```
+
+---
+
+### Primitive Policy
+
+This policy must stay consistent with capabilities and infrastructure skills.
+
+| Primitive  | Rule                                                                                |
+| ---------- | ----------------------------------------------------------------------------------- |
+| `string`   | Forbidden for domain fields and public contract return values. Use VO.              |
+| `number`   | Forbidden for domain values. Use VO.                                                |
+| `boolean`  | Allowed for semantic toggles when no richer VO is needed.                           |
+
+Prefer VOs for:
+
+- file paths,
+- symbol names,
+- messages,
+- line numbers,
+- column numbers,
+- severity levels,
+- durations,
+- counts,
+- thresholds,
+- identifiers.
+
+---
+
+### VO Construction Rules
+
+VOs MUST validate on construction when the domain has invariants.
+
+Good:
+
+```typescript
+export class LineNumber {
+    private readonly _value: number;
+
+    constructor(value: number) {
+        if (value === 0) {
+            throw new Error('LineNumber must be positive');
+        }
+        this._value = value;
+    }
+
+    get value(): number {
+        return this._value;
+    }
+}
+```
+
+If validation cannot fail, a simpler constructor may be used.
+
+---
+
+### Optional and Collection Primitives
+
+Bad:
+
+```typescript
+export interface RuleSet {
+    patterns: string[];
+    description: string | null;
+}
+```
+
+Good:
+
+```typescript
+export interface RuleSet {
+    patterns: PatternList;
+    description: RuleDescription | null;
+}
+```
+
+Use:
+
+- list VOs for collections,
+- optional VOs or `VO | null` when semantically optional.
+
+---
 
 ## Detection Patterns
 
-### BAD: Interface Defined in Layer File
+### BAD: Interface Defined in Capabilities
 
 ```typescript
-// BAD: Domain data defined in capabilities layer
-interface OrphanResult {  // ← INTERFACE — should be in shared/taxonomy
+// capabilities_orphan_analyzer.ts
+
+interface OrphanResult {
     isOrphan: boolean;
     reason: string;
-    severity: string;
-}
-
-class CapabilitiesOrphanAnalyzer {
-    result: OrphanResult;  // ← concrete type, not DI
 }
 ```
+
+Fix:
+
+Move to taxonomy.
+
+```typescript
+// shared/orphan_detector/taxonomy_orphan_result_vo.ts
+export interface OrphanResult {
+    readonly isOrphan: OrphanFlag;
+    readonly reason: OrphanReason;
+}
+```
+
+Then import:
+
+```typescript
+import { OrphanResult } from '../shared/orphan_detector/taxonomy_orphan_result_vo';
+```
+
+---
 
 ### BAD: Interface Defined in Infrastructure
 
 ```typescript
-// BAD: Domain data defined in infrastructure layer
-interface CacheEntry {  // ← INTERFACE — should be in shared/taxonomy
+// infrastructure_file_cache.ts
+
+interface CacheEntry {
     key: string;
     value: string;
-    timestamp: number;
 }
 ```
 
-### GOOD: Interface in Taxonomy + Class with DI
+Fix:
 
 ```typescript
-// GOOD: Interface in taxonomy
-// packages/shared/src/orphan-detector/taxonomy_analysis_vo.ts
-export interface OrphanIndicatorResult {
-    isOrphan: boolean;
-    reason: string;
-    severity: string;
-}
-
-// GOOD: Class imports from taxonomy
-// packages/orphan-detector/src/capabilities_orphan_analyzer.ts
-import { OrphanIndicatorResult } from '../shared/orphan_detector/taxonomy_analysis';
-import { IOrphanFilenameExtractorProtocol } from '../contract/orphan_protocol';
-
-class CapabilitiesOrphanAnalyzer {
-    constructor(private extractor: IOrphanFilenameExtractorProtocol) {}  // ← DI
+// shared/cache/taxonomy_cache_entry_vo.ts
+export interface CacheEntry {
+    readonly key: CacheKey;
+    readonly value: CacheValue;
 }
 ```
+
+---
+
+### BAD: Raw Primitive Fields in Taxonomy VO
+
+```typescript
+export interface ImportRuleVO {
+    pattern: string;
+    message: string;
+}
+```
+
+Fix:
+
+```typescript
+export interface ImportRuleVO {
+    readonly pattern: RulePattern;
+    readonly message: RuleMessage;
+}
+```
+
+---
+
+### BAD: Taxonomy Importing Layer Code
+
+```typescript
+// taxonomy_orphan_vo.ts
+
+import { OrphanAnalyzer } from '../capabilities_orphan_analyzer'; // BAD
+```
+
+Taxonomy must not import from layers.
+
+---
+
+### BAD: Domain Rule Inside Utility
+
+```typescript
+// taxonomy_layer_utility.ts
+
+export function isPortTraitName(name: string): boolean {
+    return name.endsWith('Port');
+}
+```
+
+If this knows AES naming conventions or layer rules, it is domain knowledge.
+
+It belongs in capabilities as a helper, not taxonomy utility.
+
+---
+
+### GOOD: Interface in Taxonomy + Implementor with DI
+
+```typescript
+// shared/orphan_detector/taxonomy_orphan_analysis_result_vo.ts
+export interface OrphanAnalysisResult {
+    readonly isOrphan: OrphanFlag;
+    readonly reason: OrphanReason;
+}
+```
+
+```typescript
+// capabilities_orphan_analyzer.ts
+import { OrphanAnalysisResult } from '../shared/orphan_detector/taxonomy_orphan_analysis_result_vo';
+import { IOrphanFilenameExtractorProtocol } from '../shared/orphan_detector/contract_orphan_filename_extractor_protocol';
+import { IOrphanFileCachePort } from '../shared/orphan_detector/contract_orphan_file_cache_port';
+
+export class CapabilitiesOrphanAnalyzer {
+    constructor(
+        private readonly extractor: IOrphanFilenameExtractorProtocol,
+        private readonly cache: IOrphanFileCachePort,
+    ) {}
+}
+```
+
+Service dependencies use DI.
+
+Value/result data comes from taxonomy.
+
+---
 
 ## Workflow
 
 ### Step 1: Identify the Data Type
 
-When you find an interface in a layer file (capabilities/infrastructure/agent/surface), ask: **"Is this a data type or a class?"**
+When you find an interface or type in a layer file, ask:
 
-- If it contains domain data, DTOs, results, or value wrappers → **data type → move to taxonomy**
-- If it implements an interface and uses DI → **class → stays in layer file**
+> Is this a data type or an implementor?
+
+If it carries domain data:
+
+- result object,
+- DTO,
+- VO,
+- entity,
+- error,
+- event,
+- enum,
+- constant,
+
+then move it to taxonomy.
+
+If it implements an interface and uses DI, keep it in the layer file.
+
+---
 
 ### Step 2: Determine Taxonomy Domain
 
-Find the correct domain directory under `packages/shared/src/<domain>/`:
+Choose the correct domain directory under:
 
-| Domain            | Directory                     | Example Types                              |
-| ----------------- | ----------------------------- | ------------------------------------------ |
-| `common`          | `shared/src/common/`          | Cross-domain types (PathVO, BooleanVO)     |
-| `orphan-detector` | `shared/src/orphan-detector/` | Orphan results, severity, violations       |
-| `code-analysis`   | `shared/src/code-analysis/`   | Analysis results, reachability, violations |
-| `import-rules`    | `shared/src/import-rules/`    | Import rules, violations, language types   |
-| `naming-rules`    | `shared/src/naming-rules/`    | Naming violations, patterns                |
+```text
+packages/shared/src/<domain>/
+```
+
+Examples:
+
+| Domain          | Directory                       | Example Types                         |
+| --------------- | ------------------------------- | ------------------------------------- |
+| common          | `shared/src/common/`          | cross-domain VOs, errors, utilities   |
+| orphan_detector | `shared/src/orphan_detector/` | orphan results, reasons, flags        |
+| code_analysis   | `shared/src/code_analysis/`   | analysis results, symbols, violations |
+| import_rules    | `shared/src/import_rules/`    | import rules, patterns, messages      |
+| naming_rules    | `shared/src/naming_rules/`    | naming violations, patterns           |
+
+If a type is used by multiple domains, put it in `common/`.
+
+---
 
 ### Step 3: Create or Update Taxonomy File
 
-**Option A: New taxonomy domain** — Create `<domain>/` directory with `index.ts`, then add taxonomy files.
+Use the correct suffix:
 
-**Option B: Existing domain** — Add new file to existing domain directory.
+```text
+taxonomy_*_vo.ts
+taxonomy_*_entity.ts
+taxonomy_*_error.ts
+taxonomy_*_event.ts
+taxonomy_*_constant.ts
+taxonomy_*_utility.ts
+```
 
-**Naming:** Use the correct suffix (`_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`).
+Example:
 
 ```bash
-# Example: Create orphan result interface in taxonomy
-mkdir -p packages/shared/src/orphan-detector/
-# Create taxonomy_orphan_vo.ts
+mkdir -p packages/shared/src/orphan_detector
+touch packages/shared/src/orphan_detector/taxonomy_orphan_result_vo.ts
 ```
+
+---
 
 ### Step 4: Register Module
 
-Update the domain's `index.ts` to export the new taxonomy module:
+Update the domain `index.ts`.
 
 ```typescript
-// shared/src/orphan-detector/index.ts
-export { OrphanResult } from './taxonomy_orphan_vo';  // ← Add this line
-export { OrphanIndicatorResult } from './taxonomy_analysis';
+// shared/src/orphan_detector/index.ts
+
+export { OrphanResult } from './taxonomy_orphan_result_vo';
+export { OrphanReason } from './taxonomy_orphan_reason_vo';
+export { IOrphanProtocol } from './contract_orphan_protocol';
+export { IOrphanFileCachePort } from './contract_orphan_file_cache_port';
 ```
+
+---
 
 ### Step 5: Update Imports in Layer Files
 
-Replace local interface definitions with imports from taxonomy:
+Before:
 
 ```typescript
-// BEFORE (BAD): Local interface
 interface OrphanResult {
     isOrphan: boolean;
     reason: string;
 }
-
-// AFTER (GOOD): Import from taxonomy
-import { OrphanResult } from '../shared/orphan_detector/taxonomy_orphan_vo';
 ```
 
-### Step 6: Verify
+After:
 
-Run TypeScript compiler to confirm no violations.
+```typescript
+import { OrphanResult } from '../shared/orphan_detector/taxonomy_orphan_result_vo';
+```
+
+---
+
+### Step 6: Verify Purity
+
+Check that taxonomy files do not import from:
+
+- capabilities,
+- infrastructure,
+- agents,
+- surface,
+- root containers,
+- contract interfaces.
+
+Also check that taxonomy utilities do not perform I/O.
+
+---
+
+### Step 7: Verify Primitive-to-VO Compliance
+
+Ensure:
+
+- no public raw `string` domain fields,
+- no numeric primitive domain fields,
+- VOs validate on construction,
+- contract interfaces use taxonomy VOs.
+
+---
+
+### Step 8: Verify Compilation
+
+```bash
+npx tsc --noEmit
+```
+
+---
 
 ## Verification Checklist
 
-- [ ] **All interfaces in shared/taxonomy** — no interfaces/types defined in layer files.
-- [ ] **Taxonomy file naming follows strict suffixes** — `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
-- [ ] **Taxonomy files import only from taxonomy** — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- [ ] **Utility functions in `*_utility.ts` are purely domain-agnostic AND serve MULTIPLE capabilities/infrastructures** — functions containing business rules OR serving only ONE class stay in capabilities as private helpers.
-- [ ] **Layer files import data types from taxonomy** — not defined locally.
-- [ ] **Domain's `index.ts` exports new taxonomy modules** — `export { ... } from './taxonomy_<name>'`.
-- [ ] **Value Objects are immutable** — readonly properties by default.
-- [ ] **Error types extend `Error`** — with proper error messages.
-- [ ] **Constants are pure static values** — no imports, no functions.
-- [ ] **Contract signatures use VOs, not primitives** — ALL primitives are FORBIDDEN in contract method signatures:
-  - `string` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
-  - `number` → use domain-specific VO (e.g., `LineNumber`, `Count`)
-  - `boolean` → use `BooleanVO`
-  - `string[]` → use domain-specific list VO (e.g., `PatternList`)
-  - `Record<string, T>` → use domain-specific VO
-- [ ] `tsc --noEmit` passes without errors.
+- [ ] All domain data types live in shared/taxonomy.
+- [ ] No domain interfaces/types with data are defined in layer files.
+- [ ] Taxonomy file naming uses allowed suffixes only.
+- [ ] Taxonomy files do not import from capabilities.
+- [ ] Taxonomy files do not import from infrastructure.
+- [ ] Taxonomy files do not import from agents.
+- [ ] Taxonomy files do not import from surface.
+- [ ] Taxonomy files do not import from root containers.
+- [ ] Taxonomy files do not import contract interfaces.
+- [ ] Taxonomy files contain no I/O.
+- [ ] Taxonomy utilities are stateless, pure, domain-agnostic, and multi-consumer.
+- [ ] Domain-specific stateless helpers are NOT forced into taxonomy utility.
+- [ ] Single-consumer helpers remain in their consuming layer.
+- [ ] Value objects validate on construction when invariants exist.
+- [ ] Single-value VOs expose safe constructors and accessors.
+- [ ] Composite VOs use other VOs instead of raw primitives.
+- [ ] Error types extend `Error`.
+- [ ] Constants are pure static values.
+- [ ] New taxonomy modules are registered in `index.ts`.
+- [ ] `npx tsc --noEmit` passes.
+
+---
 
 ## Quick Commands
 
+These commands are rough heuristic checks. Final validation should use `npx tsc --noEmit` or AST-based tooling.
+
 ```bash
-# Find interfaces defined in layer files (not in shared/taxonomy)
-grep -rn "^interface\|^type " packages/*/src/ | grep -v "shared/" | grep -v "index.ts"
+# Find possible data types in layer files
+grep -rn "^interface\|^type \|^enum " packages/*/src/ --exclude-dir=shared
 
-# Check for forbidden imports in taxonomy files
-grep -n "from.*capabilities_\|from.*infrastructure_\|from.*agent_" packages/shared/src/*/taxonomy_*.ts
+# Check forbidden imports in taxonomy files
+grep -n "from.*capabilities_\|from.*infrastructure_\|from.*agent_\|from.*surface_" packages/shared/src/*/taxonomy_*.ts
 
-# Find layer files with concrete type fields (non-interface) that might need taxonomy interfaces
-grep -n "constructor" packages/*/src/ | grep -v "I[A-Z].*:" | grep -v "shared/"
+# Check possible I/O in taxonomy files
+grep -n "fs\.\|readFile\|writeFile\|fetch\|axios\|sqlite3\|pg" packages/shared/src/*/taxonomy_*.ts
 
-# Verify taxonomy module exports are registered
+# List registered taxonomy modules
 grep -n "^export.*from.*taxonomy_" packages/shared/src/*/index.ts
 
-# Check for unregistered taxonomy files (exist on disk but not in index.ts)
-find packages/shared/src/<domain>/ -name "taxonomy_*.ts" | while read f; do
-    name=$(basename "$f" .ts)
-    grep -q "from.*$name" packages/shared/src/<domain>/index.ts || echo "UNREGISTERED: $name"
-done
+# Find magic constants in layer files
+grep -n "[0-9]\+\.[0-9]\+" packages/*/src/ --exclude-dir=shared | grep -v "//\|const\|import" | head -20
+```
 
-# Check for interfaces in layer files that should be moved to taxonomy
-grep -rn "^interface\|^type " packages/*/src/ | grep -v "shared/" | while read line; do
-    file=$(echo "$line" | cut -d: -f1)
-    interface=$(echo "$line" | grep -oP '(?<=interface |type )\K[a-zA-Z_]+')
-    echo "POSSIBLE INTERFACE: $file has $interface"
+---
+
+### Check Unregistered Taxonomy Files
+
+```bash
+for file in packages/shared/src/<domain>/taxonomy_*.ts; do
+  name=$(basename "$file" .ts)
+  grep -q "from.*$name" packages/shared/src/<domain>/index.ts \
+    || echo "UNREGISTERED: $name"
 done
 ```
 
-## Naming Convention (from fix-naming)
+---
 
-**All Layer File Naming:**
+## Naming Convention
 
-| Layer                    | Pattern                    | Suffix                                     |
-| ------------------------ | -------------------------- | ------------------------------------------ |
-| **root**           | `root_*_container.ts`    | `_container`                             |
-| **taxonomy**       | `taxonomy_*_vo.ts`       | `_vo`, `_constant`, `_utility`, etc. |
-| **contract**       | `contract_*_protocol.ts` | `_protocol`, `_port`, `_aggregate`   |
-| **capabilities**   | `capabilities_*.ts`      | flexible                                   |
-| **infrastructure** | `infrastructure_*.ts`    | flexible                                   |
-| **agent**          | `agent_*.ts`             | `_orchestrator`                          |
-| **surface**        | `surface_*.ts`           | `_command`, `_controller`              |
+| Layer          | File Pattern                | Suffix                        |
+| -------------- | --------------------------- | ----------------------------- |
+| root           | `root_*_container.ts`     | `_container`                |
+| taxonomy       | `taxonomy_*_vo.ts`        | `_vo`                       |
+| taxonomy       | `taxonomy_*_entity.ts`    | `_entity`                   |
+| taxonomy       | `taxonomy_*_error.ts`     | `_error`                    |
+| taxonomy       | `taxonomy_*_event.ts`     | `_event`                    |
+| taxonomy       | `taxonomy_*_constant.ts`  | `_constant`                 |
+| taxonomy       | `taxonomy_*_utility.ts`   | `_utility`                  |
+| contract       | `contract_*_protocol.ts`  | `_protocol`                 |
+| contract       | `contract_*_port.ts`      | `_port`                     |
+| contract       | `contract_*_aggregate.ts` | `_aggregate`                |
+| capabilities   | `capabilities_*.ts`       | flexible                      |
+| infrastructure | `infrastructure_*.ts`     | flexible                      |
+| agent          | `agent_*.ts`              | `_orchestrator`             |
+| surface        | `surface_*.ts`            | `_command`, `_controller` |
 
-## Primitive-to-VO Patterns (from fix-primitive-to-vo)
+---
 
-**Taxonomy Layer VO Creation Rules:**
+## Magic Constant Definitions
 
-- Entity fields MUST use VOs, not primitives (`string`, `number`, `boolean`).
-- **Contract signatures MUST use VOs** — ALL primitives are FORBIDDEN in contract method signatures. The VOs created here are the mandatory replacements:
-  - `string` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
-  - `number` → use domain-specific VO (e.g., `LineNumber`, `Count`, `Score`)
-  - `boolean` → use `BooleanVO`
-  - `string[]` → use domain-specific list VO (e.g., `PatternList`)
-  - `Record<string, T>` → use domain-specific VO
-- VOs MUST validate on construction.
-
-```typescript
-// BEFORE (primitive in layer file)
-interface LintResult {
-    filePath: string;   // ← primitive
-    line: number;       // ← primitive
-    severity: string;   // ← primitive
-}
-
-// AFTER (VO in taxonomy)
-// packages/shared/src/import-rules/taxonomy_file_path_vo.ts
-export class FilePath {
-    constructor(private readonly value: string) {}
-    value(): string { return this.value; }
-}
-
-// packages/shared/src/import-rules/taxonomy_line_number_vo.ts
-export class LineNumber {
-    constructor(private readonly value: number) {}
-    value(): number { return this.value; }
-}
-
-// packages/shared/src/import-rules/taxonomy_severity_vo.ts
-export class SeverityVO {
-    constructor(private readonly value: string) {}
-    value(): string { return this.value; }
-}
-
-interface LintResult {
-    filePath: FilePath;   // ← VO
-    line: LineNumber;     // ← VO
-    severity: SeverityVO; // ← VO
-}
-```
-
-## Magic Constant Definitions (from fix-magic-constant)
-
-**Taxonomy Layer Constant Rules:**
-
-- All domain values live in `taxonomy_*_constant.ts` files.
-- Constants are static compile-time values — no functions, no imports.
-- Used by agent, capabilities, and infrastructure layers.
+All domain constants MUST live in taxonomy constant files.
 
 ```typescript
 // packages/shared/src/animator/taxonomy_animator_constant.ts
-/** Default frames per second for animation */
-export const FPS_DEFAULT = 24.0;
 
-/** Minimum reveal time in seconds */
-export const MIN_REVEAL_SECONDS = 0.5;
+/** Default frames per second for animation. */
+export const FPS_DEFAULT: number = 24.0;
 
-/** Manifest filename constant */
-export const MANIFEST_FILENAME = 'manifest.json';
+/** Minimum reveal time in seconds. */
+export const MIN_REVEAL_SECONDS: number = 0.5;
+
+/** Manifest filename. */
+export const MANIFEST_FILENAME: string = 'manifest.json';
 ```
 
-**Layer consumption:**
+Layer consumption:
 
 ```typescript
-// Agent layer
 import { FPS_DEFAULT } from '../shared/animator/taxonomy_animator_constant';
-const result = this.process(FPS_DEFAULT);
-
-// Capabilities layer
-import { MIN_REVEAL_SECONDS } from '../shared/animator/taxonomy_animator_constant';
-function calculateDuration(): number { return MIN_REVEAL_SECONDS; }
-
-// Infrastructure layer
-import { MANIFEST_FILENAME } from '../shared/animator/taxonomy_animator_constant';
-const file = fs.createWriteStream(MANIFEST_FILENAME);
 ```
 
-## Common Mistakes (AVOID)
+```typescript
+import { MIN_REVEAL_SECONDS } from '../shared/animator/taxonomy_animator_constant';
+```
 
-- ❌ **Defining interfaces in layer files**: Domain data must be in shared/taxonomy. Only the class belongs in layer files.
-- ❌ **Importing non-taxonomy types into taxonomy files**: Taxonomy must remain completely pure — no imports from capabilities, infrastructure, agents, contracts, or surface.
-- ❌ **Using wrong suffix for taxonomy files**: Only `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility` are allowed. No other suffixes.
-- ❌ **Forgetting to register new taxonomy modules in index.ts**: Every `taxonomy_*.ts` file must have a corresponding `export { ... } from './taxonomy_<name>'` in the domain's `index.ts`.
-- ❌ **Placing Domain Knowledge in Utility files**: If a stateless function contains business-specific rules or domain logic (e.g., layer mappings, validation rules tied to a specific domain), it belongs in capabilities as a private helper, NOT in `*_utility.ts`.
-- ❌ **Placing Single-Consumer functions in Utility files**: If a function only serves ONE capability/infrastructure class, it belongs in capabilities as a private helper, NOT in `*_utility.ts`.
-- ❌ **Placing utility functions in layer files**: Stateless, domain-agnostic free functions (no `this` context) that serve MULTIPLE capabilities/infrastructures MUST be extracted to `*_utility.ts` modules in shared/taxonomy.
-- ❌ **Creating multiple data types with different names for the same concept**: Consolidate into a single taxonomy file.
-- ❌ **Duplicating taxonomy types across domains**: If a type belongs to multiple domains, put it in `common/` and import from there.
+```typescript
+import { MANIFEST_FILENAME } from '../shared/animator/taxonomy_animator_constant';
+```
+
+If a constant represents a domain value, wrap it in a VO at the consuming boundary when exposing it through public domain contracts.
+
+---
+
+## Common Mistakes
+
+- Defining interfaces/types in layer files.
+- Defining domain enums in layer files.
+- Importing non-taxonomy layer types into taxonomy files.
+- Importing contract interfaces into taxonomy files.
+- Using wrong suffix for taxonomy files.
+- Forgetting to register taxonomy modules in `index.ts`.
+- Putting domain knowledge into `*_utility.ts`.
+- Putting single-consumer helpers into `*_utility.ts`.
+- Keeping reusable domain-agnostic utilities inside layer files.
+- Exposing public raw `string` fields in VOs.
+- Exposing public numeric primitive fields in domain types.
+- Creating VOs without validation when domain invariants exist.
+- Duplicating taxonomy types across domains.
+- Putting cross-domain types in a specific domain instead of `common/`.
+- Creating taxonomy utility functions with I/O.
+- Treating every stateless function as utility.
+- Treating every concrete field as DI violation.
+- Forgetting that value fields may be shared VOs, while service fields must use DI.
