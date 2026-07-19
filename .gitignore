@@ -30,6 +30,7 @@ target/
 .obsidian/
 log/
 .mimocode
+mimocode.jsonc
 .qwen
 # Sensitive files (CRED007a)
 credentials.json

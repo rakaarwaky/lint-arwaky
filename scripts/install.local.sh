@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.local.sh — bump patch + release build + XDG-aware install + checksums
+# install.local.sh — release build + XDG-aware install + checksums
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,18 +23,10 @@ BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 # 1. Instal XDG layout sebelum build
 mkdir -p "$CONFIG_DIR/rules" "$REPORT_DIR" "$DIST_DIR" "$INSTALL_BIN"
 
-# 2. Bump patch version
-OLD_VERSION=$(grep '^version' "$CARGO_TOML" | head -1 | sed 's/version = "\(.*\)"/\1/' | tr -d '\r')
-IFS='.' read -r MAJOR MINOR PATCH <<< "$OLD_VERSION"
-PATCH=$(( PATCH + 1 ))
-NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-sed -i "0,/^version = \"$OLD_VERSION\"/s/^version = \"$OLD_VERSION\"/version = \"$NEW_VERSION\"/" "$CARGO_TOML"
-echo "  $OLD_VERSION  ->  $NEW_VERSION"
-
-# 3. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
+# 2. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
 RUST_MIN_STACK=33554432 cargo build --release
 
-# 4. Checksums + install
+# 3. Checksums + install
 pushd "$RELEASE_DIR" >/dev/null
 sha256sum "${BINARIES[@]}" > "$DIST_DIR/SHA256SUMS.txt"
 popd >/dev/null
@@ -44,7 +36,7 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
-# 5. Install docs + SKILL.md to XDG config
+# 4. Install docs + SKILL.md to XDG config
 Docs=(
     "SKILL.md"
     "ARCHITECTURE.md"
@@ -53,7 +45,7 @@ Docs=(
     "MIGRATION_TYPESCRIPT.md"
 )
 for DOC in "${Docs[@]}"; do
-    SRC="$PROJECT 2_ROOT/$DOC"
+    SRC="$PROJECT_ROOT/$DOC"
     if [ -f "$SRC" ]; then
         cp "$SRC" "$CONFIG_DIR/$DOC"
         echo "  $DOC -> $CONFIG_DIR/$DOC"
@@ -67,7 +59,7 @@ if [ -f "$RULES_SRC" ]; then
     echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
 fi
 
-# 6. Copy .agents/skills/ and .agents/rules/ to target's .agents/ folder
+# 5. Copy .agents/skills/ and .agents/rules/ to target's .agents/ folder
 AGENTS_SRC="$PROJECT_ROOT/.agents"
 AGENTS_DST="$CONFIG_DIR/.agents"
 if [ -d "$AGENTS_SRC" ]; then
@@ -92,4 +84,5 @@ if [ -d "$AGENTS_SRC" ]; then
     done
 fi
 
-echo "Done: $NEW_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
+CURRENT_VERSION=$(grep '^version' "$CARGO_TOML" | head -1 | sed 's/version = "\(.*\)"/\1/' | tr -d '\r')
+echo "Done: $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
