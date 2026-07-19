@@ -40,6 +40,26 @@ impl SurfacesOrphanAnalyzer {
         Self { extractor, cache }
     }
 
+    pub fn get_surface_suffix(
+        basename: &str,
+        extractor: &Arc<dyn IOrphanFilenameExtractorProtocol>,
+    ) -> String {
+        extractor
+            .file_suffix(&shared::common::taxonomy_path_vo::FilePath {
+                value: basename.to_string(),
+            })
+            .value
+    }
+
+    pub fn surface_category(suffix: &str) -> &'static str {
+        match suffix {
+            "command" | "controller" | "page" => "smart",
+            "hook" | "store" | "action" | "screen" | "router" => "utility",
+            "component" | "view" | "layout" => "passive",
+            _ => "unknown",
+        }
+    }
+
     fn check_surface_orphan(
         &self,
         f: &FilePath,
@@ -188,7 +208,7 @@ impl SurfacesOrphanAnalyzer {
                         .extractor
                         .file_basename(&FilePath { value: cf.clone() })
                         .value;
-                    let cf_suffix = get_surface_suffix(&cb, &self.extractor);
+                    let cf_suffix = Self::get_surface_suffix(&cb, &self.extractor);
                     if cb.starts_with("cli_")
                         || cb.starts_with("mcp_")
                         || cf_suffix == "entry"
@@ -219,8 +239,8 @@ impl SurfacesOrphanAnalyzer {
                         .extractor
                         .file_basename(&FilePath { value: cf.clone() })
                         .value;
-                    let cf_suffix = get_surface_suffix(&cb, &self.extractor);
-                    if surface_category(&cf_suffix) == "smart" {
+                    let cf_suffix = Self::get_surface_suffix(&cb, &self.extractor);
+                    if Self::surface_category(&cf_suffix) == "smart" {
                         let cf_content = self
                             .cache
                             .read_cached(&FilePath { value: cf.clone() })
@@ -246,8 +266,8 @@ impl SurfacesOrphanAnalyzer {
                         .extractor
                         .file_basename(&FilePath { value: cf.clone() })
                         .value;
-                    let cf_suffix = get_surface_suffix(&cb, &self.extractor);
-                    let cat = surface_category(&cf_suffix);
+                    let cf_suffix = Self::get_surface_suffix(&cb, &self.extractor);
+                    let cat = Self::surface_category(&cf_suffix);
                     if cat == "smart" || cat == "utility" {
                         let cf_content = self
                             .cache

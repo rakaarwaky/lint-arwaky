@@ -17,17 +17,73 @@
 // Per-language patterns are applied only when the file extension matches. Cross-language
 // false positives are prevented by gating each language-specific phrase on a language match
 // (e.g. `raise` only fires on .py files; `throw` only fires on .js/.jsx/.mjs/.cjs/.ts/.tsx files).
-use crate::utils_bypass::{
-    classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
-    matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
-};
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+
+/// Logical source languages recognised by the bypass checker.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SourceLanguage {
+    Rust,
+    Python,
+    JavaScript,
+    TypeScript,
+}
+
+impl SourceLanguage {
+    pub fn from_file(file: &str) -> Self {
+        let Ok(fp) = FilePath::new(file) else {
+            return SourceLanguage::Rust;
+        };
+        match fp.language() {
+            shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
+            shared::common::contract_language_detector_port::Language::Python => {
+                SourceLanguage::Python
+            }
+            shared::common::contract_language_detector_port::Language::JavaScript => {
+                SourceLanguage::JavaScript
+            }
+            shared::common::contract_language_detector_port::Language::TypeScript => {
+                SourceLanguage::TypeScript
+            }
+            shared::common::contract_language_detector_port::Language::Unknown => {
+                SourceLanguage::Rust
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ViolationKind {
+    UnwrapExpect,
+    Panic,
+    Todo,
+    Unimplemented,
+    BypassComment,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum CharClass {
+    Code,
+    Comment,
+    StringLiteral,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ClassifierState {
+    Normal,
+    LineComment,
+    BlockComment,
+    SingleQuoteString,
+    DoubleQuoteString,
+    TripleSingleQuoteString,
+    TripleDoubleQuoteString,
+    TemplateLiteral,
+}
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
 /// These mirror the AES304 catalog (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented).
@@ -204,6 +260,255 @@ impl BypassChecker {
         }
         false
     }
+
+    /// Returns true if byte is a valid identifier continuation character.
+    pub fn is_ident_continue(b: u8) -> bool {
+        b.is_ascii_alphanumeric() || b == b'_'
+    }
+
+    /// Returns true if byte can start an identifier.
+    pub fn is_ident_start(b: u8) -> bool {
+        b.is_ascii_alphabetic() || b == b'_'
+    }
+
+    /// Check if a line starts with `#[allow(` or `#[expect(`, constructed without the
+    /// literal prefixes appearing in source to avoid AES304 self-flagging.
+    pub fn starts_with_allow_attr(line: &str) -> bool {
+        static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
+        let prefixes = PREFIXES.get_or_init(|| {
+            let a: String = ['#', '[', 'a', 'l', 'l', 'o', 'w', '('].iter().collect();
+            let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']
+                .iter()
+                .collect();
+            [a, e]
+        });
+        line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])
+    }
+
+    /// Map a forbidden token to its ViolationKind variant.
+    pub fn classify_token(token: &str) -> ViolationKind {
+        match token {
+            "unwrap" | "expect" => ViolationKind::UnwrapExpect,
+            "panic" => ViolationKind::Panic,
+            "todo" => ViolationKind::Todo,
+            "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
+            _ => ViolationKind::BypassComment,
+        }
+    }
+
+    /// Returns true if the pattern is a comment-style bypass annotation.
+    pub fn is_comment_bypass_pattern(p: &str) -> bool {
+        p.starts_with('#')
+            || p.starts_with("//")
+            || p.starts_with("/*")
+            || p.contains("eslint")
+            || p.contains("ts-ignore")
+            || p.contains("ts-expect-error")
+            || p.contains("noqa")
+            || p.contains("type:")
+            || p.contains("pylint:")
+    }
+
+    /// Word-boundary keyword token matcher.
+    pub fn matches_keyword_token(line: &str, token: &str) -> bool {
+        let bytes = line.as_bytes();
+        let token_bytes = token.as_bytes();
+        let tlen = token_bytes.len();
+        if bytes.len() < tlen {
+            return false;
+        }
+        let mut i = 0;
+        while i + tlen <= bytes.len() {
+            if &bytes[i..i + tlen] == token_bytes {
+                let before_ok =
+                    i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_');
+                let after_ok = i + tlen == bytes.len()
+                    || (!bytes[i + tlen].is_ascii_alphanumeric() && bytes[i + tlen] != b'_');
+                if before_ok && after_ok {
+                    return true;
+                }
+            }
+            i += 1;
+        }
+        false
+    }
+
+    /// Classify source content into code/comment/string-literal characters.
+    pub fn classify_source(content: &str, language: SourceLanguage) -> Vec<CharClass> {
+        let chars: Vec<char> = content.chars().collect();
+        let mut classes = vec![CharClass::Code; chars.len()];
+        let mut i = 0;
+
+        match language {
+            SourceLanguage::Python => {
+                let mut state = ClassifierState::Normal;
+                while i < chars.len() {
+                    match state {
+                        ClassifierState::Normal => {
+                            if chars[i] == '#' {
+                                state = ClassifierState::LineComment;
+                                classes[i] = CharClass::Comment;
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
+                                state = ClassifierState::TripleDoubleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                                classes[i + 1] = CharClass::StringLiteral;
+                                classes[i + 2] = CharClass::StringLiteral;
+                                i += 2;
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\'']
+                            {
+                                state = ClassifierState::TripleSingleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                                classes[i + 1] = CharClass::StringLiteral;
+                                classes[i + 2] = CharClass::StringLiteral;
+                                i += 2;
+                            } else if chars[i] == '"' {
+                                state = ClassifierState::DoubleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                            } else if chars[i] == '\'' {
+                                state = ClassifierState::SingleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                            } else {
+                                classes[i] = CharClass::Code;
+                            }
+                        }
+                        ClassifierState::LineComment => {
+                            classes[i] = CharClass::Comment;
+                            if chars[i] == '\n' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::DoubleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if chars[i] == '"' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::SingleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if chars[i] == '\'' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::TripleDoubleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
+                                classes[i] = CharClass::StringLiteral;
+                                classes[i + 1] = CharClass::StringLiteral;
+                                classes[i + 2] = CharClass::StringLiteral;
+                                i += 2;
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::TripleSingleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\'']
+                            {
+                                classes[i] = CharClass::StringLiteral;
+                                classes[i + 1] = CharClass::StringLiteral;
+                                classes[i + 2] = CharClass::StringLiteral;
+                                i += 2;
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        _ => {}
+                    }
+                    i += 1;
+                }
+            }
+            SourceLanguage::Rust | SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
+                let mut state = ClassifierState::Normal;
+                while i < chars.len() {
+                    match state {
+                        ClassifierState::Normal => {
+                            if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '/' {
+                                state = ClassifierState::LineComment;
+                                classes[i] = CharClass::Comment;
+                                classes[i + 1] = CharClass::Comment;
+                                i += 1;
+                            } else if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '*'
+                            {
+                                state = ClassifierState::BlockComment;
+                                classes[i] = CharClass::Comment;
+                                classes[i + 1] = CharClass::Comment;
+                                i += 1;
+                            } else if chars[i] == '"' {
+                                state = ClassifierState::DoubleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                            } else if chars[i] == '\'' {
+                                state = ClassifierState::SingleQuoteString;
+                                classes[i] = CharClass::StringLiteral;
+                            } else if chars[i] == '`'
+                                && (language == SourceLanguage::JavaScript
+                                    || language == SourceLanguage::TypeScript)
+                            {
+                                state = ClassifierState::TemplateLiteral;
+                                classes[i] = CharClass::StringLiteral;
+                            } else {
+                                classes[i] = CharClass::Code;
+                            }
+                        }
+                        ClassifierState::LineComment => {
+                            classes[i] = CharClass::Comment;
+                            if chars[i] == '\n' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::BlockComment => {
+                            classes[i] = CharClass::Comment;
+                            if i + 1 < chars.len() && chars[i] == '*' && chars[i + 1] == '/' {
+                                classes[i] = CharClass::Comment;
+                                classes[i + 1] = CharClass::Comment;
+                                i += 1;
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::DoubleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if chars[i] == '"' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::SingleQuoteString => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if chars[i] == '\'' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        ClassifierState::TemplateLiteral => {
+                            classes[i] = CharClass::StringLiteral;
+                            if chars[i] == '\\' && i + 1 < chars.len() {
+                                classes[i + 1] = CharClass::StringLiteral;
+                                i += 1;
+                            } else if chars[i] == '`' {
+                                state = ClassifierState::Normal;
+                            }
+                        }
+                        _ => {}
+                    }
+                    i += 1;
+                }
+            }
+        }
+        classes
+    }
 }
 
 // Block 2: impl Trait for Struct (Public Contract)
@@ -258,7 +563,7 @@ impl IBypassCheckerProtocol for BypassChecker {
 
         let language = SourceLanguage::from_file(file);
         let chars: Vec<char> = content.chars().collect();
-        let classifications = classify_source(content, language);
+        let classifications = Self::classify_source(content, language);
 
         let mut code_content = String::with_capacity(content.len());
         let mut comment_content = String::with_capacity(content.len());
@@ -322,7 +627,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
-            if starts_with_allow_attr(t) {
+            if Self::starts_with_allow_attr(t) {
                 violations.push(LintResult::new_arch(
                     file,
                     i + 1,
@@ -343,7 +648,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                 .zip(self.forbidden_bypass_lower.iter())
             {
                 let p_str = p.as_str();
-                if is_comment_bypass_pattern(p_str) {
+                if Self::is_comment_bypass_pattern(p_str) {
                     if !p_str.is_empty() && comment_line.to_lowercase().contains(p_lower.as_str()) {
                         bypass_hit = Some(ViolationKind::BypassComment);
                         break;
@@ -355,14 +660,14 @@ impl IBypassCheckerProtocol for BypassChecker {
                             if p_str == "unwrap" && code_line.contains(".unwrap_or") {
                                 continue;
                             }
-                            bypass_hit = Some(classify_token(p_str));
+                            bypass_hit = Some(Self::classify_token(p_str));
                             break;
                         }
                     } else {
                         if !p_str.is_empty()
-                            && matches_keyword_token(&code_line.to_lowercase(), p_lower.as_str())
+                            && Self::matches_keyword_token(&code_line.to_lowercase(), p_lower.as_str())
                         {
-                            bypass_hit = Some(classify_token(p_str));
+                            bypass_hit = Some(Self::classify_token(p_str));
                             break;
                         }
                     }

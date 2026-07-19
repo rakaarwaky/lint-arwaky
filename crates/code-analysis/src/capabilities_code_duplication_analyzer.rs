@@ -9,10 +9,8 @@
 //   7. For each file, calculate what % of its windows are shared
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 
-use crate::utils_duplication::{
-    build_violations, collect_file_entries, normalize_window, scan_duplicate_blocks,
-};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_target_utility::{
     collect_source_files, detect_source_dir, resolve_target,

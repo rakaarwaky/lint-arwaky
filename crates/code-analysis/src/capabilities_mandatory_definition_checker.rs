@@ -3,7 +3,6 @@
 // Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
 use std::path::Path;
 
-use crate::utils_mandatory::rust_declares_type;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
@@ -59,7 +58,7 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             if trimmed.starts_with("class ")
                 || trimmed.starts_with("export class ")
                 || trimmed.starts_with("export default class ")
-                || rust_declares_type(trimmed)
+                || Self::rust_declares_type(trimmed)
             {
                 has_class = true;
                 break;
@@ -171,5 +170,15 @@ impl Default for MandatoryDefinitionChecker {
 impl MandatoryDefinitionChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    pub fn rust_declares_type(line: &str) -> bool {
+        let keywords = ["struct", "enum", "trait"];
+        for kw in keywords {
+            if line.contains(kw) && !line.contains('(') {
+                return true;
+            }
+        }
+        false
     }
 }
