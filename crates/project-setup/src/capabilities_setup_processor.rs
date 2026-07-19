@@ -176,20 +176,48 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let mut found_javascript = false;
 
         // Phase 1: Marker-based detection (fast, no filesystem scan)
-        if self.fs_port.path_exists("crates").await || self.fs_port.path_exists("Cargo.toml").await
+        if self
+            .fs_port
+            .path_exists(&FilePath::new("crates").unwrap())
+            .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("Cargo.toml").unwrap())
+                .await
         {
             found_rust = true;
         }
-        if self.fs_port.path_exists("packages").await
-            || self.fs_port.path_exists("modules").await
-            || self.fs_port.path_exists("pyproject.toml").await
-            || self.fs_port.path_exists("setup.py").await
-            || self.fs_port.path_exists("requirements.txt").await
+        if self
+            .fs_port
+            .path_exists(&FilePath::new("packages").unwrap())
+            .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("modules").unwrap())
+                .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("pyproject.toml").unwrap())
+                .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("setup.py").unwrap())
+                .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("requirements.txt").unwrap())
+                .await
         {
             found_python = true;
         }
-        if self.fs_port.path_exists("package.json").await
-            || self.fs_port.path_exists("tsconfig.json").await
+        if self
+            .fs_port
+            .path_exists(&FilePath::new("package.json").unwrap())
+            .await
+            || self
+                .fs_port
+                .path_exists(&FilePath::new("tsconfig.json").unwrap())
+                .await
         {
             found_javascript = true;
         }

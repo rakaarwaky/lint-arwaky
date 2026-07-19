@@ -272,18 +272,14 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        self.file_adapter.write_file(&path, &result)
+        self.file_adapter.write_file(file_path, &result)
     }
 
-    fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = match FilePath::new(file_path) {
-            Ok(p) => p,
-            Err(_) => return false,
-        };
-        if !self.file_adapter.path_exists(&path) {
+    fn fix_unused_import_impl(&self, file_path: &FilePath, line: u32) -> bool {
+        if !self.file_adapter.path_exists(file_path) {
             return false;
         }
-        let content = match self.file_adapter.read_file(&path) {
+        let content = match self.file_adapter.read_file(file_path) {
             Some(c) => c,
             None => return false,
         };
@@ -311,7 +307,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        self.file_adapter.write_file(&path, &result)
+        self.file_adapter.write_file(file_path, &result)
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
