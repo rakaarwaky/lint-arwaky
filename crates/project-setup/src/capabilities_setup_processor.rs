@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 
-use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
@@ -280,9 +280,10 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let entries = self.fs_port.list_dir(dir).await;
+        let dir_fp = FilePath::new(dir.to_string()).unwrap_or_default();
+        let entries = self.fs_port.list_dir(&dir_fp).await;
         for entry in &entries {
-            let path = std::path::Path::new(&entry.path);
+            let path = std::path::Path::new(entry.path.value());
             if entry.is_dir {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')
@@ -296,7 +297,7 @@ impl SetupManagementProcessor {
                     continue;
                 }
                 Box::pin(self.scan_source_extensions(
-                    &entry.path,
+                    entry.path.value(),
                     depth + 1,
                     max_depth,
                     found_rust,

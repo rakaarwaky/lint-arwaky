@@ -211,7 +211,7 @@ impl LintFixProcessor {
         }
     }
 
-    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
+    fn fix_bypass_comments_impl(&self, file_path: &FilePath, line: u32) -> bool {
         if !self.file_adapter.path_exists(file_path) {
             return false;
         }
