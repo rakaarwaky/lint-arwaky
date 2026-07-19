@@ -276,10 +276,14 @@ impl LintFixProcessor {
     }
 
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        if !self.file_adapter.path_exists(file_path) {
+        let path = match FilePath::new(file_path) {
+            Ok(p) => p,
+            Err(_) => return false,
+        };
+        if !self.file_adapter.path_exists(&path) {
             return false;
         }
-        let content = match self.file_adapter.read_file(file_path) {
+        let content = match self.file_adapter.read_file(&path) {
             Some(c) => c,
             None => return false,
         };
@@ -320,4 +324,3 @@ impl LintFixProcessor {
         let _ = event;
     }
 }
-

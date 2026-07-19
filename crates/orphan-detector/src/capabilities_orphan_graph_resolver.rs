@@ -113,6 +113,50 @@ impl OrphanGraphResolver {
         Self { extractor, cache }
     }
 
+    /// Resolve a multi-segment external-crate import path to the real leaf
+    /// module file, so inbound-links are attached to the actual module and not
+    /// just its domain `mod.rs` (which previously caused false AES501/AES502
+    /// orphans for cross-crate-consumed foundation modules).
+    ///
+    /// e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
+    ///   -> `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`
+    ///      (or `.../orphan-detector/taxonomy_orphan_result_utility/mod.rs`)
+    fn resolve_module_file(
+        &self,
+        _crate_name: &str,
+        segments: &[&str],
+        src_dir: &std::path::Path,
+        importing_file: &str,
+    ) -> Option<String> {
+        // Walk the crate src dir following each import segment as a path
+        // component (normalize `-` -> `_` to match crate dir naming).
+        let mut current = src_dir.to_path_buf();
+        for seg in segments {
+            let normalized = seg.replace('-', "_");
+            let candidate_file = current.join(format!("{}.rs", normalized));
+            let candidate_mod = current.join(&normalized).join("mod.rs");
+            if candidate_file.is_file() {
+                let p = candidate_file.to_string_lossy().to_string();
+                return if p != importing_file { Some(p) } else { None };
+            } else if candidate_mod.is_file() {
+                // Segment is a directory module; descend for the next segment.
+                current = current.join(&normalized);
+                continue;
+            } else {
+                // No such file/dir at this level — cannot resolve deeper.
+                return None;
+            }
+        }
+        // If we consumed all segments inside directory modules, the final
+        // directory's mod.rs is the resolved module file.
+        let final_mod = current.join("mod.rs");
+        if final_mod.is_file() {
+            let p = final_mod.to_string_lossy().to_string();
+            return if p != importing_file { Some(p) } else { None };
+        }
+        None
+    }
+
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -450,52 +494,25 @@ impl OrphanGraphResolver {
                     let rest = &full_import[colon_idx + 2..];
                     let segments: Vec<&str> = rest.split("::").collect();
                     if !segments.is_empty() {
-                        let module_name = segments[0];
                         // Bug 3: no ./ prefix — store resolved paths verbatim
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            let entries = self.cache.read_dir(src_dir.to_str().unwrap_or(""));
-                            for entry_path in &entries {
-                                let path = std::path::Path::new(entry_path);
-                                if path.is_dir() {
-                                    // FIX: Check mod.rs in subdirectories (e.g., code-analysis/mod.rs)
-                                    let mod_rs = path.join("mod.rs");
-                                    if mod_rs.exists() {
-                                        let dir_name = path
-                                            .file_name()
-                                            .and_then(|n| n.to_str())
-                                            .unwrap_or_default();
-                                        let normalized_dir = dir_name.replace('-', "_");
-                                        if normalized_dir == module_name {
-                                            if let Some(path_str) = mod_rs.to_str() {
-                                                if path_str != *f {
-                                                    import_graph
-                                                        .entry(f.clone())
-                                                        .or_default()
-                                                        .push(path_str.to_string());
-                                                    inbound_links
-                                                        .entry(path_str.to_string())
-                                                        .or_default()
-                                                        .push(f.clone());
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else if let Some(path_str) = path.to_str() {
-                                    let stem = path
-                                        .file_stem()
-                                        .and_then(|s| s.to_str())
-                                        .unwrap_or_default();
-                                    if stem == module_name && path_str != *f {
-                                        import_graph
-                                            .entry(f.clone())
-                                            .or_default()
-                                            .push(path_str.to_string());
-                                        inbound_links
-                                            .entry(path_str.to_string())
-                                            .or_default()
-                                            .push(f.clone());
-                                    }
-                                }
+                            // Resolve the FULL import path (all segments) to the real
+                            // leaf module file, not just the top-level domain directory.
+                            // e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
+                            // must link to
+                            // `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`,
+                            // NOT only `crates/shared/src/orphan-detector/mod.rs`.
+                            // Previously only the leading segment was resolved, so leaf
+                            // taxonomy/contract module files appeared to have zero inbound
+                            // links and were falsely flagged as AES501/AES502 orphans.
+                            if let Some(resolved) =
+                                self.resolve_module_file(crate_name, &segments, src_dir, f)
+                            {
+                                import_graph
+                                    .entry(f.clone())
+                                    .or_default()
+                                    .push(resolved.clone());
+                                inbound_links.entry(resolved).or_default().push(f.clone());
                             }
                         }
                         continue;
