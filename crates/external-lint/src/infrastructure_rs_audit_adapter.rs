@@ -33,20 +33,13 @@ use tracing::debug;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CargoAuditAdapter {
     path_norm: Arc<dyn IPathNormalizationPort>,
     utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
-impl CargoAuditAdapter {
-    pub fn new(
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-    ) -> Self {
-        Self { path_norm, utility }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl ILinterAdapterPort for CargoAuditAdapter {
     fn name(&self) -> AdapterName {
@@ -178,5 +171,15 @@ impl ILinterAdapterPort for CargoAuditAdapter {
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(true))
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl CargoAuditAdapter {
+    pub fn new(
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+    ) -> Self {
+        Self { path_norm, utility }
     }
 }

@@ -1,7 +1,7 @@
 ---
 name: create-agent-rust
 description: "Create and validate agent layer files following AES rules: 3-block structure, one struct per file, aggregate contracts, zero computation/I/O/business logic."
-version: 1.0.0
+version: 1.1.0
 category: refactoring
 tags:
   [rust, aes, agent, aggregate, structure, 3-block-structure, di, orchestration]
@@ -57,11 +57,66 @@ Create and validate Rust **agent layer** files following clean architecture rule
 
 Every implementation file MUST follow this exact order:
 
-1. `struct Definition`
-2. `impl Aggregate for Struct` (Public Contract)
-3. `impl Struct` (Constructors & Helpers)
+1. **Block 1 — `struct Definition`**
+2. **Block 2 — `impl I<Name>Aggregate for Struct`** (Public Contract)
+   - Contains **ONLY** the domain aggregate trait (e.g., `IOrphanOrchestratorAggregate`, `ILintExecutorAggregate`).
+   - **NO** standard library trait impls here (`Default`, `Clone`, `Debug`, `Display`, `From`, etc.).
+3. **Block 3 — `impl Struct`** (Constructors, Std Traits & Helpers)
+   - `new()`, builders
+   - `impl Default`, `impl Clone`, `impl Debug`, `impl Display`, and other std trait impls — these are **constructors/utilities**, not public contracts.
+   - Private helper methods (`&self`)
+
+**CRITICAL:** Block 2 is **RESERVED** for the domain aggregate trait ONLY. Standard library trait impls (`Default`, `Clone`, `Debug`, `Display`, `From`) belong in **Block 3** because they serve as constructors or utility formatting, not as the public domain contract.
 
 **CRITICAL:** Utility functions extracted to standalone modules — Stateless, domain-agnostic free functions (no `&self`) MUST be extracted OUT of the impl block into their own `*_utility.rs` modules in shared/taxonomy. They do NOT belong in Block 3.
+
+#### Trait Placement Decision Rule
+
+```
+Trait impl found in an agent file?
+  │
+  ├─ Is it the domain aggregate? (I<Name>Aggregate)
+  │   └─ YES → Block 2
+  │
+  └─ Is it a std/derive trait? (Default, Clone, Debug, Display, From, etc.)
+      └─ YES → Block 3 (alongside constructors)
+```
+
+#### Example: Correct 3-Block Order
+
+```rust
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct OrphanOrchestrator;
+
+// ─── Block 2: Public Contract (domain aggregate ONLY) ─────
+impl IOrphanOrchestratorAggregate for OrphanOrchestrator {
+    fn execute(&self, files: &[FilePath]) -> Vec<LintResult> {
+        let mut violations = Vec::new();
+        for file in files {
+            match self.analyzer.analyze(file) {
+                Ok(result) => violations.push(result),
+                Err(e) => violations.push(LintResult::new_arch(
+                    "ANALYZE_ERROR", &e.to_string(), file.clone(),
+                )),
+            }
+        }
+        violations
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for OrphanOrchestrator {
+    fn default() -> Self {
+        Self
+    }
+}
+
+impl OrphanOrchestrator {
+    pub fn new(analyzer: Arc<dyn ICapabilitiesOrphanProtocol>) -> Self {
+        Self { analyzer }
+    }
+}
+```
 
 ### Aggregate Rules
 
@@ -70,6 +125,7 @@ Every implementation file MUST follow this exact order:
 - **Aggregate contains ONLY public/contract methods** — no private helpers
 - **Private helpers stay in Block 3** (`impl Struct`)
 - **Constructors (`new`, builders) in Block 3**
+- **Std trait impls (`Default`, `Clone`, etc.) in Block 3**
 - **Generic aggregate methods need `where Self: Sized`**
 
 ## The Fundamental Question
@@ -136,6 +192,25 @@ pub struct OrphanOrchestrator {
 }
 ```
 
+### BAD: Std Trait in Block 2
+
+```rust
+// BAD: Default impl placed before aggregate trait (wrong block order)
+pub struct OrphanOrchestrator;
+
+impl Default for OrphanOrchestrator {       // ← Block 2 position, but this is NOT the aggregate
+    fn default() -> Self { Self }
+}
+
+impl IOrphanOrchestratorAggregate for OrphanOrchestrator {  // ← pushed to Block 3 position
+    fn execute(&self, files: &[FilePath]) -> Vec<LintResult> { ... }
+}
+
+impl OrphanOrchestrator {                   // ← Block 3
+    pub fn new() -> Self { Self }
+}
+```
+
 ### GOOD: Implementor with Shared Data
 
 ```rust
@@ -147,6 +222,27 @@ pub struct OrphanOrchestrator {
 }
 
 impl IOrphanOrchestratorAggregate for OrphanOrchestrator { ... }
+```
+
+### GOOD: Correct 3-Block with Std Traits
+
+```rust
+// GOOD: Aggregate in Block 2, Default + new() in Block 3
+pub struct OrphanOrchestrator;
+
+impl IOrphanOrchestratorAggregate for OrphanOrchestrator {   // Block 2: domain aggregate ONLY
+    fn execute(&self, files: &[FilePath]) -> Vec<LintResult> { ... }
+}
+
+impl Default for OrphanOrchestrator {                         // Block 3: std trait = constructor
+    fn default() -> Self { Self }
+}
+
+impl OrphanOrchestrator {                                     // Block 3: constructors & helpers
+    pub fn new(analyzer: Arc<dyn ICapabilitiesOrphanProtocol>) -> Self {
+        Self { analyzer }
+    }
+}
 ```
 
 ## Workflow
@@ -189,8 +285,8 @@ Create `contract_<name>_aggregate.rs` in the shared crate with all public method
 Reorganize into strict 3-block order:
 
 1. `pub struct <Type>` (struct definition with DI fields)
-2. `impl I<Name>Aggregate for <Type>` (all public contract methods)
-3. `impl <Type>` (constructors, private helpers — utilities extracted to standalone modules)
+2. `impl I<Name>Aggregate for <Type>` (all public contract methods — **domain aggregate ONLY**)
+3. `impl <Type>` + std trait impls (constructors, `Default`/`Clone`/`Debug`, private helpers — utilities extracted to standalone modules)
 
 ### Step 5: Verify Struct Discipline
 
@@ -217,7 +313,9 @@ Run `cargo check` to confirm no violations.
 
 ## Verification Checklist
 
-- [ ] File follows the **3-Block Structure** (Struct -> Impl Aggregate -> Impl Struct).
+- [ ] File follows the **3-Block Structure** (Struct → Impl Aggregate Trait → Impl Struct + Std Traits).
+- [ ] **Block 2 contains ONLY the domain aggregate trait** (`I<Name>Aggregate`). No std traits (`Default`, `Clone`, `Debug`) in Block 2.
+- [ ] **Std trait impls** (`Default`, `Clone`, `Debug`, `Display`) are in **Block 3**, alongside constructors.
 - [ ] Agent struct implements an aggregate trait.
 - [ ] Aggregate contains **only** public/contract methods (no private helpers).
 - [ ] Private helpers are in Block 3 (`impl Struct`).
@@ -280,6 +378,10 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/agent_*.rs | grep -v "// " 
 
 # Find computation patterns in agents
 rg "\.sum\(\)|\.len\(\)|\.iter\(\)|\.map\(" crates/<crate>/src/agent_*.rs
+
+# Detect std trait impls appearing BEFORE the aggregate trait (wrong block order)
+# If Default/Clone/Debug appears before I<Name>Aggregate, the 3-block order is violated
+awk '/^impl (Default|Clone|Debug|Display)/{std=NR} /^impl I[A-Z].*Aggregate/{proto=NR} END{if(std && proto && std < proto) print "VIOLATION: std trait (line "std") before aggregate (line "proto")"}' crates/<crate>/src/agent_*.rs
 ```
 
 ## Computation Detection (from module_logic_validator)
@@ -438,3 +540,5 @@ impl IRunnerProtocol for Runner { fn run(&self) -> Result<(), Error> { /* ... */
 - ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the aggregate.
 - ❌ **Placing `new()` in the aggregate impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).
 - ❌ **Multiple impl structs in one file**: Each file should have exactly ONE impl struct. Use `consolidate-files-rust` if merging multiple files.
+- ❌ **Placing std trait impls (`Default`, `Clone`, `Debug`) in Block 2**: Block 2 is RESERVED for the domain aggregate trait ONLY. Std traits are constructors/utilities and belong in Block 3.
+- ❌ **Placing `impl Default` before `impl I<Name>Aggregate`**: This breaks the 3-block order. Aggregate trait MUST come first (Block 2), then `Default` + `new()` in Block 3.

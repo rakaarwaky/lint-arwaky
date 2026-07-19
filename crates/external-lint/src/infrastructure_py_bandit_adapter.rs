@@ -33,9 +33,8 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
-// old imports removed:
-// removed
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct BanditAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
@@ -43,38 +42,7 @@ pub struct BanditAdapter {
     bin_path: Option<FilePath>,
 }
 
-impl BanditAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "bandit".to_string(),
-        }
-    }
-
-    fn map_severity(&self, severity: &str) -> Severity {
-        match severity {
-            "HIGH" => Severity::HIGH,
-            "MEDIUM" => Severity::MEDIUM,
-            "LOW" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl ILinterAdapterPort for BanditAdapter {
     fn name(&self) -> AdapterName {
@@ -170,5 +138,38 @@ impl ILinterAdapterPort for BanditAdapter {
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.utility.noop_apply_fix().await
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl BanditAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "bandit".to_string(),
+        }
+    }
+
+    fn map_severity(&self, severity: &str) -> Severity {
+        match severity {
+            "HIGH" => Severity::HIGH,
+            "MEDIUM" => Severity::MEDIUM,
+            "LOW" => Severity::LOW,
+            _ => Severity::MEDIUM,
+        }
     }
 }

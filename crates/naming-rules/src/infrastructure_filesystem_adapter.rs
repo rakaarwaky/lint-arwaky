@@ -7,8 +7,10 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
 use shared::taxonomy_common_vo::PatternList;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct OSFileSystemAdapter {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl INamingFileSystemPort for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
@@ -27,6 +29,7 @@ impl INamingFileSystemPort for OSFileSystemAdapter {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl OSFileSystemAdapter {
     pub fn new() -> Self {
         Self {}

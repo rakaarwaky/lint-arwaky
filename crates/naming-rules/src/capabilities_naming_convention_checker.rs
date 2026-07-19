@@ -20,12 +20,14 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
 static NAMING_REGEX: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
 
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl INamingCheckerProtocol for NamingConventionChecker {
     // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
@@ -71,6 +73,7 @@ impl INamingCheckerProtocol for NamingConventionChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl NamingConventionChecker {
     pub fn new() -> Self {
         Self {}

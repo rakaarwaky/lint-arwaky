@@ -18,19 +18,10 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::taxonomy_path_utils::has_suffix;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-use std::path::Path;
-
-fn has_suffix(file: &str, suffix: &str) -> bool {
-    let path = Path::new(file);
-    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-        stem.ends_with(suffix)
-    } else {
-        false
-    }
-}
 
 pub struct TaxonomyRoleChecker {}
 

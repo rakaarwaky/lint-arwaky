@@ -18,9 +18,11 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 #[derive(Clone)]
 pub struct SuffixPrefixChecker {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl INamingCheckerProtocol for SuffixPrefixChecker {
     async fn check_file_naming(
@@ -56,6 +58,7 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SuffixPrefixChecker {
     pub fn new() -> Self {
         Self {}

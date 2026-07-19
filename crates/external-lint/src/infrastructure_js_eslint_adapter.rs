@@ -34,26 +34,14 @@ use std::sync::Arc;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ESLintAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
     utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
-impl ESLintAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait::async_trait]
 impl ILinterAdapterPort for ESLintAdapter {
     fn name(&self) -> AdapterName {
@@ -172,5 +160,20 @@ impl ILinterAdapterPort for ESLintAdapter {
         self.utility
             .js_apply_fix(self.executor.as_ref(), path, "eslint", "--fix")
             .await
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl ESLintAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+        }
     }
 }

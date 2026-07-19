@@ -12,20 +12,10 @@ use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 use std::path::{Path, PathBuf};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ExternalLintUtilityAdapter;
 
-impl ExternalLintUtilityAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for ExternalLintUtilityAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait::async_trait]
 impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
@@ -260,5 +250,18 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
             }
         }
         BooleanVO::new(false)
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl ExternalLintUtilityAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for ExternalLintUtilityAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }

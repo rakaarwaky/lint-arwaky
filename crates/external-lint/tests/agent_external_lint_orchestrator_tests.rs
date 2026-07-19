@@ -21,6 +21,10 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::contract_external_lint_language_detector_port::{
+    DetectedLanguages, IExternalLintLanguageDetectorPort,
+};
+use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -51,6 +55,101 @@ impl ILinterAdapterPort for MockAdapter {
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(true))
     }
+}
+
+// ---------------------------------------------------------------------------
+// Mock language detector that scans temp directories for file extensions
+
+// ---------------------------------------------------------------------------
+struct MockLanguageDetector;
+
+#[async_trait]
+impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
+    async fn detect_languages(&self, path: &FilePath) -> DetectedLanguages {
+        let mut has_rs = false;
+        let mut has_py = false;
+        let mut has_js = false;
+
+        let root = std::path::Path::new(&path.value);
+        if root.is_file() {
+            if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
+                match ext {
+                    "rs" => has_rs = true,
+                    "py" => has_py = true,
+                    "js" | "ts" | "jsx" | "tsx" => has_js = true,
+                    _ => {}
+                }
+            }
+        } else if let Ok(entries) = std::fs::read_dir(root) {
+            for entry in entries.flatten() {
+                let p = entry.path();
+                if p.is_dir() {
+                    let name = p
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    if !matches!(name.as_ref(), "node_modules" | "target" | ".git" | ".jj") {
+                        // recurse
+                        let sub =
+                            FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default();
+                        let sub_det = MockLanguageDetector;
+                        let sub_lang = sub_det.detect_languages(&sub).await;
+                        has_rs |= sub_lang.has_rs;
+                        has_py |= sub_lang.has_py;
+                        has_js |= sub_lang.has_js;
+                    }
+                } else if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
+                    match ext {
+                        "rs" => has_rs = true,
+                        "py" => has_py = true,
+                        "js" | "ts" | "jsx" | "tsx" => has_js = true,
+                        _ => {}
+                    }
+                }
+                if has_rs && has_py && has_js {
+                    break;
+                }
+            }
+        }
+
+        DetectedLanguages {
+            has_rs,
+            has_py,
+            has_js,
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Mock selector — uses default adapter mapping
+
+// ---------------------------------------------------------------------------
+struct MockSelector;
+
+impl IExternalLintSelectorProtocol for MockSelector {
+    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
+        let mut names = Vec::new();
+        if has_rs {
+            names.extend(["clippy", "rustfmt", "cargo-audit"].map(String::from));
+        }
+        if has_py {
+            names.extend(["ruff", "mypy", "bandit"].map(String::from));
+        }
+        if has_js {
+            names.extend(["eslint", "prettier", "tsc"].map(String::from));
+        }
+        names
+    }
+}
+
+fn make_orchestrator(
+    adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+) -> ExternalLintOrchestrator {
+    ExternalLintOrchestrator::new(
+        adapters,
+        Arc::new(MockLanguageDetector),
+        Arc::new(MockSelector),
+    )
 }
 
 fn make_adapters() -> HashMap<String, Arc<dyn ILinterAdapterPort>> {
@@ -136,7 +235,7 @@ fn make_temp_dir(files: &[&str]) -> std::path::PathBuf {
 async fn detects_rust_project() {
     let dir = make_temp_dir(&["main.rs", "lib.rs"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     // Only clippy adapter is set up for rust; should produce 1 result
     assert_eq!(results.len(), 1);
@@ -148,7 +247,7 @@ async fn detects_rust_project() {
 async fn detects_python_project() {
     let dir = make_temp_dir(&["app.py", "utils.py"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "ruff");
@@ -159,7 +258,7 @@ async fn detects_python_project() {
 async fn detects_javascript_project() {
     let dir = make_temp_dir(&["app.ts", "component.tsx", "style.js"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "eslint");
@@ -170,7 +269,7 @@ async fn detects_javascript_project() {
 async fn detects_multi_language_project() {
     let dir = make_temp_dir(&["main.rs", "app.py", "ui.tsx"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     // All 3 adapters should fire
     assert_eq!(results.len(), 3);
@@ -182,7 +281,7 @@ async fn detects_single_file_by_extension_rust() {
     let dir = make_temp_dir(&["main.rs"]);
     let file_path = dir.join("main.rs");
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "clippy");
@@ -194,7 +293,7 @@ async fn detects_single_file_by_extension_python() {
     let dir = make_temp_dir(&["module.py"]);
     let file_path = dir.join("module.py");
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "ruff");
@@ -206,7 +305,7 @@ async fn detects_single_file_by_extension_javascript() {
     let dir = make_temp_dir(&["component.tsx"]);
     let file_path = dir.join("component.tsx");
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 1);
     assert_eq!(results.values[0].source.as_ref().unwrap().value(), "eslint");
@@ -222,7 +321,7 @@ async fn skips_node_modules_and_target() {
         ".git/config",
     ]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     // Should still detect Rust (main.rs in root), not JS (only in node_modules)
     assert_eq!(results.len(), 1);
@@ -234,7 +333,7 @@ async fn skips_node_modules_and_target() {
 async fn empty_project_returns_no_results() {
     let dir = make_temp_dir(&[]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(HashMap::new());
+    let orch = make_orchestrator(HashMap::new());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 0);
     let _ = std::fs::remove_dir_all(&dir);
@@ -254,7 +353,7 @@ async fn adapter_not_in_map_is_skipped_gracefully() {
             fail_with: None,
         }),
     );
-    let orch = ExternalLintOrchestrator::new(adapters);
+    let orch = make_orchestrator(adapters);
     let results = orch.scan_all(&path).await;
     // Rust adapters (clippy, rustfmt, cargo-audit) aren't registered → no results
     assert_eq!(results.len(), 0);
@@ -265,7 +364,7 @@ async fn adapter_not_in_map_is_skipped_gracefully() {
 async fn merges_results_from_multiple_adapters() {
     let dir = make_temp_dir(&["main.rs", "app.py"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(make_adapters());
+    let orch = make_orchestrator(make_adapters());
     let results = orch.scan_all(&path).await;
     assert_eq!(results.len(), 2);
     let sources: Vec<&str> = results
@@ -281,7 +380,7 @@ async fn merges_results_from_multiple_adapters() {
 #[tokio::test]
 async fn adapter_names_returns_registered_names() {
     let adapters = make_adapters();
-    let orch = ExternalLintOrchestrator::new(adapters);
+    let orch = make_orchestrator(adapters);
     let mut names = orch.adapter_names();
     names.sort();
     assert_eq!(names, vec!["clippy", "eslint", "ruff"]);
@@ -323,7 +422,7 @@ async fn adapter_failure_does_not_crash_scan() {
 
     let dir = make_temp_dir(&["main.py"]);
     let path = FilePath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
-    let orch = ExternalLintOrchestrator::new(adapters);
+    let orch = make_orchestrator(adapters);
     let results = orch.scan_all(&path).await;
     // Should still get results from ruff even though clippy failed
     assert_eq!(results.len(), 1);

@@ -27,6 +27,8 @@ use std::sync::Arc;
 ///   - analyzer: provides layer configuration and detection
 ///   - fs: filesystem access for walking directories
 ///   - ignored_patterns: paths to skip during file collection
+
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
@@ -35,6 +37,7 @@ pub struct NamingOrchestrator {
     ignored_patterns: PatternList,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl INamingRunnerAggregate for NamingOrchestrator {
     /// Run both naming convention checks (AES101 + AES102) on the target.
@@ -74,6 +77,7 @@ impl INamingRunnerAggregate for NamingOrchestrator {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl NamingOrchestrator {
     /// Constructor: builds the orchestrator with injected dependencies.
     /// Pre-processes ignored patterns from config (normalize paths).

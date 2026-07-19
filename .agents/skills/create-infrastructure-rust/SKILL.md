@@ -1,7 +1,7 @@
 ---
 name: create-infrastructure-rust
 description: "Create and validate infrastructure layer files following AES rules: 3-block structure, one struct per file, port contracts, zero business logic."
-version: 1.0.0
+version: 1.1.0
 category: refactoring
 tags:
   [rust, aes, infrastructure, port, structure, aes404, 3-block-structure, di]
@@ -55,11 +55,64 @@ Create and validate Rust **infrastructure layer** files following clean architec
 
 Every implementation file MUST follow this exact order:
 
-1. `struct Definition`
-2. `impl Port for Struct` (Public Contract)
-3. `impl Struct` (Constructors & Helpers)
+1. **Block 1 — `struct Definition`**
+2. **Block 2 — `impl I<Name>Port for Struct`** (Public Contract)
+   - Contains **ONLY** the domain port trait (e.g., `IFileReaderPort`, `INetworkClientPort`).
+   - **NO** standard library trait impls here (`Default`, `Clone`, `Debug`, `Display`, `From`, etc.).
+3. **Block 3 — `impl Struct`** (Constructors, Std Traits & Helpers)
+   - `new()`, builders
+   - `impl Default`, `impl Clone`, `impl Debug`, `impl Display`, and other std trait impls — these are **constructors/utilities**, not public contracts.
+   - Private helper methods (`&self`)
+
+**CRITICAL:** Block 2 is **RESERVED** for the domain port trait ONLY. Standard library trait impls (`Default`, `Clone`, `Debug`, `Display`, `From`) belong in **Block 3** because they serve as constructors or utility formatting, not as the public domain contract.
 
 **CRITICAL:** Utility functions extracted to standalone modules — Stateless, domain-agnostic free functions (no `&self`) MUST be extracted OUT of the impl block into their own `*_utility.rs` modules in shared/taxonomy. They do NOT belong in Block 3.
+
+#### Trait Placement Decision Rule
+
+```
+Trait impl found in an infrastructure file?
+  │
+  ├─ Is it the domain port? (I<Name>Port)
+  │   └─ YES → Block 2
+  │
+  └─ Is it a std/derive trait? (Default, Clone, Debug, Display, From, etc.)
+      └─ YES → Block 3 (alongside constructors)
+```
+
+#### Example: Correct 3-Block Order
+
+```rust
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct FileCacheAdapter;
+
+// ─── Block 2: Public Contract (domain port ONLY) ──────────
+impl IFileReaderPort for FileCacheAdapter {
+    fn read(
+        &self,
+        path: &FilePath,
+    ) -> Result<String, std::io::Error> {
+        std::fs::read_to_string(path.value())
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for FileCacheAdapter {
+    fn default() -> Self {
+        Self
+    }
+}
+
+impl FileCacheAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn ensure_dir(path: &str) -> std::io::Result<()> {
+        std::fs::create_dir_all(std::path::Path::new(path).parent().unwrap_or_default())
+    }
+}
+```
 
 ### Port Rules
 
@@ -68,6 +121,7 @@ Every implementation file MUST follow this exact order:
 - **Port contains ONLY public/contract methods** — no private helpers
 - **Private helpers stay in Block 3** (`impl Struct`)
 - **Constructors (`new`, builders) in Block 3**
+- **Std trait impls (`Default`, `Clone`, etc.) in Block 3**
 - **Generic port methods need `where Self: Sized`**
 
 ## The Fundamental Question
@@ -125,6 +179,25 @@ pub struct OrphanFileCache {
 }
 ```
 
+### BAD: Std Trait in Block 2
+
+```rust
+// BAD: Default impl placed before port trait (wrong block order)
+pub struct FileCacheAdapter;
+
+impl Default for FileCacheAdapter {       // ← Block 2 position, but this is NOT the port
+    fn default() -> Self { Self }
+}
+
+impl IFileReaderPort for FileCacheAdapter {  // ← pushed to Block 3 position
+    fn read(&self, path: &FilePath) -> Result<String, std::io::Error> { ... }
+}
+
+impl FileCacheAdapter {                   // ← Block 3
+    pub fn new() -> Self { Self }
+}
+```
+
 ### GOOD: Implementor with Shared Data
 
 ```rust
@@ -136,6 +209,25 @@ pub struct OrphanFileCache {
 }
 
 impl IOrphanFileCachePort for OrphanFileCache { ... }
+```
+
+### GOOD: Correct 3-Block with Std Traits
+
+```rust
+// GOOD: Port in Block 2, Default + new() in Block 3
+pub struct FileCacheAdapter;
+
+impl IFileReaderPort for FileCacheAdapter {   // Block 2: domain port ONLY
+    fn read(&self, path: &FilePath) -> Result<String, std::io::Error> { ... }
+}
+
+impl Default for FileCacheAdapter {           // Block 3: std trait = constructor
+    fn default() -> Self { Self }
+}
+
+impl FileCacheAdapter {                       // Block 3: constructors & helpers
+    pub fn new() -> Self { Self }
+}
 ```
 
 ## Workflow
@@ -177,8 +269,8 @@ Create `contract_<name>_port.rs` in the shared crate with all public method sign
 Reorganize into strict 3-block order:
 
 1. `pub struct <Type>` (struct definition with DI fields)
-2. `impl I<Name>Port for <Type>` (all public contract methods)
-3. `impl <Type>` (constructors, private helpers — utilities extracted to standalone modules)
+2. `impl I<Name>Port for <Type>` (all public contract methods — **domain port ONLY**)
+3. `impl <Type>` + std trait impls (constructors, `Default`/`Clone`/`Debug`, private helpers — utilities extracted to standalone modules)
 
 ### Step 5: Verify Struct Discipline
 
@@ -205,7 +297,9 @@ Run `cargo check` to confirm no violations.
 
 ## Verification Checklist
 
-- [ ] File follows the **3-Block Structure** (Struct -> Impl Port -> Impl Struct).
+- [ ] File follows the **3-Block Structure** (Struct → Impl Port Trait → Impl Struct + Std Traits).
+- [ ] **Block 2 contains ONLY the domain port trait** (`I<Name>Port`). No std traits (`Default`, `Clone`, `Debug`) in Block 2.
+- [ ] **Std trait impls** (`Default`, `Clone`, `Debug`, `Display`) are in **Block 3**, alongside constructors.
 - [ ] Infrastructure struct implements a port trait.
 - [ ] Port contains **only** public/contract methods (no private helpers).
 - [ ] Private helpers are in Block 3 (`impl Struct`).
@@ -257,6 +351,10 @@ rg "unwrap_or_default\(\)" crates/<crate>/src/infrastructure_*.rs
 
 # Find magic constants (hardcoded literals)
 rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/infrastructure_*.rs | grep -v "// " | head -20
+
+# Detect std trait impls appearing BEFORE the port trait (wrong block order)
+# If Default/Clone/Debug appears before I<Name>Port, the 3-block order is violated
+awk '/^impl (Default|Clone|Debug|Display)/{std=NR} /^impl I[A-Z].*Port/{proto=NR} END{if(std && proto && std < proto) print "VIOLATION: std trait (line "std") before port (line "proto")"}' crates/<crate>/src/infrastructure_*.rs
 ```
 
 ## Error Handling (from fix-error-handling)
@@ -372,3 +470,5 @@ pub struct DataProcessor {
 - ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the port.
 - ❌ **Placing `new()` in the port impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).
 - ❌ **Multiple impl structs in one file**: Each file should have exactly ONE impl struct. Use `consolidate-files-rust` if merging multiple files.
+- ❌ **Placing std trait impls (`Default`, `Clone`, `Debug`) in Block 2**: Block 2 is RESERVED for the domain port trait ONLY. Std traits are constructors/utilities and belong in Block 3.
+- ❌ **Placing `impl Default` before `impl I<Name>Port`**: This breaks the 3-block order. Port trait MUST come first (Block 2), then `Default` + `new()` in Block 3.

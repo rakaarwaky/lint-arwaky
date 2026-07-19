@@ -11,20 +11,6 @@
 //   - Skips files that don't end in .ts or .tsx
 //   - All tsc errors are reported as HIGH severity
 
-use regex::Regex;
-use std::sync::OnceLock;
-fn tsc_pattern1() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
-
-fn tsc_pattern2() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
-
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -45,27 +31,16 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use shared::external_lint::taxonomy_tsc_regex_utility::{tsc_pattern1, tsc_pattern2};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
     utility: Arc<dyn IExternalLintUtilityPort>,
 }
 
-impl TSCAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait::async_trait]
 impl ILinterAdapterPort for TSCAdapter {
     fn name(&self) -> AdapterName {
@@ -169,5 +144,20 @@ impl ILinterAdapterPort for TSCAdapter {
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.utility.noop_apply_fix().await
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl TSCAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+        }
     }
 }

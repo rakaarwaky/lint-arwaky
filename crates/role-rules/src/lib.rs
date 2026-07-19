@@ -10,6 +10,10 @@ pub use shared::role_rules::taxonomy_layer_names_vo::{
     layer_agent, layer_capabilities, layer_contract, layer_global, layer_infrastructure,
     layer_root, layer_surfaces, layer_taxonomy, LayerNames,
 };
+// Re-export extracted utility functions for backward compatibility
+pub use shared::role_rules::taxonomy_path_utils::has_suffix;
+pub use shared::role_rules::taxonomy_surface_utils::{is_in_surfaces, is_init};
+
 pub mod agent_role_orchestrator;
 pub mod taxonomy_language_info_vo;
 pub use agent_role_orchestrator::RoleOrchestrator;

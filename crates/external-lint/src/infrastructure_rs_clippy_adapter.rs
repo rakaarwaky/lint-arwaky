@@ -41,6 +41,7 @@ use tracing::debug;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
@@ -49,22 +50,7 @@ pub struct RustLinterAdapter {
     _bin_path: Option<FilePath>,
 }
 
-impl RustLinterAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            _bin_path: bin_path,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl ILinterAdapterPort for RustLinterAdapter {
     fn name(&self) -> AdapterName {
@@ -216,5 +202,22 @@ impl ILinterAdapterPort for RustLinterAdapter {
             )
             .await;
         Ok(ComplianceStatus::new(true))
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl RustLinterAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+            _bin_path: bin_path,
+        }
     }
 }

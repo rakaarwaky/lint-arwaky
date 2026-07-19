@@ -1,15 +1,11 @@
 // PURPOSE: ExternalLintOrchestrator — agent layer, orchestrates external linter adapters
 //
-// The orchestrator dynamically selects which adapters to run based on the
-// languages detected in the project (Rust, Python, JavaScript/TypeScript).
-// It performs a file-system scan to detect language usage before running
-// any adapters — avoids running rustfmt on Python-only projects.
+// The orchestrator uses DI to:
+//   1. Detect languages via IExternalLintLanguageDetectorPort (infrastructure)
+//   2. Select adapters via IExternalLintSelectorProtocol (capabilities)
+//   3. Run adapters concurrently via future::join_all (agent flow control)
 //
-// Adapters are run concurrently via future::join_all. If an adapter's binary
-// is not installed, a warning is printed (not an error) — the scan continues
-// with the remaining adapters.
-//
-// Language detection is recursive but skips node_modules, target, .git, and .jj dirs.
+// If an adapter's binary is not installed, a warning is printed (not an error) — the scan continues.
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -19,96 +15,43 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::contract_external_lint_language_detector_port::IExternalLintLanguageDetectorPort;
+use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
+    selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
 impl ExternalLintOrchestrator {
-    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>) -> Self {
-        Self { adapters }
+    pub fn new(
+        adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+        language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
+        selector: Arc<dyn IExternalLintSelectorProtocol>,
+    ) -> Self {
+        Self {
+            adapters,
+            language_detector,
+            selector,
+        }
     }
 }
 
 #[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {
-        let mut has_rs = false;
-        let mut has_py = false;
-        let mut has_js = false;
-
-        fn detect_languages(
-            dir: &std::path::Path,
-            has_rs: &mut bool,
-            has_py: &mut bool,
-            has_js: &mut bool,
-        ) {
-            if let Ok(entries) = std::fs::read_dir(dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        let name = match path.file_name() {
-                            Some(n) => n.to_string_lossy(),
-                            None => continue,
-                        };
-                        if !matches!(
-                            name.as_ref(),
-                            "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
-                        ) {
-                            detect_languages(&path, has_rs, has_py, has_js);
-                        }
-                    } else if let Some(ext) = path.extension() {
-                        match ext.to_str() {
-                            Some("rs") => *has_rs = true,
-                            Some("py") => *has_py = true,
-                            Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
-                            _ => {}
-                        }
-                    }
-                    if *has_rs && *has_py && *has_js {
-                        break;
-                    }
-                }
-            }
-        }
-
-        let root_path = std::path::Path::new(&path.value);
-        if root_path.is_file() {
-            if let Some(ext) = root_path.extension() {
-                match ext.to_str() {
-                    Some("rs") => has_rs = true,
-                    Some("py") => has_py = true,
-                    Some("js" | "ts" | "jsx" | "tsx") => has_js = true,
-                    _ => {}
-                }
-            }
-        } else {
-            detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js);
-        }
-
-        let mut adapter_names = Vec::new();
-        if has_rs {
-            adapter_names.push("clippy");
-            adapter_names.push("rustfmt");
-            adapter_names.push("cargo-audit");
-        }
-        if has_py {
-            adapter_names.push("ruff");
-            adapter_names.push("mypy");
-            adapter_names.push("bandit");
-        }
-        if has_js {
-            adapter_names.push("eslint");
-            adapter_names.push("prettier");
-            adapter_names.push("tsc");
-        }
+        let detected = self.language_detector.detect_languages(path).await;
+        let adapter_names =
+            self.selector
+                .select_adapters(detected.has_rs, detected.has_py, detected.has_js);
 
         let mut futures = Vec::new();
         for name in &adapter_names {
-            if let Some(adapter) = self.adapters.get(*name) {
+            if let Some(adapter) = self.adapters.get(name.as_str()) {
                 let adapter: Arc<dyn ILinterAdapterPort> = adapter.clone();
                 let path_clone = path.clone();
-                let name_owned = name.to_string();
+                let name_owned = name.clone();
                 futures.push(async move {
                     match adapter.scan(&path_clone).await {
                         Ok(results) => Ok::<Vec<_>, String>(results.values),

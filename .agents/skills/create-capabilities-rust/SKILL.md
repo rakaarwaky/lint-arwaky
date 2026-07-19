@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-rust
 description: "Create and validate capabilities layer files following AES rules: 3-block structure, one struct per file, trait contracts, zero I/O."
-version: 1.0.0
+version: 1.1.0
 category: refactoring
 tags:
   [
@@ -65,11 +65,67 @@ Create and validate Rust **capabilities layer** files following clean architectu
 
 Every implementation file MUST follow this exact order:
 
-1. `struct Definition`
-2. `impl Trait for Struct` (Public Contract)
-3. `impl Struct` (Constructors & Helpers)
+1. **Block 1 — `struct Definition`**
+2. **Block 2 — `impl I<Name>Protocol for Struct`** (Public Contract)
+   - Contains **ONLY** the domain protocol trait (e.g., `ILineCheckerProtocol`, `IOrphanAnalyzerProtocol`).
+   - **NO** standard library trait impls here (`Default`, `Clone`, `Debug`, `Display`, `From`, etc.).
+3. **Block 3 — `impl Struct`** (Constructors, Std Traits & Helpers)
+   - `new()`, builders
+   - `impl Default`, `impl Clone`, `impl Debug`, `impl Display`, and other std trait impls — these are **constructors/utilities**, not public contracts.
+   - Private helper methods (`&self`)
+
+**CRITICAL:** Block 2 is **RESERVED** for the domain protocol trait ONLY. Standard library trait impls (`Default`, `Clone`, `Debug`, `Display`, `From`) belong in **Block 3** because they serve as constructors or utility formatting, not as the public domain contract.
 
 **CRITICAL:** Utility functions extracted to standalone modules — Stateless, domain-agnostic free functions (no `&self`) MUST be extracted OUT of the impl block into their own `*_utility.rs` modules in shared/taxonomy. They do NOT belong in Block 3.
+
+#### Trait Placement Decision Rule
+
+```
+Trait impl found in a capabilities file?
+  │
+  ├─ Is it the domain protocol? (I<Name>Protocol)
+  │   └─ YES → Block 2
+  │
+  └─ Is it a std/derive trait? (Default, Clone, Debug, Display, From, etc.)
+      └─ YES → Block 3 (alongside constructors)
+```
+
+#### Example: Correct 3-Block Order
+
+```rust
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct ArchLineChecker;
+
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl ILineCheckerProtocol for ArchLineChecker {
+    fn check_line_counts(
+        &self,
+        file: &str,
+        definition: Option<&LayerDefinition>,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        // ... domain logic ...
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for ArchLineChecker {
+    fn default() -> Self {
+        Self
+    }
+}
+
+impl ArchLineChecker {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn is_barrel_file(basename: &str) -> bool {
+        matches!(basename, "__init__.py" | "mod.rs")
+    }
+}
+```
 
 ### Trait Rules
 
@@ -78,6 +134,7 @@ Every implementation file MUST follow this exact order:
 - **Trait contains ONLY public/contract methods** — no private helpers
 - **Private helpers stay in Block 3** (`impl Struct`)
 - **Constructors (`new`, builders) in Block 3**
+- **Std trait impls (`Default`, `Clone`, etc.) in Block 3**
 - **Generic trait methods need `where Self: Sized`**
 
 ## The Fundamental Question
@@ -133,6 +190,25 @@ pub struct CapabilitiesOrphanAnalyzer {
 }
 ```
 
+### BAD: Std Trait in Block 2
+
+```rust
+// BAD: Default impl placed before protocol trait (wrong block order)
+pub struct ArchLineChecker;
+
+impl Default for ArchLineChecker {       // ← Block 2 position, but this is NOT the protocol
+    fn default() -> Self { Self }
+}
+
+impl ILineCheckerProtocol for ArchLineChecker {  // ← pushed to Block 3 position
+    fn check_line_counts(&self, ...) { ... }
+}
+
+impl ArchLineChecker {                   // ← Block 3
+    pub fn new() -> Self { Self }
+}
+```
+
 ### GOOD: Implementor with Shared Data
 
 ```rust
@@ -145,6 +221,25 @@ pub struct CapabilitiesOrphanAnalyzer {
 }
 
 impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer { ... }
+```
+
+### GOOD: Correct 3-Block with Std Traits
+
+```rust
+// GOOD: Protocol in Block 2, Default + new() in Block 3
+pub struct ArchLineChecker;
+
+impl ILineCheckerProtocol for ArchLineChecker {   // Block 2: domain protocol ONLY
+    fn check_line_counts(&self, ...) { ... }
+}
+
+impl Default for ArchLineChecker {                 // Block 3: std trait = constructor
+    fn default() -> Self { Self }
+}
+
+impl ArchLineChecker {                             // Block 3: constructors & helpers
+    pub fn new() -> Self { Self }
+}
 ```
 
 ## Workflow
@@ -186,8 +281,8 @@ Create `contract_<name>_protocol.rs` in the shared crate with all public method 
 Reorganize into strict 3-block order:
 
 1. `pub struct <Type>` (struct definition with DI fields)
-2. `impl I<Name>Protocol for <Type>` (all public contract methods)
-3. `impl <Type>` (constructors, private helpers — utilities extracted to standalone modules)
+2. `impl I<Name>Protocol for <Type>` (all public contract methods — **domain protocol ONLY**)
+3. `impl <Type>` + std trait impls (constructors, `Default`/`Clone`/`Debug`, private helpers — utilities extracted to standalone modules)
 
 ### Step 5: Verify Struct Discipline
 
@@ -214,7 +309,9 @@ Run `cargo check` to confirm no violations.
 
 ## Verification Checklist
 
-- [ ] File follows the **3-Block Structure** (Struct -> Impl Trait -> Impl Struct).
+- [ ] File follows the **3-Block Structure** (Struct → Impl Protocol Trait → Impl Struct + Std Traits).
+- [ ] **Block 2 contains ONLY the domain protocol trait** (`I<Name>Protocol`). No std traits (`Default`, `Clone`, `Debug`) in Block 2.
+- [ ] **Std trait impls** (`Default`, `Clone`, `Debug`, `Display`) are in **Block 3**, alongside constructors.
 - [ ] Capability struct implements a protocol trait (AES403 resolved).
 - [ ] Trait contains **only** public/contract methods (no private helpers).
 - [ ] Private helpers are in Block 3 (`impl Struct`).
@@ -426,6 +523,10 @@ rg "unwrap_or_default\(\)" crates/<crate>/src/capabilities_*.rs
 
 # Find magic constants (hardcoded literals)
 rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/capabilities_*.rs | grep -v "// " | head -20
+
+# Detect std trait impls appearing BEFORE the protocol trait (wrong block order)
+# If Default/Clone/Debug appears before I<Name>Protocol, the 3-block order is violated
+awk '/^impl (Default|Clone|Debug|Display)/{std=NR} /^impl I[A-Z].*Protocol/{proto=NR} END{if(std && proto && std < proto) print "VIOLATION: std trait (line "std") before protocol (line "proto")"}' crates/<crate>/src/capabilities_*.rs
 ```
 
 ## Common Mistakes (AVOID)
@@ -440,3 +541,5 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/capabilities_*.rs | grep -v
 - ❌ **Forgetting `where Self: Sized`**: This will break `dyn Trait` usage for the rest of the trait.
 - ❌ **Placing `new()` in the trait impl**: Constructors must stay in the inherent `impl Struct` block (Block 3).
 - ❌ **Multiple impl structs in one file**: Each file should have exactly ONE impl struct. Use `consolidate-files-rust` if merging multiple files.
+- ❌ **Placing std trait impls (`Default`, `Clone`, `Debug`) in Block 2**: Block 2 is RESERVED for the domain protocol trait ONLY. Std traits are constructors/utilities and belong in Block 3.
+- ❌ **Placing `impl Default` before `impl I<Name>Protocol`**: This breaks the 3-block order. Protocol trait MUST come first (Block 2), then `Default` + `new()` in Block 3.

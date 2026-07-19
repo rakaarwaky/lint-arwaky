@@ -1,0 +1,16 @@
+// PURPOSE: IToolExecutorPort — port trait for executing external tools and capturing output
+use async_trait::async_trait;
+
+pub struct ToolOutput {
+    pub stdout: String,
+    pub stderr: String,
+    pub success: bool,
+}
+
+#[async_trait]
+pub trait IToolExecutorPort: Send + Sync {
+    async fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput;
+    async fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &str) -> ToolOutput;
+    async fn tool_exists(&self, name: &str) -> bool;
+    async fn get_binary_path(&self) -> String;
+}

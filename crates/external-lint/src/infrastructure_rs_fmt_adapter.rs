@@ -35,6 +35,7 @@ use tracing::debug;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterPort.
 ///
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
@@ -46,22 +47,7 @@ pub struct RustFmtAdapter {
     _bin_path: Option<FilePath>,
 }
 
-impl RustFmtAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            _bin_path: bin_path,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl ILinterAdapterPort for RustFmtAdapter {
     fn name(&self) -> AdapterName {
@@ -166,5 +152,22 @@ impl ILinterAdapterPort for RustFmtAdapter {
             )
             .await;
         Ok(ComplianceStatus::new(true))
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl RustFmtAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+            _bin_path: bin_path,
+        }
     }
 }

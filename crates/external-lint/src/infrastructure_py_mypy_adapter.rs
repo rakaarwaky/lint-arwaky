@@ -12,9 +12,7 @@
 //   - apply_fix always returns false (mypy is a type checker, not a formatter)
 
 use async_trait::async_trait;
-use regex::Regex;
 use std::sync::Arc;
-use std::sync::OnceLock;
 
 use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -35,21 +33,9 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
-// old imports removed:
-// removed
+use shared::external_lint::taxonomy_mypy_regex_utility::{mypy_re_with_col, mypy_re_without_col};
 
-fn mypy_re_with_col() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
-        .as_ref()
-}
-
-fn mypy_re_without_col() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
-        .as_ref()
-}
-
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorPort>,
     path_norm: Arc<dyn IPathNormalizationPort>,
@@ -57,43 +43,7 @@ pub struct MyPyAdapter {
     bin_path: Option<FilePath>,
 }
 
-impl MyPyAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
-        utility: Arc<dyn IExternalLintUtilityPort>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            path_norm,
-            utility,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "mypy".to_string(),
-        }
-    }
-
-    fn map_severity(msg_type: &str, msg: &str) -> Severity {
-        let m = msg.to_lowercase();
-        if msg_type == "note" {
-            return Severity::LOW;
-        }
-        if m.contains("syntax") || m.contains("parse") {
-            return Severity::CRITICAL;
-        }
-        if msg_type == "warning" {
-            return Severity::MEDIUM;
-        }
-        Severity::HIGH
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl ILinterAdapterPort for MyPyAdapter {
     fn name(&self) -> AdapterName {
@@ -240,5 +190,43 @@ impl ILinterAdapterPort for MyPyAdapter {
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.utility.noop_apply_fix().await
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl MyPyAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorPort>,
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        utility: Arc<dyn IExternalLintUtilityPort>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            path_norm,
+            utility,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "mypy".to_string(),
+        }
+    }
+
+    fn map_severity(msg_type: &str, msg: &str) -> Severity {
+        let m = msg.to_lowercase();
+        if msg_type == "note" {
+            return Severity::LOW;
+        }
+        if m.contains("syntax") || m.contains("parse") {
+            return Severity::CRITICAL;
+        }
+        if msg_type == "warning" {
+            return Severity::MEDIUM;
+        }
+        Severity::HIGH
     }
 }

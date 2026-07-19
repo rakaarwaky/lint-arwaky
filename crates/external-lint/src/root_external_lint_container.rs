@@ -2,11 +2,11 @@
 //
 // The DI container that assembles the external lint subsystem:
 //   1. Creates a StdioClient (ICommandExecutorPort) for subprocess execution
-//   2. Registers all 8 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
-//   3. Wraps them in a ExternalLintOrchestrator
-//   4. Provides a DefaultPathNormalization that passes paths through unchanged
-//
-// Each adapter follows the same pattern: Arc<dyn ILinterAdapterPort> in a HashMap keyed by name.
+//   2. Creates an ExternalLintLanguageDetectorAdapter (IExternalLintLanguageDetectorPort)
+//   3. Creates a CapabilitiesExternalLintSelector (IExternalLintSelectorProtocol)
+//   4. Registers all 9 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
+//   5. Wraps them in a ExternalLintOrchestrator
+//   6. Provides a DefaultPathNormalization that passes paths through unchanged
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -14,6 +14,8 @@ use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
 use shared::common::contract_path_normalization_port::IPathNormalizationPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::contract_external_lint_language_detector_port::IExternalLintLanguageDetectorPort;
+use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 pub struct ExternalLintContainer {
@@ -21,7 +23,11 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
+    pub fn new(
+        path_norm: Arc<dyn IPathNormalizationPort>,
+        language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
+        selector: Arc<dyn IExternalLintSelectorProtocol>,
+    ) -> Self {
         let executor: Arc<dyn shared::cli_commands::contract_executor_port::ICommandExecutorPort> =
             Arc::new(crate::infrastructure_stdio_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
@@ -115,13 +121,22 @@ impl ExternalLintContainer {
 
         Self {
             aggregate: Arc::new(
-                crate::agent_external_lint_orchestrator::ExternalLintOrchestrator::new(adapters),
+                crate::agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
+                    adapters,
+                    language_detector,
+                    selector,
+                ),
             ),
         }
     }
 
     pub fn new_default() -> Self {
-        Self::new(Arc::new(DefaultPathNormalization))
+        let path_norm = Arc::new(DefaultPathNormalization);
+        let language_detector: Arc<dyn IExternalLintLanguageDetectorPort> =
+            Arc::new(crate::infrastructure_language_detector_adapter::ExternalLintLanguageDetectorAdapter::new());
+        let selector: Arc<dyn IExternalLintSelectorProtocol> =
+            Arc::new(crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults());
+        Self::new(path_norm, language_detector, selector)
     }
 
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {
