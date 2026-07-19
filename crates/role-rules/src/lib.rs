@@ -11,8 +11,8 @@ pub use shared::role_rules::taxonomy_layer_names_vo::{
     layer_root, layer_surfaces, layer_taxonomy, LayerNames,
 };
 // Re-export extracted utility functions for backward compatibility
-pub use shared::role_rules::taxonomy_path_utils::has_suffix;
-pub use shared::role_rules::taxonomy_surface_utils::{is_in_surfaces, is_init};
+pub use shared::role_rules::taxonomy_path_utility::has_suffix;
+pub use shared::role_rules::taxonomy_surface_utility::{is_in_surfaces, is_init};
 
 pub mod agent_role_orchestrator;
 pub mod taxonomy_language_info_vo;
