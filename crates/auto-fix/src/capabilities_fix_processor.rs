@@ -321,8 +321,3 @@ impl LintFixProcessor {
     }
 }
 
-impl Default for LintFixProcessor {
-    fn default() -> Self {
-        panic!("LintFixProcessor requires linter and file_adapter dependencies via DI")
-    }
-}
