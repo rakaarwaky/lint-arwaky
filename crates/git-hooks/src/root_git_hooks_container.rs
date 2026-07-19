@@ -13,6 +13,9 @@ pub struct GitContainer {
     aggregate: Arc<dyn GitHooksAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
 // Block 3: constructors & public API
 impl GitContainer {
     pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {

@@ -12,6 +12,7 @@ use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggrega
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
+// Block 1: struct Definition
 pub struct CliContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -25,6 +26,10 @@ pub struct CliContainer {
     pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl CliContainer {
     pub fn new_default() -> Self {
         let import_container =

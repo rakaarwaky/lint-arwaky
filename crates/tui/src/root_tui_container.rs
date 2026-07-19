@@ -10,8 +10,13 @@ use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use std::sync::Arc;
 
+// Block 1: struct Definition
 pub struct TuiContainer;
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
         crate::root_logging_entry::init()?;

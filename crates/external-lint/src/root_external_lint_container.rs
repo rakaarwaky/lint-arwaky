@@ -18,10 +18,15 @@ use shared::external_lint::contract_external_lint_language_detector_port::IExter
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
+// Block 1: struct Definition
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl ExternalLintContainer {
     pub fn new(
         path_norm: Arc<dyn IPathNormalizationPort>,

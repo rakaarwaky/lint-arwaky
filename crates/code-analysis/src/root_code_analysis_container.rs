@@ -30,6 +30,11 @@ pub struct CodeAnalysisCheckerContainer {
     code_duplication_analyzer: Arc<CodeDuplicationAnalyzer>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
+
 impl CodeAnalysisCheckerContainer {
     pub fn new(analyzer: Arc<dyn ILayerDetectionProtocol>) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
@@ -188,6 +193,10 @@ pub struct CodeAnalysisContainer {
     code_analysis_linter: Arc<CodeAnalysisOrchestrator>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl CodeAnalysisContainer {
     pub fn new() -> Self {
         Self {

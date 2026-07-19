@@ -12,6 +12,7 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
+// Block 1: struct Definition
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -25,6 +26,10 @@ pub struct McpContainer {
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl McpContainer {
     pub fn new_default() -> Self {
         let import_container =

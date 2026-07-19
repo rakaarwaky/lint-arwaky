@@ -3,20 +3,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
 use shared::config_system::contract_workspace_detector_port::WorkspaceType;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WorkspaceDetector;
 
-impl WorkspaceDetector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for WorkspaceDetector {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IWorkspaceDetectorPort for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let mut path_buf = std::path::Path::new(&path.value).to_path_buf();
@@ -83,5 +73,18 @@ impl IWorkspaceDetectorPort for WorkspaceDetector {
         ["crates", "packages", "modules"]
             .iter()
             .any(|dir| root.join(dir).is_dir())
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl WorkspaceDetector {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for WorkspaceDetector {
+    fn default() -> Self {
+        Self::new()
     }
 }

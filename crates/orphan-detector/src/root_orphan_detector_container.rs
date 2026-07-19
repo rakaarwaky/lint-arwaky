@@ -6,11 +6,16 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use std::sync::Arc;
 
+// Block 1: struct Definition
 pub struct OrphanContainer {
     analyzer: Arc<dyn IOrphanAggregate>,
     layer_detector: Arc<dyn ILayerDetectionAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl OrphanContainer {
     pub fn new() -> Self {
         Self::new_with_ignored(Vec::new())

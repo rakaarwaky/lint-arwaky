@@ -15,6 +15,9 @@ pub struct MaintenanceContainer {
     orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
 // Block 3: constructors & public API
 impl MaintenanceContainer {
     pub fn orchestrator(&self) -> Arc<dyn MaintenanceCommandsAggregate> {

@@ -2,12 +2,17 @@
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use std::sync::Arc;
 
+// Block 1: struct Definition
 #[derive(Clone)]
 pub struct AutoFixContainer {
     code_analysis_linter:
         Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl AutoFixContainer {
     pub fn new(
         code_analysis_linter: Arc<

@@ -4,6 +4,7 @@ use shared::config_system::contract_parser_port::IConfigParserPort;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ConfigContainer {
     orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
     parser: Arc<dyn IConfigParserPort>,
@@ -11,12 +12,10 @@ pub struct ConfigContainer {
     multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
-impl Default for ConfigContainer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is a wiring facade, not a protocol implementor)
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ConfigContainer {
     pub fn new() -> Self {
         let workspace_detector =
@@ -55,5 +54,11 @@ impl ConfigContainer {
 
     pub fn multi_project_orchestrator(&self) -> Arc<dyn MultiProjectOrchestratorAggregate> {
         self.multi_project_orchestrator.clone()
+    }
+}
+
+impl Default for ConfigContainer {
+    fn default() -> Self {
+        Self::new()
     }
 }
