@@ -10,14 +10,17 @@ use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct GitCommandsSurface {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for GitCommandsSurface {
     fn default() -> Self {
         Self::new()
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl GitCommandsSurface {
     pub fn new() -> Self {
         Self {}

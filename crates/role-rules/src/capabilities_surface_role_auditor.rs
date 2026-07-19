@@ -69,9 +69,11 @@ static RUST_IMPL_RE: Lazy<Option<Regex>> =
 static RUST_FN_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(").ok());
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfaceRoleChecker {}
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
@@ -100,6 +102,7 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SurfaceRoleChecker {
     pub fn new() -> Self {
         Self {}

@@ -13,8 +13,10 @@ use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus};
 use std::path::Path;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TreeView;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl TreeView {
     pub fn new() -> Self {
         Self
@@ -72,6 +74,7 @@ impl TreeView {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for TreeView {
     fn default() -> Self {
         Self::new()

@@ -19,6 +19,7 @@ use shared::external_lint::contract_external_lint_selector_protocol::IExternalLi
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
 
 // Block 1: struct Definition
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
 }
@@ -27,6 +28,7 @@ pub struct ExternalLintContainer {
 // (No trait impl — root container is wiring only)
 
 // Block 3: constructors & public API
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ExternalLintContainer {
     pub fn new(
         path_norm: Arc<dyn IPathNormalizationPort>,
@@ -150,6 +152,7 @@ impl ExternalLintContainer {
 }
 
 struct DefaultPathNormalization;
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IPathNormalizationPort for DefaultPathNormalization {
     fn normalize_path(&self, path: FilePath) -> FilePath {
         path

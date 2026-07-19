@@ -8,10 +8,12 @@ use shared::orphan_detector::contract_orphan_protocol::{
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct InfrastructureOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for InfrastructureOrphanAnalyzer {
     fn default() -> Self {
         Self {
@@ -22,6 +24,7 @@ impl Default for InfrastructureOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl InfrastructureOrphanAnalyzer {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }

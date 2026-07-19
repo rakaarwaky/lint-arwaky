@@ -12,14 +12,17 @@ use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupInstallerAdapter;
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for SetupInstallerAdapter {
     fn default() -> Self {
         Self::new()
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupInstallerAdapter {
     pub fn new() -> Self {
         let _dummy = ProjectLanguage::new("rust");

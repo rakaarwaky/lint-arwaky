@@ -25,10 +25,12 @@ use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
 use std::sync::Arc;
 
 /// Business logic for generating setup and configuration artifacts.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementProcessor {
     installer: Arc<dyn ISetupInstallerPort>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupManagementProcessor {
     pub fn new(installer: Arc<dyn ISetupInstallerPort>) -> Self {
         Self { installer }
@@ -36,6 +38,7 @@ impl SetupManagementProcessor {
 }
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ISetupManagementProtocol for SetupManagementProcessor {
     /// Generate .env content for the lint-arwaky environment.
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO {

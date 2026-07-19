@@ -30,6 +30,7 @@ use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
 /// CheckContext — DI container struct holding all analysis subsystems.
 /// Defined in the surfaces layer because surfaces are the primary consumers.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CheckContext {
     pub code_analysis_linter:
         Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
@@ -65,6 +66,8 @@ pub struct CheckCommandsSurface {
     pub factory: Option<OrchestratorFactory>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 2: Public Contract ─────────────────────────────
 impl CheckCommandsSurface {
     pub fn new(ctx: CheckContext) -> Self {
         Self {

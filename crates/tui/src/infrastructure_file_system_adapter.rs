@@ -14,14 +14,17 @@ use shared::tui::contract_file_system_port::IFileSystemPort;
 use shared::tui::taxonomy_file_entry_vo::FileEntry;
 use std::path::Path;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileSystemAdapter;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileSystemAdapter {
     pub fn new() -> Self {
         Self
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for FileSystemAdapter {
     fn default() -> Self {
         Self::new()

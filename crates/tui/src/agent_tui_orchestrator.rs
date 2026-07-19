@@ -11,16 +11,19 @@ use std::sync::Arc;
 
 /// TuiOrchestrator — the agent-level aggregate for the TUI.
 /// Wraps an IActionHandlerProtocol and forwards all ITuiAggregate calls to it.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TuiOrchestrator {
     action_handler: Arc<dyn IActionHandlerProtocol>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl TuiOrchestrator {
     pub fn new(action_handler: Arc<dyn IActionHandlerProtocol>) -> Self {
         Self { action_handler }
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ITuiAggregate for TuiOrchestrator {
     /// Handle a TuiEvent by delegating to the action handler's state machine.
     fn handle_event(&self, state: &mut AppState, event: TuiEvent) {

@@ -4,6 +4,7 @@ use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use std::sync::Arc;
 
 // Block 1: struct Definition
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupContainer {
     aggregate: Arc<dyn SetupManagementAggregate>,
     protocol: Arc<dyn ISetupManagementProtocol>,
@@ -13,6 +14,7 @@ pub struct SetupContainer {
 // (No trait impl — root container is wiring only)
 
 // Block 3: constructors & public API
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SetupContainer {
     pub fn new() -> Self {
         let installer =
@@ -36,6 +38,7 @@ impl SetupContainer {
         self.protocol.clone()
     }
 }
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for SetupContainer {
     fn default() -> Self {
         Self::new()

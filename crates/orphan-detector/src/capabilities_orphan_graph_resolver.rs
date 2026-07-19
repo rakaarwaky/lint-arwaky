@@ -15,10 +15,12 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 /// Build graph context and identify entry points for orphan analysis.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanGraphResolver {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for OrphanGraphResolver {
     fn default() -> Self {
         Self {
@@ -135,6 +137,7 @@ fn inh_re() -> Option<&'static Regex> {
         .as_ref()
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl OrphanGraphResolver {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }

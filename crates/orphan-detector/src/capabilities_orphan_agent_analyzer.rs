@@ -7,14 +7,17 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentOrphanAnalyzer {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {
         Self::new()
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl AgentOrphanAnalyzer {
     pub fn new() -> Self {
         Self {}

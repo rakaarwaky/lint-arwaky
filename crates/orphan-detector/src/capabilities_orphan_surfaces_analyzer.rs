@@ -13,10 +13,12 @@ use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfacesOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {
         Self {
@@ -27,6 +29,7 @@ impl Default for SurfacesOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl SurfacesOrphanAnalyzer {
     pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
         Self { extractor }

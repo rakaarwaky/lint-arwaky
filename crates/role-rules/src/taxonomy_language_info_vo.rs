@@ -5,6 +5,7 @@ use shared::taxonomy_source_vo::SourceContentVO;
 
 /// Pre-computed language flags for a source file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct LanguageInfo {
     pub is_rs: bool,
     pub is_py: bool,
@@ -12,6 +13,8 @@ pub struct LanguageInfo {
     pub lang: DetLang,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 2: Public Contract ─────────────────────────────
 impl LanguageInfo {
     /// Detect language from a `SourceContentVO`.
     pub fn new(source: &SourceContentVO) -> Self {

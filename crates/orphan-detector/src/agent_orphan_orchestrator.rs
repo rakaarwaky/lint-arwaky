@@ -46,6 +46,7 @@ use shared::role_rules::taxonomy_layer_names_constant::{
 
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
@@ -56,6 +57,7 @@ pub struct ArchOrphanAnalyzer {
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ArchOrphanAnalyzer {
     pub fn new(
         resolver: Arc<dyn IOrphanGraphResolverProtocol>,
@@ -78,6 +80,7 @@ impl ArchOrphanAnalyzer {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         // Bridge the raw &[String] parameter from IOrphanAggregate into the

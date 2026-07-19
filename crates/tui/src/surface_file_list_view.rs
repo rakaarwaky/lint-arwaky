@@ -13,8 +13,10 @@ use ratatui::Frame;
 use shared::tui::taxonomy_file_entry_vo::AesLayer;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileListView;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileListView {
     pub fn new() -> Self {
         Self
@@ -107,6 +109,7 @@ impl FileListView {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for FileListView {
     fn default() -> Self {
         Self::new()

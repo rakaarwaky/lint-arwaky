@@ -3,8 +3,10 @@ use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtoc
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ChangeAnalyzer;
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     fn analyze(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
         let mut deduped: HashMap<String, WatchEvent> = HashMap::new();
@@ -30,6 +32,7 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ChangeAnalyzer {
     pub fn new() -> Self {
         Self

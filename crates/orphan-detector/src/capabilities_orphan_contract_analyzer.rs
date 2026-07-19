@@ -59,11 +59,13 @@ fn re_interface() -> Option<&'static Regex> {
 // FILE CACHE — built ONCE, passed by reference
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileCache {
     pub contents: HashMap<String, Arc<str>>,
     pub basenames: HashMap<String, String>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileCache {
     pub fn build(
         all_files: &[FilePath],
@@ -108,6 +110,7 @@ pub struct ContractOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
         Self {

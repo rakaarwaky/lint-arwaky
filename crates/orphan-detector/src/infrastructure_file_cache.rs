@@ -9,14 +9,17 @@ thread_local! {
     static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
 }
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanFileCache;
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for OrphanFileCache {
     fn default() -> Self {
         Self::new()
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl OrphanFileCache {
     pub fn new() -> Self {
         Self

@@ -12,6 +12,7 @@ use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 use tokio::sync::broadcast;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct NotifyWatchProvider {
     watcher: Mutex<Option<notify_debouncer_mini::Debouncer<RecommendedWatcher>>>,
     tx: broadcast::Sender<WatchEvent>,
@@ -19,6 +20,7 @@ pub struct NotifyWatchProvider {
 }
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IWatchProviderPort for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
         let path_str = config.path.value.clone();
@@ -112,6 +114,7 @@ impl IWatchProviderPort for NotifyWatchProvider {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl NotifyWatchProvider {
     pub fn new() -> Self {
         let (tx, _) = broadcast::channel(256);

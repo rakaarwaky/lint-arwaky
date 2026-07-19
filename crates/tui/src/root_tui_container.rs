@@ -11,12 +11,15 @@ use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use std::sync::Arc;
 
 // Block 1: struct Definition
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TuiContainer;
 
 // ─── Block 2: Public Contract ─────────────────────────────
 // (No trait impl — root container is wiring only)
 
 // Block 3: constructors & public API
+// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 2: Public Contract ─────────────────────────────
 impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
         crate::root_logging_entry::init()?;

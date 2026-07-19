@@ -15,9 +15,11 @@ use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesRoleChecker {}
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
     fn check_capability_routing(
         &self,
@@ -29,6 +31,7 @@ impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl CapabilitiesRoleChecker {
     pub fn new() -> Self {
         Self {}

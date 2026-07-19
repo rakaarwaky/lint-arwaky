@@ -7,14 +7,17 @@ use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagn
 use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ReportFormatterHelper;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ReportFormatterHelper {
     pub fn new() -> Self {
         Self
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for ReportFormatterHelper {
     fn default() -> Self {
         Self::new()

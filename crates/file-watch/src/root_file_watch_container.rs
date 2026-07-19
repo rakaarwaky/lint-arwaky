@@ -9,6 +9,7 @@ use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtoc
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 
 // Block 1: struct Definition
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FileWatchContainer {
     provider: Arc<NotifyWatchProvider>,
 }
@@ -17,6 +18,7 @@ pub struct FileWatchContainer {
 // (No trait impl — root container is wiring only)
 
 // Block 3: constructors & public API
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl FileWatchContainer {
     pub fn new() -> Self {
         Self {
@@ -38,6 +40,7 @@ impl FileWatchContainer {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for FileWatchContainer {
     fn default() -> Self {
         Self::new()

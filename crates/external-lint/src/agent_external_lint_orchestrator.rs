@@ -18,12 +18,14 @@ use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggreg
 use shared::external_lint::contract_external_lint_language_detector_port::IExternalLintLanguageDetectorPort;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
     language_detector: Arc<dyn IExternalLintLanguageDetectorPort>,
     selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ExternalLintOrchestrator {
     pub fn new(
         adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
@@ -39,6 +41,7 @@ impl ExternalLintOrchestrator {
 }
 
 #[async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {
         let detected = self.language_detector.detect_languages(path).await;

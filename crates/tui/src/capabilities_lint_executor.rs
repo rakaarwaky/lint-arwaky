@@ -89,6 +89,7 @@ pub fn discover_adapters() -> Vec<AdapterInfo> {
     list
 }
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
@@ -107,6 +108,7 @@ pub struct LintExecutor {
     formatter: Arc<dyn IReportFormatterProtocol>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl LintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
@@ -470,6 +472,7 @@ impl LintExecutor {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let results = self.code_analysis.run_code_analysis(path);

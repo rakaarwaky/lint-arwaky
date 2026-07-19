@@ -11,14 +11,17 @@ use std::sync::Arc;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WatchCommandsSurface {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for WatchCommandsSurface {
     fn default() -> Self {
         Self::new()
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl WatchCommandsSurface {
     pub fn new() -> Self {
         Self {}

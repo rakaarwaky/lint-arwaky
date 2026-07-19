@@ -46,6 +46,7 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
     }
 }
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -63,6 +64,7 @@ pub struct McpServerOrchestrator {
     pub(crate) deps: McpServerDependencies,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl McpServerOrchestrator {
     pub fn new(deps: McpServerDependencies) -> Self {
         Self { deps }
@@ -87,6 +89,7 @@ fn resolve_path(path: &str) -> Option<String> {
 }
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IMcpServerAggregate for McpServerOrchestrator {
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
         let action = args.action.clone();

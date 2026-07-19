@@ -20,8 +20,10 @@ type ShortcutRows = (
     Vec<(&'static str, &'static str)>,
 );
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ShortcutComponent;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ShortcutComponent {
     pub fn new() -> Self {
         Self
@@ -44,6 +46,7 @@ impl ShortcutComponent {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for ShortcutComponent {
     fn default() -> Self {
         Self::new()

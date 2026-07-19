@@ -13,6 +13,7 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
 // Block 1: struct Definition
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -30,6 +31,8 @@ pub struct McpContainer {
 // (No trait impl — root container is wiring only)
 
 // Block 3: constructors & public API
+// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 2: Public Contract ─────────────────────────────
 impl McpContainer {
     pub fn new_default() -> Self {
         let import_container =

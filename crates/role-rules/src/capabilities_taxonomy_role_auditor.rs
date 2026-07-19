@@ -24,9 +24,11 @@ use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 use std::path::Path;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
         self.check_vo()
@@ -61,6 +63,7 @@ impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
         Self {}

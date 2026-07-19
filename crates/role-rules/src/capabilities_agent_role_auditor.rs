@@ -17,9 +17,11 @@ use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentRoleChecker {}
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IAgentRoleChecker for AgentRoleChecker {
     fn check_container(
         &self,
@@ -56,6 +58,7 @@ impl IAgentRoleChecker for AgentRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}

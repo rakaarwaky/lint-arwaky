@@ -3,6 +3,7 @@ use rmcp::schemars::JsonSchema;
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, JsonSchema)]
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ExecuteCommandArgs {
     /// The command action to execute (e.g. "scan", "check", "security", "doctor")
     pub action: String,

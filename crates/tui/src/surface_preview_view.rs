@@ -15,8 +15,10 @@ use ratatui::widgets::{
 use ratatui::Frame;
 use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct PreviewView;
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl PreviewView {
     pub fn new() -> Self {
         Self
@@ -88,6 +90,7 @@ impl PreviewView {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl Default for PreviewView {
     fn default() -> Self {
         Self::new()

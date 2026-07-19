@@ -18,8 +18,10 @@ use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRo
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct InfrastructureRoleChecker {}
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     fn check_port_implementation(
         &self,
@@ -40,6 +42,7 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl InfrastructureRoleChecker {
     pub fn new() -> Self {
         Self {}

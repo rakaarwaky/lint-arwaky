@@ -22,12 +22,14 @@ use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderPort>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
     change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IWatchAggregate for WatchOrchestrator {
     fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
         let rt = match tokio::runtime::Runtime::new() {
@@ -41,6 +43,7 @@ impl IWatchAggregate for WatchOrchestrator {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderPort>,

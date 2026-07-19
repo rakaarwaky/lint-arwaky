@@ -14,12 +14,15 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct FixCommandsSurface {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub fix_orchestrator_factory:
         Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 2: Public Contract ─────────────────────────────
 impl FixCommandsSurface {
     pub fn new(
         code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,

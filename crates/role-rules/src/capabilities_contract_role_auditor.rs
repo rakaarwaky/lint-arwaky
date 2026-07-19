@@ -30,9 +30,11 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}
 
 #[async_trait::async_trait]
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IContractRoleChecker for ContractRoleChecker {
     fn check_port(
         &self,
@@ -56,6 +58,7 @@ impl IContractRoleChecker for ContractRoleChecker {
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}

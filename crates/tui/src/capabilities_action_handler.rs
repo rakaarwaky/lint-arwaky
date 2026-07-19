@@ -15,11 +15,13 @@ use std::sync::Arc;
 
 /// ActionHandler — pure state machine for TUI interaction.
 /// Owns the filesystem adapter and lint executor, bridging UI events to backend operations.
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ActionHandler {
     fs_port: Arc<dyn IFileSystemPort>,
     lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ActionHandler {
     pub fn new(
         fs_port: Arc<dyn IFileSystemPort>,
@@ -454,6 +456,7 @@ impl ActionHandler {
     }
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IActionHandlerProtocol for ActionHandler {
     fn handle(&self, state: &mut AppState, event: TuiEvent) {
         ActionHandler::handle(self, state, event);

@@ -33,6 +33,7 @@ use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
     config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
@@ -54,6 +55,7 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
     }
 }
 
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl RoleOrchestrator {
     pub fn new(
         aggregate: Arc<dyn IRoleAggregate>,
@@ -234,6 +236,7 @@ pub struct RoleAggregateImpl {
     agent: Arc<dyn IAgentRoleChecker>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IRoleAggregate for RoleAggregateImpl {
     fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
         self.taxonomy.as_ref()

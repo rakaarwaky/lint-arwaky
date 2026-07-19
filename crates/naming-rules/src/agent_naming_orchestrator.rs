@@ -27,7 +27,6 @@ use std::sync::Arc;
 ///   - analyzer: provides layer configuration and detection
 ///   - fs: filesystem access for walking directories
 ///   - ignored_patterns: paths to skip during file collection
-
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
