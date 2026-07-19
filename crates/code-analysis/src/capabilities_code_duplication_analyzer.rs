@@ -187,7 +187,8 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         _fs: &dyn IFileSystemPort,
     ) -> Vec<AesCodeAnalysisViolation> {
         let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
-        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
+        let src =
+            crate::agent_code_analysis_orchestrator::detect_source_dir(std::path::Path::new(&root));
         let config = default_aes_config();
         let ignored_vec: Vec<String> = config
             .ignored_paths

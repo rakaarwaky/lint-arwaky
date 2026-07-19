@@ -20,18 +20,6 @@ use shared::taxonomy_source_vo::SourceContentVO;
 
 pub struct InfrastructureRoleChecker {}
 
-impl Default for InfrastructureRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl InfrastructureRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
 impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
     fn check_port_implementation(
         &self,
@@ -53,6 +41,10 @@ impl IInfrastructureRoleChecker for InfrastructureRoleChecker {
 }
 
 impl InfrastructureRoleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+
     fn _check_rust(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let has_import = content.contains("use ")
             && (content.contains("_port::") || content.contains("_protocol::"));
@@ -131,5 +123,11 @@ impl InfrastructureRoleChecker {
                 AesRoleViolation::InfrastructureNoPort { reason: None }.to_string(),
             ));
         }
+    }
+}
+
+impl Default for InfrastructureRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -17,11 +17,7 @@ pub struct DummyImportChecker {
     parser: Arc<dyn IImportParserPort>,
 }
 
-impl DummyImportChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
-        Self { parser }
-    }
-}
+// ─── Block 2: Public Contract (IDummyImportCheckerProtocol) ───
 
 #[async_trait]
 impl IDummyImportCheckerProtocol for DummyImportChecker {
@@ -566,6 +562,14 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
                 }
             }
         }
+    }
+}
+
+// ─── Block 3: Constructors & Private Helpers ───
+
+impl DummyImportChecker {
+    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+        Self { parser }
     }
 
     fn python_class_inherits(&self, line: &str, agg_type: &str) -> bool {

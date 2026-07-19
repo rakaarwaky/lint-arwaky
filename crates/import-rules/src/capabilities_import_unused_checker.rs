@@ -1,11 +1,5 @@
 // PURPOSE: UnusedImportRuleChecker — IUnusedImportProtocol for AES203: detect imports that are never used in the code (Rust/Python/JS)
 // AES203 rule: Every import must be used at least once in the file that declares it.
-// Detection strategies:
-//   - Python/standard imports: extract imported aliases → find used symbols → diff.
-//   - Rust/JS imports: extract named imports → check `is_name_used` for each.
-//   - Respects __all__ exports (Python) and self-use patterns.
-//
-// Merged from capabilities_unused_analyzer.rs — all computation logic is now inline.
 
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -23,28 +17,97 @@ use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
+
 /// Identifies imports that are declared but never used in the file (AES203).
-///
-/// Algorithm:
-///   1. Extract all imported aliases/symbols from the source (Python `import X` / `from Y import Z`,
-///      Rust `use X::Y`, JS `import X from Y`).
-///   2. Extract all used symbols by scanning the file content (inline computation).
-///   3. If a symbol is exported (e.g., Python `__all__`), it is NOT unused (re-export pattern).
-///   4. For Rust/JS: additional extraction of named imports + per-name usage check.
-///   5. Each unused import becomes an AES203 MEDIUM violation.
 pub struct UnusedImportRuleChecker {
     parser: Arc<dyn IImportParserPort>,
 }
+
+// ─── Block 2: Public Contract (IUnusedImportProtocol) ───
+
+impl IUnusedImportProtocol for UnusedImportRuleChecker {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+        let Ok(content_msg) = self.parser.read_file_to_message(path) else {
+            return vec![];
+        };
+        let content = content_msg.value().to_string();
+        let imported_aliases = self.extract_imported_aliases(&content);
+        let exported_symbols = self.extract_exported_symbols(&content);
+        let used_symbols = self.extract_used_symbols(&content, &imported_aliases);
+        let mut unused: Vec<String> = Vec::new();
+        for alias in imported_aliases.keys() {
+            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
+                unused.push(alias.value().to_string());
+            }
+        }
+        let rust_js_imports = self.extract_rust_js_imports(&content);
+        for (name, line_idx) in rust_js_imports {
+            if !self.is_name_used(&name, &content, line_idx) {
+                unused.push(name.value().to_string());
+            }
+        }
+        unused.into_iter().map(LintMessage::new).collect()
+    }
+
+    fn check_unused_imports(
+        &self,
+        file: &FilePath,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let imported_aliases = self.extract_imported_aliases(content);
+        let exported_symbols = self.extract_exported_symbols(content);
+        let used_symbols = self.extract_used_symbols(content, &imported_aliases);
+        for alias in imported_aliases.keys() {
+            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
+                let line_num = self
+                    .parser
+                    .find_import_line_number(content, alias.value())
+                    .value() as usize;
+                violations.push(LintResult::new_arch(
+                    file.value(),
+                    line_num,
+                    "AES203",
+                    Severity::MEDIUM,
+                    AesImportViolation::FixUnusedImport {
+                        reason: Some(LintMessage::new(format!(
+                            "Import '{}' is declared but never used in this file.",
+                            alias
+                        ))),
+                    }
+                    .to_string(),
+                ));
+            }
+        }
+        let rust_js_imports = self.extract_rust_js_imports(content);
+        for (name, line_idx) in rust_js_imports {
+            if !self.is_name_used(&name, content, line_idx.clone()) {
+                violations.push(LintResult::new_arch(
+                    file.value(),
+                    line_idx.value() as usize,
+                    "AES203",
+                    Severity::MEDIUM,
+                    AesImportViolation::FixUnusedImport {
+                        reason: Some(LintMessage::new(format!(
+                            "Import '{}' is declared but never used in this file.",
+                            name.value()
+                        ))),
+                    }
+                    .to_string(),
+                ));
+            }
+        }
+    }
+}
+
+// ─── Block 3: Constructors & Private Helpers ───
 
 impl UnusedImportRuleChecker {
     pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
         Self { parser }
     }
-}
 
-static ALL_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r#"__all__\s*=\s*\[([^\]]*)\]"#).ok());
-
-impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn is_rust_trait_import(&self, name: &SymbolName) -> bool {
         let name_str = name.value();
         if name_str.starts_with('I')
@@ -153,7 +216,6 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 continue;
             }
 
-            // Rust `use` statements: `use std::collections::HashMap;` or `use serde::{A, B};`
             if let Some(use_part) = trimmed.strip_prefix("use ") {
                 let use_part = use_part.trim_end_matches(';').trim();
                 if !use_part.is_empty()
@@ -401,78 +463,5 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             .collect::<Vec<_>>()
             .join("\n");
         rest.contains(name.value())
-    }
-
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let Ok(content_msg) = self.parser.read_file_to_message(path) else {
-            return vec![];
-        };
-        let content = content_msg.value().to_string();
-        let imported_aliases = self.extract_imported_aliases(&content);
-        let exported_symbols = self.extract_exported_symbols(&content);
-        let used_symbols = self.extract_used_symbols(&content, &imported_aliases);
-        let mut unused: Vec<String> = Vec::new();
-        for alias in imported_aliases.keys() {
-            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                unused.push(alias.value().to_string());
-            }
-        }
-        let rust_js_imports = self.extract_rust_js_imports(&content);
-        for (name, line_idx) in rust_js_imports {
-            if !self.is_name_used(&name, &content, line_idx) {
-                unused.push(name.value().to_string());
-            }
-        }
-        unused.into_iter().map(LintMessage::new).collect()
-    }
-
-    fn check_unused_imports(
-        &self,
-        file: &FilePath,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let imported_aliases = self.extract_imported_aliases(content);
-        let exported_symbols = self.extract_exported_symbols(content);
-        let used_symbols = self.extract_used_symbols(content, &imported_aliases);
-        for alias in imported_aliases.keys() {
-            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                let line_num = self
-                    .parser
-                    .find_import_line_number(content, alias.value())
-                    .value() as usize;
-                violations.push(LintResult::new_arch(
-                    file.value(),
-                    line_num,
-                    "AES203",
-                    Severity::MEDIUM,
-                    AesImportViolation::FixUnusedImport {
-                        reason: Some(LintMessage::new(format!(
-                            "Import '{}' is declared but never used in this file.",
-                            alias
-                        ))),
-                    }
-                    .to_string(),
-                ));
-            }
-        }
-        let rust_js_imports = self.extract_rust_js_imports(content);
-        for (name, line_idx) in rust_js_imports {
-            if !self.is_name_used(&name, content, line_idx.clone()) {
-                violations.push(LintResult::new_arch(
-                    file.value(),
-                    line_idx.value() as usize,
-                    "AES203",
-                    Severity::MEDIUM,
-                    AesImportViolation::FixUnusedImport {
-                        reason: Some(LintMessage::new(format!(
-                            "Import '{}' is declared but never used in this file.",
-                            name.value()
-                        ))),
-                    }
-                    .to_string(),
-                ));
-            }
-        }
     }
 }

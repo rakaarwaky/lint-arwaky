@@ -1,7 +1,6 @@
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules per layer definition and scope rules
 // AES202 rule: Each architectural layer (or scoped sub-layer) may declare a set of mandatory imports.
 // Files belonging to that layer MUST import at least one symbol from each required scope.
-// Two paths: (1) layer-definition mandatory list, (2) per-rule scope mandatory conditions.
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -21,35 +20,18 @@ use shared::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
 /// Enforces AES202 mandatory import rules — both layer-level and scope-level.
-///
-/// Workflow (layer-level):
-///   1. If the layer definition has no mandatory list, skip.
-///   2. Skip Python __init__.py files and files in the exception list.
-///   3. Read file content and parse all import lines.
-///   4. For each required scope: check if any import line matches
-///      (exact layer string match or suffix-based scope match).
-///   5. Report each missing required import as an AES202 HIGH violation.
-///
-/// Workflow (scope-level):
-///   - Same logic but reads mandatory from per-rule scope definitions instead.
 pub struct ArchImportMandatoryChecker {
     parser: Arc<dyn IImportParserPort>,
 }
 
-impl ArchImportMandatoryChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
-        Self { parser }
-    }
-}
+// ─── Block 2: Public Contract (IImportMandatoryProtocol) ───
 
 #[async_trait]
 impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
-    /// Returns the rule identifier (e.g., "AES202").
     fn rule_name(&self) -> Identity {
         Identity::new("AES202")
     }
 
-    /// Run both layer-level and scope-level mandatory import checks on every file.
     async fn run_mandatory_imports(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -61,7 +43,6 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             let f_str = f.to_string();
             let basename = f.basename();
 
-            // Step 2: Check Rule Exception directly (avoid LayerDefinition overwrite bugs)
             let mut is_exception = false;
             for r in &analyzer.config().rules {
                 if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename) {
@@ -73,16 +54,22 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                 continue;
             }
 
-            // Step 3-4: Detect layer and run layer-level mandatory check
             let _root_dir_str = root_dir.to_string();
             if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 if let Some(def) = analyzer.get_layer_def(&layer) {
                     self.check_mandatory_imports(&f_str, &def, &mut results.values);
                 }
             }
-            // Step 5: Run scope-level mandatory check
             self.check_scope_mandatory_imports(&f_str, analyzer.config(), &mut results.values);
         }
+    }
+}
+
+// ─── Block 3: Constructors & Private Helpers ───
+
+impl ArchImportMandatoryChecker {
+    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+        Self { parser }
     }
 
     /// Check mandatory imports from layer definition (global layer rules).
@@ -92,12 +79,10 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        // Step 1: Skip if no mandatory imports defined
         if definition.mandatory.values.is_empty() {
             return;
         }
 
-        // Step 2-3: Skip special files and exceptions
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
@@ -108,7 +93,6 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             return;
         }
 
-        // Step 4: Read file and parse import lines
         let Ok(content_msg) = self.parser.read_file_to_message(&file_path) else {
             return;
         };
@@ -116,17 +100,14 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         let file_content = FileContentVO::new(content);
         let import_lines = self.parser.parse_import_lines(&file_content);
 
-        // Step 5: Derive source layer from filename (first prefix segment)
         let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
         let source_layer = stem.split('_').next().map_or("unknown", |s| s);
 
-        // Step 6: Check each required scope against actual imports
         for required in &definition.mandatory.values {
             let required_identity = Identity::new(required);
             let (layer, suffixes) = self.parser.resolve_scope(&required_identity);
             let layer_str = layer.value();
 
-            // Step 6a-c: Check if any import line matches the required scope
             let is_present = if suffixes.is_empty() {
                 import_lines
                     .iter()
@@ -137,7 +118,6 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     .any(|(_, l)| self.parser.import_matches_scope(l, &layer, &suffixes))
             };
 
-            // Step 6d: Report missing import
             if !is_present {
                 violations.push(LintResult::new_arch(
                     file,
@@ -155,35 +135,29 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         }
     }
 
-    /// Check mandatory imports from per-rule scope definitions (fine-grained, per-suffix rules).
+    /// Check mandatory imports from per-rule scope definitions.
     fn check_scope_mandatory_imports(
         &self,
         file: &str,
         config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        // Step 1: Extract file stem and suffix
         let file_path = filepath_or_default(FilePath::new(file.to_string()));
         let basename_identity = self.parser.get_basename(&file_path);
         let basename = basename_identity.value();
-        // Step 2: Skip Rust entry files
         if RUST_ENTRY_FILES.contains(&basename) {
             return;
         }
         let stem = basename.rsplit('.').next_back().map_or(basename, |s| s);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
-        // Step 3: Parse import lines
         let import_lines = self.parser.read_import_lines(&file_path);
 
-        // Step 4: Check each rule against this file
         for rule in &config.rules {
-            // Step 4a: Skip rules without mandatory imports
             if rule.mandatory.values.is_empty() {
                 continue;
             }
 
-            // Step 4b-c: Check scope match
             let scope_identity = Identity::new(&rule.scope.value);
             let (rule_layer, rule_suffixes) = self.parser.resolve_scope(&scope_identity);
             let rule_layer_str = rule_layer.value();
@@ -198,7 +172,6 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                 }
             }
 
-            // Step 4d: Check each required import
             for required in &rule.mandatory.values {
                 let required_identity = Identity::new(required);
                 let (req_layer, req_suffixes) = self.parser.resolve_scope(&required_identity);

@@ -34,12 +34,6 @@ fn has_suffix(file: &str, suffix: &str) -> bool {
 
 pub struct TaxonomyRoleChecker {}
 
-impl Default for TaxonomyRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[async_trait::async_trait]
 impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
@@ -319,5 +313,11 @@ impl TaxonomyRoleChecker {
                 ));
             }
         }
+    }
+}
+
+impl Default for TaxonomyRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

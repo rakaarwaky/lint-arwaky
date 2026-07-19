@@ -32,7 +32,6 @@ related:
   - fix-capability-structure-rust
   - create-missing-protocols-rust
 ---
-
 # create-capabilities-rust
 
 ## Purpose
@@ -45,22 +44,22 @@ Create and validate Rust **capabilities layer** files following clean architectu
 
 **Capabilities Layer (`capabilities_*.rs`)**
 
-| Allowed                               | Forbidden                                  |
-| ------------------------------------- | ------------------------------------------ |
-| Computation, validation, calculation  | File I/O (`std::fs`, `File::open`)         |
-| Data transformation, business rules   | Network calls (`reqwest`, `hyper`)         |
-| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`)   |
-| Trait implementation                  | Direct import from `infrastructure_*`      |
-|                                       | Direct import from `agent_*`               |
-|                                       | Direct import from `capabilities_*` (self) |
+| Allowed                               | Forbidden                                    |
+| ------------------------------------- | -------------------------------------------- |
+| Computation, validation, calculation  | File I/O (`std::fs`, `File::open`)       |
+| Data transformation, business rules   | Network calls (`reqwest`, `hyper`)       |
+| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`) |
+| Trait implementation                  | Direct import from`infrastructure_*`       |
+|                                       | Direct import from`agent_*`                |
+|                                       | Direct import from`capabilities_*` (self)  |
 
 ### Structural Rules (All Layers)
 
 - **1 file = 1 impl struct** — each capabilities file contains exactly ONE main impl struct
-- **All data classes in shared** — no structs/enums with data may be defined outside shared/taxonomy
+- **All data classes in shared** — no structs/enums/cons with data may be defined outside shared/folder-name/taxonomy_
 - **Fields must use DI** — impl struct fields should be `Arc<dyn Trait>` objects, not concrete types
 - **Helper functions stay in layer** — helper methods that support the impl struct remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) should be extracted to `*_utility.rs` modules in shared/taxonomy
+- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) should be extracted to `*file_name_utility.rs` modules in shared/folder-name/taxonomy_
 
 ### The 3-Block Structure
 
@@ -90,8 +89,8 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 ## Naming Convention
 
-| Layer              | File Pattern          | Trait File                     | Trait Name         |
-| ------------------ | --------------------- | ------------------------------ | ------------------ |
+| Layer                    | File Pattern            | Trait File                       | Trait Name           |
+| ------------------------ | ----------------------- | -------------------------------- | -------------------- |
 | **Capabilities**   | `capabilities_*.rs`   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  |
 | **Infrastructure** | `infrastructure_*.rs` | `contract_<name>_port.rs`      | `I<Name>Port`      |
 | **Agents**         | `agent_*.rs`          | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` |
@@ -176,8 +175,8 @@ Create `contract_<name>_protocol.rs` in the shared crate with all public method 
 
 **Trait location:**
 
-| Crate           | Trait Path                                                 |
-| --------------- | ---------------------------------------------------------- |
+| Crate           | Trait Path                                                   |
+| --------------- | ------------------------------------------------------------ |
 | import-rules    | `crates/shared/src/import_rules/contract_*_protocol.rs`    |
 | code-analysis   | `crates/shared/src/code_analysis/contract_*_protocol.rs`   |
 | orphan-detector | `crates/shared/src/orphan_detector/contract_*_protocol.rs` |
@@ -327,11 +326,11 @@ When fixing cross-import violations in capabilities, choose the right approach:
 
 Use when the code is **stateless, pure logic** with no side effects:
 
-| Condition                                   | Example                                     |
-| ------------------------------------------- | ------------------------------------------- |
-| Pure function — no `&self`, no struct state | `parse_path()`, `normalize_name()`          |
-| Stateless — all data via parameters         | `fn compute_distance(a: &Point, b: &Point)` |
-| No side effects — deterministic output      | `fn sanitize_string(input: &str) -> String` |
+| Condition                                     | Example                                       |
+| --------------------------------------------- | --------------------------------------------- |
+| Pure function — no`&self`, no struct state | `parse_path()`, `normalize_name()`        |
+| Stateless — all data via parameters          | `fn compute_distance(a: &Point, b: &Point)` |
+| No side effects — deterministic output       | `fn sanitize_string(input: &str) -> String` |
 
 ```rust
 // taxonomy_path_utility.rs (TAXONOMY LAYER)
@@ -349,7 +348,7 @@ Use when the code requires **state, side effects, or layer-specific behavior**:
 
 | Condition                     | Example                                         |
 | ----------------------------- | ----------------------------------------------- |
-| Needs `&self` / struct state  | Struct with fields for data/mutation            |
+| Needs`&self` / struct state | Struct with fields for data/mutation            |
 | Has side effects / I/O        | File operations, network calls, DB queries      |
 | Layer-specific implementation | Adapter that depends on concrete infrastructure |
 

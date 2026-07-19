@@ -24,20 +24,14 @@ pub struct ImportForbiddenChecker {
     parser: Arc<dyn IImportParserPort>,
 }
 
-impl ImportForbiddenChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
-        Self { parser }
-    }
-}
+// ─── Block 2: Public Contract (IImportForbiddenProtocol) ───
 
 #[async_trait]
 impl IImportForbiddenProtocol for ImportForbiddenChecker {
-    /// Returns the rule identifier (e.g., "AES201").
     fn rule_name(&self) -> Identity {
         Identity::new("AES201")
     }
 
-    /// Run both layer-level and scope-level forbidden import checks on every file.
     async fn check_forbidden_imports(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -47,7 +41,6 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
     ) {
         let config = analyzer.config();
 
-        // 1. PRE-COMPUTE: Ekstrak exception AES201 ke HashSet untuk lookup O(1)
         let aes201_exceptions: HashSet<String> = config
             .rules
             .iter()
@@ -55,14 +48,12 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             .flat_map(|r| r.exceptions.values.iter().cloned())
             .collect();
 
-        // 2. PRE-COMPUTE: Default forbidden list untuk surfaces (menghindari alokasi berulang)
         let default_surface_forbidden = vec![
             "agent".to_string(),
             "infrastructure".to_string(),
             "capabilities".to_string(),
         ];
 
-        // 3. TRACKER: Mencegah pelaporan duplikat (File, Line, Rule)
         let mut processed_violations: HashSet<(String, usize, String)> = HashSet::new();
 
         let _root_dir_str = root_dir.to_string();
@@ -70,12 +61,10 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         for f in &files.values {
             let basename = f.basename();
 
-            // Step 2: Cek Exception dengan O(1)
             if aes201_exceptions.contains(&basename) {
                 continue;
             }
 
-            // Step 3-4: Deteksi layer dan jalankan pengecekan level layer
             if let Some(layer) = analyzer.detect_layer(f, root_dir) {
                 let layer_str = layer.clone();
                 if let Some(def) = analyzer.get_layer_def(&layer_str) {
@@ -90,7 +79,6 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
                 }
             }
 
-            // Step 5: Jalankan pengecekan level scope
             self.check_scope_forbidden_imports(
                 f,
                 config,
@@ -98,6 +86,14 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
                 &mut processed_violations,
             );
         }
+    }
+}
+
+// ─── Block 3: Constructors & Private Helpers ───
+
+impl ImportForbiddenChecker {
+    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+        Self { parser }
     }
 
     /// Check forbidden imports from layer definition (global layer rules).
@@ -112,7 +108,6 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
     ) {
         let basename = file_path.basename();
 
-        // Skip exceptions dari definisi layer
         if definition
             .exceptions
             .values
@@ -165,12 +160,10 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
         let basename_identity = self.parser.get_basename(file_path);
         let basename = basename_identity.value();
 
-        // Skip Rust entry files
         if RUST_ENTRY_FILES.contains(&basename) {
             return;
         }
 
-        // Ekstraksi stem dan suffix secara efisien
         let stem = basename.rsplit('.').next_back().unwrap_or(basename);
         let suffix = stem.rsplit('_').next().unwrap_or("");
 
@@ -188,11 +181,9 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             let (rule_layer, rule_suffixes) = self.parser.resolve_scope(&scope_identity);
             let rule_layer_str = rule_layer.value();
 
-            // Pengecekan prefix tanpa alokasi `format!`
             if !stem.starts_with(rule_layer_str) {
                 continue;
             }
-            // Pastikan karakter setelah prefix adalah underscore '_'
             if stem.len() > rule_layer_str.len() && stem.as_bytes()[rule_layer_str.len()] != b'_' {
                 continue;
             }
@@ -232,7 +223,6 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
 
         let file_str = file_path.to_string();
 
-        // 1. PRE-RESOLVE Forbidden Scopes (Menghindari parsing O(Lines * Forbidden))
         let resolved_forbidden: Vec<(&String, LayerNameVO, Vec<Identity>)> = rule
             .forbidden_list
             .iter()
@@ -243,7 +233,6 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             })
             .collect();
 
-        // 2. PRE-RESOLVE Allowed Scopes
         let resolved_allowed_strs: Vec<String> = rule
             .allowed_values
             .iter()
@@ -275,19 +264,17 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
             let line_val = line_num.value() as usize;
 
             for (forbidden_name, forbidden_layer, forbidden_suffixes) in &resolved_forbidden {
-                // Cegah duplikasi violation untuk baris yang sama
                 let violation_key = (file_str.clone(), line_val, "AES201".to_string());
                 if processed.contains(&violation_key) {
                     continue;
                 }
 
-                // 3. FIX BUG LOGIKA: Cek apakah import diizinkan secara eksplisit (Allowed List)
                 let is_explicitly_allowed = resolved_allowed_strs.iter().any(|allowed| {
                     module_str.contains(allowed) || segments.contains(&allowed.as_str())
                 });
 
                 if is_explicitly_allowed {
-                    continue; // Lewati, karena ada di daftar 'allowed'
+                    continue;
                 }
 
                 let is_forbidden = if forbidden_suffixes.is_empty() {
@@ -323,7 +310,7 @@ impl IImportForbiddenProtocol for ImportForbiddenChecker {
                         .to_string(),
                     ));
 
-                    break; // Satu violation per baris sudah cukup, lanjut ke baris berikutnya
+                    break;
                 }
             }
         }

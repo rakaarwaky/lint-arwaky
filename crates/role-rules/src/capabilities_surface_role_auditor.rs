@@ -99,15 +99,12 @@ pub fn is_init(f: &FilePath) -> bool {
         || path_str.ends_with("index.js")
 }
 
-pub struct SurfaceRoleChecker {}
+/// Create an AdapterName from a string (helper for _report_aes0306).
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
-impl Default for SurfaceRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+
+pub struct SurfaceRoleChecker {}
 
 #[async_trait::async_trait]
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
@@ -634,5 +631,11 @@ impl SurfaceRoleChecker {
             enclosing_scope: None,
             related_locations: LocationList::new(),
         });
+    }
+}
+
+impl Default for SurfaceRoleChecker {
+    fn default() -> Self {
+        Self::new()
     }
 }

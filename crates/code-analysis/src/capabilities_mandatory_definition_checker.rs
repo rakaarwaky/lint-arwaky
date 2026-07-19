@@ -1,28 +1,20 @@
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/trait/enum/class (IMandatoryClassProtocol).
 // Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
-// ALGORITHM (check_mandatory_class_definition):
-//   1. Skip barrel/constant files (mod.rs, __init__.py, _constant.*)
-//   2. If no LayerDefinition or mandatory_class_definition disabled → skip
-//   3. Check if filename is in exception list
-//   4. Scan passed content for class/struct/trait/enum keyword declarations
-//   5. If none found → AES303 MANDATORY_DEFINITION
-// ALGORITHM (check_dead_inheritance):
-//   1. Iterate lines; skip #[cfg(test)] blocks
-//   2. For each `struct Foo;` (unit struct) → flag unless followed by impl block
-//   3. For each `class Foo: pass` (Python empty class) → flag
-//   4. For each `class Foo {}` (JS/TS empty class) → flag
 use std::path::Path;
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::code_analysis::taxonomy_mandatory_utility::rust_declares_type;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
+// Block 1: struct Definition
 pub struct MandatoryDefinitionChecker {}
 
+// Block 3: constructors
 impl Default for MandatoryDefinitionChecker {
     fn default() -> Self {
         Self::new()
@@ -35,18 +27,7 @@ impl MandatoryDefinitionChecker {
     }
 }
 
-/// Helper: check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
-fn rust_declares_type(line: &str) -> bool {
-    let keywords = ["struct", "enum", "trait"];
-    for kw in keywords {
-        if line.contains(kw) && !line.contains('(') {
-            return true;
-        }
-    }
-    false
-}
-
-/// AES303 sub-check 1: file must have at least one struct/enum/trait/class definition
+// Block 2: impl Trait for Struct (Public Contract)
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
         &self,
@@ -106,7 +87,6 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     }
 }
 
-/// AES303 sub-check 2: detect empty struct/impl blocks (dead/empty definitions)
 impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
@@ -114,7 +94,6 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
         let mut in_test_module = false;
         while i < lines.len() {
             let t = lines[i].trim();
-            // Skip test modules
             if t.starts_with("#[cfg(test)]") {
                 in_test_module = true;
                 i += 1;
@@ -124,9 +103,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 i += 1;
                 continue;
             }
-            // Rust: unit struct `struct Foo;` (tuple structs `struct Foo(i32);` excluded)
             if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
-                // Skip if followed by impl block or attribute (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
                     let next_t = lines[next_idx].trim();
@@ -152,7 +129,6 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 i += 1;
                 continue;
             }
-            // Python: empty class `class Foo: pass` (single line or multi-line)
             if t.starts_with("class ") || t.starts_with("class\t") {
                 if t.ends_with(": pass") || t.ends_with(":pass") {
                     violations.push(LintResult::new_arch(
@@ -175,7 +151,6 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     }
                 }
             }
-            // JS/TS: empty class `class Foo {}` or `class Foo extends Bar {}`
             if t.starts_with("class ") && t.ends_with("{}") {
                 violations.push(LintResult::new_arch(
                     file,

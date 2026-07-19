@@ -24,37 +24,15 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 /// Unified cycle import analyzer — combines scanning logic and core cycle detection (AES205).
-///
-/// Workflow:
-///   1. Scan receives the full file list and an `IAnalyzer` reference.
-///   2. For each file, extract its layer (via filename prefix) and parse all import statements.
-///   3. For each import, determine the target layer → build a directed edge (source_layer → target_layer).
-///   4. Pass all edges to `detect_cycle_edges` (DFS 3-color algorithm internally).
-///   5. Every edge that participates in a cycle is reported as a CRITICAL LintResult.
 pub struct CycleImportAnalyzer {
     _config: ArchitectureConfig,
     parser: Arc<dyn IImportParserPort>,
 }
 
-impl CycleImportAnalyzer {
-    pub fn new(config: ArchitectureConfig, parser: Arc<dyn IImportParserPort>) -> Self {
-        Self {
-            _config: config,
-            parser,
-        }
-    }
-}
+// ─── Block 2: Public Contract (ICycleImportProtocol) ───
 
 #[async_trait]
 impl ICycleImportProtocol for CycleImportAnalyzer {
-    fn filepath_or_default(
-        &self,
-        result: Result<FilePath, shared::taxonomy_common_error::ErrorMessage>,
-    ) -> FilePath {
-        result.unwrap_or_default()
-    }
-
-    /// Scan all files for circular dependency cycles (AES205).
     fn scan(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -64,8 +42,6 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         self.do_scan(analyzer, files, root_dir)
     }
 
-    /// Adapter: converts ICycleImportProtocol parameters to internal `scan()` format
-    /// and appends results into the shared LintResultList.
     async fn check_cycles(
         &self,
         analyzer: &dyn ILayerDetectionProtocol,
@@ -77,14 +53,23 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         results.values.extend(cycle_violations);
     }
 
-    /// Detect cycle edges in a directed graph using DFS 3-coloring.
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
         self.do_detect_cycle_edges(edges)
     }
 
-    /// Normalize a file/module name to its architectural layer name.
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
         self.do_normalize_to_layer(name)
+    }
+}
+
+// ─── Block 3: Constructors & Private Helpers ───
+
+impl CycleImportAnalyzer {
+    pub fn new(config: ArchitectureConfig, parser: Arc<dyn IImportParserPort>) -> Self {
+        Self {
+            _config: config,
+            parser,
+        }
     }
 
     /// Scan all files for circular dependency cycles (AES205).
@@ -94,21 +79,17 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
         files: &[FilePath],
         root_dir: &FilePath,
     ) -> Vec<LintResult> {
-        // Step 1: Skip analysis if the architecture checker is globally disabled
         let config = analyzer.config();
         if !config.enabled.value {
             return vec![];
         }
 
-        // Step 2: Find AES205 rule to access exception list (files allowed to have cycles)
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
 
         let mut edges = Vec::new();
         let mut file_by_layer: HashMap<String, FilePath> = HashMap::new();
 
-        // Step 3: Iterate every file in the project
         for file in files {
-            // Step 3a: Skip files exempted via rule exceptions
             let basename = file.basename();
             if let Some(rule) = aes205_rule {
                 if rule.exceptions.values.contains(&basename.to_string()) {
@@ -116,13 +97,11 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 }
             }
 
-            // Step 3b: Read the raw file content
             let Ok(content_msg) = self.parser.read_file_to_message(file) else {
                 continue;
             };
             let content = content_msg.value().to_string();
 
-            // Step 3c: Detect the file's architectural layer (strip scoped suffix)
             let file_layer = match analyzer.detect_layer(file, root_dir) {
                 Some(l) => {
                     let s = match l.value.split('(').next() {
@@ -134,14 +113,10 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 None => continue,
             };
 
-            // Step 3e: Parse every import statement in the file
             let modules = self.parser.extract_import_modules(&content);
-            // Step 3f: For each import, resolve its target layer (strip scoped suffix)
             let mut has_cross_layer = false;
             for module in modules {
                 let module_value = module.value();
-                // For crate:: imports, check if the first segment is a layer name
-                // (e.g., crate::contract::foo → contract layer = cross-layer)
                 let is_crate_import = module_value.starts_with("crate::")
                     || module_value.starts_with("lint_arwaky::");
                 let layer_prefixes = [
@@ -171,7 +146,6 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                 } else {
                     false
                 };
-                // Skip crate:: imports that don't reference a layer prefix
                 if is_crate_import && !is_cross_layer_crate {
                     continue;
                 }
@@ -189,14 +163,12 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
                         None => &target_layer.value,
                     }
                     .to_string();
-                    // Step 3g: Only record cross-layer edges (same-layer edges cannot cause cycles)
                     if target_layer_str != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
                         has_cross_layer = true;
                     }
                 }
             }
-            // Step 3d: Only store files that contribute cross-layer edges as representatives
             if has_cross_layer {
                 file_by_layer
                     .entry(file_layer.clone())
@@ -204,10 +176,8 @@ impl ICycleImportProtocol for CycleImportAnalyzer {
             }
         }
 
-        // Step 4: Run cycle detection algorithm on the directed graph of layer edges
         let cycle_edge_results = self.do_detect_cycle_edges(&edges);
 
-        // Step 5: Convert each detected cycle edge into a CRITICAL LintResult
         cycle_edge_results
             .into_iter()
             .map(|sn| {

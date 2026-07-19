@@ -39,6 +39,21 @@ pub struct RoleOrchestrator {
     ignored_paths: Vec<String>,
 }
 
+#[async_trait]
+impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        let files = self.collect_files(target);
+        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        self.run_all_role_checks(&file_strings, &mut results);
+        results
+    }
+
+    fn name(&self) -> &str {
+        "role-rules"
+    }
+}
+
 impl RoleOrchestrator {
     pub fn new(
         aggregate: Arc<dyn IRoleAggregate>,
@@ -210,21 +225,6 @@ impl RoleOrchestrator {
     }
 }
 
-#[async_trait]
-impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
-        let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, &mut results);
-        results
-    }
-
-    fn name(&self) -> &str {
-        "role-rules"
-    }
-}
-
 pub struct RoleAggregateImpl {
     taxonomy: Arc<dyn ITaxonomyRoleChecker>,
     contract: Arc<dyn IContractRoleChecker>,
@@ -232,26 +232,6 @@ pub struct RoleAggregateImpl {
     capabilities: Arc<dyn ICapabilitiesRoleChecker>,
     surface: Arc<dyn ISurfaceRoleChecker>,
     agent: Arc<dyn IAgentRoleChecker>,
-}
-
-impl RoleAggregateImpl {
-    pub fn new(
-        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
-        contract: Arc<dyn IContractRoleChecker>,
-        infrastructure: Arc<dyn IInfrastructureRoleChecker>,
-        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
-        surface: Arc<dyn ISurfaceRoleChecker>,
-        agent: Arc<dyn IAgentRoleChecker>,
-    ) -> Self {
-        Self {
-            taxonomy,
-            contract,
-            infrastructure,
-            capabilities,
-            surface,
-            agent,
-        }
-    }
 }
 
 impl IRoleAggregate for RoleAggregateImpl {
@@ -272,5 +252,25 @@ impl IRoleAggregate for RoleAggregateImpl {
     }
     fn agent(&self) -> &dyn IAgentRoleChecker {
         self.agent.as_ref()
+    }
+}
+
+impl RoleAggregateImpl {
+    pub fn new(
+        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
+        contract: Arc<dyn IContractRoleChecker>,
+        infrastructure: Arc<dyn IInfrastructureRoleChecker>,
+        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
+        surface: Arc<dyn ISurfaceRoleChecker>,
+        agent: Arc<dyn IAgentRoleChecker>,
+    ) -> Self {
+        Self {
+            taxonomy,
+            contract,
+            infrastructure,
+            capabilities,
+            surface,
+            agent,
+        }
     }
 }
