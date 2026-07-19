@@ -18,11 +18,8 @@ fn cross_crate_use_links_to_leaf_module_file() {
         .join("..");
     let root = root.canonicalize().expect("workspace root");
 
-    let leaf = root
-        .join("crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs");
-    let consumer = root.join(
-        "crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs",
-    );
+    let leaf = root.join("crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs");
+    let consumer = root.join("crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs");
 
     assert!(leaf.exists(), "leaf module must exist: {leaf:?}");
     assert!(consumer.exists(), "consumer must exist: {consumer:?}");

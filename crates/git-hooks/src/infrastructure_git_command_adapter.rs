@@ -1,6 +1,7 @@
 // PURPOSE: GitCommandAdapter — IGitCommandPort implementation for running git commands
 use std::process::Command;
 
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_command_port::{GitCommandOutput, IGitCommandPort};
 
 // Block 1: struct Definition
@@ -9,8 +10,11 @@ pub struct GitCommandAdapter;
 // Block 2: impl Port for Struct (Public Contract)
 #[async_trait::async_trait]
 impl IGitCommandPort for GitCommandAdapter {
-    async fn run_git(&self, args: &[&str], dir: &str) -> GitCommandOutput {
-        let output = Command::new("git").args(args).current_dir(dir).output();
+    async fn run_git(&self, args: &[&str], dir: &FilePath) -> GitCommandOutput {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(dir.value())
+            .output();
         match output {
             Ok(o) => GitCommandOutput {
                 stdout: String::from_utf8_lossy(&o.stdout).to_string(),
@@ -25,7 +29,7 @@ impl IGitCommandPort for GitCommandAdapter {
         }
     }
 
-    async fn symbolic_ref(&self, dir: &str) -> Option<String> {
+    async fn symbolic_ref(&self, dir: &FilePath) -> Option<String> {
         let output = self
             .run_git(&["symbolic-ref", "refs/remotes/origin/HEAD"], dir)
             .await;
@@ -37,7 +41,7 @@ impl IGitCommandPort for GitCommandAdapter {
         }
     }
 
-    async fn diff_name_only(&self, range: &str, dir: &str) -> Vec<String> {
+    async fn diff_name_only(&self, range: &str, dir: &FilePath) -> Vec<String> {
         let output = self.run_git(&["diff", "--name-only", range], dir).await;
         if output.success {
             output
@@ -51,7 +55,7 @@ impl IGitCommandPort for GitCommandAdapter {
         }
     }
 
-    async fn ls_files_modified(&self, dir: &str) -> Vec<String> {
+    async fn ls_files_modified(&self, dir: &FilePath) -> Vec<String> {
         let output = self
             .run_git(
                 &["ls-files", "--modified", "--others", "--exclude-standard"],

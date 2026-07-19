@@ -1,6 +1,7 @@
 // PURPOSE: ToolExecutorAdapter — IToolExecutorPort implementation for running external tools
 use std::process::Command;
 
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_tool_executor_port::{IToolExecutorPort, ToolOutput};
 
 // Block 1: struct Definition
@@ -25,8 +26,11 @@ impl IToolExecutorPort for ToolExecutorAdapter {
         }
     }
 
-    async fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &str) -> ToolOutput {
-        let output = Command::new(name).args(args).current_dir(dir).output();
+    async fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &FilePath) -> ToolOutput {
+        let output = Command::new(name)
+            .args(args)
+            .current_dir(dir.value())
+            .output();
         match output {
             Ok(o) => ToolOutput {
                 stdout: String::from_utf8_lossy(&o.stdout).to_string(),
@@ -49,10 +53,11 @@ impl IToolExecutorPort for ToolExecutorAdapter {
             .unwrap_or(false)
     }
 
-    async fn get_binary_path(&self) -> String {
-        std::env::current_exe()
+    async fn get_binary_path(&self) -> FilePath {
+        let path = std::env::current_exe()
             .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_default()
+            .unwrap_or_default();
+        FilePath::new(path).unwrap_or_default()
     }
 }
 

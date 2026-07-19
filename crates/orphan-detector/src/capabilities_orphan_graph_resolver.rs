@@ -135,25 +135,11 @@ impl OrphanGraphResolver {
         importing_file: &str,
     ) -> Option<String> {
         let mut current = src_dir.to_path_buf();
-        eprintln!("[DBG-RMF] src_dir={src_dir:?} current={current:?} segments={segments:?}");
         let mut last_resolved: Option<String> = None;
         for seg in segments {
             let normalized = seg.replace('-', "_");
             let candidate_file = current.join(format!("{}.rs", normalized));
             let candidate_mod = current.join(&normalized).join("mod.rs");
-            eprintln!(
-                "[DBG-RMF] seg={seg} file_exists={} mod_exists={} cand_mod={:?}",
-                candidate_file.is_file(),
-                candidate_mod.is_file(),
-                candidate_mod
-            );
-            if let Ok(entries) = std::fs::read_dir(&current) {
-                let names: Vec<String> = entries
-                    .flatten()
-                    .filter_map(|e| e.file_name().into_string().ok())
-                    .collect();
-                eprintln!("[DBG-RMF] current contents: {names:?}");
-            }
             if candidate_file.is_file() {
                 let p = candidate_file.to_string_lossy().to_string();
                 if p != importing_file {
@@ -523,20 +509,24 @@ impl OrphanGraphResolver {
                     let rest = &full_import[colon_idx + 2..];
                     let segments: Vec<&str> = rest.split("::").collect();
                     if !segments.is_empty() {
-                        // Bug 3: no ./ prefix — store resolved paths verbatim
+                        // Resolve the FULL import path (all segments) to the real
+                        // leaf module file, not just the top-level domain directory.
+                        // e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
+                        // must link to
+                        // `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`,
+                        // NOT only `crates/shared/src/orphan-detector/mod.rs`.
+                        // Previously only the leading segment was resolved, so leaf
+                        // taxonomy/contract module files appeared to have zero inbound
+                        // links and were falsely flagged as AES501/AES502 orphans.
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            eprintln!("[DBG] ext-import f={f} crate={crate_name} rest={rest}");
                             if let Some(resolved) =
                                 self.resolve_module_file(crate_name, &segments, src_dir, f)
                             {
-                                eprintln!("[DBG]   resolved -> {resolved}");
                                 import_graph
                                     .entry(f.clone())
                                     .or_default()
                                     .push(resolved.clone());
                                 inbound_links.entry(resolved).or_default().push(f.clone());
-                            } else {
-                                eprintln!("[DBG]   resolve_module_file returned None");
                             }
                         }
                         continue;
