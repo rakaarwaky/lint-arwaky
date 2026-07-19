@@ -22,6 +22,7 @@ use shared::role_rules::taxonomy_path_utils::has_suffix;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
+use std::path::Path;
 
 pub struct TaxonomyRoleChecker {}
 

@@ -28,8 +28,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_surface_utils::{
-    aes406_passive_violation_details, is_in_surfaces, is_init, make_adapter,
+    aes406_passive_violation_details as aes406_passive_violation_details_util,
+    make_adapter as make_adapter_util,
 };
+pub use shared::role_rules::taxonomy_surface_utils::{is_in_surfaces, is_init};
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
@@ -194,7 +196,7 @@ impl SurfaceRoleChecker {
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
                 message: LintMessage::new(AesRoleViolation::NoDomainLogic { reason: None }),
-                source: make_adapter("architecture"),
+                source: make_adapter_util("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
@@ -588,7 +590,10 @@ impl SurfaceRoleChecker {
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
             code: ErrorCode::raw("AES406"),
-            message: LintMessage::new(aes406_passive_violation_details(&f.to_string(), &detail)),
+            message: LintMessage::new(aes406_passive_violation_details_util(
+                &f.to_string(),
+                &detail,
+            )),
             source: Some(AdapterName::raw("surface_hierarchy")),
             severity: Severity::HIGH,
             enclosing_scope: None,

@@ -15,10 +15,15 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::taxonomy_signature_utils::{
-    extract_python_method_signatures, extract_trait_method_signatures,
-    extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
-    regex_lite_match_whole_token, signature_uses_forbidden_primitive,
-    typescript_signature_uses_forbidden_primitive,
+    extract_python_method_signatures as extract_python_method_signatures_util,
+    extract_trait_method_signatures as extract_trait_method_signatures_util,
+    extract_typescript_method_signatures as extract_typescript_method_signatures_util,
+    python_signature_uses_forbidden_primitive as python_signature_uses_forbidden_primitive_util,
+    signature_uses_forbidden_primitive as signature_uses_forbidden_primitive_util,
+    typescript_signature_uses_forbidden_primitive as typescript_signature_uses_forbidden_primitive_util,
+};
+pub use shared::role_rules::taxonomy_signature_utils::{
+    extract_trait_method_signatures, signature_uses_forbidden_primitive,
 };
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -199,8 +204,8 @@ impl ContractRoleChecker {
 
         if is_py {
             // Python-specific: look for class methods with primitive type annotations
-            for (line_no, sig) in extract_python_method_signatures(content) {
-                let forbidden = python_signature_uses_forbidden_primitive(&sig);
+            for (line_no, sig) in extract_python_method_signatures_util(content) {
+                let forbidden = python_signature_uses_forbidden_primitive_util(&sig);
                 if forbidden.is_empty() {
                     continue;
                 }
@@ -220,8 +225,8 @@ impl ContractRoleChecker {
 
         if is_js {
             // JS/TS-specific: look for interface/class methods with primitive type annotations
-            for (line_no, sig) in extract_typescript_method_signatures(content) {
-                let forbidden = typescript_signature_uses_forbidden_primitive(&sig);
+            for (line_no, sig) in extract_typescript_method_signatures_util(content) {
+                let forbidden = typescript_signature_uses_forbidden_primitive_util(&sig);
                 if forbidden.is_empty() {
                     continue;
                 }
@@ -240,8 +245,8 @@ impl ContractRoleChecker {
         }
 
         // Rust: use trait-method-signature parser
-        for (line_no, sig) in extract_trait_method_signatures(content) {
-            let forbidden = signature_uses_forbidden_primitive(&sig);
+        for (line_no, sig) in extract_trait_method_signatures_util(content) {
+            let forbidden = signature_uses_forbidden_primitive_util(&sig);
             if forbidden.is_empty() {
                 continue;
             }

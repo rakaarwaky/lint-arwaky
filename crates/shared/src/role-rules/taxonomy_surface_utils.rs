@@ -5,10 +5,6 @@
 // SurfaceRoleChecker or feed it a full SourceContentVO.
 
 use crate::taxonomy_adapter_name_vo::AdapterName;
-use crate::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use crate::taxonomy_error_vo::ErrorCode;
-use crate::taxonomy_lint_vo::LocationList;
-use crate::taxonomy_message_vo::LintMessage;
 use crate::taxonomy_path_vo::FilePath;
 
 /// Generate AES406 passive violation detail message.

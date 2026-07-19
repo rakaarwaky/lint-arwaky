@@ -26,12 +26,9 @@ use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryPr
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_constant::SOURCE_EXTENSIONS;
+use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use std::path::Path;
 use std::sync::Arc;
-
-fn filepath_or_default(result: Result<FilePath, String>) -> FilePath {
-    result.unwrap_or_default()
-}
 
 /// Import orchestrator — the agent layer for import compliance.
 ///
@@ -43,6 +40,8 @@ fn filepath_or_default(result: Result<FilePath, String>) -> FilePath {
 ///   - `cycle`: checks AES205 — detects circular dependency chains
 ///   - `analyzer`: provides configuration (layer definitions, ignored paths, etc.)
 ///   - `helper`: provides filepath and string helper utilities
+
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
     forbidden: Arc<dyn IImportForbiddenProtocol>,
@@ -53,36 +52,7 @@ pub struct ImportOrchestrator {
     ignored_paths: Vec<String>,
 }
 
-impl ImportOrchestrator {
-    /// Constructor: extracts ignored paths from config on initialization.
-    /// This avoids repeated config lookups during file collection.
-    pub fn new(
-        mandatory: Arc<dyn IImportMandatoryProtocol>,
-        forbidden: Arc<dyn IImportForbiddenProtocol>,
-        intent: Arc<dyn IDummyImportCheckerProtocol>,
-        unused: Arc<dyn IUnusedImportProtocol>,
-        cycle: Arc<dyn ICycleImportProtocol>,
-        analyzer: Arc<dyn ILayerDetectionProtocol>,
-    ) -> Self {
-        let config = analyzer.config();
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        Self {
-            mandatory,
-            forbidden,
-            intent,
-            unused,
-            cycle,
-            analyzer,
-            ignored_paths,
-        }
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl IImportRunnerAggregate for ImportOrchestrator {
     fn is_ignored(&self, p: &Path) -> bool {
@@ -253,5 +223,36 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
     fn name(&self) -> &str {
         "import-rules"
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl ImportOrchestrator {
+    /// Constructor: extracts ignored paths from config on initialization.
+    /// This avoids repeated config lookups during file collection.
+    pub fn new(
+        mandatory: Arc<dyn IImportMandatoryProtocol>,
+        forbidden: Arc<dyn IImportForbiddenProtocol>,
+        intent: Arc<dyn IDummyImportCheckerProtocol>,
+        unused: Arc<dyn IUnusedImportProtocol>,
+        cycle: Arc<dyn ICycleImportProtocol>,
+        analyzer: Arc<dyn ILayerDetectionProtocol>,
+    ) -> Self {
+        let config = analyzer.config();
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+            .collect();
+        Self {
+            mandatory,
+            forbidden,
+            intent,
+            unused,
+            cycle,
+            analyzer,
+            ignored_paths,
+        }
     }
 }

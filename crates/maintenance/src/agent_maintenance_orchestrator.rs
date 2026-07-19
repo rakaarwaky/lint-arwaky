@@ -28,41 +28,6 @@ pub struct MaintenanceCommandsOrchestrator {
         Arc<dyn shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol>,
 }
 
-// Block 3: constructors
-impl MaintenanceCommandsOrchestrator {
-    pub fn new(
-        tool_executor: Arc<dyn IToolExecutorPort>,
-        fs: Arc<dyn IFileSystemMaintenancePort>,
-        checker: Arc<
-            dyn shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol,
-        >,
-    ) -> Self {
-        Self {
-            tool_executor,
-            fs,
-            checker,
-        }
-    }
-}
-
-impl Default for MaintenanceCommandsOrchestrator {
-    fn default() -> Self {
-        use crate::infrastructure_filesystem_maintenance_adapter::FileSystemMaintenanceAdapter;
-        use crate::infrastructure_tool_executor_adapter::ToolExecutorAdapter;
-        let te: Arc<dyn IToolExecutorPort> = Arc::new(ToolExecutorAdapter::new());
-        let fs: Arc<dyn IFileSystemMaintenancePort> = Arc::new(FileSystemMaintenanceAdapter::new());
-        let checker: Arc<
-            dyn shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol,
-        > = Arc::new(
-            crate::capabilities_maintenance_checker::MaintenanceChecker::new(
-                te.clone(),
-                fs.clone(),
-            ),
-        );
-        Self::new(te, fs, checker)
-    }
-}
-
 // Block 2: impl Trait for Struct (Public Contract)
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
@@ -198,5 +163,40 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
         self.checker.run_dependency_report(project_path).await
+    }
+}
+
+// Block 3: constructors
+impl MaintenanceCommandsOrchestrator {
+    pub fn new(
+        tool_executor: Arc<dyn IToolExecutorPort>,
+        fs: Arc<dyn IFileSystemMaintenancePort>,
+        checker: Arc<
+            dyn shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol,
+        >,
+    ) -> Self {
+        Self {
+            tool_executor,
+            fs,
+            checker,
+        }
+    }
+}
+
+impl Default for MaintenanceCommandsOrchestrator {
+    fn default() -> Self {
+        use crate::infrastructure_filesystem_maintenance_adapter::FileSystemMaintenanceAdapter;
+        use crate::infrastructure_tool_executor_adapter::ToolExecutorAdapter;
+        let te: Arc<dyn IToolExecutorPort> = Arc::new(ToolExecutorAdapter::new());
+        let fs: Arc<dyn IFileSystemMaintenancePort> = Arc::new(FileSystemMaintenanceAdapter::new());
+        let checker: Arc<
+            dyn shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol,
+        > = Arc::new(
+            crate::capabilities_maintenance_checker::MaintenanceChecker::new(
+                te.clone(),
+                fs.clone(),
+            ),
+        );
+        Self::new(te, fs, checker)
     }
 }

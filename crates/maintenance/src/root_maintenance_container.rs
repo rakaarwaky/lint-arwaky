@@ -15,6 +15,13 @@ pub struct MaintenanceContainer {
     orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
 }
 
+// Block 2: impl Trait for Struct (Public Contract)
+impl MaintenanceContainer {
+    pub fn orchestrator(&self) -> Arc<dyn MaintenanceCommandsAggregate> {
+        self.orchestrator.clone()
+    }
+}
+
 // Block 3: constructors
 impl MaintenanceContainer {
     pub fn new() -> Self {
@@ -26,10 +33,6 @@ impl MaintenanceContainer {
             MaintenanceCommandsOrchestrator::new(tool_executor, fs, checker),
         );
         Self { orchestrator }
-    }
-
-    pub fn orchestrator(&self) -> Arc<dyn MaintenanceCommandsAggregate> {
-        self.orchestrator.clone()
     }
 }
 

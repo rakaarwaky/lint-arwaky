@@ -18,24 +18,10 @@ thread_local! {
     static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
 }
 
-pub fn clear_file_cache() {
-    FILE_CACHE.with(|c| c.borrow_mut().clear());
-}
-
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ImportParserAdapter;
 
-impl ImportParserAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for ImportParserAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 impl IImportParserPort for ImportParserAdapter {
     /// Extract layer from filename prefix — inline implementation.
     fn extract_layer_from_prefix(&self, segment: &str) -> Option<LayerNameVO> {
@@ -336,5 +322,22 @@ impl IImportParserPort for ImportParserAdapter {
 
     fn is_name_used(&self, _name: &str, _content: &str, _exclude_line: LineNumber) -> bool {
         false
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl ImportParserAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn clear_file_cache() {
+        FILE_CACHE.with(|c| c.borrow_mut().clear());
+    }
+}
+
+impl Default for ImportParserAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }

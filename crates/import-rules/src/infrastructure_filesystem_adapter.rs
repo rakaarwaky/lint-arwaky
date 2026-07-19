@@ -16,20 +16,10 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_layer_vo::Identity;
 use shared::taxonomy_source_vo::ContentString;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct OSFileSystemAdapter;
 
-impl OSFileSystemAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for OSFileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
+// ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
 impl IFileSystemPort for OSFileSystemAdapter {
     fn walk_recursive(&self, dir: &Path, ignored: &[String], results: &mut Vec<FilePath>) {
@@ -168,5 +158,18 @@ impl IFileSystemPort for OSFileSystemAdapter {
                 ActionName::new("read"),
             )),
         }
+    }
+}
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
+impl OSFileSystemAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for OSFileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }

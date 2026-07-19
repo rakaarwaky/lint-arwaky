@@ -10,6 +10,7 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ImportContainer {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
     forbidden: Arc<dyn IImportForbiddenProtocol>,
@@ -19,6 +20,10 @@ pub struct ImportContainer {
     analyzer: Arc<dyn ILayerDetectionProtocol>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is a wiring facade, not a protocol implementor)
+
+// ─── Block 3: Constructors & Helpers ──────────────────────
 impl ImportContainer {
     pub fn new() -> Self {
         Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
