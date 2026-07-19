@@ -3850,6 +3850,8 @@ dependencies = [
  "code_analysis-lint-arwaky",
  "once_cell",
  "regex",
+ "rmcp",
+ "schemars",
  "serde",
  "serde_json",
  "serde_yaml_ng",

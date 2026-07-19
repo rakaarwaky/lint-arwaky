@@ -72,6 +72,7 @@ pub trait IOrphanFileCachePort: Send + Sync {
     fn read_cached(&self, path: &FilePath) -> ContentString;
     fn read_dir(&self, dir_path: &str) -> Vec<String>;
     fn path_exists(&self, path: &str) -> bool;
+    fn is_symlink(&self, path: &str) -> bool;
     fn clear_cache(&self);
 }
 

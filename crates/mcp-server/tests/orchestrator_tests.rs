@@ -3,9 +3,7 @@ use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::contract_mcp_server_aggregate::IMcpServerAggregate;
-use mcp_server_lint_arwaky::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use mcp_server_lint_arwaky::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

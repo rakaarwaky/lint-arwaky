@@ -1,4 +1,3 @@
-use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
@@ -10,7 +9,12 @@ use shared::orphan_detector::contract_orphan_protocol::{
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::OnceLock;
+
+use shared::orphan_detector::taxonomy_contract_detection_utility::{
+    extract_contract_trait_name, has_py_call, has_py_impl, has_py_wire, has_rust_call,
+    has_rust_impl, has_rust_wire, has_ts_call, has_ts_impl, has_ts_wire,
+};
+use shared::orphan_detector::taxonomy_contract_regex_utility::word_boundary_re;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -22,39 +26,6 @@ const SUFFIX_AGGREGATE: &str = "aggregate";
 const LAYER_INFRASTRUCTURE: &str = "infrastructure";
 const LAYER_CAPABILITIES: &str = "capabilities";
 const LAYER_AGENT: &str = "agent";
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STATIC REGEXES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-fn re_contract_rust() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
-        .as_ref()
-}
-
-fn re_contract_py() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:class\s+([A-Za-z0-9_]+)\s*\([^)]*ABC[^)]*\)|class\s+([A-Za-z0-9_]+)\s*\([^)]*Protocol[^)]*\))").ok()).as_ref()
-}
-
-fn re_contract_py_fallback() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+([A-Za-z0-9_]+)\s*[\(:]").ok())
-        .as_ref()
-}
-
-fn re_ts_interface_export() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"export\s+interface\s+([A-Za-z0-9_]+)").ok())
-        .as_ref()
-}
-
-fn re_interface() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"interface\s+([A-Za-z0-9_]+)").ok())
-        .as_ref()
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN STRUCT
@@ -76,7 +47,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         _inheritance_map: &InheritanceMap,
         all_files: &[FilePath],
     ) -> OrphanIndicatorResult {
-        let search_files = build_search_files(all_files, root_dir);
+        let search_files = build_search_files(all_files, root_dir, self.cache.as_ref());
         let mut contents: HashMap<String, String> = HashMap::new();
         let mut basenames: HashMap<String, String> = HashMap::new();
 
@@ -321,159 +292,8 @@ fn check_wired(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LANGUAGE DETECTION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-fn has_rust_impl(content: &str, rust_impl_pattern: &str, re_trait: &Regex) -> bool {
-    content.contains(rust_impl_pattern)
-        || content.lines().any(|ln| {
-            let t = ln.trim();
-            t.starts_with("impl") && re_trait.is_match(t) && t.contains(" for")
-        })
-}
-
-fn has_rust_call(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
-            continue;
-        }
-        if (t.starts_with("use ")
-            || t.contains("::")
-            || t.contains("<dyn ")
-            || t.contains("Arc<dyn "))
-            && re_trait.is_match(t)
-        {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_rust_wire(content: &str, re_trait: &Regex) -> bool {
-    let lines: Vec<&str> = content.lines().collect();
-    for (i, line) in lines.iter().enumerate() {
-        let t = line.trim();
-        if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
-            continue;
-        }
-        if !re_trait.is_match(t) {
-            continue;
-        }
-        let end = std::cmp::min(i + 4, lines.len());
-        if lines[i..end].iter().any(|&ln| {
-            let tl = ln.trim();
-            !tl.starts_with("//")
-                && !tl.starts_with("/*")
-                && !tl.starts_with('*')
-                && (tl.contains("Arc::new(") || tl.contains("Box::new(") || tl.contains("::new("))
-        }) {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_py_impl(content: &str, trait_name: &str) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with('#') {
-            continue;
-        }
-        if t.starts_with("class ") && t.contains(trait_name) && t.contains('(') {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_py_call(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with('#') {
-            continue;
-        }
-        if (t.starts_with("from ") || t.starts_with("import ")) && re_trait.is_match(t) {
-            return true;
-        }
-        if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_py_wire(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with('#') {
-            continue;
-        }
-        if re_trait.is_match(t) && t.contains('(') && !t.starts_with("class ") {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_ts_impl(content: &str, trait_name: &str) -> bool {
-    let re = word_boundary_re(trait_name);
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with("//") || t.starts_with("/*") {
-            continue;
-        }
-        if (t.contains("implements ") || t.contains("extends ")) && re.is_match(t) {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_ts_call(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with("//") || t.starts_with("/*") {
-            continue;
-        }
-        if t.starts_with("import ") && re_trait.is_match(t) {
-            return true;
-        }
-        if re_trait.is_match(t) && (t.contains('.') || t.contains(": ")) {
-            return true;
-        }
-    }
-    false
-}
-
-fn has_ts_wire(content: &str, re_trait: &Regex) -> bool {
-    for line in content.lines() {
-        let t = line.trim();
-        if t.starts_with("//") || t.starts_with("/*") {
-            continue;
-        }
-        if re_trait.is_match(t) && t.contains("new ") && t.contains('(') {
-            return true;
-        }
-    }
-    false
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
-
-fn word_boundary_re(trait_name: &str) -> Regex {
-    let pattern = format!(r"\b{}\b", regex::escape(trait_name));
-    Regex::new(&pattern).unwrap_or_else(|_| never_match_regex())
-}
-
-fn never_match_regex() -> Regex {
-    match Regex::new("") {
-        Ok(re) => re,
-        Err(_) => std::process::abort(),
-    }
-}
 
 fn not_orphan() -> OrphanIndicatorResult {
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
@@ -498,141 +318,45 @@ fn orphan_result(
     )
 }
 
-fn build_search_files(all_files: &[FilePath], root_dir: &FilePath) -> Vec<String> {
+fn build_search_files(
+    all_files: &[FilePath],
+    root_dir: &FilePath,
+    cache: &dyn IOrphanFileCachePort,
+) -> Vec<String> {
     let mut search_files: Vec<String> = all_files.iter().map(|fp| fp.value().to_string()).collect();
     let root_path = std::path::Path::new(root_dir.value());
     for ws_dir in &["crates", "packages", "modules"] {
         let ws_path = root_path.join(ws_dir);
         if ws_path.exists() {
-            collect_source_files(&ws_path, &mut search_files);
+            collect_source_files(&ws_path, &mut search_files, cache);
         }
     }
     search_files
 }
 
-fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
-    let meta = match std::fs::symlink_metadata(dir) {
-        Ok(m) => m,
-        Err(_) => return,
-    };
-    if meta.file_type().is_symlink() {
+fn collect_source_files(
+    dir: &std::path::Path,
+    files: &mut Vec<String>,
+    cache: &dyn IOrphanFileCachePort,
+) {
+    let dir_str = dir.to_str().unwrap_or("");
+    if cache.is_symlink(dir_str) {
         return;
     }
 
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = entry.file_name().to_string_lossy().to_string();
-                if name == "target" || name == ".git" || name == "node_modules" {
-                    continue;
-                }
-                collect_source_files(&path, files);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                    if let Some(s) = path.to_str() {
-                        files.push(s.to_string());
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TRAIT NAME EXTRACTION
-// ═══════════════════════════════════════════════════════════════════════════════
-
-fn strip_comments(content: &str, ext: &str) -> String {
-    let mut result = String::with_capacity(content.len());
-    let mut in_block_comment = false;
-
-    for line in content.lines() {
-        let trimmed = line.trim();
-
-        if in_block_comment {
-            if trimmed.contains("*/") {
-                in_block_comment = false;
-            }
-            continue;
-        }
-
-        if ext == "rs" {
-            if trimmed.starts_with("//") || trimmed.starts_with("/*") {
-                if trimmed.starts_with("/*") && !trimmed.contains("*/") {
-                    in_block_comment = true;
-                }
+    let entries = cache.read_dir(dir_str);
+    for entry_path in &entries {
+        let path = std::path::Path::new(entry_path);
+        if path.is_dir() {
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if name == "target" || name == ".git" || name == "node_modules" {
                 continue;
             }
-            let code_line = if let Some(pos) = line.find("//") {
-                &line[..pos]
-            } else {
-                line
-            };
-            result.push_str(code_line);
-            result.push('\n');
-            continue;
-        }
-
-        if ext == "py" {
-            if trimmed.starts_with('#') {
-                continue;
-            }
-            let code_line = if let Some(pos) = line.find('#') {
-                &line[..pos]
-            } else {
-                line
-            };
-            result.push_str(code_line);
-            result.push('\n');
-            continue;
-        }
-
-        if trimmed.starts_with("//") || trimmed.starts_with("/*") {
-            if trimmed.starts_with("/*") && !trimmed.contains("*/") {
-                in_block_comment = true;
-            }
-            continue;
-        }
-        let code_line = if let Some(pos) = line.find("//") {
-            &line[..pos]
-        } else {
-            line
-        };
-        result.push_str(code_line);
-        result.push('\n');
-    }
-
-    result
-}
-
-fn extract_contract_trait_name(content: &str, file_path: &str) -> Option<String> {
-    let ext = std::path::Path::new(file_path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("");
-
-    let code = strip_comments(content, ext);
-
-    match ext {
-        "rs" => re_contract_rust()
-            .and_then(|re| re.captures(&code))
-            .map(|caps| caps[1].to_string()),
-        "py" => {
-            if let Some(caps) = re_contract_py().and_then(|re| re.captures(&code)) {
-                caps.get(1)
-                    .or_else(|| caps.get(2))
-                    .map(|m| m.as_str().to_string())
-            } else {
-                re_contract_py_fallback()
-                    .and_then(|re| re.captures(&code))
-                    .map(|caps| caps[1].to_string())
+            collect_source_files(path, files, cache);
+        } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                files.push(entry_path.clone());
             }
         }
-        "ts" | "tsx" | "js" | "jsx" => re_ts_interface_export()
-            .and_then(|re| re.captures(&code))
-            .or_else(|| re_interface().and_then(|re| re.captures(&code)))
-            .map(|caps| caps[1].to_string()),
-        _ => None,
     }
 }

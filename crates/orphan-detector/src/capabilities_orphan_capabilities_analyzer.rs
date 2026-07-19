@@ -204,49 +204,52 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
 pub fn check_wired_in_container(
     workspace_root: &std::path::Path,
     identifiers: &[String],
-) -> Result<bool, std::io::Error> {
+    cache: &dyn IOrphanFileCachePort,
+) -> bool {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
-        if dir.is_dir() && check_dir_containers(&dir, identifiers)? {
-            return Ok(true);
+        if dir.is_dir() && check_dir_containers(&dir, identifiers, cache) {
+            return true;
         }
     }
-    Ok(false)
+    false
 }
 
 fn check_dir_containers(
     dir: &std::path::Path,
     identifiers: &[String],
-) -> Result<bool, std::io::Error> {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                if check_dir_containers(&path, identifiers)? {
-                    return Ok(true);
-                }
-            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_container.rs")
-                    || name.ends_with("_container.py")
-                    || name.ends_with("_container.ts")
-                    || name.ends_with("_container.js")
-                    || name.ends_with("_entry.rs")
-                    || name.ends_with("_entry.py")
-                    || name.ends_with("_entry.ts")
-                    || name.ends_with("_entry.js")
-                {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        for id in identifiers {
-                            if content.contains(id) {
-                                return Ok(true);
-                            }
-                        }
+    cache: &dyn IOrphanFileCachePort,
+) -> bool {
+    let entries = cache.read_dir(dir.to_str().unwrap_or(""));
+    for entry_path in &entries {
+        let path = std::path::Path::new(entry_path);
+        if path.is_dir() {
+            if check_dir_containers(path, identifiers, cache) {
+                return true;
+            }
+        } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if name.ends_with("_container.rs")
+                || name.ends_with("_container.py")
+                || name.ends_with("_container.ts")
+                || name.ends_with("_container.js")
+                || name.ends_with("_entry.rs")
+                || name.ends_with("_entry.py")
+                || name.ends_with("_entry.ts")
+                || name.ends_with("_entry.js")
+            {
+                let fp = FilePath {
+                    value: entry_path.clone(),
+                };
+                let content = cache.read_cached(&fp).value;
+                for id in identifiers {
+                    if content.contains(id) {
+                        return true;
                     }
                 }
             }
         }
     }
-    Ok(false)
+    false
 }
 
 pub fn check_capabilities_orphan(

@@ -94,15 +94,12 @@ impl InfrastructureOrphanAnalyzer {
             if let Ok(workspace_root) =
                 crate::capabilities_orphan_capabilities_analyzer::find_workspace_root(root)
             {
-                if let Ok(wired) =
-                    crate::capabilities_orphan_capabilities_analyzer::check_wired_in_container(
-                        &workspace_root,
-                        &identifiers,
-                    )
-                {
-                    if wired {
-                        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-                    }
+                if crate::capabilities_orphan_capabilities_analyzer::check_wired_in_container(
+                    &workspace_root,
+                    &identifiers,
+                    self.cache.as_ref(),
+                ) {
+                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
             }
         }

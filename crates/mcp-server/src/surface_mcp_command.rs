@@ -8,7 +8,7 @@ use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
 use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
-use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 // ─── Block 1: Struct Definition ───────────────────────────

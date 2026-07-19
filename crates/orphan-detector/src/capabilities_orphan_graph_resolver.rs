@@ -5,7 +5,9 @@ use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
+use shared::orphan_detector::contract_orphan_protocol::{
+    IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
+};
 use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
@@ -24,6 +26,7 @@ use shared::orphan_detector::taxonomy_graph_regex_utility::{
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanGraphResolver {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: Arc<dyn IOrphanFileCachePort>,
 }
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
@@ -108,13 +111,17 @@ impl Default for OrphanGraphResolver {
             extractor: Arc::new(
                 crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
             ),
+            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
         }
     }
 }
 
 impl OrphanGraphResolver {
-    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
-        Self { extractor }
+    pub fn new(
+        extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+        cache: Arc<dyn IOrphanFileCachePort>,
+    ) -> Self {
+        Self { extractor, cache }
     }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
@@ -167,19 +174,15 @@ impl OrphanGraphResolver {
         let root_path = std::path::Path::new(root_dir);
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if let Ok(entries) = std::fs::read_dir(&ws_path) {
-                for entry in entries.flatten() {
-                    if let Ok(ft) = entry.file_type() {
-                        if !ft.is_dir() {
-                            continue;
-                        }
-                    } else {
-                        continue;
-                    }
-                    if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
+            let entries = self.cache.read_dir(ws_path.to_str().unwrap_or(""));
+            for entry_path in &entries {
+                let path = std::path::Path::new(entry_path);
+                if path.is_dir() {
+                    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                        let name = name.to_string();
                         workspace_modules.insert(name.clone());
                         workspace_modules.insert(name.replace('-', "_"));
-                        let src_dir = entry.path().join("src");
+                        let src_dir = path.join("src");
                         if src_dir.is_dir() {
                             crate_src_dirs.insert(name.clone(), src_dir.clone());
                             crate_src_dirs.insert(name.replace('-', "_"), src_dir);
@@ -192,10 +195,11 @@ impl OrphanGraphResolver {
         // Perf 8: Single-pass file reading
         for f in files {
             import_graph.entry(f.clone()).or_default();
-            let content = match std::fs::read_to_string(f) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+            let fp = shared::common::taxonomy_path_vo::FilePath { value: f.clone() };
+            let content = self.cache.read_cached(&fp).value;
+            if content.is_empty() {
+                continue;
+            }
 
             // Pass 1: #[path = "..."] pub mod (Bug 14 fix — link only the referenced file)
             if let Some(re) = pub_mod_path_re() {
@@ -257,7 +261,15 @@ impl OrphanGraphResolver {
                 continue;
             };
             for cap in import_re.captures_iter(&content) {
-                let full_import = cap[1].to_string();
+                let full_import = cap
+                    .get(1)
+                    .or_else(|| cap.get(2))
+                    .or_else(|| cap.get(3))
+                    .map(|m| m.as_str().to_string())
+                    .unwrap_or_default();
+                if full_import.is_empty() {
+                    continue;
+                }
 
                 // Handle crate:: and lint_arwaky:: imports
                 let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
@@ -452,48 +464,47 @@ impl OrphanGraphResolver {
                         let module_name = segments[0];
                         // Bug 3: no ./ prefix — store resolved paths verbatim
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            if let Ok(entries) = std::fs::read_dir(src_dir) {
-                                for entry in entries.flatten() {
-                                    let path = entry.path();
-                                    if path.is_dir() {
-                                        // FIX: Check mod.rs in subdirectories (e.g., code-analysis/mod.rs)
-                                        let mod_rs = path.join("mod.rs");
-                                        if mod_rs.exists() {
-                                            let dir_name = path
-                                                .file_name()
-                                                .and_then(|n| n.to_str())
-                                                .unwrap_or_default();
-                                            let normalized_dir = dir_name.replace('-', "_");
-                                            if normalized_dir == module_name {
-                                                if let Some(path_str) = mod_rs.to_str() {
-                                                    if path_str != *f {
-                                                        import_graph
-                                                            .entry(f.clone())
-                                                            .or_default()
-                                                            .push(path_str.to_string());
-                                                        inbound_links
-                                                            .entry(path_str.to_string())
-                                                            .or_default()
-                                                            .push(f.clone());
-                                                    }
+                            let entries = self.cache.read_dir(src_dir.to_str().unwrap_or(""));
+                            for entry_path in &entries {
+                                let path = std::path::Path::new(entry_path);
+                                if path.is_dir() {
+                                    // FIX: Check mod.rs in subdirectories (e.g., code-analysis/mod.rs)
+                                    let mod_rs = path.join("mod.rs");
+                                    if mod_rs.exists() {
+                                        let dir_name = path
+                                            .file_name()
+                                            .and_then(|n| n.to_str())
+                                            .unwrap_or_default();
+                                        let normalized_dir = dir_name.replace('-', "_");
+                                        if normalized_dir == module_name {
+                                            if let Some(path_str) = mod_rs.to_str() {
+                                                if path_str != *f {
+                                                    import_graph
+                                                        .entry(f.clone())
+                                                        .or_default()
+                                                        .push(path_str.to_string());
+                                                    inbound_links
+                                                        .entry(path_str.to_string())
+                                                        .or_default()
+                                                        .push(f.clone());
                                                 }
                                             }
                                         }
-                                    } else if let Some(path_str) = path.to_str() {
-                                        let stem = path
-                                            .file_stem()
-                                            .and_then(|s| s.to_str())
-                                            .unwrap_or_default();
-                                        if stem == module_name && path_str != *f {
-                                            import_graph
-                                                .entry(f.clone())
-                                                .or_default()
-                                                .push(path_str.to_string());
-                                            inbound_links
-                                                .entry(path_str.to_string())
-                                                .or_default()
-                                                .push(f.clone());
-                                        }
+                                    }
+                                } else if let Some(path_str) = path.to_str() {
+                                    let stem = path
+                                        .file_stem()
+                                        .and_then(|s| s.to_str())
+                                        .unwrap_or_default();
+                                    if stem == module_name && path_str != *f {
+                                        import_graph
+                                            .entry(f.clone())
+                                            .or_default()
+                                            .push(path_str.to_string());
+                                        inbound_links
+                                            .entry(path_str.to_string())
+                                            .or_default()
+                                            .push(f.clone());
                                     }
                                 }
                             }

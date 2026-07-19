@@ -181,6 +181,7 @@ impl Default for ArchOrphanAnalyzer {
         Self::new(
             Arc::new(crate::capabilities_orphan_graph_resolver::OrphanGraphResolver::new(
                 Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()),
+                Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
             )),
             Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()), Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()))),
             Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(Arc::new(crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new()), Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()))),

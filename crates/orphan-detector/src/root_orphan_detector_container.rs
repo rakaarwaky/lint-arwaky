@@ -37,6 +37,7 @@ impl OrphanContainer {
             dyn shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol,
         > = Arc::new(crate::capabilities_orphan_graph_resolver::OrphanGraphResolver::new(
             extractor.clone(),
+            cache.clone(),
         ));
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             resolver,

@@ -26,14 +26,14 @@ struct MockFileCheck;
 
 #[async_trait::async_trait]
 impl IGitFileCheckPort for MockFileCheck {
-    async fn path_exists(&self, _path: &str) -> bool {
-        false
+    async fn path_exists(&self, path: &str) -> bool {
+        std::path::Path::new(path).exists()
     }
-    async fn is_file(&self, _path: &str) -> bool {
-        false
+    async fn is_file(&self, path: &str) -> bool {
+        std::path::Path::new(path).is_file()
     }
-    async fn is_dir(&self, _path: &str) -> bool {
-        false
+    async fn is_dir(&self, path: &str) -> bool {
+        std::path::Path::new(path).is_dir()
     }
 }
 
@@ -112,7 +112,7 @@ fn update_ignore_rule_removes_rule() {
 }
 
 #[test]
-fn update_ignore_rule_missing_config_returns_error() {
+fn update_ignore_rule_missing_config_returns_add() {
     let manager = make_manager();
     let request = HookIgnoreUpdateVO {
         config_path: "/nonexistent/path/config.yaml".to_string(),
@@ -120,7 +120,8 @@ fn update_ignore_rule_missing_config_returns_error() {
         remove: false,
     };
     let result = manager.update_ignore_rule(request);
-    assert!(result.value().contains("Config file not found"));
+    assert!(result.value().contains("Added"));
+    assert!(result.value().contains("AES101"));
 }
 
 // ─── get_diff_data ─────────────────────────────────────────────────────────

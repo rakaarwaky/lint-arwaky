@@ -42,6 +42,12 @@ impl IOrphanFileCachePort for OrphanFileCache {
         std::path::Path::new(path).exists()
     }
 
+    fn is_symlink(&self, path: &str) -> bool {
+        std::fs::symlink_metadata(path)
+            .map(|m| m.file_type().is_symlink())
+            .unwrap_or(false)
+    }
+
     fn clear_cache(&self) {
         FILE_CACHE.with(|c| c.borrow_mut().clear());
     }
