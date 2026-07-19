@@ -100,6 +100,12 @@ Every contract interface must follow these structural rules:
 2. **Signatures**: Methods must have proper TypeScript type annotations and end with `;` (semicolon).
 3. **No Bodies**: Absolutely no implementation logic or method bodies (no `{ ... }`).
 4. **No Helpers**: Do NOT include private helper signatures (e.g., `extractSpecificRegex`) or highly specific algorithmic steps in the interface.
+5. **No Primitives**: ALL primitive types are FORBIDDEN in contract method signatures:
+   - `string` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
+   - `number` → use domain-specific VO (e.g., `LineNumber`, `Count`)
+   - `boolean` → use `BooleanVO`
+   - `string[]` → use domain-specific list VO (e.g., `PatternList`)
+   - `Record<string, T>` → use domain-specific VO
 
 ```typescript
 // contract_system_port.ts — Complete interface structure example
@@ -107,13 +113,13 @@ import { FilePath } from '../common/taxonomy_path';
 
 export interface IFileSystemPort {
     /** Read file contents. */
-    readFile(path: FilePath): Promise<string>;
+    readFile(path: FilePath): Promise<ContentString>;
 
     /** Write content to file. */
-    writeFile(path: FilePath, content: string): Promise<void>;
+    writeFile(path: FilePath, content: ContentString): Promise<void>;
 
     /** Glob files matching pattern. */
-    globFiles(pattern: string, callback: (file: string) => void): number;
+    globFiles(pattern: PatternList, callback: (file: FilePath) => void): Count;
 }
 
 // NOTE: Implementation belongs in infrastructure_adapter.ts — NOT here.

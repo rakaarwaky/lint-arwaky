@@ -343,7 +343,13 @@ rg "[0-9]+\.[0-9]+|#[0-9A-Fa-f]+" crates/<crate>/src/ | grep -v "shared/" | grep
 **Taxonomy Layer VO Creation Rules:**
 
 - Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`)
-- Contract signatures MUST use VOs
+- Contract signatures MUST use VOs — ALL primitives are FORBIDDEN in contract trait method signatures:
+  - `&str` → use `FilePath`, `SymbolName`, or domain-specific VO
+  - `String` → use domain-specific VO
+  - `bool` → use `BooleanVO`
+  - `i32`, `i64`, `u32`, `u64`, `f32`, `f64`, `usize`, `isize` → use domain-specific VO (`LineNumber`, `Count`, `Score`, etc.)
+  - `Vec<String>` → use `PatternList` or domain-specific list VO
+  - `Option<String>` → use domain-specific optional VO
 - VOs MUST validate on construction
 - Use macros for simple wrappers: `string_value_object!`, `primitive_value_object!`
 

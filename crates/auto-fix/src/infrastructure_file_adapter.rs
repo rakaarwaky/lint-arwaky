@@ -1,6 +1,7 @@
 // PURPOSE: FileAdapter — infrastructure layer for file I/O operations
 use shared::auto_fix::contract_file_adapter_port::IFileAdapterPort;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -8,16 +9,16 @@ pub struct FileAdapter;
 
 // ─── Block 2: Public Contract (domain port ONLY) ──────────
 impl IFileAdapterPort for FileAdapter {
-    fn read_file(&self, path: &FilePath) -> Option<String> {
+    fn read_file(&self, path: &FilePath) -> Option<ContentString> {
         let p = Path::new(path.value());
         if !p.exists() {
             return None;
         }
-        std::fs::read_to_string(p).ok()
+        std::fs::read_to_string(p).ok().map(ContentString::new)
     }
 
-    fn write_file(&self, path: &FilePath, content: &str) -> bool {
-        std::fs::write(path.value(), content).is_ok()
+    fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
+        std::fs::write(path.value(), &content.value).is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {

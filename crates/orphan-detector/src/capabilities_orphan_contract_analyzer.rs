@@ -73,13 +73,14 @@ impl ContractOrphanAnalyzer {
 
     fn collect_source_files(&self, dir: &std::path::Path, files: &mut Vec<String>) {
         let dir_str = dir.to_str().unwrap_or("");
-        if self.cache.is_symlink(dir_str) {
+        let dir_fp = shared::common::taxonomy_path_vo::FilePath::new(dir_str).unwrap_or_default();
+        if self.cache.is_symlink(&dir_fp).value() {
             return;
         }
 
-        let entries = self.cache.read_dir(dir_str);
+        let entries = self.cache.read_dir(&dir_fp);
         for entry_path in &entries {
-            let path = std::path::Path::new(entry_path);
+            let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if name == "target" || name == ".git" || name == "node_modules" {
@@ -88,7 +89,7 @@ impl ContractOrphanAnalyzer {
                 self.collect_source_files(path, files);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                    files.push(entry_path.clone());
+                    files.push(entry_path.value().to_string());
                 }
             }
         }

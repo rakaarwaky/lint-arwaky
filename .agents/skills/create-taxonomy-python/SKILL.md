@@ -271,6 +271,13 @@ Run syntax check to confirm no violations.
 - [ ] **Value Objects use `@dataclass(frozen=True)`** — immutable by default.
 - [ ] **Error types inherit from `Exception`** — with proper error messages.
 - [ ] **Constants are pure static values** — no imports, no functions.
+- [ ] **Contract signatures use VOs, not primitives** — ALL primitives are FORBIDDEN in contract method signatures:
+  - `str` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
+  - `int` → use domain-specific VO (e.g., `LineNumber`, `Count`)
+  - `bool` → use `BooleanVO`
+  - `float` → use domain-specific VO (e.g., `Score`)
+  - `list[str]` → use domain-specific list VO (e.g., `PatternList`)
+  - `dict` → use domain-specific VO
 - [ ] `python -c "import <module>"` passes without errors.
 
 ## Quick Commands

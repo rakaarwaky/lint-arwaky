@@ -100,6 +100,13 @@ Every contract ABC must follow these structural rules:
 2. **Decorators**: All methods MUST use the `@abstractmethod` decorator.
 3. **Bodies**: Use `...` (ellipsis) for method bodies — absolutely no implementation logic.
 4. **No Helpers**: Do NOT include private helper signatures (e.g., `_extract_regex`) or highly specific algorithmic steps in the ABC.
+5. **No Primitives**: ALL primitive types are FORBIDDEN in contract method signatures:
+   - `str` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
+   - `int` → use domain-specific VO (e.g., `LineNumber`, `Count`)
+   - `bool` → use `BooleanVO`
+   - `float` → use domain-specific VO (e.g., `Score`)
+   - `list[str]` → use domain-specific list VO (e.g., `PatternList`)
+   - `dict` → use domain-specific VO
 
 ```python
 # contract_system_port.py — Complete ABC structure example
@@ -110,17 +117,17 @@ class IFileSystemPort(ABC):
     """Outbound interface for file system operations."""
 
     @abstractmethod
-    def read_file(self, path: FilePath) -> str:
+    def read_file(self, path: FilePath) -> ContentString:
         """Read file contents."""
         ...
 
     @abstractmethod
-    async def write_file(self, path: FilePath, content: str) -> None:
+    async def write_file(self, path: FilePath, content: ContentString) -> None:
         """Write content to file."""
         ...
 
     @abstractmethod
-    def glob_files(self, pattern: str, callback: callable) -> int:
+    def glob_files(self, pattern: PatternList, callback: callable) -> Count:
         """Glob files matching pattern."""
         ...
 

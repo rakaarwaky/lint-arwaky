@@ -7,6 +7,7 @@ use shared::auto_fix::taxonomy_symbol_renamer_utility::rename_in_file;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::LineNumber;
@@ -225,7 +226,7 @@ impl LintFixProcessor {
             Some(c) => c,
             None => return false,
         };
-        let lines: Vec<&str> = content.lines().collect();
+        let lines: Vec<&str> = content.value().lines().collect();
         if (line as usize) > lines.len() || line == 0 {
             return false;
         }
@@ -278,7 +279,8 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        self.file_adapter.write_file(file_path, &result)
+        self.file_adapter
+            .write_file(file_path, &ContentString::new(result))
     }
 
     fn fix_unused_import_impl(&self, file_path: &FilePath, line: u32) -> bool {
@@ -289,7 +291,7 @@ impl LintFixProcessor {
             Some(c) => c,
             None => return false,
         };
-        let lines: Vec<&str> = content.lines().collect();
+        let lines: Vec<&str> = content.value().lines().collect();
         if (line as usize) > lines.len() || line == 0 {
             return false;
         }
@@ -313,7 +315,8 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        self.file_adapter.write_file(file_path, &result)
+        self.file_adapter
+            .write_file(file_path, &ContentString::new(result))
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {

@@ -50,7 +50,7 @@ fn check_dir_containers(
     if let Ok(fp) = FilePath::new(dir.to_str().unwrap_or("")) {
         let entries = cache.read_dir(&fp);
         for entry_path in &entries {
-            let path = std::path::Path::new(entry_path);
+            let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
                 if check_dir_containers(path, identifiers, cache) {
                     return true;
@@ -66,7 +66,7 @@ fn check_dir_containers(
                     || name.ends_with("_entry.js")
                 {
                     let fp = FilePath {
-                        value: entry_path.clone(),
+                        value: entry_path.value.clone(),
                     };
                     let content = cache.read_cached(&fp).value;
                     for id in identifiers {

@@ -4,6 +4,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
 
@@ -70,9 +71,9 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
 
 pub trait IOrphanFileCachePort: Send + Sync {
     fn read_cached(&self, path: &FilePath) -> ContentString;
-    fn read_dir(&self, dir_path: &FilePath) -> Vec<String>;
-    fn path_exists(&self, path: &FilePath) -> bool;
-    fn is_symlink(&self, path: &FilePath) -> bool;
+    fn read_dir(&self, dir_path: &FilePath) -> Vec<FilePath>;
+    fn path_exists(&self, path: &FilePath) -> BooleanVO;
+    fn is_symlink(&self, path: &FilePath) -> BooleanVO;
     fn clear_cache(&self);
 }
 

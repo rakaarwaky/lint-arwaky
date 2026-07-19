@@ -123,6 +123,8 @@ impl OrphanGraphResolver {
     /// resolved module is the one that should receive the inbound link.
     /// e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
     ///   -> `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`
+    /// Resolve an external-crate import path (e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`)
+    /// to the real leaf module file, descending through directory modules.
     fn resolve_module_file(
         &self,
         _crate_name: &str,
@@ -141,21 +143,39 @@ impl OrphanGraphResolver {
         // never be linked and produced false AES501/AES502 orphans.
         let mut last_resolved: Option<String> = None;
         for seg in segments {
+            // Rust module names use underscores, but the repo's directories use
+            // hyphens (e.g. `code_analysis` module lives in `code-analysis/`), and
+            // vice versa (`orphan_detector` import -> `orphan-detector/` dir). Try
+            // BOTH the underscore and hyphen spellings of every segment against the
+            // real filesystem so leaf modules are linked correctly.
             let normalized = seg.replace('-', "_");
-            let file_cand = format!("{}/{}.rs", current.display(), normalized);
-            let mod_cand = format!("{}/{}/mod.rs", current.display(), normalized);
-            if Path::new(&file_cand).is_file() {
-                if file_cand != importing_file {
-                    last_resolved = Some(file_cand.clone());
+            let hyphenated = seg.replace('_', "-");
+            let mut file_variants = vec![format!("{}/{}.rs", current.display(), normalized)];
+            let mut mod_variants = vec![format!("{}/{}/mod.rs", current.display(), normalized)];
+            if hyphenated != normalized {
+                file_variants.push(format!("{}/{}.rs", current.display(), hyphenated));
+                mod_variants.push(format!("{}/{}/mod.rs", current.display(), hyphenated));
+            }
+            if seg != &normalized && seg != &hyphenated {
+                file_variants.push(format!("{}/{}.rs", current.display(), seg));
+                mod_variants.push(format!("{}/{}/mod.rs", current.display(), seg));
+            }
+            let mut matched: Option<String> = None;
+            for cand in file_variants.iter().chain(mod_variants.iter()) {
+                if Path::new(cand).is_file() {
+                    matched = Some(cand.clone());
+                    break;
                 }
-                last_resolved = last_resolved.or(Some(file_cand.clone()));
-                current = PathBuf::from(&file_cand);
-                continue;
-            } else if Path::new(&mod_cand).is_file() {
-                if mod_cand != importing_file {
-                    last_resolved = Some(mod_cand.clone());
+            }
+            if let Some(resolved) = matched {
+                if resolved != importing_file {
+                    last_resolved = Some(resolved.clone());
                 }
-                current = PathBuf::from(&mod_cand);
+                last_resolved = last_resolved.or(Some(resolved.clone()));
+                current = Path::new(&resolved)
+                    .parent()
+                    .map(PathBuf::from)
+                    .unwrap_or(current);
                 continue;
             } else {
                 return last_resolved;
@@ -222,10 +242,12 @@ impl OrphanGraphResolver {
         let root_path = std::path::Path::new(root_dir);
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(ws_path.to_str().unwrap_or("")) {
+            if let Ok(fp) =
+                shared::common::taxonomy_path_vo::FilePath::new(ws_path.to_str().unwrap_or(""))
+            {
                 let entries = self.cache.read_dir(&fp);
                 for entry_path in &entries {
-                    let path = std::path::Path::new(entry_path);
+                    let path = std::path::Path::new(entry_path.value());
                     if path.is_dir() {
                         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                             let name = name.to_string();
@@ -363,13 +385,9 @@ impl OrphanGraphResolver {
                                         .entry(file_path.clone())
                                         .or_default()
                                         .push(f.clone());
-                                    resolved = true;
                                     break;
                                 }
                             }
-                        }
-                        if resolved {
-                            continue;
                         }
                     }
                     if let Some(seg) = segments.first() {
@@ -518,8 +536,6 @@ impl OrphanGraphResolver {
                         // `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`,
                         // NOT only `crates/shared/src/orphan-detector/mod.rs`.
                         // Previously only the leading segment was resolved, so leaf
-                        // taxonomy/contract module files appeared to have zero inbound
-                        // links and were falsely flagged as AES501/AES502 orphans.
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
                             if let Some(resolved) =
                                 self.resolve_module_file(crate_name, &segments, src_dir, f)

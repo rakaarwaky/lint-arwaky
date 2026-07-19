@@ -101,6 +101,13 @@ Every contract trait must follow these structural rules for object safety and cr
 2. **Generics**: Generic methods MUST include `where Self: Sized` to preserve object safety for the rest of the trait.
 3. **Errors**: Use associated types (`type Error;`) for flexible, implementation-specific error handling.
 4. **No Helpers**: Do NOT include private helper signatures or highly specific algorithmic steps in the trait.
+5. **No Primitives**: ALL primitive types are FORBIDDEN in contract trait method signatures:
+   - `&str` → use `FilePath`, `SymbolName`, or domain-specific VO
+   - `String` → use domain-specific VO
+   - `bool` → use `BooleanVO`
+   - `i32`, `i64`, `u32`, `u64`, `f32`, `f64`, `usize`, `isize` → use domain-specific VO (`LineNumber`, `Count`, `Score`, etc.)
+   - `Vec<String>` → use `PatternList` or domain-specific list VO
+   - `Option<String>` → use domain-specific optional VO
 
 ```rust
 // contract_system_port.rs — Complete trait structure example
@@ -111,17 +118,17 @@ pub trait IFileSystemPort: Send + Sync {
     type Error;
 
     // 2. Async methods (implicitly Sized, but good to be explicit if mixing with generics)
-    async fn read_file(&self, path: &FilePath) -> Result<String, Self::Error>;
-    async fn write_file(&self, path: &FilePath, content: &str) -> Result<(), Self::Error>;
+    async fn read_file(&self, path: &FilePath) -> Result<ContentString, Self::Error>;
+    async fn write_file(&self, path: &FilePath, content: &ContentString) -> Result<(), Self::Error>;
 
     // 3. Generic methods (MUST have `where Self: Sized` for object safety)
-    fn glob_files<F>(&self, pattern: &str, callback: F) -> usize
+    fn glob_files<F>(&self, pattern: &PatternList, callback: F) -> Count
     where
         Self: Sized,
-        F: FnMut(&str);
+        F: FnMut(&FilePath);
 
     // 4. Regular methods (no extra bounds needed)
-    fn list_files(&self, dir: &FilePath) -> Vec<String>;
+    fn list_files(&self, dir: &FilePath) -> FilePathList;
 }
 // NOTE: Implementation belongs in infrastructure_*.rs — NOT here.
 ```

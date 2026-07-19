@@ -127,10 +127,11 @@ impl SurfacesOrphanAnalyzer {
     }
 
     fn check_dir_imports(&self, dir: &std::path::Path, stem: &str) -> bool {
-        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or("")) {
+        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or(""))
+        {
             let entries = self.cache.read_dir(&fp);
             for entry_path in &entries {
-                let path = std::path::Path::new(entry_path);
+                let path = std::path::Path::new(entry_path.value());
                 if path.is_dir() {
                     if self.check_dir_imports(path, stem) {
                         return true;
@@ -147,9 +148,7 @@ impl SurfacesOrphanAnalyzer {
                             || name.ends_with(".ts")
                             || name.ends_with(".js"))
                     {
-                        let fp = FilePath {
-                            value: entry_path.clone(),
-                        };
+                        let fp = entry_path.clone();
                         let content = self.cache.read_cached(&fp).value;
                         if content.contains(stem) {
                             return true;

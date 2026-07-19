@@ -277,6 +277,12 @@ Run TypeScript compiler to confirm no violations.
 - [ ] **Value Objects are immutable** — readonly properties by default.
 - [ ] **Error types extend `Error`** — with proper error messages.
 - [ ] **Constants are pure static values** — no imports, no functions.
+- [ ] **Contract signatures use VOs, not primitives** — ALL primitives are FORBIDDEN in contract method signatures:
+  - `string` → use domain-specific VO (e.g., `FilePath`, `SymbolName`)
+  - `number` → use domain-specific VO (e.g., `LineNumber`, `Count`)
+  - `boolean` → use `BooleanVO`
+  - `string[]` → use domain-specific list VO (e.g., `PatternList`)
+  - `Record<string, T>` → use domain-specific VO
 - [ ] `tsc --noEmit` passes without errors.
 
 ## Quick Commands

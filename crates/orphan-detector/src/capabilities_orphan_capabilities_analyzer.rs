@@ -131,10 +131,11 @@ impl CapabilitiesOrphanAnalyzer {
     }
 
     fn check_dir_containers(&self, dir: &std::path::Path, identifiers: &[String]) -> bool {
-        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or("")) {
+        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or(""))
+        {
             let entries = self.cache.read_dir(&fp);
             for entry_path in &entries {
-                let path = std::path::Path::new(entry_path);
+                let path = std::path::Path::new(entry_path.value());
                 if path.is_dir() {
                     if self.check_dir_containers(path, identifiers) {
                         return true;
@@ -149,9 +150,7 @@ impl CapabilitiesOrphanAnalyzer {
                         || name.ends_with("_entry.ts")
                         || name.ends_with("_entry.js")
                     {
-                        let fp = FilePath {
-                            value: entry_path.clone(),
-                        };
+                        let fp = entry_path.clone();
                         let content = self.cache.read_cached(&fp).value;
                         for id in identifiers {
                             if content.contains(id) {

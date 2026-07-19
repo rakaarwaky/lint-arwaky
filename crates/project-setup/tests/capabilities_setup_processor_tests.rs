@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort;
 use shared::project_setup::contract_filesystem_maintenance_port::FileEntry;
+use shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort;
 use shared::project_setup::contract_setup_protocol::{
     ISetupInstallerPort, ISetupManagementProtocol,
 };
@@ -123,7 +123,9 @@ async fn test_write_config_file() {
     let dir = std::env::temp_dir().join("lint_arwaky_test_setup");
     let _ = std::fs::create_dir_all(&dir);
     let path = dir.join("test_config.yaml");
-    let result = proc.write_config_file(&path.to_string_lossy(), "rules:\n  aes001: enabled\n").await;
+    let result = proc
+        .write_config_file(&path.to_string_lossy(), "rules:\n  aes001: enabled\n")
+        .await;
     assert!(result.is_ok());
     let desc = result.unwrap();
     assert!(desc.value.contains("wrote"));

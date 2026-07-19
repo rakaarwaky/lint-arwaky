@@ -1,3 +1,4 @@
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFileCachePort;
@@ -26,26 +27,30 @@ impl IOrphanFileCachePort for OrphanFileCache {
         })
     }
 
-    fn read_dir(&self, dir_path: &FilePath) -> Vec<String> {
+    fn read_dir(&self, dir_path: &FilePath) -> Vec<FilePath> {
         let mut entries = Vec::new();
         if let Ok(read_dir) = fs::read_dir(dir_path.value()) {
             for entry in read_dir.flatten() {
                 if let Some(s) = entry.path().to_str() {
-                    entries.push(s.to_string());
+                    if let Ok(fp) = FilePath::new(s) {
+                        entries.push(fp);
+                    }
                 }
             }
         }
         entries
     }
 
-    fn path_exists(&self, path: &FilePath) -> bool {
-        std::path::Path::new(&path.value).exists()
+    fn path_exists(&self, path: &FilePath) -> BooleanVO {
+        BooleanVO::from(std::path::Path::new(path.value()).exists())
     }
 
-    fn is_symlink(&self, path: &FilePath) -> bool {
-        std::fs::symlink_metadata(&path.value)
-            .map(|m| m.file_type().is_symlink())
-            .unwrap_or(false)
+    fn is_symlink(&self, path: &FilePath) -> BooleanVO {
+        BooleanVO::from(
+            std::fs::symlink_metadata(path.value())
+                .map(|m| m.file_type().is_symlink())
+                .unwrap_or(false),
+        )
     }
 
     fn clear_cache(&self) {
