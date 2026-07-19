@@ -8,10 +8,15 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 
+// Block 1: struct Definition
 pub struct FileWatchContainer {
     provider: Arc<NotifyWatchProvider>,
 }
 
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl — root container is wiring only)
+
+// Block 3: constructors & public API
 impl FileWatchContainer {
     pub fn new() -> Self {
         Self {
