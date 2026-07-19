@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-python
 description: "Create and validate capabilities layer files following AES rules: 3-block structure, one class per file, protocol contracts, zero I/O."
-version: 1.1.0
+version: 1.2.0
 category: refactoring
 tags:
   [
@@ -65,28 +65,26 @@ Create and validate Python **capabilities layer** files following clean architec
 - **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions (no `self`, no `cls`) MUST be extracted to `*_utility.py` modules in shared/taxonomy
 - **No module-level `def` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.py`
 
-### Helper vs Utility Decision (The Litmus Test)
+### Helper vs Utility Decision (The Ultimate Boundary)
 
-> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
-> - If **YES** → **Extract to Utility File**.
-> - If **NO** (needs `self`, `cls`, or class context) → **Keep as Private Helper**.
+The boundary is not just about `self`/`cls`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)**.
 
-#### When to Extract to Utility (`*_utility.py`)
+> **The Litmus Test:** "Does this function know about specific business rules (e.g., AES violations, layer mappings), or is it just a blind data manipulator?"
 
-Extract if **ALL** conditions are met:
+#### 🟢 Keep as Private Helper in Capabilities (Block 3)
+Keep if the function contains **Domain Knowledge** or meets ANY of these:
+1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific domain violation codes).
+2. **Needs Instance State**: Accesses `self.field` or class variables.
+3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
+4. **Factory Method**: `create_default()`, `from_config()`, `from_dict()` — specific to instantiating this class.
+5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
 
-1. **Stateless**: No `self`, no `cls`, no class-level state access
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
-3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
-
-#### When to Keep as Private Helper (Block 3)
-
-Keep if **ANY** condition is met:
-
-1. **Needs Instance State**: Accesses `self.field`
-2. **Needs Class State**: Accesses class variables or `cls` attributes
-3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
-4. **Factory Method**: `create_default()`, `from_config()`, `from_dict()` — specific to instantiating this class
+#### 🔴 Extract to Utility (`*_utility.py`)
+Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
+1. **Stateless**: No `self`, no `cls`, no class-level state access.
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
 
 #### I/O Blocker (CRITICAL)
 
@@ -699,6 +697,180 @@ grep -n "^def [a-z_]*(\s*[^self])" modules/*/src/capabilities_*.py
 
 # Check syntax
 python -c "import <module>"
+
+# Find error swallowing patterns (or "", or 0)
+grep -n "or ''\|or \"\"\|or 0\|or ''\|or \"\"" modules/*/src/capabilities_*.py
+
+# Find magic constants (hardcoded literals)
+grep -n "[0-9]\+\.[0-9]\+" modules/*/src/capabilities_*.py | grep -v "#\|const\|import" | head -20
+
+# Detect dunder methods appearing BEFORE protocol methods (wrong block order)
+python3 -c "
+import re, sys
+for f in sys.argv[1:]:
+    lines = open(f).readlines()
+    first_dunder = first_proto = None
+    for i, l in enumerate(lines):
+        m = re.match(r'\s+def (__\w+__)\(', l)
+        if m and m.group(1) not in ('__init__', '__init_subclass__') and first_dunder is None:
+            first_dunder = i + 1
+        m2 = re.match(r'\s+def ([a-z]\w+)\(', l)
+        if m2 and not m2.group(1).startswith('_') and first_proto is None:
+            first_proto = i + 1
+    if first_dunder and first_proto and first_dunder < first_proto:
+        print(f'VIOLATION: {f} — dunder (line {first_dunder}) before protocol method (line {first_proto})')
+" modules/*/src/capabilities_*.py
+```
+
+## Error Handling (from fix-error-handling)
+
+**Capabilities Layer Error Rules:**
+- **Never silently discard errors** with `or ""` or `or 0` in capabilities layer.
+- All public methods MUST return descriptive error types or raise meaningful exceptions.
+- IO errors (file read, network) → propagate with `raise` or return error result.
+- Logic errors (validation, parsing) → propagate with custom exception type.
+
+### Silent Swallowing (Fix)
+
+```python
+# [FORBIDDEN] Error silently discarded
+def filepath_or_default(result: FilePath | None) -> FilePath:
+    return result or FilePath("")  # Error thrown away
+
+# [FORBIDDEN] Error detail lost
+try:
+    cycle_check()
+except Exception as e:
+    print(e)  # Debug printing loses context
+```
+
+### Proper Patterns (Use)
+
+```python
+# [OK] Explicit error propagation
+def parse_file(path: FilePath) -> Result[Content, ParseError]:
+    try:
+        return Ok(path.value().read_text())
+    except Exception as e:
+        return Err(ParseError(f"Cannot read: {e}"))
+
+# [OK] LintResult for check failures (not IO failures)
+def check_imports(...) -> list[LintResult]:
+    try:
+        content = path.read_text()
+    except Exception as e:
+        return [LintResult.new_arch(
+            "PARSE_ERROR", f"Cannot read: {e}", str(path)
+        )]
+    # Import check failure -> LintResult (expected outcome)
+```
+
+## Primitive-to-VO Replacement (from fix-primitive-to-vo)
+
+**Capabilities Layer VO Rules:**
+- Entity fields MUST use VOs, not primitives (`str`, `int`, `float`, `bool`).
+- Contract signatures MUST use VOs.
+- VOs MUST validate on construction.
+
+```python
+# BEFORE (primitive)
+@dataclass
+class LintResult:
+    file_path: str
+    line: int
+    severity: str
+
+# AFTER (VO)
+@dataclass
+class LintResult:
+    file_path: FilePath
+    line: LineNumber
+    severity: SeverityVO
+```
+
+## Magic Constant Extraction (from fix-magic-constant)
+
+**Capabilities Layer Constant Rules:**
+- NO hardcoded literals in capabilities layer.
+- All domain values MUST be named constants.
+- Constants MUST live in `taxonomy_*_constant.py`.
+
+```python
+# [FORBIDDEN] BEFORE
+def calculate_duration(self) -> float:
+    return 0.5  # magic
+
+# [OK] AFTER
+from shared.animator.taxonomy_animator_constant import MIN_REVEAL_SECONDS
+def calculate_duration(self) -> float:
+    return MIN_REVEAL_SECONDS
+```
+
+## Import Strategy (from fix-imports)
+
+When fixing cross-import violations in capabilities, choose the right approach:
+
+### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
+Use when the code is **stateless, pure logic** with no side effects:
+
+| Condition                                     | Example                                       |
+| --------------------------------------------- | --------------------------------------------- |
+| Pure function — no `self`, no `cls`           | `parse_path()`, `normalize_name()`            |
+| Stateless — all data via parameters           | `compute_distance(a: Point, b: Point)`        |
+| No side effects — deterministic output        | `sanitize_string(input: str) -> str`          |
+
+```python
+# taxonomy_path_utility.py (TAXONOMY LAYER)
+def parse_path(path: str) -> str | None:
+    return path[1:] if path.startswith('/') else None
+
+# capabilities_timeline_processor.py (CONSUMER)
+from shared.taxonomy_path_utility import parse_path, normalize_name  # ALLOWED: taxonomy import
+```
+
+### Option B: Dependency Injection via Protocols (Port/Protocol Pattern)
+Use when the code requires **state, side effects, or layer-specific behavior**:
+
+| Condition                     | Example                                         |
+| ----------------------------- | ----------------------------------------------- |
+| Needs `self` / instance state | Class with fields for data/mutation              |
+| Has side effects / I/O        | File operations, network calls, DB queries       |
+| Layer-specific implementation | Adapter that depends on concrete infrastructure |
+
+```python
+# 1. Define protocol in CONTRACT layer
+# contract_frame_exporter_protocol.py
+class IFrameExporterProtocol(Protocol):
+    def export(self, frame: Frame) -> str: ...
+
+# 2. Capability implements the protocol
+# capabilities_frame_exporter.py
+class FrameExporter(IFrameExporterProtocol):
+    def __init__(self, output_dir: str):
+        self._output_dir = output_dir
+    def export(self, frame: Frame) -> str:
+        return f"{self._output_dir}/{frame.id}.png"
+
+# 3. Consumer receives via DI (knows only the protocol)
+# capabilities_timeline_processor.py
+class TimelineProcessor:
+    def __init__(self, exporter: IFrameExporterProtocol):  # via DI, not direct import
+        self._exporter = exporter
+```
+
+## Decision Tree: Which Option to Choose?
+
+```text
+Encountered cross-import violation in capabilities?
+  │
+  ├─ Does the code need self / class state?
+  │   └─ YES → Option B: Dependency Injection
+  │
+  ├─ Does the code have side effects (I/O, file, network)?
+  │   └─ YES → Option B: Dependency Injection
+  │
+  └─ Is it pure, stateless, no self?
+      └─ YES → Option A: Extract to Taxonomy Utility
 ```
 
 ## Common Mistakes (AVOID)
@@ -716,3 +888,5 @@ python -c "import <module>"
 - ❌ **Mixing `__init__` into Block 2**: `__init__` is part of Block 1 (class definition & constructor), not a protocol method.
 - ❌ **Leaving module-level `def` in capabilities files**: Free functions outside the class MUST be extracted to `*_utility.py` in shared/taxonomy. No exceptions.
 - ❌ **Keeping stateless `@staticmethod` in class**: If a `@staticmethod` uses no `self`, no `cls`, and no class-level state, it belongs in `*_utility.py`, not in the class body.
+- ❌ **Placing `__init__` in Block 2**: Constructor is part of Block 1 (class definition), not a protocol method.
+- ❌ **Placing `__repr__`/`__str__` before protocol methods**: Dunder methods belong in Block 3, after protocol methods.

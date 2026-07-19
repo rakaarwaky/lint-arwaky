@@ -301,7 +301,9 @@ fn main() -> ExitCode {
             let dup_analyzer = CodeDuplicationAnalyzer::new();
             let fs_adapter = OSFileSystemAdapter::new();
             let violations = dup_analyzer.handle_duplicates(
-                path.map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).unwrap_or_default()),
+                path.map(|p| {
+                    shared::common::taxonomy_path_vo::FilePath::new(p).unwrap_or_default()
+                }),
                 &fs_adapter,
             );
             if violations.is_empty() {

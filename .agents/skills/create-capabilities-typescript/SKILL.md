@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-typescript
 description: "Create and validate capabilities layer files following AES rules: 3-block structure, one class per file, protocol contracts, zero I/O."
-version: 1.1.0
+version: 1.2.0
 category: refactoring
 tags:
   [
@@ -65,28 +65,26 @@ Create and validate TypeScript **capabilities layer** files following clean arch
 - **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic functions MUST be extracted to `*_utility.ts` modules in shared/taxonomy
 - **No module-level `export function` in capabilities files** — free functions outside the class are forbidden; extract to `*_utility.ts`
 
-### Helper vs Utility Decision (The Litmus Test)
+### Helper vs Utility Decision (The Ultimate Boundary)
 
-> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
-> - If **YES** → **Extract to Utility File**.
-> - If **NO** (needs `this`, class state, or class context) → **Keep as Private Helper**.
+The boundary is not just about `this`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single-Domain vs. Multi-Domain Reuse**.
 
-#### When to Extract to Utility (`*_utility.ts`)
+> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple features/domains use it, or only this one?"
 
-Extract if **ALL** conditions are met:
+#### 🟢 Keep as Private Helper in Capabilities (Block 3)
+Keep if the function contains **Domain Knowledge** or meets ANY of these:
+1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific domain violation codes).
+2. **Needs Instance State**: Accesses `this.field` or `static` fields.
+3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
+4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class.
+5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
 
-1. **Stateless**: No `this`, no class-level state access
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
-3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
-
-#### When to Keep as Private Helper (Block 3)
-
-Keep if **ANY** condition is met:
-
-1. **Needs Instance State**: Accesses `this.field`
-2. **Needs Class State**: Accesses `static` fields
-3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
-4. **Factory Method**: `static create()`, `static from()`, `static of()` — specific to instantiating this class
+#### 🔴 Extract to Utility (`*_utility.ts`)
+Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
+1. **Stateless**: No `this`, no class-level state access.
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
 
 #### I/O Blocker (CRITICAL)
 
@@ -721,6 +719,183 @@ awk '
 
 # Check TypeScript
 npx tsc --noEmit
+
+# Find error swallowing patterns (?? '', || 0)
+grep -n "?? ''\|?? \"\"\||| 0\||| ''\||| \"\"" packages/*/src/capabilities_*.ts
+
+# Find magic constants (hardcoded literals)
+grep -n "[0-9]\+\.[0-9]\+" packages/*/src/capabilities_*.ts | grep -v "//\|const\|import" | head -20
+
+# Detect utility methods appearing BEFORE protocol methods (wrong block order)
+awk '
+    /^    (toString|toJSON|valueOf|equals)\(/ { if (!util_line) util_line = NR }
+    /^    [a-z][a-zA-Z]*\(/ && !/^    (toString|toJSON|valueOf|equals|constructor)\(/ { if (!proto_line) proto_line = NR }
+    END { if (util_line && proto_line && util_line < proto_line) print "VIOLATION: utility method (line " util_line ") before protocol method (line " proto_line ")" }
+' packages/*/src/capabilities_*.ts
+```
+
+## Error Handling (from fix-error-handling)
+
+**Capabilities Layer Error Rules:**
+- **Never silently discard errors** with `?? ''` or `|| 0` in capabilities layer.
+- All public methods MUST return descriptive error types or throw meaningful errors.
+- IO errors (file read, network) → propagate with `throw` or return error result.
+- Logic errors (validation, parsing) → propagate with custom error type.
+
+### Silent Swallowing (Fix)
+
+```typescript
+// [FORBIDDEN] Error silently discarded
+function filepathOrDefault(result: FilePath | undefined): FilePath {
+    return result ?? new FilePath('');  // Error thrown away
+}
+
+// [FORBIDDEN] Error detail lost
+try {
+    await cycleCheck();
+} catch (e) {
+    console.log(e);  // Debug logging loses context
+}
+```
+
+### Proper Patterns (Use)
+
+```typescript
+// [OK] Explicit error propagation
+function parseFile(path: FilePath): Result<Content, ParseError> {
+    try {
+        return Ok(fs.readFileSync(path.value()));
+    } catch (e) {
+        return Err(new ParseError(`Cannot read: ${e}`));
+    }
+}
+
+// [OK] LintResult for check failures (not IO failures)
+function checkImports(...): LintResult[] {
+    const content = (() => {
+        try {
+            return fs.readFileSync(path);
+        } catch (e) {
+            return [LintResult.newArch(
+                'PARSE_ERROR', `Cannot read: ${e}`, path
+            )];
+        }
+    })();
+    // Import check failure -> LintResult (expected outcome)
+}
+```
+
+## Primitive-to-VO Replacement (from fix-primitive-to-vo)
+
+**Capabilities Layer VO Rules:**
+- Entity fields MUST use VOs, not primitives (`string`, `number`, `boolean`).
+- Contract signatures MUST use VOs.
+- VOs MUST validate on construction.
+
+```typescript
+// BEFORE (primitive)
+interface LintResult {
+    filePath: string;
+    line: number;
+    severity: string;
+}
+
+// AFTER (VO)
+interface LintResult {
+    filePath: FilePath;
+    line: LineNumber;
+    severity: SeverityVO;
+}
+```
+
+## Magic Constant Extraction (from fix-magic-constant)
+
+**Capabilities Layer Constant Rules:**
+- NO hardcoded literals in capabilities layer.
+- All domain values MUST be named constants.
+- Constants MUST live in `taxonomy_*_constant.ts`.
+
+```typescript
+// [FORBIDDEN] BEFORE
+function calculateDuration(): number {
+    return 0.5;  // magic
+}
+
+// [OK] AFTER
+import { MIN_REVEAL_SECONDS } from '../shared/animator/taxonomy_animator_constant';
+function calculateDuration(): number {
+    return MIN_REVEAL_SECONDS;
+}
+```
+
+## Import Strategy (from fix-imports)
+
+When fixing cross-import violations in capabilities, choose the right approach:
+
+### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
+Use when the code is **stateless, pure logic** with no side effects:
+
+| Condition                                     | Example                                       |
+| --------------------------------------------- | --------------------------------------------- |
+| Pure function — no `this`, no class state     | `parsePath()`, `normalizeName()`              |
+| Stateless — all data via parameters           | `computeDistance(a: Point, b: Point)`         |
+| No side effects — deterministic output        | `sanitizeString(input: string): string`       |
+
+```typescript
+// taxonomy_path_utility.ts (TAXONOMY LAYER)
+export function parsePath(path: string): string | null {
+    return path.startsWith('/') ? path.slice(1) : null;
+}
+
+// capabilities_timeline_processor.ts (CONSUMER)
+import { parsePath, normalizeName } from '../shared/taxonomy_path_utility'; // ALLOWED: taxonomy import
+```
+
+### Option B: Dependency Injection via Interfaces (Port/Protocol Pattern)
+Use when the code requires **state, side effects, or layer-specific behavior**:
+
+| Condition                     | Example                                         |
+| ----------------------------- | ----------------------------------------------- |
+| Needs `this` / class state    | Class with fields for data/mutation              |
+| Has side effects / I/O        | File operations, network calls, DB queries       |
+| Layer-specific implementation | Adapter that depends on concrete infrastructure |
+
+```typescript
+// 1. Define interface in CONTRACT layer
+// contract_frame_exporter_protocol.ts
+export interface IFrameExporterProtocol {
+    export(frame: Frame): string;
+}
+
+// 2. Capability implements the interface
+// capabilities_frame_exporter.ts
+export class FrameExporter implements IFrameExporterProtocol {
+    constructor(private outputDir: string) {}
+    export(frame: Frame): string {
+        return `${this.outputDir}/${frame.id}.png`;
+    }
+}
+
+// 3. Consumer receives via DI (knows only the interface)
+// capabilities_timeline_processor.ts
+export class TimelineProcessor {
+    constructor(private exporter: IFrameExporterProtocol) {} // via DI, not direct import
+}
+```
+
+## Decision Tree: Which Option to Choose?
+
+```text
+Encountered cross-import violation in capabilities?
+  │
+  ├─ Does the code need this / class state?
+  │   └─ YES → Option B: Dependency Injection
+  │
+  ├─ Does the code have side effects (I/O, file, network)?
+  │   └─ YES → Option B: Dependency Injection
+  │
+  └─ Is it pure, stateless, no this?
+      └─ YES → Option A: Extract to Taxonomy Utility
 ```
 
 ## Common Mistakes (AVOID)
@@ -738,3 +913,5 @@ npx tsc --noEmit
 - ❌ **Leaving module-level `export function` in capabilities files**: Free functions outside the class MUST be extracted to `*_utility.ts` in shared/taxonomy. No exceptions.
 - ❌ **Keeping stateless `static` methods in class**: If a `static` method uses no `this`, no class-level state, and is not a factory, it belongs in `*_utility.ts`, not in the class body.
 - ❌ **Defining `export const` at module level in capabilities files**: Domain constants MUST live in `taxonomy_<name>_constant.ts` in shared/taxonomy.
+- ❌ **Placing `constructor` in Block 2**: Constructor is part of Block 1 (class definition), not a protocol method.
+- ❌ **Placing `toString`/`toJSON` before protocol methods**: Utility methods belong in Block 3, after protocol methods.

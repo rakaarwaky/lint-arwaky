@@ -559,11 +559,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let dup_analyzer = code_analysis::CodeDuplicationAnalyzer::new();
                     let fs_adapter =
                         import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter::new();
-                    let violations =
-                        dup_analyzer.handle_duplicates(
-                            Some(FilePath::new(path.clone()).unwrap_or_default()),
-                            &fs_adapter,
-                        );
+                    let violations = dup_analyzer.handle_duplicates(
+                        Some(FilePath::new(path.clone()).unwrap_or_default()),
+                        &fs_adapter,
+                    );
 
                     let findings: Vec<_> = violations
                         .iter()

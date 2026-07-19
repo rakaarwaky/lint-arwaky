@@ -66,7 +66,7 @@ impl WatchOrchestrator {
         println!();
 
         // Initial full lint
-        let results = self.linter.run_code_analysis_path(&path);
+        let results = self.linter.run_code_analysis_path(&config.path);
         let score = self.linter.calc_score(&results);
         println!("[initial] {} violations, score {:.1}", results.len(), score);
 

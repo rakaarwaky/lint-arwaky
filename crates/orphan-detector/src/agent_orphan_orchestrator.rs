@@ -58,19 +58,26 @@ pub struct ArchOrphanAnalyzer {
 
 // ─── Block 2: Public Contract (domain aggregate ONLY) ─────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
-    fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        // Bridge the raw &[String] parameter from IOrphanAggregate into the
+    fn build_orphan_graph_context(
+        &self,
+        files: &[FilePath],
+        root_dir: &FilePath,
+    ) -> GraphAnalysisContext {
+        // Bridge the raw &[FilePath] parameter from IOrphanAggregate into the
         // VO-typed contract surface of IOrphanGraphResolverProtocol.
-        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+        let file_strs: Vec<String> = files.iter().map(|fp| fp.value().to_string()).collect();
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(file_strs);
         self.resolver.build_graph_context(&[file_vo], root_dir)
     }
 
-    fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
-        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+    fn identify_orphan_entry_points(&self, files: &[FilePath]) -> HashSet<FilePath> {
+        let file_strs: Vec<String> = files.iter().map(|fp| fp.value().to_string()).collect();
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(file_strs);
         self.resolver
             .identify_entry_points(&[file_vo], &[])
             .values
             .into_iter()
+            .map(|s| FilePath::new(s).unwrap())
             .collect()
     }
 
@@ -87,8 +94,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn check_orphans(
         &self,
         layer_detector: &dyn ILayerDetectionAggregate,
-        files: &[String],
-        root_dir: &str,
+        files: &[FilePath],
+        root_dir: &FilePath,
     ) -> Vec<LintResult> {
         // Global gate: skip all orphan checks if architecture checker is disabled
         let config = layer_detector.config();
@@ -105,18 +112,19 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
         // Trace reachability: BFS from all entry points through the import graph
         let configured = layer_detector.get_orphan_entry_points();
-        let configured_vo = shared::orphan_detector::OrphanEntryPatternListVO::new(configured);
+        let configured_strs: Vec<String> = configured
+            .into_iter()
+            .map(|fp| fp.value().to_string())
+            .collect();
+        let configured_vo = shared::orphan_detector::OrphanEntryPatternListVO::new(configured_strs);
         let entry_points = self
             .resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
 
         // Evaluate each file: alive (reachable) vs orphan (unreachable)
         for f in files {
-            let file_fp = match FilePath::new(f.clone()) {
-                Ok(fp) => fp,
-                Err(_) => continue,
-            };
-            let layer_str = match layer_detector.detect_layer(f, root_dir) {
+            let root_dir_fp = FilePath::new(root_dir.value()).unwrap_or_default();
+            let layer_str = match layer_detector.detect_layer(f, &root_dir_fp) {
                 Some(l) => l,
                 None => continue,
             };
@@ -127,13 +135,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             };
 
             // Skip files in the layer's exception list (e.g., mod.rs, __init__.py)
-            let basename = file_fp.basename();
+            let basename = f.basename();
             if definition.exceptions.values.contains(&basename) {
                 continue;
             }
 
             // Skip if the specific orphan rule for this layer is disabled
-            let rule_code = match layer_str.to_lowercase() {
+            let rule_code = match layer_str.value().to_lowercase() {
                 s if s.contains(LAYER_TAXONOMY) => "AES501",
                 s if s.contains(LAYER_CONTRACT) => "AES502",
                 s if s.contains(LAYER_CAPABILITIES) => "AES503",
@@ -146,19 +154,19 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 continue;
             }
 
-            let layer_vo = LayerNameVO::new(&layer_str);
+            let layer_vo = LayerNameVO::new(layer_str.value());
             let res = self._evaluate_layer(
-                f,
+                f.value(),
                 &context,
                 &entry_points.values,
                 &layer_vo,
-                files,
-                root_dir,
+                &file_strs,
+                root_dir.value(),
             );
 
             // If the layer-specific protocol confirms orphan status, emit the appropriate AES code
             if res.is_orphan {
-                let code = match layer_str.to_lowercase() {
+                let code = match layer_str.value().to_lowercase() {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",
                     s if s.contains(LAYER_CONTRACT) => "AES502",
                     s if s.contains(LAYER_CAPABILITIES) => "AES503",
@@ -167,7 +175,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     s if s.contains(LAYER_SURFACES) => "AES506",
                     _ => continue,
                 };
-                results.push(self._make_result(f, &res.reason, res.severity, code));
+                results.push(self._make_result(f.value(), &res.reason, res.severity, code));
             }
         }
 
@@ -337,8 +345,8 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
         > = std::sync::OnceLock::new();
         EMPTY.get_or_init(shared::config_system::taxonomy_config_vo::ArchitectureConfig::default)
     }
-    fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let path = std::path::Path::new(file_path);
+    fn detect_layer(&self, file_path: &FilePath, _root_dir: &FilePath) -> Option<LayerNameVO> {
+        let path = std::path::Path::new(&file_path.value);
         let filename = path.file_name()?.to_str()?;
         let stem = std::path::Path::new(filename).file_stem()?.to_str()?;
 
@@ -354,14 +362,14 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
 
         for (prefix, layer) in PREFIX_MAP {
             if stem.starts_with(prefix) {
-                return Some(layer.to_string());
+                return Some(LayerNameVO::new(layer.to_string()));
             }
         }
 
         None
     }
 
-    fn get_layer_def(&self, _layer: &str) -> Option<LayerDefinition> {
+    fn get_layer_def(&self, _layer: &LayerNameVO) -> Option<LayerDefinition> {
         let mut def = LayerDefinition::default();
         def.exceptions.values = vec![
             "mod.rs".to_string(),
@@ -373,23 +381,23 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
         Some(def)
     }
 
-    fn get_orphan_entry_points(&self) -> Vec<String> {
+    fn get_orphan_entry_points(&self) -> Vec<FilePath> {
         vec![
-            "_container.rs".to_string(),
-            "_container.py".to_string(),
-            "_container.ts".to_string(),
-            "_container.js".to_string(),
-            "_entry.rs".to_string(),
-            "_entry.py".to_string(),
-            "_entry.ts".to_string(),
-            "_entry.js".to_string(),
-            "main.rs".to_string(),
-            "lib.rs".to_string(),
-            "main.py".to_string(),
-            "main.ts".to_string(),
-            "main.js".to_string(),
-            "index.ts".to_string(),
-            "index.js".to_string(),
+            FilePath::new("_container.rs".to_string()).unwrap_or_default(),
+            FilePath::new("_container.py".to_string()).unwrap_or_default(),
+            FilePath::new("_container.ts".to_string()).unwrap_or_default(),
+            FilePath::new("_container.js".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.rs".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.py".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.ts".to_string()).unwrap_or_default(),
+            FilePath::new("_entry.js".to_string()).unwrap_or_default(),
+            FilePath::new("main.rs".to_string()).unwrap_or_default(),
+            FilePath::new("lib.rs".to_string()).unwrap_or_default(),
+            FilePath::new("main.py".to_string()).unwrap_or_default(),
+            FilePath::new("main.ts".to_string()).unwrap_or_default(),
+            FilePath::new("main.js".to_string()).unwrap_or_default(),
+            FilePath::new("index.ts".to_string()).unwrap_or_default(),
+            FilePath::new("index.js".to_string()).unwrap_or_default(),
         ]
     }
 }

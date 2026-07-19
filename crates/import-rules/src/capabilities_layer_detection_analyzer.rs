@@ -100,24 +100,16 @@ impl ILayerDetectionProtocol for LayerDetectionAnalyzer {
 impl shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate
     for LayerDetectionAnalyzer
 {
-    fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String> {
-        ILayerDetectionProtocol::detect_layer(
-            self,
-            &FilePath::new(file_path.to_string()).unwrap_or_default(),
-            &FilePath::new(root_dir.to_string()).unwrap_or_default(),
-        )
-        .map(|l| l.value)
+    fn detect_layer(&self, file_path: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO> {
+        ILayerDetectionProtocol::detect_layer(self, file_path, root_dir)
     }
 
-    fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition> {
-        ILayerDetectionProtocol::get_layer_def(self, &LayerNameVO::new(layer))
+    fn get_layer_def(&self, layer: &LayerNameVO) -> Option<LayerDefinition> {
+        ILayerDetectionProtocol::get_layer_def(self, layer)
     }
 
-    fn get_orphan_entry_points(&self) -> Vec<String> {
+    fn get_orphan_entry_points(&self) -> Vec<FilePath> {
         ILayerDetectionProtocol::get_orphan_entry_points(self)
-            .into_iter()
-            .map(|fp| fp.value)
-            .collect()
     }
 
     fn config(&self) -> &ArchitectureConfig {

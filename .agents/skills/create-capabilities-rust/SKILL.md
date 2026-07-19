@@ -63,22 +63,24 @@ Create and validate Rust **capabilities layer** files following clean architectu
 
 ### Helper vs Utility Decision (The Ultimate Boundary)
 
-The boundary is not just about `&self`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)**.
+The boundary is not just about `&self`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)** and **Single-Domain vs. Multi-Domain Reuse**.
 
-> **The Litmus Test:** "Does this function know about specific business rules (e.g., AES violations, layer mappings), or is it just a blind data manipulator?"
+> **The Litmus Test:** "Does this function know about specific business rules, or is it just a blind data manipulator? AND will multiple features/domains use it, or only this one?"
 
 #### 🟢 Keep as Private Helper in Capabilities (Block 3)
 Keep if the function contains **Domain Knowledge** or meets ANY of these:
-1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific AES violation codes).
+1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific domain violation codes).
 2. **Needs Instance State**: Accesses `self.field` or `static` fields.
 3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
 4. **Factory Method**: `new()`, builders — specific to instantiating this class.
+5. **Single-Domain Only**: Function only serves ONE feature/domain and won't be reused elsewhere.
 
 #### 🔴 Extract to Utility (`*_utility.rs`)
 Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
 1. **Stateless**: No `&self`, no struct field access.
 2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
-3. **Domain-Agnostic / Reusable**: Logic is general enough that *other* checkers could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *multiple* checkers/features could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
+4. **Multi-Domain Reusable**: Function serves multiple features/domains, not just one.
 
 #### ⚠️ I/O Blocker (CRITICAL)
 A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
@@ -89,9 +91,9 @@ A function can be stateless but STILL **cannot** be extracted to taxonomy if it 
 **Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
 
 ```rust
-fn has_crate_self_import(file_path: &str) -> bool {
+fn read_config(file_path: &str) -> Option<String> {
     // Stateless ✓ (no &self)
-    // But uses std::fs::read_dir ✗ (I/O)
+    // But uses std::fs::read_to_string ✗ (I/O)
     // → CANNOT extract to taxonomy utility
     // → Keep in capabilities layer
 }
