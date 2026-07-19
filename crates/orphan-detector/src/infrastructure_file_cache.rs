@@ -26,6 +26,22 @@ impl IOrphanFileCachePort for OrphanFileCache {
         })
     }
 
+    fn read_dir(&self, dir_path: &str) -> Vec<String> {
+        let mut entries = Vec::new();
+        if let Ok(read_dir) = fs::read_dir(dir_path) {
+            for entry in read_dir.flatten() {
+                if let Some(s) = entry.path().to_str() {
+                    entries.push(s.to_string());
+                }
+            }
+        }
+        entries
+    }
+
+    fn path_exists(&self, path: &str) -> bool {
+        std::path::Path::new(path).exists()
+    }
+
     fn clear_cache(&self) {
         FILE_CACHE.with(|c| c.borrow_mut().clear());
     }

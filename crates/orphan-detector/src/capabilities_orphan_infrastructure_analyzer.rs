@@ -3,7 +3,7 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::{
-    IInfrastructureOrphanProtocol, IOrphanFilenameExtractorProtocol,
+    IInfrastructureOrphanProtocol, IOrphanFileCachePort, IOrphanFilenameExtractorProtocol,
 };
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::Arc;
@@ -11,6 +11,7 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct InfrastructureOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+    cache: Arc<dyn IOrphanFileCachePort>,
 }
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
@@ -32,13 +33,17 @@ impl Default for InfrastructureOrphanAnalyzer {
             extractor: Arc::new(
                 crate::capabilities_orphan_filename_extractor::OrphanFilenameExtractor::new(),
             ),
+            cache: Arc::new(crate::infrastructure_file_cache::OrphanFileCache::new()),
         }
     }
 }
 
 impl InfrastructureOrphanAnalyzer {
-    pub fn new(extractor: Arc<dyn IOrphanFilenameExtractorProtocol>) -> Self {
-        Self { extractor }
+    pub fn new(
+        extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+        cache: Arc<dyn IOrphanFileCachePort>,
+    ) -> Self {
+        Self { extractor, cache }
     }
 
     fn check_infrastructure_orphan(
@@ -56,7 +61,8 @@ impl InfrastructureOrphanAnalyzer {
         let fp = f.value();
         let stem = self.extractor.file_stem(f).value;
 
-        if let Ok(content) = std::fs::read_to_string(fp) {
+        let content = self.cache.read_cached(f).value;
+        if !content.is_empty() {
             let mut identifiers: Vec<String> = Vec::new();
             identifiers.extend(
                 self.extractor

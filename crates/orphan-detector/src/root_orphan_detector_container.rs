@@ -10,7 +10,17 @@ pub struct OrphanContainer {
     layer_detector: Arc<dyn ILayerDetectionAggregate>,
 }
 
-// ─── Block 2: Public Contract (public API, no trait impl — root container is wiring only) ──
+// ─── Block 2: Public Contract ─────────────────────────────
+// (No trait impl )
+
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for OrphanContainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OrphanContainer {
     pub fn new() -> Self {
         Self::new_with_ignored(Vec::new())
@@ -72,12 +82,5 @@ impl OrphanContainer {
 
     pub fn layer_detector(&self) -> Arc<dyn ILayerDetectionAggregate> {
         self.layer_detector.clone()
-    }
-}
-
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for OrphanContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -1,5 +1,4 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -12,44 +11,14 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
 };
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::OnceLock;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STATIC REGEXES (OnceLock)
+// IMPORTS FROM TAXONOMY UTILITY
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Regex for `#[path = "..."] pub mod` declarations
-fn pub_mod_path_re() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r#"\[path\s*=\s*"([^"]+)"\]\s*pub\s+mod"#).ok())
-        .as_ref()
-}
-
-/// Regex for `mod name;` declarations (plain mod without path attribute)
-fn plain_mod_re() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^\s*mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
-        .as_ref()
-}
-
-/// Regex for `use`, `import`, `from ... import` statements
-fn import_re() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(
-            r"(?:use\s+([a-zA-Z_][a-zA-Z0-9_:]*)|from\s+([a-zA-Z_.]+)\s+import|import\s+([a-zA-Z_][a-zA-Z0-9_.]*))",
-        )
-        .ok()
-    })
-    .as_ref()
-}
-
-/// Regex for Python class inheritance: `class Foo(Bar, Baz):`
-fn inh_re() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-        .as_ref()
-}
+use shared::orphan_detector::taxonomy_graph_regex_utility::{
+    import_re, inh_re, plain_mod_re, pub_mod_path_re,
+};
 
 /// Build graph context and identify entry points for orphan analysis.
 // ─── Block 1: Struct Definition ───────────────────────────
