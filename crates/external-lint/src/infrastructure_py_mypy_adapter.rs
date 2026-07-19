@@ -32,8 +32,9 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use crate::utils_mypy_regex::{mypy_re_with_col, mypy_re_without_col};
+use regex::Regex;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct MyPyAdapter {
@@ -78,14 +79,14 @@ impl ILinterAdapterPort for MyPyAdapter {
             .await?;
 
         let stdout = &response.stdout;
-        let re = match mypy_re_with_col() {
+        let re = match Self::mypy_re_with_col() {
             Some(r) => r,
-            None => match mypy_re_without_col() {
+            None => match Self::mypy_re_without_col() {
                 Some(r) => r,
                 None => return Ok(LintResultList::new(vec![])),
             },
         };
-        let re_simple = match mypy_re_without_col() {
+        let re_simple = match Self::mypy_re_without_col() {
             Some(r) => r,
             None => return Ok(LintResultList::new(vec![])),
         };
@@ -195,6 +196,20 @@ impl ILinterAdapterPort for MyPyAdapter {
 
 // ─── Block 3: Constructors & Helpers ──────────────────────
 impl MyPyAdapter {
+    pub fn mypy_re_with_col() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| {
+            Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok()
+        })
+        .as_ref()
+    }
+
+    pub fn mypy_re_without_col() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
+            .as_ref()
+    }
+
     pub fn new(
         executor: Arc<dyn ICommandExecutorPort>,
         path_norm: Arc<dyn IPathNormalizationPort>,

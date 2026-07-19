@@ -8,12 +8,11 @@
 // NOTE: check_smart_surface / check_utility_surface / check_passive_surface are no-ops because
 //      the actual surface role checks run via check_surface_roles (no-domain-logic checks).
 //      These trait methods are required by ISurfaceRoleChecker but are intentionally empty.
-use crate::utils_surface::make_adapter as make_adapter_util;
-pub use crate::utils_surface::{is_in_surfaces, is_init};
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
@@ -65,6 +64,50 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
 impl SurfaceRoleChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    /// Generate AES406 passive violation detail message.
+    pub fn aes406_passive_violation_details(file: &str, details: &str) -> String {
+        format!(
+            "AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.",
+            file, details
+        )
+    }
+
+    /// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
+    pub fn is_in_surfaces(f: &FilePath) -> bool {
+        let path_str = f.to_string();
+        let basename = match path_str.rsplit('/').next() {
+            Some(s) => s,
+            None => &path_str,
+        };
+        let stem = match basename.rfind('.') {
+            Some(pos) => &basename[..pos],
+            None => basename,
+        };
+        if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
+            return true;
+        }
+        if let Some(parent) = path_str.rsplit('/').nth(1) {
+            if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if the file is a barrel/init file.
+    pub fn is_init(f: &FilePath) -> bool {
+        let path_str = f.to_string();
+        path_str.ends_with("__init__.py")
+            || path_str.ends_with("mod.rs")
+            || path_str.ends_with("index.ts")
+            || path_str.ends_with("index.js")
+    }
+
+    /// Create an AdapterName from a string (helper for _report_aes0306).
+    pub fn make_adapter(name: &str) -> Option<AdapterName> {
+        AdapterName::new(name).ok()
     }
     pub fn check_smart(&self) -> Vec<LintResult> {
         vec![]
@@ -158,7 +201,7 @@ impl SurfaceRoleChecker {
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
                 message: LintMessage::new(AesRoleViolation::NoDomainLogic { reason: None }),
-                source: make_adapter_util("architecture"),
+                source: Self::make_adapter("architecture"),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
@@ -176,4 +219,12 @@ impl Default for SurfaceRoleChecker {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub fn is_in_surfaces(f: &FilePath) -> bool {
+    SurfaceRoleChecker::is_in_surfaces(f)
+}
+
+pub fn is_init(f: &FilePath) -> bool {
+    SurfaceRoleChecker::is_init(f)
 }

@@ -1,0 +1,27 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation class + `constructor`.
+- [ ] Block 2 contains ONLY the aggregate interface method implementations.
+- [ ] Block 3 contains utility methods, factories, and private helpers.
+- [ ] Agent class implements an aggregate interface.
+- [ ] Aggregate contains only public contract methods.
+- [ ] Private helpers are not declared in the aggregate.
+- [ ] Constructors are not declared in the aggregate.
+- [ ] Utility methods are in Block 3.
+- [ ] Agent-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.ts`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] One file contains exactly one implementation class.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use port interfaces via DI.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Aggregate signatures use shared VOs for domain data.
+- [ ] Agent contains zero I/O.
+- [ ] Agent contains zero business logic.
+- [ ] Agent contains zero domain computation.
+- [ ] No forbidden imports from concrete `capabilities_*`.
+- [ ] No forbidden imports from concrete `infrastructure_*`.
+- [ ] Aggregate module is registered in the shared package's `index.ts`.
+- [ ] `npx tsc --noEmit` passes.

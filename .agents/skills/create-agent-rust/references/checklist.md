@@ -1,0 +1,29 @@
+# Verification Checklist
+
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation struct.
+- [ ] Block 2 contains ONLY the aggregate trait implementation.
+- [ ] Block 3 contains constructors, std traits, and private helpers.
+- [ ] Agent struct implements an aggregate trait.
+- [ ] Aggregate contains only public contract methods.
+- [ ] Private helpers are not declared in the aggregate.
+- [ ] Constructors are not declared in the aggregate.
+- [ ] Std trait impls are in Block 3.
+- [ ] Agent-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.rs`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] Generic aggregate methods are object-safe or bounded with `where Self: Sized`.
+- [ ] One file contains exactly one implementation struct.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use `Arc<dyn Trait>`.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Aggregate signatures use shared VOs for domain data.
+- [ ] Agent contains zero I/O.
+- [ ] Agent contains zero business logic.
+- [ ] Agent contains zero domain computation.
+- [ ] No forbidden imports from concrete `capabilities_*`.
+- [ ] No forbidden imports from concrete `infrastructure_*`.
+- [ ] No forbidden imports from concrete `surface_*`.
+- [ ] Aggregate module is registered in the shared crate's `mod.rs`.
+- [ ] `cargo check -p <crate-name>` passes.

@@ -1,9 +1,13 @@
+use once_cell::sync::OnceCell;
+use regex::Regex;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
-use shared::orphan_detector::taxonomy_filename_regex_utility::{struct_re, trait_re};
 use shared::taxonomy_layer_vo::Identity;
+
+static STRUCT_RE: OnceCell<Option<Regex>> = OnceCell::new();
+static TRAIT_RE: OnceCell<Option<Regex>> = OnceCell::new();
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct OrphanFilenameExtractor;
@@ -24,7 +28,7 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
 
     fn extract_struct_names(&self, content: &ContentString) -> Vec<SymbolName> {
         let mut names = Vec::new();
-        if let Some(re) = struct_re() {
+        if let Some(re) = Self::struct_re() {
             for cap in re.captures_iter(&content.value) {
                 let name = cap[1].to_string();
                 if name != "Self" && !name.is_empty() {
@@ -37,7 +41,7 @@ impl IOrphanFilenameExtractorProtocol for OrphanFilenameExtractor {
 
     fn extract_trait_names(&self, content: &ContentString) -> Vec<SymbolName> {
         let mut names = Vec::new();
-        if let Some(re) = trait_re() {
+        if let Some(re) = Self::trait_re() {
             for cap in re.captures_iter(&content.value) {
                 names.push(SymbolName::new(cap[1].to_string()));
             }
@@ -56,5 +60,17 @@ impl Default for OrphanFilenameExtractor {
 impl OrphanFilenameExtractor {
     pub fn new() -> Self {
         Self
+    }
+
+    pub fn struct_re() -> Option<&'static Regex> {
+        STRUCT_RE
+            .get_or_init(|| Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z0-9_]+)").ok())
+            .as_ref()
+    }
+
+    pub fn trait_re() -> Option<&'static Regex> {
+        TRAIT_RE
+            .get_or_init(|| Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z0-9_]+)").ok())
+            .as_ref()
     }
 }

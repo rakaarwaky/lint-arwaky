@@ -1,5 +1,5 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IFixProtocol, tracks fix results
-use crate::utils_symbol_renamer::rename_in_file;
+use crate::infrastructure_symbol_adapter::rename_in_file;
 use shared::auto_fix::contract_file_adapter_port::IFileAdapterPort;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;

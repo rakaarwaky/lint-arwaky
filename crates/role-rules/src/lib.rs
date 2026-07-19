@@ -11,8 +11,7 @@ pub use shared::role_rules::taxonomy_layer_names_vo::{
     layer_root, layer_surfaces, layer_taxonomy, LayerNames,
 };
 // Re-export extracted utility functions for backward compatibility
-pub use crate::utils_path::has_suffix;
-pub use crate::utils_surface::{is_in_surfaces, is_init};
+// (now methods on respective checker structs)
 
 pub mod agent_role_orchestrator;
 pub mod taxonomy_language_info_vo;
@@ -32,7 +31,3 @@ pub mod capabilities_taxonomy_role_auditor;
 pub use agent_role_orchestrator::RoleAggregateImpl;
 pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 pub mod root_role_rules_container;
-
-// Private utility modules (extracted from shared)
-mod utils_path;
-mod utils_surface;

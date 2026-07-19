@@ -13,7 +13,6 @@
 //
 // NOTE: scan_primitives uses language-specific primitive sets. Only Rust, Python,
 //      and JavaScript/TypeScript are currently supported.
-use crate::utils_path::has_suffix;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
@@ -67,6 +66,16 @@ impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    /// Check if a file path ends with the given suffix (on the filename stem).
+    pub fn has_suffix(file: &str, suffix: &str) -> bool {
+        let path = Path::new(file);
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+            stem.ends_with(suffix)
+        } else {
+            false
+        }
     }
 
     const RUST_PRIMITIVES: &'static [&'static str] = &[
@@ -240,21 +249,21 @@ impl TaxonomyRoleChecker {
     }
 
     pub fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_entity") {
+        if !Self::has_suffix(source.file_path.value(), "_entity") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_error") {
+        if !Self::has_suffix(source.file_path.value(), "_error") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     pub fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_event") {
+        if !Self::has_suffix(source.file_path.value(), "_event") {
             return;
         }
         Self::scan_primitives(source, violations);

@@ -30,8 +30,9 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::utils_tsc_regex::{tsc_pattern1, tsc_pattern2};
+use regex::Regex;
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TSCAdapter {
@@ -87,11 +88,11 @@ impl ILinterAdapterPort for TSCAdapter {
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
 
-        let pattern1 = match tsc_pattern1() {
+        let pattern1 = match Self::tsc_pattern1() {
             Some(r) => r,
             None => return Ok(LintResultList::new(vec![])),
         };
-        let pattern2 = match tsc_pattern2() {
+        let pattern2 = match Self::tsc_pattern2() {
             Some(r) => r,
             None => return Ok(LintResultList::new(vec![])),
         };
@@ -149,6 +150,18 @@ impl ILinterAdapterPort for TSCAdapter {
 
 // ─── Block 3: Constructors & Helpers ──────────────────────
 impl TSCAdapter {
+    pub fn tsc_pattern1() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+            .as_ref()
+    }
+
+    pub fn tsc_pattern2() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+            .as_ref()
+    }
+
     pub fn new(
         executor: Arc<dyn ICommandExecutorPort>,
         path_norm: Arc<dyn IPathNormalizationPort>,

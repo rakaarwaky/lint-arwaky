@@ -14,7 +14,6 @@
 //
 // Step 3 reuses the mandatory checker protocol (IArchImportProtocol) with a
 // different configuration — the protocol is symmetric for both checks.
-use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionProtocol;
@@ -28,6 +27,7 @@ use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryPr
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_constant::SOURCE_EXTENSIONS;
+use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use std::path::Path;
 use std::sync::Arc;
 

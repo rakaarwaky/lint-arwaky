@@ -15,9 +15,8 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use shared::orphan_detector::taxonomy_graph_regex_utility::{
-    import_re, inh_re, plain_mod_re, pub_mod_path_re,
-};
+use regex::Regex;
+use std::sync::OnceLock;
 
 /// Build graph context and identify entry points for orphan analysis.
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -108,6 +107,35 @@ impl OrphanGraphResolver {
         cache: Arc<dyn IOrphanFileCachePort>,
     ) -> Self {
         Self { extractor, cache }
+    }
+
+    pub fn pub_mod_path_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r#"\[path\s*=\s*"([^"]+)"\]\s*pub\s+mod"#).ok())
+            .as_ref()
+    }
+
+    pub fn plain_mod_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"^\s*mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
+            .as_ref()
+    }
+
+    pub fn import_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| {
+            Regex::new(
+                r"(?:use\s+([a-zA-Z_][a-zA-Z0-9_:]*)|from\s+([a-zA-Z_.]+)\s+import|import\s+([a-zA-Z_][a-zA-Z0-9_.]*))",
+            )
+            .ok()
+        })
+        .as_ref()
+    }
+
+    pub fn inh_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+            .as_ref()
     }
 
     /// Given the directory module currently being descended into (`mod_dir`) and
@@ -330,7 +358,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 1: #[path = "..."] pub mod (Bug 14 fix — link only the referenced file)
-            if let Some(re) = pub_mod_path_re() {
+            if let Some(re) = Self::pub_mod_path_re() {
                 for cap in re.captures_iter(&content) {
                     let mod_path = cap[1].to_string();
                     let base_dir = match std::path::Path::new(f).parent() {
@@ -353,7 +381,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 2: plain mod (Bug 10 fix)
-            if let Some(re) = plain_mod_re() {
+            if let Some(re) = Self::plain_mod_re() {
                 for cap in re.captures_iter(&content) {
                     let mod_name = cap[1].to_string();
                     let parent = match std::path::Path::new(f).parent() {
@@ -385,7 +413,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 3: use/import/from
-            let Some(import_re) = import_re() else {
+            let Some(import_re) = Self::import_re() else {
                 continue;
             };
             for cap in import_re.captures_iter(&content) {
@@ -625,7 +653,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 4: Python class inheritance
-            if let Some(re) = inh_re() {
+            if let Some(re) = Self::inh_re() {
                 for cap in re.captures_iter(&content) {
                     for base in cap[1].split(',') {
                         inheritance_map

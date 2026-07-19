@@ -1,0 +1,32 @@
+skill: create-agent-rust
+version: 1.3.0
+
+cases:
+  - id: good-01
+    type: good
+    description: "Agent with correct 3-block structure and aggregate trait"
+    expect: pass
+
+  - id: bad-01
+    type: bad
+    description: "Agent without aggregate trait"
+    expect: fail
+    violation: AES403
+
+  - id: bad-02
+    type: bad
+    description: "Computation in agent"
+    expect: fail
+    violation: COMPUTATION
+
+  - id: bad-03
+    type: bad
+    description: "I/O in agent"
+    expect: fail
+    violation: AES404
+
+  - id: bad-04
+    type: bad
+    description: "Business logic in agent"
+    expect: fail
+    violation: BUSINESS_LOGIC

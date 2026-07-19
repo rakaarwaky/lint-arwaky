@@ -1,13 +1,13 @@
-// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
+use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, IOrphanFileCachePort,
 };
-use shared::orphan_detector::taxonomy_agent_regex_utility::extract_aggregate_traits;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentOrphanAnalyzer {
@@ -32,13 +32,83 @@ impl AgentOrphanAnalyzer {
         Self { cache }
     }
 
+    pub fn re_impl_generic() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
+            .as_ref()
+    }
+
+    pub fn re_dyn() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
+            .as_ref()
+    }
+
+    pub fn re_py_class() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+            .as_ref()
+    }
+
+    pub fn re_ts_implements() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
+            .as_ref()
+    }
+
+    pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
+        let mut traits = Vec::new();
+
+        if let Some(re) = Self::re_impl_generic() {
+            for cap in re.captures_iter(content) {
+                let name = cap[1].to_string();
+                if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                    traits.push(name);
+                }
+            }
+        }
+
+        if let Some(re) = Self::re_dyn() {
+            for cap in re.captures_iter(content) {
+                let name = cap[1].to_string();
+                if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                    traits.push(name);
+                }
+            }
+        }
+
+        if let Some(re) = Self::re_py_class() {
+            for cap in re.captures_iter(content) {
+                for part in cap[1].split(',') {
+                    let name = part.trim().to_string();
+                    if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                        traits.push(name);
+                    }
+                }
+            }
+        }
+
+        if let Some(re) = Self::re_ts_implements() {
+            for cap in re.captures_iter(content) {
+                let name = cap[1].to_string();
+                if name.contains("Aggregate") || name.ends_with("Aggregate") {
+                    traits.push(name);
+                }
+            }
+        }
+
+        traits.sort();
+        traits.dedup();
+        traits
+    }
+
     fn check_agent_orphan(&self, f: &FilePath, all_files: &[FilePath]) -> OrphanIndicatorResult {
         let content = self.cache.read_cached(f).value;
         if content.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        let aggregate_traits = extract_aggregate_traits(&content);
+        let aggregate_traits = Self::extract_aggregate_traits(&content);
         if aggregate_traits.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }

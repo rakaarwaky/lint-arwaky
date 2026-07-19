@@ -6,8 +6,6 @@ pub mod capabilities_external_lint_selector;
 pub mod infrastructure_external_lint_adapter;
 pub mod infrastructure_language_detector_adapter;
 pub mod infrastructure_stdio_client;
-mod utils_mypy_regex;
-mod utils_tsc_regex;
 pub use infrastructure_stdio_client::StdioClient;
 pub mod infrastructure_js_eslint_adapter;
 pub use infrastructure_js_eslint_adapter::ESLintAdapter;

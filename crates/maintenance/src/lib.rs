@@ -4,5 +4,4 @@ pub mod capabilities_maintenance_checker;
 pub mod infrastructure_filesystem_maintenance_adapter;
 pub mod infrastructure_tool_executor_adapter;
 pub mod root_maintenance_container;
-mod utils_dependency_parser;
 pub use agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;

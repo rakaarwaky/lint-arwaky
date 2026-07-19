@@ -8,7 +8,6 @@ use shared::orphan_detector::contract_orphan_protocol::{
     IOrphanFileCachePort, IOrphanFilenameExtractorProtocol, ISurfacesOrphanProtocol,
 };
 use shared::orphan_detector::taxonomy_orphan_result_utility::mk_orphan_result;
-use shared::orphan_detector::taxonomy_surface_utility::{get_surface_suffix, surface_category};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::taxonomy_workspace_utility::find_workspace_root;
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -98,8 +97,8 @@ impl SurfacesOrphanAnalyzer {
             }
         }
 
-        let suffix = get_surface_suffix(&basename, &self.extractor);
-        let category = surface_category(&suffix);
+        let suffix = Self::get_surface_suffix(&basename, &self.extractor);
+        let category = Self::surface_category(&suffix);
         OrphanIndicatorResult::new(
             true,
             AesOrphanViolation::SurfaceOrphan {
@@ -174,8 +173,8 @@ impl SurfacesOrphanAnalyzer {
             Err(_) => return,
         };
         let basename = self.extractor.file_basename(&fp_vo).value;
-        let suffix = get_surface_suffix(&basename, &self.extractor);
-        let category = surface_category(&suffix);
+        let suffix = Self::get_surface_suffix(&basename, &self.extractor);
+        let category = Self::surface_category(&suffix);
         let stem = self.extractor.file_stem(&fp_vo).value;
 
         let mut is_orphan = false;
