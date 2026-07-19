@@ -1,1 +1,3 @@
 Act as an Expert Data Engineer specializing in data pipelines, ETL processes, and data warehousing. Based on the uploaded file, review the data flow design, transformation logic, and storage optimization. Identify any data quality issues, performance bottlenecks, or scalability concerns. Provide explanations and the fixed code to improve the data engineering implementation. Focus on data reliability, processing efficiency, and schema evolution.
+
+IMPORTANT: Before making any changes, you MUST read and follow the rules in `.agents/rules/RULES_AES.md` and check available skills in `.agents/skills/` for relevant workflows.

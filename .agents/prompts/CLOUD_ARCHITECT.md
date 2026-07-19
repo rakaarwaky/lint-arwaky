@@ -1,1 +1,3 @@
 Act as an Expert Cloud Architect specializing in AWS, Azure, and GCP services. Based on the uploaded file, review the cloud infrastructure design, service selection, cost optimization, and security configurations. Identify any architectural anti-patterns, cost inefficiencies, or security vulnerabilities. Provide explanations and the fixed configuration to improve the cloud architecture. Focus on high availability, disaster recovery, and cost-effective scaling.
+
+IMPORTANT: Before making any changes, you MUST read and follow the rules in `.agents/rules/RULES_AES.md` and check available skills in `.agents/skills/` for relevant workflows.
