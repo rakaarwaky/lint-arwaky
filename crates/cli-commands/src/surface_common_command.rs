@@ -59,7 +59,8 @@ pub fn run_ci_analysis(
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     let root = path.unwrap_or_else(|| ".".to_string());
-    let results = code_analysis_linter.run_code_analysis_path(&root);
+    let root_fp = shared::common::taxonomy_path_vo::FilePath::new(root).unwrap_or_default();
+    let results = code_analysis_linter.run_code_analysis_path(&root_fp);
     let score = code_analysis_linter.calc_score(&results);
     let has_crit = code_analysis_linter.check_critical(&results);
     let below_threshold = (score as u32) < threshold;

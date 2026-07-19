@@ -10,7 +10,6 @@ pub mod taxonomy_cycle_color_vo;
 pub mod taxonomy_dependency_edge_vo;
 pub mod taxonomy_import_constant;
 pub mod taxonomy_import_rule_vo;
-pub mod taxonomy_import_utility;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_violation_import_vo;
 

@@ -11,11 +11,6 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::orphan_detector::taxonomy_contract_detection_utility;
-use crate::orphan_detector::taxonomy_contract_regex_utility;
-use crate::orphan_detector::taxonomy_filename_regex_utility;
-use crate::orphan_detector::taxonomy_graph_regex_utility;
-use crate::orphan_detector::taxonomy_surface_utility;
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     fn is_taxonomy_orphan(

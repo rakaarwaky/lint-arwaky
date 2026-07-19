@@ -18,6 +18,7 @@ use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -94,9 +95,9 @@ impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
                             FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default();
                         let sub_det = MockLanguageDetector;
                         let sub_lang = sub_det.detect_languages(&sub).await;
-                        has_rs |= sub_lang.has_rs;
-                        has_py |= sub_lang.has_py;
-                        has_js |= sub_lang.has_js;
+                        has_rs |= sub_lang.has_rs.value;
+                        has_py |= sub_lang.has_py.value;
+                        has_js |= sub_lang.has_js.value;
                     }
                 } else if let Some(ext) = p.extension().and_then(|e| e.to_str()) {
                     match ext {
@@ -106,16 +107,16 @@ impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
                         _ => {}
                     }
                 }
-                if has_rs && has_py && has_js {
+                if has_rs.value && has_py.value && has_js.value {
                     break;
                 }
             }
         }
 
         DetectedLanguages {
-            has_rs,
-            has_py,
-            has_js,
+            has_rs: BooleanVO::new(has_rs),
+            has_py: BooleanVO::new(has_py),
+            has_js: BooleanVO::new(has_js),
         }
     }
 }
@@ -127,15 +128,15 @@ impl IExternalLintLanguageDetectorPort for MockLanguageDetector {
 struct MockSelector;
 
 impl IExternalLintSelectorProtocol for MockSelector {
-    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
+    fn select_adapters(&self, has_rs: BooleanVO, has_py: BooleanVO, has_js: BooleanVO) -> Vec<String> {
         let mut names = Vec::new();
-        if has_rs {
+        if has_rs.value {
             names.extend(["clippy", "rustfmt", "cargo-audit"].map(String::from));
         }
-        if has_py {
+        if has_py.value {
             names.extend(["ruff", "mypy", "bandit"].map(String::from));
         }
-        if has_js {
+        if has_js.value {
             names.extend(["eslint", "prettier", "tsc"].map(String::from));
         }
         names

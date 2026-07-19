@@ -15,8 +15,8 @@ use shared::code_analysis::contract_layer_detection_protocol::ILayerDetectionPro
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
-use shared::role_rules::taxonomy_surface_utility::make_adapter as make_adapter_util;
-pub use shared::role_rules::taxonomy_surface_utility::{is_in_surfaces, is_init};
+use crate::utils_surface::make_adapter as make_adapter_util;
+pub use crate::utils_surface::{is_in_surfaces, is_init};
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_error_vo::ErrorCode;

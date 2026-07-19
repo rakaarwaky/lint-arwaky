@@ -463,8 +463,8 @@ impl IActionHandlerProtocol for ActionHandler {
         ActionHandler::handle(self, state, event);
     }
 
-    fn load_directory(&self, state: &mut AppState, path: &str) {
-        ActionHandler::load_directory(self, state, path);
+    fn load_directory(&self, state: &mut AppState, path: &FilePath) {
+        ActionHandler::load_directory(self, state, &path.value);
     }
 
     fn load_preview(&self, state: &mut AppState) {

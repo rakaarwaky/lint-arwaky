@@ -11,7 +11,7 @@
 use std::collections::{HashMap, HashSet};
 
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::taxonomy_duplication_utility::{
+use crate::utils_duplication::{
     build_violations, collect_file_entries, normalize_window, scan_duplicate_blocks,
 };
 use shared::code_analysis::taxonomy_target_utility::{

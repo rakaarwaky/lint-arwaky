@@ -8,6 +8,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
@@ -315,11 +316,8 @@ impl LintExecutor {
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
                 let scan_root =
                     find_workspace_root(path).unwrap_or_else(|| std::path::PathBuf::from(path));
-                let all_source_files: Vec<String> =
-                    code_analysis::collect_all_source_files(&scan_root)
-                        .into_iter()
-                        .map(|f| f.value)
-                        .collect();
+                let all_source_files: Vec<FilePath> =
+                    code_analysis::collect_all_source_files(&scan_root);
 
                 for ws in &workspaces {
                     // Dynamically build the orchestrators/linters using ws.config!
@@ -345,7 +343,7 @@ impl LintExecutor {
                     let mut ws_results = Vec::new();
 
                     // 1. AES code analysis
-                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path);
                     ws_results.extend(aes_results.values);
 
                     // 2. Naming rules audit (AES101-102)
@@ -374,10 +372,12 @@ impl LintExecutor {
                         (&self.orphan_aggregate, &self.layer_detector)
                     {
                         if !all_source_files.is_empty() {
+                            let scan_root_fp = FilePath::new(scan_root.to_string_lossy().to_string())
+                                .unwrap_or_default();
                             let orphan_results = orphan_agg.check_orphans(
                                 layer_det.as_ref(),
                                 &all_source_files,
-                                &scan_root.to_string_lossy(),
+                                &scan_root_fp,
                             );
                             ws_results.extend(orphan_results);
                         }
@@ -413,7 +413,9 @@ impl LintExecutor {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
-        let aes_results = self.code_analysis.run_code_analysis(path);
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+            .unwrap_or_default();
+        let aes_results = self.code_analysis.run_code_analysis(&fp);
         all_results.extend(aes_results.values);
 
         let rt = match tokio::runtime::Runtime::new() {
@@ -467,9 +469,10 @@ impl LintExecutor {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
-            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-            if !file_strs.is_empty() {
-                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
+            let file_fps: Vec<FilePath> = source_files;
+            if !file_fps.is_empty() {
+                let root_fp = FilePath::new(path.to_string()).unwrap_or_default();
+                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
                 all_results.extend(orphan_results);
             }
         }
@@ -484,7 +487,9 @@ impl LintExecutor {
 // ─── Block 2: Public Contract ─────────────────────────────
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+            .unwrap_or_default();
+        let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
         let output = self.formatter.format_results(&results);
         LintExecutionResult {
@@ -513,7 +518,9 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let results = self.code_analysis.run_code_analysis(path);
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                    .unwrap_or_default();
+                let results = self.code_analysis.run_code_analysis(&fp);
                 let count_before = results.len();
                 let output = format!("[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.", mode, path, count_before, path);
                 LintExecutionResult {
@@ -526,7 +533,9 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+            .unwrap_or_default();
+        let results = self.code_analysis.run_code_analysis(&fp);
         let score = self.code_analysis.calc_score(&results.values);
         let has_critical = self.code_analysis.check_critical(&results.values);
         let pass = score >= flags.threshold as f64 && !has_critical;
@@ -566,8 +575,8 @@ impl ILintExecutorProtocol for LintExecutor {
                         ));
                     }
                 };
-                let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-                if file_strs.is_empty() {
+                let file_fps: Vec<FilePath> = source_files;
+                if file_fps.is_empty() {
                     return LintExecutionResult::success(
                         format!(
                             "Orphan detection for {}\nNo source files found in {}.",
@@ -576,12 +585,13 @@ impl ILintExecutorProtocol for LintExecutor {
                         0,
                     );
                 }
-                let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, &scan_root);
+                let root_fp = FilePath::new(scan_root.clone()).unwrap_or_default();
+                let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_fps, &root_fp);
                 let count = results.len();
                 let mut output = format!(
                     "Orphan detection for {}\nScanned {} files in {}\n",
                     path,
-                    file_strs.len(),
+                    file_fps.len(),
                     scan_root
                 );
                 if results.is_empty() {

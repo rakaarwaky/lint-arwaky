@@ -31,7 +31,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
-use shared::external_lint::taxonomy_tsc_regex_utility::{tsc_pattern1, tsc_pattern2};
+use crate::utils_tsc_regex::{tsc_pattern1, tsc_pattern2};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TSCAdapter {

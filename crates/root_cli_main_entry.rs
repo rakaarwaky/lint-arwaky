@@ -438,7 +438,9 @@ fn run_default_check(project_root: &str, linter: Arc<dyn ICodeAnalysisAggregate>
     use shared::cli_commands::taxonomy_severity_vo::Severity;
     use std::collections::BTreeMap;
 
-    let results = linter.run_code_analysis_path(project_root);
+    let root_fp = shared::common::taxonomy_path_vo::FilePath::new(project_root.to_string())
+        .unwrap_or_default();
+    let results = linter.run_code_analysis_path(&root_fp);
 
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

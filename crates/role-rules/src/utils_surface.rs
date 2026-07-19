@@ -4,8 +4,8 @@
 // so they can be unit-tested directly without needing to construct a
 // SurfaceRoleChecker or feed it a full SourceContentVO.
 
-use crate::taxonomy_adapter_name_vo::AdapterName;
-use crate::taxonomy_path_vo::FilePath;
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_path_vo::FilePath;
 
 /// Generate AES406 passive violation detail message.
 pub fn aes406_passive_violation_details(file: &str, details: &str) -> String {

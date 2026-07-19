@@ -3,7 +3,7 @@ use shared::auto_fix::contract_file_adapter_port::IFileAdapterPort;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::auto_fix::taxonomy_symbol_renamer_utility::rename_in_file;
+use crate::utils_symbol_renamer::rename_in_file;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;

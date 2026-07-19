@@ -278,8 +278,8 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 > **"Does this function need the class?"**
 
-If no (`this` / class state unused) → **extract to `*_utility.ts` in shared/taxonomy**
-If yes → **keep in Block 3**
+If no (`this` / class state unused) AND serves MULTIPLE capabilities/infrastructures → **extract to `*_utility.ts` in shared/taxonomy**
+If yes OR serves only ONE class → **keep in Block 3**
 
 ## Naming Convention
 
@@ -629,7 +629,10 @@ Function found in capabilities file?
   │
   ├─ Static method inside class?
   │   ├─ Pure logic, no class dependency?
-  │   │   └─ YES → EXTRACT to *_utility.ts
+  │   │   ├─ Serves MULTIPLE capabilities/infrastructures?
+  │   │   │   └─ YES → EXTRACT to *_utility.ts
+  │   │   │   └─ NO → Keep in Block 3 (Single Consumer)
+  │   │   └─ NO → Keep in Block 3
   │   ├─ Factory (create, from, of)?
   │   │   └─ YES → Keep in Block 3
   │   ├─ Uses class-level static state?

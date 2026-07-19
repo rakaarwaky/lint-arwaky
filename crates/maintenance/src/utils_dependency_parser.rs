@@ -1,6 +1,5 @@
-// PURPOSE: taxonomy_dependency_parser_utility — pure parsing functions for dependency files
-// Stateless, domain-agnostic: parse Cargo.lock, pyproject.toml, requirements.txt, cargo-audit, bandit output.
-use crate::project_setup::taxonomy_doctor_vo::{
+// PURPOSE: utils_dependency_parser — pure parsing functions for dependency files
+use shared::project_setup::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport,
 };
 

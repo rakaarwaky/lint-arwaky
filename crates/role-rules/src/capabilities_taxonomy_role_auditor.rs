@@ -18,7 +18,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::common::contract_language_detector_port::Language as DetLang;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::taxonomy_path_utility::has_suffix;
+use crate::utils_path::has_suffix;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;

@@ -171,7 +171,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                             loaded_config.clone(),
                         ));
 
-                    let aes_results = arch_linter.run_code_analysis_path(&path);
+                    let aes_results = arch_linter.run_code_analysis_path(&path_obj);
                     all_results.extend(aes_results);
 
                     let naming_results = rt.block_on(naming_container.orchestrator().run_audit(&path_obj));
@@ -193,12 +193,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };
-                    let file_strs: Vec<String> =
-                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let file_paths: Vec<FilePath> = source_files;
+                    let orphan_scan_root_fp = FilePath::new(orphan_scan_root).unwrap_or_default();
                     let orphan_results = orphan_orch.check_orphans(
                         layer_det.as_ref(),
-                        &file_strs,
-                        &orphan_scan_root,
+                        &file_paths,
+                        &orphan_scan_root_fp,
                     );
                     all_results.extend(orphan_results);
 
@@ -213,7 +213,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
                             final_results.clone(),
                         ),
-                        &path,
+                        &path_obj,
                     );
                     serde_json::json!({
                         "status": "success",
@@ -257,7 +257,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let path_obj = FilePath::new(path.clone()).unwrap_or_default();
-                    let results_before = linter.run_code_analysis(&path_obj.value);
+                    let results_before = linter.run_code_analysis(&path_obj);
                     let violations_before = results_before.len();
 
                     let auto_fix_container =
@@ -268,7 +268,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     let violations_after = if dry_run {
                         violations_before
                     } else {
-                        let after = linter.run_code_analysis(&path_obj.value);
+                        let after = linter.run_code_analysis(&path_obj);
                         after.len()
                     };
                     let fixed_count = violations_before.saturating_sub(violations_after);
@@ -320,10 +320,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
-                    let aes_results = linter.run_code_analysis_path(&path);
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    let aes_results = linter.run_code_analysis_path(&path_obj);
                     all_results.extend(aes_results);
 
-                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
                         Err(_) => {
@@ -350,12 +350,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };
-                    let file_strs: Vec<String> =
-                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let file_paths: Vec<FilePath> = source_files;
+                    let orphan_scan_root_fp = FilePath::new(orphan_scan_root).unwrap_or_default();
                     let orphan_results = orphan_orch.check_orphans(
                         layer_det.as_ref(),
-                        &file_strs,
-                        &orphan_scan_root,
+                        &file_paths,
+                        &orphan_scan_root_fp,
                     );
                     all_results.extend(orphan_results);
 
@@ -422,12 +422,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };
-                    let file_strs: Vec<String> =
-                        source_files.iter().map(|f| f.value.clone()).collect();
+                    let file_paths: Vec<FilePath> = source_files;
+                    let orphan_scan_root_fp = FilePath::new(orphan_scan_root).unwrap_or_default();
                     let orphan_results = orphan_orch.check_orphans(
                         layer_det.as_ref(),
-                        &file_strs,
-                        &orphan_scan_root,
+                        &file_paths,
+                        &orphan_scan_root_fp,
                     );
 
                     let path_canonical = std::path::Path::new(&path)

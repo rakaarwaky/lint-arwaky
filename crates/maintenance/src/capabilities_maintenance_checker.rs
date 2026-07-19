@@ -6,7 +6,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_filesystem_maintenance_port::IFileSystemMaintenancePort;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::contract_tool_executor_port::IToolExecutorPort;
-use shared::project_setup::taxonomy_dependency_parser_utility::{
+use crate::utils_dependency_parser::{
     parse_bandit_output, parse_cargo_audit, parse_cargo_lock, parse_cargo_toml_direct_deps,
     parse_pyproject, parse_requirements,
 };

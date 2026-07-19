@@ -14,7 +14,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
-use shared::role_rules::taxonomy_signature_utility::{
+use crate::utils_signature::{
     extract_python_method_signatures as extract_python_method_signatures_util,
     extract_trait_method_signatures as extract_trait_method_signatures_util,
     extract_typescript_method_signatures as extract_typescript_method_signatures_util,
@@ -22,7 +22,7 @@ use shared::role_rules::taxonomy_signature_utility::{
     signature_uses_forbidden_primitive as signature_uses_forbidden_primitive_util,
     typescript_signature_uses_forbidden_primitive as typescript_signature_uses_forbidden_primitive_util,
 };
-pub use shared::role_rules::taxonomy_signature_utility::{
+pub use crate::utils_signature::{
     extract_trait_method_signatures, signature_uses_forbidden_primitive,
 };
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;

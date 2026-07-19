@@ -61,8 +61,7 @@ pub async fn handle_git_diff(
 
     let mut total_violations = 0;
     for f in &files {
-        if let Ok(fp) = FilePath::new(f.clone()) {
-            let results = code_analysis_linter.run_code_analysis_path(&fp);
+        let results = code_analysis_linter.run_code_analysis_path(f);
         let fv = results.len();
         total_violations += fv;
         if fv > 0 {

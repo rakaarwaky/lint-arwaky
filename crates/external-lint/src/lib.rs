@@ -1,6 +1,8 @@
 // PURPOSE: Module declarations for external-lint (external linter adapters)
 pub use shared::common::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 
+mod utils_tsc_regex;
+mod utils_mypy_regex;
 pub mod agent_external_lint_orchestrator;
 pub mod capabilities_external_lint_selector;
 pub mod infrastructure_external_lint_adapter;

@@ -1,4 +1,5 @@
 // PURPOSE: Module declarations for import-rules (checkers, analyzers, orchestrators)
+mod utils_import;
 pub mod capabilities_layer_detection_analyzer;
 pub use capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
 pub mod capabilities_import_forbidden_checker;

@@ -7,7 +7,7 @@ use shared::common::contract_system_port::IFileSystemPort;
 use shared::common::taxonomy_filesystem_error::FileSystemError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::import_rules::taxonomy_import_utility::{filepath_or_default, os_str_to_str};
+use crate::utils_import::{filepath_or_default, os_str_to_str};
 use shared::mcp_server::taxonomy_action_vo::ActionName;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::taxonomy_common_error::ErrorMessage;

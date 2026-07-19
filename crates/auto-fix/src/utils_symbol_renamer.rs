@@ -1,8 +1,7 @@
-// PURPOSE: taxonomy_symbol_renamer_util — utility for in-place symbol renaming in files
+// PURPOSE: utils_symbol_renamer — utility for in-place symbol renaming in files
 use std::path::Path;
 
 /// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
-/// Relaxed taxonomy rules: can be used by any layer.
 pub fn rename_in_file(file_path: &str, old_name: &str, new_name: &str) -> usize {
     let path = Path::new(file_path);
     if !path.exists() || !path.is_file() {

@@ -1,8 +1,4 @@
 // PURPOSE: ILayerDetectionProtocol — contract trait for layer detection (all methods)
-use crate::code_analysis::taxonomy_bypass_utility;
-use crate::code_analysis::taxonomy_duplication_utility;
-use crate::code_analysis::taxonomy_import_source_vo;
-use crate::code_analysis::taxonomy_target_utility;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_path_vo::FilePath;

@@ -220,28 +220,21 @@ impl CheckCommandsSurface {
         layer_detector: &Arc<dyn ILayerDetectionAggregate>,
     ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
-        let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let orphan_scan_root_str = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
 
         // Collect ALL source files from workspace root for cross-crate orphan detection
         // This fixes false positives where contracts in shared/ are implemented in
         // other crates (auto-fix, git-hooks, maintenance, etc.)
-        let all_source_files: Vec<String> = if let Some(ref root) = scan_root {
+        let orphan_files: Vec<FilePath> = if let Some(ref root) = scan_root {
             code_analysis::collect_all_source_files_raw(root)
-                .iter()
-                .map(|f| f.value.clone())
-                .collect()
         } else {
             Vec::new()
         };
-
-        let orphan_files: Vec<FilePath> = all_source_files
-            .into_iter()
-            .filter_map(|s| FilePath::new(s).ok())
-            .collect();
+        let orphan_scan_root_fp = FilePath::new(orphan_scan_root_str.to_string()).unwrap_or_default();
         orphan_orchestrator.check_orphans(
             layer_detector.as_ref(),
             &orphan_files,
-            orphan_scan_root,
+            &orphan_scan_root_fp,
         )
     }
 
@@ -462,10 +455,7 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> = code_analysis::collect_all_source_files_raw(&scan_root)
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        let all_source_files: Vec<FilePath> = code_analysis::collect_all_source_files_raw(&scan_root);
 
         let multi = workspaces.len() > 1;
         if multi {
@@ -517,7 +507,7 @@ impl CheckCommandsSurface {
                 )
             };
 
-            let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+            let aes_results = code_analysis_linter.run_code_analysis(&ws.path);
             all_results.extend(aes_results.values);
 
             let (naming_results, import_results, external_results, role_results) =
@@ -573,10 +563,11 @@ impl CheckCommandsSurface {
                     .collect()
             };
 
+            let scan_root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
             let member_orphans = orphan_orchestrator.check_orphans(
                 layer_detector.as_ref(),
                 &all_source_files,
-                &scan_root.to_string_lossy(),
+                &scan_root_fp,
             );
 
             // Filter orphan results to this workspace member's path
@@ -644,7 +635,7 @@ impl CheckCommandsSurface {
                         let results_list = LintResultList::new(member_results.clone());
                         print!(
                             "{}",
-                            code_analysis_linter.format_report(&results_list, &ws.path.value)
+                            code_analysis_linter.format_report(&results_list, &ws.path)
                         );
                     }
                     Format::Json => {

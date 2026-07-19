@@ -269,8 +269,8 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 > **"Does this function need the class?"**
 
-If no (`self`/`cls` unused) → **extract to `*_utility.py` in shared/taxonomy**
-If yes → **keep in Block 3**
+If no (`self`/`cls` unused) AND serves MULTIPLE capabilities/infrastructures → **extract to `*_utility.py` in shared/taxonomy**
+If yes OR serves only ONE class → **keep in Block 3**
 
 ## Naming Convention
 

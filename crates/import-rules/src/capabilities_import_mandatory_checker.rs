@@ -12,7 +12,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;
 use shared::import_rules::taxonomy_import_constant::{PYTHON_ENTRY_FILES, RUST_ENTRY_FILES};
-use shared::import_rules::taxonomy_import_utility::filepath_or_default;
+use crate::utils_import::filepath_or_default;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};

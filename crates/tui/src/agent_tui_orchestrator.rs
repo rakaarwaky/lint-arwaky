@@ -2,6 +2,7 @@
 // Delegates all events/commands to the ActionHandler (Capabilities layer).
 // This is the top-level aggregate that mediates between the TUI surface and business logic.
 
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
@@ -32,7 +33,8 @@ impl ITuiAggregate for TuiOrchestrator {
 
     /// Load a directory listing by delegating to the action handler.
     fn load_directory(&self, state: &mut AppState, path: &str) {
-        self.action_handler.load_directory(state, path);
+        let fp = FilePath::new(path.to_string()).unwrap_or_default();
+        self.action_handler.load_directory(state, &fp);
     }
 
     /// Load file preview by delegating to the action handler.

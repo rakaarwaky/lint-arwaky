@@ -20,7 +20,7 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::taxonomy_bypass_utility::{
+use crate::utils_bypass::{
     classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
     matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
 };
