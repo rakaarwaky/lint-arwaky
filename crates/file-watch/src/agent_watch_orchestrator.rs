@@ -17,6 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_port::IWatchProviderPort;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
@@ -82,7 +83,8 @@ impl WatchOrchestrator {
                 Ok(event) = rx.recv() => {
                     let lintable = self.change_analyzer.filter_lintable(vec![event.clone()]);
                     if let Some(event) = lintable.into_iter().next() {
-                        let lint_results = self.linter.run_code_analysis_path(&event.path);
+                        let event_fp = FilePath::new(event.path.clone()).unwrap_or_default();
+                        let lint_results = self.linter.run_code_analysis_path(&event_fp);
                         let lint_score = self.linter.calc_score(&lint_results);
                         println!(
                             "[change] {} | {} violations, score {:.1}",

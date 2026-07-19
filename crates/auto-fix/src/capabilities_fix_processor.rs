@@ -26,7 +26,7 @@ pub struct LintFixProcessor {
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
-        let results = self.linter.run_code_analysis(&path.value).values;
+        let results = self.linter.run_code_analysis(path).values;
 
         let naming_violations: Vec<_> = results
             .iter()
