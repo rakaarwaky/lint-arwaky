@@ -331,10 +331,18 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection with workspace root
+        let orphan_files: Vec<FilePath> = all_files
+            .into_iter()
+            .filter_map(|s| FilePath::new(s).ok())
+            .collect();
+        let scan_root_fp = match FilePath::new(scan_root.to_string_lossy().to_string()) {
+            Ok(fp) => fp,
+            Err(_) => FilePath::default(),
+        };
         let all_results = self.orphan_orchestrator.check_orphans(
             self.layer_detector.as_ref(),
-            &all_files,
-            &scan_root.to_string_lossy(),
+            &orphan_files,
+            &scan_root_fp,
         );
 
         // Filter results for the specific file — canonicalize for robust comparison
