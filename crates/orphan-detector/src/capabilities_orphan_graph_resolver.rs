@@ -526,11 +526,9 @@ impl OrphanGraphResolver {
                         // taxonomy/contract module files appeared to have zero inbound
                         // links and were falsely flagged as AES501/AES502 orphans.
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            let rmf = self.resolve_module_file(crate_name, &segments, src_dir, f);
-                            if crate_name == "shared" {
-                                eprintln!("[DBG-X] rest={rest:?} segments={segments:?} rmf={rmf:?} src_dir={src_dir:?}");
-                            }
-                            if let Some(resolved) = rmf {
+                            if let Some(resolved) =
+                                self.resolve_module_file(crate_name, &segments, src_dir, f)
+                            {
                                 import_graph
                                     .entry(f.clone())
                                     .or_default()
