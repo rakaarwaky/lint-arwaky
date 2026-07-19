@@ -1,7 +1,7 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
 //
 // Three subcommands:
-//   - init:        writes lint_arwaky.config.<lang>.yaml (local) or global XDG configs
+//   - init:        writes lint_arwaky.config.<lang>.yaml (local), distributes docs + .agents/* from XDG config
 //   - install:     pip install Python adapters (ruff, mypy, bandit) + npm install JS adapters (eslint, prettier, typescript)
 //   - mcp-config:  prints MCP client config JSON for Claude/Cursor/Windsurf/Copilot
 //
@@ -10,13 +10,7 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-pub fn handle_init(
-    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
-    global: bool,
-) -> ExitCode {
-    if global {
-        return handle_init_global(setup_orchestrator);
-    }
+pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
     // 1. Write language config files
     let mut all_ok = true;
     let languages = setup_orchestrator.detect_languages();
@@ -47,15 +41,10 @@ pub fn handle_init(
         "MIGRATION_RUST.md",
         "MIGRATION_PYTHON.md",
         "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
     ];
     if let Some(config_dir) = dirs::config_dir() {
         let xdg_base = config_dir.join("lint-arwaky");
         for doc in &doc_files {
-            if setup_orchestrator.file_exists(doc) {
-                println!("  {doc} — already exists, skipping");
-                continue;
-            }
             let xdg_src = xdg_base.join(doc);
             if !xdg_src.exists() {
                 println!("  {doc} — not in XDG config, skipping");
@@ -74,6 +63,74 @@ pub fn handle_init(
                 Err(e) => println!("  {doc} — read error: {e}"),
             }
         }
+
+        // 3. Distribute .agents/skills/ and .agents/rules/ from XDG config to project
+        let agents_src = xdg_base.join(".agents");
+        if agents_src.is_dir() {
+            let current_dir = match std::env::current_dir() {
+                Ok(d) => d,
+                Err(e) => {
+                    println!("Error: could not determine current directory: {e}");
+                    return ExitCode::from(1);
+                }
+            };
+
+            // Copy .agents/skills/* (overwrite)
+            let skills_dir = agents_src.join("skills");
+            if skills_dir.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(&skills_dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        let skill_name_os = entry.file_name();
+                        let src = skills_dir.join(&skill_name_os);
+                        let dst = current_dir
+                            .join(".agents")
+                            .join("skills")
+                            .join(&skill_name_os);
+
+                        if src.is_dir() {
+                            match copy_dir_recursive(&src, &dst) {
+                                Ok(_) => println!(
+                                    "  .agents/skills/{} — distributed from XDG config",
+                                    skill_name_os.to_string_lossy()
+                                ),
+                                Err(e) => println!(
+                                    "  .agents/skills/{} — error: {e}",
+                                    skill_name_os.to_string_lossy()
+                                ),
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Copy .agents/rules/* (overwrite)
+            let rules_dir = agents_src.join("rules");
+            if rules_dir.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(&rules_dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        let rule_name_os = entry.file_name();
+                        let src = rules_dir.join(&rule_name_os);
+                        let dst = current_dir
+                            .join(".agents")
+                            .join("rules")
+                            .join(&rule_name_os);
+
+                        if src.is_file() {
+                            match std::fs::copy(&src, &dst) {
+                                Ok(_) => println!(
+                                    "  .agents/rules/{} — distributed from XDG config",
+                                    rule_name_os.to_string_lossy()
+                                ),
+                                Err(e) => println!(
+                                    "  .agents/rules/{} — error: {e}",
+                                    rule_name_os.to_string_lossy()
+                                ),
+                            }
+                        }
+                    }
+                }
+            }
+        }
     } else {
         println!("Warning: could not determine XDG config dir");
     }
@@ -85,87 +142,20 @@ pub fn handle_init(
     }
 }
 
-fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
-    let config_dir = match setup_orchestrator.create_global_config_dir() {
-        Ok(d) => d,
-        Err(_) => {
-            println!("Error: Could not determine or create XDG config directory");
-            return ExitCode::from(1);
-        }
-    };
-
-    println!("Installing default configs to: {}", config_dir.display());
-
-    let configs = [
-        (
-            "lint_arwaky.config.rust.yaml",
-            setup_orchestrator.get_config_template("rust"),
-        ),
-        (
-            "lint_arwaky.config.python.yaml",
-            setup_orchestrator.get_config_template("python"),
-        ),
-        (
-            "lint_arwaky.config.javascript.yaml",
-            setup_orchestrator.get_config_template("javascript"),
-        ),
-    ];
-
-    let mut all_ok = true;
-    for (filename, content) in &configs {
-        let target = config_dir.join(filename);
-        let target_str = target.to_string_lossy();
-        if setup_orchestrator.file_exists(&target_str) {
-            println!("  {filename} — already exists, skipping");
+/// Recursively copy a directory from `src` to `dst`.
+fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> Result<(), String> {
+    std::fs::create_dir_all(dst).map_err(|e| e.to_string())?;
+    for entry in std::fs::read_dir(src).map_err(|e| e.to_string())? {
+        let entry = entry.map_err(|e| e.to_string())?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
         } else {
-            match setup_orchestrator.write_config_file(&target_str, content) {
-                Ok(_) => println!("  {filename} — created"),
-                Err(e) => {
-                    println!("  {filename} — error: {e}");
-                    all_ok = false;
-                }
-            }
+            std::fs::copy(src_path, dst_path).map_err(|e| e.to_string())?;
         }
     }
-
-    // Distribute docs + SKILL.md from project root to XDG config
-    let doc_files = [
-        "SKILL.md",
-        "ARCHITECTURE.md",
-        "MIGRATION_RUST.md",
-        "MIGRATION_PYTHON.md",
-        "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
-    ];
-    for doc in &doc_files {
-        let target = config_dir.join(doc);
-        let target_str = target.to_string_lossy();
-        if setup_orchestrator.file_exists(&target_str) {
-            println!("  {doc} — already exists, skipping");
-            continue;
-        }
-        match std::fs::read_to_string(doc) {
-            Ok(content) => {
-                if let Some(parent) = target.parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-                match setup_orchestrator.write_config_file(&target_str, &content) {
-                    Ok(_) => println!("  {doc} — created"),
-                    Err(e) => {
-                        println!("  {doc} — error: {e}");
-                        all_ok = false;
-                    }
-                }
-            }
-            Err(_) => println!("  {doc} — not found in project root, skipping"),
-        }
-    }
-
-    if all_ok {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
+    Ok(())
 }
 
 pub async fn handle_install(

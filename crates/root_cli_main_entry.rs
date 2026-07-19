@@ -385,11 +385,11 @@ fn main() -> ExitCode {
                 }
             }
         }
-        Commands::Init { global } => {
+        Commands::Init => {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
             let setup_orchestrator = setup_container.aggregate();
-            cli_commands::surface_setup_command::handle_init(setup_orchestrator, global)
+            cli_commands::surface_setup_command::handle_init(setup_orchestrator)
         }
         Commands::Install { sudo } => {
             let setup_container =

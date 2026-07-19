@@ -53,7 +53,7 @@ Docs=(
     "MIGRATION_TYPESCRIPT.md"
 )
 for DOC in "${Docs[@]}"; do
-    SRC="$PROJECT_ROOT/$DOC"
+    SRC="$PROJECT 2_ROOT/$DOC"
     if [ -f "$SRC" ]; then
         cp "$SRC" "$CONFIG_DIR/$DOC"
         echo "  $DOC -> $CONFIG_DIR/$DOC"
@@ -65,6 +65,31 @@ RULES_SRC="$PROJECT_ROOT/.agents/rules/RULES_AES.md"
 if [ -f "$RULES_SRC" ]; then
     cp "$RULES_SRC" "$CONFIG_DIR/RULES_AES.md"
     echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
+fi
+
+# 6. Copy .agents/skills/ and .agents/rules/ to target's .agents/ folder
+AGENTS_SRC="$PROJECT_ROOT/.agents"
+AGENTS_DST="$CONFIG_DIR/.agents"
+if [ -d "$AGENTS_SRC" ]; then
+    mkdir -p "$AGENTS_DST/skills" "$AGENTS_DST/rules"
+
+    # Copy skills (each subdirectory = one skill)
+    for SKILL_DIR in "$AGENTS_SRC"/skills/*; do
+        if [ -d "$SKILL_DIR" ]; then
+            SKILL_NAME=$(basename "$SKILL_DIR")
+            cp -r "$SKILL_DIR" "$AGENTS_DST/skills/$SKILL_NAME"
+            echo "  .agents/skills/$SKILL_NAME -> $CONFIG_DIR/.agents/skills/$SKILL_NAME"
+        fi
+    done
+
+    # Copy rules
+    for RULE_FILE in "$AGENTS_SRC"/rules/*; do
+        if [ -f "$RULE_FILE" ]; then
+            RULE_NAME=$(basename "$RULE_FILE")
+            cp "$RULE_FILE" "$AGENTS_DST/rules/$RULE_NAME"
+            echo "  .agents/rules/$RULE_NAME -> $CONFIG_DIR/.agents/rules/$RULE_NAME"
+        fi
+    done
 fi
 
 echo "Done: $NEW_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
