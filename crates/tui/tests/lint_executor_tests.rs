@@ -218,10 +218,10 @@ impl SetupManagementAggregate for MockSetupAggregate {
     async fn install_javascript_adapters(&self, _sudo: bool) -> SuccessStatus {
         SuccessStatus::new(self.js_success)
     }
-    fn detect_language(&self) -> ProjectLanguageVO {
+    async fn detect_language(&self) -> ProjectLanguageVO {
         ProjectLanguageVO::new(&self.language)
     }
-    fn detect_languages(
+    async fn detect_languages(
         &self,
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO {
         shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO::new(vec![
@@ -233,13 +233,13 @@ impl SetupManagementAggregate for MockSetupAggregate {
     fn get_config_template(&self, _language: &str) -> &'static str {
         "mock template"
     }
-    fn write_config_file(&self, _filename: &str, _content: &str) -> WriteConfigResult {
+    async fn write_config_file(&self, _filename: &str, _content: &str) -> WriteConfigResult {
         Ok(DescriptionVO::new("wrote mock".to_string()))
     }
-    fn create_global_config_dir(&self) -> CreateConfigDirResult {
+    async fn create_global_config_dir(&self) -> CreateConfigDirResult {
         Ok(std::path::PathBuf::from("/tmp/mock"))
     }
-    fn file_exists(&self, _path: &str) -> bool {
+    async fn file_exists(&self, _path: &str) -> bool {
         false
     }
 }

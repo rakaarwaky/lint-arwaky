@@ -2,22 +2,22 @@
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 
-#[test]
-fn container_default_constructs_with_aggregate_and_protocol() {
+#[tokio::test]
+async fn container_default_constructs_with_aggregate_and_protocol() {
     let container = SetupContainer::new();
     let agg = container.aggregate();
     let proto = container.protocol();
     // Verify accessors return functional objects
-    assert!(agg.detect_language().value.len() >= 2);
+    assert!(agg.detect_language().await.value.len() >= 2);
     assert!(!proto.which_mcp_binary().value.is_empty());
 }
 
-#[test]
-fn container_default_trait_via_new() {
+#[tokio::test]
+async fn container_default_trait_via_new() {
     let container = SetupContainer::default();
     let agg = container.aggregate();
-    let _lang = agg.detect_language();
-    let exists = agg.file_exists("Cargo.toml");
+    let _lang = agg.detect_language().await;
+    let exists = agg.file_exists("Cargo.toml").await;
     assert!(exists);
 }
 
@@ -31,11 +31,11 @@ fn container_aggregate_generate_mcp_config() {
     assert_eq!(val.get("transport").unwrap(), "Stdio");
 }
 
-#[test]
-fn container_aggregate_detect_language_returns_rust() {
+#[tokio::test]
+async fn container_aggregate_detect_language_returns_rust() {
     let container = SetupContainer::new();
     let agg = container.aggregate();
-    let lang = agg.detect_language();
+    let lang = agg.detect_language().await;
     // From workspace root where crates/ exists
     assert_eq!(lang.value, "rust");
 }
@@ -70,10 +70,10 @@ fn container_protocol_get_config_template_returns_non_empty() {
     assert!(!tmpl_py.is_empty());
 }
 
-#[test]
-fn container_protocol_file_exists_checks_paths() {
+#[tokio::test]
+async fn container_protocol_file_exists_checks_paths() {
     let container = SetupContainer::new();
     let proto = container.protocol();
-    assert!(proto.file_exists("Cargo.toml"));
-    assert!(!proto.file_exists("nonexistent_xyz_123.txt"));
+    assert!(proto.file_exists("Cargo.toml").await);
+    assert!(!proto.file_exists("nonexistent_xyz_123.txt").await);
 }

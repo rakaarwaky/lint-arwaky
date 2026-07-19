@@ -48,12 +48,12 @@ impl shared::project_setup::contract_setup_protocol::ISetupManagementProtocol fo
     ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
         shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(true)
     }
-    fn detect_language(
+    async fn detect_language(
         &self,
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO {
         shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguageVO::new("rust")
     }
-    fn detect_languages(
+    async fn detect_languages(
         &self,
     ) -> shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO {
         shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO::new(vec![
@@ -63,17 +63,17 @@ impl shared::project_setup::contract_setup_protocol::ISetupManagementProtocol fo
     fn get_config_template(&self, _language: &str) -> &'static str {
         "mock template"
     }
-    fn write_config_file(
+    async fn write_config_file(
         &self,
         _filename: &str,
         _content: &str,
     ) -> shared::project_setup::WriteConfigResult {
         Ok(shared::taxonomy_suggestion_vo::DescriptionVO::new("ok"))
     }
-    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
+    async fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
         Ok(std::path::PathBuf::from("/tmp/mock"))
     }
-    fn file_exists(&self, _path: &str) -> bool {
+    async fn file_exists(&self, _path: &str) -> bool {
         true
     }
 }
@@ -132,10 +132,10 @@ fn test_mcp_config_vscode_has_client() {
     assert_eq!(val.get("client").unwrap(), "vscode");
 }
 
-#[test]
-fn test_detect_language() {
+#[tokio::test]
+async fn test_detect_language() {
     let orch = make_orchestrator();
-    let lang = orch.detect_language();
+    let lang = orch.detect_language().await;
     assert_eq!(lang.value, "rust");
 }
 
@@ -146,8 +146,8 @@ fn test_get_config_template() {
     assert_eq!(template, "mock template");
 }
 
-#[test]
-fn test_file_exists() {
+#[tokio::test]
+async fn test_file_exists() {
     let orch = make_orchestrator();
-    assert!(orch.file_exists("any"));
+    assert!(orch.file_exists("any").await);
 }

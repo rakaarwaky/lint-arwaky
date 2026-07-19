@@ -43,27 +43,44 @@ fn cross_crate_use_links_to_leaf_module_file() {
 
     let ctx = resolver.build_graph_context(&files, root.to_str().unwrap());
 
-    let leaf_content = std::fs::read_to_string(&leaf).unwrap_or_default();
-    let consumer_content = std::fs::read_to_string(&consumer).unwrap_or_default();
-    eprintln!(
-        "[DBG] leaf content len={} consumer content len={} root={:?}",
-        leaf_content.len(),
-        consumer_content.len(),
-        root
-    );
-    eprintln!("[DBG] inbound keys: {}", ctx.inbound_links.mapping.len());
-    eprintln!(
-        "[DBG] import_graph keys: {}",
-        ctx.import_graph.mapping.len()
-    );
-    eprintln!("[DBG] FULL inbound_links = {:?}", ctx.inbound_links);
-    eprintln!("[DBG] FULL import_graph = {:?}", ctx.import_graph);
-
     let leaf_str = leaf.to_string_lossy().to_string();
     let inbound = ctx.inbound_links.mapping.get(&leaf_str);
 
     assert!(
         inbound.is_some_and(|v| !v.is_empty()),
         "leaf module file {leaf_str} must have an inbound link from the cross-crate consumer"
+    );
+}
+
+#[test]
+fn cross_crate_use_tolerates_trailing_function_segment() {
+    // `shared::orphan_detector::taxonomy_orphan_result_utility::mk_orphan_result`
+    // must still link to the leaf module file, ignoring the trailing fn item.
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..");
+    let root = root.canonicalize().expect("workspace root");
+
+    let leaf = root.join("crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs");
+    let consumer = root.join("crates/orphan-detector/src/capabilities_orphan_surfaces_analyzer.rs");
+    assert!(leaf.exists() && consumer.exists());
+
+    let resolver = OrphanGraphResolver::new(
+        Arc::new(OrphanFilenameExtractor::new()),
+        Arc::new(OrphanFileCache::new()),
+    );
+    let files = vec![OrphanFileListVO::new(vec![
+        leaf.to_string_lossy().to_string(),
+        consumer.to_string_lossy().to_string(),
+    ])];
+    let ctx = resolver.build_graph_context(&files, root.to_str().unwrap());
+    let leaf_str = leaf.to_string_lossy().to_string();
+
+    assert!(
+        ctx.inbound_links
+            .mapping
+            .get(&leaf_str)
+            .is_some_and(|v| !v.is_empty()),
+        "leaf {leaf_str} must receive an inbound link despite trailing fn segment"
     );
 }

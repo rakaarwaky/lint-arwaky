@@ -26,14 +26,14 @@ struct MockFileCheck;
 
 #[async_trait::async_trait]
 impl IGitFileCheckPort for MockFileCheck {
-    async fn path_exists(&self, path: &str) -> bool {
-        std::path::Path::new(path).exists()
+    async fn path_exists(&self, path: &FilePath) -> bool {
+        std::path::Path::new(path.value()).exists()
     }
-    async fn is_file(&self, path: &str) -> bool {
-        std::path::Path::new(path).is_file()
+    async fn is_file(&self, path: &FilePath) -> bool {
+        std::path::Path::new(path.value()).is_file()
     }
-    async fn is_dir(&self, path: &str) -> bool {
-        std::path::Path::new(path).is_dir()
+    async fn is_dir(&self, path: &FilePath) -> bool {
+        std::path::Path::new(path.value()).is_dir()
     }
 }
 

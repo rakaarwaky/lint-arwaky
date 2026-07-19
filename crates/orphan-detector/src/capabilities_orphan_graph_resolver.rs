@@ -124,7 +124,6 @@ impl OrphanGraphResolver {
     /// segments, descending through directory modules, and stop at the deepest
     /// segment that actually resolves to a file or directory module. That last
     /// resolved module is the one that should receive the inbound link.
-    ///
     /// e.g. `shared::orphan_detector::taxonomy_orphan_result_utility`
     ///   -> `crates/shared/src/orphan-detector/taxonomy_orphan_result_utility.rs`
     fn resolve_module_file(
@@ -134,51 +133,51 @@ impl OrphanGraphResolver {
         src_dir: &std::path::Path,
         importing_file: &str,
     ) -> Option<String> {
-        let mut current = src_dir.to_path_buf();
-        let mut last_resolved: Option<String> = None;
-        for seg in segments {
-            let normalized = seg.replace('-', "_");
-            let candidate_file = current.join(format!("{}.rs", normalized));
-            let candidate_mod = current.join(&normalized).join("mod.rs");
-            if crate_name == "shared" && (normalized.contains("orphan_result") || normalized == "orphan_detector") {
-                eprintln!(
-                    "[DBG-RMF] seg={seg} current={current:?} file={} mod={} cand_mod={:?}",
-                    candidate_file.is_file(),
-                    candidate_mod.is_file(),
-                    candidate_mod
-                );
-            }
-            if candidate_file.is_file() {
-                let p = candidate_file.to_string_lossy().to_string();
-                if p != importing_file {
-                    last_resolved = Some(p.clone());
+            let mut current = src_dir.to_path_buf();
+            // Deepest module file resolved so far (returned if a deeper segment is
+            // a non-module item like a function/type).
+            let mut last_resolved: Option<String> = None;
+            for seg in segments {
+                // Use &str joins — `Path::join(&String)` does not reliably resolve to
+                // `AsRef<Path>` the way `&str` does, which previously produced wrong
+                // (non-existent) candidate paths and false orphans.
+                let normalized = seg.replace('-', "_");
+                let candidate_file = current.join(format!("{normalized}.rs"));
+                let candidate_mod = current.join(&normalized).join("mod.rs");
+                if candidate_file.is_file() {
+                    let p = candidate_file.to_string_lossy().to_string();
+                    if p != importing_file {
+                        last_resolved = Some(p.clone());
+                    }
+                    last_resolved = last_resolved.or(Some(p));
+                    current = current.join(&normalized);
+                    continue;
+                } else if candidate_mod.is_file() {
+                    let p = candidate_mod.to_string_lossy().to_string();
+                    if p != importing_file {
+                        last_resolved = Some(p);
+                    }
+                    current = current.join(&normalized);
+                    continue;
+                } else {
+                    // No such file/dir at this level — this segment (and anything
+                    // after it) is a non-module item. Return the deepest module
+                    // resolved so far.
+                    return last_resolved;
                 }
-                last_resolved = last_resolved.or(Some(p));
-                current = current.join(&normalized);
-                continue;
-            } else if candidate_mod.is_file() {
-                let p = candidate_mod.to_string_lossy().to_string();
-                if p != importing_file {
-                    last_resolved = Some(p);
-                }
-                current = current.join(&normalized);
-                continue;
-            } else {
-                return last_resolved;
             }
+            // All segments resolved inside directory modules; final mod.rs.
+            let final_mod = current.join("mod.rs");
+            if final_mod.is_file() {
+                let p = final_mod.to_string_lossy().to_string();
+                return if p != importing_file {
+                    Some(p)
+                } else {
+                    last_resolved
+                };
+            }
+            last_resolved
         }
-        // All segments resolved inside directory modules; final mod.rs.
-        let final_mod = current.join("mod.rs");
-        if final_mod.is_file() {
-            let p = final_mod.to_string_lossy().to_string();
-            return if p != importing_file {
-                Some(p)
-            } else {
-                last_resolved
-            };
-        }
-        last_resolved
-    }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
