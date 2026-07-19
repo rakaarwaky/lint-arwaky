@@ -1,6 +1,6 @@
 // PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
 
-use crate::utils_import::parse_import_lines_helper;
+use shared::import_rules::taxonomy_import_utility::parse_import_lines_helper;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_import_parser_port::IImportParserPort;

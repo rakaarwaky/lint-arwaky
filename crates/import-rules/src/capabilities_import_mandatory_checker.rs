@@ -2,7 +2,7 @@
 // AES202 rule: Each architectural layer (or scoped sub-layer) may declare a set of mandatory imports.
 // Files belonging to that layer MUST import at least one symbol from each required scope.
 
-use crate::utils_import::filepath_or_default;
+use shared::import_rules::taxonomy_import_utility::filepath_or_default;
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;

@@ -15,11 +15,10 @@ The real question is:
 Keep the function inside the capabilities file if ANY of these is true:
 
 1. It contains business/domain rules.
-2. It knows AES-specific patterns, layer names, suffixes, violation codes, or taxonomy conventions.
-3. It accesses `self.field` or instance state.
-4. It is tightly coupled to this capability only.
-5. It is a factory method such as `new()` or builder method.
-6. It is stateless but only used by this one struct and is domain-specific.
+2. It accesses `self.field` or instance state.
+3. It is tightly coupled to this capability only.
+4. It is a factory method such as `new()` or builder method.
+5. It is stateless but only used by this one struct and is domain-specific.
 
 Example:
 

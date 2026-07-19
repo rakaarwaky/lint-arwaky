@@ -1,7 +1,7 @@
-// PURPOSE: utils_import — free functions for import parsing
-use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_layer_vo::LineContentVO;
-use shared::common::taxonomy_path_vo::FilePath;
+// PURPOSE: Import parsing utility functions — stateless, domain-agnostic, multi-consumer
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_layer_vo::LineContentVO;
+use crate::common::taxonomy_path_vo::FilePath;
 
 /// Convert a Result<FilePath, _> to FilePath, using default on error.
 pub fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
