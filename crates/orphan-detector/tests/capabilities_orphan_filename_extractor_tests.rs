@@ -1,4 +1,4 @@
-use orphan_detector_lint_arwaky::capabilities_orphan_filename_extractor::OrphanFilenameExtractor;
+use orphan_detector_lint_arwaky::infrastructure_orphan_filename_helper::OrphanFilenameExtractor;
 use shared::orphan_detector::contract_orphan_protocol::IOrphanFilenameExtractorProtocol;
 
 fn make_extractor() -> OrphanFilenameExtractor {

@@ -1,5 +1,4 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use crate::taxonomy_orphan_filename_helper::file_stem;
 use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
@@ -10,6 +9,7 @@ use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGra
 use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
+use shared::orphan_detector::taxonomy_orphan_filename_utility::file_stem;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -80,8 +80,10 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || basename.ends_with(pattern)
-                            || crate::taxonomy_orphan_filename_helper::file_stem(basename)
-                                .contains(pattern)
+                            || shared::orphan_detector::taxonomy_orphan_filename_utility::file_stem(
+                                basename,
+                            )
+                            .contains(pattern)
                     })
                 })
                 .cloned()

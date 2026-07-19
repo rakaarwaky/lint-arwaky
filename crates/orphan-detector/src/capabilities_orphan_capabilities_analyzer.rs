@@ -1,11 +1,13 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
 use crate::taxonomy_file_cache_utility;
-use crate::taxonomy_orphan_filename_helper::{file_basename, file_stem, file_suffix};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared::orphan_detector::taxonomy_orphan_filename_utility::{
+    file_basename, file_stem, file_suffix,
+};
 use shared::orphan_detector::taxonomy_orphan_utility::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
