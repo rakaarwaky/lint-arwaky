@@ -2,6 +2,7 @@
 //
 // Three subcommands:
 //   - init:        writes lint_arwaky.config.<lang>.yaml (local), distributes docs + .agents/* from XDG config
+//                  (skills, rules, prompts)
 //   - install:     pip install Python adapters (ruff, mypy, bandit) + npm install JS adapters (eslint, prettier, typescript)
 //   - mcp-config:  prints MCP client config JSON for Claude/Cursor/Windsurf/Copilot
 //
@@ -36,7 +37,6 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
 
     // 2. Distribute docs + SKILL.md from XDG config to project
     let doc_files = [
-        "SKILL.md",
         "ARCHITECTURE.md",
         "MIGRATION_RUST.md",
         "MIGRATION_PYTHON.md",
@@ -124,6 +124,34 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
                                 Err(e) => println!(
                                     "  .agents/rules/{} — error: {e}",
                                     rule_name_os.to_string_lossy()
+                                ),
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Copy .agents/prompts/* (overwrite)
+            let prompts_dir = agents_src.join("prompts");
+            if prompts_dir.is_dir() {
+                if let Ok(entries) = std::fs::read_dir(&prompts_dir) {
+                    for entry in entries.filter_map(|e| e.ok()) {
+                        let prompt_name_os = entry.file_name();
+                        let src = prompts_dir.join(&prompt_name_os);
+                        let dst = current_dir
+                            .join(".agents")
+                            .join("prompts")
+                            .join(&prompt_name_os);
+
+                        if src.is_file() {
+                            match std::fs::copy(&src, &dst) {
+                                Ok(_) => println!(
+                                    "  .agents/prompts/{} — distributed from XDG config",
+                                    prompt_name_os.to_string_lossy()
+                                ),
+                                Err(e) => println!(
+                                    "  .agents/prompts/{} — error: {e}",
+                                    prompt_name_os.to_string_lossy()
                                 ),
                             }
                         }

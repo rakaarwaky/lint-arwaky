@@ -59,11 +59,11 @@ if [ -f "$RULES_SRC" ]; then
     echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
 fi
 
-# 5. Copy .agents/skills/ and .agents/rules/ to target's .agents/ folder
+# 5. Copy .agents/skills/, .agents/rules/, and .agents/prompts/ to target's .agents/ folder
 AGENTS_SRC="$PROJECT_ROOT/.agents"
 AGENTS_DST="$CONFIG_DIR/.agents"
 if [ -d "$AGENTS_SRC" ]; then
-    mkdir -p "$AGENTS_DST/skills" "$AGENTS_DST/rules"
+    mkdir -p "$AGENTS_DST/skills" "$AGENTS_DST/rules" "$AGENTS_DST/prompts"
 
     # Copy skills (each subdirectory = one skill)
     for SKILL_DIR in "$AGENTS_SRC"/skills/*; do
@@ -80,6 +80,15 @@ if [ -d "$AGENTS_SRC" ]; then
             RULE_NAME=$(basename "$RULE_FILE")
             cp "$RULE_FILE" "$AGENTS_DST/rules/$RULE_NAME"
             echo "  .agents/rules/$RULE_NAME -> $CONFIG_DIR/.agents/rules/$RULE_NAME"
+        fi
+    done
+
+    # Copy prompts
+    for PROMPT_FILE in "$AGENTS_SRC"/prompts/*; do
+        if [ -f "$PROMPT_FILE" ]; then
+            PROMPT_NAME=$(basename "$PROMPT_FILE")
+            cp "$PROMPT_FILE" "$AGENTS_DST/prompts/$PROMPT_NAME"
+            echo "  .agents/prompts/$PROMPT_NAME -> $CONFIG_DIR/.agents/prompts/$PROMPT_NAME"
         fi
     done
 fi
