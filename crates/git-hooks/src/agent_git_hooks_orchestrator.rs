@@ -12,6 +12,7 @@ use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 
 // Block 1: struct Definition
+#[derive(Clone)]
 pub struct GitHooksOrchestrator {
     diff_protocol: Arc<dyn IDiffProtocol>,
     hook_protocol: Arc<dyn IHookProtocol>,
