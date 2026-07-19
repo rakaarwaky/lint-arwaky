@@ -127,31 +127,33 @@ impl SurfacesOrphanAnalyzer {
     }
 
     fn check_dir_imports(&self, dir: &std::path::Path, stem: &str) -> bool {
-        let entries = self.cache.read_dir(dir.to_str().unwrap_or(""));
-        for entry_path in &entries {
-            let path = std::path::Path::new(entry_path);
-            if path.is_dir() {
-                if self.check_dir_imports(path, stem) {
-                    return true;
-                }
-            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                let is_entry_or_router = name.starts_with("root_")
-                    || name.starts_with("cli_")
-                    || name.starts_with("mcp_")
-                    || name.contains("_entry")
-                    || name.contains("_router");
-                if is_entry_or_router
-                    && (name.ends_with(".rs")
-                        || name.ends_with(".py")
-                        || name.ends_with(".ts")
-                        || name.ends_with(".js"))
-                {
-                    let fp = FilePath {
-                        value: entry_path.clone(),
-                    };
-                    let content = self.cache.read_cached(&fp).value;
-                    if content.contains(stem) {
+        if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(dir.to_str().unwrap_or("")) {
+            let entries = self.cache.read_dir(&fp);
+            for entry_path in &entries {
+                let path = std::path::Path::new(entry_path);
+                if path.is_dir() {
+                    if self.check_dir_imports(path, stem) {
                         return true;
+                    }
+                } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                    let is_entry_or_router = name.starts_with("root_")
+                        || name.starts_with("cli_")
+                        || name.starts_with("mcp_")
+                        || name.contains("_entry")
+                        || name.contains("_router");
+                    if is_entry_or_router
+                        && (name.ends_with(".rs")
+                            || name.ends_with(".py")
+                            || name.ends_with(".ts")
+                            || name.ends_with(".js"))
+                    {
+                        let fp = FilePath {
+                            value: entry_path.clone(),
+                        };
+                        let content = self.cache.read_cached(&fp).value;
+                        if content.contains(stem) {
+                            return true;
+                        }
                     }
                 }
             }

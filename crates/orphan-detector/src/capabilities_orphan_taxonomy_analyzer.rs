@@ -134,19 +134,21 @@ impl TaxonomyOrphanAnalyzer {
         }
         let search = format!("crate::{}", stem);
         if let Some(parent) = std::path::Path::new(file_path).parent() {
-            let entries = self.cache.read_dir(parent.to_str().unwrap_or(""));
-            for entry_path in &entries {
-                let path = std::path::Path::new(entry_path);
-                if path == std::path::Path::new(file_path) {
-                    continue;
-                }
-                if path.extension().is_some_and(|e| e == "rs") {
-                    let fp = FilePath {
-                        value: entry_path.clone(),
-                    };
-                    let content = self.cache.read_cached(&fp).value;
-                    if content.contains(&search) {
-                        return true;
+            if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(parent.to_str().unwrap_or("")) {
+                let entries = self.cache.read_dir(&fp);
+                for entry_path in &entries {
+                    let path = std::path::Path::new(entry_path);
+                    if path == std::path::Path::new(file_path) {
+                        continue;
+                    }
+                    if path.extension().is_some_and(|e| e == "rs") {
+                        let fp = FilePath {
+                            value: entry_path.clone(),
+                        };
+                        let content = self.cache.read_cached(&fp).value;
+                        if content.contains(&search) {
+                            return true;
+                        }
                     }
                 }
             }

@@ -12,6 +12,7 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use shared::orphan_detector::taxonomy_graph_regex_utility::{
@@ -221,18 +222,20 @@ impl OrphanGraphResolver {
         let root_path = std::path::Path::new(root_dir);
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            let entries = self.cache.read_dir(ws_path.to_str().unwrap_or(""));
-            for entry_path in &entries {
-                let path = std::path::Path::new(entry_path);
-                if path.is_dir() {
-                    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                        let name = name.to_string();
-                        workspace_modules.insert(name.clone());
-                        workspace_modules.insert(name.replace('-', "_"));
-                        let src_dir = path.join("src");
-                        if src_dir.is_dir() {
-                            crate_src_dirs.insert(name.clone(), src_dir.clone());
-                            crate_src_dirs.insert(name.replace('-', "_"), src_dir);
+            if let Ok(fp) = shared::common::taxonomy_path_vo::FilePath::new(ws_path.to_str().unwrap_or("")) {
+                let entries = self.cache.read_dir(&fp);
+                for entry_path in &entries {
+                    let path = std::path::Path::new(entry_path);
+                    if path.is_dir() {
+                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                            let name = name.to_string();
+                            workspace_modules.insert(name.clone());
+                            workspace_modules.insert(name.replace('-', "_"));
+                            let src_dir = path.join("src");
+                            if src_dir.is_dir() {
+                                crate_src_dirs.insert(name.clone(), src_dir.clone());
+                                crate_src_dirs.insert(name.replace('-', "_"), src_dir);
+                            }
                         }
                     }
                 }
