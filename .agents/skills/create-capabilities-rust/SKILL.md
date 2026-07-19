@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-rust
 description: "Create and validate capabilities layer files following AES rules: 3-block structure, one struct per file, trait contracts, zero I/O."
-version: 1.1.0
+version: 1.2.0
 category: refactoring
 tags:
   [
@@ -46,56 +46,49 @@ Create and validate Rust **capabilities layer** files following clean architectu
 
 | Allowed                               | Forbidden                                    |
 | ------------------------------------- | -------------------------------------------- |
-| Computation, validation, calculation  | File I/O (`std::fs`, `File::open`)       |
-| Data transformation, business rules   | Network calls (`reqwest`, `hyper`)       |
-| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`) |
-| Trait implementation                  | Direct import from`infrastructure_*`       |
-|                                       | Direct import from`agent_*`                |
-|                                       | Direct import from`capabilities_*` (self)  |
+| Computation, validation, calculation  | File I/O (`std::fs`, `File::open`)           |
+| Data transformation, business rules   | Network calls (`reqwest`, `hyper`)           |
+| Domain logic, domain model definition | Database operations (`sqlx`, `rusqlite`)     |
+| Trait implementation                  | Direct import from `infrastructure_*`        |
+|                                       | Direct import from `agent_*`                 |
+|                                       | Direct import from `capabilities_*` (self)   |
 
 ### Structural Rules (All Layers)
 
-- **1 file = 1 impl struct** — each capabilities file contains exactly ONE main impl struct
-- **All data classes in shared** — no structs/enums/cons with data may be defined outside shared/folder-name/taxonomy_
-- **Fields must use DI** — impl struct fields should be `Arc<dyn Trait>` objects, not concrete types
-- **Helper functions stay in layer** — helper methods that support the impl struct remain in the file
-- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) should be extracted to `*file_name_utility.rs` modules in shared/folder-name/taxonomy_
+- **1 file = 1 impl struct** — each capabilities file contains exactly ONE main impl struct.
+- **All data classes in shared** — no structs/enums/consts with data may be defined outside `shared/folder-name/taxonomy_`.
+- **Fields must use DI** — impl struct fields should be `Arc<dyn Trait>` objects, not concrete types.
+- **Helper functions stay in layer** — helper methods that support the impl struct remain in the file.
+- **Utility functions → extract to taxonomy** — truly stateless, domain-agnostic free functions (no `&self`) should be extracted to `*file_name_utility.rs` modules in `shared/folder-name/taxonomy_`.
 
-### Helper vs Utility Decision (The Litmus Test)
+### Helper vs Utility Decision (The Ultimate Boundary)
 
-> **The Litmus Test:** "If I copy-paste this function to a completely different file, would it still work 100% the same without changing a single line of code?"
->
-> - If **YES** → **Extract to Utility File**.
-> - If **NO** (needs `self`, struct state, or class context) → **Keep as Private Helper**.
+The boundary is not just about `&self`. It is about **Domain Knowledge (The Rules) vs. Dumb Tools (The Mechanics)**.
 
-#### When to Extract to Utility (`*_utility.rs`)
+> **The Litmus Test:** "Does this function know about specific business rules (e.g., AES violations, layer mappings), or is it just a blind data manipulator?"
 
-Extract if **ALL** conditions are met:
+#### 🟢 Keep as Private Helper in Capabilities (Block 3)
+Keep if the function contains **Domain Knowledge** or meets ANY of these:
+1. **Contains Business Rules**: Knows about specific system rules (e.g., knows that `_port` suffix means `infrastructure_` layer, or knows specific AES violation codes).
+2. **Needs Instance State**: Accesses `self.field` or `static` fields.
+3. **Tightly Coupled**: Logic is specific to this checker only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name).
+4. **Factory Method**: `new()`, builders — specific to instantiating this class.
 
-1. **Stateless**: No `&self`, no struct field access
-2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation)
-3. **Domain-Agnostic / Reusable**: Logic is general enough that other classes could use it in the future
+#### 🔴 Extract to Utility (`*_utility.rs`)
+Extract ONLY if the function is a **Dumb Tool** and meets ALL of these:
+1. **Stateless**: No `&self`, no struct field access.
+2. **Pure Function**: Input A always produces output B. No side effects (no I/O, no random, no global state mutation).
+3. **Domain-Agnostic / Reusable**: Logic is general enough that *other* checkers could use it (e.g., regex matching, string normalization, AST parsing). It doesn't know *what* it's checking, only *how* to check.
 
-#### When to Keep as Private Helper (Block 3)
-
-Keep if **ANY** condition is met:
-
-1. **Needs Instance State**: Accesses `self.field`
-2. **Needs Class State**: Accesses `static` fields
-3. **Tightly Coupled**: Logic is specific to this class only and doesn't make sense elsewhere (e.g., formatting error messages that reference this class name, mapping internal data to a class-specific output format)
-4. **Factory Method**: `new()`, builders — specific to instantiating this class
-
-#### I/O Blocker (CRITICAL)
-
+#### ⚠️ I/O Blocker (CRITICAL)
 A function can be stateless but STILL **cannot** be extracted to taxonomy if it has I/O:
-
 - `std::fs::read_to_string`, `std::fs::read_dir`, `File::open`
 - `reqwest`, `hyper` (network)
 - `sqlx`, `rusqlite` (database)
 
 **Rule:** Stateless + I/O = Keep in layer (or move to infrastructure), **NOT** taxonomy utility.
 
-```
+```rust
 fn has_crate_self_import(file_path: &str) -> bool {
     // Stateless ✓ (no &self)
     // But uses std::fs::read_dir ✗ (I/O)
@@ -113,9 +106,9 @@ Every implementation file MUST follow this exact order:
    - Contains **ONLY** the domain protocol trait (e.g., `ILineCheckerProtocol`, `IOrphanAnalyzerProtocol`).
    - **NO** standard library trait impls here (`Default`, `Clone`, `Debug`, `Display`, `From`, etc.).
 3. **Block 3 — `impl Struct`** (Constructors, Std Traits & Helpers)
-   - `new()`, builders
+   - `new()`, builders.
    - `impl Default`, `impl Clone`, `impl Debug`, `impl Display`, and other std trait impls — these are **constructors/utilities**, not public contracts.
-   - Private helper methods (`&self`)
+   - Private helper methods (`&self`).
 
 **CRITICAL:** Block 2 is **RESERVED** for the domain protocol trait ONLY. Standard library trait impls (`Default`, `Clone`, `Debug`, `Display`, `From`) belong in **Block 3** because they serve as constructors or utility formatting, not as the public domain contract.
 
@@ -123,7 +116,7 @@ Every implementation file MUST follow this exact order:
 
 #### Trait Placement Decision Rule
 
-```
+```text
 Trait impl found in a capabilities file?
   │
   ├─ Is it the domain protocol? (I<Name>Protocol)
@@ -137,9 +130,10 @@ Trait impl found in a capabilities file?
 
 ```rust
 use shared::code_analysis::taxonomy_line_checker_utility::is_barrel_file;
+use shared::code_analysis::taxonomy_analysis_vo::LayerDefinition;
+use shared::code_analysis::taxonomy_analysis_vo::LintResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct ArchLineChecker;
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
@@ -175,6 +169,7 @@ impl ArchLineChecker {
 
     // ✅ CONTOH PRIVATE HELPER YANG BENAR: 
     // Fungsi ini MEMANG harus di Block 3 karena menggunakan `self` (instance state)
+    // atau mengandung Domain Knowledge spesifik checker ini.
     fn get_effective_threshold(&self, layer: &str) -> i64 {
         self.config.get_threshold(layer) * 2 // Contoh akses `self`
     }
@@ -183,13 +178,13 @@ impl ArchLineChecker {
 
 ### Trait Rules
 
-- **Every capability struct MUST implement a trait** (AES403)
-- **Trait MUST define methods for all public methods**
-- **Trait contains ONLY public/contract methods** — no private helpers
-- **Private helpers stay in Block 3** (`impl Struct`)
-- **Constructors (`new`, builders) in Block 3**
-- **Std trait impls (`Default`, `Clone`, etc.) in Block 3**
-- **Generic trait methods need `where Self: Sized`**
+- **Every capability struct MUST implement a trait** (AES403).
+- **Trait MUST define methods for all public methods**.
+- **Trait contains ONLY public/contract methods** — no private helpers.
+- **Private helpers stay in Block 3** (`impl Struct`).
+- **Constructors (`new`, builders) in Block 3**.
+- **Std trait impls (`Default`, `Clone`, etc.) in Block 3**.
+- **Generic trait methods need `where Self: Sized`**.
 
 ## The Fundamental Question
 
@@ -200,11 +195,11 @@ If no (has I/O) → **split into infrastructure layer instead**
 
 ## Naming Convention
 
-| Layer                    | File Pattern            | Trait File                       | Trait Name           |
-| ------------------------ | ----------------------- | -------------------------------- | -------------------- |
-| **Capabilities**   | `capabilities_*.rs`   | `contract_<name>_protocol.rs`  | `I<Name>Protocol`  |
-| **Infrastructure** | `infrastructure_*.rs` | `contract_<name>_port.rs`      | `I<Name>Port`      |
-| **Agents**         | `agent_*.rs`          | `contract_<name>_aggregate.rs` | `I<Name>Aggregate` |
+| Layer          | File Pattern          | Trait File                      | Trait Name          |
+| -------------- | --------------------- | ------------------------------- | ------------------- |
+| **Capabilities**   | `capabilities_*.rs` | `contract_<name>_protocol.rs` | `I<Name>Protocol` |
+| **Infrastructure** | `infrastructure_*.rs` | `contract_<name>_port.rs`     | `I<Name>Port`     |
+| **Agents**         | `agent_*.rs`        | `contract_<name>_aggregate.rs`| `I<Name>Aggregate`|
 
 ## Detection Patterns
 
@@ -274,7 +269,9 @@ pub struct CapabilitiesOrphanAnalyzer {
     cache: Arc<dyn IOrphanFileCachePort>,                   // ← DI
 }
 
-impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer { ... }
+impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer { 
+    // ... implementation ...
+}
 ```
 
 ### GOOD: Correct 3-Block with Std Traits
@@ -299,14 +296,11 @@ impl ArchLineChecker {                             // Block 3: constructors & he
 ## Workflow
 
 ### Step 1: Analyze File
-
 Read file and check for mixed responsibilities. Ask: **"Is this code in the right layer?"**
-
-- If it has I/O → **MOVE to Infrastructure** (AES404)
-- If pure business logic → continue to Step 2
+- If it has I/O → **MOVE to Infrastructure** (AES404).
+- If pure business logic → continue to Step 2.
 
 ### Step 2: Check for Missing Trait (AES403)
-
 Does the capability struct implement a trait? If no → create one.
 
 ```bash
@@ -319,36 +313,28 @@ done
 ```
 
 ### Step 3: Create Trait File (if missing)
-
 Create `contract_<name>_protocol.rs` in the shared crate with all public method signatures.
-
-**Trait location:**
 
 | Crate           | Trait Path                                                   |
 | --------------- | ------------------------------------------------------------ |
-| import-rules    | `crates/shared/src/import_rules/contract_*_protocol.rs`    |
-| code-analysis   | `crates/shared/src/code_analysis/contract_*_protocol.rs`   |
-| orphan-detector | `crates/shared/src/orphan_detector/contract_*_protocol.rs` |
+| import-rules    | `crates/shared/src/import_rules/contract_*_protocol.rs`      |
+| code-analysis   | `crates/shared/src/code_analysis/contract_*_protocol.rs`     |
+| orphan-detector | `crates/shared/src/orphan_detector/contract_*_protocol.rs`   |
 
 ### Step 4: Enforce 3-Block Structure
-
 Reorganize into strict 3-block order:
-
 1. `pub struct <Type>` (struct definition with DI fields)
 2. `impl I<Name>Protocol for <Type>` (all public contract methods — **domain protocol ONLY**)
 3. `impl <Type>` + std trait impls (constructors, `Default`/`Clone`/`Debug`, private helpers — utilities extracted to standalone modules)
 
 ### Step 5: Verify Struct Discipline
-
-- **1 file = 1 impl struct** — no multiple structs in one file
-- **All data classes in shared/taxonomy** — domain structs must be imported, not defined locally
-- **Fields use DI** — `Arc<dyn Trait>`, never concrete types
-- **No free functions (no `&self`) remain in Block 3** — extract to `*_utility.rs` modules
+- **1 file = 1 impl struct** — no multiple structs in one file.
+- **All data classes in shared/taxonomy** — domain structs must be imported, not defined locally.
+- **Fields use DI** — `Arc<dyn Trait>`, never concrete types.
+- **No free functions (no `&self`) remain in Block 3** — extract to `*_utility.rs` modules.
 
 ### Step 6: Verify Layer Compliance
-
 Check forbidden imports and I/O patterns:
-
 ```bash
 # Check for I/O in capabilities
 grep -n "std::fs\|File::open\|reqwest\|sqlx" crates/<crate>/src/capabilities_*.rs
@@ -358,7 +344,6 @@ grep -n "infrastructure_\|agent_" crates/<crate>/src/capabilities_*.rs
 ```
 
 ### Step 7: Verify
-
 Run `cargo check` to confirm no violations.
 
 ## Verification Checklist
@@ -377,18 +362,17 @@ Run `cargo check` to confirm no violations.
 - [ ] All data classes imported from shared/taxonomy (none defined locally).
 - [ ] Impl struct fields use DI (`Arc<dyn Trait>`), not concrete types.
 - [ ] **Zero I/O** in capabilities layer (no std::fs, no network, no database).
-- [ ] No forbidden imports (no infrastructure__, no agent__).
+- [ ] No forbidden imports (no `infrastructure_*`, no `agent_*`).
 - [ ] Trait module is registered in the shared crate's `mod.rs`.
 - [ ] `cargo check -p <crate-name>` passes without warnings or errors.
 
 ## Error Handling (from fix-error-handling)
 
 **Capabilities Layer Error Rules:**
-
-- **Never silently discard errors** with `unwrap_or_default()` in capabilities layer
-- All public methods MUST return `Result<T, E>` where `E` is descriptive
-- IO errors (file read, network) → propagate with `Result` or return `LintResult::new_arch()`
-- Logic errors (validation, parsing) → propagate with `Result` + custom error type
+- **Never silently discard errors** with `unwrap_or_default()` in capabilities layer.
+- All public methods MUST return `Result<T, E>` where `E` is descriptive.
+- IO errors (file read, network) → propagate with `Result` or return `LintResult::new_arch()`.
+- Logic errors (validation, parsing) → propagate with `Result` + custom error type.
 
 ### Silent Swallowing (Fix)
 
@@ -427,10 +411,9 @@ fn check_imports(...) -> Vec<LintResult> {
 ## Primitive-to-VO Replacement (from fix-primitive-to-vo)
 
 **Capabilities Layer VO Rules:**
-
-- Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`)
-- Contract signatures MUST use VOs
-- VOs MUST validate on construction
+- Entity fields MUST use VOs, not primitives (`String`, `i32`, `f64`, `bool`).
+- Contract signatures MUST use VOs.
+- VOs MUST validate on construction.
 
 ```rust
 // BEFORE (primitive)
@@ -451,10 +434,9 @@ pub struct LintResult {
 ## Magic Constant Extraction (from fix-magic-constant)
 
 **Capabilities Layer Constant Rules:**
-
-- NO hardcoded literals in capabilities layer
-- All domain values MUST be named constants
-- Constants MUST live in `taxonomy_*_constant.rs`
+- NO hardcoded literals in capabilities layer.
+- All domain values MUST be named constants.
+- Constants MUST live in `taxonomy_*_constant.rs`.
 
 ```rust
 // [FORBIDDEN] BEFORE
@@ -474,14 +456,13 @@ fn calculate_duration(&self) -> f64 {
 When fixing cross-import violations in capabilities, choose the right approach:
 
 ### Option A: Extract to Taxonomy Utility (Standalone Free Functions)
-
 Use when the code is **stateless, pure logic** with no side effects:
 
 | Condition                                     | Example                                       |
 | --------------------------------------------- | --------------------------------------------- |
-| Pure function — no`&self`, no struct state | `parse_path()`, `normalize_name()`        |
-| Stateless — all data via parameters          | `fn compute_distance(a: &Point, b: &Point)` |
-| No side effects — deterministic output       | `fn sanitize_string(input: &str) -> String` |
+| Pure function — no `&self`, no struct state   | `parse_path()`, `normalize_name()`            |
+| Stateless — all data via parameters           | `fn compute_distance(a: &Point, b: &Point)`   |
+| No side effects — deterministic output        | `fn sanitize_string(input: &str) -> String`   |
 
 ```rust
 // taxonomy_path_utility.rs (TAXONOMY LAYER)
@@ -494,12 +475,11 @@ use crate::taxonomy_path_utility::{parse_path, normalize_name}; // ALLOWED: taxo
 ```
 
 ### Option B: Dependency Injection via Traits (Port/Protocol Pattern)
-
 Use when the code requires **state, side effects, or layer-specific behavior**:
 
 | Condition                     | Example                                         |
 | ----------------------------- | ----------------------------------------------- |
-| Needs`&self` / struct state | Struct with fields for data/mutation            |
+| Needs `&self` / struct state  | Struct with fields for data/mutation            |
 | Has side effects / I/O        | File operations, network calls, DB queries      |
 | Layer-specific implementation | Adapter that depends on concrete infrastructure |
 
@@ -528,7 +508,7 @@ pub struct TimelineProcessor {
 
 ## Decision Tree: Which Option to Choose?
 
-```
+```text
 Encountered cross-import violation in capabilities?
   │
   ├─ Does the code need &self / struct state?
@@ -597,3 +577,4 @@ awk '/^impl (Default|Clone|Debug|Display)/{std=NR} /^impl I[A-Z].*Protocol/{prot
 - ❌ **Multiple impl structs in one file**: Each file should have exactly ONE impl struct. Use `consolidate-files-rust` if merging multiple files.
 - ❌ **Placing std trait impls (`Default`, `Clone`, `Debug`) in Block 2**: Block 2 is RESERVED for the domain protocol trait ONLY. Std traits are constructors/utilities and belong in Block 3.
 - ❌ **Placing `impl Default` before `impl I<Name>Protocol`**: This breaks the 3-block order. Protocol trait MUST come first (Block 2), then `Default` + `new()` in Block 3.
+```

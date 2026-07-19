@@ -193,13 +193,11 @@ impl CodeAnalysisOrchestrator {
 
             // Layer-independent checks (run on ALL files)
             if config.is_rule_enabled("AES304") {
-                self.container
-                    .bypass_checker()
-                    .check_bypass_comments(
-                        &FilePath::new(file.to_string()).unwrap_or_default(),
-                        &ContentString::new(c),
-                        &mut violations,
-                    );
+                self.container.bypass_checker().check_bypass_comments(
+                    &FilePath::new(file.to_string()).unwrap_or_default(),
+                    &ContentString::new(c.clone()),
+                    &mut violations,
+                );
             }
             if config.is_rule_enabled("AES303") {
                 self.container

@@ -24,10 +24,10 @@ use shared::code_analysis::taxonomy_bypass_utility::{
     classify_source, classify_token, is_comment_bypass_pattern, is_ident_continue, is_ident_start,
     matches_keyword_token, starts_with_allow_attr, CharClass, SourceLanguage, ViolationKind,
 };
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.
 /// These mirror the AES304 catalog (BypassComment, UnwrapExpect, Panic, Todo, Unimplemented).

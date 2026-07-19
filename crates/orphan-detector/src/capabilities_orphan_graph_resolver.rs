@@ -116,11 +116,7 @@ impl OrphanGraphResolver {
     /// the re-exported path (e.g. `crate::common::taxonomy_action_vo` ->
     /// `["common", "taxonomy_action_vo"]`). Returns `None` if no matching
     /// re-export is found.
-    fn resolve_reexport(
-        &self,
-        mod_dir: &std::path::Path,
-        seg: &str,
-    ) -> Option<Vec<String>> {
+    fn resolve_reexport(&self, mod_dir: &std::path::Path, seg: &str) -> Option<Vec<String>> {
         let mod_rs = mod_dir.join("mod.rs");
         let content = std::fs::read_to_string(&mod_rs).ok()?;
         // Match `pub use crate::...::seg;` or `pub use crate::seg;`
@@ -220,19 +216,17 @@ impl OrphanGraphResolver {
                 // contains `pub use crate::common::taxonomy_action_vo;`. Follow
                 // `pub use` re-exports and resume resolution from the re-exported
                 // module's real location.
-                if let Some(reexport_segments) =
-                    self.resolve_reexport(&current, seg)
-                {
+                if let Some(reexport_segments) = self.resolve_reexport(&current, seg) {
                     // Recurse with the re-exported module path, then continue the
-                    // remaining original segments (the item, if any).
-                    let mut full = reexport_segments;
-                    full.extend_from_slice(&segments[seg_i + 1..]);
-                    if let Some(resolved) = self.resolve_module_file(
-                        _crate_name,
-                        &full,
-                        src_dir,
-                        importing_file,
-                    ) {
+                    // remaining original segments (the sub-item, if any).
+                    let mut full: Vec<String> = reexport_segments;
+                    for s in &segments[seg_i + 1..] {
+                        full.push(s.to_string());
+                    }
+                    let full_refs: Vec<&str> = full.iter().map(|s| s.as_str()).collect();
+                    if let Some(resolved) =
+                        self.resolve_module_file(_crate_name, &full_refs, src_dir, importing_file)
+                    {
                         return if resolved != importing_file {
                             Some(resolved)
                         } else {
@@ -242,7 +236,6 @@ impl OrphanGraphResolver {
                 }
                 return last_resolved;
             }
-
         }
         let final_mod = format!("{}/mod.rs", current.display());
         if Path::new(&final_mod).is_file() {
