@@ -10,10 +10,7 @@ pub struct GitCommandAdapter;
 #[async_trait::async_trait]
 impl IGitCommandPort for GitCommandAdapter {
     async fn run_git(&self, args: &[&str], dir: &str) -> GitCommandOutput {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(dir)
-            .output();
+        let output = Command::new("git").args(args).current_dir(dir).output();
         match output {
             Ok(o) => GitCommandOutput {
                 stdout: String::from_utf8_lossy(&o.stdout).to_string(),
@@ -29,7 +26,9 @@ impl IGitCommandPort for GitCommandAdapter {
     }
 
     async fn symbolic_ref(&self, dir: &str) -> Option<String> {
-        let output = self.run_git(&["symbolic-ref", "refs/remotes/origin/HEAD"], dir).await;
+        let output = self
+            .run_git(&["symbolic-ref", "refs/remotes/origin/HEAD"], dir)
+            .await;
         if output.success {
             let ref_str = output.stdout.trim().to_string();
             ref_str.rsplit('/').next().map(|s| s.to_string())
@@ -41,7 +40,8 @@ impl IGitCommandPort for GitCommandAdapter {
     async fn diff_name_only(&self, range: &str, dir: &str) -> Vec<String> {
         let output = self.run_git(&["diff", "--name-only", range], dir).await;
         if output.success {
-            output.stdout
+            output
+                .stdout
                 .lines()
                 .map(|l| l.trim().to_string())
                 .filter(|l| !l.is_empty())
@@ -53,10 +53,14 @@ impl IGitCommandPort for GitCommandAdapter {
 
     async fn ls_files_modified(&self, dir: &str) -> Vec<String> {
         let output = self
-            .run_git(&["ls-files", "--modified", "--others", "--exclude-standard"], dir)
+            .run_git(
+                &["ls-files", "--modified", "--others", "--exclude-standard"],
+                dir,
+            )
             .await;
         if output.success {
-            output.stdout
+            output
+                .stdout
                 .lines()
                 .map(|l| l.trim().to_string())
                 .filter(|l| !l.is_empty())

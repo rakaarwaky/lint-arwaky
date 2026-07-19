@@ -1,5 +1,4 @@
-// PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
-
+// PURPOSE: GitHookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_port::IHookManagerPort;
@@ -9,25 +8,12 @@ use std::path::Path;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+// Block 1: struct Definition
 pub struct GitHookAdapter {
     root_dir: FilePath,
 }
 
-impl GitHookAdapter {
-    pub fn new(root_dir: FilePath) -> Self {
-        Self { root_dir }
-    }
-
-    fn git_dir(&self) -> std::path::PathBuf {
-        Path::new(&self.root_dir.value).join(".git")
-    }
-
-    fn is_git_repo(&self) -> bool {
-        let git = self.git_dir();
-        git.exists() && git.is_dir()
-    }
-}
-
+// Block 2: impl Port for Struct (Public Contract)
 impl IHookManagerPort for GitHookAdapter {
     fn install_pre_commit(
         &self,
@@ -98,5 +84,21 @@ exit 0
             })?;
         }
         Ok(SuccessStatus::new(true))
+    }
+}
+
+// Block 3: constructors & helpers
+impl GitHookAdapter {
+    pub fn new(root_dir: FilePath) -> Self {
+        Self { root_dir }
+    }
+
+    fn git_dir(&self) -> std::path::PathBuf {
+        Path::new(&self.root_dir.value).join(".git")
+    }
+
+    fn is_git_repo(&self) -> bool {
+        let git = self.git_dir();
+        git.exists() && git.is_dir()
     }
 }

@@ -18,23 +18,6 @@ pub struct NotifyWatchProvider {
     ignore_patterns: Mutex<Vec<String>>,
 }
 
-impl Default for NotifyWatchProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl NotifyWatchProvider {
-    pub fn new() -> Self {
-        let (tx, _) = broadcast::channel(256);
-        Self {
-            watcher: Mutex::new(None),
-            tx,
-            ignore_patterns: Mutex::new(Vec::new()),
-        }
-    }
-}
-
 #[async_trait::async_trait]
 impl IWatchProviderPort for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
@@ -126,5 +109,22 @@ impl IWatchProviderPort for NotifyWatchProvider {
 
     fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
         self.tx.subscribe()
+    }
+}
+
+impl NotifyWatchProvider {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
+    }
+}
+
+impl Default for NotifyWatchProvider {
+    fn default() -> Self {
+        Self::new()
     }
 }

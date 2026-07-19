@@ -74,7 +74,7 @@ impl ArchImportMandatoryChecker {
     }
 
     /// Check mandatory imports from layer definition (global layer rules).
-    fn check_mandatory_imports(
+    pub fn check_mandatory_imports(
         &self,
         file: &str,
         definition: &LayerDefinition,
@@ -137,7 +137,7 @@ impl ArchImportMandatoryChecker {
     }
 
     /// Check mandatory imports from per-rule scope definitions.
-    fn check_scope_mandatory_imports(
+    pub fn check_scope_mandatory_imports(
         &self,
         file: &str,
         config: &ArchitectureConfig,

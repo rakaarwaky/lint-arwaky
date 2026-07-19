@@ -5,18 +5,6 @@ use std::collections::HashMap;
 
 pub struct ChangeAnalyzer;
 
-impl Default for ChangeAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ChangeAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     fn analyze(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
         let mut deduped: HashMap<String, WatchEvent> = HashMap::new();
@@ -39,5 +27,17 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
             .into_iter()
             .filter(|e| self.is_lintable(&e.path))
             .collect()
+    }
+}
+
+impl ChangeAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for ChangeAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

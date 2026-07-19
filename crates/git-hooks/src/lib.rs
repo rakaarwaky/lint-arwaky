@@ -11,6 +11,8 @@ pub mod capabilities_diff_checker;
 pub use capabilities_diff_checker::DiffChecker;
 pub mod capabilities_hook_manager;
 pub use capabilities_hook_manager::HookManager;
+pub mod infrastructure_file_system_check_adapter;
+pub mod infrastructure_git_command_adapter;
 pub mod infrastructure_hook_adapter;
 pub use infrastructure_hook_adapter::GitHookAdapter;
 pub mod root_git_hooks_container;

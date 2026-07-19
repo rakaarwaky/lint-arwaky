@@ -28,6 +28,19 @@ pub struct WatchOrchestrator {
     change_analyzer: Arc<dyn IChangeAnalyzerProtocol>,
 }
 
+impl IWatchAggregate for WatchOrchestrator {
+    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+                std::process::exit(1);
+            }
+        };
+        rt.block_on(self.run_async(config, running))
+    }
+}
+
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderPort>,
@@ -83,18 +96,5 @@ impl WatchOrchestrator {
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
         ExitCode::SUCCESS
-    }
-}
-
-impl IWatchAggregate for WatchOrchestrator {
-    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
-                std::process::exit(1);
-            }
-        };
-        rt.block_on(self.run_async(config, running))
     }
 }

@@ -15,15 +15,12 @@ pub struct MaintenanceContainer {
     orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
 }
 
-// Block 2: impl Trait for Struct (Public Contract)
+// Block 3: constructors & public API
 impl MaintenanceContainer {
     pub fn orchestrator(&self) -> Arc<dyn MaintenanceCommandsAggregate> {
         self.orchestrator.clone()
     }
-}
 
-// Block 3: constructors
-impl MaintenanceContainer {
     pub fn new() -> Self {
         let tool_executor: Arc<dyn IToolExecutorPort> = Arc::new(ToolExecutorAdapter::new());
         let fs: Arc<dyn IFileSystemMaintenancePort> = Arc::new(FileSystemMaintenanceAdapter::new());

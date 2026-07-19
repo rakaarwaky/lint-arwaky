@@ -1,139 +1,33 @@
-// PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
+// PURPOSE: DiffChecker — IDiffProtocol for git diff analysis (capabilities layer)
+// Zero I/O: all git commands delegated to IGitCommandPort via DI.
+use std::collections::HashSet;
+use std::sync::Arc;
+
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_command_port::IGitCommandPort;
 use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
-use std::collections::HashSet;
-use std::sync::Arc;
 
+// Block 1: struct Definition
 pub struct DiffChecker {
-    _scanner: Arc<dyn IScannerProviderPort>,
+    git_command: Arc<dyn IGitCommandPort>,
 }
 
-impl DiffChecker {
-    pub fn new(scanner: Arc<dyn IScannerProviderPort>) -> Self {
-        Self { _scanner: scanner }
-    }
-
-    fn get_default_branch(&self, project_path: &FilePath) -> String {
-        let result = std::process::Command::new("git")
-            .args(["symbolic-ref", "refs/remotes/origin/HEAD"])
-            .current_dir(&project_path.value)
-            .output()
-            .ok();
-        if let Some(output) = result {
-            if output.status.success() {
-                let ref_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if let Some(branch) = ref_str.rsplit('/').next() {
-                    if !branch.is_empty() {
-                        return branch.to_string();
-                    }
-                }
-            }
-        }
-        "main".to_string()
-    }
-
-    fn collect_changed_files(&self, project_path: &FilePath, default_branch: &str) -> FilePathList {
-        let mut changed_set: HashSet<FilePath> = HashSet::new();
-        let variants = [
-            format!("origin/{}...HEAD", default_branch),
-            format!("HEAD...origin/{}", default_branch),
-            format!("{}...HEAD", default_branch),
-            "master...HEAD".to_string(),
-        ];
-        for variant in &variants {
-            if self.try_variant(&mut changed_set, variant, project_path) {
-                break;
-            }
-        }
-        if changed_set.is_empty() {
-            self.try_fallback_head(&mut changed_set, project_path);
-        }
-        if changed_set.is_empty() {
-            self.try_ls_files(&mut changed_set, project_path);
-        }
-        FilePathList::new(changed_set.into_iter().collect())
-    }
-
-    fn try_variant(
-        &self,
-        changed_set: &mut HashSet<FilePath>,
-        variant: &str,
-        project_path: &FilePath,
-    ) -> bool {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["diff", "--name-only", variant])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
-                }
-            }
-        }
-        !changed_set.is_empty()
-    }
-
-    fn try_fallback_head(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["diff", "--name-only", "HEAD"])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn try_ls_files(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["ls-files", "--modified", "--others", "--exclude-standard"])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
+// Block 2: impl Trait for Struct (Public Contract)
 #[async_trait::async_trait]
 impl IDiffProtocol for DiffChecker {
     async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        let default_branch = self.get_default_branch(path);
-        let _changed_files = self.collect_changed_files(path, &default_branch);
+        let default_branch = self.resolve_default_branch(path).await;
+        let _changed_files = self.collect_changed_files(path, &default_branch).await;
         LintResultList::new(Vec::new())
     }
 
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
-        let default_branch = self.get_default_branch(path);
-        let changed_files = self.collect_changed_files(path, &default_branch);
+        let default_branch = self.resolve_default_branch(path).await;
+        let changed_files = self.collect_changed_files(path, &default_branch).await;
         let filtered = changed_files.clone();
         GitDiffResultVO {
             added: FilePathList::new(Vec::new()),
@@ -148,14 +42,79 @@ impl IDiffProtocol for DiffChecker {
 
     async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList {
         let branch = if base.is_empty() || base == "." {
-            self.get_default_branch(path)
+            self.resolve_default_branch(path).await
         } else {
             base.to_string()
         };
-        self.collect_changed_files(path, &branch)
+        self.collect_changed_files(path, &branch).await
     }
 
     async fn get_default_branch(&self, path: &FilePath) -> String {
-        self.get_default_branch(path)
+        self.resolve_default_branch(path).await
+    }
+}
+
+// Block 3: constructors & helpers
+impl DiffChecker {
+    pub fn new(git_command: Arc<dyn IGitCommandPort>) -> Self {
+        Self { git_command }
+    }
+
+    async fn resolve_default_branch(&self, project_path: &FilePath) -> String {
+        self.git_command
+            .symbolic_ref(&project_path.value)
+            .await
+            .unwrap_or_else(|| "main".to_string())
+    }
+
+    async fn collect_changed_files(
+        &self,
+        project_path: &FilePath,
+        default_branch: &str,
+    ) -> FilePathList {
+        let mut changed_set: HashSet<FilePath> = HashSet::new();
+        let variants = [
+            format!("origin/{}...HEAD", default_branch),
+            format!("HEAD...origin/{}", default_branch),
+            format!("{}...HEAD", default_branch),
+            "master...HEAD".to_string(),
+        ];
+        for variant in &variants {
+            let files = self
+                .git_command
+                .diff_name_only(variant, &project_path.value)
+                .await;
+            for file_str in &files {
+                if let Ok(fp) = FilePath::new(file_str.clone()) {
+                    changed_set.insert(fp);
+                }
+            }
+            if !changed_set.is_empty() {
+                break;
+            }
+        }
+        if changed_set.is_empty() {
+            let files = self
+                .git_command
+                .diff_name_only("HEAD", &project_path.value)
+                .await;
+            for file_str in &files {
+                if let Ok(fp) = FilePath::new(file_str.clone()) {
+                    changed_set.insert(fp);
+                }
+            }
+        }
+        if changed_set.is_empty() {
+            let files = self
+                .git_command
+                .ls_files_modified(&project_path.value)
+                .await;
+            for file_str in &files {
+                if let Ok(fp) = FilePath::new(file_str.clone()) {
+                    changed_set.insert(fp);
+                }
+            }
+        }
+        FilePathList::new(changed_set.into_iter().collect())
     }
 }

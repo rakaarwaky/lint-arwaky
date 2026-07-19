@@ -97,7 +97,7 @@ impl ImportForbiddenChecker {
     }
 
     /// Check forbidden imports from layer definition (global layer rules).
-    fn check_forbidden_imports_layer(
+    pub fn check_forbidden_imports_layer(
         &self,
         file_path: &FilePath,
         layer_name: &str,
@@ -150,7 +150,7 @@ impl ImportForbiddenChecker {
     }
 
     /// Check forbidden imports from per-rule scope definitions.
-    fn check_scope_forbidden_imports(
+    pub fn check_scope_forbidden_imports(
         &self,
         file_path: &FilePath,
         config: &ArchitectureConfig,
