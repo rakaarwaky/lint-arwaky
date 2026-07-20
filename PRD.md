@@ -56,8 +56,10 @@ Software projects accumulate quality debt silently. Developers lack:
 **Vertical Slicing & Layer Boundary Rules:**
 
 1. Layer determined by **file prefix** (`taxonomy_`, `contract_`, etc.), NOT by folder.
-2. `infrastructure_` and `capabilities_` must not import each other directly (enforced by AES201).
-3. Communication via `contract_` ports/protocols or `agent_` orchestrator.
+2. `utility_` and `capabilities_` must not import each other directly (enforced by AES201).
+3. Communication via `contract_` protocols/aggregates or `agent_` orchestrator.
+
+> **Note:** The `infrastructure_` layer was removed. Its technical mechanics now live in the **`utility_`** layer as stateless standalone functions (no structs, traits, or ports). The canonical 7-layer order is: Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root.
 
 ### 5.1 `shared` —
 
@@ -66,7 +68,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | ID     | Requirement                                                               |
 | ------ | ------------------------------------------------------------------------- |
 | FR-001 | All `taxonomy_*` VOs, entities, events, errors, constants across features |
-| FR-002 | All `contract_*` ports, protocols, and aggregates across features         |
+| FR-002 | All `contract_*` protocols and aggregates across features                |
 
 ### 5.2 `shared` (common) — Source Code Parsing (Consolidated)
 
@@ -139,7 +141,7 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-027 | Primitive usage — no raw primitives in taxonomy domain types               | AES401   |
 | FR-035 | Contract primitive checker — contract uses VO/constants, not primitives    | AES402   |
 | FR-037 | Capability role — capability must implement a protocol                     | AES403   |
-| FR-404 | Infrastructure role — infra must implement contract                        | AES404   |
+| FR-404 | Utility layer — stateless standalone functions; must NOT implement contracts (replaces former Infrastructure layer) | AES404   |
 | FR-038 | Agent role — no `any` type in orchestrators                                | AES405   |
 | FR-039 | Surface role — passive surface must not contain business logic             | AES406   |
 
