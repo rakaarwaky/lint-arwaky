@@ -1,3 +1,5 @@
+// PURPOSE: StdioClient — ICommandExecutorProtocol implementation via stdio
+use std::collections::HashMap;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -8,13 +10,10 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_duration_vo::Timeout;
 use tokio::process::Command;
 
-// PURPOSE: StdioClient — ICommandExecutorProtocol implementation via stdio
-use std::collections::HashMap;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct StdioClient {
-    timeout: Duration,
+    timeout: Timeout,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -28,8 +27,8 @@ impl ICommandExecutorProtocol for StdioClient {
         timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData> {
         let timeout_val = match timeout {
-            Some(d) => Duration::from_secs(d.value() as u64),
-            None => self.timeout,
+            Some(d) => Duration::from_secs_f64(d.value()),
+            None => Duration::from_secs_f64(self.timeout.value()),
         };
         let cmd_list: Vec<&str> = command.values.iter().map(|s| s.as_str()).collect();
         if cmd_list.is_empty() {
@@ -75,7 +74,7 @@ impl ICommandExecutorProtocol for StdioClient {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl StdioClient {
-    pub fn new(timeout: Duration) -> Self {
+    pub fn new(timeout: Timeout) -> Self {
         Self { timeout }
     }
 }

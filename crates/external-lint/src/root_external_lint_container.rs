@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::taxonomy_duration_vo::Timeout;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
@@ -21,7 +22,7 @@ impl ExternalLintContainer {
         let executor: Arc<
             dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol,
         > = Arc::new(crate::capabilities_stdio_client::StdioClient::new(
-            std::time::Duration::from_secs(60),
+            Timeout::new(60.0),
         ));
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(

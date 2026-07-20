@@ -16,10 +16,6 @@ pub struct ReportFormatterHelper;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-// (No protocol implementation found in this file)
-
-// (No protocol implementation found in this file)
-
 impl IReportFormatterProtocol for ReportFormatterHelper {
     fn format_results(&self, results: &LintResultList) -> DisplayContent {
         if results.is_empty() {
