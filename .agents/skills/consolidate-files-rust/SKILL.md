@@ -334,7 +334,7 @@ pub struct CycleImportAnalyzer {
 
 #[async_trait]
 impl ICycleImportProtocol for CycleImportAnalyzer {
-    fn scan(...) -> Vec<LintResult> { self.do_scan(...) }
+    fn scan(...) -> Vec<<ResultVO>> { self.do_scan(...) }
     async fn check_cycles(...) -> ... { ... }
     fn pure_detect_cycle_edges(...) -> Vec<SymbolName> { self.do_detect_cycle_edges(...) }
     fn pure_normalize_to_layer(...) -> String { self.do_normalize_to_layer(...) }

@@ -8,25 +8,25 @@ Forbidden:
 let result = checker.check().unwrap_or_default();
 ```
 
-## Rule 2: Agent may return `Vec<LintResult>` for analysis orchestration
+## Rule 2: Agent may return `Vec<<ResultVO>>` for analysis orchestration
 
 ```rust
-fn execute(&self, request: &ScanRequest) -> Vec<LintResult> {
-    let mut violations = Vec::new();
+fn execute(&self, request: &<ScanRequest>VO) -> Vec<<ResultVO>> {
+    let mut results = Vec::new();
     for file in request.files() {
         match self.analyzer.analyze(file) {
-            Ok(result) => violations.extend(result.into_violations()),
-            Err(err) => violations.push(LintResult::from_analysis_error(file, err)),
+            Ok(result) => results.extend(result.into_results()),
+            Err(err) => results.push(<ResultVO>::from_analysis_error(file, err)),
         }
     }
-    violations
+    results
 }
 ```
 
 ## Rule 3: Agent may return `Result` for execution orchestration
 
 ```rust
-fn run(&self, request: &ScanRequest) -> Result<ExecutionReport, AgentExecutionError>;
+fn run(&self, request: &<ScanRequest>VO) -> Result<ExecutionReport, AgentExecutionError>;
 ```
 
 ## Rule 4: Agent must not perform I/O error handling directly
@@ -45,7 +45,7 @@ Good:
 ```rust
 match self.reader.read(file) {
     Ok(content) => { /* delegate to capability */ }
-    Err(err) => { violations.push(LintResult::from_read_error(file, err)); }
+    Err(err) => { results.push(<ResultVO>::from_read_error(file, err)); }
 }
 ```
 

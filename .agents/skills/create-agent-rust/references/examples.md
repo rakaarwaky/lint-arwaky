@@ -3,7 +3,7 @@
 ## BAD: Computation in Agent
 
 ```rust
-impl OrphanOrchestrator {
+impl <NameOrchestrator> {
     fn process(&self, files: &[FilePath]) {
         let total = files.len(); // BAD: domain/technical computation
         let sum: usize = files.iter().map(|f| f.size()).sum(); // BAD
@@ -16,9 +16,9 @@ Fix: Move computation to capabilities.
 ## BAD: Business Logic in Agent
 
 ```rust
-impl OrphanOrchestrator {
-    fn analyze(&self, content: &FileContent) -> bool {
-        content.value().contains("orphan") // BAD: business rule
+impl <NameOrchestrator> {
+    fn evaluate(&self, content: &FileContent) -> bool {
+        content.value().contains("forbidden-marker") // BAD: business rule
     }
 }
 ```
@@ -28,7 +28,7 @@ Fix: Move to capabilities.
 ## BAD: I/O in Agent
 
 ```rust
-impl OrphanOrchestrator {
+impl <NameOrchestrator> {
     fn execute(&self, path: &FilePath) {
         let content = std::fs::read_to_string(path.value()); // BAD
     }
@@ -40,7 +40,7 @@ Fix: Use an injected port.
 ## BAD: Dataclass Defined in Agent File
 
 ```rust
-pub struct OrphanReport {
+pub struct <Report>VO {
     results: Vec<String>,
 }
 ```
@@ -50,28 +50,28 @@ Fix: Move to taxonomy.
 ## BAD: Concrete Service Field
 
 ```rust
-pub struct OrphanOrchestrator {
-    analyzer: OrphanAnalyzer, // BAD
+pub struct <NameOrchestrator> {
+    analyzer: <NameAnalyzer>, // BAD
 }
 ```
 
 Fix:
 
 ```rust
-pub struct OrphanOrchestrator {
-    analyzer: Arc<dyn IOrphanAnalyzerProtocol>,
+pub struct <NameOrchestrator> {
+    analyzer: Arc<dyn I<NameAnalyzer>Protocol>,
 }
 ```
 
 ## BAD: Std Trait in Block 2
 
 ```rust
-impl Default for OrphanOrchestrator {
+impl Default for <NameOrchestrator> {
     fn default() -> Self { Self }
 }
 
-impl IOrphanOrchestratorAggregate for OrphanOrchestrator {
-    fn execute(&self, request: &ScanRequest) -> Vec<LintResult> { Vec::new() }
+impl I<NameOrchestrator>Aggregate for <NameOrchestrator> {
+    fn execute(&self, request: &<ScanRequest>VO) -> Vec<<ResultVO>> { Vec::new() }
 }
 ```
 
@@ -82,34 +82,34 @@ Fix: Move `Default` to Block 3.
 ```rust
 use std::sync::Arc;
 
-use shared::code_analysis::taxonomy_file_path_vo::FilePath;
-use shared::code_analysis::taxonomy_lint_result_vo::LintResult;
-use shared::orphan_detector::taxonomy_orphan_analyzer_protocol::IOrphanAnalyzerProtocol;
-use shared::orphan_detector::taxonomy_orphan_orchestrator_aggregate::IOrphanOrchestratorAggregate;
-use shared::scan::taxonomy_scan_request_vo::ScanRequest;
+use shared::<name-feature>::taxonomy_file_path_vo::FilePath;
+use shared::<name-feature>::taxonomy_result_vo::<ResultVO>;
+use shared::<name-feature>::contract_analyzer_protocol::I<NameAnalyzer>Protocol;
+use shared::<name-feature>::contract_orchestrator_aggregate::I<NameOrchestrator>Aggregate;
+use shared::<name-feature>::taxonomy_scan_request_vo::<ScanRequest>VO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-pub struct OrphanOrchestrator {
-    analyzer: Arc<dyn IOrphanAnalyzerProtocol>,
+pub struct <NameOrchestrator> {
+    analyzer: Arc<dyn I<NameAnalyzer>Protocol>,
 }
 
 // ─── Block 2: Public Contract (domain aggregate ONLY) ─────
-impl IOrphanOrchestratorAggregate for OrphanOrchestrator {
-    fn execute(&self, request: &ScanRequest) -> Vec<LintResult> {
-        let mut violations = Vec::new();
+impl I<NameOrchestrator>Aggregate for <NameOrchestrator> {
+    fn execute(&self, request: &<ScanRequest>VO) -> Vec<<ResultVO>> {
+        let mut results = Vec::new();
         for file in request.files() {
             match self.analyzer.analyze(file) {
-                Ok(result) => violations.extend(result.into_violations()),
-                Err(err) => violations.push(LintResult::from_analysis_error(file, err)),
+                Ok(result) => results.extend(result.into_results()),
+                Err(err) => results.push(<ResultVO>::from_analysis_error(file, err)),
             }
         }
-        violations
+        results
     }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl OrphanOrchestrator {
-    pub fn new(analyzer: Arc<dyn IOrphanAnalyzerProtocol>) -> Self {
+impl <NameOrchestrator> {
+    pub fn new(analyzer: Arc<dyn I<NameAnalyzer>Protocol>) -> Self {
         Self { analyzer }
     }
 }

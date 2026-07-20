@@ -8,27 +8,27 @@ Forbidden:
 const result = checker.check() ?? '';
 ```
 
-## Rule 2: Agent may return `LintResult[]` for analysis orchestration
+## Rule 2: Agent may return `<ResultVO>[]` for analysis orchestration
 
 ```typescript
-execute(request: ScanRequest): LintResult[] {
-    const violations: LintResult[] = [];
+execute(request: <ScanRequest>VO): <ResultVO>[] {
+    const results: <ResultVO>[] = [];
     for (const file of request.files()) {
         try {
             const result = this.analyzer.analyze(file);
-            violations.push(...result.intoViolations());
+            results.push(...result.intoResults());
         } catch (err) {
-            violations.push(LintResult.fromAnalysisError(file, err));
+            results.push(<ResultVO>.fromAnalysisError(file, err));
         }
     }
-    return violations;
+    return results;
 }
 ```
 
 ## Rule 3: Agent may return `Result` for execution orchestration
 
 ```typescript
-run(request: ScanRequest): Result<ExecutionReport, AgentExecutionError> { ... }
+run(request: <ScanRequest>VO): Result<ExecutionReport, AgentExecutionError> { ... }
 ```
 
 ## Rule 4: Agent must not perform I/O error handling directly
@@ -49,6 +49,6 @@ Good:
 try {
     const content = this.reader.read(file);
 } catch (err) {
-    violations.push(LintResult.fromReadError(file, err));
+    results.push(<ResultVO>.fromReadError(file, err));
 }
 ```

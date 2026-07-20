@@ -8,24 +8,24 @@ Forbidden:
 result = checker.check() or ""
 ```
 
-## Rule 2: Agent may return `list[LintResult]` for analysis orchestration
+## Rule 2: Agent may return `list[<ResultVO>]` for analysis orchestration
 
 ```python
-def execute(self, request: ScanRequest) -> list[LintResult]:
-    violations: list[LintResult] = []
+def execute(self, request: <ScanRequest>VO) -> list[<ResultVO>]:
+    results: list[<ResultVO>] = []
     for file in request.files():
         try:
             result = self.analyzer.analyze(file)
-            violations.extend(result.into_violations())
+            results.extend(result.into_results())
         except Exception as e:
-            violations.append(LintResult.from_analysis_error(file, e))
-    return violations
+            results.append(<ResultVO>.from_analysis_error(file, e))
+    return results
 ```
 
 ## Rule 3: Agent may return `Result` for execution orchestration
 
 ```python
-def run(self, request: ScanRequest) -> Result[ExecutionReport, AgentExecutionError]: ...
+def run(self, request: <ScanRequest>VO) -> Result[ExecutionReport, AgentExecutionError]: ...
 ```
 
 ## Rule 4: Agent must not perform I/O error handling directly
@@ -45,5 +45,5 @@ Good:
 try:
     content = self.reader.read(file)
 except Exception as e:
-    violations.append(LintResult.from_read_error(file, e))
+    results.append(<ResultVO>.from_read_error(file, e))
 ```

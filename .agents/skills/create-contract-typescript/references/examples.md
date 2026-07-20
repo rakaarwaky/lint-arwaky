@@ -3,11 +3,11 @@
 ## GOOD: Port Contract
 
 ```typescript
-import { FileContent } from '../file_system/taxonomy_file_content_vo';
-import { FilePath } from '../file_system/taxonomy_file_path_vo';
-import { FileReadError } from '../file_system/taxonomy_file_read_error';
+import { FileContent } from '../shared/<name-feature>/taxonomy_file_content_vo';
+import { FilePath } from '../shared/<name-feature>/taxonomy_file_path_vo';
+import { FileReadError } from '../shared/<name-feature>/taxonomy_file_read_error';
 
-export interface IFileSystemPort {
+export interface IFileSystemProtocol {
     readFile(path: FilePath): Promise<Result<FileContent, FileReadError>>;
 }
 ```
@@ -15,33 +15,33 @@ export interface IFileSystemPort {
 ## GOOD: Protocol Contract
 
 ```typescript
-import { LintResult } from '../code_analysis/taxonomy_lint_result_vo';
-import { SourceContentVO } from '../code_analysis/taxonomy_source_vo';
+import { <ResultVO> } from '../shared/<name-feature>/taxonomy_result_vo';
+import { SourceContentVO } from '../shared/<name-feature>/taxonomy_source_vo';
 
 export interface IImportForbiddenProtocol {
-    check(source: SourceContentVO): LintResult[];
+    check(source: SourceContentVO): <ResultVO>[];
 }
 ```
 
 ## GOOD: Aggregate Contract
 
 ```typescript
-import { LintResult } from '../code_analysis/taxonomy_lint_result_vo';
-import { ImportScanRequest } from '../import_rules/taxonomy_import_scan_request_vo';
+import { <ResultVO> } from '../shared/<name-feature>/taxonomy_result_vo';
+import { <ScanRequest>VO } from '../shared/<name-feature>/taxonomy_scan_request_vo';
 
 export interface IImportRunnerAggregate {
-    run(request: ImportScanRequest): LintResult[];
+    run(request: <ScanRequest>VO): <ResultVO>[];
 }
 ```
 
 ## BAD: Contract Contains Implementation
 
 ```typescript
-export interface IFileSystemPort {
+export interface IFileSystemProtocol {
     readFile(path: FilePath): Promise<FileContent>;
 }
 
-class FileAdapter implements IFileSystemPort {
+class FileAdapter implements IFileSystemProtocol {
     async readFile(path: FilePath): Promise<FileContent> {
         return fs.readFileSync(path.value()); // BAD: implementation in contract
     }
@@ -51,7 +51,7 @@ class FileAdapter implements IFileSystemPort {
 ## BAD: Raw Primitives for Domain Values
 
 ```typescript
-export interface IFileReaderPort {
+export interface IFileReaderProtocol {
     read(path: string): Promise<string>;
 }
 ```

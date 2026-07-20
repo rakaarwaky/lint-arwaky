@@ -5,7 +5,7 @@ Aggregate contracts should use shared VOs for domain data.
 Bad:
 
 ```rust
-pub trait IOrphanOrchestratorAggregate {
+pub trait I<NameOrchestrator>Aggregate {
     fn execute(&self, files: Vec<String>) -> Vec<String>;
 }
 ```
@@ -13,8 +13,8 @@ pub trait IOrphanOrchestratorAggregate {
 Good:
 
 ```rust
-pub trait IOrphanOrchestratorAggregate {
-    fn execute(&self, request: &ScanRequest) -> Vec<LintResult>;
+pub trait I<NameOrchestrator>Aggregate {
+    fn execute(&self, request: &<ScanRequest>VO) -> Vec<<ResultVO>>;
 }
 ```
 
@@ -31,4 +31,4 @@ pub trait IOrphanOrchestratorAggregate {
 | `bool`             | Allowed for semantic toggles when no richer VO is needed.                           |
 | `&str`             | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
 
-Prefer VOs for: requests, reports, file paths, identifiers, execution results, violations, policies, thresholds.
+Prefer VOs for: requests, reports, file paths, identifiers, execution results, results, policies, thresholds.

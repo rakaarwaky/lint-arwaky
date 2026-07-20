@@ -3,7 +3,7 @@
 ## BAD: Computation in Agent
 
 ```typescript
-class OrphanOrchestrator {
+class <NameOrchestrator> {
     process(files: FilePath[]) {
         const total = files.length; // BAD: computation
         const sum = files.reduce((acc, f) => acc + f.size, 0); // BAD
@@ -14,9 +14,9 @@ class OrphanOrchestrator {
 ## BAD: Business Logic in Agent
 
 ```typescript
-class OrphanOrchestrator {
-    analyze(content: FileContent): boolean {
-        return content.value.includes("orphan"); // BAD: business rule
+class <NameOrchestrator> {
+    evaluate(content: FileContent): boolean {
+        return content.value.includes("forbidden-marker"); // BAD: business rule
     }
 }
 ```
@@ -24,7 +24,7 @@ class OrphanOrchestrator {
 ## BAD: I/O in Agent
 
 ```typescript
-class OrphanOrchestrator {
+class <NameOrchestrator> {
     execute(path: FilePath) {
         const content = fs.readFileSync(path.value()); // BAD
     }
@@ -34,7 +34,7 @@ class OrphanOrchestrator {
 ## BAD: Interface in Agent File
 
 ```typescript
-interface OrphanReport {
+interface <Report>VO {
     results: string[];
 }
 ```
@@ -42,40 +42,40 @@ interface OrphanReport {
 ## BAD: Concrete Service Field
 
 ```typescript
-class OrphanOrchestrator {
-    constructor(private readonly analyzer: OrphanAnalyzer) {} // BAD
+class <NameOrchestrator> {
+    constructor(private readonly analyzer: <NameAnalyzer>) {} // BAD
 }
 ```
 
 ## GOOD: Correct 3-Block Order
 
 ```typescript
-import { IOrphanAnalyzerProtocol } from '../shared/orphan_detector/contract_orphan_protocol';
-import { IOrphanOrchestratorAggregate } from '../shared/orphan_detector/contract_orphan_aggregate';
-import { LintResult } from '../shared/code_analysis/taxonomy_result_vo';
+import { I<NameAnalyzer>Protocol } from '../shared/<name-feature>/contract_analyzer_protocol';
+import { I<NameOrchestrator>Aggregate } from '../shared/<name-feature>/contract_orchestrator_aggregate';
+import { <ResultVO> } from '../shared/<name-feature>/taxonomy_result_vo';
 
-export class OrphanOrchestrator implements IOrphanOrchestratorAggregate {
-    constructor(private readonly analyzer: IOrphanAnalyzerProtocol) {}
+export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
+    constructor(private readonly analyzer: I<NameAnalyzer>Protocol) {}
 
-    execute(request: ScanRequest): LintResult[] {
-        const violations: LintResult[] = [];
+    execute(request: <ScanRequest>VO): <ResultVO>[] {
+        const results: <ResultVO>[] = [];
         for (const file of request.files()) {
             try {
                 const result = this.analyzer.analyze(file);
-                violations.push(...result.intoViolations());
+                results.push(...result.intoResults());
             } catch (err) {
-                violations.push(LintResult.fromAnalysisError(file, err));
+                results.push(<ResultVO>.fromAnalysisError(file, err));
             }
         }
-        return violations;
+        return results;
     }
 
     toString(): string {
-        return 'OrphanOrchestrator()';
+        return '<NameOrchestrator>()';
     }
 
-    static create(): OrphanOrchestrator {
-        return new OrphanOrchestrator(new CapabilitiesOrphanAnalyzer());
+    static create(): <NameOrchestrator> {
+        return new <NameOrchestrator>(new Capabilities<NameCapability>());
     }
 }
 ```

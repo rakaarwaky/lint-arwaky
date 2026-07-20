@@ -7,8 +7,8 @@
 ## Block 1 — Struct Definition
 
 ```rust
-pub struct OrphanOrchestrator {
-    analyzer: Arc<dyn IOrphanAnalyzerProtocol>,
+pub struct <NameOrchestrator> {
+    analyzer: Arc<dyn I<NameAnalyzer>Protocol>,
 }
 ```
 
@@ -17,8 +17,8 @@ pub struct OrphanOrchestrator {
 Block 2 is RESERVED for the domain aggregate trait ONLY.
 
 ```rust
-impl IOrphanOrchestratorAggregate for OrphanOrchestrator {
-    fn execute(&self, request: &ScanRequest) -> Vec<LintResult> {
+impl I<NameOrchestrator>Aggregate for <NameOrchestrator> {
+    fn execute(&self, request: &<ScanRequest>VO) -> Vec<<ResultVO>> {
         // orchestration only
     }
 }
@@ -29,8 +29,8 @@ Do NOT put `Default`, `Clone`, `Debug`, `Display`, `From` impls in Block 2.
 ## Block 3 — Constructors, Std Traits, and Helpers
 
 ```rust
-impl OrphanOrchestrator {
-    pub fn new(analyzer: Arc<dyn IOrphanAnalyzerProtocol>) -> Self {
+impl <NameOrchestrator> {
+    pub fn new(analyzer: Arc<dyn I<NameAnalyzer>Protocol>) -> Self {
         Self { analyzer }
     }
 

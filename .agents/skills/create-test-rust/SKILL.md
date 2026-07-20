@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn test_public_method() {
         // Arrange
-        let sut = MyCapability::new();
+        let sut = <NameCapability>::new();
 
         // Act
         let result = sut.public_method();

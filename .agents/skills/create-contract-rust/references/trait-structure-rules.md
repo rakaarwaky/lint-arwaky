@@ -6,7 +6,7 @@ Good:
 
 ```rust
 pub trait IImportForbiddenProtocol: Send + Sync {
-    fn check(&self, source: &SourceContentVO) -> Vec<LintResult>;
+    fn check(&self, source: &SourceContentVO) -> Vec<<ResultVO>>;
 }
 ```
 

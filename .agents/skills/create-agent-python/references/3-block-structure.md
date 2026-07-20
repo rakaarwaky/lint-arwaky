@@ -7,8 +7,8 @@
 ## Block 1 — Class Definition & Constructor
 
 ```python
-class OrphanOrchestrator(IOrphanOrchestratorAggregate):
-    def __init__(self, analyzer: IOrphanAnalyzerProtocol):
+class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
+    def __init__(self, analyzer: I<NameAnalyzer>Protocol):
         self._analyzer = analyzer
 ```
 
@@ -17,8 +17,8 @@ class OrphanOrchestrator(IOrphanOrchestratorAggregate):
 Block 2 is RESERVED for the domain aggregate ABC methods ONLY.
 
 ```python
-class OrphanOrchestrator(IOrphanOrchestratorAggregate):
-    def execute(self, request: ScanRequest) -> list[LintResult]:
+class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
+    def execute(self, request: <ScanRequest>VO) -> list[<ResultVO>]:
         # orchestration only
         ...
 ```
@@ -28,13 +28,13 @@ Do NOT put `__repr__`, `__str__`, `__eq__`, `@classmethod create_default()`, `@s
 ## Block 3 — Dunder Methods, Factories, and Helpers
 
 ```python
-class OrphanOrchestrator(IOrphanOrchestratorAggregate):
+class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
     def __repr__(self) -> str:
-        return "OrphanOrchestrator()"
+        return "<NameOrchestrator>()"
 
     @classmethod
-    def create_default(cls) -> "OrphanOrchestrator":
-        return cls(analyzer=CapabilitiesOrphanAnalyzer())
+    def create_default(cls) -> "<NameOrchestrator>":
+        return cls(analyzer=Capabilities<NameCapability>())
 
     def _should_skip_file(self, file: FilePath) -> bool:
         # private helper

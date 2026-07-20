@@ -7,8 +7,8 @@
 ## Block 1 — Class Definition & Constructor
 
 ```typescript
-export class OrphanOrchestrator implements IOrphanOrchestratorAggregate {
-    constructor(private readonly analyzer: IOrphanAnalyzerProtocol) {}
+export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
+    constructor(private readonly analyzer: I<NameAnalyzer>Protocol) {}
 }
 ```
 
@@ -17,8 +17,8 @@ export class OrphanOrchestrator implements IOrphanOrchestratorAggregate {
 Block 2 is RESERVED for the domain aggregate interface methods ONLY.
 
 ```typescript
-export class OrphanOrchestrator implements IOrphanOrchestratorAggregate {
-    execute(request: ScanRequest): LintResult[] {
+export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
+    execute(request: <ScanRequest>VO): <ResultVO>[] {
         // orchestration only
     }
 }
@@ -29,13 +29,13 @@ Do NOT put `toString()`, `toJSON()`, `valueOf()`, `equals()`, `static create()`,
 ## Block 3 — Utility Methods, Factories, and Helpers
 
 ```typescript
-export class OrphanOrchestrator implements IOrphanOrchestratorAggregate {
+export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
     toString(): string {
-        return 'OrphanOrchestrator()';
+        return '<NameOrchestrator>()';
     }
 
-    static create(): OrphanOrchestrator {
-        return new OrphanOrchestrator(new CapabilitiesOrphanAnalyzer());
+    static create(): <NameOrchestrator> {
+        return new <NameOrchestrator>(new Capabilities<NameCapability>());
     }
 
     private shouldSkipFile(file: FilePath): boolean {
