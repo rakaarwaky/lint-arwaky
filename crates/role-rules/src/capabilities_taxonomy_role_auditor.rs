@@ -97,7 +97,7 @@ impl TaxonomyRoleChecker {
     fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_helper::detect_language(source);
+        let li = crate::utility_language_detector::detect_language(source);
         let primitives: &[&str] = match li.lang {
             DetLang::Rust => Self::RUST_PRIMITIVES,
             DetLang::Python => Self::PY_PRIMITIVES,
