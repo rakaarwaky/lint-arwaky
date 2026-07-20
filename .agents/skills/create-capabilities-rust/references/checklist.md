@@ -1,5 +1,6 @@
 # Verification Checklist
 
+- [ ] File name follows role naming `capabilities_<domain>_<role>.rs` (ARCHITECTURE §8).
 - [ ] File follows the 3-Block Structure.
 - [ ] Block 1 contains exactly one implementation struct.
 - [ ] Block 2 contains ONLY the domain protocol trait implementation.
@@ -21,6 +22,10 @@
 - [ ] Zero I/O in capabilities layer (AES404).
 - [ ] Low-level technical operations delegate to `utility_*` (infrastructure layer removed).
 - [ ] No forbidden imports from `agent_*`.
-- [ ] No direct dependency on concrete `capabilities_*` implementations.
+- [ ] No direct dependency on concrete `capabilities_*` implementations (No Inter-Capability Dependency).
+- [ ] No orchestration inside the capability: no flow control across capabilities, no error-escalation policy (No Orchestration).
+- [ ] No domain models (Entities/Value Objects) defined in the file — consumed from Taxonomy only (No Domain Definition).
+- [ ] Reusable technical mechanics extracted to Utility, not duplicated across capabilities (DRY).
+- [ ] Pipeline composition is the Agent's job, not the capability's (Pipeline Aggregation).
 - [ ] Trait module is registered in the shared crate's `mod.rs`.
 - [ ] `cargo check -p <crate-name>` passes.

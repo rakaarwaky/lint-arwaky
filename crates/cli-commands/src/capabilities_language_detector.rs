@@ -4,7 +4,7 @@
 // ILanguageDetectorProtocol contract. No inner struct — the utilities are stateless.
 use shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol;
 use shared::common::contract_language_detector_protocol::Language;
-use shared::common::taxonomy_language_detector_utility::{detect_language, is_lintable};
+use shared::common::utility_language_detector::{detect_language, is_lintable};
 use shared::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy)]

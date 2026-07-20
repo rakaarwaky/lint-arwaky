@@ -413,7 +413,7 @@ impl LintExecutor {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
             let source_files =
-                match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+                match shared::common::utility_file::scan_directory(&dir_path) {
                     Ok(list) => list.values,
                     Err(_) => Vec::new(),
                 };
@@ -503,7 +503,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
                 let source_files =
-                    match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+                    match shared::common::utility_file::scan_directory(&dir_path) {
                         Ok(list) => list.values,
                         Err(e) => {
                             return LintExecutionResult::failure(format!(
@@ -631,7 +631,7 @@ impl ILintExecutorProtocol for LintExecutor {
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let source_files = match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };

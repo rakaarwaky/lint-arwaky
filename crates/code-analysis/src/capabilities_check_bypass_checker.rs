@@ -22,7 +22,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_language_detector_utility::detect_language;
+use shared::common::utility_language_detector::detect_language;
 use shared::common::taxonomy_path_vo::FilePath;
 
 /// Default forbidden-bypass patterns applied when config is empty or missing.

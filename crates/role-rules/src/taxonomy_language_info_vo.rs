@@ -1,5 +1,5 @@
 // PURPOSE: taxonomy_language_info_vo — shared language detection value object for role auditors
-use shared::common::taxonomy_language_detector_utility::detect_language;
+use shared::common::utility_language_detector::detect_language;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::SourceContentVO;

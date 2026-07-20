@@ -57,6 +57,34 @@ export class CapabilitiesOrphanAnalyzer {
 }
 ```
 
+## BAD: Orchestration Inside Capability (No Orchestration, §8)
+
+```typescript
+export class MyPipeline implements IImportCheckerProtocol {
+    run(): void {
+        const a = this.stepA();      // calls another capability's behavior
+        if (a.isOk()) {
+            this.stepB();            // branching between capabilities
+        } else {
+            this.escalate();         // error-escalation policy
+        }
+    }
+}
+```
+
+Fix: remove flow control and cross-capability calls. Let the Agent layer compose the pipeline. The capability executes one responsibility and returns a result.
+
+## BAD: Domain Model Defined in Capability (No Domain Definition, §8)
+
+```typescript
+interface OrphanResult {   // domain model defined here = forbidden
+    isOrphan: boolean;
+    reason: string;
+}
+```
+
+Fix: define `OrphanResult` as a Taxonomy VO; the capability only consumes and produces it.
+
 ## BAD: Utility Methods in Block 2
 
 ```typescript

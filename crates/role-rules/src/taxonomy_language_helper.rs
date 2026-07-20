@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_language_helper — shared language detection utility for role auditors
 // Eliminates boilerplate: every role auditor was repeating the same 5-line language detection pattern.
-use shared::common::taxonomy_language_detector_utility::detect_language as detect_lang;
+use shared::common::utility_language_detector::detect_language as detect_lang;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::SourceContentVO;

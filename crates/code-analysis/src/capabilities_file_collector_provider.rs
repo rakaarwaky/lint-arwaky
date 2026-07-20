@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use shared::common::contract_scanner_provider_protocol::IScannerProviderProtocol;
-use shared::common::taxonomy_file_utility::{
+use shared::common::utility_file::{
     collect_source_file, is_ignored_dir, is_path_ignored, is_source_file,
 };
 use shared::common::taxonomy_filesystem_error::FileSystemError;

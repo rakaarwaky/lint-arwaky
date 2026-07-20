@@ -9,7 +9,7 @@ use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGra
 use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
-use shared::orphan_detector::taxonomy_orphan_filename_utility::file_stem;
+use shared::orphan_detector::utility_orphan_filename::file_stem;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -80,7 +80,7 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || basename.ends_with(pattern)
-                            || shared::orphan_detector::taxonomy_orphan_filename_utility::file_stem(
+                            || shared::orphan_detector::utility_orphan_filename::file_stem(
                                 basename,
                             )
                             .contains(pattern)

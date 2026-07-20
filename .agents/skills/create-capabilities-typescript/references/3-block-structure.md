@@ -53,6 +53,14 @@ export class ArchLineChecker implements ILineCheckerProtocol {
         // private helper
     }
 }
+
+```
+
+Block 3 MUST NOT:
+
+- define domain models (Entities, Value Objects) — that is **No Domain Definition** (ARCHITECTURE §8); consume them from Taxonomy instead.
+- perform orchestration — no flow control across capabilities, no error-escalation policy (**No Orchestration**, ARCHITECTURE §8).
+- duplicate technical mechanics that belong in a Utility standalone function (**DRY**, ARCHITECTURE §8).
 ```
 
 ## Method Placement Decision Rule

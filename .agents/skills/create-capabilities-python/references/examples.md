@@ -53,6 +53,31 @@ class CapabilitiesOrphanAnalyzer:
         self._extractor = extractor
 ```
 
+## BAD: Orchestration Inside Capability (No Orchestration, §8)
+
+```python
+class MyPipeline(IImportCheckerProtocol):
+    def run(self) -> None:
+        a = self.step_a()          # calls another capability's behavior
+        if a.is_ok():
+            self.step_b()          # branching between capabilities
+        else:
+            self.escalate()        # error-escalation policy
+```
+
+Fix: remove flow control and cross-capability calls. Let the Agent layer compose the pipeline. The capability executes one responsibility and returns a result.
+
+## BAD: Domain Model Defined in Capability (No Domain Definition, §8)
+
+```python
+@dataclass
+class OrphanResult:    # domain model defined here = forbidden
+    is_orphan: bool
+    reason: str
+```
+
+Fix: define `OrphanResult` as a Taxonomy VO; the capability only consumes and produces it.
+
 ## BAD: Dunder Methods in Block 2
 
 ```python

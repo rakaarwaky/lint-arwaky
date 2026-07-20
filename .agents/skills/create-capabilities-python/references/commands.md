@@ -13,6 +13,15 @@ grep -n "^class " modules/*/src/capabilities_*.py
 # List protocol ABC implementations
 grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
 
+# Check capability filename follows role naming capabilities_<domain>_<role>.py
+grep -rnE "capabilities_[a-z_]+_[a-z_]+\.py$" modules/*/src/capabilities_*.py || echo "FILENAME VIOLATION"
+
+# Check for inter-capability dependency (forbidden)
+grep -n "^\s*from\s+.*capabilities_" modules/*/src/capabilities_*.py
+
+# Check for orchestration anti-patterns in capabilities (No Orchestration, §8)
+grep -nE "for .* in|while |\.escalate\(|error_escalation" modules/*/src/capabilities_*.py
+
 # Find error swallowing patterns
 grep -n "or ''\|or \"\"\|or 0" modules/*/src/capabilities_*.py
 

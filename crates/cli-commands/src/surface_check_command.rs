@@ -205,7 +205,7 @@ impl CheckCommandsSurface {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let source_files = match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };

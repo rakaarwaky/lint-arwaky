@@ -63,6 +63,12 @@ Block 3 contains:
 - private helper methods
 - domain-specific associated functions used only by this struct
 
+Block 3 MUST NOT:
+
+- define domain models (Entities, Value Objects) — that is **No Domain Definition** (ARCHITECTURE §8); consume them from Taxonomy instead.
+- perform orchestration — no flow control across capabilities, no error-escalation policy (**No Orchestration**, ARCHITECTURE §8).
+- duplicate technical mechanics that belong in a Utility standalone function (**DRY**, ARCHITECTURE §8).
+
 ```rust
 impl Default for ArchLineChecker {
     fn default() -> Self {

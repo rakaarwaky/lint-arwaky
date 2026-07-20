@@ -15,6 +15,15 @@ rg -n "^\s*pub struct" crates/<crate>/src/capabilities_*.rs
 # List protocol trait implementations
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 
+# Check capability filename follows role naming capabilities_<domain>_<role>.rs
+rg -n --files-with-matches "capabilities_[a-z_]+_[a-z_]+\.rs$" crates/<crate>/src/capabilities_*.rs || echo "FILENAME VIOLATION"
+
+# Check for inter-capability dependency (forbidden)
+rg "^\s*use\s+.*capabilities_" crates/<crate>/src/capabilities_*.rs
+
+# Check for orchestration anti-patterns in capabilities (No Orchestration, §8)
+rg "for\s+.*\s+in|while\s+|\.escalate\(|error_escalation" crates/<crate>/src/capabilities_*.rs
+
 # Find unwrap_or_default usage
 rg "unwrap_or_default\(\)" crates/<crate>/src/capabilities_*.rs
 

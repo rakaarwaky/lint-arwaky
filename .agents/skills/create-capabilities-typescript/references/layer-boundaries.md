@@ -13,15 +13,26 @@
 | Calling injected port/protocol traits        |                                                       |
 | Calling Utility standalone functions         |                                                       |
 
-## Allowed Dependencies
+## Allowed Dependencies (ARCHITECTURE §8)
 
-- `shared/*`
-- taxonomy VOs
-- taxonomy constants
-- protocol interfaces
-- Utility standalone functions
+A capability may depend ONLY on these layers:
 
-## Forbidden Dependencies
+- **Taxonomy** — VOs, constants, entities, events
+- **Contract** — protocol interfaces, aggregate interfaces
+- **Utility** — standalone stateless functions (the former infrastructure mechanics now live here)
 
-- concrete agent implementations
-- concrete capabilities implementations (no inter-capability deps)
+## Forbidden Dependencies (ARCHITECTURE §8)
+
+- concrete **agent** implementations — capabilities must not import or know about the Agent layer
+- concrete **capabilities** implementations — no inter-capability dependencies; capabilities never import each other
+
+## Special Rules (ARCHITECTURE §8)
+
+- **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
+- **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
+- **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
+- **Contract Implementation:** the capability implements the `protocol_` interface defined in the Contract layer.
+- **State Ownership:** the capability owns business and technical state within its execution scope.
+- **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
+- **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
+- **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.

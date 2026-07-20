@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::contract_system_protocol::IFileSystemProtocol;
-use shared::common::taxonomy_language_detector_utility::is_lintable;
+use shared::common::utility_language_detector::is_lintable;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
