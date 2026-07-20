@@ -2,8 +2,5 @@
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 
 pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
-    fn handle_duplicates(
-        &self,
-        path: Option<String>,
-    ) -> Vec<AesCodeAnalysisViolation>;
+    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation>;
 }

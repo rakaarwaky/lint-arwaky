@@ -6,7 +6,9 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
-use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
+use shared::naming_rules::taxonomy_naming_constant::{
+    ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
+};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -83,12 +85,7 @@ impl SuffixPrefixChecker {
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
     }
 
-    fn _make_result(
-        file: &str,
-        code: &str,
-        msg: impl Into<String>,
-        sev: Severity,
-    ) -> LintResult {
+    fn _make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
         let file_path = FilePath::new(file).unwrap_or_default();
         LintResult {
             file: file_path,
@@ -202,4 +199,3 @@ impl SuffixPrefixChecker {
         }
     }
 }
-

@@ -2,8 +2,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::utility_language_detector::detect_language;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_language_detector::detect_language;
 
 // PURPOSE: BypassChecker — IBypassCheckerProtocol for AES304: detect bypass annotations, panics, and fallback calls
 // ALGORITHM:
@@ -265,18 +265,14 @@ impl SourceLanguage {
         };
         match detect_language(&fp) {
             shared::common::taxonomy_language_vo::Language::Rust => SourceLanguage::Rust,
-            shared::common::taxonomy_language_vo::Language::Python => {
-                SourceLanguage::Python
-            }
+            shared::common::taxonomy_language_vo::Language::Python => SourceLanguage::Python,
             shared::common::taxonomy_language_vo::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
             shared::common::taxonomy_language_vo::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            shared::common::taxonomy_language_vo::Language::Unknown => {
-                SourceLanguage::Rust
-            }
+            shared::common::taxonomy_language_vo::Language::Unknown => SourceLanguage::Rust,
         }
     }
 }
@@ -501,4 +497,3 @@ fn classify_token(token: &str) -> ViolationKind {
         _ => ViolationKind::BypassComment,
     }
 }
-

@@ -41,19 +41,6 @@ pub struct PrettierAdapter {
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl PrettierAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-        }
-    }
-}
 
 #[async_trait::async_trait]
 impl ILinterAdapterProtocol for PrettierAdapter {
@@ -116,3 +103,14 @@ impl ILinterAdapterProtocol for PrettierAdapter {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
+impl PrettierAdapter {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
+        Self { executor }
+    }
+}

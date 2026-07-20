@@ -103,15 +103,25 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
     false
 }
 
-/// Build default ignored paths from config.
+/// Build default ignored paths from config, with a hardcoded safety net for
+/// build artifacts and dependency trees that must never be linted.
 pub fn default_ignored_paths() -> Vec<String> {
+    let mut ignored: Vec<String> = vec![
+        "target".to_string(),
+        "test-workspaces".to_string(),
+        ".mimocode".to_string(),
+        ".agents".to_string(),
+        "node_modules".to_string(),
+        "build.rs".to_string(),
+    ];
     let config = default_aes_config();
-    config
-        .ignored_paths
-        .values
-        .iter()
-        .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-        .collect()
+    for fp in config.ignored_paths.values.iter() {
+        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
+        if !v.is_empty() && !ignored.contains(&v) {
+            ignored.push(v);
+        }
+    }
+    ignored
 }
 
 #[cfg(unix)]
@@ -216,9 +226,11 @@ fn walk_source_files_inner(
 }
 
 /// Walk a directory tree collecting all .rs files.
+/// Contained to `dir` (symlink targets outside the root are pruned).
 pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::new();
-    walk_rs_files_inner(dir, cb, ignored, &mut visited)
+    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
 }
 
 fn walk_rs_files_inner(
@@ -226,6 +238,7 @@ fn walk_rs_files_inner(
     cb: &mut dyn FnMut(PathBuf),
     ignored: &[String],
     visited: &mut HashSet<u64>,
+    root: &Path,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -236,14 +249,18 @@ fn walk_rs_files_inner(
             if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
                 if sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&p) {
+                        if !target.starts_with(root) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
                             let inode = get_inode(&target_meta);
                             if !visited.insert(inode) {
                                 continue;
                             }
                             if target_meta.is_dir() {
-                                walk_rs_files_inner(&target, cb, ignored, visited);
+                                walk_rs_files_inner(&target, cb, ignored, visited, root);
                             } else if target_meta.is_file()
+                                && target.starts_with(root)
                                 && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
                             {
                                 cb(target);
@@ -260,7 +277,7 @@ fn walk_rs_files_inner(
                         continue;
                     }
                 }
-                walk_rs_files_inner(&p, cb, ignored, visited);
+                walk_rs_files_inner(&p, cb, ignored, visited, root);
             } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
                 cb(p);
             }

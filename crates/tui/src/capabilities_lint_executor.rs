@@ -117,16 +117,15 @@ impl ILintExecutorProtocol for LintExecutor {
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
-                let source_files =
-                    match shared::common::utility_file::scan_directory(&dir_path) {
-                        Ok(list) => list.values,
-                        Err(e) => {
-                            return LintExecutionResult::failure(format!(
-                                "Orphan detection for {}\nFailed to scan directory: {}",
-                                path, e
-                            ));
-                        }
-                    };
+                let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
+                    Ok(list) => list.values,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Orphan detection for {}\nFailed to scan directory: {}",
+                            path, e
+                        ));
+                    }
+                };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
@@ -883,11 +882,10 @@ impl LintExecutor {
         {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
-            let source_files =
-                match shared::common::utility_file::scan_directory(&dir_path) {
-                    Ok(list) => list.values,
-                    Err(_) => Vec::new(),
-                };
+            let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
                 let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
@@ -901,4 +899,3 @@ impl LintExecutor {
         LintExecutionResult::success(output, count)
     }
 }
-

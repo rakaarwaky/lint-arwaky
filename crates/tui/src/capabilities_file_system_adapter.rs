@@ -22,21 +22,6 @@ use shared::common::taxonomy_byte_count_vo::ByteCount;
 pub struct FileSystemAdapter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl FileSystemAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for FileSystemAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl IFileSystemProtocol for FileSystemAdapter {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry> {
@@ -122,3 +107,20 @@ impl IFileSystemProtocol for FileSystemAdapter {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
+impl FileSystemAdapter {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for FileSystemAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}

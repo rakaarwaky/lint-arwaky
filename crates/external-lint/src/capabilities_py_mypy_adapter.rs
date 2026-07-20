@@ -116,13 +116,14 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     None => "",
                 };
 
-                let resolved = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    match FilePath::new(filename.to_string()) {
-                        Ok(fp) => fp,
-                        Err(_) => path.clone(),
-                    },
-                    Some(path.clone()),
-                );
+                let resolved =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        match FilePath::new(filename.to_string()) {
+                            Ok(fp) => fp,
+                            Err(_) => path.clone(),
+                        },
+                        Some(path.clone()),
+                    );
 
                 results.push(LintResult {
                     file: resolved,
@@ -157,13 +158,14 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     None => "",
                 };
 
-                let resolved = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    match FilePath::new(filename.to_string()) {
-                        Ok(fp) => fp,
-                        Err(_) => path.clone(),
-                    },
-                    Some(path.clone()),
-                );
+                let resolved =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        match FilePath::new(filename.to_string()) {
+                            Ok(fp) => fp,
+                            Err(_) => path.clone(),
+                        },
+                        Some(path.clone()),
+                    );
 
                 results.push(LintResult {
                     file: resolved,
@@ -201,14 +203,8 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
 }
 
 impl MyPyAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            bin_path,
-        }
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
+        Self { executor, bin_path }
     }
 
     fn resolve_executable(&self) -> String {
@@ -232,4 +228,3 @@ impl MyPyAdapter {
         Severity::HIGH
     }
 }
-

@@ -40,8 +40,7 @@ use shared::orphan_detector::contract_orphan_protocol::{
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
 use shared::role_rules::taxonomy_layer_names_constant::{
-    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES,
-    LAYER_TAXONOMY,
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY,
 };
 
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;

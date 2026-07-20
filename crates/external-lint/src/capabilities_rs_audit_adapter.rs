@@ -1,4 +1,3 @@
-
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -36,8 +35,7 @@ use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CargoAuditAdapter {
-}
+pub struct CargoAuditAdapter {}
 
 #[async_trait]
 impl ILinterAdapterProtocol for CargoAuditAdapter {
@@ -101,19 +99,15 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
         if deny_toml_path.exists() {
             if let Ok(content) = std::fs::read_to_string(&deny_toml_path) {
-                #[derive(serde::Deserialize)]
-                struct DenyConfig {
-                    advisories: Option<AdvisoriesConfig>,
-                }
-                #[derive(serde::Deserialize)]
-                struct AdvisoriesConfig {
-                    ignore: Option<Vec<String>>,
-                }
-                if let Ok(deny_cfg) = toml::from_str::<DenyConfig>(&content) {
-                    if let Some(advisories) = deny_cfg.advisories {
-                        if let Some(ignore) = advisories.ignore {
-                            for id in ignore {
-                                ignored_advisories.insert(id);
+                if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
+                    if let Some(advisories) = deny_cfg.get("advisories") {
+                        if let Some(ignore) = advisories.get("ignore") {
+                            if let Some(ignore_arr) = ignore.as_array() {
+                                for val in ignore_arr {
+                                    if let Some(id) = val.as_str() {
+                                        ignored_advisories.insert(id.to_string());
+                                    }
+                                }
                             }
                         }
                     }
@@ -178,6 +172,10 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
 impl CargoAuditAdapter {
     pub fn new() -> Self {
         Self {}
@@ -189,4 +187,3 @@ impl Default for CargoAuditAdapter {
         Self::new()
     }
 }
-

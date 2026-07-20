@@ -45,19 +45,6 @@ pub struct ESLintAdapter {
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl ESLintAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-        }
-    }
-}
 
 #[async_trait::async_trait]
 impl ILinterAdapterProtocol for ESLintAdapter {
@@ -117,10 +104,11 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     Some(s) => s.to_string(),
                     None => String::new(),
                 };
-                let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    FilePath::new(filename).unwrap_or(path.clone()),
-                    Some(path.clone()),
-                );
+                let filename_vo =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        FilePath::new(filename).unwrap_or(path.clone()),
+                        Some(path.clone()),
+                    );
 
                 if let Some(messages) = file_data["messages"].as_array() {
                     for msg in messages {
@@ -172,3 +160,14 @@ impl ILinterAdapterProtocol for ESLintAdapter {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
+impl ESLintAdapter {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
+        Self { executor }
+    }
+}

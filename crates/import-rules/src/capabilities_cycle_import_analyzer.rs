@@ -3,8 +3,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::import_rules::DependencyEdge;
+use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
@@ -27,23 +27,43 @@ pub struct DependencyCycleAnalyzer;
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
 #[async_trait]
-impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol for DependencyCycleAnalyzer {
-    fn scan(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO, files: &[FilePath], root_dir: &FilePath) -> Vec<LintResult> {
+impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol
+    for DependencyCycleAnalyzer
+{
+    fn scan(
+        &self,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
+        files: &[FilePath],
+        root_dir: &FilePath,
+    ) -> Vec<LintResult> {
         let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
         let root_str = root_dir.to_string();
         self._scan(config, layer_map, &file_strs, &root_str)
     }
 
-    async fn check_cycles(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO,
-        files: &shared::common::taxonomy_paths_vo::FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+    async fn check_cycles(
+        &self,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
+        files: &shared::common::taxonomy_paths_vo::FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
     ) {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
         let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string());
         results.values.extend(cycle_violations);
     }
 
-    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<shared::taxonomy_name_vo::SymbolName> {
+    fn detect_cycle_edges(
+        &self,
+        edges: &[DependencyEdge],
+    ) -> Vec<shared::taxonomy_name_vo::SymbolName> {
         utility_cycle_detector::detect_cycle_edges(edges)
     }
 
@@ -53,11 +73,15 @@ impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol 
 }
 
 impl Default for DependencyCycleAnalyzer {
-    fn default() -> Self { Self }
+    fn default() -> Self {
+        Self
+    }
 }
 
 impl DependencyCycleAnalyzer {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     fn _scan(
         &self,
@@ -66,25 +90,39 @@ impl DependencyCycleAnalyzer {
         files: &[String],
         _root_dir: &str,
     ) -> Vec<LintResult> {
-        if !config.enabled.value { return vec![]; }
+        if !config.enabled.value {
+            return vec![];
+        }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let mut edges = Vec::new();
         let mut file_by_layer: HashMap<String, String> = HashMap::new();
 
         for file in files {
-            let file_fp = match FilePath::new(file.clone()) { Ok(p) => p, Err(_) => continue };
+            let file_fp = match FilePath::new(file.clone()) {
+                Ok(p) => p,
+                Err(_) => continue,
+            };
             let basename = file_fp.basename();
             if let Some(rule) = aes205_rule {
-                if rule.exceptions.values.contains(&basename.to_string()) { continue; }
+                if rule.exceptions.values.contains(&basename.to_string()) {
+                    continue;
+                }
             }
-            let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => continue };
+            let content = match fs::read_to_string(file) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
 
             let filename = utility_layer_detector::extract_filename(file);
             let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
                 Some(l) => {
-                    let specialized = utility_layer_detector::resolve_specialized_layer(&l, file, &layer_keys);
-                    match specialized.split('(').next() { Some(p) => p.to_string(), None => specialized }
+                    let specialized =
+                        utility_layer_detector::resolve_specialized_layer(&l, file, &layer_keys);
+                    match specialized.split('(').next() {
+                        Some(p) => p.to_string(),
+                        None => specialized,
+                    }
                 }
                 None => continue,
             };
@@ -93,28 +131,66 @@ impl DependencyCycleAnalyzer {
             let mut has_cross_layer = false;
             for module in modules {
                 let module_value = module.value();
-                let is_crate_import = module_value.starts_with("crate::") || module_value.starts_with("lint_arwaky::");
-                let layer_prefixes = ["taxonomy_", "contract_", "capabilities_", "utility_", "agent_", "surface_"];
-                let layer_names = ["taxonomy", "contract", "capabilities", "utility", "agent", "surface"];
+                let is_crate_import = module_value.starts_with("crate::")
+                    || module_value.starts_with("lint_arwaky::");
+                let layer_prefixes = [
+                    "taxonomy_",
+                    "contract_",
+                    "capabilities_",
+                    "utility_",
+                    "agent_",
+                    "surface_",
+                ];
+                let layer_names = [
+                    "taxonomy",
+                    "contract",
+                    "capabilities",
+                    "utility",
+                    "agent",
+                    "surface",
+                ];
                 let is_cross_layer_crate = if is_crate_import {
-                    let stripped = module_value.strip_prefix("crate::").or_else(|| module_value.strip_prefix("lint_arwaky::")).unwrap_or("");
+                    let stripped = module_value
+                        .strip_prefix("crate::")
+                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                        .unwrap_or("");
                     let first_segment = stripped.split("::").next().unwrap_or("");
-                    layer_prefixes.iter().any(|p| stripped.starts_with(p)) || layer_names.contains(&first_segment)
-                } else { false };
-                if is_crate_import && !is_cross_layer_crate { continue; }
+                    layer_prefixes.iter().any(|p| stripped.starts_with(p))
+                        || layer_names.contains(&first_segment)
+                } else {
+                    false
+                };
+                if is_crate_import && !is_cross_layer_crate {
+                    continue;
+                }
                 let module_path = if is_crate_import {
-                    module_value.strip_prefix("crate::").or_else(|| module_value.strip_prefix("lint_arwaky::")).unwrap_or(module_value)
-                } else { module_value };
-                let module_layer_names: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
-                if let Some(target_layer) = utility_layer_detector::detect_module_layer(module_path, &module_layer_names) {
-                    let target_layer_str = match target_layer.split('(').next() { Some(p) => p.to_string(), None => target_layer };
+                    module_value
+                        .strip_prefix("crate::")
+                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                        .unwrap_or(module_value)
+                } else {
+                    module_value
+                };
+                let module_layer_names: Vec<String> =
+                    layer_map.values.keys().map(|k| k.to_string()).collect();
+                if let Some(target_layer) =
+                    utility_layer_detector::detect_module_layer(module_path, &module_layer_names)
+                {
+                    let target_layer_str = match target_layer.split('(').next() {
+                        Some(p) => p.to_string(),
+                        None => target_layer,
+                    };
                     if target_layer_str != file_layer {
                         edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
                         has_cross_layer = true;
                     }
                 }
             }
-            if has_cross_layer { file_by_layer.entry(file_layer.clone()).or_insert_with(|| file.clone()); }
+            if has_cross_layer {
+                file_by_layer
+                    .entry(file_layer.clone())
+                    .or_insert_with(|| file.clone());
+            }
         }
 
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
@@ -135,4 +211,3 @@ impl DependencyCycleAnalyzer {
         }).collect()
     }
 }
-

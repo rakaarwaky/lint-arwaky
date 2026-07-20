@@ -1,4 +1,3 @@
-
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
@@ -315,4 +314,3 @@ impl SetupManagementProcessor {
         }
     }
 }
-

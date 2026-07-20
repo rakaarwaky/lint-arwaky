@@ -23,9 +23,13 @@ pub struct CliContainer {
     pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
-fn make_layer_map() -> (shared::config_system::taxonomy_config_vo::ArchitectureConfig, shared::taxonomy_definition_vo::LayerMapVO) {
+fn make_layer_map() -> (
+    shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+    shared::taxonomy_definition_vo::LayerMapVO,
+) {
     let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
-    let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+    let (merged_layers, _) =
+        shared::config_system::utility_config_merger::merge_config(&aes_config);
     let mut config = aes_config;
     config.layers = merged_layers;
     let layer_map = shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone());

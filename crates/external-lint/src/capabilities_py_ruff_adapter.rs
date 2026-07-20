@@ -159,14 +159,8 @@ impl ILinterAdapterProtocol for RuffAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl RuffAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            bin_path,
-        }
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
+        Self { executor, bin_path }
     }
 
     fn resolve_executable(&self) -> String {
@@ -185,4 +179,3 @@ impl RuffAdapter {
         }
     }
 }
-

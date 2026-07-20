@@ -15,9 +15,10 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 pub struct ReportFormatterHelper;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 // (No protocol implementation found in this file)
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// (No protocol implementation found in this file)
 
 impl IReportFormatterProtocol for ReportFormatterHelper {
     fn format_results(&self, results: &LintResultList) -> DisplayContent {
@@ -186,6 +187,8 @@ impl IReportFormatterProtocol for ReportFormatterHelper {
         LintExecutionResult::success(output, 0)
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for ReportFormatterHelper {
     fn default() -> Self {

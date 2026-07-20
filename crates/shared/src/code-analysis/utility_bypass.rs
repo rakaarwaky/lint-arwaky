@@ -12,25 +12,17 @@ pub enum SourceLanguage {
     TypeScript,
 }
 
-    impl SourceLanguage {
+impl SourceLanguage {
     pub fn from_file(file: &str) -> Self {
         let Ok(fp) = FilePath::new(file) else {
             return SourceLanguage::Rust;
         };
         match crate::common::utility_language_detector::detect_language(&fp) {
             crate::common::taxonomy_language_vo::Language::Rust => SourceLanguage::Rust,
-            crate::common::taxonomy_language_vo::Language::Python => {
-                SourceLanguage::Python
-            }
-            crate::common::taxonomy_language_vo::Language::JavaScript => {
-                SourceLanguage::JavaScript
-            }
-            crate::common::taxonomy_language_vo::Language::TypeScript => {
-                SourceLanguage::TypeScript
-            }
-            crate::common::taxonomy_language_vo::Language::Unknown => {
-                SourceLanguage::Rust
-            }
+            crate::common::taxonomy_language_vo::Language::Python => SourceLanguage::Python,
+            crate::common::taxonomy_language_vo::Language::JavaScript => SourceLanguage::JavaScript,
+            crate::common::taxonomy_language_vo::Language::TypeScript => SourceLanguage::TypeScript,
+            crate::common::taxonomy_language_vo::Language::Unknown => SourceLanguage::Rust,
         }
     }
 }

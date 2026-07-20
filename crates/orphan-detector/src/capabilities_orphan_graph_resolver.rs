@@ -79,10 +79,8 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || basename.ends_with(pattern)
-                            || shared::orphan_detector::utility_orphan_filename::file_stem(
-                                basename,
-                            )
-                            .contains(pattern)
+                            || shared::orphan_detector::utility_orphan_filename::file_stem(basename)
+                                .contains(pattern)
                     })
                 })
                 .cloned()
@@ -475,4 +473,3 @@ impl OrphanGraphResolver {
         )
     }
 }
-

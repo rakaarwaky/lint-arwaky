@@ -160,9 +160,17 @@ fn create_specialized_sub_layers(
 
         if let Some(base_def) = base_def_opt {
             let suffixes: Vec<&str> = if inner.contains('|') {
-                inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split('|')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             } else {
-                inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).collect()
+                inner
+                    .split(',')
+                    .map(|s| s.trim())
+                    .filter(|s| !s.is_empty())
+                    .collect()
             };
 
             for suffix in suffixes {
@@ -187,7 +195,10 @@ mod tests {
     use super::*;
     use crate::common::taxonomy_common_vo::{Count, PatternList};
 
-    fn make_config(layers: HashMap<LayerNameVO, LayerDefinition>, rules: Vec<ArchitectureRule>) -> ArchitectureConfig {
+    fn make_config(
+        layers: HashMap<LayerNameVO, LayerDefinition>,
+        rules: Vec<ArchitectureRule>,
+    ) -> ArchitectureConfig {
         ArchitectureConfig {
             enabled: BooleanVO::new(true),
             layers,
@@ -208,17 +219,19 @@ mod tests {
     #[test]
     fn merge_global_rule() {
         let mut layers = HashMap::new();
-        layers.insert(
-            LayerNameVO::new("agent"),
-            LayerDefinition::default(),
-        );
+        layers.insert(LayerNameVO::new("agent"), LayerDefinition::default());
         let rule = ArchitectureRule {
             scope: LayerNameVO::new(""),
-            forbidden: PatternList { values: vec!["capabilities".to_string()] },
+            forbidden: PatternList {
+                values: vec!["capabilities".to_string()],
+            },
             ..Default::default()
         };
         let config = make_config(layers, vec![rule]);
         let (merged, _) = merge_config(&config);
-        assert!(merged[&LayerNameVO::new("agent")].forbidden.values.contains(&"capabilities".to_string()));
+        assert!(merged[&LayerNameVO::new("agent")]
+            .forbidden
+            .values
+            .contains(&"capabilities".to_string()));
     }
 }

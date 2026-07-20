@@ -8,7 +8,9 @@ use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
+    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
+};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {

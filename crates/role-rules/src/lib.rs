@@ -7,8 +7,8 @@ pub use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate
 pub use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 pub use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 pub use shared::role_rules::taxonomy_layer_names_vo::{
-    layer_agent, layer_capabilities, layer_contract, layer_global,
-    layer_root, layer_surfaces, layer_taxonomy, LayerNames,
+    layer_agent, layer_capabilities, layer_contract, layer_global, layer_root, layer_surfaces,
+    layer_taxonomy, LayerNames,
 };
 pub mod agent_role_orchestrator;
 pub mod taxonomy_language_helper;

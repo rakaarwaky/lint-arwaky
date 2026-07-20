@@ -1,3 +1,5 @@
+// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::common::taxonomy_language_vo::Language as DetLang;
@@ -7,26 +9,38 @@ use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
 use std::path::Path;
 
-// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
-//
-// ALGORITHM:
-//   1. scan_primitives (entity/error/event) — Detects primitive type annotations
-//      in taxonomy files. For each line with a `:`, extracts the type after the colon
-//      and checks against language-specific primitive lists (RUST_PRIMITIVES,
-//      PY_PRIMITIVES, JS_PRIMITIVES). Handles generic wrappers (Option<X>, Vec<X>)
-//      by checking the inner type. Skips: pub(crate) value: Primitive (newtype pattern),
-//      From<Primitive>/visit_* from() methods (trait-mandated boundaries).
-//   2. check_constant — Scans _constant files for non-constant declarations.
-//      Allows only: pub const, pub static, use/pub use/pub(crate) use.
-//      Flags struct, enum, fn, impl, mod, trait, class, type declarations.
-//
-// NOTE: scan_primitives uses language-specific primitive sets. Only Rust, Python,
-//      and JavaScript/TypeScript are currently supported.
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-
 // ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct TaxonomyRoleChecker {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
+    fn check_vo(&self) -> Vec<LintResult> {
+        self.check_vo_impl()
+    }
+
+    fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        self.check_entity_impl(source, violations);
+    }
+
+    fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        self.check_error_impl(source, violations);
+    }
+
+    fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        self.check_event_impl(source, violations);
+    }
+
+    fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        self.check_constant_impl(source, violations);
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl Default for TaxonomyRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl TaxonomyRoleChecker {
     pub fn new() -> Self {
@@ -38,6 +52,7 @@ impl TaxonomyRoleChecker {
         "usize", "f32", "f64", "bool", "char", "Vec<", "HashMap<", "Option<", "Result<", "Box<",
         "Cell<", "RefCell<", "Arc<", "Mutex<", "Rc<",
     ];
+
     const PY_PRIMITIVES: &'static [&'static str] = &[
         "str",
         "int",
@@ -58,6 +73,7 @@ impl TaxonomyRoleChecker {
         "Set",
         "FrozenSet",
     ];
+
     const JS_PRIMITIVES: &'static [&'static str] = &[
         "string",
         "number",
@@ -96,16 +112,12 @@ impl TaxonomyRoleChecker {
             if !t.contains(':') {
                 continue;
             }
-            // Skip class/struct definitions and value object newtype wrappers
             if t.starts_with("class ") || t.starts_with("pub struct ") || t.starts_with("struct ") {
                 continue;
             }
             if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
                 continue;
             }
-            // Skip trait-mandated conversion boundaries: From<Primitive>::from()
-            // and Visitor::visit_*() method parameters. The primitive type is
-            // mandated by the trait definition and cannot be replaced with a VO.
             if t.starts_with("fn from(") || t.starts_with("fn visit_") {
                 continue;
             }
@@ -129,7 +141,6 @@ impl TaxonomyRoleChecker {
                 .trim_end_matches('}')
                 .trim();
             for p in primitives {
-                // For generic wrappers like Option<X>, Vec<X>, check if X is a primitive
                 if p.ends_with('<') {
                     if type_candidate.starts_with(p) {
                         let inner = match type_candidate.strip_prefix(p) {
@@ -167,9 +178,8 @@ impl TaxonomyRoleChecker {
                             break;
                         }
                     }
-                    continue; // Skip starts_with for generic wrappers
+                    continue;
                 }
-                // Direct primitive types (String, i64, etc.)
                 if type_candidate.starts_with(p) || type_candidate == *p {
                     let primitive_clean = p.trim_end_matches('<');
                     let lang = if is_rs {
@@ -197,6 +207,43 @@ impl TaxonomyRoleChecker {
                 }
             }
         }
+    }
+
+    fn check_vo_impl(&self) -> Vec<LintResult> {
+        vec![]
+    }
+
+    fn check_entity_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        if !has_suffix(source.file_path.value(), "_entity") {
+            return;
+        }
+        Self::scan_primitives(source, violations);
+    }
+
+    fn check_error_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        if !has_suffix(source.file_path.value(), "_error") {
+            return;
+        }
+        Self::scan_primitives(source, violations);
+    }
+
+    fn check_event_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        if !has_suffix(source.file_path.value(), "_event") {
+            return;
+        }
+        Self::scan_primitives(source, violations);
+    }
+
+    fn check_constant_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let file = source.file_path.value();
+        let basename = Path::new(file)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap_or_default();
+        if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
+            return;
+        }
+        let content = source.content.value();
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[") {
@@ -235,30 +282,8 @@ impl TaxonomyRoleChecker {
                 ));
             }
         }
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-
     }
 }
-
-impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_vo(&self) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for TaxonomyRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-        self.check_vo()
-    }
-    fn check_entity(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_entity(source, violations);
 
 fn has_suffix(file: &str, suffix: &str) -> bool {
     let path = Path::new(file);
@@ -268,64 +293,3 @@ fn has_suffix(file: &str, suffix: &str) -> bool {
         false
     }
 }
-    }
-
-    pub fn check_vo(&self) -> Vec<LintResult> {
-        vec![]
-    }
-
-    pub fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_entity") {
-            return;
-        }
-        Self::scan_primitives(source, violations);
-    }
-
-    pub fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_error") {
-            return;
-        }
-        Self::scan_primitives(source, violations);
-    }
-
-    pub fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_event") {
-            return;
-        }
-        Self::scan_primitives(source, violations);
-    }
-
-    pub fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        let basename = Path::new(file)
-            .file_name()
-            .and_then(|f| f.to_str())
-            .unwrap_or_default();
-        if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
-            return;
-        }
-        let content = source.content.value();
-    }
-    fn check_error(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_error(source, violations);
-    }
-    fn check_event(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_event(source, violations);
-    }
-    fn check_constant(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_constant(source, violations);
-    }
-}
-

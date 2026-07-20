@@ -3,11 +3,9 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
-use shared::orphan_detector::utility_orphan_filename::{
-    file_basename, file_stem, file_suffix,
-};
-use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
+use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
 use shared::orphan_detector::utility_file_cache;
@@ -291,4 +289,3 @@ pub fn check_capabilities_orphan(
         ));
     }
 }
-

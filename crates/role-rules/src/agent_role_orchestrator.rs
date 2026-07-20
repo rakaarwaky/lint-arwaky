@@ -19,9 +19,9 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::utility_language_detector::detect_language;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_language_detector::detect_language;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 use std::path::Path;

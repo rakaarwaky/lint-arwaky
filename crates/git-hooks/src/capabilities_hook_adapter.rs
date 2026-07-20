@@ -107,4 +107,3 @@ impl GitHookAdapter {
         git.exists() && git.is_dir()
     }
 }
-

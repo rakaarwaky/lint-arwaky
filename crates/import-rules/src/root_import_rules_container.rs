@@ -16,23 +16,36 @@ impl ImportContainer {
         Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
     }
 
-    pub fn mandatory(&self) -> Arc<dyn shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol> {
+    pub fn mandatory(
+        &self,
+    ) -> Arc<dyn shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol>
+    {
         Arc::new(crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new())
     }
 
-    pub fn forbidden(&self) -> Arc<dyn shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol> {
+    pub fn forbidden(
+        &self,
+    ) -> Arc<dyn shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol>
+    {
         Arc::new(crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new())
     }
 
-    pub fn dummy(&self) -> Arc<dyn shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol> {
+    pub fn dummy(
+        &self,
+    ) -> Arc<dyn shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol>
+    {
         Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new())
     }
 
-    pub fn unused(&self) -> Arc<dyn shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol> {
+    pub fn unused(
+        &self,
+    ) -> Arc<dyn shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol> {
         Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new())
     }
 
-    pub fn cycle(&self) -> Arc<dyn shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol> {
+    pub fn cycle(
+        &self,
+    ) -> Arc<dyn shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol> {
         Arc::new(crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new())
     }
 

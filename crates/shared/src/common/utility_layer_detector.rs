@@ -125,14 +125,11 @@ pub fn get_layer_def<'a>(
     layer: &str,
     layers: &'a HashMap<LayerNameVO, LayerDefinition>,
 ) -> Option<&'a LayerDefinition> {
-    layers
-        .get(&LayerNameVO::new(layer))
-        .or_else(|| {
-            let base = match layer.split('(').next() {
-                Some(s) => s,
-                None => layer,
-            };
-            layers.get(&LayerNameVO::new(base))
-        })
+    layers.get(&LayerNameVO::new(layer)).or_else(|| {
+        let base = match layer.split('(').next() {
+            Some(s) => s,
+            None => layer,
+        };
+        layers.get(&LayerNameVO::new(base))
+    })
 }
-

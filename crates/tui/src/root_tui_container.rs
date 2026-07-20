@@ -1,7 +1,7 @@
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
-use crate::capabilities_lint_executor::LintExecutor;
 use crate::capabilities_file_system_adapter::FileSystemAdapter;
+use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use maintenance::root_maintenance_container::MaintenanceContainer;
@@ -26,7 +26,8 @@ impl TuiContainer {
             import_rules::root_import_rules_container::ImportContainer::new_default();
         let (config, layer_map) = {
             let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
-            let (merged, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+            let (merged, _) =
+                shared::config_system::utility_config_merger::merge_config(&aes_config);
             let mut c = aes_config;
             c.layers = merged;
             let lm = shared::taxonomy_definition_vo::LayerMapVO::new(c.layers.clone());
@@ -34,8 +35,7 @@ impl TuiContainer {
         };
         let checker_container =
             code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                config,
-                layer_map,
+                config, layer_map,
             );
         init_global_checker(Arc::new(checker_container));
 
@@ -48,11 +48,11 @@ impl TuiContainer {
         let fix_orchestrator = auto_fix_container.orchestrator(false);
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
-        let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol> =
-            Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
-                shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
-                    .unwrap_or_default(),
-            ));
+        let hook_adapter: Arc<
+            dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol,
+        > = Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
+            shared::common::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default(),
+        ));
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let maintenance_container = MaintenanceContainer::new();
         let orphan_container =

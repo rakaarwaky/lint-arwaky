@@ -25,14 +25,29 @@ pub struct NamingOrchestrator {
 impl INamingRunnerAggregate for NamingOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = LintResultList::new(Vec::new());
-        let all_files = shared::naming_rules::utility_naming_filesystem::walk_recursive(target, Some(&self.ignored_patterns));
+        let all_files = shared::naming_rules::utility_naming_filesystem::walk_recursive(
+            target,
+            Some(&self.ignored_patterns),
+        );
         let files = Self::filter_source_files(&all_files);
 
         self.naming_convention_checker
-            .check_file_naming(self.config.as_ref(), self.layer_map.as_ref(), &files, target, &mut results)
+            .check_file_naming(
+                self.config.as_ref(),
+                self.layer_map.as_ref(),
+                &files,
+                target,
+                &mut results,
+            )
             .await;
         self.suffix_prefix_checker
-            .check_domain_suffixes(self.config.as_ref(), self.layer_map.as_ref(), &files, target, &mut results)
+            .check_domain_suffixes(
+                self.config.as_ref(),
+                self.layer_map.as_ref(),
+                &files,
+                target,
+                &mut results,
+            )
             .await;
 
         results.values
@@ -74,7 +89,9 @@ impl NamingOrchestrator {
         }
     }
 
-    fn filter_source_files(files: &shared::common::taxonomy_paths_vo::FilePathList) -> shared::common::taxonomy_paths_vo::FilePathList {
+    fn filter_source_files(
+        files: &shared::common::taxonomy_paths_vo::FilePathList,
+    ) -> shared::common::taxonomy_paths_vo::FilePathList {
         let filtered: Vec<FilePath> = files
             .values
             .iter()

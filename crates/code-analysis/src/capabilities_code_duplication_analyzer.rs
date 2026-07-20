@@ -2,9 +2,9 @@ use std::path::{Path, PathBuf};
 
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::utility_language_detector::is_lintable;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_language_detector::is_lintable;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
@@ -26,10 +26,7 @@ pub struct CodeDuplicationAnalyzer {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(
-        &self,
-        path: Option<String>,
-    ) -> Vec<AesCodeAnalysisViolation> {
+    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation> {
         let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
         let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));
         let config = default_aes_config();
@@ -336,4 +333,3 @@ fn build_violations(
         ))),
     }]
 }
-

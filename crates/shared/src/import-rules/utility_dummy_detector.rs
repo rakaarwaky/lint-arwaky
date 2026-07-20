@@ -51,7 +51,10 @@ pub fn symbol_used_real(
     dummy_ranges: &[(LineNumber, LineNumber)],
     dummy_impl_traits: &[String],
 ) -> bool {
-    let dummy_ranges_usize: Vec<(usize, usize)> = dummy_ranges.iter().map(|(a, b)| (a.value() as usize, b.value() as usize)).collect();
+    let dummy_ranges_usize: Vec<(usize, usize)> = dummy_ranges
+        .iter()
+        .map(|(a, b)| (a.value() as usize, b.value() as usize))
+        .collect();
     if (symbol.starts_with('I')
         && symbol.len() > 1
         && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))

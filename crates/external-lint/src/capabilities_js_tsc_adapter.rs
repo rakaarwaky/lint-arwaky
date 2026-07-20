@@ -45,30 +45,6 @@ pub struct TSCAdapter {
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-fn tsc_pattern1() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
-
-fn tsc_pattern2() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
-
-impl TSCAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-        }
-    }
-}
 
 #[async_trait::async_trait]
 impl ILinterAdapterProtocol for TSCAdapter {
@@ -145,10 +121,11 @@ impl ILinterAdapterProtocol for TSCAdapter {
                     None => String::new(),
                 };
 
-                let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    FilePath::new(filename).unwrap_or(path.clone()),
-                    Some(path.clone()),
-                );
+                let filename_vo =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        FilePath::new(filename).unwrap_or(path.clone()),
+                        Some(path.clone()),
+                    );
 
                 results.push(LintResult {
                     file: filename_vo,
@@ -172,3 +149,26 @@ impl ILinterAdapterProtocol for TSCAdapter {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
+fn tsc_pattern1() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
+fn tsc_pattern2() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
+impl TSCAdapter {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
+        Self { executor }
+    }
+}

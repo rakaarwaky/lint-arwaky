@@ -1,6 +1,8 @@
 // common — truly shared types used by multiple features
 pub mod taxonomy_action_vo;
-pub use utility_file::{collect_all_source_files, collect_all_source_files_raw, find_workspace_root, scan_directory};
+pub use utility_file::{
+    collect_all_source_files, collect_all_source_files_raw, find_workspace_root, scan_directory,
+};
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_byte_count_vo;
@@ -21,9 +23,9 @@ pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_parser_error;
-pub mod taxonomy_paths_vo;
 pub mod taxonomy_path_utils_vo;
 pub mod taxonomy_path_vo;
+pub mod taxonomy_paths_vo;
 pub mod taxonomy_response_data_vo;
 pub mod taxonomy_severity_vo;
 pub mod taxonomy_source_vo;
@@ -33,4 +35,3 @@ pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
 pub mod utility_value_object_generator;
-

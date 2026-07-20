@@ -18,10 +18,11 @@ pub struct ExternalLintContainer {
 
 impl ExternalLintContainer {
     pub fn new() -> Self {
-        let executor: Arc<dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol> =
-            Arc::new(crate::capabilities_stdio_client::StdioClient::new(
-                std::time::Duration::from_secs(60),
-            ));
+        let executor: Arc<
+            dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol,
+        > = Arc::new(crate::capabilities_stdio_client::StdioClient::new(
+            std::time::Duration::from_secs(60),
+        ));
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
             "ruff".to_string(),
@@ -52,9 +53,9 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "prettier".to_string(),
-            Arc::new(crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
-                executor.clone(),
-            )),
+            Arc::new(
+                crate::capabilities_js_prettier_adapter::PrettierAdapter::new(executor.clone()),
+            ),
         );
         adapters.insert(
             "tsc".to_string(),
@@ -64,10 +65,12 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "clippy".to_string(),
-            Arc::new(crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
-                executor.clone(),
-                None,
-            )),
+            Arc::new(
+                crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
+                    executor.clone(),
+                    None,
+                ),
+            ),
         );
         adapters.insert(
             "rustfmt".to_string(),

@@ -16,9 +16,9 @@ use shared::taxonomy_source_vo::SourceContentVO;
 //      This checker assumes Rust syntax; Python/JS support would need additional parsing.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 
-// (No constructors or helpers found in this file)
-
 // ─── Block 1: Struct Definition ───────────────────────────
+
+// (No constructors or helpers found in this file)
 
 pub struct CapabilitiesRoleChecker {}
 
@@ -272,4 +272,3 @@ impl Default for CapabilitiesRoleChecker {
         Self::new()
     }
 }
-

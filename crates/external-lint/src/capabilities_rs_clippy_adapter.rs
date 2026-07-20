@@ -126,13 +126,14 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
                             Some(f) if !f.is_empty() => f,
                             _ => continue,
                         };
-                        let resolved_file = shared::common::utility_path_normalization::resolve_capabilities_path(
-                            match FilePath::new(filename.to_string()) {
-                                Ok(fp) => fp,
-                                Err(_) => path.clone(),
-                            },
-                            Some(path.clone()),
-                        );
+                        let resolved_file =
+                            shared::common::utility_path_normalization::resolve_capabilities_path(
+                                match FilePath::new(filename.to_string()) {
+                                    Ok(fp) => fp,
+                                    Err(_) => path.clone(),
+                                },
+                                Some(path.clone()),
+                            );
                         let line_num = match span.get("line_start").and_then(|v| v.as_u64()) {
                             Some(v) => v as i64,
                             None => 1,
@@ -206,10 +207,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 use std::path::Path;
 
 impl RustLinterAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
         Self {
             executor,
             _bin_path: bin_path,
@@ -217,6 +215,9 @@ impl RustLinterAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 // (No constructors or helpers found in this file)
 
+// (No constructors or helpers found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// (No constructors or helpers found in this file)

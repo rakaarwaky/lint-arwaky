@@ -110,13 +110,14 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 
             // Report added lines (+) as formatting violations
             if line.starts_with('+') && !line.starts_with("+++") {
-                let resolved = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    match FilePath::new(current_file.clone()) {
-                        Ok(fp) => fp,
-                        Err(_) => path.clone(),
-                    },
-                    Some(path.clone()),
-                );
+                let resolved =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        match FilePath::new(current_file.clone()) {
+                            Ok(fp) => fp,
+                            Err(_) => path.clone(),
+                        },
+                        Some(path.clone()),
+                    );
                 results.push(LintResult {
                     file: resolved,
                     line: LineNumber::new(0),
@@ -158,14 +159,10 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl RustFmtAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
         Self {
             executor,
             _bin_path: bin_path,
         }
     }
 }
-

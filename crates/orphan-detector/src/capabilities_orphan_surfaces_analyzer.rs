@@ -2,10 +2,8 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
-use shared::orphan_detector::utility_orphan_filename::{
-    file_basename, file_stem, file_suffix,
-};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::taxonomy_definition_vo::LayerDefinition;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -308,10 +306,7 @@ pub fn surface_category(suffix: &str) -> &'static str {
     }
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
 // (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for SurfacesOrphanAnalyzer {
     fn default() -> Self {
@@ -319,3 +314,12 @@ impl Default for SurfacesOrphanAnalyzer {
     }
 }
 
+// (No protocol implementation found in this file)
+
+// (No constructors or helpers found in this file)
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// (No constructors or helpers found in this file)

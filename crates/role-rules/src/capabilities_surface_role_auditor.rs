@@ -2,8 +2,8 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_language_vo::Language as DetLang;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
@@ -71,6 +71,7 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 fn make_adapter(name: &str) -> Option<AdapterName> {
     AdapterName::new(name).ok()
 }
@@ -160,12 +161,15 @@ impl SurfaceRoleChecker {
     ) {
         for f in &files.values {
             let filename = shared::common::utility_layer_detector::extract_filename(&f.value);
-            let layer = match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
-                Some(l) => l,
-                None => continue,
-            };
+            let layer =
+                match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
+                    Some(l) => l,
+                    None => continue,
+                };
             let keys = shared::common::utility_layer_detector::collect_layer_keys(layer_map);
-            let layer_vo = shared::common::utility_layer_detector::resolve_specialized_layer(&layer, &f.value, &keys);
+            let layer_vo = shared::common::utility_layer_detector::resolve_specialized_layer(
+                &layer, &f.value, &keys,
+            );
 
             let is_surface = layer_vo == layer_surfaces().value
                 || layer_vo.starts_with(&format!("{}(", layer_surfaces().value));
@@ -173,7 +177,10 @@ impl SurfaceRoleChecker {
                 continue;
             }
 
-            let definition = match layer_map.values.get(&shared::taxonomy_layer_vo::LayerNameVO::new(&layer_vo)) {
+            let definition = match layer_map
+                .values
+                .get(&shared::taxonomy_layer_vo::LayerNameVO::new(&layer_vo))
+            {
                 Some(d) => d.clone(),
                 None => continue,
             };
@@ -205,12 +212,21 @@ impl SurfaceRoleChecker {
             Ok(c) => c,
             Err(_) => return,
         };
-        let control_flow_count = content.lines().filter(|line| {
-            let t = line.trim();
-            t.starts_with("if ") || t.starts_with("else ") || t.starts_with("for ")
-                || t.starts_with("while ") || t.starts_with("match ") || t.starts_with("switch ")
-                || t.starts_with("try:") || t.starts_with("except") || t.starts_with("catch")
-        }).count();
+        let control_flow_count = content
+            .lines()
+            .filter(|line| {
+                let t = line.trim();
+                t.starts_with("if ")
+                    || t.starts_with("else ")
+                    || t.starts_with("for ")
+                    || t.starts_with("while ")
+                    || t.starts_with("match ")
+                    || t.starts_with("switch ")
+                    || t.starts_with("try:")
+                    || t.starts_with("except")
+                    || t.starts_with("catch")
+            })
+            .count();
         if control_flow_count > 3 {
             results.push(LintResult {
                 file: f.clone(),
@@ -653,4 +669,3 @@ pub fn is_init(f: &FilePath) -> bool {
         || path_str.ends_with("index.ts")
         || path_str.ends_with("index.js")
 }
-

@@ -86,4 +86,3 @@ impl HookManager {
         Self { hook_adapter }
     }
 }
-

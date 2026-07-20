@@ -41,9 +41,7 @@ pub async fn handle_git_diff(
     let files: Vec<&shared::common::taxonomy_path_vo::FilePath> = changed_files
         .values
         .iter()
-        .filter(|fp| {
-            shared::common::utility_language_detector::is_lintable(fp)
-        })
+        .filter(|fp| shared::common::utility_language_detector::is_lintable(fp))
         .collect();
 
     println!("Base: {} (changed files)", base);

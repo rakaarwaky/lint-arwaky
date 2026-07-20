@@ -17,4 +17,3 @@ pub fn get_stem(filename: &str) -> Option<&str> {
 pub fn get_suffix(stem: &str) -> Option<&str> {
     stem.rfind('_').map(|pos| &stem[pos + 1..])
 }
-

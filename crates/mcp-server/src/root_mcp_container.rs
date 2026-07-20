@@ -26,7 +26,8 @@ impl McpContainer {
 
         let (config, layer_map) = {
             let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
-            let (merged, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+            let (merged, _) =
+                shared::config_system::utility_config_merger::merge_config(&aes_config);
             let mut c = aes_config;
             c.layers = merged;
             let lm = shared::taxonomy_definition_vo::LayerMapVO::new(c.layers.clone());
@@ -35,8 +36,7 @@ impl McpContainer {
 
         let checker_container =
             code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                config,
-                layer_map,
+                config, layer_map,
             );
         code_analysis::agent_code_analysis_orchestrator::init_global_checker(Arc::new(
             checker_container,

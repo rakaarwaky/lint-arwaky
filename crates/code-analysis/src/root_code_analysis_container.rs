@@ -78,9 +78,7 @@ impl CodeAnalysisCheckerContainer {
         let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
         let keys = shared::common::utility_layer_detector::collect_layer_keys(&self.layer_map);
         Some(shared::taxonomy_layer_vo::LayerNameVO::new(
-            shared::common::utility_layer_detector::resolve_specialized_layer(
-                &layer, file, &keys,
-            ),
+            shared::common::utility_layer_detector::resolve_specialized_layer(&layer, file, &keys),
         ))
     }
 

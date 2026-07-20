@@ -22,7 +22,9 @@ pub struct ArchImportForbiddenChecker;
 
 #[async_trait]
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
-    fn rule_name(&self) -> Identity { Identity::new("AES201") }
+    fn rule_name(&self) -> Identity {
+        Identity::new("AES201")
+    }
 
     async fn check_forbidden_imports(
         &self,
@@ -38,15 +40,22 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
             let mut is_exception = false;
             for r in &config.rules {
                 if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename) {
-                    is_exception = true; break;
+                    is_exception = true;
+                    break;
                 }
             }
-            if is_exception { continue; }
+            if is_exception {
+                continue;
+            }
 
             let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
             let filename = utility_layer_detector::extract_filename(&f_str);
             if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
+                let specialized = utility_layer_detector::resolve_specialized_layer(
+                    &base_layer,
+                    &f_str,
+                    &layer_keys,
+                );
                 let layer_name = LayerNameVO::new(specialized.as_str());
                 if let Some(def) = layer_map.values.get(&layer_name) {
                     self._check_forbidden_imports(&f_str, &specialized, def, &mut results.values);
@@ -60,58 +69,97 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for ArchImportForbiddenChecker {
-    fn default() -> Self { Self }
+    fn default() -> Self {
+        Self
+    }
 }
 
 impl ArchImportForbiddenChecker {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     fn _check_forbidden_imports(
-        &self, file: &str, layer_name: &str, definition: &LayerDefinition,
+        &self,
+        file: &str,
+        layer_name: &str,
+        definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        let file_path = match FilePath::new(file.to_string()) { Ok(p) => p, Err(_) => return };
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
         let basename = file_path.basename();
-        if definition.exceptions.values.contains(&basename.to_string()) { return; }
+        if definition.exceptions.values.contains(&basename.to_string()) {
+            return;
+        }
 
         let is_surfaces = layer_name == "surfaces" || layer_name.starts_with("surfaces(");
-        if definition.forbidden.values.is_empty() && !is_surfaces { return; }
+        if definition.forbidden.values.is_empty() && !is_surfaces {
+            return;
+        }
         let forbidden_list: Vec<String> = if !definition.forbidden.values.is_empty() {
             definition.forbidden.values.clone()
         } else {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
         let layer_name_vo = LayerNameVO::new(layer_name);
 
         for (line_num, line) in &import_lines {
             if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                let segments: Vec<&str> = module.value().split([':', '.', '/', '\\']).filter(|s| !s.is_empty()).collect();
+                let segments: Vec<&str> = module
+                    .value()
+                    .split([':', '.', '/', '\\'])
+                    .filter(|s| !s.is_empty())
+                    .collect();
                 for forbidden in &forbidden_list {
                     let forbidden_identity = Identity::new(forbidden);
-                    let (layer, suffixes) = utility_import_resolver::resolve_scope(&forbidden_identity);
+                    let (layer, suffixes) =
+                        utility_import_resolver::resolve_scope(&forbidden_identity);
                     let is_forbidden = if suffixes.is_empty() {
                         segments.iter().any(|seg| {
                             let cleaned = Identity::new(seg.trim_end_matches(';').trim());
                             match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                Some(l) => l == layer, None => false,
+                                Some(l) => l == layer,
+                                None => false,
                             }
                         })
                     } else {
                         utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
                     };
                     if is_forbidden {
-                        let allowed: Vec<LayerNameVO> = definition.allowed.values.iter()
-                            .map(|s| LayerNameVO::new(utility_import_resolver::resolve_scope(&Identity::new(s)).0.value().to_string()))
+                        let allowed: Vec<LayerNameVO> = definition
+                            .allowed
+                            .values
+                            .iter()
+                            .map(|s| {
+                                LayerNameVO::new(
+                                    utility_import_resolver::resolve_scope(&Identity::new(s))
+                                        .0
+                                        .value()
+                                        .to_string(),
+                                )
+                            })
                             .collect();
-                        violations.push(LintResult::new_arch(file, line_num.value() as usize, "AES201", Severity::CRITICAL,
+                        violations.push(LintResult::new_arch(
+                            file,
+                            line_num.value() as usize,
+                            "AES201",
+                            Severity::CRITICAL,
                             AesImportViolation::ForbiddenImport {
                                 source_layer: layer_name_vo.clone(),
                                 forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                                allowed, reason: None,
-                            }.to_string(),
+                                allowed,
+                                reason: None,
+                            }
+                            .to_string(),
                         ));
                     }
                 }
@@ -120,53 +168,101 @@ impl ArchImportForbiddenChecker {
     }
 
     fn _check_scope_forbidden_imports(
-        &self, file: &str, config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        &self,
+        file: &str,
+        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let file_path = match FilePath::new(file.to_string()) { Ok(p) => p, Err(_) => return };
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
         let basename = file_path.basename();
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" { return; }
-        let stem = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
+        let stem = basename
+            .rsplit('.')
+            .next_back()
+            .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
-        if import_lines.is_empty() { return; }
+        if import_lines.is_empty() {
+            return;
+        }
 
         for rule in &config.rules {
-            if rule.exceptions.values.contains(&basename.to_string()) { continue; }
+            if rule.exceptions.values.contains(&basename.to_string()) {
+                continue;
+            }
             let scope_identity = Identity::new(&rule.scope.value);
-            let (rule_layer, rule_suffixes) = utility_import_resolver::resolve_scope(&scope_identity);
+            let (rule_layer, rule_suffixes) =
+                utility_import_resolver::resolve_scope(&scope_identity);
             let rule_layer_str = rule_layer.value();
-            if !stem.starts_with(&format!("{}_", rule_layer_str)) { continue; }
-            if !rule_suffixes.is_empty() && !rule_suffixes.iter().any(|s| s.value() == suffix) { continue; }
+            if !stem.starts_with(&format!("{}_", rule_layer_str)) {
+                continue;
+            }
+            if !rule_suffixes.is_empty() && !rule_suffixes.iter().any(|s| s.value() == suffix) {
+                continue;
+            }
 
             for (line_num, line) in &import_lines {
                 if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                    let segments: Vec<&str> = module.value().split([':', '.', '/', '\\']).filter(|s| !s.is_empty()).collect();
+                    let segments: Vec<&str> = module
+                        .value()
+                        .split([':', '.', '/', '\\'])
+                        .filter(|s| !s.is_empty())
+                        .collect();
                     for forbidden in &rule.forbidden.values {
                         let forbidden_identity = Identity::new(forbidden);
-                        let (forbidden_layer, forbidden_suffixes) = utility_import_resolver::resolve_scope(&forbidden_identity);
+                        let (forbidden_layer, forbidden_suffixes) =
+                            utility_import_resolver::resolve_scope(&forbidden_identity);
                         let is_forbidden = if forbidden_suffixes.is_empty() {
                             segments.iter().any(|seg| {
                                 let cleaned = Identity::new(seg.trim_end_matches(';').trim());
                                 match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                    Some(l) => l == forbidden_layer, None => false,
+                                    Some(l) => l == forbidden_layer,
+                                    None => false,
                                 }
                             })
                         } else {
-                            utility_import_resolver::import_matches_scope(line, &forbidden_layer, &forbidden_suffixes)
+                            utility_import_resolver::import_matches_scope(
+                                line,
+                                &forbidden_layer,
+                                &forbidden_suffixes,
+                            )
                         };
                         if is_forbidden {
-                            let allowed: Vec<LayerNameVO> = rule.allowed.values.iter()
-                                .map(|s| LayerNameVO::new(utility_import_resolver::resolve_scope(&Identity::new(s)).0.value().to_string()))
+                            let allowed: Vec<LayerNameVO> = rule
+                                .allowed
+                                .values
+                                .iter()
+                                .map(|s| {
+                                    LayerNameVO::new(
+                                        utility_import_resolver::resolve_scope(&Identity::new(s))
+                                            .0
+                                            .value()
+                                            .to_string(),
+                                    )
+                                })
                                 .collect();
-                            violations.push(LintResult::new_arch(file, line_num.value() as usize, "AES201", Severity::CRITICAL,
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_num.value() as usize,
+                                "AES201",
+                                Severity::CRITICAL,
                                 AesImportViolation::ForbiddenImport {
                                     source_layer: rule_layer.clone(),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                                    allowed, reason: None,
-                                }.to_string(),
+                                    allowed,
+                                    reason: None,
+                                }
+                                .to_string(),
                             ));
                         }
                     }
@@ -175,4 +271,3 @@ impl ArchImportForbiddenChecker {
         }
     }
 }
-

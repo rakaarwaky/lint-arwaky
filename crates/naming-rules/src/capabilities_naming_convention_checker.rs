@@ -8,7 +8,10 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
-use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR};
+use shared::naming_rules::taxonomy_naming_constant::{
+    ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
+    SNAKE_CASE_SEPARATOR,
+};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -96,12 +99,7 @@ impl NamingConventionChecker {
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
     }
 
-    fn _make_result(
-        file: &str,
-        code: &str,
-        msg: impl Into<String>,
-        sev: Severity,
-    ) -> LintResult {
+    fn _make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
         let file_path = FilePath::new(file).unwrap_or_default();
         LintResult {
             file: file_path,
@@ -216,4 +214,3 @@ impl NamingConventionChecker {
         }
     }
 }
-

@@ -79,4 +79,3 @@ impl StdioClient {
         Self { timeout }
     }
 }
-

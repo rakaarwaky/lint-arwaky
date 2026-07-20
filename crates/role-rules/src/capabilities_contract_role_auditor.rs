@@ -10,6 +10,11 @@ use shared::taxonomy_source_vo::SourceContentVO;
 pub struct ContractRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
 
 //
 // These pure functions implement the trait-method-signature parser used by
@@ -693,11 +698,8 @@ fn aes013_forbidden_inheritance(trait_name: &str) -> String {
     )
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl Default for ContractRoleChecker {
     fn default() -> Self {
         Self::new()
     }
 }
-

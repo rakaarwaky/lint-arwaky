@@ -15,21 +15,6 @@ use shared::common::taxonomy_path_vo::FilePath;
 pub struct ConfigParserProvider {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for ConfigParserProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ConfigParserProvider {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
 
 impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
@@ -104,3 +89,20 @@ impl IConfigParserProtocol for ConfigParserProvider {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+// (No protocol implementation found in this file)
+
+// (No protocol implementation found in this file)
+
+impl Default for ConfigParserProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ConfigParserProvider {
+    pub fn new() -> Self {
+        Self {}
+    }
+}

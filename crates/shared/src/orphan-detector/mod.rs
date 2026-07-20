@@ -1,13 +1,13 @@
 pub mod contract_orphan_aggregate;
 pub mod contract_orphan_graph_resolver_protocol;
 pub mod contract_orphan_protocol;
+pub mod taxonomy_orphan_contract_vo;
 pub mod taxonomy_orphan_rule_vo;
 pub mod taxonomy_violation_orphan_vo;
-pub mod taxonomy_orphan_contract_vo;
 pub mod utility_file_cache;
 pub mod utility_orphan;
 pub mod utility_orphan_filename;
 pub mod utility_orphan_result;
 pub mod utility_workspace;
-pub use taxonomy_violation_orphan_vo::AesOrphanViolation;
 pub use taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
+pub use taxonomy_violation_orphan_vo::AesOrphanViolation;

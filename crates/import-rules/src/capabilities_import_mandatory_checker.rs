@@ -22,7 +22,9 @@ pub struct ArchImportMandatoryChecker;
 
 #[async_trait]
 impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
-    fn rule_name(&self) -> Identity { Identity::new("AES202") }
+    fn rule_name(&self) -> Identity {
+        Identity::new("AES202")
+    }
 
     async fn run_mandatory_imports(
         &self,
@@ -43,12 +45,18 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     break;
                 }
             }
-            if is_exception { continue; }
+            if is_exception {
+                continue;
+            }
 
             let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
             let filename = utility_layer_detector::extract_filename(&f_str);
             if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
+                let specialized = utility_layer_detector::resolve_specialized_layer(
+                    &base_layer,
+                    &f_str,
+                    &layer_keys,
+                );
                 let layer_name = LayerNameVO::new(specialized.as_str());
                 if let Some(def) = layer_map.values.get(&layer_name) {
                     self._check_mandatory_imports(&f_str, def, &mut results.values);
@@ -62,11 +70,15 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for ArchImportMandatoryChecker {
-    fn default() -> Self { Self }
+    fn default() -> Self {
+        Self
+    }
 }
 
 impl ArchImportMandatoryChecker {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     fn _check_mandatory_imports(
         &self,
@@ -74,16 +86,34 @@ impl ArchImportMandatoryChecker {
         definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.mandatory.values.is_empty() { return; }
-        let file_path = match FilePath::new(file.to_string()) { Ok(p) => p, Err(_) => return };
+        if definition.mandatory.values.is_empty() {
+            return;
+        }
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
         let basename = file_path.basename();
-        if basename == "__init__.py" { return; }
-        if definition.exceptions.values.contains(&basename.to_string()) { return; }
+        if basename == "__init__.py" {
+            return;
+        }
+        if definition.exceptions.values.contains(&basename.to_string()) {
+            return;
+        }
 
-        let content = match std::fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match std::fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
         let file_content = FileContentVO::new(content);
-        let import_lines: Vec<(shared::taxonomy_common_vo::LineNumber, shared::taxonomy_layer_vo::LineContentVO)> = utility_import_resolver::parse_import_lines_helper(file_content.value());
-        let stem: &str = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
+        let import_lines: Vec<(
+            shared::taxonomy_common_vo::LineNumber,
+            shared::taxonomy_layer_vo::LineContentVO,
+        )> = utility_import_resolver::parse_import_lines_helper(file_content.value());
+        let stem: &str = basename
+            .rsplit('.')
+            .next_back()
+            .map_or(basename.as_str(), |s| s);
         let source_layer: &str = stem.split('_').next().map_or("unknown", |s| s);
 
         for required in &definition.mandatory.values {
@@ -91,17 +121,26 @@ impl ArchImportMandatoryChecker {
             let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
             let layer_str: &str = layer.value();
             let is_present: bool = if suffixes.is_empty() {
-                import_lines.iter().any(|(_, l)| l.value().contains(layer_str))
+                import_lines
+                    .iter()
+                    .any(|(_, l)| l.value().contains(layer_str))
             } else {
-                import_lines.iter().any(|(_, l)| utility_import_resolver::import_matches_scope(l, &layer, &suffixes))
+                import_lines.iter().any(|(_, l)| {
+                    utility_import_resolver::import_matches_scope(l, &layer, &suffixes)
+                })
             };
             if !is_present {
-                violations.push(LintResult::new_arch(file, 0, "AES202", Severity::HIGH,
+                violations.push(LintResult::new_arch(
+                    file,
+                    0,
+                    "AES202",
+                    Severity::HIGH,
                     AesImportViolation::MissingImport {
                         source_layer: LayerNameVO::new(source_layer.to_string()),
                         required: SymbolName::new(required.clone()),
                         reason: None,
-                    }.to_string(),
+                    }
+                    .to_string(),
                 ));
             }
         }
@@ -113,45 +152,72 @@ impl ArchImportMandatoryChecker {
         config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        let file_path = match FilePath::new(file.to_string()) { Ok(p) => p, Err(_) => return };
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
         let basename = file_path.basename();
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" { return; }
-        let stem = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
+        let stem = basename
+            .rsplit('.')
+            .next_back()
+            .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match std::fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match std::fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
 
         for rule in &config.rules {
-            if rule.mandatory.values.is_empty() { continue; }
+            if rule.mandatory.values.is_empty() {
+                continue;
+            }
             let scope_identity = Identity::new(&rule.scope.value);
-            let (rule_layer, rule_suffixes) = utility_import_resolver::resolve_scope(&scope_identity);
+            let (rule_layer, rule_suffixes) =
+                utility_import_resolver::resolve_scope(&scope_identity);
             let rule_layer_str = rule_layer.value();
-            if !stem.starts_with(&format!("{}_", rule_layer_str)) { continue; }
+            if !stem.starts_with(&format!("{}_", rule_layer_str)) {
+                continue;
+            }
             if !rule_suffixes.is_empty() {
                 let suffix_match = rule_suffixes.iter().any(|s| s.value() == suffix);
-                if !suffix_match { continue; }
+                if !suffix_match {
+                    continue;
+                }
             }
             for required in &rule.mandatory.values {
                 let required_identity = Identity::new(required);
-                let (req_layer, req_suffixes) = utility_import_resolver::resolve_scope(&required_identity);
+                let (req_layer, req_suffixes) =
+                    utility_import_resolver::resolve_scope(&required_identity);
                 let req_layer_str = req_layer.value();
                 let is_present = if req_suffixes.is_empty() {
-                    import_lines.iter().any(|(_, l)| l.value().contains(req_layer_str))
+                    import_lines
+                        .iter()
+                        .any(|(_, l)| l.value().contains(req_layer_str))
                 } else {
-                    import_lines.iter().any(|(_, l)| utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes))
+                    import_lines.iter().any(|(_, l)| {
+                        utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes)
+                    })
                 };
                 if !is_present {
-                    violations.push(LintResult::new_arch(file, 0, "AES202", Severity::HIGH,
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES202",
+                        Severity::HIGH,
                         AesImportViolation::MissingImport {
                             source_layer: rule_layer.clone(),
                             required: SymbolName::new(required.clone()),
                             reason: None,
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
             }
         }
     }
 }
-

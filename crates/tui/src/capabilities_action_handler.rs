@@ -535,4 +535,3 @@ impl ActionHandler {
         content_length.saturating_sub(preview_height)
     }
 }
-
