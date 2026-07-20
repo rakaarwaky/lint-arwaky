@@ -149,10 +149,6 @@ impl RoleOrchestrator {
                         checker.check_passive_surface(&source_vo, violations);
                     }
                 }
-                "infrastructure" | "infra" => {
-                    let checker = self.aggregate.infrastructure();
-                    checker.check_port_implementation(&source_vo, violations);
-                }
                 "contract" => {
                     let checker = self.aggregate.contract();
                     if filename.contains("_port") {
