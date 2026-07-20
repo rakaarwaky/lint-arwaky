@@ -1,49 +1,52 @@
-# Feature Requirement Document (FRD) - Naming Rules
+# FRD — naming-rules
 
-See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES101-AES102 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for naming conventions.
+> Stateless document. Describes the IDEAL TARGET only. Never record progress,
+> status, or current-state notes. If reality diverges from this, update
+> README.md — do NOT add state to this file.
 
-## 1. Feature Goal
+See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES101-AES102 details and [ARCHITECTURE.md](../../ARCHITECTURE.md) for naming conventions.
 
-The primary objective of the `naming-rules` feature is to enforce strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture system. By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos and helps developers instantly recognize the architectural role of any component based solely on its name.
+## Feature Goal
 
-## 2. Requirements & Scope
+The `naming-rules` feature enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root). By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos and lets developers recognize a component's architectural role from its name alone.
 
-The `naming-rules` module is responsible for scanning workspace source files and auditing naming compliance based on the following rules:
+## Requirements & Scope
 
-### Rules Specifications
+The `naming-rules` feature audits naming compliance of every scanned source file against the following rules:
 
-- **AES101: Name Convention Consistency**
+### AES101 — Naming Convention Consistency
 
-  - **Requirement**: All file stems (basenames without extensions) must be in `snake_case` (lowercase letters and underscores only).
-  - **Scope**: Applies to all scanned source files in the project (Rust, Python, JavaScript, TypeScript).
-  - **Length Constraint**: Each name segment must be at least 2 words or meet project-defined length patterns to avoid overly short/cryptic names (e.g., `db.rs` is flagged; `db_connector.rs` is accepted).
-- **AES102: Suffix and Prefix Layer Alignment**
+- **Requirement**: Every file stem (basename without extension) MUST be `snake_case` (lowercase ASCII letters and underscores only), follow the `prefix_concept_suffix` pattern, and contain at least 2 words (prefix + suffix) to avoid cryptic names (e.g. `db.rs` is flagged; `db_connector.rs` is accepted).
+- **Scope**: All scanned source files (Rust, Python, JavaScript, TypeScript).
+- **Exceptions**: `main.rs`, `lib.rs`, `mod.rs`, `root_*_entry.rs` (`root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`), `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
 
-  - **Requirement**: Files must match the specific naming convention of the architectural layer they belong to. The architectural layer of a file is determined by its prefix, and its suffix must align with its definition.
-  - **Scope**:
+### AES102 — Suffix/Prefix Layer Alignment
 
-    - `taxonomy_` files must end with allowed suffixes: `_vo`, `_entity`, `_event`, `_error`, `_constant`
-    - `contract_` files must end with:  `_protocol`, `_aggregate`.
-    - `capabilities_` files must end with: `_checker`, `_analyzer`, `_processor`, etc.
-    - `agent_` files must end with: `_orchestrator` only.
-    - `surface_` files must end with: `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`.
-    - `root_` files must end with: `_container`, `_entry`.
+- **Requirement**: A file's architectural layer is identified by its `prefix_`. Its `suffix` MUST align with that layer's suffix policy.
+- **Scope** (prefix → suffix policy):
 
-### Inputs
+| Layer prefix    | Policy   | Allowed suffixes (non-exhaustive)                                                                                                | Forbidden suffixes                                                          |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `taxonomy_`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                          | —                                                                           |
+| `contract_`     | strict   | `_protocol`, `_aggregate`                                                                                                        | `_port` (removed)                                                           |
+| `utility_`      | flexible | any role suffix describing the technical responsibility (`_reader`, `_writer`, `_parser`, `_formatter`, …)                       | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate` |
+| `capabilities_` | flexible | `_checker`, `_analyzer`, `_processor`, `_validator`, `_resolver`, `_calculator`, `_extractor`, `_reporter`, … (role-based)        | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`, `_protocol`, `_aggregate` |
+| `agent_`        | strict   | `_orchestrator`                                                                                                                  | —                                                                           |
+| `surface_`      | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`          | —                                                                           |
+| `root_`         | strict   | `_container`, `_entry`                                                                                                           | —                                                                           |
 
-- A list of source file paths (`&[FilePath]`) and the current project configuration (`ArchitectureConfig`).
+- **Note**: The `infrastructure_` layer was removed; its mechanics now live in `utility_`. Suffixes once under `infrastructure_` (`_adapter`, `_provider`, `_client`, `_repository`, `_cache`, …) are expressed as `utility_` flexible suffixes.
 
-### Outputs
+### Expected Behavior (scope, not implementation)
 
-- A list of naming violations containing the file path, violating name, the exact rule violated (AES101/AES102), and detailed error descriptions.
+- Accept a set of source file paths and the active architecture configuration.
+- Emit a list of naming violations, each carrying the file path, the violating name, the exact rule violated (AES101 / AES102), and a detailed description.
 
 ---
 
-## 3. Success Indicators
+## Success Indicators
 
-The success of the `naming-rules` module is measured by the following metrics:
-
-- **Accuracy**: Zero false positives. Valid `snake_case` stems and correct layer suffixes must never be flagged, while invalid ones must be caught 100% of the time.
-- **Coverage**: Successfully checks Rust, Python, JavaScript, and TypeScript files as configured in the project settings.
-- **Integration**: Correctly reports issues to the central CLI/MCP runner with precise location mappings.
-- **Self-Audit**: The `naming-rules` codebase itself must adhere to naming rules (e.g., prefix and suffix alignment) and pass the naming checks.
+- [ ] **Accuracy** — Zero false positives: valid `snake_case` stems and correct layer suffixes are never flagged, while invalid ones are caught 100% of the time.
+- [ ] **Coverage** — Rust, Python, JavaScript, and TypeScript files are all checked according to configuration.
+- [ ] **Layer completeness** — Every canonical layer prefix (`taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`) is validated, with `utility_` covering the former `infrastructure_` concerns.
+- [ ] **Reporting** — Violations are reported with precise location mappings consumable by the central CLI/MCP runner.
