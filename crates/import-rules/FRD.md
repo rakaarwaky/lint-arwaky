@@ -13,8 +13,8 @@ The `import-rules` module analyzes import paths and validates compliance using t
 ### Rules Specifications
 
 - **AES201: Layer Dependency Violation (Unidirectional Flow)**
-  - **Requirement**: Restricts imports based on the layer hierarchy. Lower layers (e.g., `taxonomy_`, `contract_`) must never import higher layers (e.g., `capabilities_`, `infrastructure_`, `agent_`, `surface_`).
-  - **Layer Boundary**: `infrastructure_` and `capabilities_` must not import each other directly; they must interact through `contract_` traits.
+  - **Requirement**: Restricts imports based on the layer hierarchy. Lower layers (e.g., `taxonomy_`, `contract_`) must never import higher layers (e.g., `capabilities_`, `utility_`, `agent_`, `surface_`).
+  - **Layer Boundary**: `utility_` and `capabilities_` must not import each other directly; they must interact through `contract_` traits.
 
 - **AES202: Mandatory Layer Imports**
   - **Requirement**: Verifies that specific layers contain required imports (e.g., ensuring a capability layer file correctly imports its corresponding contract trait, or that a surface entry imports its container).
@@ -38,4 +38,3 @@ The success of the `import-rules` module is measured by:
 - **Strict Unidirectional Flow**: Complete blocking of cross-layer violations (e.g., taxonomy files importing orchestration layer code).
 - **Cleaner Namespace**: Prompt warning of unused symbols to maintain clean, lean namespaces.
 - **High Performance**: Graph cycle detection runs within milliseconds using optimized cycle-finding algorithms (e.g., Tarjan's or simple DFS-based cycle detection).
-- **Self-Audit Conformity**: The crate's own imports are strictly compliant with the unidirectional rules (e.g., `import_rules` must not import CLI/MCP main layers).

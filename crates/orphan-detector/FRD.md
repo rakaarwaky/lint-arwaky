@@ -16,13 +16,13 @@ The `orphan-detector` module scans all source code files and evaluates reachabil
   - **Requirement**: Taxonomy layer files (e.g. `taxonomy_`) must be reachable from contracts, capabilities, or orchestrators.
 
 - **AES502: Contract Orphan Checker**
-  - **Requirement**: Contract files (e.g. `contract_`) must have at least one active implementation in the capabilities or infrastructure layers.
+  - **Requirement**: Contract files (e.g. `contract_`) must have at least one active implementation in the capabilities or utility layers.
 
 - **AES503: Capabilities Orphan Checker**
   - **Requirement**: Capability files (e.g. `capabilities_`) must be instantiated or imported by orchestrators or other capability files.
 
-- **AES504: Infrastructure Orphan Checker**
-  - **Requirement**: Infrastructure files (e.g. `infrastructure_`) must be wired into root containers or instantiated by orchestrators.
+- **AES504: Utility Orphan Checker**
+  - **Requirement**: Utility files (e.g. `utility_`) must be wired into root containers or imported by capabilities/agents that consume their functions.
 
 - **AES505: Agent Orphan Checker**
   - **Requirement**: Agent orchestrator files (e.g. `agent_`) must be called by surface layer files or binary entry points.

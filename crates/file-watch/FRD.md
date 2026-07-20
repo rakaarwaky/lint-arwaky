@@ -36,4 +36,4 @@ The success of the `file-watch` module is measured by:
 - **Responsiveness**: File changes are detected within 100ms-2s depending on debouncing.
 - **Debouncing Effectiveness**: Rapid changes do not trigger multiple lint runs.
 - **Resource Efficiency**: Memory usage remains low during long-running watches.
-- **Self-Audit Conformity**: The module itself passes AES rule checks.
+- **Rule Conformance**: When complete, the module itself passes AES rule checks.

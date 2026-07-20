@@ -4,7 +4,7 @@ See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES401-AES406 details a
 
 ## 1. Feature Goal
 
-The main goal of the `role-rules` module is to enforce architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Infrastructure, Agent, Surface, and Root) as defined by the 7-layer architecture standard. It ensures that components behave exactly according to their architectural roles (e.g., contracts define ports, infrastructure provides concrete implementations, agents coordinate, and taxonomy remains pure and free of external dependencies or raw primitives).
+The `role-rules` module enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Utility, Capabilities, Agent, Surface, and Root) as defined by the 7-layer architecture standard. It ensures that components behave exactly according to their architectural roles (e.g., contracts define protocols, utility provides stateless technical functions, capabilities implement protocols, agents coordinate, and taxonomy remains pure and free of external dependencies or raw primitives).
 
 ## 2. Requirements & Scope
 
@@ -17,13 +17,13 @@ The `role-rules` module audits code syntax to verify role alignment according to
   - **Requirement 2**: Taxonomy types (Value Objects, entities) must not expose raw primitive types (e.g., raw `String`, `i32`, `bool`) in their public interfaces; they must encapsulate them using strongly-typed domain primitives.
 
 - **AES402: Contract Primitive Restriction**
-  - **Requirement**: Public method signatures within `contract_` traits, protocols, or ports must not use raw primitive types. They must receive and return domain-specific Value Objects (VOs) or constants to avoid primitive obsession.
+  - **Requirement**: Public method signatures within `contract_` traits, protocols, or aggregates must not use raw primitive types. They must receive and return domain-specific Value Objects (VOs) or constants to avoid primitive obsession.
 
 - **AES403: Capability Protocol Implementation**
-  - **Requirement**: Any capability layer component (e.g. ending in `_checker`, `_analyzer`) must implement at least one defined contract or protocol. They cannot be floating classes/structures without structural contracts.
+  - **Requirement**: Any capability layer component (e.g. ending in `_checker`, `_analyzer`) must implement at least one defined contract protocol. They cannot be floating classes/structures without structural contracts.
 
-- **AES404: Infrastructure Contract Implementation**
-  - **Requirement**: Infrastructure components (e.g. ending in `_adapter`, `_provider`) must implement their designated `contract_` port or aggregate. Direct access to infrastructure without a contract port is forbidden.
+- **AES404: Utility Purity**
+  - **Requirement**: The `utility_` layer provides stateless standalone functions only. Utility files must NOT implement any `contract_` protocol or aggregate, must not hold state, and must not contain business logic or orchestration. (Replaces the former Infrastructure layer, which was removed; its technical mechanics now live here as free functions.)
 
 - **AES405: Agent Orchestrator Purity**
   - **Requirement**: Agent orchestrators must not use dynamic, generic, or untyped constructs (such as `any` in JS/TS or generic `Object`/`dyn Any` in Rust) to bypass strict typing. They must maintain explicit orchestration flows.
@@ -40,4 +40,4 @@ The success of the `role-rules` module is measured by:
 - **Strict Role Compliance**: All structural rules (AES401–406) are audited at compile/scan time with high precision.
 - **Architecture Purity**: Developers are alerted immediately when a contract violates the primitive restriction or a capability lacks a protocol.
 - **Precision Reporting**: Reports violations pointing to the exact line and column numbers of the offending syntax (e.g., pointing directly to the primitive in a contract signature).
-- **Self-Check Pass**: The module's own implementation code must be fully compliant with its role (e.g., `role_rules` structures must comply with their capability/infrastructure boundaries).
+- **Utility Boundary Enforcement**: Every `utility_` file is confirmed stateless and contract-free when the feature is complete.

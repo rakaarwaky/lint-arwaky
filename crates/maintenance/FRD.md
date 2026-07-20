@@ -41,4 +41,4 @@ The success of the `maintenance` module is measured by:
 - **Update Accuracy**: Dependencies are updated with compatible versions.
 - **Audit Coverage**: All vulnerabilities are detected and reported.
 - **Drift Detection**: Differences between code and rules are accurately detected.
-- **Self-Audit Conformity**: The module itself passes AES rule checks.
+- **Rule Conformance**: When complete, the module's own source complies with AES rules.

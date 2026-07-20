@@ -38,4 +38,4 @@ The success of the `config-system` module is measured by:
 - **Discovery Reliability**: Workspaces are correctly detected from various project structures.
 - **Validation Accuracy**: Invalid configurations are rejected with clear error messages.
 - **Merge Correctness**: Project-level overrides are merged correctly without conflicts.
-- **Self-Audit Conformity**: The module itself complies with AES rules in its source code.
+- **Rule Conformance**: When complete, the module itself complies with AES rules in its source code.

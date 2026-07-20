@@ -36,4 +36,4 @@ The success of the `git-hooks` module is measured by:
 - **Hook Installation**: Hooks are correctly installed on all system types (Linux, macOS, Windows).
 - **Diff Accuracy**: Only files that have actually been changed are scanned.
 - **Commit Blocking**: Commits that violate AES rules are successfully blocked.
-- **Self-Audit Conformity**: The module itself complies with AES rules in its source code.
+- **Rule Conformance**: When complete, the module's own source complies with AES rules in its source code.

@@ -99,7 +99,7 @@ State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer 
 ### Infrastructure
 
 - All TUI types (taxonomy, contract) live in `shared/src/tui/`
-- TUI crate contains only capabilities, infrastructure, agent, surfaces, root
+- TUI crate contains only capabilities, utility, agent, surfaces, root
 - `init_global_checker()` called before `CodeAnalysisContainer::new()` in container
 - Terminal size tracked via `Resize` events for mouse coordinate mapping
 - Non-blocking scan via background thread with `std::sync::mpsc` channel

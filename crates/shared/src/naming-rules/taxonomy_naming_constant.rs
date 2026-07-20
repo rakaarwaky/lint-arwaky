@@ -25,3 +25,6 @@ pub const SNAKE_CASE_SEPARATOR: &str = "_";
 
 /// Suffix policy value for strict enforcement
 pub const SUFFIX_POLICY_STRICT: &str = "strict";
+
+/// Source file extensions recognized by naming checks
+pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];

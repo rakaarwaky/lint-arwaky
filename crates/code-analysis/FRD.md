@@ -40,4 +40,4 @@ The success of the `code-analysis` module is measured by:
 - **Code Size Discipline**: Strict enforcement of LOC (Lines of Code) limits with configurable rules.
 - **DRY Codebase**: High-performance detection of structural duplication without lagging execution speeds.
 - **Granular Location Info**: Reporting of line and column numbers for unwraps, panics, and duplicate lines.
-- **Compliance**: Full verification of the workspace's self-check results.
+- **Compliance**: When complete, the workspace self-check passes fully.

@@ -42,4 +42,4 @@ The success of the `mcp-server` module is measured by:
 - **Protocol Compliance**: Implementation conforms to MCP JSON-RPC standards.
 - **Tool Discovery**: All tools can be discovered by AI clients.
 - **Response Time**: Response time is under 5 seconds for standard operations.
-- **Self-Audit Conformity**: The module itself passes AES rule checks.
+- **Rule Conformance**: When complete, the module's own source complies with AES rules (no `agent_*`, `capabilities_*`, or `infrastructure_*` imports; taxonomy/contract only).

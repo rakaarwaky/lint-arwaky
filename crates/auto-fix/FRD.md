@@ -47,4 +47,4 @@ The success of the `auto-fix` module is measured by:
 - **Fix Accuracy**: Applied fixes do not break code functionality.
 - **Coverage Rules**: The percentage of automatically fixable violations reaches the target.
 - **Idempotency**: Running auto-fix repeatedly on the same file does not produce additional changes.
-- **Self-Audit**: The module itself must comply with AES rules and pass linting checks.
+- **Rule Conformance**: When complete, the module itself must comply with AES rules and pass linting checks.

@@ -40,4 +40,4 @@ The success of the `cli-commands` module is measured by:
 - **UX Consistency**: All commands follow a consistent input/output pattern.
 - **Performance**: CLI is responsive with buffered output for large workspaces.
 - **Help Documentation**: Every command has clear `--help` documentation.
-- **Self-Audit Conformity**: The module itself passes AES rule checks.
+- **Rule Conformance**: When complete, the module itself passes AES rule checks.
