@@ -365,6 +365,11 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
 }
 
 pub fn is_name_used(name: &str, content: &str, exclude_line: usize) -> bool {
+    is_name_used_at(name, content, exclude_line)
+}
+
+/// `&str` overload for callers that track the exclude line as a 1-based `LineNumber`.
+pub fn is_name_used_at(name: &str, content: &str, exclude_line: usize) -> bool {
     if is_rust_trait_import(name) || DERIVE_MACROS.contains(&name) {
         return true;
     }

@@ -26,7 +26,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
         files: &FilePathList,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         for f in &files.values {

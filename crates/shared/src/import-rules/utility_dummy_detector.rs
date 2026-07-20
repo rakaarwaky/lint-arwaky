@@ -48,7 +48,7 @@ pub fn dummy_impl_traits_with_lines(lines: &[&str]) -> Vec<(SymbolName, LineNumb
 pub fn symbol_used_real(
     lines: &[&str],
     symbol: &str,
-    dummy_ranges: &[(usize, usize)],
+    dummy_ranges: &[(LineNumber, LineNumber)],
     dummy_impl_traits: &[String],
 ) -> bool {
     if (symbol.starts_with('I')

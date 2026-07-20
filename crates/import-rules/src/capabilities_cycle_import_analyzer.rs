@@ -1,6 +1,5 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -56,7 +55,7 @@ impl DependencyCycleAnalyzer {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &[String],
-        root_dir: &str,
+        _root_dir: &str,
     ) -> Vec<LintResult> {
         if !config.enabled.value { return vec![]; }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
