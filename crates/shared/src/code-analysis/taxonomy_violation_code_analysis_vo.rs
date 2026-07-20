@@ -2,6 +2,27 @@
 use std::fmt;
 
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
+
+/// Identifiers treated as Rust-style word tokens (must match as a whole identifier).
+pub const WORD_PATTERN_TOKENS: &[&str] = &[
+    "unwrap",
+    "expect",
+    "panic",
+    "todo",
+    "unimplemented",
+    "unreachable",
+];
+
+/// Internal violation kind for classification during scanning.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ViolationKind {
+    UnwrapExpect,
+    Panic,
+    Todo,
+    Unimplemented,
+    BypassComment,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Language {
@@ -12,6 +33,19 @@ pub enum Language {
 }
 
 impl Language {
+    pub fn from_file(file: &str) -> Self {
+        let Ok(fp) = FilePath::new(file) else {
+            return Self::Rust;
+        };
+        match crate::common::utility_language_detector::detect_language(&fp) {
+            crate::common::taxonomy_language_vo::Language::Rust => Self::Rust,
+            crate::common::taxonomy_language_vo::Language::Python => Self::Python,
+            crate::common::taxonomy_language_vo::Language::JavaScript => Self::JavaScript,
+            crate::common::taxonomy_language_vo::Language::TypeScript => Self::TypeScript,
+            crate::common::taxonomy_language_vo::Language::Unknown => Self::Rust,
+        }
+    }
+
     pub fn from_adapter_name(name: &str) -> Self {
         match name.to_lowercase().as_str() {
             "clippy" | "rust" => Self::Rust,

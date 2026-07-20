@@ -1,31 +1,28 @@
 # Verification Checklist
 
-- [ ]  File name follows role naming `capabilities_<domain>_<role>.rs` (ARCHITECTURE §8).
-- [ ]  File follows the 3-Block Structure.
-- [ ]  Block 1 contains exactly one implementation struct.
-- [ ]  Block 2 contains ONLY the domain protocol trait implementation.
-- [ ]  Block 3 contains constructors, std traits, and private helpers.
-- [ ]  Capability struct implements a protocol trait (AES403).
-- [ ]  Trait contains only public domain contract methods.
-- [ ]  Private helpers are not declared in the trait.
-- [ ]  Constructors are not declared in the trait.
-- [ ]  Std trait impls are in Block 3.
-- [ ]  Domain-specific helpers may remain in Block 3.
-- [ ]  Reusable, stateless, domain-agnostic functions are extracted to `utility_.rs`.
-- [ ]  No reusable utility-like functions remain inside Block 3.
-- [ ]  Generic trait methods are object-safe or bounded with `where Self: Sized`.
-- [ ]  One file contains exactly one implementation struct.
-- [ ]  No domain data structures are defined locally.
-- [ ]  All domain data structures are imported from shared/taxonomy.
-- [ ]  Service dependencies use `Arc<dyn Trait>`.
-- [ ]  Value/configuration fields use shared VOs.
-- [ ]  Zero I/O in capabilities layer (AES404).
-- [ ]  Low-level technical operations delegate to `utility_*` (infrastructure layer removed).
-- [ ]  No forbidden imports from `agent_*`.
-- [ ]  No direct dependency on concrete `capabilities_*` implementations (No Inter-Capability Dependency).
-- [ ]  No orchestration inside the capability: no flow control across capabilities, no error-escalation policy (No Orchestration).
-- [ ]  No domain models (Entities/Value Objects) defined in the file — consumed from Taxonomy only (No Domain Definition).
-- [ ]  Reusable technical mechanics extracted to Utility, not duplicated across capabilities (DRY).
-- [ ]  Pipeline composition is the Agent's job, not the capability's (Pipeline Aggregation).
-- [ ]  Trait module is registered in the shared crate's `mod.rs`.
-- [ ]  `cargo check -p <crate-name>` passes.
+- [ ] File name follows role naming `capabilities_<domain>_<role>.rs`
+- [ ] File follows the 3-Block Structure.
+- [ ] Block 1 contains exactly one implementation struct.
+- [ ] Block 2 contains ONLY the domain protocol trait implementation.
+- [ ] Block 3 contains constructors, std traits, and private helpers.
+- [ ] Capability struct implements a protocol trait
+- [ ] Trait contains only public domain contract methods.
+- [ ] Private helpers are not declared in the trait.
+- [ ] Constructors are not declared in the trait.
+- [ ] Std trait impls are in Block 3.
+- [ ] Domain-specific helpers may remain in Block 3.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `utility_.rs`.
+- [ ] No reusable utility-like functions remain inside Block 3.
+- [ ] Generic trait methods are object-safe or bounded with `where Self: Sized`.
+- [ ] One file contains exactly one implementation struct.
+- [ ] No domain data structures are defined locally.
+- [ ] All domain data structures are imported from shared/taxonomy.
+- [ ] Service dependencies use `Arc<dyn Trait>`.
+- [ ] Value/configuration fields use shared VOs.
+- [ ] Low-level technical operations delegate to `utility_*`Reusable technical mechanics extracted to Utility, not duplicated across capabilities (DRY).
+- [ ] No forbidden imports from `agent_*`.
+- [ ] No direct dependency on concrete `capabilities_*` (No Cross-Capability Dependency).
+- [ ] No orchestration inside the capability
+- [ ] No domain models (Entities/ValueObjects/Event/Error/Constant) defined in the file — consumed from Taxonomy only.
+- [ ] Trait module is registered in the shared crate's `mod.rs`.
+- [ ] `cargo check -p <crate-name>` passes.

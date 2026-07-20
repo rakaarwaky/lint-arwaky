@@ -1,59 +1,5 @@
 // PURPOSE: Stateless utility functions for bypass checking (AES304)
-// Extracted from capabilities_check_bypass_checker.rs — pure functions, no &self, no I/O
-
-use crate::common::taxonomy_path_vo::FilePath;
-
-/// Logical source languages recognised by the bypass checker.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SourceLanguage {
-    Rust,
-    Python,
-    JavaScript,
-    TypeScript,
-}
-
-impl SourceLanguage {
-    pub fn from_file(file: &str) -> Self {
-        let Ok(fp) = FilePath::new(file) else {
-            return SourceLanguage::Rust;
-        };
-        match crate::common::utility_language_detector::detect_language(&fp) {
-            crate::common::taxonomy_language_vo::Language::Rust => SourceLanguage::Rust,
-            crate::common::taxonomy_language_vo::Language::Python => SourceLanguage::Python,
-            crate::common::taxonomy_language_vo::Language::JavaScript => SourceLanguage::JavaScript,
-            crate::common::taxonomy_language_vo::Language::TypeScript => SourceLanguage::TypeScript,
-            crate::common::taxonomy_language_vo::Language::Unknown => SourceLanguage::Rust,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ViolationKind {
-    UnwrapExpect,
-    Panic,
-    Todo,
-    Unimplemented,
-    BypassComment,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum CharClass {
-    Code,
-    Comment,
-    StringLiteral,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ClassifierState {
-    Normal,
-    LineComment,
-    BlockComment,
-    SingleQuoteString,
-    DoubleQuoteString,
-    TripleSingleQuoteString,
-    TripleDoubleQuoteString,
-    TemplateLiteral,
-}
+// Pure functions only — no domain types (enums, consts) belong here
 
 /// Returns true if byte is a valid identifier continuation character.
 pub fn is_ident_continue(b: u8) -> bool {
@@ -79,28 +25,71 @@ pub fn starts_with_allow_attr(line: &str) -> bool {
     line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])
 }
 
-/// Map a forbidden token to its ViolationKind variant.
-pub fn classify_token(token: &str) -> ViolationKind {
-    match token {
-        "unwrap" | "expect" => ViolationKind::UnwrapExpect,
-        "panic" => ViolationKind::Panic,
-        "todo" => ViolationKind::Todo,
-        "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
-        _ => ViolationKind::BypassComment,
+/// Returns true if `line` (already trimmed) contains `token` invoked as a method call or macro.
+/// When `requires_method_call` is true, the token must be preceded by a dot (`.`).
+pub fn matches_word_token(line: &str, token: &str, requires_method_call: bool) -> bool {
+    if token.is_empty() {
+        return false;
     }
-}
-
-/// Returns true if the pattern is a comment-style bypass annotation.
-pub fn is_comment_bypass_pattern(p: &str) -> bool {
-    p.starts_with('#')
-        || p.starts_with("//")
-        || p.starts_with("/*")
-        || p.contains("eslint")
-        || p.contains("ts-ignore")
-        || p.contains("ts-expect-error")
-        || p.contains("noqa")
-        || p.contains("type:")
-        || p.contains("pylint:")
+    let bytes = line.as_bytes();
+    let token_bytes = token.as_bytes();
+    let tlen = token_bytes.len();
+    if bytes.len() < tlen {
+        return false;
+    }
+    let mut i = 0;
+    while i + tlen <= bytes.len() {
+        if &bytes[i..i + tlen] == token_bytes {
+            let before_ok = i == 0 || !is_ident_start(bytes[i - 1]);
+            if !before_ok {
+                i += 1;
+                continue;
+            }
+            if requires_method_call {
+                let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
+                if !preceded_by_dot {
+                    i += 1;
+                    continue;
+                }
+            }
+            let mut j = i + tlen;
+            loop {
+                if j >= bytes.len() {
+                    return false;
+                }
+                let sep = bytes[j];
+                if sep != b'_' {
+                    if (sep == b'(' || sep == b'!') && j == i + tlen {
+                        return true;
+                    }
+                    return false;
+                }
+                j += 1;
+                if j >= bytes.len() {
+                    return false;
+                }
+                if !is_ident_start(bytes[j]) {
+                    return false;
+                }
+                j += 1;
+                while j < bytes.len() && is_ident_continue(bytes[j]) {
+                    j += 1;
+                }
+                if j >= bytes.len() {
+                    return false;
+                }
+                let after_seg = bytes[j];
+                if after_seg == b'(' || after_seg == b'!' {
+                    return true;
+                }
+                if after_seg != b'_' {
+                    return false;
+                }
+            }
+        }
+        i += 1;
+    }
+    false
 }
 
 /// Word-boundary keyword token matcher.
@@ -125,178 +114,4 @@ pub fn matches_keyword_token(line: &str, token: &str) -> bool {
         i += 1;
     }
     false
-}
-
-/// Classify source content into code/comment/string-literal characters.
-pub fn classify_source(content: &str, language: SourceLanguage) -> Vec<CharClass> {
-    let chars: Vec<char> = content.chars().collect();
-    let mut classes = vec![CharClass::Code; chars.len()];
-    let mut i = 0;
-
-    match language {
-        SourceLanguage::Python => {
-            let mut state = ClassifierState::Normal;
-            while i < chars.len() {
-                match state {
-                    ClassifierState::Normal => {
-                        if chars[i] == '#' {
-                            state = ClassifierState::LineComment;
-                            classes[i] = CharClass::Comment;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
-                            state = ClassifierState::TripleDoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
-                            state = ClassifierState::TripleSingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::DoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::SingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else {
-                            classes[i] = CharClass::Code;
-                        }
-                    }
-                    ClassifierState::LineComment => {
-                        classes[i] = CharClass::Comment;
-                        if chars[i] == '\n' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::DoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::SingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TripleDoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['"', '"', '"'] {
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TripleSingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if i + 2 < chars.len() && chars[i..i + 3] == ['\'', '\'', '\''] {
-                            classes[i] = CharClass::StringLiteral;
-                            classes[i + 1] = CharClass::StringLiteral;
-                            classes[i + 2] = CharClass::StringLiteral;
-                            i += 2;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    _ => {}
-                }
-                i += 1;
-            }
-        }
-        SourceLanguage::Rust | SourceLanguage::JavaScript | SourceLanguage::TypeScript => {
-            let mut state = ClassifierState::Normal;
-            while i < chars.len() {
-                match state {
-                    ClassifierState::Normal => {
-                        if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '/' {
-                            state = ClassifierState::LineComment;
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                        } else if i + 1 < chars.len() && chars[i] == '/' && chars[i + 1] == '*' {
-                            state = ClassifierState::BlockComment;
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::DoubleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::SingleQuoteString;
-                            classes[i] = CharClass::StringLiteral;
-                        } else if chars[i] == '`'
-                            && (language == SourceLanguage::JavaScript
-                                || language == SourceLanguage::TypeScript)
-                        {
-                            state = ClassifierState::TemplateLiteral;
-                            classes[i] = CharClass::StringLiteral;
-                        } else {
-                            classes[i] = CharClass::Code;
-                        }
-                    }
-                    ClassifierState::LineComment => {
-                        classes[i] = CharClass::Comment;
-                        if chars[i] == '\n' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::BlockComment => {
-                        classes[i] = CharClass::Comment;
-                        if i + 1 < chars.len() && chars[i] == '*' && chars[i + 1] == '/' {
-                            classes[i] = CharClass::Comment;
-                            classes[i + 1] = CharClass::Comment;
-                            i += 1;
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::DoubleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '"' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::SingleQuoteString => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '\'' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    ClassifierState::TemplateLiteral => {
-                        classes[i] = CharClass::StringLiteral;
-                        if chars[i] == '\\' && i + 1 < chars.len() {
-                            classes[i + 1] = CharClass::StringLiteral;
-                            i += 1;
-                        } else if chars[i] == '`' {
-                            state = ClassifierState::Normal;
-                        }
-                    }
-                    _ => {}
-                }
-                i += 1;
-            }
-        }
-    }
-    classes
 }
