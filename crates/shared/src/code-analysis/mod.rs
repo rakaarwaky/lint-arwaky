@@ -13,4 +13,8 @@ pub mod taxonomy_code_analysis_rule_vo;
 pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
 pub mod taxonomy_violation_code_analysis_vo;
+pub mod utility_bypass;
+pub mod utility_duplication;
+pub mod utility_mandatory;
+pub mod utility_target;
 pub use taxonomy_violation_code_analysis_vo::{AesCodeAnalysisViolation, Language};

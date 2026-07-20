@@ -1,5 +1,5 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
-use crate::utility_naming::get_stem;
+use shared::naming_rules::utility_naming::get_stem;
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
