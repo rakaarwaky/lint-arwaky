@@ -1,14 +1,14 @@
 // BAD: Std trait in Block 2 (wrong block order)
-pub struct ArchLineChecker;
+pub struct Capabilities<NameCapability>;
 
-impl Default for ArchLineChecker {
+impl Default for Capabilities<NameCapability> {
     fn default() -> Self {
         Self
     }
 }
 
-impl ILineCheckerProtocol for ArchLineChecker {
-    fn check_line_counts(&self, file: &FilePath) {
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(&self, input: &<DomainVO>) {
         // protocol method should be in Block 2, not after Default
     }
 }

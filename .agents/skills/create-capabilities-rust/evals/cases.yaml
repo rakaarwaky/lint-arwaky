@@ -1,17 +1,11 @@
 skill: create-capabilities-rust
-version: 1.3.0
+version: 1.4.0
 
 cases:
   - id: good-01
     type: good
     description: "Capability with correct 3-block structure, DI, and shared VOs"
-    file: capabilities_orphan_analyzer.rs
-    expect: pass
-
-  - id: good-02
-    type: good
-    description: "Stateless capability with no DI fields"
-    file: arch_line_checker.rs
+    file: capabilities_<name-capability>.rs
     expect: pass
 
   - id: bad-01

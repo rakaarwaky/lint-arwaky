@@ -19,16 +19,16 @@ value = result or 0
 ## Rule 2: Fallible operations should return `Result` or raise
 
 ```python
-def parse_manifest(content: ManifestContent) -> Result[Manifest, ManifestParseError]:
+def parse_input(content: <RawContent>VO) -> Result[<DomainVO>, <Name>ParseError]:
     # ...
     ...
 ```
 
-## Rule 3: Check/analysis methods may return `list[LintResult]`
+## Rule 3: Check/analysis methods may return `list[<ResultVO>]`
 
 ```python
-def check_imports(source: SourceContentVO) -> list[LintResult]:
-    violations: list[LintResult] = []
+def check_input(source: <DomainVO>) -> list[<ResultVO>]:
+    violations: list[<ResultVO>] = []
     # analysis logic
     return violations
 ```
@@ -38,7 +38,7 @@ def check_imports(source: SourceContentVO) -> list[LintResult]:
 Bad in capabilities:
 
 ```python
-def check_file(path: FilePath) -> list[LintResult]:
+def read_input(path: <Path>VO) -> list[<ResultVO>]:
     content = open(path.value()).read()  # BAD: I/O in capabilities
     return []
 ```
@@ -47,17 +47,17 @@ Good:
 
 ```python
 # utility_source_reader.py
-class FileSystemSourceReader(ISourceReaderProtocol):
-    def read(self, path: FilePath) -> Result[SourceContentVO, SourceReadError]:
+class FileSystem<NameReader>(I<NameReader>Protocol):
+    def read(self, path: <Path>VO) -> Result[<SourceContent>VO, <Name>ReadError]:
         try:
             raw = path.value().read_text()
         except Exception as e:
-            return Err(SourceReadError.Io(e))
-        return SourceContentVO.new(path, raw).map_err(SourceReadError.Validation)
+            return Err(<Name>ReadError.Io(e))
+        return <SourceContent>VO.new(path, raw).map_err(<Name>ReadError.Validation)
 
-# capabilities_import_checker.py
-class ImportChecker(IImportCheckerProtocol):
-    def check(self, source: SourceContentVO) -> list[LintResult]:
+# capabilities_<name>.py
+class <NameCapability>(I<NameCapability>Protocol):
+    def execute(self, source: <SourceContent>VO) -> list[<ResultVO>]:
         # pure analysis using already-read source
         return []
 ```

@@ -45,7 +45,7 @@ Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 Example:
 
 ```rust
-// shared/code_analysis/taxonomy_string_utility.rs
+// shared/<name-feature>/taxonomy_string_utility.rs
 pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
     // generic token matching
 }

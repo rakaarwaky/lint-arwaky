@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use shared::orphan_detector::taxonomy_orphan_analysis_policy_vo::OrphanAnalysisPolicy;
-use shared::orphan_detector::taxonomy_orphan_file_cache_protocol::IOrphanFileCacheProtocol;
-use shared::orphan_detector::taxonomy_orphan_filename_extractor_protocol::IOrphanFilenameExtractorProtocol;
-use shared::orphan_detector::taxonomy_capabilities_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared::<name-feature>::taxonomy_<name-policy>_vo::<NamePolicy>VO;
+use shared::<name-feature>::contract_<name-store>_protocol::I<NameStore>Protocol;
+use shared::<name-feature>::contract_<name-collaborator>_protocol::I<NameCollaborator>Protocol;
+use shared::<name-feature>::contract_<name-capability>_protocol::I<NameCapability>Protocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCacheProtocol>,
-    policy: OrphanAnalysisPolicy,
+pub struct Capabilities<NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+    store: Arc<dyn I<NameStore>Protocol>,
+    policy: <NamePolicy>VO,
 }
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
-impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
-    fn analyze(&self, path: &FilePath) -> Vec<LintResult> {
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(&self, input: &<DomainVO>) -> Vec<<ResultVO>> {
         let mut violations = Vec::new();
         // domain logic using injected dependencies
         violations
@@ -22,12 +22,16 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl CapabilitiesOrphanAnalyzer {
+impl Capabilities<NameCapability> {
     pub fn new(
-        extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-        cache: Arc<dyn IOrphanFileCacheProtocol>,
-        policy: OrphanAnalysisPolicy,
+        collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+        store: Arc<dyn I<NameStore>Protocol>,
+        policy: <NamePolicy>VO,
     ) -> Self {
-        Self { extractor, cache, policy }
+        Self {
+            collaborator,
+            store,
+            policy,
+        }
     }
 }

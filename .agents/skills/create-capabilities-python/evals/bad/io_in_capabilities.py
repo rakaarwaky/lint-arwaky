@@ -1,5 +1,4 @@
 # BAD: I/O in capabilities layer (AES404)
-class MyCapability:
-    def process(self):
-        with open("file.txt") as f:  # FORBIDDEN
-            content = f.read()
+class <NameCapability>:
+    def process(self) -> None:
+        content = open("file.txt").read()  # FORBIDDEN

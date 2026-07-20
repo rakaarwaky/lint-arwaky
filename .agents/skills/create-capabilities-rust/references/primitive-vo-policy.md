@@ -19,7 +19,7 @@ Good:
 ```rust
 pub struct LintResult {
     file_path: FilePath,
-    line: LineNumber,
+    line: <LineNumber>VO,
     severity: Severity,
 }
 ```
@@ -57,10 +57,10 @@ VOs MUST validate on construction when the domain has invariants.
 Good:
 
 ```rust
-impl LineNumber {
+impl <LineNumber>VO {
     pub fn new(value: u32) -> Result<Self, ValidationError> {
         if value == 0 {
-            return Err(ValidationError::positive("LineNumber"));
+            return Err(ValidationError::positive("<LineNumber>VO"));
         }
         Ok(Self(value))
     }

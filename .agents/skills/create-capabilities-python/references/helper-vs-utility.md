@@ -44,7 +44,7 @@ Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 Example:
 
 ```python
-# shared/code_analysis/taxonomy_string_utility.py
+# shared/<name-feature>/taxonomy_string_utility.py
 def match_whole_token(haystack: str, needle: str) -> bool:
     # generic token matching
     ...

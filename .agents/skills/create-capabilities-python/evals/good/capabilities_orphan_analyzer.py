@@ -1,33 +1,33 @@
-from shared.orphan_detector.taxonomy_orphan_analysis_policy_vo import (
-    OrphanAnalysisPolicy,
+from shared.<name-feature>.taxonomy_<name-policy>_vo import (
+    <NamePolicy>VO,
 )
-from shared.orphan_detector.contract_orphan_file_cache_protocol import IOrphanFileCacheProtocol
-from shared.orphan_detector.contract_orphan_filename_extractor_protocol import (
-    IOrphanFilenameExtractorProtocol,
+from shared.<name-feature>.contract_<name-store>_protocol import I<NameStore>Protocol
+from shared.<name-feature>.contract_<name-collaborator>_protocol import (
+    I<NameCollaborator>Protocol,
 )
-from shared.orphan_detector.contract_capabilities_orphan_protocol import (
-    ICapabilitiesOrphanProtocol,
+from shared.<name-feature>.contract_<name-capability>_protocol import (
+    I<NameCapability>Protocol,
 )
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
-class CapabilitiesOrphanAnalyzer(ICapabilitiesOrphanProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(
         self,
-        extractor: IOrphanFilenameExtractorProtocol,
-        cache: IOrphanFileCacheProtocol,
-        policy: OrphanAnalysisPolicy,
+        collaborator: I<NameCollaborator>Protocol,
+        store: I<NameStore>Protocol,
+        policy: <NamePolicy>VO,
     ):
-        self._extractor = extractor
-        self._cache = cache
+        self._collaborator = collaborator
+        self._store = store
         self._policy = policy
 
     # ─── Block 2: Public Contract (domain protocol ONLY) ──
-    def analyze(self, path: FilePath) -> list[LintResult]:
-        violations: list[LintResult] = []
+    def execute(self, input: <DomainVO>) -> list[<ResultVO>]:
+        violations: list[<ResultVO>] = []
         # domain logic using injected dependencies
         return violations
 
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────
     def __repr__(self) -> str:
-        return "CapabilitiesOrphanAnalyzer()"
+        return "Capabilities<NameCapability>()"

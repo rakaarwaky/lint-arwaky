@@ -27,7 +27,7 @@ impl IFrameComposerProtocol for FrameComposer {
 ## BAD: I/O in Capabilities (AES404)
 
 ```rust
-impl MyCapability {
+impl <NameCapability> {
     fn process(&self) {
         let content = std::fs::read_to_string("file.txt"); // FORBIDDEN
     }
@@ -39,8 +39,8 @@ Fix: Move I/O to utility.
 ## BAD: Data Class Defined in Layer File
 
 ```rust
-pub struct OrphanResult {
-    is_orphan: bool,
+pub struct <NameResult> {
+    is_valid: bool,
     reason: String,
 }
 ```
@@ -50,23 +50,40 @@ Fix: Move to shared taxonomy, then import.
 ## BAD: Concrete Service Field
 
 ```rust
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: FilenameExtractor, // BAD
+pub struct Capabilities<NameCapability> {
+    collaborator: <NameCollaborator>, // BAD
 }
 ```
 
 Fix:
 
 ```rust
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
+pub struct Capabilities<NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
 }
 ```
+
+## BAD: Std Trait in Block 2
+
+```rust
+pub struct Capabilities<NameCapability>;
+
+impl Default for Capabilities<NameCapability> {
+    fn default() -> Self { Self }
+}
+
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(&self, ...) { // ...
+    }
+}
+```
+
+Fix: Move `Default` to Block 3.
 
 ## BAD: Orchestration Inside Capability (No Orchestration, §8)
 
 ```rust
-impl MyPipelineProtocol for MyPipeline {
+impl <NamePipeline>Protocol for <NamePipeline> {
     fn run(&self) {
         let a = self.step_a();      // calls another capability's behavior
         if a.is_ok() {
@@ -83,48 +100,31 @@ Fix: remove flow control and cross-capability calls. Let the Agent layer compose
 ## BAD: Domain Model Defined in Capability (No Domain Definition, §8)
 
 ```rust
-pub struct OrphanResult {   // domain model defined here = forbidden
-    is_orphan: bool,
+pub struct <NameResult> {   // domain model defined here = forbidden
+    is_valid: bool,
     reason: String,
 }
 ```
 
-Fix: define `OrphanResult` as a Taxonomy VO; the capability only consumes and produces it.
-
-## BAD: Std Trait in Block 2
-
-```rust
-pub struct ArchLineChecker;
-
-impl Default for ArchLineChecker {
-    fn default() -> Self { Self }
-}
-
-impl ILineCheckerProtocol for ArchLineChecker {
-    fn check_line_counts(&self, ...) { // ...
-    }
-}
-```
-
-Fix: Move `Default` to Block 3.
+Fix: define `<NameResult>` as a Taxonomy VO; the capability only consumes and produces it.
 
 ## GOOD: Capability with DI and Shared VO
 
 ```rust
 use std::sync::Arc;
 
-use shared::orphan_detector::taxonomy_orphan_analysis_policy_vo::OrphanAnalysisPolicy;
-use shared::orphan_detector::taxonomy_orphan_file_cache_protocol::IOrphanFileCacheProtocol;
-use shared::orphan_detector::taxonomy_orphan_filename_extractor_protocol::IOrphanFilenameExtractorProtocol;
-use shared::orphan_detector::taxonomy_capabilities_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared::<name-feature>::taxonomy_<name>_vo::<Name>VO;
+use shared::<name-feature>::contract_<name>_protocol::I<Name>Protocol;
+use shared::<name-feature>::taxonomy_<name-collaborator>_protocol::I<NameCollaborator>Protocol;
+use shared::<name-feature>::taxonomy_<name-store>_protocol::I<NameStore>Protocol;
 
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCacheProtocol>,
-    policy: OrphanAnalysisPolicy,
+pub struct Capabilities<NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+    store: Arc<dyn I<NameStore>Protocol>,
+    policy: <NamePolicy>VO,
 }
 
-impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     // public contract methods only
 }
 ```
@@ -134,27 +134,23 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 ```rust
 use std::sync::Arc;
 
-use shared::code_analysis::taxonomy_file_path_vo::FilePath;
-use shared::code_analysis::taxonomy_layer_definition_vo::LayerDefinition;
-use shared::code_analysis::taxonomy_line_checker_protocol::ILineCheckerProtocol;
-use shared::code_analysis::taxonomy_line_checker_utility::is_barrel_file;
-use shared::code_analysis::taxonomy_lint_result_vo::LintResult;
-use shared::code_analysis::taxonomy_source_vo::SourceContentVO;
+use shared::<name-feature>::taxonomy_<domain>_vo::<DomainVO>;
+use shared::<name-feature>::contract_<name>_protocol::I<NameCapability>Protocol;
+use shared::<name-feature>::taxonomy_<name-utility>::<name>_utility;
+use shared::<name-feature>::taxonomy_<result>_vo::<ResultVO>;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-pub struct ArchLineChecker;
+pub struct Capabilities<NameCapability>;
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
-impl ILineCheckerProtocol for ArchLineChecker {
-    fn check_line_counts(
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(
         &self,
-        file: &FilePath,
-        definition: Option<&LayerDefinition>,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
+        input: &<DomainVO>,
+        output: &mut Vec<<ResultVO>>,
     ) {
-        let basename = file.basename();
-        if is_barrel_file(basename) {
+        let key = input.key();
+        if <name>_utility(key) {
             return;
         }
         // Remaining domain logic...
@@ -162,15 +158,15 @@ impl ILineCheckerProtocol for ArchLineChecker {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
-impl Default for ArchLineChecker {
+impl Default for Capabilities<NameCapability> {
     fn default() -> Self { Self }
 }
 
-impl ArchLineChecker {
+impl Capabilities<NameCapability> {
     pub fn new() -> Self { Self }
 
-    fn is_layer_relevant(&self, definition: &LayerDefinition) -> bool {
-        // Private helper specific to this checker.
+    fn is_relevant(&self, input: &<DomainVO>) -> bool {
+        // Private helper specific to this capability.
         true
     }
 }

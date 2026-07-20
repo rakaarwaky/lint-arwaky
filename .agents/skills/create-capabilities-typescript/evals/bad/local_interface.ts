@@ -1,11 +1,11 @@
 // BAD: Interface defined in capabilities layer (AES201)
-interface OrphanResult {
-    isOrphan: boolean;
+interface <NameResult> {
+    is_valid: boolean;
     reason: string;
 }
 
-class CapabilitiesOrphanAnalyzer {
-    analyze(): OrphanResult {
-        return { isOrphan: true, reason: '' };
+export class Capabilities<NameCapability> {
+    analyze(): <NameResult> {
+        return { is_valid: true, reason: '' };
     }
 }

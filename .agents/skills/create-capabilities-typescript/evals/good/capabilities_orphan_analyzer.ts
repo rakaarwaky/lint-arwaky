@@ -1,25 +1,25 @@
-import { OrphanAnalysisPolicy } from '../shared/orphan_detector/taxonomy_orphan_analysis_policy_vo';
-import { IOrphanFileCacheProtocol } from '../shared/orphan_detector/contract_orphan_file_cache_protocol';
-import { IOrphanFilenameExtractorProtocol } from '../shared/orphan_detector/contract_orphan_filename_extractor_protocol';
-import { ICapabilitiesOrphanProtocol } from '../shared/orphan_detector/contract_capabilities_orphan_protocol';
+import { <NamePolicy>VO } from '../shared/<name-feature>/taxonomy_<name-policy>_vo';
+import { I<NameStore>Protocol } from '../shared/<name-feature>/contract_<name-store>_protocol';
+import { I<NameCollaborator>Protocol } from '../shared/<name-feature>/contract_<name-collaborator>_protocol';
+import { I<NameCapability>Protocol } from '../shared/<name-feature>/contract_<name-capability>_protocol';
 
 // ─── Block 1: Class Definition & Constructor ──────────────
-export class CapabilitiesOrphanAnalyzer implements ICapabilitiesOrphanProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor(
-        private readonly extractor: IOrphanFilenameExtractorProtocol,
-        private readonly cache: IOrphanFileCacheProtocol,
-        private readonly policy: OrphanAnalysisPolicy,
+        private readonly collaborator: I<NameCollaborator>Protocol,
+        private readonly store: I<NameStore>Protocol,
+        private readonly policy: <NamePolicy>VO,
     ) {}
 
     // ─── Block 2: Public Contract (domain protocol ONLY) ──
-    analyze(path: FilePath): LintResult[] {
-        const violations: LintResult[] = [];
+    execute(input: <DomainVO>): <ResultVO>[] {
+        const violations: <ResultVO>[] = [];
         // domain logic using injected dependencies
         return violations;
     }
 
     // ─── Block 3: Utility Methods, Factories & Helpers ────
     toString(): string {
-        return 'CapabilitiesOrphanAnalyzer()';
+        return 'Capabilities<NameCapability>()';
     }
 }

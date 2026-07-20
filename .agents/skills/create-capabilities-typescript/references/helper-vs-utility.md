@@ -45,7 +45,7 @@ Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 Example:
 
 ```typescript
-// shared/code_analysis/taxonomy_string_utility.ts
+// shared/<name-feature>/taxonomy_string_utility.ts
 export function matchWholeToken(haystack: string, needle: string): boolean {
     // generic token matching
 }

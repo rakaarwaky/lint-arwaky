@@ -9,7 +9,7 @@ Every implementation file MUST follow this order **within the class body**:
 ## Block 1 — Class Definition & Constructor
 
 ```python
-class ArchLineChecker(ILineCheckerProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(self) -> None:
         pass
 ```
@@ -19,13 +19,11 @@ class ArchLineChecker(ILineCheckerProtocol):
 Block 2 is RESERVED for the domain protocol methods ONLY.
 
 ```python
-class ArchLineChecker(ILineCheckerProtocol):
-    def check_line_counts(
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
+    def execute(
         self,
-        file: FilePath,
-        definition: LayerDefinition | None,
-        source: SourceContentVO,
-        violations: list[LintResult],
+        input: <DomainVO>,
+        output: list[<ResultVO>],
     ) -> None:
         # domain behavior
         ...
@@ -36,18 +34,18 @@ Do NOT put these in Block 2: `__repr__`, `__str__`, `__eq__`, `__hash__`, `@clas
 ## Block 3 — Dunder Methods, Factories, and Helpers
 
 ```python
-class ArchLineChecker(ILineCheckerProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __repr__(self) -> str:
-        return "ArchLineChecker()"
+        return "Capabilities<NameCapability>()"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, ArchLineChecker)
+        return isinstance(other, Capabilities<NameCapability>)
 
     @classmethod
-    def create_default(cls) -> "ArchLineChecker":
+    def create_default(cls) -> "Capabilities<NameCapability>":
         return cls()
 
-    def _resolve_threshold(self, layer: str) -> int:
+    def _resolve_threshold(self, input: <DomainVO>) -> int:
         # private helper
         ...
 ```

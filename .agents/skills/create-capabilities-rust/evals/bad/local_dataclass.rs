@@ -1,13 +1,13 @@
 // BAD: Data class defined in capabilities layer (AES201)
-pub struct OrphanResult {
-    is_orphan: bool,
+pub struct <NameResult> {
+    is_valid: bool,
     reason: String,
 }
 
-pub struct CapabilitiesOrphanAnalyzer;
+pub struct Capabilities<NameCapability>;
 
-impl CapabilitiesOrphanAnalyzer {
-    fn analyze(&self) -> OrphanResult {
-        OrphanResult { is_orphan: true, reason: String::new() }
+impl Capabilities<NameCapability> {
+    fn execute(&self) -> <NameResult> {
+        <NameResult> { is_valid: true, reason: String::new() }
     }
 }

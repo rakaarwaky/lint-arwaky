@@ -21,7 +21,7 @@ class FrameComposer(IFrameComposerProtocol):
 ## BAD: I/O in Capabilities (AES404)
 
 ```python
-class MyCapability:
+class <NameCapability>:
     def process(self) -> None:
         content = open("file.txt").read()  # FORBIDDEN
 ```
@@ -30,8 +30,8 @@ class MyCapability:
 
 ```python
 @dataclass
-class OrphanResult:
-    is_orphan: bool
+class <NameResult>:
+    is_valid: bool
     reason: str
 ```
 
@@ -40,23 +40,23 @@ Fix: Move to shared taxonomy, then import.
 ## BAD: Concrete Service Field
 
 ```python
-class CapabilitiesOrphanAnalyzer:
-    def __init__(self, extractor: FilenameExtractor):  # BAD
-        self._extractor = extractor
+class Capabilities<NameCapability>:
+    def __init__(self, collaborator: <NameCollaborator>):  # BAD
+        self._collaborator = collaborator
 ```
 
 Fix:
 
 ```python
-class CapabilitiesOrphanAnalyzer:
-    def __init__(self, extractor: IOrphanFilenameExtractorProtocol):
-        self._extractor = extractor
+class Capabilities<NameCapability>:
+    def __init__(self, collaborator: I<NameCollaborator>Protocol):
+        self._collaborator = collaborator
 ```
 
 ## BAD: Orchestration Inside Capability (No Orchestration, §8)
 
 ```python
-class MyPipeline(IImportCheckerProtocol):
+class <NamePipeline>(I<NameCapability>Protocol):
     def run(self) -> None:
         a = self.step_a()          # calls another capability's behavior
         if a.is_ok():
@@ -71,23 +71,23 @@ Fix: remove flow control and cross-capability calls. Let the Agent layer compose
 
 ```python
 @dataclass
-class OrphanResult:    # domain model defined here = forbidden
-    is_orphan: bool
+class <NameResult>:    # domain model defined here = forbidden
+    is_valid: bool
     reason: str
 ```
 
-Fix: define `OrphanResult` as a Taxonomy VO; the capability only consumes and produces it.
+Fix: define `<NameResult>` as a Taxonomy VO; the capability only consumes and produces it.
 
 ## BAD: Dunder Methods in Block 2
 
 ```python
-class ArchLineChecker(ILineCheckerProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(self) -> None: ...
 
     def __repr__(self) -> str:           # ← Block 2 position, NOT a protocol method
-        return "ArchLineChecker()"
+        return "Capabilities<NameCapability>()"
 
-    def check_line_counts(self, ...) -> None:  # ← pushed down
+    def execute(self, ...) -> None:  # ← pushed down
         ...
 ```
 
@@ -96,60 +96,55 @@ Fix: Move `__repr__` to Block 3.
 ## GOOD: Capability with DI and Shared VO
 
 ```python
-from shared.orphan_detector.taxonomy_orphan_analysis_policy_vo import OrphanAnalysisPolicy
-from shared.orphan_detector.contract_orphan_file_cache_protocol import IOrphanFileCacheProtocol
-from shared.orphan_detector.contract_orphan_filename_extractor_protocol import IOrphanFilenameExtractorProtocol
-from shared.orphan_detector.contract_capabilities_orphan_protocol import ICapabilitiesOrphanProtocol
+from shared.<name-feature>.taxonomy_<name-policy>_vo import <NamePolicy>VO
+from shared.<name-feature>.contract_<name-store>_protocol import I<NameStore>Protocol
+from shared.<name-feature>.contract_<name-collaborator>_protocol import I<NameCollaborator>Protocol
+from shared.<name-feature>.contract_<name-capability>_protocol import I<NameCapability>Protocol
 
-class CapabilitiesOrphanAnalyzer(ICapabilitiesOrphanProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(
         self,
-        extractor: IOrphanFilenameExtractorProtocol,
-        cache: IOrphanFileCacheProtocol,
-        policy: OrphanAnalysisPolicy,
+        collaborator: I<NameCollaborator>Protocol,
+        store: I<NameStore>Protocol,
+        policy: <NamePolicy>VO,
     ):
-        self._extractor = extractor
-        self._cache = cache
+        self._collaborator = collaborator
+        self._store = store
         self._policy = policy
 ```
 
 ## GOOD: Correct 3-Block Structure
 
 ```python
-from shared.code_analysis.taxonomy_file_path_vo import FilePath
-from shared.code_analysis.taxonomy_layer_definition_vo import LayerDefinition
-from shared.code_analysis.taxonomy_line_checker_protocol import ILineCheckerProtocol
-from shared.code_analysis.taxonomy_line_checker_utility import is_barrel_file
-from shared.code_analysis.taxonomy_lint_result_vo import LintResult
-from shared.code_analysis.taxonomy_source_vo import SourceContentVO
-
+from shared.<name-feature>.taxonomy_<domain>_vo import <DomainVO>
+from shared.<name-feature>.contract_<name-capability>_protocol import I<NameCapability>Protocol
+from shared.<name-feature>.taxonomy_<name-utility> import <name>_utility
+from shared.<name-feature>.taxonomy_<result>_vo import <ResultVO>
 
 # ─── Block 1: Class Definition & Constructor ──────────────
-class ArchLineChecker(ILineCheckerProtocol):
+class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(self) -> None:
         pass
 
     # ─── Block 2: Public Contract (domain protocol ONLY) ──
-    def check_line_counts(
+    def execute(
         self,
-        file: FilePath,
-        definition: LayerDefinition | None,
-        source: SourceContentVO,
-        violations: list[LintResult],
+        input: <DomainVO>,
+        output: list[<ResultVO>],
     ) -> None:
-        basename = file.basename()
-        if is_barrel_file(basename):
+        key = input.key()
+        if <name>_utility(key):
             return
         # Remaining domain logic...
 
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────
     def __repr__(self) -> str:
-        return "ArchLineChecker()"
+        return "Capabilities<NameCapability>()"
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, ArchLineChecker)
+        return isinstance(other, Capabilities<NameCapability>)
 
     @classmethod
-    def create_default(cls) -> "ArchLineChecker":
+    def create_default(cls) -> "Capabilities<NameCapability>":
         return cls()
 ```

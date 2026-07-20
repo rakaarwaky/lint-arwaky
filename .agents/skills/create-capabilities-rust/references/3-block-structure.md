@@ -9,16 +9,16 @@ Every implementation file MUST follow this order:
 ## Block 1 — Struct Definition
 
 ```rust
-pub struct ArchLineChecker;
+pub struct Capabilities<NameCapability>;
 ```
 
 Or with dependencies:
 
 ```rust
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCacheProtocol>,
-    policy: OrphanAnalysisPolicy,
+pub struct Capabilities<NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+    store: Arc<dyn I<NameStore>Protocol>,
+    policy: <NamePolicy>VO,
 }
 ```
 
@@ -27,13 +27,11 @@ pub struct CapabilitiesOrphanAnalyzer {
 Block 2 is RESERVED for the domain protocol trait ONLY.
 
 ```rust
-impl ILineCheckerProtocol for ArchLineChecker {
-    fn check_line_counts(
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(
         &self,
-        file: &FilePath,
-        definition: Option<&LayerDefinition>,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
+        input: &<DomainVO>,
+        output: &mut Vec<<ResultVO>>,
     ) {
         // domain behavior
     }
@@ -43,11 +41,11 @@ impl ILineCheckerProtocol for ArchLineChecker {
 Do NOT put these in Block 2:
 
 ```rust
-impl Default for ArchLineChecker
-impl Clone for ArchLineChecker
-impl Debug for ArchLineChecker
-impl Display for ArchLineChecker
-impl From<...> for ArchLineChecker
+impl Default for Capabilities<NameCapability>
+impl Clone for Capabilities<NameCapability>
+impl Debug for Capabilities<NameCapability>
+impl Display for Capabilities<NameCapability>
+impl From<...> for Capabilities<NameCapability>
 ```
 
 Those belong in Block 3.
@@ -63,29 +61,29 @@ Block 3 contains:
 - private helper methods
 - domain-specific associated functions used only by this struct
 
-Block 3 MUST NOT:
-
-- define domain models (Entities, Value Objects) — that is **No Domain Definition** (ARCHITECTURE §8); consume them from Taxonomy instead.
-- perform orchestration — no flow control across capabilities, no error-escalation policy (**No Orchestration**, ARCHITECTURE §8).
-- duplicate technical mechanics that belong in a Utility standalone function (**DRY**, ARCHITECTURE §8).
-
 ```rust
-impl Default for ArchLineChecker {
+impl Default for Capabilities<NameCapability> {
     fn default() -> Self {
         Self
     }
 }
 
-impl ArchLineChecker {
+impl Capabilities<NameCapability> {
     pub fn new() -> Self {
         Self
     }
 
-    fn effective_threshold(&self, layer: &LayerDefinition) -> LineCountThreshold {
+    fn effective_threshold(&self, input: &<DomainVO>) -> <Threshold>VO {
         // private helper
     }
 }
 ```
+
+Block 3 MUST NOT:
+
+- define domain models (Entities, Value Objects) — that is **No Domain Definition** (ARCHITECTURE §8); consume them from Taxonomy instead.
+- perform orchestration — no flow control across capabilities, no error-escalation policy (**No Orchestration**, ARCHITECTURE §8).
+- duplicate technical mechanics that belong in a Utility standalone function (**DRY**, ARCHITECTURE §8).
 
 ## Trait Placement Decision Rule
 

@@ -19,7 +19,7 @@ Good:
 ```typescript
 interface LintResult {
     filePath: FilePath;
-    line: LineNumber;
+    line: <LineNumber>VO;
     severity: Severity;
 }
 ```
@@ -44,12 +44,12 @@ VOs MUST validate on construction when the domain has invariants.
 Good:
 
 ```typescript
-export class LineNumber {
+export class <LineNumber>VO {
     private readonly _value: number;
 
     constructor(value: number) {
         if (value === 0) {
-            throw new Error('LineNumber must be positive');
+            throw new Error('<LineNumber>VO must be positive');
         }
         this._value = value;
     }

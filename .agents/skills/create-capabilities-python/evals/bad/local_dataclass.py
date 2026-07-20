@@ -1,13 +1,8 @@
 # BAD: Data class defined in capabilities layer (AES201)
-from dataclasses import dataclass
-
-
-@dataclass
-class OrphanResult:
-    is_orphan: bool
+class <NameResult>:
+    is_valid: bool
     reason: str
 
-
-class CapabilitiesOrphanAnalyzer:
-    def analyze(self) -> OrphanResult:
-        return OrphanResult(is_orphan=True, reason="")
+class Capabilities<NameCapability>:
+    def analyze(self) -> <NameResult>:
+        return <NameResult>(is_valid=True, reason="")

@@ -21,17 +21,17 @@ let value = result.ok().unwrap_or_default();
 If a method represents an operation that can fail unexpectedly, return `Result<T, E>`.
 
 ```rust
-fn parse_manifest(content: &ManifestContent) -> Result<Manifest, ManifestParseError> {
+fn parse_input(content: &<RawContent>VO) -> Result<<DomainVO>, <Name>ParseError> {
     // ...
 }
 ```
 
-## Rule 3: Check/analysis methods may return `Vec<LintResult>`
+## Rule 3: Check/analysis methods may return `Vec<<ResultVO>>`
 
 For linting/analysis use cases, violations are expected domain outcomes.
 
 ```rust
-fn check_imports(source: &SourceContentVO) -> Vec<LintResult> {
+fn check_input(source: &<DomainVO>) -> Vec<<ResultVO>> {
     let mut violations = Vec::new();
     // analysis logic
     violations
@@ -43,7 +43,7 @@ fn check_imports(source: &SourceContentVO) -> Vec<LintResult> {
 Bad in capabilities:
 
 ```rust
-fn check_file(path: &FilePath) -> Vec<LintResult> {
+fn read_input(path: &<Path>VO) -> Vec<<ResultVO>> {
     let content = std::fs::read_to_string(path.value()).unwrap_or_default(); // BAD
     Vec::new()
 }
@@ -53,20 +53,20 @@ Good:
 
 ```rust
 // utility_source_reader.rs
-impl ISourceReaderProtocol for FileSystemSourceReader {
-    fn read(&self, path: &FilePath) -> Result<SourceContentVO, SourceReadError> {
+impl I<NameReader>Protocol for FileSystem<NameReader> {
+    fn read(&self, path: &<Path>VO) -> Result<<SourceContent>VO, <Name>ReadError> {
         let raw = std::fs::read_to_string(path.value())
-            .map_err(SourceReadError::Io)?;
-        SourceContentVO::new(path.clone(), raw)
-            .map_err(SourceReadError::Validation)
+            .map_err(<Name>ReadError::Io)?;
+        <SourceContent>VO::new(path.clone(), raw)
+            .map_err(<Name>ReadError::Validation)
     }
 }
 ```
 
 ```rust
-// capabilities_import_checker.rs
-impl IImportCheckerProtocol for ImportChecker {
-    fn check(&self, source: &SourceContentVO) -> Vec<LintResult> {
+// capabilities_<name>.rs
+impl I<NameCapability>Protocol for <NameCapability> {
+    fn execute(&self, source: &<SourceContent>VO) -> Vec<<ResultVO>> {
         // pure analysis using already-read source
         Vec::new()
     }

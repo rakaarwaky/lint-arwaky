@@ -19,16 +19,16 @@ const value = result || 0;
 ## Rule 2: Fallible operations should return `Result` or throw
 
 ```typescript
-function parseManifest(content: ManifestContent): Result<Manifest, ManifestParseError> {
+function parseInput(content: <RawContent>VO): Result<<DomainVO>, <Name>ParseError> {
     // ...
 }
 ```
 
-## Rule 3: Check/analysis methods may return `LintResult[]`
+## Rule 3: Check/analysis methods may return `<ResultVO>[]`
 
 ```typescript
-function checkImports(source: SourceContentVO): LintResult[] {
-    const violations: LintResult[] = [];
+function checkInput(source: <DomainVO>): <ResultVO>[] {
+    const violations: <ResultVO>[] = [];
     // analysis logic
     return violations;
 }
@@ -39,7 +39,7 @@ function checkImports(source: SourceContentVO): LintResult[] {
 Bad in capabilities:
 
 ```typescript
-function checkFile(path: FilePath): LintResult[] {
+function readInput(path: <Path>VO): <ResultVO>[] {
     const content = fs.readFileSync(path.value(), 'utf-8'); // BAD: I/O
     return [];
 }
@@ -49,20 +49,20 @@ Good:
 
 ```typescript
 // utility_source_reader.ts
-export class FileSystemSourceReader implements ISourceReaderProtocol {
-    read(path: FilePath): Result<SourceContentVO, SourceReadError> {
+export class FileSystem<NameReader> implements I<NameReader>Protocol {
+    read(path: <Path>VO): Result<<SourceContent>VO, <Name>ReadError> {
         try {
             const raw = fs.readFileSync(path.value(), 'utf-8');
-            return Ok(SourceContentVO.new(path, raw));
+            return Ok(<SourceContent>VO.new(path, raw));
         } catch (e) {
-            return Err(new SourceReadError.Io(e));
+            return Err(new <Name>ReadError.Io(e));
         }
     }
 }
 
-// capabilities_import_checker.ts
-export class ImportChecker implements IImportCheckerProtocol {
-    check(source: SourceContentVO): LintResult[] {
+// capabilities_<name>.ts
+export class <NameCapability> implements I<NameCapability>Protocol {
+    execute(source: <SourceContent>VO): <ResultVO>[] {
         // pure analysis using already-read source
         return [];
     }

@@ -9,7 +9,7 @@ Every implementation file MUST follow this order **within the class body**:
 ## Block 1 — Class Definition & Constructor
 
 ```typescript
-export class ArchLineChecker implements ILineCheckerProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor() {}
 }
 ```
@@ -19,12 +19,10 @@ export class ArchLineChecker implements ILineCheckerProtocol {
 Block 2 is RESERVED for the domain protocol methods ONLY.
 
 ```typescript
-export class ArchLineChecker implements ILineCheckerProtocol {
-    checkLineCounts(
-        file: FilePath,
-        definition: LayerDefinition | null,
-        source: SourceContentVO,
-        violations: LintResult[],
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
+    execute(
+        input: <DomainVO>,
+        output: <ResultVO>[],
     ): void {
         // domain behavior
     }
@@ -36,24 +34,23 @@ Do NOT put these in Block 2: `toString()`, `toJSON()`, `valueOf()`, `equals()`, 
 ## Block 3 — Utility Methods, Factories, and Helpers
 
 ```typescript
-export class ArchLineChecker implements ILineCheckerProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     toString(): string {
-        return 'ArchLineChecker()';
+        return 'Capabilities<NameCapability>()';
     }
 
     equals(other: unknown): boolean {
-        return other instanceof ArchLineChecker;
+        return other instanceof Capabilities<NameCapability>;
     }
 
-    static create(): ArchLineChecker {
-        return new ArchLineChecker();
+    static create(): Capabilities<NameCapability> {
+        return new Capabilities<NameCapability>();
     }
 
-    private resolveThreshold(layer: string): number {
+    private resolveThreshold(input: <DomainVO>): number {
         // private helper
     }
 }
-
 ```
 
 Block 3 MUST NOT:
@@ -61,7 +58,6 @@ Block 3 MUST NOT:
 - define domain models (Entities, Value Objects) — that is **No Domain Definition** (ARCHITECTURE §8); consume them from Taxonomy instead.
 - perform orchestration — no flow control across capabilities, no error-escalation policy (**No Orchestration**, ARCHITECTURE §8).
 - duplicate technical mechanics that belong in a Utility standalone function (**DRY**, ARCHITECTURE §8).
-```
 
 ## Method Placement Decision Rule
 

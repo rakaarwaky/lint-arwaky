@@ -20,7 +20,7 @@ Good:
 @dataclass
 class LintResult:
     file_path: FilePath
-    line: LineNumber
+    line: <LineNumber>VO
     severity: Severity
 ```
 
@@ -46,12 +46,12 @@ Good:
 
 ```python
 @dataclass(frozen=True)
-class LineNumber:
+class <LineNumber>VO:
     _value: int
 
     def __post_init__(self) -> None:
         if self._value == 0:
-            raise ValueError("LineNumber must be positive")
+            raise ValueError("<LineNumber>VO must be positive")
 
     @property
     def value(self) -> int:

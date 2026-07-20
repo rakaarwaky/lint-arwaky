@@ -23,7 +23,7 @@ export class FrameComposer implements IFrameComposerProtocol {
 ## BAD: I/O in Capabilities (AES404)
 
 ```typescript
-export class MyCapability {
+export class <NameCapability> {
     process(): void {
         const content = fs.readFileSync('file.txt', 'utf-8'); // FORBIDDEN
     }
@@ -33,8 +33,8 @@ export class MyCapability {
 ## BAD: Interface Defined in Layer File
 
 ```typescript
-interface OrphanResult {
-    isOrphan: boolean;
+interface <NameResult> {
+    is_valid: boolean;
     reason: string;
 }
 ```
@@ -44,23 +44,23 @@ Fix: Move to shared taxonomy, then import.
 ## BAD: Concrete Service Field
 
 ```typescript
-export class CapabilitiesOrphanAnalyzer {
-    constructor(private readonly extractor: FilenameExtractor) {} // BAD
+export class Capabilities<NameCapability> {
+    constructor(private readonly collaborator: <NameCollaborator>) {} // BAD
 }
 ```
 
 Fix:
 
 ```typescript
-export class CapabilitiesOrphanAnalyzer {
-    constructor(private readonly extractor: IOrphanFilenameExtractorProtocol) {}
+export class Capabilities<NameCapability> {
+    constructor(private readonly collaborator: I<NameCollaborator>Protocol) {}
 }
 ```
 
 ## BAD: Orchestration Inside Capability (No Orchestration, §8)
 
 ```typescript
-export class MyPipeline implements IImportCheckerProtocol {
+export class <NamePipeline> implements I<NameCapability>Protocol {
     run(): void {
         const a = this.stepA();      // calls another capability's behavior
         if (a.isOk()) {
@@ -77,25 +77,25 @@ Fix: remove flow control and cross-capability calls. Let the Agent layer compose
 ## BAD: Domain Model Defined in Capability (No Domain Definition, §8)
 
 ```typescript
-interface OrphanResult {   // domain model defined here = forbidden
-    isOrphan: boolean;
+interface <NameResult> {   // domain model defined here = forbidden
+    is_valid: boolean;
     reason: string;
 }
 ```
 
-Fix: define `OrphanResult` as a Taxonomy VO; the capability only consumes and produces it.
+Fix: define `<NameResult>` as a Taxonomy VO; the capability only consumes and produces it.
 
 ## BAD: Utility Methods in Block 2
 
 ```typescript
-export class ArchLineChecker implements ILineCheckerProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor() {}
 
     toString(): string {                    // ← Block 2 position, NOT a protocol method
-        return 'ArchLineChecker()';
+        return 'Capabilities<NameCapability>()';
     }
 
-    checkLineCounts(...): void {            // ← pushed down
+    execute(...): void {            // ← pushed down
     }
 }
 ```
@@ -105,16 +105,16 @@ Fix: Move `toString()` to Block 3.
 ## GOOD: Capability with DI and Shared VO
 
 ```typescript
-import { OrphanAnalysisPolicy } from '../shared/orphan_detector/taxonomy_orphan_analysis_policy_vo';
-import { IOrphanFileCacheProtocol } from '../shared/orphan_detector/contract_orphan_file_cache_protocol';
-import { IOrphanFilenameExtractorProtocol } from '../shared/orphan_detector/contract_orphan_filename_extractor_protocol';
-import { ICapabilitiesOrphanProtocol } from '../shared/orphan_detector/contract_capabilities_orphan_protocol';
+import { <NamePolicy>VO } from '../shared/<name-feature>/taxonomy_<name-policy>_vo';
+import { I<NameStore>Protocol } from '../shared/<name-feature>/contract_<name-store>_protocol';
+import { I<NameCollaborator>Protocol } from '../shared/<name-feature>/contract_<name-collaborator>_protocol';
+import { I<NameCapability>Protocol } from '../shared/<name-feature>/contract_<name-capability>_protocol';
 
-export class CapabilitiesOrphanAnalyzer implements ICapabilitiesOrphanProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor(
-        private readonly extractor: IOrphanFilenameExtractorProtocol,
-        private readonly cache: IOrphanFileCacheProtocol,
-        private readonly policy: OrphanAnalysisPolicy,
+        private readonly collaborator: I<NameCollaborator>Protocol,
+        private readonly store: I<NameStore>Protocol,
+        private readonly policy: <NamePolicy>VO,
     ) {}
 }
 ```
@@ -122,26 +122,22 @@ export class CapabilitiesOrphanAnalyzer implements ICapabilitiesOrphanProtocol {
 ## GOOD: Correct 3-Block Structure
 
 ```typescript
-import { FilePath } from '../shared/code_analysis/taxonomy_file_path_vo';
-import { LayerDefinition } from '../shared/code_analysis/taxonomy_layer_definition_vo';
-import { ILineCheckerProtocol } from '../shared/code_analysis/contract_line_checker_protocol';
-import { isBarrelFile } from '../shared/code_analysis/taxonomy_line_checker_utility';
-import { LintResult } from '../shared/code_analysis/taxonomy_lint_result_vo';
-import { SourceContentVO } from '../shared/code_analysis/taxonomy_source_vo';
+import { <DomainVO> } from '../shared/<name-feature>/taxonomy_<domain>_vo';
+import { I<NameCapability>Protocol } from '../shared/<name-feature>/contract_<name-capability>_protocol';
+import { <name>_utility } from '../shared/<name-feature>/taxonomy_<name-utility>';
+import { <ResultVO> } from '../shared/<name-feature>/taxonomy_<result>_vo';
 
 // ─── Block 1: Class Definition & Constructor ──────────────
-export class ArchLineChecker implements ILineCheckerProtocol {
+export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor() {}
 
     // ─── Block 2: Public Contract (domain protocol ONLY) ──
-    checkLineCounts(
-        file: FilePath,
-        definition: LayerDefinition | null,
-        source: SourceContentVO,
-        violations: LintResult[],
+    execute(
+        input: <DomainVO>,
+        output: <ResultVO>[],
     ): void {
-        const basename = file.basename();
-        if (isBarrelFile(basename)) {
+        const key = input.key();
+        if (<name>_utility(key)) {
             return;
         }
         // Remaining domain logic...
@@ -149,15 +145,15 @@ export class ArchLineChecker implements ILineCheckerProtocol {
 
     // ─── Block 3: Utility Methods, Factories & Helpers ────
     toString(): string {
-        return 'ArchLineChecker()';
+        return 'Capabilities<NameCapability>()';
     }
 
     equals(other: unknown): boolean {
-        return other instanceof ArchLineChecker;
+        return other instanceof Capabilities<NameCapability>;
     }
 
-    static create(): ArchLineChecker {
-        return new ArchLineChecker();
+    static create(): Capabilities<NameCapability> {
+        return new Capabilities<NameCapability>();
     }
 }
 ```
