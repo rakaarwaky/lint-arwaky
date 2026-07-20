@@ -18,31 +18,27 @@ project-root/
 │   │       ├── common/          ← truly shared across ALL features
 │   │       │   ├── mod.rs
 │   │       │   ├── taxonomy_common_vo.rs
-│   │       │   ├── contract_system_port.rs
 │   │       │   ├── taxonomy_path_vo.rs
 │   │       │   └── ...
-│   │       ├── tui/             ← shared types for tui feature
+│   │       ├── user/            ← shared types for user feature (domain folder)
 │   │       │   ├── mod.rs
-│   │       │   ├── taxonomy_state_vo.rs
-│   │       │   ├── taxonomy_tui_event.rs
+│   │       │   ├── taxonomy_user_vo.rs
+│   │       │   ├── taxonomy_user_error.rs
+│   │       │   ├── taxonomy_user_constant.rs
+│   │       │   ├── contract_user_protocol.rs
+│   │       │   ├── contract_user_aggregate.rs
+│   │       │   ├── utility_user_hasher.rs
 │   │       │   └── ...
-│   │       ├── import-rules/    ← shared types for import-rules feature
-│   │       │   ├── mod.rs
-│   │       │   ├── taxonomy_import_rule_vo.rs
-│   │       │   └── ...
-│   │       ├── code-analysis/   ← shared types for code-analysis feature
 │   │       └── ...              ← one subfolder per feature crate
 │   │
 │   ├── user/               ← feature crate
 │   │   ├── Cargo.toml
 │   │   └── src/
-│   │       ├── taxonomy_user_vo.rs
-│   │       ├── contract_user_port.rs
-│   │       ├── capabilities_user_checker.rs
-│   │       ├── infrastructure_user_adapter.rs
-│   │       ├── agent_user_orchestrator.rs
-│   │       ├── surface_user_command.rs
-│   │       ├── root_user_container.rs
+│   │       ├── capabilities_user_checker.rs     ← business logic capability
+│   │       ├── capabilities_user_repository.rs  ← external adaptation capability
+│   │       ├── agent_user_orchestrator.rs       ← agent layer (orchestrator)
+│   │       ├── surface_user_command.rs          ← surfaces layer
+│   │       ├── root_user_container.rs           ← root container
 │   │       └── lib.rs
 │   ├── root_cli_main_entry.rs   ← CLI binary (file, NOT directory)
 │   ├── root_mcp_main_entry.rs   ← MCP server binary
@@ -52,11 +48,9 @@ project-root/
 ```
 
 **Key rules:**
-
-- All 7 layers coexist in each feature crate, differentiated by file prefix.
+- All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `crates/shared/<feature>/`. Orchestration, capabilities, and surfaces live in the feature crate.
 - Entry points (`root_*_entry.rs`) are files inside `crates/`, not separate directories.
-- `crates/shared/` has **subfolders matching each feature crate** (e.g. `shared/src/tui/` for tui types, `shared/src/import-rules/` for import-rules types).
-- `crates/shared/src/common/` holds types shared across ALL features (path VOs, system ports, error types).
+- `crates/shared/src/common/` holds types shared across ALL features (path VOs, common errors, etc.).
 
 ---
 
@@ -75,7 +69,6 @@ lint-arwaky-cli check your-project/
 ```bash
 lint-arwaky-cli check your-project/
 find your-project/crates -name "*.rs" | wc -l
-lint-arwaky-cli scan your-project/ | grep AES205
 ```
 
 - Violations < 10 → full migration in one session
@@ -86,6 +79,8 @@ lint-arwaky-cli scan your-project/ | grep AES205
 
 ## Phase 1: Taxonomy Layer
 
+Define Value Objects, Errors, Events, and compile-time Constants under the `shared` member.
+
 ### Step 1.1: Identify Domain Types
 
 ```bash
@@ -94,11 +89,8 @@ grep -rn "pub struct\|pub enum" your-project/crates/*/src/ | grep -v test | grep
 
 ### Step 1.2: Create Value Objects
 
-**Before:** `crates/user/src/user.rs` (struct + logic mixed)
-**After:** `crates/user/src/taxonomy_user_vo.rs` (pure data)
-
 ```rust
-// crates/user/src/taxonomy_user_vo.rs
+// crates/shared/src/user/taxonomy_user_vo.rs
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UserVO {
     pub id: String,
@@ -116,7 +108,7 @@ impl UserVO {
 ### Step 1.3: Create Constants
 
 ```rust
-// crates/user/src/taxonomy_user_constant.rs
+// crates/shared/src/user/taxonomy_user_constant.rs
 pub const MAX_RETRY_COUNT: u32 = 3;
 pub const DEFAULT_TIMEOUT_MS: u64 = 5000;
 ```
@@ -124,7 +116,7 @@ pub const DEFAULT_TIMEOUT_MS: u64 = 5000;
 ### Step 1.4: Create Error Types
 
 ```rust
-// crates/user/src/taxonomy_user_error.rs
+// crates/shared/src/user/taxonomy_user_error.rs
 #[derive(Debug, thiserror::Error)]
 pub enum UserError {
     #[error("User not found: {0}")]
@@ -134,10 +126,10 @@ pub enum UserError {
 }
 ```
 
-### Step 1.5: Register in lib.rs
+### Step 1.5: Register in mod.rs
 
 ```rust
-// crates/user/src/lib.rs
+// crates/shared/src/user/mod.rs
 pub mod taxonomy_user_vo;
 pub mod taxonomy_user_error;
 pub mod taxonomy_user_constant;
@@ -147,42 +139,34 @@ pub mod taxonomy_user_constant;
 
 ## Phase 2: Contract Layer
 
-### Step 2.1: Identify Outbound Dependencies
+Contracts define public interfaces (Protocols and Aggregates) without exposing implementation.
 
-```bash
-grep -rn "std::fs\|std::net\|reqwest\|tokio::fs\|sqlx\|redis" your-project/crates/*/src/
-```
+### Step 2.1: Create Protocols (inbound/outbound interfaces)
 
-### Step 2.2: Create Ports (outbound interfaces)
+Define protocol traits implemented by Capabilities (both business calculation and external adapters) and consumed by the Agent.
 
 ```rust
-// crates/user/src/contract_user_port.rs
-use crate::taxonomy_user_vo::UserVO;
+// crates/shared/src/user/contract_user_protocol.rs
+use crate::user::taxonomy_user_vo::UserVO;
 
-pub trait IUserPort {
+pub trait IUserProtocol {
+    fn check_valid_email(&self, email: &str) -> bool;
+}
+
+pub trait IUserRepositoryProtocol {
     fn find_by_id(&self, id: &str) -> Result<Option<UserVO>, Box<dyn std::error::Error>>;
     fn save(&self, user: &UserVO) -> Result<(), Box<dyn std::error::Error>>;
     fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error>>;
 }
 ```
 
-### Step 2.3: Create Protocols (inbound interfaces)
+### Step 2.2: Create Aggregates (facades)
+
+Define aggregate facades implemented by the Agent and consumed by Surfaces.
 
 ```rust
-// crates/user/src/contract_user_protocol.rs
-use crate::taxonomy_user_vo::UserVO;
-
-pub trait IUserProtocol {
-    fn get_user(&self, id: &str) -> Result<UserVO, String>;
-    fn create_user(&self, name: &str, email: &str) -> Result<UserVO, String>;
-}
-```
-
-### Step 2.4: Create Aggregates (facades)
-
-```rust
-// crates/user/src/contract_user_aggregate.rs
-use crate::taxonomy_user_vo::UserVO;
+// crates/shared/src/user/contract_user_aggregate.rs
+use crate::user::taxonomy_user_vo::UserVO;
 
 pub trait IUserAggregate {
     fn get_user(&self, id: &str) -> Result<UserVO, String>;
@@ -191,74 +175,112 @@ pub trait IUserAggregate {
 }
 ```
 
-### Step 2.5: Register in lib.rs
+### Step 2.3: Register in mod.rs
 
 ```rust
-pub mod contract_user_port;
+// crates/shared/src/user/mod.rs
 pub mod contract_user_protocol;
 pub mod contract_user_aggregate;
 ```
 
 ---
 
-## Phase 3: Capabilities Layer
+## Phase 3: Utility Layer
 
-Business logic only. No infrastructure imports.
+Utility contains low-level technical mechanics. It must contain only **stateless standalone functions** (no stateful objects, no behavior, no contract implementation, and no business decisions).
 
-```bash
-grep -rn "if \|match \|calc\|validate\|check" your-project/crates/*/src/
-```
+### Step 3.1: Create Technical Utilities
+
+Extract reusable technical actions (e.g. parsing, hash computation, formatting) into the Utility layer inside the `shared` member.
 
 ```rust
-// crates/user/src/capabilities_user_checker.rs
-use crate::contract_user_protocol::IUserProtocol;
-use crate::taxonomy_user_vo::UserVO;
-
-pub struct UserChecker {
-    user_protocol: Box<dyn IUserProtocol>,
+// crates/shared/src/user/utility_user_hasher.rs
+pub fn hash_user_token(input: &str) -> String {
+    // stateless technical operation
+    format!("hash_{}", input)
 }
+```
 
-impl UserChecker {
-    pub fn new(user_protocol: Box<dyn IUserProtocol>) -> Self {
-        Self { user_protocol }
-    }
+### Step 3.2: Register in mod.rs
 
-    pub fn validate_email(&self, email: &str) -> bool {
-        email.contains('@') && email.contains('.')
-    }
-}
+```rust
+// crates/shared/src/user/mod.rs
+pub mod utility_user_hasher;
 ```
 
 ---
 
-## Phase 4: Infrastructure Layer
+## Phase 4: Capabilities Layer
 
-Each adapter implements a port.
+Capabilities contain concrete behavior implementations. This includes business logic (validations, computations) and external adaptation (database repositories, network integration, third-party clients).
+
+- Must implement one domain protocol trait defined in Contract.
+- Must follow strict **3-Block Structure** separated by block comments.
+- Must use dependency injection for collaborator services via `Arc<dyn Trait>`.
+- Must not import or depend on other Capabilities.
+
+### Step 4.1: Create Business Logic Capability
 
 ```rust
-// crates/user/src/infrastructure_user_adapter.rs
-use crate::contract_user_port::IUserPort;
-use crate::taxonomy_user_vo::UserVO;
+// crates/user/src/capabilities_user_checker.rs
+use shared::user::contract_user_protocol::IUserProtocol;
 
-pub struct UserAdapter {
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct UserChecker;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+impl IUserProtocol for UserChecker {
+    fn check_valid_email(&self, email: &str) -> bool {
+        email.contains('@') && email.contains('.')
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl Default for UserChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UserChecker {
+    pub fn new() -> Self {
+        Self
+    }
+}
+```
+
+### Step 4.2: Create External Adaptation Capability (formerly Infrastructure)
+
+```rust
+// crates/user/src/capabilities_user_repository.rs
+use shared::user::contract_user_protocol::IUserRepositoryProtocol;
+use shared::user::taxonomy_user_vo::UserVO;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct UserRepository {
     db_path: String,
 }
 
-impl UserAdapter {
-    pub fn new(db_path: String) -> Self {
-        Self { db_path }
+// ─── Block 2: Protocol Trait Implementation ───────────────
+impl IUserRepositoryProtocol for UserRepository {
+    fn find_by_id(&self, id: &str) -> Result<Option<UserVO>, Box<dyn std::error::Error>> {
+        // Concrete database query using local state and/or shared utilities
+        todo!("Query DB at {}", self.db_path)
+    }
+
+    fn save(&self, user: &UserVO) -> Result<(), Box<dyn std::error::Error>> {
+        todo!("Insert/update user")
+    }
+
+    fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
+        todo!("Delete user")
     }
 }
 
-impl IUserPort for UserAdapter {
-    fn find_by_id(&self, id: &str) -> Result<Option<UserVO>, Box<dyn std::error::Error>> {
-        todo!("Implement database query")
-    }
-    fn save(&self, user: &UserVO) -> Result<(), Box<dyn std::error::Error>> {
-        todo!("Implement database insert/update")
-    }
-    fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!("Implement database delete")
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl UserRepository {
+    pub fn new(db_path: String) -> Self {
+        Self { db_path }
     }
 }
 ```
@@ -267,34 +289,38 @@ impl IUserPort for UserAdapter {
 
 ## Phase 5: Agent Layer
 
-Orchestrator coordinates capabilities and infrastructure.
+Orchestrates sequential execution, branching, looping, and error handling. Ignorant of concrete capability and utility implementations (coordinates only via contract protocols injected via `Arc`).
 
 ```rust
 // crates/user/src/agent_user_orchestrator.rs
-use crate::contract_user_aggregate::IUserAggregate;
-use crate::contract_user_port::IUserPort;
-use crate::capabilities_user_checker::UserChecker;
-use crate::taxonomy_user_vo::UserVO;
+use shared::user::contract_user_aggregate::IUserAggregate;
+use shared::user::contract_user_protocol::{IUserProtocol, IUserRepositoryProtocol};
+use shared::user::taxonomy_user_vo::UserVO;
+use std::sync::Arc;
 
 pub struct UserOrchestrator {
-    checker: UserChecker,
-    port: Box<dyn IUserPort>,
+    checker: Arc<dyn IUserProtocol>,
+    repository: Arc<dyn IUserRepositoryProtocol>,
 }
 
 impl UserOrchestrator {
-    pub fn new(checker: UserChecker, port: Box<dyn IUserPort>) -> Self {
-        Self { checker, port }
+    pub fn new(
+        checker: Arc<dyn IUserProtocol>,
+        repository: Arc<dyn IUserRepositoryProtocol>,
+    ) -> Self {
+        Self { checker, repository }
     }
 }
 
 impl IUserAggregate for UserOrchestrator {
     fn get_user(&self, id: &str) -> Result<UserVO, String> {
-        self.port.find_by_id(id).map_err(|e| e.to_string())?
+        self.repository.find_by_id(id)
+            .map_err(|e| e.to_string())?
             .ok_or_else(|| format!("User not found: {}", id))
     }
 
     fn create_user(&self, name: &str, email: &str) -> Result<UserVO, String> {
-        if !self.checker.validate_email(email) {
+        if !self.checker.check_valid_email(email) {
             return Err("Invalid email".to_string());
         }
         let user = UserVO::new(
@@ -302,12 +328,12 @@ impl IUserAggregate for UserOrchestrator {
             name.to_string(),
             email.to_string(),
         );
-        self.port.save(&user).map_err(|e| e.to_string())?;
+        self.repository.save(&user).map_err(|e| e.to_string())?;
         Ok(user)
     }
 
     fn delete_user(&self, id: &str) -> Result<(), String> {
-        self.port.delete(id).map_err(|e| e.to_string())
+        self.repository.delete(id).map_err(|e| e.to_string())
     }
 }
 ```
@@ -316,18 +342,19 @@ impl IUserAggregate for UserOrchestrator {
 
 ## Phase 6: Surface Layer
 
-CLI commands, API handlers. Delegates to orchestrator.
+Translates user-facing inputs into actions, delegating execution to the Agent orchestrator.
 
 ```rust
 // crates/user/src/surface_user_command.rs
-use crate::contract_user_aggregate::IUserAggregate;
+use shared::user::contract_user_aggregate::IUserAggregate;
+use std::sync::Arc;
 
 pub struct UserCommand {
-    orchestrator: Box<dyn IUserAggregate>,
+    orchestrator: Arc<dyn IUserAggregate>,
 }
 
 impl UserCommand {
-    pub fn new(orchestrator: Box<dyn IUserAggregate>) -> Self {
+    pub fn new(orchestrator: Arc<dyn IUserAggregate>) -> Self {
         Self { orchestrator }
     }
 
@@ -342,7 +369,7 @@ impl UserCommand {
                 let name = args.get(1).ok_or("Missing name")?;
                 let email = args.get(2).ok_or("Missing email")?;
                 let user = self.orchestrator.create_user(name, email)?;
-                Ok(format!("Created: {}", user.id))
+                Ok(format!("Created user: {}", user.id))
             }
             _ => Err("Usage: user <get|create> [args...]".to_string()),
         }
@@ -354,35 +381,37 @@ impl UserCommand {
 
 ## Phase 7: Root Layer
 
-DI container wires everything. Entry point bootstraps.
+Wires concrete implementations to contracts and bootstraps the system.
 
-### Container (inside feature crate)
+### Container
 
 ```rust
 // crates/user/src/root_user_container.rs
-use crate::infrastructure_user_adapter::UserAdapter;
-use crate::capabilities_user_checker::UserChecker;
 use crate::agent_user_orchestrator::UserOrchestrator;
+use crate::capabilities_user_checker::UserChecker;
+use crate::capabilities_user_repository::UserRepository;
+use shared::user::contract_user_aggregate::IUserAggregate;
+use std::sync::Arc;
 
 pub struct UserContainer {
-    orchestrator: UserOrchestrator,
+    orchestrator: Arc<dyn IUserAggregate>,
 }
 
 impl UserContainer {
     pub fn new(db_path: &str) -> Self {
-        let port = Box::new(UserAdapter::new(db_path.to_string()));
-        let checker = UserChecker::new(/* inject protocol */);
-        let orchestrator = UserOrchestrator::new(checker, port);
+        let checker = Arc::new(UserChecker::new());
+        let repository = Arc::new(UserRepository::new(db_path.to_string()));
+        let orchestrator = Arc::new(UserOrchestrator::new(checker, repository));
         Self { orchestrator }
     }
 
-    pub fn orchestrator(&self) -> &UserOrchestrator {
-        &self.orchestrator
+    pub fn orchestrator(&self) -> Arc<dyn IUserAggregate> {
+        self.orchestrator.clone()
     }
 }
 ```
 
-### Entry Point (inside crates/)
+### Entry Point
 
 ```rust
 // crates/root_cli_main_entry.rs
@@ -391,7 +420,7 @@ use user::surface_user_command::UserCommand;
 
 fn main() {
     let container = UserContainer::new("data.db");
-    let command = UserCommand::new(Box::new(container.orchestrator().clone()));
+    let command = UserCommand::new(container.orchestrator());
 
     let args: Vec<String> = std::env::args().skip(1).collect();
     match command.run(&args) {
@@ -415,46 +444,46 @@ cargo fmt --all && cargo clippy --all-targets -- -D warnings
 
 ## File Naming Reference
 
-| Layer          | Pattern                                | Example                          |
-| -------------- | -------------------------------------- | -------------------------------- |
-| taxonomy       | `taxonomy_<concept>_<suffix>.rs`       | `taxonomy_user_vo.rs`            |
-| contract       | `contract_<concept>_<suffix>.rs`       | `contract_user_port.rs`          |
-| capabilities   | `capabilities_<concept>_<suffix>.rs`   | `capabilities_user_checker.rs`   |
-| infrastructure | `infrastructure_<concept>_<suffix>.rs` | `infrastructure_user_adapter.rs` |
-| agent          | `agent_<concept>_orchestrator.rs`      | `agent_user_orchestrator.rs`     |
-| surface        | `surface_<concept>_<suffix>.rs`        | `surface_user_command.rs`        |
-| root           | `root_<concept>_<suffix>.rs`           | `root_user_container.rs`         |
+| Layer        | Pattern                              | Example                         |
+| ------------ | ------------------------------------ | ------------------------------- |
+| taxonomy     | `taxonomy_<concept>_<suffix>.rs`     | `taxonomy_user_vo.rs`           |
+| contract     | `contract_<concept>_<suffix>.rs`     | `contract_user_protocol.rs`     |
+| utility      | `utility_<concept>_<suffix>.rs`      | `utility_user_hasher.rs`        |
+| capabilities | `capabilities_<concept>_<suffix>.rs` | `capabilities_user_checker.rs`  |
+| agent        | `agent_<concept>_orchestrator.rs`    | `agent_user_orchestrator.rs`    |
+| surface      | `surface_<concept>_<suffix>.rs`      | `surface_user_command.rs`       |
+| root         | `root_<concept>_<suffix>.rs`         | `root_user_container.rs`        |
 
 ---
 
 ## Import Rules
 
 ```
-taxonomy_       → taxonomy_*
-contract_       → taxonomy_*, contract_*
-capabilities_   → taxonomy_*, contract_*
-infrastructure_ → taxonomy_*, contract_*
-agent_          → taxonomy_*, contract_aggregate_*, contract_port_*, contract_protocol_*
-surface_        → taxonomy_*, contract_aggregate_*
-root_           → ALL layers
+taxonomy_     → taxonomy_*
+contract_     → taxonomy_*
+utility_      → taxonomy_*
+capabilities_ → taxonomy_*, contract_*, utility_*
+agent_        → taxonomy_*, contract_*
+surface_      → taxonomy_*, contract_*
+root_         → ALL layers
 ```
 
-**NEVER:** capabilities → infrastructure, agent → surface, surface → capabilities.
+**NEVER:** capabilities → agent, agent → surface, surface → capabilities, capability → capability.
 
 ---
 
 ## Troubleshooting
 
-| Violation  | Fix                                               |
-| ---------- | ------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                  |
-| AES102     | Change suffix to match layer's allowed list       |
-| AES201     | Remove forbidden import, use contract interface   |
-| AES202     | Add missing import per layer requirements         |
-| AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
-| AES401     | Move primitives to VO, constants to `_constant`   |
-| AES402     | Replace primitive types with VO types in contract |
-| AES403     | Implement protocol trait in capability            |
-| AES404     | Implement port trait in infrastructure            |
-| AES501-506 | Wire in container or remove dead code             |
+| Violation  | Fix                                                     |
+| ---------- | ------------------------------------------------------- |
+| AES101     | Rename to `layer_concept_suffix`                        |
+| AES102     | Change suffix to match layer's allowed list             |
+| AES201     | Remove forbidden import, use contract interface         |
+| AES202     | Add missing import per layer requirements               |
+| AES303     | Add struct/enum/trait definition                        |
+| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`                 |
+| AES401     | Move primitives to VO, constants to `_constant`         |
+| AES402     | Replace primitive types with VO types in contract       |
+| AES403     | Implement protocol trait in capability                  |
+| AES404     | Move stateless helper functions to Utility              |
+| AES501-506 | Wire in container or remove dead code                   |
