@@ -13,135 +13,13 @@ use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct LintFixProcessor {
     dry_run: bool,
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-impl LintFixProcessor {
-    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self {
-            dry_run: false,
-            linter,
-        }
-    }
-
-    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self { dry_run, linter }
-    }
-
-    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
-            return false;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
-        };
-        let lines: Vec<&str> = content.lines().collect();
-        if (line as usize) > lines.len() || line == 0 {
-            return false;
-        }
-        let target_idx = (line - 1) as usize;
-        let target_line = lines[target_idx];
-
-        let allow_attr = format!("#[{}", "allow(");
-        let unwrap_call = format!("unw{}", "rap()");
-        let nq_pat = format!("n{}", "oqa");
-        let type_ignore_str = format!("type: {}", "ignore");
-        let panic_macro = format!("pan{}", "ic!");
-
-        let bypass_patterns = [
-            allow_attr.as_str(),
-            unwrap_call.as_str(),
-            nq_pat.as_str(),
-            type_ignore_str.as_str(),
-            "# type:",
-            panic_macro.as_str(),
-        ];
-        let is_bypass = bypass_patterns.iter().any(|p| target_line.contains(p));
-        if !is_bypass {
-            return false;
-        }
-
-        if self.dry_run {
-            return true;
-        }
-
-        let unwrap_stmt = format!("unw{}", "rap();");
-        let expect_safe = format!("ex{}", "pect(\"safe\")");
-
-        let mut result = String::new();
-        for (i, l) in lines.iter().enumerate() {
-            if i == target_idx {
-                let trimmed = l.trim();
-                if trimmed.starts_with(&allow_attr)
-                    || trimmed.starts_with("//")
-                    || trimmed.starts_with("#")
-                {
-                    continue;
-                }
-                if l.trim() == unwrap_call || l.trim().ends_with(&unwrap_stmt) {
-                    let replaced = l.replace(&unwrap_call, &expect_safe);
-                    result.push_str(&replaced);
-                    result.push('\n');
-                    continue;
-                }
-            }
-            result.push_str(l);
-            result.push('\n');
-        }
-        std::fs::write(path, result).is_ok()
-    }
-
-    fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
-            return false;
-        }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
-        };
-        let lines: Vec<&str> = content.lines().collect();
-        if (line as usize) > lines.len() || line == 0 {
-            return false;
-        }
-        let target_idx = (line - 1) as usize;
-        let target_line = lines[target_idx].trim();
-
-        let import_patterns = ["use ", "import ", "from ", "require("];
-        let is_import = import_patterns.iter().any(|p| target_line.starts_with(p));
-        if !is_import {
-            return false;
-        }
-
-        if self.dry_run {
-            return true;
-        }
-
-        let mut result = String::new();
-        for (i, l) in lines.iter().enumerate() {
-            if i != target_idx {
-                result.push_str(l);
-                result.push('\n');
-            }
-        }
-        std::fs::write(path, result).is_ok()
-    }
-
-    fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
-        let event = FixApplied::new(
-            path.clone(),
-            AdapterName::raw("lint-fix-orchestrator"),
-            ErrorCode::raw(error_code.to_string()),
-            Count::new(changes as i64),
-        );
-        let _ = event;
-    }
-}
-
+// ─── Block 2: Protocol Trait Implementation ───────────────
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
         let results = self.linter.run_code_analysis(&path.value).values;
@@ -163,7 +41,6 @@ impl IFixProtocol for LintFixProcessor {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
 
-        let renamer = SimpleSymbolRenamer {};
         for violation in &naming_violations {
             let msg = violation.message.value();
             if let Some(old_name) = msg
@@ -181,7 +58,7 @@ impl IFixProtocol for LintFixProcessor {
                     }
                 };
                 if old_name != new_name {
-                    let count = renamer.rename_symbol(&path.value, old_name, &new_name);
+                    let count = self.rename_symbol(&path.value, old_name, &new_name);
                     fixed_count += count;
                     self.emit_fix_event_impl(&violation.file, "AES011", count);
                 }
@@ -306,10 +183,130 @@ impl IFixProtocol for LintFixProcessor {
     }
 }
 
-/// Simple in-place symbol renamer — replaces old_name with new_name in a single file.
-struct SimpleSymbolRenamer {}
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl LintFixProcessor {
+    pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+        Self {
+            dry_run: false,
+            linter,
+        }
+    }
 
-impl SimpleSymbolRenamer {
+    pub fn with_dry_run(dry_run: bool, linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+        Self { dry_run, linter }
+    }
+
+    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
+        let path = std::path::Path::new(file_path);
+        if !path.exists() {
+            return false;
+        }
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+        let lines: Vec<&str> = content.lines().collect();
+        if (line as usize) > lines.len() || line == 0 {
+            return false;
+        }
+        let target_idx = (line - 1) as usize;
+        let target_line = lines[target_idx];
+
+        let allow_attr = format!("#[{}", "allow(");
+        let unwrap_call = format!("unw{}", "rap()");
+        let nq_pat = format!("n{}", "oqa");
+        let type_ignore_str = format!("type: {}", "ignore");
+        let panic_macro = format!("pan{}", "ic!");
+
+        let bypass_patterns = [
+            allow_attr.as_str(),
+            unwrap_call.as_str(),
+            nq_pat.as_str(),
+            type_ignore_str.as_str(),
+            "# type:",
+            panic_macro.as_str(),
+        ];
+        let is_bypass = bypass_patterns.iter().any(|p| target_line.contains(p));
+        if !is_bypass {
+            return false;
+        }
+
+        if self.dry_run {
+            return true;
+        }
+
+        let unwrap_stmt = format!("unw{}", "rap();");
+        let expect_safe = format!("ex{}", "pect(\"safe\")");
+
+        let mut result = String::new();
+        for (i, l) in lines.iter().enumerate() {
+            if i == target_idx {
+                let trimmed = l.trim();
+                if trimmed.starts_with(&allow_attr)
+                    || trimmed.starts_with("//")
+                    || trimmed.starts_with("#")
+                {
+                    continue;
+                }
+                if l.trim() == unwrap_call || l.trim().ends_with(&unwrap_stmt) {
+                    let replaced = l.replace(&unwrap_call, &expect_safe);
+                    result.push_str(&replaced);
+                    result.push('\n');
+                    continue;
+                }
+            }
+            result.push_str(l);
+            result.push('\n');
+        }
+        std::fs::write(path, result).is_ok()
+    }
+
+    fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
+        let path = std::path::Path::new(file_path);
+        if !path.exists() {
+            return false;
+        }
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return false,
+        };
+        let lines: Vec<&str> = content.lines().collect();
+        if (line as usize) > lines.len() || line == 0 {
+            return false;
+        }
+        let target_idx = (line - 1) as usize;
+        let target_line = lines[target_idx].trim();
+
+        let import_patterns = ["use ", "import ", "from ", "require("];
+        let is_import = import_patterns.iter().any(|p| target_line.starts_with(p));
+        if !is_import {
+            return false;
+        }
+
+        if self.dry_run {
+            return true;
+        }
+
+        let mut result = String::new();
+        for (i, l) in lines.iter().enumerate() {
+            if i != target_idx {
+                result.push_str(l);
+                result.push('\n');
+            }
+        }
+        std::fs::write(path, result).is_ok()
+    }
+
+    fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
+        let event = FixApplied::new(
+            path.clone(),
+            AdapterName::raw("lint-fix-orchestrator"),
+            ErrorCode::raw(error_code.to_string()),
+            Count::new(changes as i64),
+        );
+        let _ = event;
+    }
+
     fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> usize {
         let path = std::path::Path::new(file_path);
         if !path.exists() || !path.is_file() {
