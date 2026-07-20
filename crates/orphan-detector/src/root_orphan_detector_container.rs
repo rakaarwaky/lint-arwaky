@@ -23,7 +23,6 @@ impl OrphanContainer {
             Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_capabilities_analyzer::InfrastructureOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new()),
         ));

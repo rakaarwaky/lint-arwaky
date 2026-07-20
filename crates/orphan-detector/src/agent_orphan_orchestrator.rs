@@ -37,10 +37,10 @@ use std::sync::Arc;
 
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
-    IInfrastructureOrphanProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
+    ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
 };
 use shared::role_rules::taxonomy_layer_names_constant::{
-    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_INFRASTRUCTURE, LAYER_SURFACES,
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES,
     LAYER_TAXONOMY,
 };
 
@@ -51,7 +51,6 @@ pub struct ArchOrphanAnalyzer {
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-    infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
     agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
 }
@@ -62,7 +61,6 @@ impl ArchOrphanAnalyzer {
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
         contract_analyzer: Arc<dyn IContractOrphanProtocol>,
         capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
         agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
         surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     ) -> Self {
@@ -71,7 +69,6 @@ impl ArchOrphanAnalyzer {
             taxonomy_analyzer,
             contract_analyzer,
             capabilities_analyzer,
-            infrastructure_analyzer,
             agent_analyzer,
             surfaces_analyzer,
         }
@@ -170,7 +167,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",
                     s if s.contains(LAYER_CONTRACT) => "AES502",
                     s if s.contains(LAYER_CAPABILITIES) => "AES503",
-                    s if s.contains(LAYER_INFRASTRUCTURE) => "AES504",
                     s if s.contains(LAYER_AGENT) => "AES505",
                     s if s.contains(LAYER_SURFACES) => "AES506",
                     _ => continue,
@@ -283,12 +279,6 @@ impl ArchOrphanAnalyzer {
                 .collect(),
         );
 
-        if layer_str.contains(LAYER_INFRASTRUCTURE) {
-            return self
-                .capabilities_analyzer
-                .is_capabilities_orphan(&fp, &root, &alive_set);
-        }
-
         if layer_str.contains(LAYER_CAPABILITIES) {
             return self
                 .capabilities_analyzer
@@ -327,7 +317,6 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
             ("capabilities_", "capabilities"),
-            ("capabilities_", "infrastructure"),
             ("agent_", "agent"),
             ("surface_", "surfaces"),
             ("root_", "root"),
