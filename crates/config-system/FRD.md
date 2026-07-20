@@ -10,8 +10,6 @@ The primary purpose of the `config-system` module is to manage lint_arwaky confi
 
 The `config-system` module is responsible for configuration based on the following specifications:
 
-### Component Specifications
-
 - **ConfigLoadingOrchestrator**: Coordinates the configuration loading process from various sources.
 - **ConfigRulesValidator**: Validates loaded configuration rules against the defined schema.
 - **WorkspaceDetector**: Detects Rust workspace roots based on Cargo.toml or common project roots.
@@ -19,17 +17,6 @@ The `config-system` module is responsible for configuration based on the followi
 - **ConfigYamlReader**: Reads and parses the main YAML configuration file.
 - **MultiProjectOrchestrator**: Manages configuration for multiple projects/workspaces simultaneously.
 
-### Inputs
-
-- Path to the project root or current working directory.
-- Default configuration values and defined AES rules.
-
-### Outputs
-
-- A validated configuration struct (`ArchitectureConfig`).
-- Validation errors if the configuration does not match the schema.
-
----
 
 ## 3. Success Indicators
 
