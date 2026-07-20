@@ -1,179 +1,374 @@
-# AES Architecture: Agentic Engineering System
 
-See [AGENTS.md](../AGENTS.md) for workspace conventions and [RULES_AES.md](../.agents/rules/RULES_AES.md) for the rule catalog (AESxxx codes referenced below).
+# Agentic Engineering System Architecture
 
-The **Agentic Engineering System (AES)** is a strictly layered, decoupled, AI-native architectural pattern. It isolates domain models, keeps business logic free of low-level detail, and makes the codebase easy for humans and LLMs to navigate without architectural violations.
+## 1. Purpose
 
-The seven layers, from foundation to user-facing, are: **Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root**.
+The Agentic Engineering System is a layered, AI-native architecture pattern. It keeps domain models stable, business logic readable, technical detail isolated, and layer boundaries explicit enough for both humans and AI agents to modify the system safely.
 
-## Terminology
+---
 
-| Term         | Language        | Definition                                                                                  |
-| ------------ | --------------- | ------------------------------------------------------------------------------------------- |
-| Workspace    | All             | Project root (e.g. `lint-arwaky/`) containing all configs and language sub-projects.        |
-| `crates/`    | Rust            | Rust workspace members (Cargo).                                                             |
-| `packages/`  | TypeScript / JS | TypeScript/JavaScript packages (npm/pnpm workspace).                                        |
-| `modules/`   | Python          | Python sub-projects (independent modules).                                                  |
-| Member       | All             | One self-contained sub-project (crate, package, or module) inside the workspace.            |
+## 2. Workspace Organization
 
-## Core Pillars
+The architecture supports multi-language workspaces.
 
-### 1. Strict Layered Boundary Enforcement
+| Term               | Meaning                                                           |
+| ------------------ | ----------------------------------------------------------------- |
+| Project Workspaces | Project root containing all configuration and language members    |
+| Workspace Member   | One self-contained crate, package, or module inside the workspace |
+| Crates directory   | Rust workspace members                                            |
+| Packages directory | TypeScript or JavaScript packages                                 |
+| Modules directory  | Python modules or sub-projects                                    |
 
-Layers communicate only along downward dependency paths to prevent coupling and circular dependencies. A layer may import layers below it, never above it.
+---
 
-### 2. The 3-Structure Naming Convention
+## 3. Naming Convention
 
-Every source file is named `[layer]_[concept]_[suffix]` (or `[layer]_[concept1]_[concept2]_[suffix]`). The layer prefix is the architectural boundary; all seven layers coexist inside one feature crate, distinguished by prefix — not by directory.
+File names must communicate three parts:
 
-1. **Layer (prefix)**: `taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`.
-2. **Concept (middle)**: the core concept, e.g. `import_rule`.
-3. **Role (suffix)**: the architectural role, e.g. `_checker`, `_protocol`.
+1. Layer as prefix
+2. Domain as middle name
+3. Role as suffix
 
-## Layer Catalog
+The parts are joined by underscores, followed by the normal file extension for the language.
 
-Numbered foundation → user-facing. Each layer imports only the layers listed.
+`layer_domain_role.rs/py/ts`
 
-| # | Layer       | Role                                                            | Imports                     |
-| - | ----------- | --------------------------------------------------------------- | --------------------------- |
-| 1 | Taxonomy    | Pure domain models (VO/entity/error/constant).                  | — (foundation)              |
-| 2 | Contract    | Inbound interfaces (`_protocol`) and facades (`_aggregate`).    | Taxonomy                    |
-| 3 | Utility     | Standalone technical functions (no struct/trait/contract).      | Taxonomy                    |
-| 4 | Capabilities| Business logic, use-cases, computations.                         | Contract, Utility, Taxonomy |
-| 5 | Agent       | Orchestration / pipeline flow control.                           | Contract, Taxonomy          |
-| 6 | Surface     | User-facing entry points (CLI, TUI, MCP, API).                  | Contract-aggregate, Taxonomy|
-| 7 | Root        | Wiring / bootstrap. No business logic.                          | All layers                  |
+---
 
-**Dependency direction (user-facing → foundation):** Surface → Agent → Capabilities → Utility → Contract → Taxonomy. Root wraps all.
+## 4. Vertical Slicing Folder Structure
 
-## Layer Prefix Specifications
+The recommended folder structure follows this order:
 
-| Prefix         | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                         | Allowed Imports                              | Semantic Role                                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------- |
-| `taxonomy_`    | `_vo`, `_entity`, `_event`, `_error`, `_constant` (strict)                                                                                                                                                                                                                                                                                                               | `taxonomy_` only                             | Pure domain models, value objects, events, errors, constants.             |
-| `contract_`    | `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                               | `taxonomy_`, `contract_`                     | Inbound interfaces and composition facades.                               |
-| `utility_`     | `_utility`, `_helper`, `_walker`, `_scanner`, `_runner`, `_parser`, `_normalizer`, `_matcher`                                                                                                                                                                                                                                                                            | `taxonomy_` only                             | Standalone technical functions. No struct/trait/contract.                 |
-| `capabilities_`| `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor` | `taxonomy_`, `contract_`, `utility_`         | Business logic. Calls Utility by name.                                    |
-| `agent_`       | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                         | `taxonomy_`, `contract_`                     | Coordinates capabilities flows into pipelines.                             |
-| `surface_`     | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                  | varies by surface role (see Surface)         | CLI/TUI/MCP/API entry points.                                             |
-| `root_`        | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                  | all layers                                   | Composition root and binary entry. No business logic.                     |
+#### Features member
 
-## Layer Specifications
+_Example feature crate `crates|packages|modules/<name-features>/`_
 
-### 1. Taxonomy (`taxonomy_`)
-
-Pure domain models and value objects.
-
-- **Value Object (`_vo`)**: immutable data container (primitives allowed internally, AES401).
-- **Entity (`_entity`)**: stateful domain concept with a unique ID.
-- **Event (`_event`)**: immutable domain fact snapshot.
-- **Error (`_error`)**: domain-level exception.
-- **Constant (`_constant`)**: compile-time literal (AES401).
-
-### 2. Contract (`contract_`)
-
-Abstract interfaces — _what_ without _how_. Two components:
-
-- **Protocol (`_protocol`)**: inbound interface implemented by Capabilities. Callers (Agent/Surface) depend on it, not on the implementation.
-- **Aggregate (`_aggregate`)**: composition facade. Surfaces reach Capabilities only through it (AES201), never by direct import.
-
-### 3. Utility (`utility_`)
-
-Standalone technical implementation. Owns all low-level detail as free functions.
-
-**Rules:**
-- Free functions (`pub fn`). No `struct`, no `trait`, no `impl` of any contract.
-- Imports Taxonomy only — never references `_protocol` / `_aggregate` or Capabilities.
-- Called by name from Capabilities: `collect_source_files(dir)`, `run_ruff(path)`, `normalize_path(p)`.
-- Performs mechanical work and returns data; decides no policy.
-
-| Concern                 | Example Suffix      | Examples                                  |
-| ----------------------- | ------------------- | ----------------------------------------- |
-| File I/O detail         | `_walker`, `_utility` | dir walking, ignore-matching, detection   |
-| External tool execution | `_runner`, `_helper`   | spawn ruff/clippy/eslint/tsc, parse output|
-| Algorithm / regex       | `_matcher`, `_parser` | string/array/regex manipulation           |
-| Path / normalization    | `_normalizer`, `_utility`| cross-platform path handling            |
-| System operations       | `_helper`, `_utility`  | process / env handling                    |
-
-### 4. Capabilities (`capabilities_`)
-
-Business logic, use-cases, computations. Calls Utility by name; contains no low-level detail.
-
-| Concern                 | Example Suffix            |
-| ----------------------- | ------------------------- |
-| Computation / scoring   | `_calculator`, `_scorer`  |
-| Validation / checking   | `_checker`, `_validator`  |
-| Data transformation     | `_transformer`, `_mapper` |
-| Business rules          | `_evaluator`, `_resolver` |
-| Information extraction  | `_extractor`, `_classifier`|
-| Assessment / scoring    | `_assessor`, `_auditor`, `_inspector` |
-
-**Forbidden:** flow control / orchestration → Agent; domain models → Taxonomy; low-level detail (algorithms, regex, I/O, library wiring) → Utility.
-
-### 5. Agent (`agent_`)
-
-Orchestration and pipeline execution. Holds protocol references via Contract; sequences fetch → branch → loop → handle errors → return.
-
-Allowed flow-control syntax: `while`/`loop`/`for`, sequential statements, `if/else`/`match`, `match`/`if let`/`?` (or `try/except`), `tokio::select!`/`asyncio.wait_for()` for cancellation.
-
-**Forbidden:** computation / business rules → Capabilities; low-level detail → Utility; domain models → Taxonomy.
-
-### 6. Surface (`surface_`)
-
-User-facing entry points — CLI, TUI, MCP server, API.
-
-- **Smart** (`command`/`controller`/`page`/`entry`): `taxonomy_` + `contract_aggregate_` only (AES201). Never import Capabilities/Utility/Agent directly.
-- **Utility** (`hook`/`store`/`action`/`screen`): `taxonomy_` only (AES406).
-- **Passive** (`component`/`view`/`layout`): `taxonomy_` only (AES406).
-
-Allowed: input handling, UI rendering, event mapping, state, routing. **Forbidden:** business rules → Capabilities; orchestration → Agent; low-level detail → Utility; direct import of Capabilities/Utility → AES201.
-
-### 7. Root (`root_`)
-
-Wiring and bootstrap. Instantiates Capabilities and wires them behind Contract protocols/aggregates; each feature crate owns one `root_*_container`. The `_entry` binary builds the composition root and starts the main loop. No business logic.
-
-## Concrete Example
-
-A feature crate, showing the seven prefixes side by side:
-
-```
-crates/import-rules/src/
-  taxonomy_import_rule_vo.rs          # 1. domain model
-  contract_import_rule_protocol.rs     # 2. inbound interface
-  utility_import_rule_walker.rs        # 3. low-level scan (free fn)
-  capabilities_import_rule_checker.rs  # 4. business logic (calls the walker)
-  agent_import_rule_orchestrator.rs    # 5. pipeline
-  surface_import_rule_command.rs       # 6. CLI command
-  root_import_rule_container.rs         # 7. wiring
+```text
+surfaces_<domain>_<role>.rs/py/ts               ← surfaces layer
+capabilities_<domain>_<role>.rs/py/ts           ← capabilities layer
+agent_<domain>_orchestrator.rs/py/ts            ← agent layer
 ```
 
-## Quick Reference: Where Logic Lives
+Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
-| Logic Type               | Layer          | Suffix                          |
-| ------------------------ | -------------- | ------------------------------- |
-| User input / UI / routing| `surface_`     | `_command`, `_view`, `_router`  |
-| Computation / scoring    | `capabilities_`| `_calculator`, `_scorer`        |
-| Validation / rules       | `capabilities_`| `_checker`, `_validator`        |
-| Low-level detail         | `utility_`     | `_utility`, `_walker`, `_runner`|
-| Regex / parsing          | `utility_`     | `_matcher`, `_parser`           |
-| Looping / branching      | `agent_`       | `_orchestrator`                 |
-| Domain models            | `taxonomy_`    | `_vo`, `_entity`                |
-| Inbound interfaces       | `contract_`    | `_protocol`                     |
-| Facades                  | `contract_`    | `_aggregate`                    |
-| Wiring / bootstrap       | `root_`        | `_container`, `_entry`          |
+#### Shared member
 
-## Patterns
+`crates|packages|modules/shared/<common>or<domain-folder>`
 
-**Capabilities → Utility.** Business-logic file calls one clearly named utility function; the utility owns the messy detail.
-
-```
-// capabilities_import_rule_checker.rs
-let files = collect_source_files(dir);   // one readable line
-
-// utility_import_rule_walker.rs
-// recursive walk, ignore-matching, extension check, symlink/inode handling
+```text
+contract_<domain>_protocol.rs/py/ts             ← contract layer
+contract_<domain>_aggregate.rs/py/ts            ← contract layer
+taxonomy_<domain>_vo.rs/py/ts                   ← taxonomy layer
+taxonomy_<domain>_event.rs/py/ts                ← taxonomy layer
+taxonomy_<domain>_entity.rs/py/ts               ← taxonomy layer
+taxonomy_<domain>_constant.rs/py/ts             ← taxonomy layer
+utility_<domain>_<role>.rs/py/ts                ← utility layer
 ```
 
-**Data flow:** Surface → Agent → Capabilities → Utility → Taxonomy. Surface maps input via the aggregate; Agent delegates to the executor; Capabilities runs logic and calls Utility for low-level work; Utility operates on Taxonomy value objects.
+`shared` folder groups by domain. Use `shared/common/` for generic files.
 
-**Wiring:** Root wires Capabilities behind Contract protocols/aggregates. Surfaces reach Capabilities only through the aggregate (AES201). No port/DI-through-trait abstraction.
+---
+
+## 5. Taxonomy Layer
+
+### Purpose
+
+Taxonomy is the domain foundation layer. It defines the stable language of the domain and must remain free from technical or behavioral concerns.
+
+### Components
+
+| Role         | Meaning                               |
+| ------------ | ------------------------------------- |
+| Value object | Immutable data concept                |
+| Entity       | Stateful domain concept with identity |
+| Event        | Immutable domain fact                 |
+| Error        | Domain-level error                    |
+| Constant     | Compile-time literal value            |
+
+### Dependencies
+
+Taxonomy depends on nothing.
+
+### Special Rules
+
+- Value objects and Constants may use all primitive types.
+- Entities, Events, and Errors must use Value objects/Constants instead of primitive types (bool/str is an exception).
+- Constants must be compile-time values.
+- Taxonomy must not contain business rules, infrastructure, or imports from other layers.
+
+---
+
+## 6. Contract Layer
+
+### Purpose
+
+Contract defines the public behavior of the system without exposing implementation. It allows callers to depend on stable interfaces instead of concrete logic.
+
+### Components
+
+| Role      | Meaning                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. |
+| Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               |
+
+### Dependencies
+
+Contract may depend on Taxonomy only.
+
+### Special Rules
+
+- Protocol defines behavior only without implementation.
+- Aggregate hides Capabilities from Surface.
+
+---
+
+## 7. Utility Layer
+
+### Purpose
+
+Utility contains low-level technical mechanics. It exists so that Capabilities can remain clean and expressive.
+
+### Role Naming
+
+Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
+
+parser
+splitter
+trimmer
+slugifier
+sanitizer
+normalizer
+extractor
+replacer
+converter
+counter
+resolver
+detector
+builder
+joiner
+serializer
+deserializer
+encoder
+decoder
+hasher
+generator
+formatter
+comparator
+differ
+matcher
+checker
+calculator
+mapper
+merger
+grouper
+sorter
+deduplicator
+printer
+
+### Dependencies
+
+Utility may depend only on Taxonomy.
+
+### Technical Concern Examples
+
+| Concern                 | Responsibility                                      |
+| ----------------------- | --------------------------------------------------- |
+| File discovery          | Walk directories, detect files, apply ignore        |
+| External tool execution | Run linters, compilers, formatters, analyzers       |
+| Parsing and matching    | Parse text, match patterns, extract structured data |
+| Path normalization      | Normalize paths across platforms                    |
+| System operations       | Handle process or environment mechanics             |
+
+### Special Rules
+
+- Utility must use stateless standalone functions only.
+- Utility must not contain stateful objects, behavior definitions, or contract implementations.
+- Utility must not make business decisions.
+- Utility may perform technical operations if needed.
+- Utility must not implement any contract.
+- Utility role names may expand freely, but the layer must remain technical and standalone.
+- Utility must use stateless standalone functions only.
+
+---
+
+## 8. Capabilities Layer
+
+### Purpose
+
+Capabilities contain the concrete implementation of the system's behavior. This layer encapsulates both **pure business logic** (computations, validations) and **external adaptations** (database access, third-party API calls, infrastructure mechanics). By hiding these implementations behind Contracts, the system keeps its behavior modular, swappable, and fully isolated from orchestration.
+
+### Role Naming
+
+#### Internal Examples
+
+validator
+assessor
+calculator
+resolver
+classifier
+selector
+mapper
+transformer
+policy
+enricher
+evaluator
+analyzer
+scorer
+grader
+ranker
+filter
+checker
+reviewer
+approver
+rejector
+
+#### External Examples
+
+repository
+gateway
+client
+provider
+fetcher
+reader
+writer
+scanner
+executor
+publisher
+subscriber
+adapter
+connector
+uploader
+downloader
+sender
+receiver
+dispatcher
+watcher
+monitor
+
+### Dependencies
+
+- Capabilities may depend on Taxonomy, Contract, and Utility.
+- Capabilities must not depend on or import other Capabilities.
+
+### Concern Examples
+
+Capabilities generally handle two types of concerns:
+
+| Category                      | Concern        | Responsibility                                 |
+| ----------------------------- | -------------- | ---------------------------------------------- |
+| **Business Logic**      | Validation     | Check domain conditions or input correctness   |
+|                               | Computation    | Calculate scores, totals, or derived values    |
+|                               | Transformation | Map, filter, reduce, or reshape data           |
+|                               | Resolution     | Apply rules and decide outcomes                |
+|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+| **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
+|                               | Integration    | Communicate with third-party services or APIs  |
+|                               | Provider       | Generate data from external systems            |
+
+### Special Rules
+
+- **No Inter-Capability Dependency:** Capabilities must never import or call other Capabilities directly. They are standalone execution units.
+- **Pipeline Aggregation:** Multiple Capabilities (e.g., Capability A for data fetching, Capability B for business calculation) are designed to be composed into a sequential pipeline by the **Agent Layer**, not by themselves.
+- **Shared Logic Extraction (DRY):** If multiple Capabilities require the same technical mechanics or functions, that logic must be extracted into a reusable standalone function in the **Utility Layer**. Capabilities must not duplicate technical code (Don't Repeat Yourself).
+- **Contract Implementation:** Capabilities must implement the `protocol_` defined in the Contract Layer.
+- **State Ownership:** Capabilities are the owners of business and technical state within their execution scope.
+- **Utility Delegation:** Capabilities must call Utility standalone functions when low-level technical operations are required, passing their state/data as arguments.
+- **No Orchestration:** Capabilities must not contain flow control (looping across capabilities, branching between capabilities, or error escalation policy). They execute their single responsibility and return a result.
+- **No Domain Definition:** Capabilities must not define domain models (Entities, Value Objects); they only consume and produce Taxonomy.
+
+---
+
+## 9. Agent Layer
+
+### Purpose
+
+Agent coordinates multiple capabilities into executable flows. It controls sequence and movement, not business calculation.
+
+### Allowed Role
+
+The only Agent role is orchestrator.
+
+### Dependencies
+
+Agent may depend only on Taxonomy and Contract.
+
+### Allowed Flow Control
+
+| Flow Type               | Purpose                                |
+| ----------------------- | -------------------------------------- |
+| Sequential execution    | Run steps in order                     |
+| Looping                 | Process multiple items or events       |
+| Branching               | Choose path based on result            |
+| Error handling          | Recover, abort, continue, or escalate  |
+| Timeout or cancellation | Stop long-running or asynchronous work |
+
+### Special Rules
+
+- Agent must depend on Contract, not concrete implementations.
+- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not calculate business results.
+- Agent must not define domain models.
+
+---
+
+## 10. Surface Layer
+
+### Purpose
+
+Surface is the outer boundary of the system. It handles user-facing or external-facing interaction and translates it into architectural actions.
+
+### Allowed Roles
+
+Surface roles include:
+
+- command
+- controller
+- page
+- view
+- component
+- router
+- layout
+- hook
+- store
+- action
+- screen
+
+### Surface Groups
+
+| Group            | Roles                             | Dependencies                 | Rule                                            |
+| ---------------- | --------------------------------- | ---------------------------- | ----------------------------------------------- |
+| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate | May initiate feature behavior through aggregate |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                | Presentation-only, no logic or orchestration    |
+
+### Special Rules
+
+- Smart surfaces must consume Contract Aggregates.
+- Surfaces must not import Capabilities, Utility, or Agent directly.
+- Surfaces must not contain business calculation or orchestration.
+
+---
+
+## 11. Root Layer
+
+### Purpose
+
+Root is the composition layer. It assembles the system by connecting concrete implementations to contracts and starting the application.
+
+### Components
+
+| Role      | Meaning                                                                           |
+| --------- | --------------------------------------------------------------------------------- |
+| Container | Wires one feature by connecting Capabilities to Contract protocols and aggregates |
+| Entry     | Bootstraps the application and composes feature containers                        |
+
+### Dependencies
+
+Root may depend on all layers.
+
+### Special Rules
+
+- Root may instantiate and wire components.
+- Root must not contain business logic.
+- Root must not contain orchestration policy.
+- Root must not contain technical parsing or user interface behavior.
