@@ -56,10 +56,11 @@ pub fn is_infra_cap_orphan(
     let stem = file_stem(fp);
 
     if !fp.is_empty() {
-        let content = utility_file_cache::read_cached(fp);
+        let path = FilePath::new(fp).unwrap_or_default();
+        let content = utility_file_cache::read_cached(&path);
         let mut identifiers: Vec<String> = Vec::new();
-        identifiers.extend(extract_struct_names(&content));
-        identifiers.extend(extract_trait_names(&content));
+        identifiers.extend(extract_struct_names(&content.value()));
+        identifiers.extend(extract_trait_names(&content.value()));
         identifiers.push(stem.clone());
 
         let pascal_stem: String = stem

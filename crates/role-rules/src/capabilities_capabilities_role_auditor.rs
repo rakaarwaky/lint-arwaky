@@ -38,7 +38,7 @@ impl CapabilitiesRoleChecker {
         }
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_helper::detect_language(source);
+        let li = crate::utility_language_detector::detect_language(source);
 
         if li.is_rs {
             self._check_rust_routing(file, content, violations);

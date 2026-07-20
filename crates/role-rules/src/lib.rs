@@ -11,7 +11,6 @@ pub use shared::role_rules::taxonomy_layer_names_vo::{
     layer_taxonomy, LayerNames,
 };
 pub mod agent_role_orchestrator;
-pub mod taxonomy_language_helper;
 pub use agent_role_orchestrator::RoleOrchestrator;
 pub mod capabilities_agent_role_auditor;
 pub use capabilities_agent_role_auditor::AgentRoleChecker;

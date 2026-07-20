@@ -549,7 +549,7 @@ impl ContractRoleChecker {
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::taxonomy_language_helper::detect_language(source);
+        let li = crate::utility_language_detector::detect_language(source);
         let is_rs = li.is_rs;
         let is_py = li.is_py;
         let is_js = li.is_js;

@@ -16,6 +16,7 @@ pub mod taxonomy_filesystem_error;
 pub mod taxonomy_job_id_vo;
 pub mod taxonomy_job_vo;
 pub mod taxonomy_language_vo;
+pub mod taxonomy_language_info_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_line_count_vo;
 pub mod taxonomy_lint_vo;
