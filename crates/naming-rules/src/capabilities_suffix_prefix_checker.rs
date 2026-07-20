@@ -7,6 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -83,7 +84,7 @@ impl SuffixPrefixChecker {
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
+            source: Some(AdapterName::raw(ADAPTER_NAME)),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: DescriptionVO::new(String::new()),
@@ -138,7 +139,7 @@ impl SuffixPrefixChecker {
                     .unwrap_or_else(|| "unknown".to_string());
                 violations.push(Self::make_result(
                     file,
-                    "AES102",
+                    RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixForbidden {
                         layer_name: layer_display.clone(),
                         forbidden_suffix: suf.to_string(),
@@ -171,7 +172,7 @@ impl SuffixPrefixChecker {
                 let suffix_display = suffix.unwrap_or("(none)");
                 violations.push(Self::make_result(
                     file,
-                    "AES102",
+                    RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixMismatch {
                         layer_name: layer_display.clone(),
                         used_suffix: suffix_display.to_string(),

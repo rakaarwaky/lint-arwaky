@@ -3,9 +3,9 @@
 ## BAD: Dataclass Defined in Capabilities
 
 ```rust
-// capabilities_orphan_analyzer.rs
-pub struct OrphanResult {
-    is_orphan: bool,
+// capabilities_<name-capability>.rs
+pub struct <ResultVO> {
+    is_valid: bool,
     reason: String,
 }
 ```
@@ -13,18 +13,18 @@ pub struct OrphanResult {
 Fix: Move to taxonomy.
 
 ```rust
-// shared/orphan_detector/taxonomy_orphan_result_vo.rs
-pub struct OrphanResult {
-    is_orphan: OrphanFlag,
-    reason: OrphanReason,
+// shared/<name-feature>/taxonomy_<name>_result_vo.rs
+pub struct <ResultVO> {
+    is_valid: <Flag>VO,
+    reason: <Reason>VO,
 }
 ```
 
 ## BAD: Taxonomy Importing Layer Code
 
 ```rust
-// taxonomy_orphan_vo.rs
-use crate::capabilities_orphan_analyzer::OrphanAnalyzer; // BAD
+// taxonomy_<name>_vo.rs
+use crate::capabilities_<name-capability>::<NameAnalyzer>; // BAD
 ```
 
 Taxonomy must not import from layers.
@@ -42,15 +42,15 @@ If this knows AES naming conventions, it belongs in capabilities as a helper.
 ## GOOD: Dataclass in Taxonomy + Implementor with DI
 
 ```rust
-// shared/orphan_detector/taxonomy_orphan_analysis_result_vo.rs
-pub struct OrphanAnalysisResult {
-    is_orphan: OrphanFlag,
-    reason: OrphanReason,
+// shared/<name-feature>/taxonomy_<name>_analysis_result_vo.rs
+pub struct <AnalysisResult>VO {
+    is_valid: <Flag>VO,
+    reason: <Reason>VO,
 }
 
-// capabilities_orphan_analyzer.rs
-pub struct CapabilitiesOrphanAnalyzer {
-    extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCachePort>,
+// capabilities_<name-capability>.rs
+pub struct <NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+    store: Arc<dyn I<NameStore>Protocol>,
 }
 ```

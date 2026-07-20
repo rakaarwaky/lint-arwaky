@@ -8,20 +8,20 @@ Bad:
 
 ```python
 @dataclass
-class LintResult:
-    file_path: str
-    line: int
-    severity: str
+class <ResultVO>:
+    target: str
+    position: int
+    level: str
 ```
 
 Good:
 
 ```python
 @dataclass(frozen=True)
-class LintResult:
-    file_path: FilePath
-    line: LineNumber
-    severity: Severity
+class <ResultVO>:
+    target: <Target>VO
+    position: <LineNumber>VO
+    level: <Severity>VO
 ```
 
 ## Primitive Policy
@@ -41,12 +41,12 @@ VOs MUST validate on construction when the domain has invariants.
 
 ```python
 @dataclass(frozen=True)
-class LineNumber:
+class <LineNumber>VO:
     _value: int
 
     def __post_init__(self) -> None:
         if self._value == 0:
-            raise ValueError("LineNumber must be positive")
+            raise ValueError("<LineNumber>VO must be positive")
 ```
 
 ## Optional and Collection Primitives
@@ -55,7 +55,7 @@ Bad:
 
 ```python
 @dataclass(frozen=True)
-class RuleSet:
+class <RuleSet>VO:
     patterns: list[str]
     description: str | None
 ```
@@ -64,7 +64,7 @@ Good:
 
 ```python
 @dataclass(frozen=True)
-class RuleSet:
-    patterns: PatternList
-    description: RuleDescription | None
+class <RuleSet>VO:
+    patterns: <PatternList>VO
+    description: <RuleDescription>VO | None
 ```

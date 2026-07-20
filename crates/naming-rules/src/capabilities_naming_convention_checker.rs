@@ -23,12 +23,56 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
 static NAMING_REGEX: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok());
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
+#[async_trait]
+impl INamingCheckerProtocol for NamingConventionChecker {
+    async fn check_file_naming(
+        &self,
+        analyzer: &dyn INamingAnalyzerProtocol,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            let filename = match f.rsplit('/').next() {
+                Some(name) => name,
+                None => &f_str,
+            };
+            let layer = analyzer.detect_layer(f, root_dir);
+            let def = layer
+                .as_ref()
+                .and_then(|l| analyzer.layer_map().values.get(l));
+            self.check_file_naming(
+                &f_str,
+                filename,
+                &layer,
+                def,
+                analyzer.config(),
+                &mut results.values,
+            );
+        }
+    }
+
+    async fn check_domain_suffixes(
+        &self,
+        _analyzer: &dyn INamingAnalyzerProtocol,
+        _files: &FilePathList,
+        _root_dir: &FilePath,
+        _results: &mut LintResultList,
+    ) {
+        // No-op for naming convention checker
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for NamingConventionChecker {
     fn default() -> Self {
         Self::new()
@@ -76,7 +120,6 @@ impl NamingConventionChecker {
         _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        // AES layer prefixes (must match extract_layer_from_prefix in LayerDetectionAnalyzer)
         const LAYER_PREFIXES: &[&str] = &[
             "taxonomy_",
             "contract_",
@@ -87,18 +130,15 @@ impl NamingConventionChecker {
             "root_",
         ];
 
-        // Step 1: Skip naming verification for barrel files (e.g. __init__.py, mod.rs, index.ts) and entry point files (e.g. main.rs, app.py).
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
             return;
         }
 
-        // Step 2: Handle cases where the layer could not be determined.
         if layer_name.is_none() {
             let stem = get_stem(filename).unwrap_or_default();
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
-            // Check if the file starts with an unrecognized/invalid prefix (not corresponding to a standard AES layer).
             if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
                 let allowed: Vec<String> = LAYER_PREFIXES
                     .iter()
@@ -106,7 +146,7 @@ impl NamingConventionChecker {
                     .collect();
                 violations.push(Self::make_result(
                     file,
-                    "AES102",
+                    RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::UnknownPrefix {
                         prefix: actual_prefix.clone(),
                         allowed,
@@ -123,11 +163,10 @@ impl NamingConventionChecker {
                 return;
             }
 
-            // If the prefix is recognized or is empty, but there is no underscore or does not meet basic naming requirements.
             let stem = get_stem(filename).unwrap_or_default();
             violations.push(Self::make_result(
                 file,
-                "AES101",
+                RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
                     min_words: 3,
                     separator: "_".to_string(),
@@ -144,21 +183,18 @@ impl NamingConventionChecker {
             return;
         }
 
-        // Step 3: Skip validation if the file name is explicitly listed in the layer's exception config.
         if let Some(def) = definition {
             if def.exceptions.values.contains(&filename.to_string()) {
                 return;
             }
         }
 
-        // Step 4: Validate the file stem pattern using a regular expression.
-        // It must consist of lowercase letters and digits separated by underscores (e.g., prefix_concept_suffix).
         let stem = get_stem(filename).unwrap_or_default();
 
         if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
             violations.push(Self::make_result(
                 file,
-                "AES101",
+                RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
                     min_words: 3,
                     separator: "_".to_string(),
@@ -174,52 +210,5 @@ impl NamingConventionChecker {
                 Severity::HIGH,
             ));
         }
-    }
-}
-
-#[async_trait]
-impl INamingCheckerProtocol for NamingConventionChecker {
-    // Implement check_file_naming from INamingCheckerProtocol trait to perform checks on multiple files.
-    async fn check_file_naming(
-        &self,
-        analyzer: &dyn INamingAnalyzerProtocol,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        // Step 1: Iterate over each file path in the checklist.
-        for f in &files.values {
-            let f_str = f.to_string();
-            // Step 2: Extract the raw filename from the path.
-            let filename = match f.rsplit('/').next() {
-                Some(name) => name,
-                None => &f_str,
-            };
-            // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer.detect_layer(f, root_dir);
-            // Step 4: Fetch layer-specific definition properties.
-            let def = layer
-                .as_ref()
-                .and_then(|l| analyzer.layer_map().values.get(l));
-            // Step 5: Execute the naming checker function.
-            self.check_file_naming(
-                &f_str,
-                filename,
-                &layer,
-                def,
-                analyzer.config(),
-                &mut results.values,
-            );
-        }
-    }
-
-    async fn check_domain_suffixes(
-        &self,
-        _analyzer: &dyn INamingAnalyzerProtocol,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for naming convention checker
     }
 }

@@ -3,28 +3,28 @@
 ## BAD: Dataclass Defined in Capabilities
 
 ```python
-# capabilities_orphan_analyzer.py
+# capabilities_<name-capability>.py
 @dataclass
-class OrphanResult:
-    is_orphan: bool
+class <ResultVO>:
+    is_valid: bool
     reason: str
 ```
 
 Fix: Move to taxonomy.
 
 ```python
-# shared/orphan_detector/taxonomy_orphan_result_vo.py
+# shared/<name-feature>/taxonomy_<name>_result_vo.py
 @dataclass(frozen=True)
-class OrphanResult:
-    is_orphan: OrphanFlag
-    reason: OrphanReason
+class <ResultVO>:
+    is_valid: <Flag>VO
+    reason: <Reason>VO
 ```
 
 ## BAD: Taxonomy Importing Layer Code
 
 ```python
-# taxonomy_orphan_vo.py
-from capabilities_orphan_analyzer import OrphanAnalyzer  # BAD
+# taxonomy_<name>_vo.py
+from capabilities_<name-capability> import <NameAnalyzer>  # BAD
 ```
 
 Taxonomy must not import from layers.
@@ -41,14 +41,14 @@ If this knows AES naming conventions, it belongs in capabilities as a helper.
 ## GOOD: Dataclass in Taxonomy + Implementor with DI
 
 ```python
-# shared/orphan_detector/taxonomy_orphan_analysis_result_vo.py
+# shared/<name-feature>/taxonomy_<name>_analysis_result_vo.py
 @dataclass(frozen=True)
-class OrphanAnalysisResult:
-    is_orphan: OrphanFlag
-    reason: OrphanReason
+class <AnalysisResult>VO:
+    is_valid: <Flag>VO
+    reason: <Reason>VO
 
-# capabilities_orphan_analyzer.py
-class CapabilitiesOrphanAnalyzer:
-    def __init__(self, extractor: IOrphanFilenameExtractorProtocol):
-        self._extractor = extractor
+# capabilities_<name-capability>.py
+class <NameCapability>:
+    def __init__(self, collaborator: I<NameCollaborator>Protocol):
+        self._collaborator = collaborator
 ```

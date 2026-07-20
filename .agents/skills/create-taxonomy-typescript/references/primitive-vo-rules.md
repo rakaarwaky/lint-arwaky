@@ -7,20 +7,20 @@ Domain data MUST use VOs, not raw primitives.
 Bad:
 
 ```typescript
-export interface LintResult {
-    filePath: string;
-    line: number;
-    severity: string;
+export interface <ResultVO> {
+    target: string;
+    position: number;
+    level: string;
 }
 ```
 
 Good:
 
 ```typescript
-export interface LintResult {
-    filePath: FilePath;
-    line: LineNumber;
-    severity: Severity;
+export interface <ResultVO> {
+    target: <Target>VO;
+    position: <LineNumber>VO;
+    level: <Severity>VO;
 }
 ```
 
@@ -39,12 +39,12 @@ Prefer VOs for: file paths, symbol names, messages, line numbers, column numbers
 VOs MUST validate on construction when the domain has invariants.
 
 ```typescript
-export class LineNumber {
+export class <LineNumber>VO {
     private readonly _value: number;
 
     constructor(value: number) {
         if (value === 0) {
-            throw new Error('LineNumber must be positive');
+            throw new Error('<LineNumber>VO must be positive');
         }
         this._value = value;
     }
@@ -58,7 +58,7 @@ export class LineNumber {
 Bad:
 
 ```typescript
-export interface RuleSet {
+export interface <RuleSet>VO {
     patterns: string[];
     description: string | null;
 }
@@ -67,8 +67,8 @@ export interface RuleSet {
 Good:
 
 ```typescript
-export interface RuleSet {
-    patterns: PatternList;
-    description: RuleDescription | null;
+export interface <RuleSet>VO {
+    patterns: <PatternList>VO;
+    description: <RuleDescription>VO | null;
 }
 ```

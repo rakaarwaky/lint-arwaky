@@ -7,20 +7,20 @@ Domain data MUST use VOs, not raw owned primitives.
 Bad:
 
 ```rust
-pub struct LintResult {
-    pub file_path: String,
-    pub line: u32,
-    pub severity: String,
+pub struct <ResultVO> {
+    pub target: String,
+    pub position: u32,
+    pub level: String,
 }
 ```
 
 Good:
 
 ```rust
-pub struct LintResult {
-    file_path: FilePath,
-    line: LineNumber,
-    severity: Severity,
+pub struct <ResultVO> {
+    target: <Target>VO,
+    position: <LineNumber>VO,
+    level: <Severity>VO,
 }
 ```
 
@@ -44,10 +44,10 @@ Prefer VOs for: file paths, symbol names, messages, line numbers, column numbers
 VOs MUST validate on construction when the domain has invariants.
 
 ```rust
-impl LineNumber {
+impl <LineNumber>VO {
     pub fn new(value: u32) -> Result<Self, ValidationError> {
         if value == 0 {
-            return Err(ValidationError::positive("LineNumber"));
+            return Err(ValidationError::positive("<LineNumber>VO"));
         }
         Ok(Self(value))
     }
@@ -59,7 +59,7 @@ impl LineNumber {
 Bad:
 
 ```rust
-pub struct RuleSet {
+pub struct <RuleSet>VO {
     pub patterns: Vec<String>,
     pub description: Option<String>,
 }
@@ -68,8 +68,8 @@ pub struct RuleSet {
 Good:
 
 ```rust
-pub struct RuleSet {
-    patterns: PatternList,
-    description: Option<RuleDescription>,
+pub struct <RuleSet>VO {
+    patterns: <PatternList>VO,
+    description: Option<<RuleDescription>VO>,
 }
 ```
