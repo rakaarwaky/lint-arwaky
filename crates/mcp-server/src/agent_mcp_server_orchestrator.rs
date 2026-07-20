@@ -7,8 +7,8 @@
 // All async operations run inside tokio::task::spawn_blocking because the
 // lint pipeline is synchronous (file I/O, regex matching) while the MCP
 // server event loop is async. spawn_blocking bridges the two worlds.
-use crate::contract_mcp_server_aggregate::IMcpServerAggregate;
-use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
+use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
+use shared::mcp_server::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
