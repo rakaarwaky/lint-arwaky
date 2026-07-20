@@ -39,8 +39,8 @@ impl ImportContainer {
         // ILayerDetectionAggregate must be wired here once the shared
         // taxonomy VOs and IFileSystemProtocol trait (deleted earlier) are
         // restored — those deletions currently make the traits unresolved.
-        let parser: Arc<dyn IImportParserProtocol> = Arc::new(UtilityImportParserAdapter::new());
-        let analyzer = Arc::new(UtilityLayerDetectorAdapter::new(config.clone(), source_parser));
+        let parser: Arc<dyn IImportParserProtocol> = Arc::new(crate::capabilities_import_parser_adapter::ImportParserAdapter::new());
+        let analyzer = Arc::new(crate::capabilities_layer_detector_adapter::UtilityLayerDetectorAdapter::new(config.clone(), source_parser));
 
         let mandatory = Arc::new(
             crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(

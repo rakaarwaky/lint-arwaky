@@ -18,18 +18,6 @@ The `project-setup` module is responsible for setup based on the following speci
 
 **ci-templates**: Provide GitHub Actions templates or CI scripts.
 
-### Inputs
-
-- Target path for initialization.
-- Setup parameters (language, framework, template).
-
-### Outputs
-
-- Created template files.
-- Initialization status and error messages when needed.
-
----
-
 ## 3. Success Indicators
 
 The success of the `project-setup` module is measured by:

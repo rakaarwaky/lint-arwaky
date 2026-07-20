@@ -6,7 +6,7 @@ See [README.md](../../../README.md) for TUI usage and [AUDIT.md](AUDIT.md) for c
 
 State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer TUI. Provides real-time AES architecture linting with navigation, file preview, and all CLI commands mapped to keyboard shortcuts. Supports mouse interaction for panel focus, scrolling, and scrollbar navigation.
 
-## 2. Requirements & Scope
+## 2. Scope & Requirements
 
 ### Core Layout
 
@@ -17,17 +17,17 @@ State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer 
 
 ### Navigation
 
-| Key                     | Action                                                      |
-| ----------------------- | ----------------------------------------------------------- |
-| `j` / `Down`            | Move down (file list or preview scroll)                     |
-| `k` / `Up`              | Move up (file list or preview scroll)                       |
-| `h` / `Left`            | Navigate back (parent directory)                            |
-| `l` / `Right` / `Enter` | Open directory or preview file                              |
-| `Home`                  | Jump to top (first entry or scroll to top)                  |
-| `End`                   | Jump to bottom (last entry or scroll to bottom)             |
-| `Tab`                   | Cycle panel focus forward: Tree → FileList → Preview → Tree |
-| `BackTab` (Shift+Tab)   | Cycle panel focus backward                                  |
-| `q` / `Esc`             | Quit                                                        |
+| Key                           | Action                                                         |
+| ----------------------------- | -------------------------------------------------------------- |
+| `j` / `Down`              | Move down (file list or preview scroll)                        |
+| `k` / `Up`                | Move up (file list or preview scroll)                          |
+| `h` / `Left`              | Navigate back (parent directory)                               |
+| `l` / `Right` / `Enter` | Open directory or preview file                                 |
+| `Home`                      | Jump to top (first entry or scroll to top)                     |
+| `End`                       | Jump to bottom (last entry or scroll to bottom)                |
+| `Tab`                       | Cycle panel focus forward: Tree → FileList → Preview → Tree |
+| `BackTab` (Shift+Tab)       | Cycle panel focus backward                                     |
+| `q` / `Esc`               | Quit                                                           |
 
 ### Scroll Behavior
 
@@ -41,8 +41,8 @@ State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer 
 
 ### Lint Actions
 
-| Key      | Action                                 | Scope         |
-| -------- | -------------------------------------- | ------------- |
+| Key        | Action                                  | Scope         |
+| ---------- | --------------------------------------- | ------------- |
 | `c`      | check — AES compliance                 | selected path |
 | `s`      | scan — multi-adapter scan (background) | selected path |
 | `f`      | fix — auto-fix violations              | selected path |
@@ -68,10 +68,10 @@ State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer 
 
 ### Copy Actions
 
-| Key      | Action                                                 |
-| -------- | ------------------------------------------------------ |
-| `y`      | Copy preview content to clipboard                      |
-| `Ctrl+Y` | Copy preview to clipboard + save to `lint-results.txt` |
+| Key        | Action                                                  |
+| ---------- | ------------------------------------------------------- |
+| `y`      | Copy preview content to clipboard                       |
+| `Ctrl+Y` | Copy preview to clipboard + save to`lint-results.txt` |
 
 ### File Display
 
@@ -95,14 +95,6 @@ State-driven 3-panel Ratatui file browser that replaces the flat-menu dialoguer 
 | Left click on scrollbar | Jump to position + focus Preview            |
 | Scroll wheel            | Scroll focused panel (preview or file list) |
 | Left drag on scrollbar  | Scrub through preview content               |
-
-### Infrastructure
-
-- All TUI types (taxonomy, contract) live in `shared/src/tui/`
-- TUI crate contains only capabilities, utility, agent, surfaces, root
-- `init_global_checker()` called before `CodeAnalysisContainer::new()` in container
-- Terminal size tracked via `Resize` events for mouse coordinate mapping
-- Non-blocking scan via background thread with `std::sync::mpsc` channel
 
 ### Out of Scope
 
