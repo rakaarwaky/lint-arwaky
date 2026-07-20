@@ -260,7 +260,3 @@ Business-logic file calls a clearly named utility function. The utility owns the
 ### Data Flow (Surface → Agent → Capability → Utility → Taxonomy)
 
 User presses "c" (check) in TUI. Surface maps key to an internal event via the aggregate. Agent receives the event and delegates to the lint executor. Capabilities runs check logic; when it needs low-level work (file scanning, running a linter) it calls a Utility function. Contract protocol defines the inbound interface the Agent relies on. Utility operates on Taxonomy value objects.
-
-### Migration Note
-
-Earlier AES revisions defined a separate **Infrastructure** layer (peer of Capabilities) reached through **Ports**. Both were retired: Infrastructure was replaced by the **Utility** layer — a standalone layer of free functions (`utility_*` prefix) with no struct, trait, or contract — and Ports were removed. Contract now carries only Protocol and Aggregate. The architecture is a seven-layer model where Utility owns all low-level technical detail and Capabilities owns all business logic.
