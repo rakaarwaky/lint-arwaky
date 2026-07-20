@@ -12,15 +12,59 @@ use shared::import_rules::utility_import_resolver;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
-use std::fs;
-use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ArchImportMandatoryChecker;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+#[async_trait]
+impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
+    fn rule_name(&self) -> Identity { Identity::new("AES202") }
+
+    async fn run_mandatory_imports(
+        &self,
+        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            let basename = f.basename();
+
+            let mut is_exception = false;
+            for r in &config.rules {
+                if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename) {
+                    is_exception = true;
+                    break;
+                }
+            }
+            if is_exception { continue; }
+
+            let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+            let filename = utility_layer_detector::extract_filename(&f_str);
+            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
+                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
+                let layer_name = LayerNameVO::new(specialized.as_str());
+                if let Some(def) = layer_map.values.get(&layer_name) {
+                    self._check_mandatory_imports(&f_str, def, &mut results.values);
+                }
+            }
+            self._check_scope_mandatory_imports(&f_str, config, &mut results.values);
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl Default for ArchImportMandatoryChecker {
+    fn default() -> Self { Self }
+}
 
 impl ArchImportMandatoryChecker {
     pub fn new() -> Self { Self }
 
-    pub fn check_mandatory_imports(
+    fn _check_mandatory_imports(
         &self,
         file: &str,
         definition: &LayerDefinition,
@@ -32,7 +76,7 @@ impl ArchImportMandatoryChecker {
         if basename == "__init__.py" { return; }
         if definition.exceptions.values.contains(&basename.to_string()) { return; }
 
-        let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match std::fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
         let file_content = FileContentVO::new(content);
         let import_lines = utility_import_resolver::parse_import_lines_helper(file_content.value());
         let stem = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
@@ -59,7 +103,7 @@ impl ArchImportMandatoryChecker {
         }
     }
 
-    pub fn check_scope_mandatory_imports(
+    fn _check_scope_mandatory_imports(
         &self,
         file: &str,
         config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
@@ -71,7 +115,7 @@ impl ArchImportMandatoryChecker {
         let stem = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
+        let content = match std::fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
 
         for rule in &config.rules {
@@ -103,45 +147,6 @@ impl ArchImportMandatoryChecker {
                     ));
                 }
             }
-        }
-    }
-}
-
-#[async_trait]
-impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
-    fn rule_name(&self) -> Identity { Identity::new("AES202") }
-
-    async fn run_mandatory_imports(
-        &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        for f in &files.values {
-            let f_str = f.to_string();
-            let basename = f.basename();
-
-            let mut is_exception = false;
-            for r in &config.rules {
-                if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename) {
-                    is_exception = true;
-                    break;
-                }
-            }
-            if is_exception { continue; }
-
-            let layer_keys: Vec<String> = layer_map.keys().map(|k| k.to_string()).collect();
-            let filename = utility_layer_detector::extract_filename(&f_str);
-            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
-                let layer_name = LayerNameVO::new(specialized.as_str());
-                if let Some(def) = layer_map.values.get(&layer_name) {
-                    self.check_mandatory_imports(&f_str, def, &mut results.values);
-                }
-            }
-            self.check_scope_mandatory_imports(&f_str, config, &mut results.values);
         }
     }
 }

@@ -1,5 +1,6 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -13,12 +14,44 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
 use std::fs;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct DependencyCycleAnalyzer;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+#[async_trait::async_trait]
+impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol for DependencyCycleAnalyzer {
+    fn scan(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO, files: &[FilePath], root_dir: &FilePath) -> Vec<LintResult> {
+        let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
+        let root_str = root_dir.to_string();
+        self._scan(config, layer_map, &file_strs, &root_str)
+    }
+
+    async fn check_cycles(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO,
+        files: &shared::common::taxonomy_paths_vo::FilePathList, root_dir: &FilePath, results: &mut LintResultList,
+    ) {
+        let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string());
+        results.values.extend(cycle_violations);
+    }
+
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<shared::taxonomy_name_vo::SymbolName> {
+        utility_cycle_detector::detect_cycle_edges(edges)
+    }
+
+    fn normalize_to_layer(&self, name: &str) -> shared::taxonomy_layer_vo::LayerNameVO {
+        shared::taxonomy_layer_vo::LayerNameVO::new(name.split('_').next().unwrap_or(name))
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl Default for DependencyCycleAnalyzer {
+    fn default() -> Self { Self }
+}
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self { Self }
 
-    pub fn scan(
+    fn _scan(
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
@@ -27,7 +60,7 @@ impl DependencyCycleAnalyzer {
     ) -> Vec<LintResult> {
         if !config.enabled.value { return vec![]; }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
-        let layer_keys: Vec<String> = layer_map.keys().map(|k| k.to_string()).collect();
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let mut edges = Vec::new();
         let mut file_by_layer: HashMap<String, String> = HashMap::new();
 
@@ -64,7 +97,7 @@ impl DependencyCycleAnalyzer {
                 let module_path = if is_crate_import {
                     module_value.strip_prefix("crate::").or_else(|| module_value.strip_prefix("lint_arwaky::")).unwrap_or(module_value)
                 } else { module_value };
-                let module_layer_names: Vec<String> = layer_map.keys().map(|k| k.to_string()).collect();
+                let module_layer_names: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
                 if let Some(target_layer) = utility_layer_detector::detect_module_layer(module_path, &module_layer_names) {
                     let target_layer_str = match target_layer.split('(').next() { Some(p) => p.to_string(), None => target_layer };
                     if target_layer_str != file_layer {
@@ -92,29 +125,5 @@ impl DependencyCycleAnalyzer {
                 }.to_string(),
             )
         }).collect()
-    }
-}
-
-impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol for DependencyCycleAnalyzer {
-    fn scan(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO, files: &[FilePath], root_dir: &FilePath) -> Vec<LintResult> {
-        let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
-        let root_str = root_dir.to_string();
-        self.scan(config, layer_map, &file_strs, &root_str)
-    }
-
-    async fn check_cycles(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO,
-        files: &shared::common::taxonomy_paths_vo::FilePathList, root_dir: &FilePath, results: &mut LintResultList,
-    ) {
-        let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self.scan(config, layer_map, &file_strs, &root_dir.to_string());
-        results.values.extend(cycle_violations);
-    }
-
-    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<shared::taxonomy_name_vo::SymbolName> {
-        utility_cycle_detector::detect_cycle_edges(edges)
-    }
-
-    fn normalize_to_layer(&self, name: &str) -> shared::taxonomy_layer_vo::LayerNameVO {
-        shared::taxonomy_layer_vo::LayerNameVO::new(name.split('_').next().unwrap_or(name))
     }
 }

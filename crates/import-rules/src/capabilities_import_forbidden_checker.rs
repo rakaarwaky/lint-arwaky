@@ -13,12 +13,56 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::fs;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ArchImportForbiddenChecker;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+#[async_trait]
+impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
+    fn rule_name(&self) -> Identity { Identity::new("AES201") }
+
+    async fn check_forbidden_imports(
+        &self,
+        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        files: &FilePathList,
+        root_dir: &FilePath,
+        results: &mut LintResultList,
+    ) {
+        for f in &files.values {
+            let f_str = f.to_string();
+            let basename = f.basename();
+            let mut is_exception = false;
+            for r in &config.rules {
+                if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename) {
+                    is_exception = true; break;
+                }
+            }
+            if is_exception { continue; }
+
+            let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+            let filename = utility_layer_detector::extract_filename(&f_str);
+            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
+                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
+                let layer_name = LayerNameVO::new(specialized.as_str());
+                if let Some(def) = layer_map.values.get(&layer_name) {
+                    self._check_forbidden_imports(&f_str, &specialized, def, &mut results.values);
+                }
+            }
+            self._check_scope_forbidden_imports(&f_str, config, &mut results.values);
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl Default for ArchImportForbiddenChecker {
+    fn default() -> Self { Self }
+}
 
 impl ArchImportForbiddenChecker {
     pub fn new() -> Self { Self }
 
-    pub fn check_forbidden_imports(
+    fn _check_forbidden_imports(
         &self, file: &str, layer_name: &str, definition: &LayerDefinition,
         violations: &mut Vec<LintResult>,
     ) {
@@ -31,7 +75,7 @@ impl ArchImportForbiddenChecker {
         let forbidden_list: Vec<String> = if !definition.forbidden.values.is_empty() {
             definition.forbidden.values.clone()
         } else {
-            vec!["agent".into(), "infrastructure".into(), "capabilities".into()]
+            vec!["agent".into(), "capabilities".into()]
         };
 
         let content = match fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
@@ -71,7 +115,7 @@ impl ArchImportForbiddenChecker {
         }
     }
 
-    pub fn check_scope_forbidden_imports(
+    fn _check_scope_forbidden_imports(
         &self, file: &str, config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
@@ -124,43 +168,6 @@ impl ArchImportForbiddenChecker {
                     }
                 }
             }
-        }
-    }
-}
-
-#[async_trait]
-impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
-    fn rule_name(&self) -> Identity { Identity::new("AES201") }
-
-    async fn check_forbidden_imports(
-        &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
-        files: &FilePathList,
-        root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
-        for f in &files.values {
-            let f_str = f.to_string();
-            let basename = f.basename();
-            let mut is_exception = false;
-            for r in &config.rules {
-                if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename) {
-                    is_exception = true; break;
-                }
-            }
-            if is_exception { continue; }
-
-            let layer_keys: Vec<String> = layer_map.keys().map(|k| k.to_string()).collect();
-            let filename = utility_layer_detector::extract_filename(&f_str);
-            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(&base_layer, &f_str, &layer_keys);
-                let layer_name = LayerNameVO::new(specialized.as_str());
-                if let Some(def) = layer_map.values.get(&layer_name) {
-                    self.check_forbidden_imports(&f_str, &specialized, def, &mut results.values);
-                }
-            }
-            self.check_scope_forbidden_imports(&f_str, config, &mut results.values);
         }
     }
 }
