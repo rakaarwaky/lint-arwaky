@@ -10,13 +10,6 @@ The primary purpose of the `maintenance` module is to provide maintenance operat
 
 The `maintenance` module is responsible for maintenance operations based on the following specifications:
 
-### Component Specifications
-
-- **MaintenanceCommandsOrchestrator**: Coordinates all maintenance operations.
-- **MaintenanceChecker**: Provides capabilities for dependency updates, audits, and drift detection.
-
-### Commands
-
 - **dep-update**: Update Rust/Python/JS dependencies across the workspace.
 - **audit**: Run security audits using cargo-audit, bandit, or external tools.
 - **drift-check**: Check drift between code and defined AES rules.

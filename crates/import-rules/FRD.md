@@ -10,8 +10,6 @@ The primary goal of the `import-rules` module is to enforce correct structural b
 
 The `import-rules` module analyzes import paths and validates compliance using the following specifications:
 
-### Scope Specifications
-
 - **AES201: Layer Dependency Violation (Unidirectional Flow)**
 
   - **Requirement**: Restricts imports based on the layer hierarchy. Lower layers (e.g., `taxonomy_`, `contract_`) must never import higher layers (e.g., `capabilities_`, `utility_`, `agent_`, `surface_`).

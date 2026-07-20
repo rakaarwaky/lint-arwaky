@@ -10,8 +10,6 @@ The goal of the `orphan-detector` module is to identify dead, unused, or unreach
 
 The `orphan-detector` module scans all source code files and evaluates reachability based on the following specifications:
 
-### Rules Specifications
-
 - **AES501: Taxonomy Orphan Checker**
 
   - **Requirement**: Taxonomy layer files (e.g. `taxonomy_`) must be reachable from contracts, capabilities, or orchestrators.

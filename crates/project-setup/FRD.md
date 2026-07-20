@@ -10,18 +10,13 @@ The `project-setup` module provides scaffolding facilities and doctor checks for
 
 The `project-setup` module is responsible for setup based on the following specifications:
 
-### Component Specifications
+**init**: Create AES directory structure (taxonomy, contract, utility, capabilities, agent, surface, root).
 
-- **SetupManagementOrchestrator**: Coordinates the project initialization process.
-- **SetupManagementProcessor**: Processes templates and files that need to be created.
-- **SetupInstallerAdapter**: Adapter for filesystem operations and template installation.
+**doctor**: Check whether a project is ready for lint_arwaky.
 
-### Features
+**mcp-config**: Create MCP configuration for AI integration.
 
-- **init**: Create AES directory structure (taxonomy, contract, utility, capabilities, agent, surface, root).
-- **doctor**: Check whether a project is ready for lint_arwaky.
-- **mcp-config**: Create MCP configuration for AI integration.
-- **ci-templates**: Provide GitHub Actions templates or CI scripts.
+**ci-templates**: Provide GitHub Actions templates or CI scripts.
 
 ### Inputs
 
