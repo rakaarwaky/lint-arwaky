@@ -95,6 +95,7 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
 - **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
+- **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.rs` in shared. Capabilities must not contain magic constants.
 
 ## Definition of Done
 
@@ -107,7 +108,8 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 7. Value/configuration fields use shared VOs.
 8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
-10. `cargo check -p <crate-name>` passes.
+10. Reusable constants extracted to `taxonomy_<domain>_constant.rs` in shared.
+11. `cargo check -p <crate-name>` passes.
 
 ## References
 
@@ -198,5 +200,5 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 - Mixing Block 2 and Block 3 responsibilities.
 - Flow control across capabilities / error-escalation policy (orchestration).
 - Silent error swallowing with `unwrap_or_default()`.
-- Magic constants in capabilities logic.
+- Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.rs`).
 - Not delegating low-level technical operations to Utility.

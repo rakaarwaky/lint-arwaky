@@ -95,6 +95,7 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
 - **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
+- **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.ts` in shared. Capabilities must not contain magic constants.
 
 ## Definition of Done
 
@@ -107,7 +108,8 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 7. Value/configuration fields use shared VOs.
 8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
-10. `npx tsc --noEmit` passes.
+10. Reusable constants extracted to `taxonomy_<domain>_constant.ts` in shared.
+11. `npx tsc --noEmit` passes.
 
 ## References
 
@@ -196,5 +198,5 @@ grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
 - Mixing Block 2 and Block 3 responsibilities.
 - Flow control across capabilities / error-escalation policy (orchestration).
 - Silent error swallowing with `?? ''` or `|| 0`.
-- Magic constants in capabilities logic.
+- Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.ts`).
 - Not delegating low-level technical operations to Utility.

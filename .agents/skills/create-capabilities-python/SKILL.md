@@ -95,6 +95,7 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
 - **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
+- **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.py` in shared. Capabilities must not contain magic constants.
 
 ## Definition of Done
 
@@ -107,7 +108,8 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 7. Value/configuration fields use shared VOs.
 8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
-10. `python -c "import <module>"` passes.
+10. Reusable constants extracted to `taxonomy_<domain>_constant.py` in shared.
+11. `python -c "import <module>"` passes.
 
 ## References
 
@@ -196,5 +198,5 @@ grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
 - Mixing Block 2 and Block 3 responsibilities.
 - Flow control across capabilities / error-escalation policy (orchestration).
 - Silent error swallowing with `or ""` or `or 0`.
-- Magic constants in capabilities logic.
+- Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.py`).
 - Not delegating low-level technical operations to Utility.
