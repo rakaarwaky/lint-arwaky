@@ -1,4 +1,4 @@
-// PURPOSE: IExternalLintLanguageDetectorPort — port for detecting languages in a project directory
+// PURPOSE: IExternalLintLanguageDetectorPort — protocol for detecting languages in a project directory
 use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
@@ -10,7 +10,7 @@ pub struct DetectedLanguages {
 }
 
 #[async_trait]
-pub trait IExternalLintLanguageDetectorPort: Send + Sync {
+pub trait IExternalLintLanguageDetectorProtocol: Send + Sync {
     /// Detect which languages are present at the given path.
     async fn detect_languages(&self, path: &FilePath) -> DetectedLanguages;
 }

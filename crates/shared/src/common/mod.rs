@@ -22,14 +22,14 @@ pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_value_object_utility;
 
 // from file-system/ (foundational, multi-feature)
-pub mod contract_system_port;
+pub mod contract_system_protocol;
 pub mod taxonomy_filesystem_error;
 
 // from source-parsing/ (foundational, multi-feature)
-pub mod contract_language_detector_port;
-pub mod contract_parser_port;
-pub mod contract_path_normalization_port;
-pub mod contract_scanner_provider_port;
+pub mod contract_language_detector_protocol;
+pub mod contract_parser_protocol;
+pub mod contract_path_normalization_protocol;
+pub mod contract_scanner_provider_protocol;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_file_utility;
 pub mod taxonomy_language_detector_utility;

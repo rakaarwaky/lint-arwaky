@@ -1,4 +1,4 @@
-// PURPOSE: IContractRoleChecker — port trait for AES402: contract primitive type audits
+// PURPOSE: IContractRoleChecker — protocol trait for AES402: contract primitive type audits
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_source_vo::SourceContentVO;

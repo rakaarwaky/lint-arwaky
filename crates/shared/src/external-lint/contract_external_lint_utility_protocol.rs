@@ -9,7 +9,7 @@ use crate::common::taxonomy_response_data_vo::ResponseData;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait IExternalLintUtilityPort: Send + Sync {
+pub trait IExternalLintUtilityProtocol: Send + Sync {
     fn canonicalize_path(&self, path_str: &str) -> FilePath;
     fn default_working_dir(&self, path: &FilePath) -> FilePath;
     fn has_python_files(&self, path: &FilePath) -> bool;

@@ -43,7 +43,7 @@ pub trait ISetupManagementProtocol: Send + Sync {
 pub type InstallPackagesResult = Result<(), SetupError>;
 
 #[async_trait::async_trait]
-pub trait ISetupInstallerPort: Send + Sync {
+pub trait ISetupInstallerProtocol: Send + Sync {
     async fn install_python_packages(&self, packages: &[String]) -> InstallPackagesResult;
     async fn install_npm_packages(&self, packages: &[String], sudo: bool) -> InstallPackagesResult;
 }

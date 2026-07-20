@@ -1,4 +1,4 @@
-// PURPOSE: IUnusedImportProtocol — unified port trait for AES203: detect unused imports across Rust, Python, JavaScript
+// PURPOSE: IUnusedImportProtocol — unified protocol trait for AES203: detect unused imports across Rust, Python, JavaScript
 // AES402: All primitive types in this contract have been replaced with taxonomy VOs.
 //   * `Vec<String>` returns → `Vec<LintMessage>` (semantic messages, not raw strings)
 //   * `&str file_path` params → kept as `&str` (idiomatic borrow, AES402 allows)

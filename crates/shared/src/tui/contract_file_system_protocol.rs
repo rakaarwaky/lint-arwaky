@@ -4,7 +4,7 @@ use crate::common::taxonomy_line_count_vo::LineCount;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::tui::taxonomy_file_entry_vo::FileEntry;
 
-pub trait IFileSystemPort: Send + Sync {
+pub trait IFileSystemProtocol: Send + Sync {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry>;
     fn read_file_preview(&self, path: &FilePath, max_lines: &LineCount) -> DisplayContent;
     fn is_valid_directory(&self, path: &FilePath) -> bool;

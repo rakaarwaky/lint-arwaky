@@ -1,5 +1,5 @@
 // code-analysis — taxonomy and contract types
-pub mod contract_adapter_port;
+pub mod contract_adapter_protocol;
 pub mod contract_bypass_checker_protocol;
 pub mod contract_class_protocol;
 pub mod contract_code_analysis_aggregate;

@@ -1,4 +1,4 @@
-// PURPOSE: ITaxonomyRoleChecker — port trait for AES401: taxonomy role audits (VO, entity, error, event, constant)
+// PURPOSE: ITaxonomyRoleChecker — protocol trait for AES401: taxonomy role audits (VO, entity, error, event, constant)
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_source_vo::SourceContentVO;
 

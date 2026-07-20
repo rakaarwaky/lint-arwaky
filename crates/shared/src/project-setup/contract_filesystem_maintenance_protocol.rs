@@ -1,4 +1,4 @@
-// PURPOSE: IFileSystemMaintenancePort — port trait for filesystem operations needed by maintenance
+// PURPOSE: IFileSystemMaintenancePort — protocol trait for filesystem operations needed by maintenance
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
@@ -8,7 +8,7 @@ pub struct FileEntry {
 }
 
 #[async_trait]
-pub trait IFileSystemMaintenancePort: Send + Sync {
+pub trait IFileSystemMaintenanceProtocol: Send + Sync {
     async fn read_file(&self, path: &FilePath) -> Result<String, String>;
     async fn write_file(&self, path: &FilePath, content: &str) -> Result<(), String>;
     async fn create_dir_all(&self, path: &FilePath) -> Result<(), String>;

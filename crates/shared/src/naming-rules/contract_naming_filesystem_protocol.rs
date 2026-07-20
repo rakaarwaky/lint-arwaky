@@ -5,6 +5,6 @@ use crate::common::taxonomy_paths_vo::FilePathList;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait INamingFileSystemPort: Send + Sync {
+pub trait INamingFileSystemProtocol: Send + Sync {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList;
 }

@@ -65,7 +65,7 @@ type _ProjectLanguageRef = ProjectLanguage;
 type _AdapterErrorRef = AdapterError;
 
 #[async_trait::async_trait]
-pub trait ICommandExecutorPort: Send + Sync {
+pub trait ICommandExecutorProtocol: Send + Sync {
     /// Execute a command and return the response.
     async fn execute_command(
         &self,

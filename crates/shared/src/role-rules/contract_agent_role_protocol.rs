@@ -1,4 +1,4 @@
-// PURPOSE: IAgentRoleChecker — port trait for AES405: agent role audits (container, orchestrator, lifecycle, file size, any type)
+// PURPOSE: IAgentRoleChecker — protocol trait for AES405: agent role audits (container, orchestrator, lifecycle, file size, any type)
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_source_vo::SourceContentVO;
 

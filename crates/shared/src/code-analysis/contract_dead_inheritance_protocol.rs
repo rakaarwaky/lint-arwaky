@@ -1,4 +1,4 @@
-// PURPOSE: IDeadInheritanceProtocol — port trait for AES303 sub-check 2: detect empty struct/impl blocks
+// PURPOSE: IDeadInheritanceProtocol — protocol trait for AES303 sub-check 2: detect empty struct/impl blocks
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 
 pub trait IDeadInheritanceProtocol: Send + Sync {

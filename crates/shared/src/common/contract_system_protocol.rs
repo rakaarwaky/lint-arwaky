@@ -1,4 +1,4 @@
-// PURPOSE: IFileSystemPort — port trait for filesystem operations (read, write, exists, glob, walk)
+// PURPOSE: IFileSystemPort — protocol trait for filesystem operations (read, write, exists, glob, walk)
 
 use async_trait::async_trait;
 
@@ -14,7 +14,7 @@ use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
 /// Abstract interface for file system operations.
 /// Implemented by Infrastructure (e.g., OSFileSystemAdapter).
 #[async_trait]
-pub trait IFileSystemPort: Send + Sync {
+pub trait IFileSystemProtocol: Send + Sync {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList;
     async fn is_directory(&self, path: &FilePath) -> SuccessStatus;
     async fn is_file(&self, path: &FilePath) -> SuccessStatus;

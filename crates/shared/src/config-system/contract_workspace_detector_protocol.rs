@@ -1,4 +1,4 @@
-// PURPOSE: IWorkspaceDetectorPort — port trait for detecting workspace type from directory structure
+// PURPOSE: IWorkspaceDetectorPort — protocol trait for detecting workspace type from directory structure
 use crate::common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -26,7 +26,7 @@ impl std::fmt::Display for WorkspaceType {
     }
 }
 
-pub trait IWorkspaceDetectorPort: Send + Sync {
+pub trait IWorkspaceDetectorProtocol: Send + Sync {
     /// Detect workspace type by checking folder structure and config files.
     fn detect(&self, path: &FilePath) -> WorkspaceType;
 
