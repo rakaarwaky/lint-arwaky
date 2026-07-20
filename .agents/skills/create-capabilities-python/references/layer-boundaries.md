@@ -10,7 +10,7 @@
 | Protocol/ABC implementation                  |                                                       |
 | External adaptation (I/O, API calls, DB)     |                                                       |
 | Private helpers supporting the impl class    |                                                       |
-| Calling injected port/protocol traits        |                                                       |
+| Calling injected protocol traits             |                                                       |
 | Calling Utility standalone functions         |                                                       |
 
 ## Allowed Dependencies (ARCHITECTURE §8)

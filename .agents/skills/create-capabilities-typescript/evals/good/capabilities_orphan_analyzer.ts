@@ -1,5 +1,5 @@
 import { OrphanAnalysisPolicy } from '../shared/orphan_detector/taxonomy_orphan_analysis_policy_vo';
-import { IOrphanFileCachePort } from '../shared/orphan_detector/contract_orphan_file_cache_port';
+import { IOrphanFileCacheProtocol } from '../shared/orphan_detector/contract_orphan_file_cache_protocol';
 import { IOrphanFilenameExtractorProtocol } from '../shared/orphan_detector/contract_orphan_filename_extractor_protocol';
 import { ICapabilitiesOrphanProtocol } from '../shared/orphan_detector/contract_capabilities_orphan_protocol';
 
@@ -7,7 +7,7 @@ import { ICapabilitiesOrphanProtocol } from '../shared/orphan_detector/contract_
 export class CapabilitiesOrphanAnalyzer implements ICapabilitiesOrphanProtocol {
     constructor(
         private readonly extractor: IOrphanFilenameExtractorProtocol,
-        private readonly cache: IOrphanFileCachePort,
+        private readonly cache: IOrphanFileCacheProtocol,
         private readonly policy: OrphanAnalysisPolicy,
     ) {}
 

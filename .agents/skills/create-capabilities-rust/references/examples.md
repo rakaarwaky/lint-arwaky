@@ -114,13 +114,13 @@ Fix: Move `Default` to Block 3.
 use std::sync::Arc;
 
 use shared::orphan_detector::taxonomy_orphan_analysis_policy_vo::OrphanAnalysisPolicy;
-use shared::orphan_detector::taxonomy_orphan_file_cache_port::IOrphanFileCachePort;
+use shared::orphan_detector::taxonomy_orphan_file_cache_protocol::IOrphanFileCacheProtocol;
 use shared::orphan_detector::taxonomy_orphan_filename_extractor_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_capabilities_orphan_protocol::ICapabilitiesOrphanProtocol;
 
 pub struct CapabilitiesOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCachePort>,
+    cache: Arc<dyn IOrphanFileCacheProtocol>,
     policy: OrphanAnalysisPolicy,
 }
 

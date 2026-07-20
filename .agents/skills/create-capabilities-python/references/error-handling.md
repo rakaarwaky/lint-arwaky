@@ -47,7 +47,7 @@ Good:
 
 ```python
 # utility_source_reader.py
-class FileSystemSourceReader(ISourceReaderPort):
+class FileSystemSourceReader(ISourceReaderProtocol):
     def read(self, path: FilePath) -> Result[SourceContentVO, SourceReadError]:
         try:
             raw = path.value().read_text()

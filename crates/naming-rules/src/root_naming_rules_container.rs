@@ -3,7 +3,6 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
-use shared::naming_rules::contract_naming_filesystem_protocol::INamingFileSystemProtocol;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
@@ -13,7 +12,6 @@ pub struct NamingContainer {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
     analyzer: Arc<dyn INamingAnalyzerProtocol>,
-    fs: Arc<dyn INamingFileSystemProtocol>,
 }
 
 impl NamingContainer {
@@ -22,13 +20,10 @@ impl NamingContainer {
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
-        let fs: Arc<dyn INamingFileSystemProtocol> =
-            Arc::new(crate::capabilities_filesystem_adapter::OSFileSystemAdapter::new());
         Self {
             naming_convention_checker,
             suffix_prefix_checker,
             analyzer,
-            fs,
         }
     }
 
@@ -53,7 +48,6 @@ impl NamingContainer {
             self.naming_convention_checker.clone(),
             self.suffix_prefix_checker.clone(),
             self.analyzer.clone(),
-            self.fs.clone(),
         ))
     }
 }

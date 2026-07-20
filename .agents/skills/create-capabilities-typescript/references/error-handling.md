@@ -49,7 +49,7 @@ Good:
 
 ```typescript
 // utility_source_reader.ts
-export class FileSystemSourceReader implements ISourceReaderPort {
+export class FileSystemSourceReader implements ISourceReaderProtocol {
     read(path: FilePath): Result<SourceContentVO, SourceReadError> {
         try {
             const raw = fs.readFileSync(path.value(), 'utf-8');

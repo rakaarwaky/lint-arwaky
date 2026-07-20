@@ -53,7 +53,7 @@ Good:
 
 ```rust
 // utility_source_reader.rs
-impl ISourceReaderPort for FileSystemSourceReader {
+impl ISourceReaderProtocol for FileSystemSourceReader {
     fn read(&self, path: &FilePath) -> Result<SourceContentVO, SourceReadError> {
         let raw = std::fs::read_to_string(path.value())
             .map_err(SourceReadError::Io)?;

@@ -17,7 +17,7 @@ Or with dependencies:
 ```rust
 pub struct CapabilitiesOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCachePort>,
+    cache: Arc<dyn IOrphanFileCacheProtocol>,
     policy: OrphanAnalysisPolicy,
 }
 ```

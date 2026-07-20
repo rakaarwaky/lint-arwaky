@@ -1,7 +1,7 @@
 from shared.orphan_detector.taxonomy_orphan_analysis_policy_vo import (
     OrphanAnalysisPolicy,
 )
-from shared.orphan_detector.contract_orphan_file_cache_port import IOrphanFileCachePort
+from shared.orphan_detector.contract_orphan_file_cache_protocol import IOrphanFileCacheProtocol
 from shared.orphan_detector.contract_orphan_filename_extractor_protocol import (
     IOrphanFilenameExtractorProtocol,
 )
@@ -15,7 +15,7 @@ class CapabilitiesOrphanAnalyzer(ICapabilitiesOrphanProtocol):
     def __init__(
         self,
         extractor: IOrphanFilenameExtractorProtocol,
-        cache: IOrphanFileCachePort,
+        cache: IOrphanFileCacheProtocol,
         policy: OrphanAnalysisPolicy,
     ):
         self._extractor = extractor

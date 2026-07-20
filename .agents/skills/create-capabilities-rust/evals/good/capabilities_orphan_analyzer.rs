@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use shared::orphan_detector::taxonomy_orphan_analysis_policy_vo::OrphanAnalysisPolicy;
-use shared::orphan_detector::taxonomy_orphan_file_cache_port::IOrphanFileCachePort;
+use shared::orphan_detector::taxonomy_orphan_file_cache_protocol::IOrphanFileCacheProtocol;
 use shared::orphan_detector::taxonomy_orphan_filename_extractor_protocol::IOrphanFilenameExtractorProtocol;
 use shared::orphan_detector::taxonomy_capabilities_orphan_protocol::ICapabilitiesOrphanProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesOrphanAnalyzer {
     extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-    cache: Arc<dyn IOrphanFileCachePort>,
+    cache: Arc<dyn IOrphanFileCacheProtocol>,
     policy: OrphanAnalysisPolicy,
 }
 
@@ -25,7 +25,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 impl CapabilitiesOrphanAnalyzer {
     pub fn new(
         extractor: Arc<dyn IOrphanFilenameExtractorProtocol>,
-        cache: Arc<dyn IOrphanFileCachePort>,
+        cache: Arc<dyn IOrphanFileCacheProtocol>,
         policy: OrphanAnalysisPolicy,
     ) -> Self {
         Self { extractor, cache, policy }
