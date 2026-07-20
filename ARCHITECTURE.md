@@ -2,7 +2,7 @@
 
 See [AGENTS.md](../AGENTS.md) for workspace conventions and [RULES_AES.md](../.agents/rules/RULES_AES.md) for the full rule catalog.
 
-The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations. The layer set is: Taxonomy, Contract, Utility, Capabilities, Agent, Surface, Root (see below).
+The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations.
 
 ## Terminology
 
@@ -22,15 +22,11 @@ AES supports multiple languages (Rust, TypeScript, Python) to maintain a single 
 
 The codebase is divided into distinct horizontal and vertical boundaries. Layers communicate using downward-only dependency paths to prevent coupling and circular dependencies.
 
-### 2. Utility Replaces Infrastructure
-
-The old Infrastructure layer is gone. Its technical responsibilities now live in the **Utility** layer — a standalone layer of free functions (no `struct`/`trait`/`contract`), with its own `utility_` file prefix. Capabilities stays clean by calling utility functions by name.
-
-### 3. Business Logic Stays Clean
+### 2. Business Logic Stays Clean
 
 Capabilities (business logic) must NOT contain low-level detail — algorithms, regex, array manipulation, third-party library wiring. It calls Utility functions by clear, intention-revealing names. The complexity lives in Utility; the readability lives in Capabilities.
 
-### 4. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix)
+### 3. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix)
 
 AES enforces a **File Naming Convention**: `[layer]_[concept]_[suffix]` or `[layer]_[concept1]_[concept2]_[suffix]` if needed
 
@@ -60,7 +56,7 @@ The dependency hierarchy flows downward as follows:
 
 1. **Taxonomy** — pure domain models (VO/entity/error/constant). Foundation, no imports.
 2. **Contract** — abstract inbound interfaces (protocol) and facades (aggregate). No ports. Imports Taxonomy only.
-3. **Utility** — standalone technical implementation (replaces old Infrastructure). Free functions, no struct/trait/contract. Imports Taxonomy only.
+3. **Utility** — standalone technical implementation. Free functions, no struct/trait/contract. Imports Taxonomy only.
 4. **Capabilities** — business logic / use-cases / computations. Imports Contract + Utility + Taxonomy.
 5. **Agent** — orchestration / pipeline flow control. Imports Contract + Taxonomy.
 6. **Surface** — user-facing entry points (CLI, TUI, MCP, API). Imports Contract-aggregate + Taxonomy.
@@ -105,9 +101,9 @@ Interface definitions — _what_ can be done without _how_. **Ports are removed.
 - **Protocol (`_protocol`)**: Inbound interface implemented by Capabilities. Defines the behavior a caller (Agent/Surface) can rely on, without exposing implementation.
 - **Aggregate (`_aggregate`)**: Composition facade. Exposes a typed entry point so Surfaces do not import Capabilities directly
 
-### 3. Utility (`utility_` prefix) — replaces old Infrastructure
+### 3. Utility (`utility_` prefix)
 
-Standalone technical implementation. This layer holds the hard, low-level detail that the old Infrastructure layer used to own — but as free functions, not adapters behind ports.
+Standalone technical implementation. This layer holds the hard, low-level detail as free functions.
 
 **Hard rules for Utility:**
 
