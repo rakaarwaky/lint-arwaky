@@ -22,11 +22,7 @@ AES supports multiple languages (Rust, TypeScript, Python) to maintain a single 
 
 The codebase is divided into distinct horizontal and vertical boundaries. Layers communicate using downward-only dependency paths to prevent coupling and circular dependencies.
 
-### 2. Business Logic Stays Clean
-
-Capabilities (business logic) must NOT contain low-level detail — algorithms, regex, array manipulation, third-party library wiring. It calls Utility functions by clear, intention-revealing names. The complexity lives in Utility; the readability lives in Capabilities.
-
-### 3. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix)
+### 2. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix)
 
 AES enforces a **File Naming Convention**: `[layer]_[concept]_[suffix]` or `[layer]_[concept1]_[concept2]_[suffix]` if needed
 
