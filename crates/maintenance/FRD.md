@@ -15,18 +15,6 @@ The `maintenance` module is responsible for maintenance operations based on the 
 - **drift-check**: Check drift between code and defined AES rules.
 - **rules-refresh**: Update the AES rule catalog from external sources.
 
-### Inputs
-
-- User-selected maintenance command.
-- Project configuration and dependency list.
-
-### Outputs
-
-- Update or audit report.
-- Exit status code for CI integration.
-
----
-
 ## 3. Success Indicators
 
 The success of the `maintenance` module is measured by:

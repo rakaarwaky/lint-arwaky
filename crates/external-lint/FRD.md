@@ -13,24 +13,20 @@ The `external-lint` module manages and wraps external processes based on the fol
 ### Supported Linters & Tools
 
 - **Rust Ecosystem**
+
   - `cargo clippy`: Catches idioms, performance bugs, and style issues.
   - `rustfmt`: Verifies codebase-wide formatting guidelines.
   - `cargo-audit`: Audits dependencies listed in `Cargo.lock` for known vulnerabilities.
-
 - **Python Ecosystem**
+
   - `ruff`: Extremely fast linter replacing flake8/autoflake/isort.
   - `mypy`: Performs static type checking on Python source code.
   - `bandit`: Scans Python code for common security vulnerabilities (e.g. SQLi, unsafe imports).
-
 - **JavaScript / TypeScript Ecosystem**
+
   - `eslint`: Checks JS/TS styling and syntax rules.
   - `prettier`: Ensures consistent formatting rules.
   - `tsc`: Checks TypeScript compiler/typing errors.
-
-### Output Normalization
-
-- **Path Mapping**: Normalizes paths returned by external tools to match project-root relative or absolute formats.
-- **Unified Diagnostic Schema**: Maps external diagnostics (line, column, code, message, severity) into the `LintResult` Value Object used by Lint Arwaky.
 
 ---
 

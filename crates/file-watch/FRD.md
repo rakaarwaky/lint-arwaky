@@ -10,23 +10,6 @@ The primary purpose of the `file-watch` module is to provide a filesystem monito
 
 The `file-watch` module is responsible for monitoring based on the following specifications:
 
-### Component Specifications
-
-- **NotifyWatchProvider**: Provider that implements watch events using the `notify` crate.
-- **ChangeAnalyzer**: Analyzes file changes to determine whether linting needs to be triggered.
-- **WatchOrchestrator**: Coordinates the watch, analysis, and linting re-triggering process.
-- **FileWatchContainer**: Container that unifies all watch components into one.
-
-### Inputs
-
-- Path to the directory to be monitored.
-- Relevant file patterns (Rust, Python, JS/TS extensions).
-
-### Outputs
-
-- Debounced file change events.
-- Lint execution trigger on changed files.
-
 ---
 
 ## 3. Success Indicators

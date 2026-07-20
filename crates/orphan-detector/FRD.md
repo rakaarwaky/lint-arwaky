@@ -29,12 +29,6 @@ The `orphan-detector` module scans all source code files and evaluates reachabil
 
   - **Requirement**: Surface layer files (e.g. `surface_`) must be registered in the routing system or called from main entries.
 
-### Reachability Logic
-
-- **Entry Points**: The reachability graph traversal starts from defined entry points (e.g., `main.rs`, `lib.rs`, `root_container.rs`, `index.ts`, `__main__.py`).
-- **Traverser**: Performs a BFS/DFS graph traversal from the entry points along the import paths. Any file not visited during traversal is flagged as an orphan unless explicitly exempted.
-- **Exceptions**: Supports an exception list configured in the YAML config files where specific files can be safely skipped from orphan checks.
-
 ---
 
 ## 3. Success Indicators
