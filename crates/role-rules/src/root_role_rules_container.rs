@@ -7,7 +7,6 @@ use std::sync::Arc;
 use crate::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::capabilities_contract_role_auditor::ContractRoleChecker;
-use crate::capabilities_capabilities_role_auditor::InfrastructureRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 
@@ -29,7 +28,6 @@ impl RoleContainer {
         let aggregate: Arc<dyn IRoleAggregate> = Arc::new(RoleAggregateImpl::new(
             Arc::new(TaxonomyRoleChecker::new()),
             Arc::new(ContractRoleChecker::new()),
-            Arc::new(InfrastructureRoleChecker::new()),
             Arc::new(CapabilitiesRoleChecker::new()),
             Arc::new(SurfaceRoleChecker::new()),
             Arc::new(AgentRoleChecker::new()),
