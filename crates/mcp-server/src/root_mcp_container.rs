@@ -49,7 +49,7 @@ impl McpContainer {
         let import_orchestrator = import_container.orchestrator();
 
         let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::new_default();
+            naming_rules::root_naming_rules_container::NamingContainer::default();
         let naming_orchestrator = naming_container.orchestrator();
 
         let orphan_container =

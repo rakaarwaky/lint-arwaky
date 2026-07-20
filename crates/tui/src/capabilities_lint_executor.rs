@@ -278,7 +278,7 @@ impl LintExecutor {
                             ws.config.clone(),
                         );
                     let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::new_default();
+                        naming_rules::root_naming_rules_container::NamingContainer::default();
                     let role_container =
                         role_rules::root_role_rules_container::RoleContainer::new_with_config(
                             ws.config.clone(),

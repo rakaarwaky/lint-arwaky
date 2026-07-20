@@ -76,7 +76,7 @@ fn main() -> ExitCode {
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(config.clone());
-        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new_default();
+        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::default();
         let role_container =
             role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());
         let arch_linter =

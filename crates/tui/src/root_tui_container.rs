@@ -60,7 +60,7 @@ impl TuiContainer {
         let external_lint_container =
             external_lint::root_external_lint_container::ExternalLintContainer::new_default();
         let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::new_default();
+            naming_rules::root_naming_rules_container::NamingContainer::default();
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate)

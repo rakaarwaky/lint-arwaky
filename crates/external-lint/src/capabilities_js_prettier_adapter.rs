@@ -16,7 +16,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -34,17 +33,14 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 
 pub struct PrettierAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
-    path_norm: Arc<dyn IPathNormalizationProtocol>,
 }
 
 impl PrettierAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
-        path_norm: Arc<dyn IPathNormalizationProtocol>,
     ) -> Self {
         Self {
             executor,
-            path_norm,
         }
     }
 }
@@ -85,9 +81,10 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         let combined_output = format!("{}{}", response.stdout, response.stderr);
 
         if combined_output.contains("[warn]") {
-            let filename_vo = self
-                .path_norm
-                .resolve_capabilities_path(path.clone(), Some(path.clone()));
+            let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
+                path.clone(),
+                Some(path.clone()),
+            );
             results.push(LintResult {
                 file: filename_vo,
                 line: LineNumber::new(1),

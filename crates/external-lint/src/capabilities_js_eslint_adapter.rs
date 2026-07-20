@@ -18,7 +18,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -38,17 +37,14 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 
 pub struct ESLintAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
-    path_norm: Arc<dyn IPathNormalizationProtocol>,
 }
 
 impl ESLintAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
-        path_norm: Arc<dyn IPathNormalizationProtocol>,
     ) -> Self {
         Self {
             executor,
-            path_norm,
         }
     }
 }
@@ -111,8 +107,8 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     Some(s) => s.to_string(),
                     None => String::new(),
                 };
-                let filename_vo = self.path_norm.resolve_capabilities_path(
-                    FilePath::new(filename).unwrap_or_default(),
+                let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
+                    FilePath::new(filename.unwrap_or_default()),
                     Some(path.clone()),
                 );
 

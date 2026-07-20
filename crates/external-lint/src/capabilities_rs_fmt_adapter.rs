@@ -19,7 +19,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -41,19 +40,16 @@ use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_
 /// When no Cargo.toml is found, the scan is silently skipped.
 pub struct RustFmtAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
-    path_norm: Arc<dyn IPathNormalizationProtocol>,
     _bin_path: Option<FilePath>,
 }
 
 impl RustFmtAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
-        path_norm: Arc<dyn IPathNormalizationProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
             executor,
-            path_norm,
             _bin_path: bin_path,
         }
     }
@@ -121,7 +117,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 
             // Report added lines (+) as formatting violations
             if line.starts_with('+') && !line.starts_with("+++") {
-                let resolved = self.path_norm.resolve_capabilities_path(
+                let resolved = shared::common::utility_path_normalization::resolve_capabilities_path(
                     match FilePath::new(current_file.clone()) {
                         Ok(fp) => fp,
                         Err(_) => path.clone(),
