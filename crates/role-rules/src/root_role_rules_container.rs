@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::capabilities_contract_role_auditor::ContractRoleChecker;
-use crate::capabilities_infrastructure_role_auditor::InfrastructureRoleChecker;
+use crate::capabilities_capabilities_role_auditor::InfrastructureRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 

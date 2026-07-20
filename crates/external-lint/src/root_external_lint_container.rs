@@ -22,13 +22,13 @@ pub struct ExternalLintContainer {
 impl ExternalLintContainer {
     pub fn new(path_norm: Arc<dyn IPathNormalizationProtocol>) -> Self {
         let executor: Arc<dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol> =
-            Arc::new(crate::infrastructure_stdio_client::StdioClient::new(
+            Arc::new(crate::capabilities_stdio_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
             ));
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
             "ruff".to_string(),
-            Arc::new(crate::infrastructure_py_ruff_adapter::RuffAdapter::new(
+            Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -36,7 +36,7 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "bandit".to_string(),
-            Arc::new(crate::infrastructure_py_bandit_adapter::BanditAdapter::new(
+            Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -44,7 +44,7 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "mypy".to_string(),
-            Arc::new(crate::infrastructure_py_mypy_adapter::MyPyAdapter::new(
+            Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -52,7 +52,7 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "eslint".to_string(),
-            Arc::new(crate::infrastructure_js_eslint_adapter::ESLintAdapter::new(
+            Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             )),
@@ -60,7 +60,7 @@ impl ExternalLintContainer {
         adapters.insert(
             "prettier".to_string(),
             Arc::new(
-                crate::infrastructure_js_prettier_adapter::PrettierAdapter::new(
+                crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
                     executor.clone(),
                     path_norm.clone(),
                 ),
@@ -68,7 +68,7 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "tsc".to_string(),
-            Arc::new(crate::infrastructure_js_tsc_adapter::TSCAdapter::new(
+            Arc::new(crate::capabilities_js_tsc_adapter::TSCAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
             )),
@@ -76,7 +76,7 @@ impl ExternalLintContainer {
         adapters.insert(
             "clippy".to_string(),
             Arc::new(
-                crate::infrastructure_rs_clippy_adapter::RustLinterAdapter::new(
+                crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
                     executor.clone(),
                     path_norm.clone(),
                     None,
@@ -85,7 +85,7 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "rustfmt".to_string(),
-            Arc::new(crate::infrastructure_rs_fmt_adapter::RustFmtAdapter::new(
+            Arc::new(crate::capabilities_rs_fmt_adapter::RustFmtAdapter::new(
                 executor.clone(),
                 path_norm.clone(),
                 None,
@@ -94,7 +94,7 @@ impl ExternalLintContainer {
         adapters.insert(
             "cargo-audit".to_string(),
             Arc::new(
-                crate::infrastructure_rs_audit_adapter::CargoAuditAdapter::new(path_norm.clone()),
+                crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(path_norm.clone()),
             ),
         );
 
@@ -119,7 +119,7 @@ impl IPathNormalizationProtocol for DefaultPathNormalization {
     fn normalize_path(&self, path: FilePath) -> FilePath {
         path
     }
-    fn resolve_infrastructure_path(
+    fn resolve_capabilities_path(
         &self,
         path: FilePath,
         _context_path: Option<FilePath>,

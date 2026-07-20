@@ -2,7 +2,7 @@
 pub mod capabilities_action_handler;
 pub mod capabilities_lint_executor;
 
-pub mod infrastructure_file_system_adapter;
+pub mod capabilities_file_system_adapter;
 
 pub mod agent_tui_orchestrator;
 

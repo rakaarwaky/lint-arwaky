@@ -126,7 +126,7 @@ impl DependencyCycleAnalyzer {
                     "taxonomy_",
                     "contract_",
                     "capabilities_",
-                    "infrastructure_",
+                    "capabilities_",
                     "agent_",
                     "surface_",
                 ];

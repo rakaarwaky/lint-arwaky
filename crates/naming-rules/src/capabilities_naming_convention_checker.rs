@@ -80,7 +80,7 @@ impl NamingConventionChecker {
             "taxonomy_",
             "contract_",
             "capabilities_",
-            "infrastructure_",
+            "capabilities_",
             "agent_",
             "surface_",
             "root_",
@@ -164,7 +164,7 @@ impl NamingConventionChecker {
                     reason: Some(LintMessage::new(format!(
                         "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
                          Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
-                         Example valid names: 'capabilities_user_checker', 'infrastructure_db_adapter'. \
+                         Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
                          Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
                         stem, stem
                     ))),

@@ -3,7 +3,7 @@
 // ALGORITHM:
 //   1. check_port_implementation checks if the file imports a port/protocol
 //      (contains `_port::` or `_protocol::` after `use `). If the file has an
-//      `infrastructure_` prefix but does NOT import any port, emits an
+//      `capabilities_` prefix but does NOT import any port, emits an
 //      InfrastructureNoPort violation — the file is either not real infrastructure
 //      or is missing a contract port.
 //   2. If the file DOES import a port/protocol but has no `impl ... for ...`
@@ -14,7 +14,7 @@
 //      implementation is in a different file or uses a different pattern.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::role_rules::contract_infrastructure_role_protocol::IInfrastructureRoleChecker;
+use shared::role_rules::contract_capabilities_role_protocol::IInfrastructureRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
 

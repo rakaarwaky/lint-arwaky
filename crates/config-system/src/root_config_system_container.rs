@@ -20,8 +20,8 @@ impl Default for ConfigContainer {
 impl ConfigContainer {
     pub fn new() -> Self {
         let workspace_detector =
-            Arc::new(crate::infrastructure_workspace_detector_provider::WorkspaceDetector::new());
-        let yaml_reader = Arc::new(crate::infrastructure_yaml_reader::ConfigYamlReader::new());
+            Arc::new(crate::capabilities_workspace_detector_provider::WorkspaceDetector::new());
+        let yaml_reader = Arc::new(crate::capabilities_yaml_reader::ConfigYamlReader::new());
 
         Self {
             orchestrator: Arc::new(
@@ -30,7 +30,7 @@ impl ConfigContainer {
                     yaml_reader.clone(),
                 ),
             ),
-            parser: Arc::new(crate::infrastructure_parser_provider::ConfigParserProvider::new()),
+            parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),
             validator: Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new()),
             multi_project_orchestrator: Arc::new(
                 crate::agent_multi_project_orchestrator::MultiProjectOrchestrator::new(

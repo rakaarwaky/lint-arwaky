@@ -146,7 +146,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
                 _ => Severity::LOW,
             };
 
-            let resolved = self.path_norm.resolve_infrastructure_path(
+            let resolved = self.path_norm.resolve_capabilities_path(
                 match FilePath::new("Cargo.lock".to_string()) {
                     Ok(fp) => fp,
                     Err(_) => path.clone(),

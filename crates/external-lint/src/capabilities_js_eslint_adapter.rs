@@ -111,7 +111,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     Some(s) => s.to_string(),
                     None => String::new(),
                 };
-                let filename_vo = self.path_norm.resolve_infrastructure_path(
+                let filename_vo = self.path_norm.resolve_capabilities_path(
                     FilePath::new(filename).unwrap_or_default(),
                     Some(path.clone()),
                 );

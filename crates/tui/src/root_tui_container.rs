@@ -1,7 +1,7 @@
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
-use crate::infrastructure_file_system_adapter::FileSystemAdapter;
+use crate::capabilities_file_system_adapter::FileSystemAdapter;
 use crate::surface_tui_command::TuiCommandSurface;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use maintenance::root_maintenance_container::MaintenanceContainer;
@@ -41,7 +41,7 @@ impl TuiContainer {
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
         let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol> =
-            Arc::new(git_hooks::infrastructure_hook_adapter::GitHookAdapter::new(
+            Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
             ));

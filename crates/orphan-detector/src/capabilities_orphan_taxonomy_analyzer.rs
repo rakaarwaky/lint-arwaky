@@ -128,7 +128,7 @@ pub fn is_taxonomy_orphan(
         };
         let has_any_importer = importers.iter().any(|importer| {
             // Must be imported by a file outside the taxonomy layer
-            // (contract_, capabilities_, infrastructure_, surface_, agent_, root_)
+            // (contract_, capabilities_, capabilities_, surface_, agent_, root_)
             importer
                 .split('/')
                 .next_back()

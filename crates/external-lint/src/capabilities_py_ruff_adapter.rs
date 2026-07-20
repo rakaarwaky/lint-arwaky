@@ -143,7 +143,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
                 .and_then(|v| v.as_str())
                 .unwrap_or_default();
 
-            let resolved = self.path_norm.resolve_infrastructure_path(
+            let resolved = self.path_norm.resolve_capabilities_path(
                 match FilePath::new(filename) {
                     Ok(fp) => fp,
                     Err(_) => path.clone(),

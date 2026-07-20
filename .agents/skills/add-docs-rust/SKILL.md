@@ -14,7 +14,6 @@ related:
   - lint-arwaky-cli
   - fix-naming
 ---
-
 # add-docs-rust
 
 ## Rules
@@ -22,7 +21,7 @@ related:
 - Every crate directory MUST contain TWO crate-level docs: `FRD.md` and `README.md`.
 - `FRD.md` is STATELESS — it describes the IDEAL TARGET only. It MUST NOT record progress, status, current-state notes, or "what's done so far". If reality diverges, fix `README.md`, never pollute `FRD.md` with state.
 - `README.md` describes the REAL CURRENT STATE — what actually exists today. It is allowed (and expected) to diverge from the ideal target in `FRD.md`.
-- Relationship: **FRD = harapan (ideal), README = kenyataan (reality).** README should call out gaps vs FRD; FRD must stay clean of any "as-built" noise.
+- Relationship: **FRD = ideal target, README = current reality.** README should call out gaps vs FRD; FRD must stay clean of any "as-built" noise.
 - All public structs and methods MUST have `///` doc comments (visible in `cargo doc`).
 - Doc comments MUST explain "what" and "why", not "how" (code shows how).
 - Example code in doc comments MUST be valid Rust.
@@ -30,6 +29,7 @@ related:
 ## Purpose
 
 Add crate-level documentation and `///` doc comments:
+
 - `FRD.md` — stateless ideal target (Feature Goal / Requirements & Scope / Success Indicators).
 - `README.md` — real current state (what exists, public API surface, known gaps vs FRD).
 - `///` doc comments on all public items for `cargo doc` visibility.
@@ -137,7 +137,7 @@ pub struct ImportOrchestrator {
 - Identify public structs and methods
 - Check existing docs (README.md / FRD.md / `///` comments)
 
-### Step 2: Create / Fix FRD.md (ideal target, stateless)
+### Step 2: Create / Fix FRD.md 
 
 Write crate-level FRD.md following the FRD template. It MUST contain only:
 
@@ -145,9 +145,9 @@ Write crate-level FRD.md following the FRD template. It MUST contain only:
 2. Requirements & Scope
 3. Success Indicators
 
-Strip any state, progress, or "as-built" notes. FRD is the harapan — it never changes because code isn't done yet.
+Strip any state, progress, or "as-built" notes. FRD is the ideal target — it never changes because code isn't done yet.
 
-### Step 3: Create / Update README.md (reality)
+### Step 3: Create / Update README.md 
 
 Write README.md reflecting the ACTUAL current state:
 
@@ -155,7 +155,7 @@ Write README.md reflecting the ACTUAL current state:
 2. Public API surface (real items)
 3. Known gaps vs FRD (where reality diverges from the ideal target)
 
-README is the kenyataan — it changes as the crate evolves.
+README is the current reality — it changes as the crate evolves.
 
 ### Step 4: Add Doc Comments
 

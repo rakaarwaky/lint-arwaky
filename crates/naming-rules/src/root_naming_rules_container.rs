@@ -23,7 +23,7 @@ impl NamingContainer {
         let suffix_prefix_checker: Arc<dyn INamingCheckerProtocol> =
             Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
         let fs: Arc<dyn INamingFileSystemProtocol> =
-            Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+            Arc::new(crate::capabilities_filesystem_adapter::OSFileSystemAdapter::new());
         Self {
             naming_convention_checker,
             suffix_prefix_checker,

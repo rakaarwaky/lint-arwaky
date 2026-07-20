@@ -23,7 +23,7 @@ impl InfrastructureOrphanAnalyzer {
 }
 
 impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
-    fn is_infrastructure_orphan(
+    fn is_capabilities_orphan(
         &self,
         f: &FilePath,
         root_dir: &FilePath,
@@ -88,7 +88,7 @@ impl IInfrastructureOrphanProtocol for InfrastructureOrphanAnalyzer {
     }
 }
 
-pub fn check_infrastructure_orphan(
+pub fn check_capabilities_orphan(
     fp: &str,
     _basename: &str,
     files: &[String],

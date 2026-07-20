@@ -160,7 +160,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     None => "",
                 };
 
-                let resolved = self.path_norm.resolve_infrastructure_path(
+                let resolved = self.path_norm.resolve_capabilities_path(
                     match FilePath::new(filename.to_string()) {
                         Ok(fp) => fp,
                         Err(_) => path.clone(),
@@ -201,7 +201,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
                     None => "",
                 };
 
-                let resolved = self.path_norm.resolve_infrastructure_path(
+                let resolved = self.path_norm.resolve_capabilities_path(
                     match FilePath::new(filename.to_string()) {
                         Ok(fp) => fp,
                         Err(_) => path.clone(),

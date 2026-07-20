@@ -51,7 +51,7 @@ pub struct ArchOrphanAnalyzer {
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-    infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
+    capabilities_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
     agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
 }
@@ -62,7 +62,7 @@ impl ArchOrphanAnalyzer {
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
         contract_analyzer: Arc<dyn IContractOrphanProtocol>,
         capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
+        capabilities_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
         agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
         surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     ) -> Self {
@@ -71,7 +71,7 @@ impl ArchOrphanAnalyzer {
             taxonomy_analyzer,
             contract_analyzer,
             capabilities_analyzer,
-            infrastructure_analyzer,
+            capabilities_analyzer,
             agent_analyzer,
             surfaces_analyzer,
         }
@@ -285,8 +285,8 @@ impl ArchOrphanAnalyzer {
 
         if layer_str.contains(LAYER_INFRASTRUCTURE) {
             return self
-                .infrastructure_analyzer
-                .is_infrastructure_orphan(&fp, &root, &alive_set);
+                .capabilities_analyzer
+                .is_capabilities_orphan(&fp, &root, &alive_set);
         }
 
         if layer_str.contains(LAYER_CAPABILITIES) {
@@ -327,7 +327,7 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
             ("taxonomy_", "taxonomy"),
             ("contract_", "contract"),
             ("capabilities_", "capabilities"),
-            ("infrastructure_", "infrastructure"),
+            ("capabilities_", "infrastructure"),
             ("agent_", "agent"),
             ("surface_", "surfaces"),
             ("root_", "root"),

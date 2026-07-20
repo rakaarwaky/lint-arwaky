@@ -121,7 +121,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 
             // Report added lines (+) as formatting violations
             if line.starts_with('+') && !line.starts_with("+++") {
-                let resolved = self.path_norm.resolve_infrastructure_path(
+                let resolved = self.path_norm.resolve_capabilities_path(
                     match FilePath::new(current_file.clone()) {
                         Ok(fp) => fp,
                         Err(_) => path.clone(),

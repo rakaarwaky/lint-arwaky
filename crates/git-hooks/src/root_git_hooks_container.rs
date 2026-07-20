@@ -33,7 +33,7 @@ impl GitContainer {
 
     pub fn new_default() -> Self {
         let hook_adapter: Arc<dyn IHookManagerProtocol> =
-            Arc::new(crate::infrastructure_hook_adapter::GitHookAdapter::new(
+            Arc::new(crate::capabilities_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
             ));

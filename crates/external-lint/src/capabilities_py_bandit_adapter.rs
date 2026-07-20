@@ -132,7 +132,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
                 .and_then(|v| v.as_str())
                 .unwrap_or("MEDIUM");
 
-            let resolved = self.path_norm.resolve_infrastructure_path(
+            let resolved = self.path_norm.resolve_capabilities_path(
                 match FilePath::new(filename.to_string()) {
                     Ok(fp) => fp,
                     Err(_) => path.clone(),

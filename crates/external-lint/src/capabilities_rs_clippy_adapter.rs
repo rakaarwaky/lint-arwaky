@@ -155,7 +155,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
                             Some(f) if !f.is_empty() => f,
                             _ => continue,
                         };
-                        let resolved_file = self.path_norm.resolve_infrastructure_path(
+                        let resolved_file = self.path_norm.resolve_capabilities_path(
                             match FilePath::new(filename.to_string()) {
                                 Ok(fp) => fp,
                                 Err(_) => path.clone(),

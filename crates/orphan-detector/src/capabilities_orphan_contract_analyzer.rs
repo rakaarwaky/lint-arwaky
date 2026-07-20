@@ -79,7 +79,7 @@ pub fn is_contract_orphan(
     let mut has_impl = false;
     for cf in &search_files {
         let cb = file_basename(cf);
-        // Check target layer files (infrastructure_ for ports, capabilities_ for protocols, agent_ for aggregates)
+        // Check target layer files (capabilities_ for ports, capabilities_ for protocols, agent_ for aggregates)
         // Also check root_*_container files (DI wiring often implements traits there)
         let is_target_layer = cb.starts_with(target_prefix);
         let is_container_impl = cb.starts_with("root_") && cb.ends_with("_container.rs");

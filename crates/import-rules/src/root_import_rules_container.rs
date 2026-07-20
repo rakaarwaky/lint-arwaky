@@ -31,9 +31,9 @@ impl ImportContainer {
         config: ArchitectureConfig,
         source_parser: Arc<dyn ISourceParserProtocol>,
     ) -> Self {
-        let fs = Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
+        let fs = Arc::new(crate::capabilities_filesystem_adapter::OSFileSystemAdapter::new());
         let parser: Arc<dyn IImportParserProtocol> =
-            Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
+            Arc::new(crate::capabilities_import_parser_adapter::ImportParserAdapter::new());
         let analyzer = Arc::new(
             crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
                 config.clone(),

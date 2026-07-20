@@ -15,7 +15,7 @@ use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use import_rules::infrastructure_filesystem_adapter::OSFileSystemAdapter;
+use import_rules::capabilities_filesystem_adapter::OSFileSystemAdapter;
 use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
@@ -43,7 +43,7 @@ fn make_check_context(
         orphan_orchestrator: container.orphan_orchestrator.clone(),
         layer_detector: layer_detector.clone(),
         language_detector: Arc::new(
-            cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+            cli_commands::capabilities_language_detector::CliLanguageDetector::new(),
         ),
     }
 }
@@ -99,7 +99,7 @@ fn main() -> ExitCode {
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_det_clone.clone(),
             language_detector: Arc::new(
-                cli_commands::infrastructure_language_detector::CliLanguageDetector::new(),
+                cli_commands::capabilities_language_detector::CliLanguageDetector::new(),
             ),
         }
     });

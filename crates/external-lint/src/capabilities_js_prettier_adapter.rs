@@ -87,7 +87,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         if combined_output.contains("[warn]") {
             let filename_vo = self
                 .path_norm
-                .resolve_infrastructure_path(path.clone(), Some(path.clone()));
+                .resolve_capabilities_path(path.clone(), Some(path.clone()));
             results.push(LintResult {
                 file: filename_vo,
                 line: LineNumber::new(1),
