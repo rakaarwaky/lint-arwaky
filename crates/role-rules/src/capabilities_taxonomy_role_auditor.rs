@@ -16,7 +16,7 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
-use shared::common::contract_language_detector_protocol::Language as DetLang;
+use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;

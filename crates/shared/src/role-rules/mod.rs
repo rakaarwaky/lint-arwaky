@@ -1,7 +1,6 @@
 // role-rules — taxonomy and contract types
 pub mod contract_agent_role_protocol;
 pub mod contract_capabilities_role_protocol;
-pub mod contract_infrastructure_role_protocol;
 pub mod contract_role_aggregate;
 pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
