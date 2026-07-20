@@ -18,7 +18,7 @@
 - [ ] Service dependencies use protocol interfaces via DI.
 - [ ] Value/configuration fields use shared VOs.
 - [ ] Zero I/O in capabilities layer (AES404).
-- [ ] No forbidden imports from `infrastructure_*`.
+- [ ] Low-level technical operations delegate to `utility_*` (infrastructure layer removed).
 - [ ] No forbidden imports from `agent_*`.
 - [ ] No direct dependency on concrete `capabilities_*` implementations.
 - [ ] Protocol module is registered in the shared package's `index.ts`.

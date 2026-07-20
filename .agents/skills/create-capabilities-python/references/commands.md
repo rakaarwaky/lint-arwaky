@@ -5,7 +5,7 @@
 grep -n "open(\|Path(\|os\.\|requests\.\|httpx\.\|sqlite3\.\|asyncpg\." modules/*/src/capabilities_*.py
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*(infrastructure_|agent_)" modules/*/src/capabilities_*.py
+grep -n "^\s*from\s+.*agent_" modules/*/src/capabilities_*.py
 
 # List classes in capabilities files
 grep -n "^class " modules/*/src/capabilities_*.py

@@ -33,7 +33,7 @@ def check_imports(source: SourceContentVO) -> list[LintResult]:
     return violations
 ```
 
-## Rule 4: I/O errors belong to infrastructure/port implementations
+## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
 
 Bad in capabilities:
 
@@ -46,7 +46,7 @@ def check_file(path: FilePath) -> list[LintResult]:
 Good:
 
 ```python
-# infrastructure_source_reader.py
+# utility_source_reader.py
 class FileSystemSourceReader(ISourceReaderPort):
     def read(self, path: FilePath) -> Result[SourceContentVO, SourceReadError]:
         try:

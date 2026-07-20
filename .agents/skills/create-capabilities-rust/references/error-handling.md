@@ -38,7 +38,7 @@ fn check_imports(source: &SourceContentVO) -> Vec<LintResult> {
 }
 ```
 
-## Rule 4: I/O errors belong to infrastructure/port implementations
+## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
 
 Bad in capabilities:
 
@@ -52,7 +52,7 @@ fn check_file(path: &FilePath) -> Vec<LintResult> {
 Good:
 
 ```rust
-// infrastructure_source_reader.rs
+// utility_source_reader.rs
 impl ISourceReaderPort for FileSystemSourceReader {
     fn read(&self, path: &FilePath) -> Result<SourceContentVO, SourceReadError> {
         let raw = std::fs::read_to_string(path.value())

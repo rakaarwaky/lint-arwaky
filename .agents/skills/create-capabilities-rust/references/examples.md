@@ -34,7 +34,7 @@ impl MyCapability {
 }
 ```
 
-Fix: Move I/O to infrastructure.
+Fix: Move I/O to utility.
 
 ## BAD: Data Class Defined in Layer File
 

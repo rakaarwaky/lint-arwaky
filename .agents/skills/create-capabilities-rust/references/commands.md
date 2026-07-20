@@ -7,7 +7,7 @@ These commands are rough heuristic checks. Final validation should use `cargo ch
 rg "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/<crate>/src/capabilities_*.rs
 
 # Check forbidden imports
-rg "^\s*use\s+.*(infrastructure_|agent_)" crates/<crate>/src/capabilities_*.rs
+rg "^\s*use\s+.*agent_" crates/<crate>/src/capabilities_*.rs
 
 # List structs in capabilities files
 rg -n "^\s*pub struct" crates/<crate>/src/capabilities_*.rs

@@ -5,7 +5,7 @@
 grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/capabilities_*.ts
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*infrastructure_\|^\s*from\s+.*agent_" packages/*/src/capabilities_*.ts
+grep -n "^\s*from\s+.*agent_" packages/*/src/capabilities_*.ts
 
 # List protocol interface implementations
 grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts

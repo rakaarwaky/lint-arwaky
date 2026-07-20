@@ -39,7 +39,7 @@ Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 2. Pure: input A always produces output B.
 3. No side effects: no I/O, no network, no database, no global mutation.
 4. Domain-agnostic: does not know business rules.
-5. Reusable: useful for multiple capabilities/infrastructures/modules.
+5. Reusable: useful for multiple capabilities/utilities/modules.
 
 Example:
 
@@ -65,7 +65,7 @@ Rule:
 
 ```text
 Stateless + I/O + domain-agnostic + reusable = taxonomy utility
-Stateless + I/O + domain-specific = infrastructure/port implementation
+Stateless + I/O + domain-specific = utility implementation (infrastructure layer removed)
 ```
 
 ## Decision Tree

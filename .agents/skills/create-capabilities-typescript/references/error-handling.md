@@ -34,7 +34,7 @@ function checkImports(source: SourceContentVO): LintResult[] {
 }
 ```
 
-## Rule 4: I/O errors belong to infrastructure/port implementations
+## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
 
 Bad in capabilities:
 
@@ -48,7 +48,7 @@ function checkFile(path: FilePath): LintResult[] {
 Good:
 
 ```typescript
-// infrastructure_source_reader.ts
+// utility_source_reader.ts
 export class FileSystemSourceReader implements ISourceReaderPort {
     read(path: FilePath): Result<SourceContentVO, SourceReadError> {
         try {
