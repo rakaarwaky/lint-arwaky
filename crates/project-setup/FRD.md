@@ -10,8 +10,8 @@ The project-setup crate provides scaffolding facilities and doctor checks for ne
   - mcp-config — create MCP configuration for AI integration.
   - ci-templates — provide GitHub Actions templates or CI scripts.
 - Out of scope:
-  - Running the linter (cli-commands).
-  - Dependency updates or audits (maintenance).
+  - Running the linter — it scaffolds and configures; invoking the checks is done through the CLI/server.
+  - Dependency updates or security audits — those are separate operational tasks.
 
 ## Success Indicators
 - [ ] Structure correctness — directories and files created per AES patterns (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root).

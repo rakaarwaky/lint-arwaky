@@ -12,8 +12,8 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
   - lint_setup — set up a new project with the AES structure.
   - JSON-RPC conformance; tool discovery by AI clients.
 - Out of scope:
-  - The CLI surface (cli-commands).
-  - The lint analysis logic itself.
+  - Invoking rule logic — the server exposes the pipeline as tools; the evaluation itself runs in the engine crates.
+  - Interactive terminal usage — that is a distinct surface with its own command entry.
 
 ## Success Indicators
 - [ ] Protocol compliance — implementation conforms to MCP JSON-RPC standards.

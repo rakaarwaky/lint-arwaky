@@ -10,8 +10,8 @@ The maintenance crate provides maintenance operations for the lint_arwaky system
   - drift-check — check drift between code and defined AES rules.
   - rules-refresh — update the AES rule catalog from external sources.
 - Out of scope:
-  - Enforcing AES rules live (delegated to the rule crates).
-  - Project scaffolding (project-setup).
+  - Enforcing AES rule evaluation — this crate reports drift and refreshes catalogs; the rules themselves are checked by the analysis crates.
+  - Scaffolding new projects — template/structure generation is a separate concern.
 
 ## Success Indicators
 - [ ] Update accuracy — dependencies updated with compatible versions.

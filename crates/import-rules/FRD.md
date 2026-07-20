@@ -11,8 +11,8 @@ The import-rules crate enforces correct structural boundaries and unidirectional
   - AES204 Dummy or Forbidden Imports — detect imports pointing to mock, dummy, or forbidden packages in production configs.
   - AES205 Circular Dependency Cycle Detection — build an import dependency graph across the workspace and flag cycles.
 - Out of scope:
-  - Reachability/orphan analysis (orphan-detector).
-  - Naming-convention checks (naming-rules).
+  - Detecting unused or unreachable modules — that is reachability analysis, not import-direction validation.
+  - Enforcing identifier/file naming — shape of names is covered by a separate naming check.
 
 ## Success Indicators
 - [ ] Zero dependency cycles — all import cycle loops are detected and resolved.

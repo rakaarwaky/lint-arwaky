@@ -15,8 +15,8 @@ The cli-commands crate provides a unified command-line interface (CLI) that driv
   - tui — launch the interactive terminal UI.
   - Consistent input/output patterns and clear --help documentation for every command.
 - Out of scope:
-  - The lint analysis logic itself (delegated to the rule crates).
-  - The MCP server transport.
+  - Rule evaluation and analysis — the CLI owns argument parsing, dispatch, output formatting, and config wiring; it delegates the actual checks to the engine crates.
+  - Serving the pipeline as a long-lived protocol server — that is a separate transport concern.
 
 ## Success Indicators
 - [ ] UX consistency — all commands follow a consistent input/output pattern.

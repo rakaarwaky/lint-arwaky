@@ -13,8 +13,8 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
   - AES506 Surface Orphan Checker — surface_ files must be registered in the routing system or called from main entries.
   - Configurable exceptions and ignored path patterns.
 - Out of scope:
-  - Dependency-direction violations (import-rules).
-  - Naming checks (naming-rules).
+  - Building the reachability graph from entry points — that is a separate detector; this crate consumes import facts only.
+  - Checking per-file metrics or naming — those are independent analysis stages.
 
 ## Success Indicators
 - [ ] Dead code identification — 100% detection of unused/unreachable architectural files.

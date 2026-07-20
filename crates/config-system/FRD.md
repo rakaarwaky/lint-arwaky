@@ -12,8 +12,8 @@ The config-system crate manages lint_arwaky configuration: loading, parsing, val
   - ConfigYamlReader — reads and parses the main YAML configuration file.
   - MultiProjectOrchestrator — manages configuration for multiple projects/workspaces simultaneously.
 - Out of scope:
-  - Defining the AES rules themselves.
-  - Applying configuration to file mutation.
+  - Authoring the AES rule definitions — the schema is consumed and validated, not defined here.
+  - Mutating source files from configuration — config is read-only input to the engine.
 
 ## Success Indicators
 - [ ] Discovery reliability — workspaces are correctly detected from various project structures.

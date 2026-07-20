@@ -10,8 +10,8 @@ The git-hooks crate implements a git hooks system for lint checking at the pre-c
   - Blocking commits that violate AES rules.
   - Optional diff checks for staged changes.
 - Out of scope:
-  - Continuous file watching (file-watch).
-  - The lint analysis logic itself.
+  - Continuous filesystem watching — only git state (diff/staged) drives the hook, not a watcher.
+  - Evaluating the rules — the hook invokes the checker; the CHECK logic lives in the analysis crates.
 
 ## Success Indicators
 - [ ] Hook installation — hooks correctly installed on all supported system types (Linux, macOS, Windows).

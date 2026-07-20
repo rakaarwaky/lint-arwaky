@@ -18,8 +18,8 @@ The naming-rules crate enforces strict naming conventions across the codebase to
     | surface_          | strict   | _command, _controller, _page, _view, _component, _router, _layout, _hook, _store, _action, _screen               | —                                                                                                                     |
     | root_             | strict   | _container, _entry                                                                                                | —                                                                                                                     |
 - Out of scope:
-  - Dependency-flow / reachability checks (import-rules, orphan-detector).
-  - Layer role/behavior checks (role-rules).
+  - Validating import direction or reachability — those are separate structural checks; this crate inspects names only.
+  - Validating per-layer behavior — naming correctness is independent of whether a component fulfills its architectural role.
 
 ## Success Indicators
 - [ ] Accuracy — zero false positives: valid snake_case stems and correct layer suffixes are never flagged, invalid ones caught 100% of the time.

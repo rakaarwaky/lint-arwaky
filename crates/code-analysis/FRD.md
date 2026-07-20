@@ -11,8 +11,8 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
   - AES304 Bypass Detection and Panic Avoidance — flag suppression comments (noqa, type: ignore, eslint-disable) and compiler/runtime bypasses (#[allow], #[warn], .unwrap(), .expect(), panic!).
   - AES305 Duplicate Code Block Detection — flag identical/highly similar code blocks across files above a configurable token/line threshold (DRY).
 - Out of scope:
-  - Import/dependency graph analysis (import-rules, orphan-detector).
-  - Auto-fixing violations (auto-fix).
+  - Cross-file dependency reasoning — import direction, reachability, and cycle detection are not evaluated here.
+  - Corrective edits — violations are reported for humans (or the fix stage) to address; this crate does not mutate files.
 
 ## Success Indicators
 - [ ] Prevention of suppression hacks — absolute blockage of bypass comments and raw panics/unwraps, forcing clean error propagation.

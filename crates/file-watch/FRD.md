@@ -11,8 +11,8 @@ The file-watch crate provides a filesystem monitoring system that detects file c
   - Configurable watch roots and ignore patterns.
   - Low resource usage during long-running watches.
 - Out of scope:
-  - The lint analysis itself (delegated to the rule crates).
-  - Serving results over MCP or building the TUI.
+  - Executing the lint checks — this crate detects file events and decides when to re-trigger; the analysis runs elsewhere.
+  - Persisting or serving results — it emits trigger signals, not a report store or protocol endpoint.
 
 ## Success Indicators
 - [ ] Responsiveness — file changes detected within 100ms–2s depending on debouncing.

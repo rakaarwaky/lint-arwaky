@@ -56,15 +56,6 @@ pub trait ICapabilitiesOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-pub trait IInfrastructureOrphanProtocol: Send + Sync {
-    fn is_infrastructure_orphan(
-        &self,
-        f: &FilePath,
-        root_dir: &FilePath,
-        alive_files: &ReachabilityResult,
-    ) -> OrphanIndicatorResult;
-}
-
 pub trait IAgentOrphanProtocol: Send + Sync {
     fn is_agent_orphan(
         &self,

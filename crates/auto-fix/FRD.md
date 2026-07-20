@@ -11,9 +11,9 @@ The auto-fix crate provides an automatic correction mechanism for AES rule viola
   - AES Fix: Code Format Correction — apply automatic formatting using rustfmt, prettier, or the built-in formatter (Rust, JavaScript/TypeScript).
   - Idempotent, deterministic fixes that do not break code functionality.
 - Out of scope:
-  - Detecting violations (handled by the rule crates).
-  - Subjective or non-mechanical refactors.
-  - Changing public APIs or program semantics.
+  - Violation detection and classification — those results are produced upstream by the analysis/rule crates; auto-fix only consumes them.
+  - Heuristic or intent-inferring rewrites — only mechanically derivable transforms (unused-import removal, deterministic rename, bypass-comment normalization, formatting) are applied.
+  - Semantics-changing edits — fixes must preserve behavior and public signatures.
 
 ## Success Indicators
 - [ ] Fix accuracy — applied fixes never break code functionality.

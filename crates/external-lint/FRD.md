@@ -12,8 +12,8 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
   - Map tool-specific severity levels (error/warning/info/refactor) to Lint Arwaky Severity (CRITICAL/HIGH/MEDIUM/LOW).
   - Run subprocesses asynchronously or parallelized where possible.
 - Out of scope:
-  - Defining AES-native rule logic.
-  - Producing fixes (delegated to auto-fix or the external tools' own fix modes).
+  - Native AES rule evaluation — only external tool output is normalized and merged into the report.
+  - Generating corrective edits — pass/fail reporting only; remediation is a separate stage.
 
 ## Success Indicators
 - [ ] Tool discovery and fallback — missing tools are safely ignored or warned about without crashing the run.
