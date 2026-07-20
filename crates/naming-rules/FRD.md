@@ -1,10 +1,6 @@
 # FRD — naming-rules
 
-> Stateless document. Describes the IDEAL TARGET only. Never record progress,
-> status, or current-state notes. If reality diverges from this, update
-> README.md — do NOT add state to this file.
-
-See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES101-AES102 details and [ARCHITECTURE.md](../../ARCHITECTURE.md) for naming conventions.
+> Stateless document. Describes the IDEAL TARGET only. Never record progress, status, or current-state notes.
 
 ## Feature Goal
 
@@ -16,7 +12,7 @@ The `naming-rules` feature audits naming compliance of every scanned source file
 
 ### AES101 — Naming Convention Consistency
 
-- **Requirement**: Every file stem (basename without extension) MUST be `snake_case` (lowercase ASCII letters and underscores only), follow the `prefix_concept_suffix` pattern, and contain at least 2 words (prefix + suffix) to avoid cryptic names (e.g. `db.rs` is flagged; `db_connector.rs` is accepted).
+- **Requirement**: Every file stem (basename without extension) MUST be `snake_case` (lowercase ASCII letters and underscores only), follow the `prefix_concept_suffix` pattern, and contain at least 3 words (prefix +middle name + suffix) to avoid cryptic names (e.g. `db.rs` is flagged; `capabilities_db_connector.rs` is accepted).
 - **Scope**: All scanned source files (Rust, Python, JavaScript, TypeScript).
 - **Exceptions**: `main.rs`, `lib.rs`, `mod.rs`, `root_*_entry.rs` (`root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`), `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
 
@@ -25,24 +21,15 @@ The `naming-rules` feature audits naming compliance of every scanned source file
 - **Requirement**: A file's architectural layer is identified by its `prefix_`. Its `suffix` MUST align with that layer's suffix policy.
 - **Scope** (prefix → suffix policy):
 
-| Layer prefix    | Policy   | Allowed suffixes (non-exhaustive)                                                                                                | Forbidden suffixes                                                          |
-| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `taxonomy_`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                          | —                                                                           |
-| `contract_`     | strict   | `_protocol`, `_aggregate`                                                                                                        | `_port` (removed)                                                           |
-| `utility_`      | flexible | any role suffix describing the technical responsibility (`_reader`, `_writer`, `_parser`, `_formatter`, …)                       | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate` |
-| `capabilities_` | flexible | `_checker`, `_analyzer`, `_processor`, `_validator`, `_resolver`, `_calculator`, `_extractor`, `_reporter`, … (role-based)        | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`, `_protocol`, `_aggregate` |
-| `agent_`        | strict   | `_orchestrator`                                                                                                                  | —                                                                           |
-| `surface_`      | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`          | —                                                                           |
-| `root_`         | strict   | `_container`, `_entry`                                                                                                           | —                                                                           |
-
-- **Note**: The `infrastructure_` layer was removed; its mechanics now live in `utility_`. Suffixes once under `infrastructure_` (`_adapter`, `_provider`, `_client`, `_repository`, `_cache`, …) are expressed as `utility_` flexible suffixes.
-
-### Expected Behavior (scope, not implementation)
-
-- Accept a set of source file paths and the active architecture configuration.
-- Emit a list of naming violations, each carrying the file path, the violating name, the exact rule violated (AES101 / AES102), and a detailed description.
-
----
+| Layer prefix      | Policy   | Allowed suffixes (non-exhaustive)                                                                                                              | Forbidden suffixes                                                                                                    |
+| ----------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `taxonomy_`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                         | —                                                                                                                    |
+| `contract_`     | strict   | `_protocol`, `_aggregate`                                                                                                                  | —                                                                                                                    |
+| `utility_`      | flexible | any role suffix describing the technical responsibility (`_reader`, `_writer`, `_parser`, `_formatter`, …)                            | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`                            |
+| `capabilities_` | flexible | `_checker`, `_analyzer`, `_processor`, `_validator`, `_resolver`, `_calculator`, `_extractor`, `_reporter`, … (role-based)    | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`, `_protocol`, `_aggregate` |
+| `agent_`        | strict   | `_orchestrator`                                                                                                                              | —                                                                                                                    |
+| `surface_`      | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | —                                                                                                                    |
+| `root_`         | strict   | `_container`, `_entry`                                                                                                                     | —                                                                                                                    |
 
 ## Success Indicators
 
