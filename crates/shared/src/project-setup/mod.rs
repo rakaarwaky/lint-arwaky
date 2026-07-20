@@ -6,6 +6,8 @@ pub mod taxonomy_doctor_vo;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_setup_contract_vo;
 pub mod taxonomy_stats_vo;
+pub mod utility_filesystem_checker;
+
 pub use taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, SetupError, WriteConfigResult,
 };

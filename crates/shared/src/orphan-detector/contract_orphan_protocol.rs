@@ -10,14 +10,6 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::taxonomy_layer_vo::Identity;
 
-pub trait IOrphanFileCacheProtocol: Send + Sync {
-    fn read_cached(&self, path: &FilePath) -> ContentString;
-    fn read_dir(&self, dir_path: &FilePath) -> Vec<FilePath>;
-    fn path_exists(&self, path: &FilePath) -> bool;
-    fn is_symlink(&self, path: &FilePath) -> bool;
-    fn clear_cache(&self);
-}
-
 pub trait IOrphanFilenameExtractorProtocol: Send + Sync {
     fn file_basename(&self, fp: &FilePath) -> Identity;
     fn file_stem(&self, fp: &FilePath) -> Identity;

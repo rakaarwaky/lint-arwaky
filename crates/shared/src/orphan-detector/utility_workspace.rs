@@ -1,5 +1,6 @@
+// PURPOSE: Workspace utility — locate workspace root and verify container wiring without dependency injection
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::orphan_detector::contract_orphan_protocol::IOrphanFileCacheProtocol;
+use crate::orphan_detector::utility_file_cache;
 
 /// Walk parent directories from `start` to locate the workspace root:
 /// a directory that holds a member dir (crates/packages/modules) AND a
@@ -31,11 +32,10 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
 pub fn check_wired_in_container(
     workspace_root: &std::path::Path,
     identifiers: &[String],
-    cache: &dyn IOrphanFileCacheProtocol,
 ) -> bool {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
-        if dir.is_dir() && check_dir_containers(&dir, identifiers, cache) {
+        if dir.is_dir() && check_dir_containers(&dir, identifiers) {
             return true;
         }
     }
@@ -45,14 +45,13 @@ pub fn check_wired_in_container(
 fn check_dir_containers(
     dir: &std::path::Path,
     identifiers: &[String],
-    cache: &dyn IOrphanFileCacheProtocol,
 ) -> bool {
     if let Ok(fp) = FilePath::new(dir.to_str().unwrap_or("")) {
-        let entries = cache.read_dir(&fp);
+        let entries = utility_file_cache::read_dir(&fp);
         for entry_path in &entries {
             let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
-                if check_dir_containers(path, identifiers, cache) {
+                if check_dir_containers(path, identifiers) {
                     return true;
                 }
             } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
@@ -68,7 +67,7 @@ fn check_dir_containers(
                     let fp = FilePath {
                         value: entry_path.value.clone(),
                     };
-                    let content = cache.read_cached(&fp).value;
+                    let content = utility_file_cache::read_cached(&fp).value;
                     for id in identifiers {
                         if content.contains(id) {
                             return true;
