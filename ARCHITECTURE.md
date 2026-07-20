@@ -1,86 +1,95 @@
-# AES Architecture: Agentic Engineering System [L1-502]
+# AES Architecture: Agentic Engineering System
 
-The **Agentic Engineering System (AES)** is a strictly layered, highly decoupled, and AI-native architectural pattern. It is designed to achieve maximum modularity, absolute testability, and extreme maintainability by enforcing rigid structural boundaries. Under the AES paradigm, technical details are isolated, domain models are protected, and dependencies are strictly inverted via abstract contracts. Furthermore, AES is specifically optimized for **Agentic workflows**, ensuring that AI agents and LLMs can easily navigate, understand, and modify the codebase without hallucinating architectural violations.
+See [AGENTS.md](../AGENTS.md) for workspace conventions and [RULES_AES.md](../.agents/rules/RULES_AES.md) for the full rule catalog.
+
+The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations.
+
+Under this AES revision there are **no Ports and no Infrastructure layer**. Technical implementation lives inside Capabilities as **Utility** functions — standalone, free functions with no struct, no trait, no contract. Business-logic files stay clean: they only call utility functions by clear names and never deal with low-level detail.
 
 ---
 
-## Terminology [L9-21]
+## Terminology
 
 AES supports multiple languages (Rust, TypeScript, Python) to maintain a single unified vocabulary:
 
-| Term                | Language        | Definition                                                                                                           |
-| ------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Term          | Language        | Definition                                                                                                         |
+| ------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
 | **Workspace** | All             | The entire project root directory (e.g.,`lint-arwaky/`) containing all configs and language-specific sub-projects. |
-| `crates/`         | Rust            | The directory containing all Rust crates (workspace members), conforming to Cargo workspace specifications.          |
-| `packages/`       | TypeScript / JS | The directory containing all TypeScript/JavaScript packages, following npm/pnpm workspace conventions.               |
-| `modules/`        | Python          | The directory containing all Python sub-projects, organized as independent python modules.                           |
-| Member              | All             | A single, self-contained sub-project (crate, package, or module) inside the workspace.                               |
+| `crates/`     | Rust            | The directory containing all Rust crates (workspace members), conforming to Cargo workspace specifications.        |
+| `packages/`   | TypeScript / JS | The directory containing all TypeScript/JavaScript packages, following npm/pnpm workspace conventions.             |
+| `modules/`    | Python          | The directory containing all Python sub-projects, organized as independent python modules.                         |
+| Member        | All             | A single, self-contained sub-project (crate, package, or module) inside the workspace.                             |
 
-## Core Pillars and Philosophy [L21-69]
+## Core Pillars and Philosophy
 
-### 1. Strict Layered Boundary Enforcement [L23-27]
+### 1. Strict Layered Boundary Enforcement
 
-The codebase is divided into distinct horizontal and vertical boundaries. Layers can only communicate using downward-only dependency paths to prevent coupling and circular dependencies. Any violation of these import boundaries is caught at compile or lint time by static analysis checkers.
+The codebase is divided into distinct horizontal and vertical boundaries. Layers communicate using downward-only dependency paths to prevent coupling and circular dependencies.
 
-### 2. Sibling Equivalence and Peer Layers [L27-35]
+### 2. Single Implementation Layer (Capabilities)
 
-Unlike traditional three-tier architectures, **Capabilities** and **Infrastructure** are horizontal peer layers.
+The **Capabilities** layer is the single implementation layer. It owns all non-trivial logic: business logic (group Utama) AND technical implementation (group Utility). There is no separate Infrastructure layer and no Port abstraction. Technical detail is expressed as standalone utility functions, not as adapters behind contracts.
 
-- Neither layer is above or below the other.
-- Neither layer can ever import from or know about the other.
-- Both layers depend downward on the **Contract** layer exclusively via Ports and Protocols.
+### 3. Business Logic Stays Clean
 
-### 3. Dependency Inversion [L35-39]
+File Utama (business logic) must NOT contain low-level detail — algorithms, regex, array manipulation, third-party library wiring. It calls Utility functions by clear, intention-revealing names. The complexity lives in Utility; the readability lives in Utama.
 
-Higher-level orchestrating layers never import concrete implementations. Instead, they interact with implementations exclusively through interfaces declared in the Contract layer using Dependency Injection (e.g., Surfaces call `ServiceContainerAggregate`, not concrete Orchestrators).
-
-### 4. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix) [L39-69]
+### 4. The 3-Structure Naming Philosophy (Layer Prefix + Vertical Slicing + Role Suffix)
 
 AES enforces a **File Naming Convention**: `[layer]_[concept]_[suffix]` or `[layer]_[concept1]_[concept2]_[suffix]` if needed
 
 1. **Layer (prefix)**: The architectural layer (e.g., `contract_`, `capabilities_`, `taxonomy_`).
 2. **Concept (middle)**: A single/multiple word defining the core concept (e.g., `compliance`, `import_rule`).
-3. **Role (suffix)**: Defines the architectural role (e.g., `_port`, `_protocol`, `_checker`).
+3. **Role (suffix)**: Defines the architectural role (e.g., `_protocol`, `_aggregate`, `_checker`).
 
-Files are organized into **feature crates** (vertical slicing) rather than layer directories. All seven layers coexist in each feature crate, distinguished by their file prefix.
+Files are organized into **feature crates** (vertical slicing). All layers coexist in each feature crate, distinguished by their file prefix.
 
 Exceptions: `main.rs/py/ts`, `lib.rs/py/ts`, `mod.rs`, `__init__.py`, `index.ts`.
 
 ---
 
-## Layer Hierarchy (Dependency Direction) [L69-107]
+## Layer Hierarchy (Dependency Direction)
 
 The dependency hierarchy flows as follows:
 
-- **Root** layer wraps all other layers and contains DI wiring.
-- **Surface** layer (CLI, MCP Server, API) imports from Contract and Taxonomy only.
+- **Root** layer wraps all other layers and contains wiring/bootstrap.
+- **Surface** layer (CLI, MCP Server, API) imports from Contract-aggregate and Taxonomy only.
 - **Agent** layer (Orchestrators) imports from Contract and Taxonomy only.
-- **Capabilities** layer (Checkers, Analyzers, Adapters, Scanners, Utilities) imports from Contract and Taxonomy only. Capabilities owns ALL implementation work — both domain logic and technical I/O — and delegates pure file/system operations to `taxonomy_*_utility` free functions rather than a separate infrastructure layer.
-- **Contract** layer (Ports, Protocols, Aggregates) imports from Taxonomy only.
+- **Capabilities** layer (Utama + Utility) imports from Contract and Taxonomy only. Utility functions are standalone (no struct/trait/port).
+- **Contract** layer (Protocol, Aggregate) imports from Taxonomy only.
 - **Taxonomy** layer (VOs, Entities, Errors, Events, Constants) is the foundation layer with no imports.
 
-The Root container handles DI wiring that instantiates and injects all layers. The Root entry point bootstraps the application by creating the composition root and starting the main loop.
+## The Six Layers
 
-## Layer Prefix Specifications [L107-121]
+1. **Taxonomy** — pure domain models (VO/entity/error/constant). Foundation, no imports.
+2. **Contract** — abstract inbound interfaces (protocol) and facades (aggregate). No ports. Imports Taxonomy only.
+3. **Capabilities** — the single implementation layer, split into **Utama** (business logic) and **Utility** (standalone technical functions). Imports Taxonomy + Contract only.
+4. **Agent** — orchestration / pipeline flow control. Imports Taxonomy + Contract only.
+5. **Surface** — user-facing entry points (CLI, TUI, MCP, API). Imports Taxonomy + Contract-aggregate only.
+6. **Root** — wiring / bootstrap. No business logic.
 
-Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix].`or `[layer]_[concept1]_[concept2]_[suffix]` if needed All seven layers coexist in each feature crate, distinguished by their prefix.
+## Layer Prefix Specifications
 
-| Layer Prefix      | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Allowed Imports                                                                                              | Semantic Role / Description                                                                                                                                                                                                                                  |
-| :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `taxonomy_`     | `_vo`, `_entity`, `_event`, `_error`, `_constant` (strict)                                                                                                                                                                                                                                                                                                                                                                                                                        | `taxonomy_` files only (outer imports trigger **AES201**).                                           | Pure domain models, value objects, domain events, errors, and compile-time constants.                                                                                                                                                                        |
-| `contract_`     | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `taxonomy_`, `contract_`                                                                                 | Abstract interfaces: Outbound interface ports, inbound protocols, and facade aggregates.                                                                                                                                                                     |
-| `capabilities_` | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_adapter`, `_provider`, `_scanner`, `_client`, `_wrapper`, `_system`, `_utility`, `_helper` | `taxonomy_`, `contract_`                                                                                 | **(A) Domain use-cases, business logic, computations** AND **(B) technical I/O implementations** (adapters, scanners, external-tool wrappers). Delegates pure reusable logic to `taxonomy_*_utility`. No separate infrastructure layer exists. |
-| `agent_`        | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `taxonomy_`, `contract_`                                                                                | Coordinates multiple capabilities and infrastructure flows to execute pipelines/workflows.                                                                                                                                                                   |
-| `surface_`      | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                              | Varies by surface role (see Surface layer details below).                                                    | Application entry points, UI components, CLI commands, controllers, and pages.                                                                                                                                                                               |
-| `root_`         | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | All layers (`taxonomy_`, `contract_`, `capabilities_`, `infrastructure_`, `agent_`, `surface_`). | App bootstrap, inline composition, and Dependency Injection wiring. Absolutely no business logic.                                                                                                                                                            |
+Files use the layer as a **file prefix** (not a directory): `[layer]_[concept]_[suffix]`.
 
-## Layer Specifications [L121-343]
+| Layer Prefix    | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Allowed Imports                                                                                  | Semantic Role / Description                                                                       |
+| :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| `taxonomy_`     | `_vo`, `_entity`, `_event`, `_error`, `_constant` (strict)                                                                                                                                                                                                                                                                                                                                                                                                            | `taxonomy_` files only.                                                                          | Pure domain models, value objects, domain events, errors, and compile-time constants.             |
+| `contract_`     | `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                             | `taxonomy_`, `contract_`                                                                         | Abstract inbound interfaces (protocol) and facade aggregates. NO ports.                           |
+| `capabilities_` | `_analyzer`, `_checker`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_utility`, `_helper`                                                                                                                  | `taxonomy_`, `contract_`                                                                         | **Utama**: business logic, use-cases, computations. **Utility**: standalone technical functions.  |
+| `agent_`        | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `taxonomy_`, `contract_`                                                                         | Coordinates multiple capabilities flows to execute pipelines/workflows.                           |
+| `surface_`      | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                              | Varies by surface role (see Surface layer details below).                                        | Application entry points, UI components, CLI commands, controllers, and pages.                    |
+| `root_`         | `_container`, `_entry`                                                                                                                                                                                                                                                                                                                                                                                                                                                | All layers (`taxonomy_`, `contract_`, `capabilities_`, `agent_`, `surface_`).                   | App bootstrap, inline composition, and wiring. Absolutely no business logic.                     |
 
-#### 1. Taxonomy (`taxonomy_` prefix) [L123-135]
+---
+
+## Layer Specifications
+
+### 1. Taxonomy (`taxonomy_` prefix)
 
 Pure domain models, value objects, and business entities.
 
-##### Components [L127-135]
+##### Components
 
 - **Value Object (`_vo`)**: Immutable data containers. May use primitive types internally (**AES401** allows primitives in VO).
 - **Entity (`_entity`)**: Stateful domain concepts with unique IDs.
@@ -88,139 +97,143 @@ Pure domain models, value objects, and business entities.
 - **Error (`_error`)**: Domain-level exceptions.
 - **Constant (`_constant`)**: Compile-time literals only (**AES401**).
 
-#### 2. Contract (`contract_` prefix) [L135-145]
+### 2. Contract (`contract_` prefix)
 
-Interface definitions — _what_ can be done without _how_.
+Interface definitions — _what_ can be done without _how_. **Ports are removed.** Only two components remain:
 
-##### Components [L139-145]
+##### Components
 
-- **Port (`_port`)**: Outbound interfaces implemented by Infrastructure.
-- **Protocol (`_protocol`)**: Inbound interfaces implemented by Capabilities.
-- **Aggregate (`_aggregate`)**: Composition facades.
+- **Protocol (`_protocol`)**: Inbound interface implemented by Capabilities Utama. Defines the behavior a caller (Agent/Surface) can rely on, without exposing implementation.
+- **Aggregate (`_aggregate`)**: Composition facade. Exposes a typed entry point so Surfaces do not import Capabilities directly (AES201).
 
-### 3. Capabilities (`capabilities_` prefix) [L145-182]
+### 3. Capabilities (`capabilities_` prefix)
 
-Use-case logic. Entirely agnostic of infrastructure.
+The single implementation layer. Split into two groups — **Utama** (business logic) and **Utility** (standalone technical functions).
 
-#### Allowed Logic: [L149-160]
+#### (A) Utama — Business Logic
 
-| Category                            | Description                             | Allowed Suffix                              |
-| ----------------------------------- | --------------------------------------- | ------------------------------------------- |
-| **Computation / Calculation** | Score calculation from violation counts | `_calculator`, `_scorer`                |
-| **Validation / Checking**     | Input validation with error returns     | `_checker`, `_validator`                |
-| **Data Transformation**       | Map, filter, reduce on collections      | `_transformer`, `_mapper`, `_filter`  |
-| **Business Rules**            | Conditional blocking based on severity  | `_evaluator`, `_resolver`               |
-| **Information Extraction**    | Parse imports from source code          | `_extractor`, `_classifier`             |
-| **Assessment / Scoring**      | Grade conversion from score values      | `_assessor`, `_auditor`, `_inspector` |
+Use-cases, business rules, computations. Clean and readable: it calls Utility functions by clear names and never contains low-level detail.
 
-#### Forbidden Logic: [L160-166]
+| Category                      | Description                                    | Allowed Suffix                        |
+| ----------------------------- | ---------------------------------------------- | ------------------------------------- |
+| **Computation / Calculation** | Score calculation from violation counts        | `_calculator`, `_scorer`              |
+| **Validation / Checking**     | Input validation with error returns            | `_checker`, `_validator`              |
+| **Data Transformation**       | Map, filter, reduce on collections             | `_transformer`, `_mapper`, `_filter`  |
+| **Business Rules**            | Conditional blocking based on severity         | `_evaluator`, `_resolver`             |
+| **Information Extraction**    | Parse imports from source code                 | `_extractor`, `_classifier`           |
+| **Assessment / Scoring**      | Grade conversion from score values             | `_assessor`, `_auditor`, `_inspector` |
+
+#### (B) Utility — Standalone Technical Implementation
+
+Contains the hard, low-level detail: specific algorithms, third-party library setup, regex/array manipulation, file-system walking, process spawning. **Rules for Utility:**
+
+- **Standalone free functions.** No `struct`, no `trait`, no `impl` of a contract/port.
+- **No Contract dependency.** Utility does not reference `_protocol` / `_aggregate`.
+- **Called by name.** Utama files invoke them directly: `collect_source_files(dir)`, `run_ruff(path)`, `normalize_path(p)`.
+- **Reusable.** Cross-feature reusable helpers belong in `shared` as `taxonomy_*_utility` / `capabilities_*_utility`.
+
+| Category                     | Description                                          | Allowed Suffix              |
+| ---------------------------- | ---------------------------------------------------- | --------------------------- |
+| **File I/O detail**          | Walking dirs, ignore-matching, source-file detection | `_utility`, `_helper`       |
+| **External tool execution**  | Spawn ruff/clippy/eslint/tsc, parse their output     | `_utility`, `_helper`       |
+| **Algorithm / regex**        | Low-level string/array/regex manipulation            | `_utility`, `_helper`       |
+| **System operations**        | Process/env handling                                 | `_utility`, `_helper`       |
+
+##### Utama vs Utility — the key separation
+
+| Concern                       | Belongs in Utama            | Belongs in Utility                        |
+| ----------------------------- | --------------------------- | ----------------------------------------- |
+| "collect all source files"    | call `collect_source_files` | the recursive walk + ignore logic         |
+| "run the linter"              | call `run_ruff(path)`       | spawn process, capture stdout, parse JSON |
+| "is this an import violation" | apply the rule              | regex/alias resolution helper             |
+
+#### Forbidden Logic (both Utama and Utility):
 
 - ❌ Flow control (loops, branching for orchestration) → **Agent**
-- ❌ File I/O, network calls → **Infrastructure**
-- ❌ Direct struct mutation without contract → **Taxonomy**
+- ❌ Domain model definition → **Taxonomy**
+- ❌ Low-level detail inside Utama → extract to **Utility**
+- ❌ `struct`/`trait`/`impl` of a contract inside Utility → keep Utility standalone
 
-### 4. Infrastructure (`infrastructure_` prefix) [L182-343]
+### 4. Agent (`agent_` prefix)
 
-Technical implementations and external tool wrappers.
+Orchestration and pipeline execution. Coordinates multiple capabilities flows.
 
-#### Allowed Logic: [L186-198]
+#### Allowed Logic (Flow Control):
 
-| Category                      | Description                               | Allowed Suffix                                 |
-| ----------------------------- | ----------------------------------------- | ---------------------------------------------- |
-| **File I/O**            | Read/write files from filesystem          | `_adapter`, `_reader`, `_writer`         |
-| **Network Calls**       | HTTP requests and API calls               | `_client`, `_connector`, `_gateway`      |
-| **Database Operations** | SQL queries and data persistence          | `_repository`, `_driver`                   |
-| **CLI Execution**       | Run external commands                     | `_adapter`, `_provider`                    |
-| **Library Wrappers**    | Wrap third-party crates/packages          | `_provider`, `_wrapper`                    |
-| **System Operations**   | Process management, environment variables | `_system`, `_lifespan`                     |
-| **Streaming / Pub-Sub** | Broadcast channels and event streams      | `_publisher`, `_subscriber`, `_streamer` |
+| Category                   | Description                                   | Rust Syntax                            | Python Syntax                     | TypeScript Syntax                |
+| -------------------------- | --------------------------------------------- | -------------------------------------- | --------------------------------- | -------------------------------- |
+| **Looping**                | Process events in event loop                  | `while`, `loop`, `for`                 | `while`, `for`                    | `while`, `for`, `forEach`        |
+| **Sequential**             | Step A → Step B → Step C                      | Sequential statements                  | Sequential statements             | Sequential statements            |
+| **Branching**              | Conditional execution                         | `if/else`, `match`                     | `if/elif/else`                    | `if/else`, `switch`              |
+| **Error Handling**         | Handle Result/Option from other layers        | `match`, `if let`, `?`                 | `try/except`                      | `try/catch`                      |
+| **Timeout / Cancellation** | Cancellable async operations                  | `tokio::select!`, `tokio::time::sleep` | `asyncio.wait_for()`              | `AbortSignal`, `Promise.race()`  |
 
-#### Forbidden Logic: [L198-204]
+#### Forbidden Logic:
 
-- ❌ Business rules / computation → **Capabilities**
-- ❌ Flow control for orchestration → **Agent**
-- ❌ Domain logic without I/O → **Taxonomy**
-
-#### 5. Agent (`agent_` prefix) [L217-221]
-
-Orchestration and pipeline execution.
-
-#### Allowed Logic (Flow Control): [L221-231]
-
-| Category                         | Description                            | Rust Syntax                                | Python Syntax          | TypeScript Syntax                   |
-| -------------------------------- | -------------------------------------- | ------------------------------------------ | ---------------------- | ----------------------------------- |
-| **Looping**                | Process events in event loop           | `while`, `loop`, `for`               | `while`, `for`     | `while`, `for`, `forEach`     |
-| **Sequential**             | Step A → Step B → Step C             | Sequential statements                      | Sequential statements  | Sequential statements               |
-| **Branching**              | Conditional execution                  | `if/else`, `match`                     | `if/elif/else`       | `if/else`, `switch`             |
-| **Error Handling**         | Handle Result/Option from other layers | `match`, `if let`, `?`               | `try/except`         | `try/catch`                       |
-| **Timeout / Cancellation** | Cancellable async operations           | `tokio::select!`, `tokio::time::sleep` | `asyncio.wait_for()` | `AbortSignal`, `Promise.race()` |
-
-#### Forbidden Logic: [L231-237]
-
-- ❌ Computation / business rules → **Capabilities**
-- ❌ File I/O, network calls → **Infrastructure**
+- ❌ Computation / business rules → **Capabilities (Utama)**
+- ❌ Low-level technical detail → **Capabilities (Utility)**
 - ❌ Domain model definition → **Taxonomy**
 
-#### File Limits: [L237-242]
+#### File Limits:
 
 - **AES301** (max 1000 lines) applies to all files including agent files
 - **AES405** checks for `any` type annotations (no file size limit)
 
-#### Agent Orchestrator Pattern: [L242-279]
+#### Agent Orchestrator Pattern:
 
-Orchestrator struct holds references to protocols via Contract layer. Constructor receives dependencies through DI. Execute method sequences calls: fetch data, check emptiness with branching, loop over items with error handling, return result.
+Orchestrator struct holds references to protocols via Contract layer. Constructor receives dependencies through wiring. Execute method sequences calls: fetch data, check emptiness with branching, loop over items with error handling, return result.
 
-#### 6. Surfaces (`surface_` prefix) [L279-306]
+### 5. Surfaces (`surface_` prefix)
 
 User-facing entry points — CLI, TUI, MCP server, API.
 
-##### Components [L127-135]
+##### Components
 
-- **Smart Surfaces (`command`/`controller`/`page`/`entry`)**: `taxonomy_` + `contract_aggregate_` only (AES201). Must NOT import capabilities/infrastructure/agent directly — use `ServiceContainerAggregate`.
+- **Smart Surfaces (`command`/`controller`/`page`/`entry`)**: `taxonomy_` + `contract_aggregate_` only (AES201). Must NOT import capabilities/agent directly — use the aggregate facade.
 - **Utility Surfaces (`hook`/`store`/`action`/`screen`)**: `taxonomy_` only + passive surfaces. Must NOT import smart surfaces (AES406).
 - **Passive Surfaces (`component`/`view`/`layout`)**: `taxonomy_` only (AES406). No logic or orchestration.
 
-##### Allowed Logic: [L289-299]
+##### Allowed Logic:
 
-| Category                      | Description                           | Allowed Suffix                |
-| ----------------------------- | ------------------------------------- | ----------------------------- |
-| **User Input Handling** | Match keys to actions                 | `_command`, `_controller` |
-| **UI Rendering**        | Print status messages to console      | `_view`, `_component`     |
-| **Event Mapping**       | Map key press to internal event types | `_command`, `_action`     |
-| **State Management**    | Update selected file in state         | `_store`, `_state`        |
-| **Routing**             | Navigate between screens              | `_router`, `_page`        |
+| Category                | Description                                | Allowed Suffix            |
+| ----------------------- | ------------------------------------------ | ------------------------- |
+| **User Input Handling** | Match keys to actions                      | `_command`, `_controller` |
+| **UI Rendering**        | Print status messages to console           | `_view`, `_component`     |
+| **Event Mapping**       | Map key press to internal event types      | `_command`, `_action`     |
+| **State Management**    | Update selected file in state              | `_store`, `_state`        |
+| **Routing**             | Navigate between screens                   | `_router`, `_page`        |
 
-##### Forbidden Logic: [L299-306]
+##### Forbidden Logic:
 
-- ❌ Computation / business rules → **Capabilities**
+- ❌ Computation / business rules → **Capabilities (Utama)**
 - ❌ Flow control for orchestration → **Agent**
-- ❌ File I/O, network calls → **Infrastructure**
-- ❌ Direct import of capabilities/infrastructure → **AES201 violation**
+- ❌ Low-level technical detail → **Capabilities (Utility)**
+- ❌ Direct import of capabilities → **AES201 violation**
 
-#### Surface vs Infrastructure — Key Difference [L306-332]
+#### Surface vs Capabilities — Key Difference
 
-| Aspect                  | Surface                              | Infrastructure                          |
-| ----------------------- | ------------------------------------ | --------------------------------------- |
-| **Purpose**       | User interaction (UI/presentation)   | System interaction (technical I/O)      |
-| **Input source**  | Human (keyboard, mouse, API request) | System (file system, network, database) |
-| **Output target** | Human (console, UI, HTTP response)   | System (files, network, processes)      |
-| **Logic**         | Event mapping, routing, rendering    | File I/O, network calls, CLI execution  |
+| Aspect            | Surface                              | Capabilities (Utility)                     |
+| ----------------- | ------------------------------------ | ------------------------------------------ |
+| **Purpose**       | User interaction (UI/presentation)   | System interaction (technical detail)      |
+| **Input source**  | Human (keyboard, mouse, API request) | System (file system, network, processes)   |
+| **Output target** | Human (console, UI, HTTP response)   | System (files, network, external processes)|
+| **Logic**         | Event mapping, routing, rendering    | Algorithms, regex, library wiring, I/O     |
 
-#### 7. Root (`root_` prefix) [L332-343]
+### 6. Root (`root_` prefix)
 
-Wiring layer. Responsible for Dependency Injection (DI) composition. No business logic is allowed here — only instantiation and wiring.
+Wiring layer. Responsible for composition and bootstrap. No business logic is allowed here — only instantiation and wiring.
 
-##### Components [L336-343]
+##### Components
 
-- **Container (`_container`)**: Per-feature DI container. Instantiates `infrastructure_*` and `capabilities_*` implementations, wires them behind `contract_*` traits/interfaces, and exposes typed factory methods. Each feature crate owns exactly one `root_*_container`.
-- **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the `CompositionRoot` (the top-level root container that composes all feature containers) and starts the main loop.
+- **Container (`_container`)**: Per-feature wiring container. Instantiates Capabilities and wires them behind Contract protocols/aggregates, exposing typed factory methods. Each feature crate owns exactly one `root_*_container`.
+- **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the composition root (top-level container composing all feature containers) and starting the main loop.
 
 ---
 
-## Quick Reference: Logic Ownership [L343-370]
+## Quick Reference: Logic Ownership
 
-| Logic Type                          | Layer               | Suffix                        |
-| ----------------------------------- | ------------------- | ----------------------------- |
+| Logic Type                    | Layer             | Suffix                    |
+| ----------------------------- | ----------------- | ------------------------- |
 | **User Input Handling**       | `surface_`        | `_command`, `_controller` |
 | **UI Rendering**              | `surface_`        | `_view`, `_component`     |
 | **Event Mapping**             | `surface_`        | `_command`, `_action`     |
@@ -229,45 +242,35 @@ Wiring layer. Responsible for Dependency Injection (DI) composition. No business
 | **Validation / Checking**     | `capabilities_`   | `_checker`, `_validator`  |
 | **Data Transformation**       | `capabilities_`   | `_transformer`, `_mapper` |
 | **Business Rules**            | `capabilities_`   | `_evaluator`, `_resolver` |
-| **File I/O**                  | `infrastructure_` | `_adapter`, `_reader`     |
-| **Network Calls**             | `infrastructure_` | `_client`, `_gateway`     |
-| **Database**                  | `infrastructure_` | `_repository`, `_driver`  |
-| **CLI Execution**             | `infrastructure_` | `_adapter`, `_provider`   |
-| **Library Wrappers**          | `infrastructure_` | `_provider`, `_wrapper`   |
-| **Looping**                   | `agent_`          | `_orchestrator`             |
-| **Sequential Steps**          | `agent_`          | `_orchestrator`             |
-| **Branching (if/match)**      | `agent_`          | `_orchestrator`             |
-| **Error Handling**            | `agent_`          | `_orchestrator`             |
+| **Low-level technical detail**| `capabilities_`   | `_utility`, `_helper`     |
+| **Looping**                   | `agent_`          | `_orchestrator`           |
+| **Sequential Steps**          | `agent_`          | `_orchestrator`           |
+| **Branching (if/match)**      | `agent_`          | `_orchestrator`           |
+| **Error Handling**            | `agent_`          | `_orchestrator`           |
 | **Domain Models**             | `taxonomy_`       | `_vo`, `_entity`          |
-| **Interfaces**                | `contract_`       | `_port`, `_protocol`      |
-| **DI Wiring**                 | `root_`           | `_container`, `_entry`    |
+| **Inbound Interfaces**        | `contract_`       | `_protocol`               |
+| **Facades**                   | `contract_`       | `_aggregate`              |
+| **Wiring / Bootstrap**        | `root_`           | `_container`, `_entry`    |
 
 ---
 
-## Architectural Patterns [L370-502]
+## Architectural Patterns
 
-### Container Wiring (DI) [L372-408]
+### Wiring (no Port / no DI-through-trait)
 
-Container struct holds orchestrator reference. Constructor creates infrastructure adapter, passes it to capability checkers, then wires everything into orchestrator. Factory method returns orchestrator reference.
+Root container wires Capabilities implementations behind Contract protocols/aggregates. There is no Port abstraction — Utama files call Utility functions directly by name; Surfaces reach Capabilities only through the aggregate facade.
 
-### Port → Adapter Pattern [L408-434]
+### Utama → Utility Pattern
 
-Contract defines trait/interface with read, write, exists methods. Infrastructure implements the trait, delegating to language standard library (std::fs, open(), fs.promises).
+Business-logic file calls a clearly named utility function. The utility owns the messy detail (regex, third-party library, recursion, process spawn). Example:
 
-### Data Flow (Surface → Agent → Capability → Contract → Infrastructure) [L434-450]
+- Utama: `let files = collect_source_files(dir);` — one readable line.
+- Utility: recursive walk, ignore-matching, extension check, symlink/inode handling.
 
-User presses "c" (check) in TUI. Surface layer maps key to internal event type. Agent layer receives event and delegates to lint executor. Capabilities layer runs check logic and calls code analysis. Contract layer provides interface for import parsing. Infrastructure layer performs actual file scanning.
+### Data Flow (Surface → Agent → Capability → Contract)
 
-### Before/After Migration [L450-502]
+User presses "c" (check) in TUI. Surface maps key to an internal event via the aggregate. Agent receives the event and delegates to the lint executor. Capabilities Utama runs check logic; when it needs low-level work (file scanning, running a linter) it calls a Utility function. Contract protocol defines the inbound interface the Agent relies on.
 
-**BEFORE (flat, no layers):**
+### Migration Note
 
-Files in the src directory contained mixed responsibilities — main entry files combined struct definitions, business logic, database calls, and I/O operations in a single file without separation of concerns. User configuration files mixed data structures with persistence logic. API handlers combined HTTP processing with business rules.
-
-**AFTER (AES 7-layer — feature-based vertical slicing):**
-
-The workspace root is organized by language-specific conventions: Rust uses crates/, TypeScript/JavaScript uses packages/, Python uses modules/. Each feature is a self-contained crate/module with all seven layers represented by file prefixes within the same directory. Shared types are isolated in a shared subdirectory with common types accessible across all features.
-
-Each feature crate contains files for each layer: taxonomy files hold data structures, contract files define interfaces, capabilities files contain validation logic, infrastructure files implement adapters, agent files coordinate operations, surface files handle CLI commands, and root files manage DI wiring. The lib.rs/py/ts file serves as the module root.
-
-Top-level entry points include separate files for CLI binary, MCP server, and TUI launcher, each bootstrapping their respective containers.
+Earlier AES revisions defined a separate **Infrastructure** layer (peer of Capabilities) reached through **Ports**. Both were retired: Infrastructure's technical responsibilities became **Capabilities Utility** (standalone free functions, no struct/trait/port), and Ports were removed — Contract now carries only Protocol and Aggregate. The architecture is a six-layer model where Capabilities is the single implementation layer, split into clean business logic (Utama) and standalone technical utility.
