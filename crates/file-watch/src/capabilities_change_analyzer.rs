@@ -1,21 +1,14 @@
-// PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 
+// PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ChangeAnalyzer;
 
-impl Default for ChangeAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ChangeAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     fn analyze(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
@@ -41,3 +34,18 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
             .collect()
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for ChangeAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ChangeAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+}
+

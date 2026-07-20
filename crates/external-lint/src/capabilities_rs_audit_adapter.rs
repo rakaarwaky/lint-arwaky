@@ -1,17 +1,3 @@
-// PURPOSE: RsAuditAdapter — ILinterAdapterProtocol implementation for cargo-audit security scanning
-//
-// Uses the `rustsec` crate directly (not subprocess) to parse Cargo.lock and
-// check against the RustSec Advisory Database. Reports vulnerabilities as
-// LintResults with CVE/RUSTSEC IDs as error codes.
-//
-// Key details:
-//   - Finds Cargo.lock via resolve_cargo_lock_working_dir (walks up from path)
-//   - Uses local advisory DB from ~/.cargo/advisory-db, or fetches if missing
-//   - No subprocess overhead — uses rustsec library API directly
-//   - CVSS severity is mapped: critical→CRITICAL, high→HIGH, medium→MEDIUM, else→LOW
-//   - apply_fix returns true (cargo-audit has no fix command; affected packages
-//     must be updated manually via cargo update)
-use std::path::Path;
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -31,19 +17,26 @@ use tracing::debug;
 
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_lock_working_dir;
 
+// (No protocol implementation found in this file)
+
+// PURPOSE: RsAuditAdapter — ILinterAdapterProtocol implementation for cargo-audit security scanning
+//
+// Uses the `rustsec` crate directly (not subprocess) to parse Cargo.lock and
+// check against the RustSec Advisory Database. Reports vulnerabilities as
+// LintResults with CVE/RUSTSEC IDs as error codes.
+//
+// Key details:
+//   - Finds Cargo.lock via resolve_cargo_lock_working_dir (walks up from path)
+//   - Uses local advisory DB from ~/.cargo/advisory-db, or fetches if missing
+//   - No subprocess overhead — uses rustsec library API directly
+//   - CVSS severity is mapped: critical→CRITICAL, high→HIGH, medium→MEDIUM, else→LOW
+//   - apply_fix returns true (cargo-audit has no fix command; affected packages
+//     must be updated manually via cargo update)
+use std::path::Path;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct CargoAuditAdapter {
-}
-
-impl CargoAuditAdapter {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl Default for CargoAuditAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 #[async_trait]
@@ -179,3 +172,21 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         Ok(ComplianceStatus::new(true))
     }
 }
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl CargoAuditAdapter {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for CargoAuditAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

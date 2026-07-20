@@ -1,13 +1,16 @@
-// PURPOSE: FileSystemCheckAdapter — IGitFileCheckProtocol implementation for file/directory existence checks
-use std::path::Path;
 
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_file_check_protocol::IGitFileCheckProtocol;
 
-// Block 1: struct Definition
+// PURPOSE: FileSystemCheckAdapter — IGitFileCheckProtocol implementation for file/directory existence checks
+use std::path::Path;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct FileSystemCheckAdapter;
 
-// Block 2: impl Port for Struct (Public Contract)
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait::async_trait]
 impl IGitFileCheckProtocol for FileSystemCheckAdapter {
     async fn path_exists(&self, path: &FilePath) -> bool {
@@ -23,7 +26,8 @@ impl IGitFileCheckProtocol for FileSystemCheckAdapter {
     }
 }
 
-// Block 3: constructors
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl FileSystemCheckAdapter {
     pub fn new() -> Self {
         Self
@@ -35,3 +39,4 @@ impl Default for FileSystemCheckAdapter {
         Self::new()
     }
 }
+

@@ -1,6 +1,3 @@
-// PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -13,10 +10,16 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 
+// PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
+// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+use async_trait::async_trait;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ArchImportMandatoryChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait]
 impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
     fn rule_name(&self) -> Identity { Identity::new("AES202") }
@@ -57,6 +60,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl Default for ArchImportMandatoryChecker {
     fn default() -> Self { Self }
 }
@@ -150,3 +154,4 @@ impl ArchImportMandatoryChecker {
         }
     }
 }
+

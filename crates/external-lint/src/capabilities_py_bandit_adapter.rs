@@ -1,16 +1,3 @@
-// PURPOSE: PyBanditAdapter — ILinterAdapterProtocol implementation for Bandit security scanner integration
-//
-// Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
-// security vulnerabilities. Parses JSON output to extract findings (filename,
-// line_range, test_id, issue_text, severity).
-//
-// Key details:
-//   - `--exit-zero` ensures bandit always exits 0 regardless of findings
-//   - JSON output avoids fragile regex parsing
-//   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
-//   - apply_fix always returns false (Bandit is a scanner, not a fixer)
-
-use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -33,38 +20,28 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
 };
 
+// PURPOSE: PyBanditAdapter — ILinterAdapterProtocol implementation for Bandit security scanner integration
+//
+// Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
+// security vulnerabilities. Parses JSON output to extract findings (filename,
+// line_range, test_id, issue_text, severity).
+//
+// Key details:
+//   - `--exit-zero` ensures bandit always exits 0 regardless of findings
+//   - JSON output avoids fragile regex parsing
+//   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
+//   - apply_fix always returns false (Bandit is a scanner, not a fixer)
+
+use async_trait::async_trait;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct BanditAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
-impl BanditAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "bandit".to_string(),
-        }
-    }
-
-    fn map_severity(&self, severity: &str) -> Severity {
-        match severity {
-            "HIGH" => Severity::HIGH,
-            "MEDIUM" => Severity::MEDIUM,
-            "LOW" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for BanditAdapter {
@@ -155,3 +132,34 @@ impl ILinterAdapterProtocol for BanditAdapter {
         noop_apply_fix().await
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl BanditAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "bandit".to_string(),
+        }
+    }
+
+    fn map_severity(&self, severity: &str) -> Severity {
+        match severity {
+            "HIGH" => Severity::HIGH,
+            "MEDIUM" => Severity::MEDIUM,
+            "LOW" => Severity::LOW,
+            _ => Severity::MEDIUM,
+        }
+    }
+}
+

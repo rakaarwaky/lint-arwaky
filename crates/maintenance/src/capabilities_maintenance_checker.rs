@@ -1,3 +1,9 @@
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::project_setup::taxonomy_doctor_vo::{
+    DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
+    ToolchainDiagnostics,
+};
+
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
 //
 // Implements IMaintenanceCheckerProtocol with three health-check operations:
@@ -12,13 +18,32 @@
 //   3. run_dependency_report: parses Cargo.lock (Rust), pyproject.toml, or
 //      requirements.txt to list direct and transitive dependencies.
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::project_setup::taxonomy_doctor_vo::{
-    DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
-    ToolchainDiagnostics,
-};
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MaintenanceChecker;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+#[async_trait::async_trait]
+impl IMaintenanceCheckerProtocol for MaintenanceChecker {
+    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
+        MaintenanceChecker::diagnose_toolchain(self).await
+    }
+
+    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+        MaintenanceChecker::run_security_scan(self, project_path).await
+    }
+
+    async fn run_dependency_report(
+        &self,
+        project_path: &FilePath,
+    ) -> Result<DependencyReport, String> {
+        MaintenanceChecker::run_dependency_report(self, project_path).await
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for MaintenanceChecker {
     fn default() -> Self {
@@ -395,20 +420,3 @@ impl MaintenanceChecker {
     }
 }
 
-#[async_trait::async_trait]
-impl IMaintenanceCheckerProtocol for MaintenanceChecker {
-    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        MaintenanceChecker::diagnose_toolchain(self).await
-    }
-
-    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        MaintenanceChecker::run_security_scan(self, project_path).await
-    }
-
-    async fn run_dependency_report(
-        &self,
-        project_path: &FilePath,
-    ) -> Result<DependencyReport, String> {
-        MaintenanceChecker::run_dependency_report(self, project_path).await
-    }
-}

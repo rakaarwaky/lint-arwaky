@@ -1,9 +1,3 @@
-// PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorProtocol implementation
-//
-// Scans a directory tree to detect which programming languages are present.
-// Skips node_modules, target, .git, .jj directories.
-
-use std::path::Path;
 
 use async_trait::async_trait;
 use shared::common::taxonomy_common_vo::bool;
@@ -12,12 +6,19 @@ use shared::external_lint::contract_external_lint_language_detector_protocol::{
     DetectedLanguages, IExternalLintLanguageDetectorProtocol,
 };
 
-const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-Live"];
+// PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorProtocol implementation
+//
+// Scans a directory tree to detect which programming languages are present.
+// Skips node_modules, target, .git, .jj directories.
+
+use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ExternalLintLanguageDetectorAdapter;
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait]
 impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapter {
     async fn detect_languages(&self, path: &FilePath) -> DetectedLanguages {
@@ -40,7 +41,10 @@ impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapt
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-Live"];
+
 impl ExternalLintLanguageDetectorAdapter {
     pub fn new() -> Self {
         Self
@@ -90,3 +94,4 @@ impl Default for ExternalLintLanguageDetectorAdapter {
         Self::new()
     }
 }
+

@@ -1,8 +1,3 @@
-// PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
-// Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
-// with user-facing output formatting.
-
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -25,45 +20,13 @@ use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use std::sync::Arc;
 
-fn is_binary_available(b: &str) -> bool {
-    std::process::Command::new("sh")
-        .args(["-c", &format!("command -v {} >/dev/null 2>&1", b)])
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
-}
+// PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
+// Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
+// with user-facing output formatting.
 
-pub fn discover_adapters() -> Vec<AdapterInfo> {
-    let mut list = vec![
-        ("ast_rust_scanner", "Rust AST (built-in)", true),
-        ("ast_py_scanner", "Python AST (built-in)", true),
-        ("ast_js_scanner", "JS/TS AST (built-in)", true),
-    ]
-    .into_iter()
-    .map(|(n, l, i)| AdapterInfo {
-        name: n.into(),
-        label: l.into(),
-        installed: i,
-    })
-    .collect::<Vec<_>>();
-    for (b, l) in [
-        ("clippy", "Clippy (Rust)"),
-        ("ruff", "Ruff (Python)"),
-        ("mypy", "MyPy (Python)"),
-        ("bandit", "Bandit (Python)"),
-        ("radon", "Radon (Python metrics)"),
-        ("eslint", "ESLint (JavaScript)"),
-        ("prettier", "Prettier (JavaScript)"),
-        ("tsc", "TypeScript Compiler"),
-    ] {
-        list.push(AdapterInfo {
-            name: b.into(),
-            label: l.into(),
-            installed: is_binary_available(b),
-        });
-    }
-    list
-}
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
@@ -81,349 +44,7 @@ pub struct LintExecutor {
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
 }
 
-impl LintExecutor {
-    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
-        Self {
-            code_analysis,
-            fix_orchestrator: None,
-            setup_aggregate: None,
-            maintenance: None,
-            hook_port: None,
-            config_orchestrator: None,
-            external_lint: None,
-            orphan_aggregate: None,
-            layer_detector: None,
-            import_orchestrator: None,
-            naming_orchestrator: None,
-            role_orchestrator: None,
-            multi_project_orchestrator: None,
-        }
-    }
-
-    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>) -> Self {
-        self.fix_orchestrator = Some(fix_orchestrator);
-        self
-    }
-
-    pub fn with_setup(mut self, setup_aggregate: Arc<dyn SetupManagementAggregate>) -> Self {
-        self.setup_aggregate = Some(setup_aggregate);
-        self
-    }
-
-    pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
-        self.maintenance = Some(maintenance);
-        self
-    }
-
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerProtocol>) -> Self {
-        self.hook_port = Some(hook_port);
-        self
-    }
-
-    pub fn with_config(
-        mut self,
-        config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
-    ) -> Self {
-        self.config_orchestrator = Some(config_orchestrator);
-        self
-    }
-
-    pub fn with_external_lint(mut self, external_lint: Arc<dyn IExternalLintAggregate>) -> Self {
-        self.external_lint = Some(external_lint);
-        self
-    }
-
-    pub fn with_orphan(
-        mut self,
-        orphan_aggregate: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    ) -> Self {
-        self.orphan_aggregate = Some(orphan_aggregate);
-        self.layer_detector = Some(layer_detector);
-        self
-    }
-
-    pub fn with_import_orchestrator(
-        mut self,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    ) -> Self {
-        self.import_orchestrator = Some(import_orchestrator);
-        self
-    }
-
-    pub fn with_naming_orchestrator(
-        mut self,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    ) -> Self {
-        self.naming_orchestrator = Some(naming_orchestrator);
-        self
-    }
-
-    pub fn with_role_orchestrator(
-        mut self,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    ) -> Self {
-        self.role_orchestrator = Some(role_orchestrator);
-        self
-    }
-
-    pub fn with_multi_project_orchestrator(
-        mut self,
-        multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
-    ) -> Self {
-        self.multi_project_orchestrator = Some(multi_project_orchestrator);
-        self
-    }
-
-    pub fn format_results(&self, results: &LintResultList) -> String {
-        ReportFormatterHelper::format_results(results)
-    }
-
-    fn format_doctor_report(
-        diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
-    ) -> LintExecutionResult {
-        ReportFormatterHelper::format_doctor_report(diagnostics)
-    }
-
-    fn run_init(&self) -> LintExecutionResult {
-        match &self.setup_aggregate {
-            Some(protocol) => {
-                let languages = protocol.detect_languages();
-                let mut created = Vec::new();
-                let mut skipped = Vec::new();
-                let mut errors = Vec::new();
-                for lang in languages.iter() {
-                    let lang_str = lang.value();
-                    let config_path = format!("lint_arwaky.config.{}.yaml", lang_str);
-                    if protocol.file_exists(&config_path) {
-                        skipped.push(config_path);
-                        continue;
-                    }
-                    let template = protocol.get_config_template(lang_str);
-                    match protocol.write_config_file(&config_path, template) {
-                        Ok(desc) => {
-                            created
-                                .push(format!("{} ({}) — {}", config_path, lang_str, desc.value));
-                        }
-                        Err(e) => {
-                            errors.push(format!("{} — error: {}", config_path, e));
-                        }
-                    }
-                }
-                let mut output = String::from("Config initialization.\n");
-                if !created.is_empty() {
-                    output.push_str(&format!("Created:\n  {}\n", created.join("\n  ")));
-                }
-                if !skipped.is_empty() {
-                    output.push_str(&format!("Already exist:\n  {}\n", skipped.join("\n  ")));
-                }
-                if !errors.is_empty() {
-                    output.push_str(&format!("Errors:\n  {}\n", errors.join("\n  ")));
-                    return LintExecutionResult::failure(output);
-                }
-                LintExecutionResult::success(output, 0)
-            }
-            None => {
-                let output =
-                    "Config initialization.\nUse CLI `lint-arwaky-cli init` to create configuration."
-                        .to_string();
-                LintExecutionResult::success(output, 0)
-            }
-        }
-    }
-
-    fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        ReportFormatterHelper::format_dependency_report(path, report)
-    }
-
-    fn format_config_result(
-        result: &shared::config_system::taxonomy_source_vo::ConfigResult,
-    ) -> LintExecutionResult {
-        ReportFormatterHelper::format_config_result(result)
-    }
-}
-
-impl LintExecutor {
-    fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
-        // If we have multi_project_orchestrator, we check for workspace members.
-        if let Some(ref multi_project) = self.multi_project_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let rt = match tokio::runtime::Runtime::new() {
-                Ok(rt) => rt,
-                Err(e) => {
-                    return LintExecutionResult::failure(format!(
-                        "Failed to create runtime: {}",
-                        e
-                    ));
-                }
-            };
-            let workspaces = rt.block_on(multi_project.discover_workspaces(&path_obj));
-            if !workspaces.is_empty() {
-                let mut all_results = Vec::new();
-
-                // Collect ALL source files from workspace root for cross-workspace orphan detection
-                let scan_root = shared::common::find_workspace_root(path)
-                    .unwrap_or_else(|| std::path::PathBuf::from(path));
-                let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root)
-                        .iter()
-                        .map(|f| f.value.clone())
-                        .collect();
-
-                for ws in &workspaces {
-                    // Dynamically build the orchestrators/linters using ws.config!
-                    let import_container =
-                        import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::default();
-                    let role_container =
-                        role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let code_analysis_linter =
-                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-                            .code_analysis_linter();
-
-                    let mut ws_results = Vec::new();
-
-                    // 1. AES code analysis
-                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
-                    ws_results.extend(aes_results.values);
-
-                    // 2. Naming rules audit (AES101-102)
-                    let naming_results =
-                        rt.block_on(naming_container.orchestrator().run_audit(&ws.path));
-                    ws_results.extend(naming_results);
-
-                    // 3. Import rules audit (AES201-205, cycles)
-                    let import_results =
-                        rt.block_on(import_container.orchestrator().run_audit(&ws.path));
-                    ws_results.extend(import_results);
-
-                    // 4. External linter adapters
-                    if let Some(ref external_lint) = self.external_lint {
-                        let ext_results = rt.block_on(external_lint.scan_all(&ws.path));
-                        ws_results.extend(ext_results.values);
-                    }
-
-                    // 5. Role rules audit (AES401-406)
-                    let role_results =
-                        rt.block_on(role_container.orchestrator().run_audit(&ws.path));
-                    ws_results.extend(role_results);
-
-                    // 6. Orphan detection (AES501-506)
-                    if let (Some(ref orphan_agg), Some(ref layer_det)) =
-                        (&self.orphan_aggregate, &self.layer_detector)
-                    {
-                        if !all_source_files.is_empty() {
-                            let orphan_results = orphan_agg.check_orphans(
-                                layer_det.as_ref(),
-                                &all_source_files,
-                                &scan_root.to_string_lossy(),
-                            );
-                            ws_results.extend(orphan_results);
-                        }
-                    }
-
-                    // Filter results to only those in this workspace member's path
-                    let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-                    let cwd_for_ws = match std::env::current_dir() {
-                        Ok(d) => d,
-                        Err(_) => std::path::PathBuf::new(),
-                    };
-                    let filtered_results: Vec<_> = ws_results
-                        .into_iter()
-                        .filter(|r| {
-                            let abs_path = cwd_for_ws.join(&r.file.value);
-                            ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(true)
-                        })
-                        .collect();
-
-                    all_results.extend(filtered_results);
-                }
-
-                let count = all_results.len();
-                let results = LintResultList::new(all_results);
-                let output = self.format_results(&results);
-                return LintExecutionResult::success(output, count);
-            }
-        }
-
-        let mut all_results = Vec::new();
-
-        // 1. AES code analysis
-        let aes_results = self.code_analysis.run_code_analysis(path);
-        all_results.extend(aes_results.values);
-
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => {
-                return LintExecutionResult::failure(format!("Failed to create runtime: {}", e));
-            }
-        };
-
-        // 2. Naming rules audit (AES101-102)
-        if let Some(ref naming) = self.naming_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let naming_results = rt.block_on(naming.run_audit(&path_obj));
-            all_results.extend(naming_results);
-        }
-
-        // 3. Import rules audit (AES201-205, cycles)
-        if let Some(ref import) = self.import_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let import_results = rt.block_on(import.run_audit(&path_obj));
-            all_results.extend(import_results);
-        }
-
-        // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
-        if let Some(ref external_lint) = self.external_lint {
-            let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let ext_results = rt.block_on(external_lint.scan_all(&fp));
-            all_results.extend(ext_results.values);
-        }
-
-        // 5. Role rules audit (AES401-406)
-        if let Some(ref role) = self.role_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let role_results = rt.block_on(role.run_audit(&path_obj));
-            all_results.extend(role_results);
-        }
-
-        // 6. Orphan detection (AES501-506)
-        if let (Some(ref orphan_agg), Some(ref layer_det)) =
-            (&self.orphan_aggregate, &self.layer_detector)
-        {
-            let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
-                .unwrap_or_default();
-            let source_files =
-                match shared::common::utility_file::scan_directory(&dir_path) {
-                    Ok(list) => list.values,
-                    Err(_) => Vec::new(),
-                };
-            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-            if !file_strs.is_empty() {
-                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
-                all_results.extend(orphan_results);
-            }
-        }
-
-        let count = all_results.len();
-        let results = LintResultList::new(all_results);
-        let output = self.format_results(&results);
-        LintExecutionResult::success(output, count)
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
@@ -894,3 +515,390 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, 0)
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+fn is_binary_available(b: &str) -> bool {
+    std::process::Command::new("sh")
+        .args(["-c", &format!("command -v {} >/dev/null 2>&1", b)])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
+pub fn discover_adapters() -> Vec<AdapterInfo> {
+    let mut list = vec![
+        ("ast_rust_scanner", "Rust AST (built-in)", true),
+        ("ast_py_scanner", "Python AST (built-in)", true),
+        ("ast_js_scanner", "JS/TS AST (built-in)", true),
+    ]
+    .into_iter()
+    .map(|(n, l, i)| AdapterInfo {
+        name: n.into(),
+        label: l.into(),
+        installed: i,
+    })
+    .collect::<Vec<_>>();
+    for (b, l) in [
+        ("clippy", "Clippy (Rust)"),
+        ("ruff", "Ruff (Python)"),
+        ("mypy", "MyPy (Python)"),
+        ("bandit", "Bandit (Python)"),
+        ("radon", "Radon (Python metrics)"),
+        ("eslint", "ESLint (JavaScript)"),
+        ("prettier", "Prettier (JavaScript)"),
+        ("tsc", "TypeScript Compiler"),
+    ] {
+        list.push(AdapterInfo {
+            name: b.into(),
+            label: l.into(),
+            installed: is_binary_available(b),
+        });
+    }
+    list
+}
+
+impl LintExecutor {
+    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+        Self {
+            code_analysis,
+            fix_orchestrator: None,
+            setup_aggregate: None,
+            maintenance: None,
+            hook_port: None,
+            config_orchestrator: None,
+            external_lint: None,
+            orphan_aggregate: None,
+            layer_detector: None,
+            import_orchestrator: None,
+            naming_orchestrator: None,
+            role_orchestrator: None,
+            multi_project_orchestrator: None,
+        }
+    }
+
+    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>) -> Self {
+        self.fix_orchestrator = Some(fix_orchestrator);
+        self
+    }
+
+    pub fn with_setup(mut self, setup_aggregate: Arc<dyn SetupManagementAggregate>) -> Self {
+        self.setup_aggregate = Some(setup_aggregate);
+        self
+    }
+
+    pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
+        self.maintenance = Some(maintenance);
+        self
+    }
+
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerProtocol>) -> Self {
+        self.hook_port = Some(hook_port);
+        self
+    }
+
+    pub fn with_config(
+        mut self,
+        config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
+    ) -> Self {
+        self.config_orchestrator = Some(config_orchestrator);
+        self
+    }
+
+    pub fn with_external_lint(mut self, external_lint: Arc<dyn IExternalLintAggregate>) -> Self {
+        self.external_lint = Some(external_lint);
+        self
+    }
+
+    pub fn with_orphan(
+        mut self,
+        orphan_aggregate: Arc<dyn IOrphanAggregate>,
+        layer_detector: Arc<dyn ILayerDetectionAggregate>,
+    ) -> Self {
+        self.orphan_aggregate = Some(orphan_aggregate);
+        self.layer_detector = Some(layer_detector);
+        self
+    }
+
+    pub fn with_import_orchestrator(
+        mut self,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    ) -> Self {
+        self.import_orchestrator = Some(import_orchestrator);
+        self
+    }
+
+    pub fn with_naming_orchestrator(
+        mut self,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    ) -> Self {
+        self.naming_orchestrator = Some(naming_orchestrator);
+        self
+    }
+
+    pub fn with_role_orchestrator(
+        mut self,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    ) -> Self {
+        self.role_orchestrator = Some(role_orchestrator);
+        self
+    }
+
+    pub fn with_multi_project_orchestrator(
+        mut self,
+        multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
+    ) -> Self {
+        self.multi_project_orchestrator = Some(multi_project_orchestrator);
+        self
+    }
+
+    pub fn format_results(&self, results: &LintResultList) -> String {
+        ReportFormatterHelper::format_results(results)
+    }
+
+    fn format_doctor_report(
+        diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
+    ) -> LintExecutionResult {
+        ReportFormatterHelper::format_doctor_report(diagnostics)
+    }
+
+    fn run_init(&self) -> LintExecutionResult {
+        match &self.setup_aggregate {
+            Some(protocol) => {
+                let languages = protocol.detect_languages();
+                let mut created = Vec::new();
+                let mut skipped = Vec::new();
+                let mut errors = Vec::new();
+                for lang in languages.iter() {
+                    let lang_str = lang.value();
+                    let config_path = format!("lint_arwaky.config.{}.yaml", lang_str);
+                    if protocol.file_exists(&config_path) {
+                        skipped.push(config_path);
+                        continue;
+                    }
+                    let template = protocol.get_config_template(lang_str);
+                    match protocol.write_config_file(&config_path, template) {
+                        Ok(desc) => {
+                            created
+                                .push(format!("{} ({}) — {}", config_path, lang_str, desc.value));
+                        }
+                        Err(e) => {
+                            errors.push(format!("{} — error: {}", config_path, e));
+                        }
+                    }
+                }
+                let mut output = String::from("Config initialization.\n");
+                if !created.is_empty() {
+                    output.push_str(&format!("Created:\n  {}\n", created.join("\n  ")));
+                }
+                if !skipped.is_empty() {
+                    output.push_str(&format!("Already exist:\n  {}\n", skipped.join("\n  ")));
+                }
+                if !errors.is_empty() {
+                    output.push_str(&format!("Errors:\n  {}\n", errors.join("\n  ")));
+                    return LintExecutionResult::failure(output);
+                }
+                LintExecutionResult::success(output, 0)
+            }
+            None => {
+                let output =
+                    "Config initialization.\nUse CLI `lint-arwaky-cli init` to create configuration."
+                        .to_string();
+                LintExecutionResult::success(output, 0)
+            }
+        }
+    }
+
+    fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
+        ReportFormatterHelper::format_dependency_report(path, report)
+    }
+
+    fn format_config_result(
+        result: &shared::config_system::taxonomy_source_vo::ConfigResult,
+    ) -> LintExecutionResult {
+        ReportFormatterHelper::format_config_result(result)
+    }
+}
+
+impl LintExecutor {
+    fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
+        // If we have multi_project_orchestrator, we check for workspace members.
+        if let Some(ref multi_project) = self.multi_project_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let rt = match tokio::runtime::Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    return LintExecutionResult::failure(format!(
+                        "Failed to create runtime: {}",
+                        e
+                    ));
+                }
+            };
+            let workspaces = rt.block_on(multi_project.discover_workspaces(&path_obj));
+            if !workspaces.is_empty() {
+                let mut all_results = Vec::new();
+
+                // Collect ALL source files from workspace root for cross-workspace orphan detection
+                let scan_root = shared::common::find_workspace_root(path)
+                    .unwrap_or_else(|| std::path::PathBuf::from(path));
+                let all_source_files: Vec<String> =
+                    shared::common::collect_all_source_files(&scan_root)
+                        .iter()
+                        .map(|f| f.value.clone())
+                        .collect();
+
+                for ws in &workspaces {
+                    // Dynamically build the orchestrators/linters using ws.config!
+                    let import_container =
+                        import_rules::root_import_rules_container::ImportContainer::new_with_config(
+                            ws.config.clone(),
+                        );
+                    let naming_container =
+                        naming_rules::root_naming_rules_container::NamingContainer::default();
+                    let role_container =
+                        role_rules::root_role_rules_container::RoleContainer::new_with_config(
+                            ws.config.clone(),
+                        );
+                    let code_analysis_linter =
+                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
+                            .code_analysis_linter();
+
+                    let mut ws_results = Vec::new();
+
+                    // 1. AES code analysis
+                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+                    ws_results.extend(aes_results.values);
+
+                    // 2. Naming rules audit (AES101-102)
+                    let naming_results =
+                        rt.block_on(naming_container.orchestrator().run_audit(&ws.path));
+                    ws_results.extend(naming_results);
+
+                    // 3. Import rules audit (AES201-205, cycles)
+                    let import_results =
+                        rt.block_on(import_container.orchestrator().run_audit(&ws.path));
+                    ws_results.extend(import_results);
+
+                    // 4. External linter adapters
+                    if let Some(ref external_lint) = self.external_lint {
+                        let ext_results = rt.block_on(external_lint.scan_all(&ws.path));
+                        ws_results.extend(ext_results.values);
+                    }
+
+                    // 5. Role rules audit (AES401-406)
+                    let role_results =
+                        rt.block_on(role_container.orchestrator().run_audit(&ws.path));
+                    ws_results.extend(role_results);
+
+                    // 6. Orphan detection (AES501-506)
+                    if let (Some(ref orphan_agg), Some(ref layer_det)) =
+                        (&self.orphan_aggregate, &self.layer_detector)
+                    {
+                        if !all_source_files.is_empty() {
+                            let orphan_results = orphan_agg.check_orphans(
+                                layer_det.as_ref(),
+                                &all_source_files,
+                                &scan_root.to_string_lossy(),
+                            );
+                            ws_results.extend(orphan_results);
+                        }
+                    }
+
+                    // Filter results to only those in this workspace member's path
+                    let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+                    let cwd_for_ws = match std::env::current_dir() {
+                        Ok(d) => d,
+                        Err(_) => std::path::PathBuf::new(),
+                    };
+                    let filtered_results: Vec<_> = ws_results
+                        .into_iter()
+                        .filter(|r| {
+                            let abs_path = cwd_for_ws.join(&r.file.value);
+                            ws_canonical
+                                .as_ref()
+                                .map(|c| abs_path.starts_with(c))
+                                .unwrap_or(true)
+                        })
+                        .collect();
+
+                    all_results.extend(filtered_results);
+                }
+
+                let count = all_results.len();
+                let results = LintResultList::new(all_results);
+                let output = self.format_results(&results);
+                return LintExecutionResult::success(output, count);
+            }
+        }
+
+        let mut all_results = Vec::new();
+
+        // 1. AES code analysis
+        let aes_results = self.code_analysis.run_code_analysis(path);
+        all_results.extend(aes_results.values);
+
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(rt) => rt,
+            Err(e) => {
+                return LintExecutionResult::failure(format!("Failed to create runtime: {}", e));
+            }
+        };
+
+        // 2. Naming rules audit (AES101-102)
+        if let Some(ref naming) = self.naming_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let naming_results = rt.block_on(naming.run_audit(&path_obj));
+            all_results.extend(naming_results);
+        }
+
+        // 3. Import rules audit (AES201-205, cycles)
+        if let Some(ref import) = self.import_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let import_results = rt.block_on(import.run_audit(&path_obj));
+            all_results.extend(import_results);
+        }
+
+        // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
+        if let Some(ref external_lint) = self.external_lint {
+            let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let ext_results = rt.block_on(external_lint.scan_all(&fp));
+            all_results.extend(ext_results.values);
+        }
+
+        // 5. Role rules audit (AES401-406)
+        if let Some(ref role) = self.role_orchestrator {
+            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
+            let role_results = rt.block_on(role.run_audit(&path_obj));
+            all_results.extend(role_results);
+        }
+
+        // 6. Orphan detection (AES501-506)
+        if let (Some(ref orphan_agg), Some(ref layer_det)) =
+            (&self.orphan_aggregate, &self.layer_detector)
+        {
+            let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
+                .unwrap_or_default();
+            let source_files =
+                match shared::common::utility_file::scan_directory(&dir_path) {
+                    Ok(list) => list.values,
+                    Err(_) => Vec::new(),
+                };
+            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+            if !file_strs.is_empty() {
+                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
+                all_results.extend(orphan_results);
+            }
+        }
+
+        let count = all_results.len();
+        let results = LintResultList::new(all_results);
+        let output = self.format_results(&results);
+        LintExecutionResult::success(output, count)
+    }
+}
+

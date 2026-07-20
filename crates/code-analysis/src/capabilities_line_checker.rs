@@ -1,3 +1,10 @@
+
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::taxonomy_definition_vo::LayerDefinition;
+
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:
 //   1. Skip barrel files (mod.rs, __init__.py)
@@ -8,25 +15,11 @@
 //   6. If max_lines > 0 and count > max_lines → AES301 FILE_TOO_LARGE
 use std::path::Path;
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::taxonomy_definition_vo::LayerDefinition;
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ArchLineChecker {}
 
-impl Default for ArchLineChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ArchLineChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ILineCheckerProtocol for ArchLineChecker {
     fn check_line_counts(
@@ -85,3 +78,18 @@ impl ILineCheckerProtocol for ArchLineChecker {
         }
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for ArchLineChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ArchLineChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+

@@ -1,5 +1,3 @@
-// PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -13,14 +11,15 @@ use shared::orphan_detector::utility_orphan_filename::file_stem;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
+// PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
+use regex::Regex;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 /// Build graph context and identify entry points for orphan analysis.
 pub struct OrphanGraphResolver {}
 
-impl Default for OrphanGraphResolver {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
     fn build_graph_context(
@@ -90,6 +89,14 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                 .collect()
         };
         OrphanFileListVO::new(matched)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for OrphanGraphResolver {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -468,3 +475,4 @@ impl OrphanGraphResolver {
         )
     }
 }
+

@@ -1,5 +1,3 @@
-// PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
-use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
@@ -11,15 +9,16 @@ use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
+// PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
+use shared::common::taxonomy_layer_vo::Identity;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct HookManager {
     hook_adapter: Arc<dyn IHookManagerProtocol>,
 }
 
-impl HookManager {
-    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
-        Self { hook_adapter }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait::async_trait]
 impl IHookProtocol for HookManager {
@@ -79,3 +78,12 @@ impl IHookProtocol for HookManager {
         }
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl HookManager {
+    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
+        Self { hook_adapter }
+    }
+}
+

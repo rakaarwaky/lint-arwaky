@@ -1,5 +1,3 @@
-// PURPOSE: NotifyWatchProvider — IWatchProviderProtocol implementation using notify crate (inotify on Linux)
-use std::sync::Mutex;
 use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
@@ -12,28 +10,18 @@ use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 use tokio::sync::broadcast;
 
+// PURPOSE: NotifyWatchProvider — IWatchProviderProtocol implementation using notify crate (inotify on Linux)
+use std::sync::Mutex;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct NotifyWatchProvider {
     watcher: Mutex<Option<notify_debouncer_mini::Debouncer<RecommendedWatcher>>>,
     tx: broadcast::Sender<WatchEvent>,
     ignore_patterns: Mutex<Vec<String>>,
 }
 
-impl Default for NotifyWatchProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl NotifyWatchProvider {
-    pub fn new() -> Self {
-        let (tx, _) = broadcast::channel(256);
-        Self {
-            watcher: Mutex::new(None),
-            tx,
-            ignore_patterns: Mutex::new(Vec::new()),
-        }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait::async_trait]
 impl IWatchProviderProtocol for NotifyWatchProvider {
@@ -128,3 +116,23 @@ impl IWatchProviderProtocol for NotifyWatchProvider {
         self.tx.subscribe()
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for NotifyWatchProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NotifyWatchProvider {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
+    }
+}
+

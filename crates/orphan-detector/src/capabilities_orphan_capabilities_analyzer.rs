@@ -1,5 +1,3 @@
-// PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use shared::orphan_detector::utility_file_cache;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
@@ -11,7 +9,27 @@ use shared::orphan_detector::utility_orphan_filename::{
 use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
+// PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
+use shared::orphan_detector::utility_file_cache;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct CapabilitiesOrphanAnalyzer {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
+    fn is_capabilities_orphan(
+        &self,
+        f: &FilePath,
+        root_dir: &FilePath,
+        alive_files: &ReachabilityResult,
+    ) -> OrphanIndicatorResult {
+        is_infra_cap_orphan(f, root_dir, alive_files)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
@@ -22,17 +40,6 @@ impl Default for CapabilitiesOrphanAnalyzer {
 impl CapabilitiesOrphanAnalyzer {
     pub fn new() -> Self {
         Self {}
-    }
-}
-
-impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
-    fn is_capabilities_orphan(
-        &self,
-        f: &FilePath,
-        root_dir: &FilePath,
-        alive_files: &ReachabilityResult,
-    ) -> OrphanIndicatorResult {
-        is_infra_cap_orphan(f, root_dir, alive_files)
     }
 }
 
@@ -284,3 +291,4 @@ pub fn check_capabilities_orphan(
         ));
     }
 }
+

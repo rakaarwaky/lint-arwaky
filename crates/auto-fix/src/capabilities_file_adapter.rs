@@ -1,13 +1,16 @@
-// PURPOSE: FileAdapter — infrastructure layer for file I/O operations
-use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use std::path::Path;
 
+// PURPOSE: FileAdapter — infrastructure layer for file I/O operations
+use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct FileAdapter;
 
-// ─── Block 2: Public Contract (domain port ONLY) ──────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IFileAdapterProtocol for FileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
         let p = Path::new(path.value());
@@ -26,7 +29,8 @@ impl IFileAdapterProtocol for FileAdapter {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl FileAdapter {
     pub fn new() -> Self {
         Self
@@ -38,3 +42,4 @@ impl Default for FileAdapter {
         Self::new()
     }
 }
+

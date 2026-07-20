@@ -1,21 +1,14 @@
-// PURPOSE: WorkspaceDetector — IWorkspaceDetectorProtocol implementation for workspace type detection
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 
+// PURPOSE: WorkspaceDetector — IWorkspaceDetectorProtocol implementation for workspace type detection
+use shared::common::taxonomy_path_vo::FilePath;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct WorkspaceDetector;
 
-impl WorkspaceDetector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for WorkspaceDetector {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
@@ -80,3 +73,18 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             .any(|dir| root.join(dir).is_dir())
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl WorkspaceDetector {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for WorkspaceDetector {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

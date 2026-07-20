@@ -1,13 +1,16 @@
-// PURPOSE: GitCommandAdapter — IGitCommandProtocol implementation for running git commands
-use std::process::Command;
 
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_command_protocol::{GitCommandOutput, IGitCommandProtocol};
 
-// Block 1: struct Definition
+// PURPOSE: GitCommandAdapter — IGitCommandProtocol implementation for running git commands
+use std::process::Command;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct GitCommandAdapter;
 
-// Block 2: impl Port for Struct (Public Contract)
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait::async_trait]
 impl IGitCommandProtocol for GitCommandAdapter {
     async fn run_git(&self, args: &[&str], dir: &FilePath) -> GitCommandOutput {
@@ -75,7 +78,8 @@ impl IGitCommandProtocol for GitCommandAdapter {
     }
 }
 
-// Block 3: constructors
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl GitCommandAdapter {
     pub fn new() -> Self {
         Self
@@ -87,3 +91,4 @@ impl Default for GitCommandAdapter {
         Self::new()
     }
 }
+

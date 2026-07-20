@@ -1,8 +1,3 @@
-// PURPOSE: FileCollectorProvider — IScannerProviderProtocol implementation for collecting source files
-// Infrastructure layer: has I/O (fs::read_dir, symlink handling).
-// Uses taxonomy utilities for pure logic (is_source_file, is_ignored_dir, etc.).
-
-use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -16,10 +11,18 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
+// PURPOSE: FileCollectorProvider — IScannerProviderProtocol implementation for collecting source files
+// Infrastructure layer: has I/O (fs::read_dir, symlink handling).
+// Uses taxonomy utilities for pure logic (is_source_file, is_ignored_dir, etc.).
+
+use std::collections::HashSet;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct FileCollectorProvider;
 
-// ─── Block 2: Public Contract (domain port ONLY) ──────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IScannerProviderProtocol for FileCollectorProvider {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
         let dir = Path::new(&path.value);
@@ -37,7 +40,8 @@ impl IScannerProviderProtocol for FileCollectorProvider {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl Default for FileCollectorProvider {
     fn default() -> Self {
         Self::new()
@@ -203,3 +207,4 @@ fn walk_rs_files_inner(
         }
     }
 }
+

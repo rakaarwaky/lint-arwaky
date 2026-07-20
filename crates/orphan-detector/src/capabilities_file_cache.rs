@@ -6,14 +6,12 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 
-thread_local! {
-    static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
-}
-
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct OrphanFileCache;
 
-// ─── Block 2: Public Contract (domain port ONLY) ──────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IOrphanFileCacheProtocol for OrphanFileCache {
     fn read_cached(&self, path: &FilePath) -> ContentString {
         FILE_CACHE.with(|cache| -> ContentString {
@@ -58,7 +56,12 @@ impl IOrphanFileCacheProtocol for OrphanFileCache {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+thread_local! {
+    static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+}
+
 impl Default for OrphanFileCache {
     fn default() -> Self {
         Self::new()
@@ -70,3 +73,4 @@ impl OrphanFileCache {
         Self
     }
 }
+

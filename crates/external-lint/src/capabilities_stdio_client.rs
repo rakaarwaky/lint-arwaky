@@ -1,5 +1,3 @@
-// PURPOSE: StdioClient — ICommandExecutorProtocol implementation via stdio
-use std::collections::HashMap;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -10,15 +8,16 @@ use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_duration_vo::Timeout;
 use tokio::process::Command;
 
+// PURPOSE: StdioClient — ICommandExecutorProtocol implementation via stdio
+use std::collections::HashMap;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct StdioClient {
     timeout: Duration,
 }
 
-impl StdioClient {
-    pub fn new(timeout: Duration) -> Self {
-        Self { timeout }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ICommandExecutorProtocol for StdioClient {
@@ -72,3 +71,12 @@ impl ICommandExecutorProtocol for StdioClient {
         Ok(ResponseData::new())
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl StdioClient {
+    pub fn new(timeout: Duration) -> Self {
+        Self { timeout }
+    }
+}
+

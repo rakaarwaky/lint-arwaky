@@ -1,13 +1,16 @@
-// PURPOSE: ToolExecutorAdapter — IToolExecutorProtocol implementation for running external tools
-use std::process::Command;
 
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_tool_executor_protocol::{IToolExecutorProtocol, ToolOutput};
 
-// Block 1: struct Definition
+// PURPOSE: ToolExecutorAdapter — IToolExecutorProtocol implementation for running external tools
+use std::process::Command;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ToolExecutorAdapter;
 
-// Block 2: impl Port for Struct (Public Contract)
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait::async_trait]
 impl IToolExecutorProtocol for ToolExecutorAdapter {
     async fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput {
@@ -61,7 +64,8 @@ impl IToolExecutorProtocol for ToolExecutorAdapter {
     }
 }
 
-// Block 3: constructors
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl ToolExecutorAdapter {
     pub fn new() -> Self {
         Self
@@ -73,3 +77,4 @@ impl Default for ToolExecutorAdapter {
         Self::new()
     }
 }
+

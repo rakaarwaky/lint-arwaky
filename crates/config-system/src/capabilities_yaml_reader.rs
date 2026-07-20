@@ -1,11 +1,57 @@
-// PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
-// XDG Base Directory Specification compliant config lookup
-use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 
+// PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
+// XDG Base Directory Specification compliant config lookup
+use async_trait::async_trait;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ConfigYamlReader;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+#[async_trait]
+impl IConfigReaderProtocol for ConfigYamlReader {
+    async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
+        let filename = Self::config_filename(language);
+        let mut current = std::path::PathBuf::from(&project_root.value);
+        let mut depth = 0;
+
+        while !current.as_os_str().is_empty() && depth < 2 {
+            let candidate = current.join(&filename);
+            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
+                return Some(ConfigSource::new(
+                    language,
+                    candidate.to_string_lossy().to_string(),
+                    content,
+                ));
+            }
+
+            if let Some(parent) = current.parent() {
+                current = parent.to_path_buf();
+            } else {
+                break;
+            }
+            depth += 1;
+        }
+
+        Self::read_any(language).await
+    }
+
+    async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
+        let mut found = Vec::new();
+        for lang in &["rust", "python", "typescript"] {
+            if let Some(config) = self.read_config(project_root, lang).await {
+                found.push((lang.to_string(), config.path.to_string()));
+            }
+        }
+        found
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ConfigYamlReader {
     pub fn new() -> Self {
@@ -60,41 +106,3 @@ impl Default for ConfigYamlReader {
     }
 }
 
-#[async_trait]
-impl IConfigReaderProtocol for ConfigYamlReader {
-    async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
-        let filename = Self::config_filename(language);
-        let mut current = std::path::PathBuf::from(&project_root.value);
-        let mut depth = 0;
-
-        while !current.as_os_str().is_empty() && depth < 2 {
-            let candidate = current.join(&filename);
-            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
-                return Some(ConfigSource::new(
-                    language,
-                    candidate.to_string_lossy().to_string(),
-                    content,
-                ));
-            }
-
-            if let Some(parent) = current.parent() {
-                current = parent.to_path_buf();
-            } else {
-                break;
-            }
-            depth += 1;
-        }
-
-        Self::read_any(language).await
-    }
-
-    async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
-        let mut found = Vec::new();
-        for lang in &["rust", "python", "typescript"] {
-            if let Some(config) = self.read_config(project_root, lang).await {
-                found.push((lang.to_string(), config.path.to_string()));
-            }
-        }
-        found
-    }
-}

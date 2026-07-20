@@ -1,6 +1,3 @@
-// PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -13,10 +10,16 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::fs;
 
+// PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
+// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+use async_trait::async_trait;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ArchImportForbiddenChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait]
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity { Identity::new("AES201") }
@@ -55,6 +58,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl Default for ArchImportForbiddenChecker {
     fn default() -> Self { Self }
 }
@@ -171,3 +175,4 @@ impl ArchImportForbiddenChecker {
         }
     }
 }
+

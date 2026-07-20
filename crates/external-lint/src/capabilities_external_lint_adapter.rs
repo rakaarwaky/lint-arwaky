@@ -13,9 +13,11 @@ use shared::external_lint::contract_external_lint_utility_protocol::IExternalLin
 use std::path::{Path, PathBuf};
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ExternalLintUtilityAdapter;
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait::async_trait]
 impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
@@ -253,7 +255,8 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl ExternalLintUtilityAdapter {
     pub fn new() -> Self {
         Self
@@ -265,3 +268,4 @@ impl Default for ExternalLintUtilityAdapter {
         Self::new()
     }
 }
+

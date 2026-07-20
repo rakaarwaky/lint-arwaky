@@ -1,16 +1,3 @@
-// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
-//
-// ALGORITHM:
-//   1. check_aggregate — Scans import lines for blocked trait patterns (layer + suffix)
-//      defined in LayerDefinition.role.forbidden_inheritance. Flags any `impl Trait for X`
-//      or equivalent that uses a disallowed trait by name.
-//   2. scan_contract_primitive (port/protocol dispatch) — Detects primitive type employment
-//      in contract interfaces (port/protocol files). Uses LanguageDetector to determine
-//      language, then checks for known primitive keywords per language.
-//
-// NOTE: check_contract_primitive is called for all files (not just test projects)
-//      since AES402 applies universally — removed test-project guard per DX audit.
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
@@ -18,24 +5,12 @@ use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_source_vo::SourceContentVO;
 
-fn aes013_forbidden_inheritance(trait_name: &str) -> String {
-    format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.\n\
-         WHY? Contracts must not inherit from forbidden source layers.\n\
-         FIX: Remove the inheritance or use a valid contract port/protocol instead.",
-        trait_name
-    )
-}
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ContractRoleChecker {}
 
-impl Default for ContractRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
-// ─── AES402 helper functions ──────────────────────────────────────────────
 //
 // These pure functions implement the trait-method-signature parser used by
 // `check_contract_primitive` above. They live at module level so they can be
@@ -692,3 +667,37 @@ impl IContractRoleChecker for ContractRoleChecker {
         self.check_aggregate(source, def, violations);
     }
 }
+
+// (No protocol implementation found in this file)
+
+// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
+//
+// ALGORITHM:
+//   1. check_aggregate — Scans import lines for blocked trait patterns (layer + suffix)
+//      defined in LayerDefinition.role.forbidden_inheritance. Flags any `impl Trait for X`
+//      or equivalent that uses a disallowed trait by name.
+//   2. scan_contract_primitive (port/protocol dispatch) — Detects primitive type employment
+//      in contract interfaces (port/protocol files). Uses LanguageDetector to determine
+//      language, then checks for known primitive keywords per language.
+//
+// NOTE: check_contract_primitive is called for all files (not just test projects)
+//      since AES402 applies universally — removed test-project guard per DX audit.
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+fn aes013_forbidden_inheritance(trait_name: &str) -> String {
+    format!(
+        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.\n\
+         WHY? Contracts must not inherit from forbidden source layers.\n\
+         FIX: Remove the inheritance or use a valid contract port/protocol instead.",
+        trait_name
+    )
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for ContractRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

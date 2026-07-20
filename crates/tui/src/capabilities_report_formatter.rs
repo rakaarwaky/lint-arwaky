@@ -1,16 +1,24 @@
-// PURPOSE: Taxonomy-layer report formatter helper — provides formatting functions for scan results, toolchain diagnostics, dependencies, and active configurations.
-
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
 use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
+// (No protocol implementation found in this file)
+
+// PURPOSE: Taxonomy-layer report formatter helper — provides formatting functions for scan results, toolchain diagnostics, dependencies, and active configurations.
+
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ReportFormatterHelper;
 
-// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl IReportFormatterProtocol for ReportFormatterHelper {
     fn format_results(&self, results: &LintResultList) -> DisplayContent {
         if results.is_empty() {
@@ -179,7 +187,6 @@ impl IReportFormatterProtocol for ReportFormatterHelper {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for ReportFormatterHelper {
     fn default() -> Self {
         Self::new()
@@ -191,3 +198,4 @@ impl ReportFormatterHelper {
         Self
     }
 }
+

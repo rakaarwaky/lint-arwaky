@@ -1,5 +1,3 @@
-// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
-use shared::naming_rules::utility_naming::get_stem;
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -23,14 +21,16 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
+// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
+use shared::naming_rules::utility_naming::get_stem;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
-static NAMING_REGEX: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok());
-
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait]
 impl INamingCheckerProtocol for NamingConventionChecker {
     async fn check_file_naming(
@@ -75,6 +75,10 @@ impl INamingCheckerProtocol for NamingConventionChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+static NAMING_REGEX: Lazy<Option<Regex>> =
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok());
+
 impl Default for NamingConventionChecker {
     fn default() -> Self {
         Self::new()
@@ -212,3 +216,4 @@ impl NamingConventionChecker {
         }
     }
 }
+

@@ -1,25 +1,20 @@
-// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
-// Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
-use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
+use std::sync::OnceLock;
+
+// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
+// Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
+use regex::Regex;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct AgentOrphanAnalyzer {}
 
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     fn is_agent_orphan(
@@ -32,31 +27,12 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     }
 }
 
-use std::sync::OnceLock;
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-/// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
-fn re_impl_generic() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
-        .as_ref()
-}
-
-fn re_dyn() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
-        .as_ref()
-}
-
-fn re_py_class() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-        .as_ref()
-}
-
-fn re_ts_implements() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
-        .as_ref()
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Extract aggregate trait names from agent file content.
@@ -109,6 +85,37 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     traits.sort();
     traits.dedup();
     traits
+}
+
+impl AgentOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+/// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
+fn re_impl_generic() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
+        .as_ref()
+}
+
+fn re_dyn() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
+        .as_ref()
+}
+
+fn re_py_class() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+        .as_ref()
+}
+
+fn re_ts_implements() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
+        .as_ref()
 }
 
 pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
@@ -194,3 +201,4 @@ pub fn check_agent_orphan(
         ));
     }
 }
+

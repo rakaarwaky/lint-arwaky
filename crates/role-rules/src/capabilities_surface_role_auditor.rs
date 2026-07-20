@@ -1,3 +1,20 @@
+use regex::Regex;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_language_vo::Language as DetLang;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
+use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_error_vo::ErrorCode;
+use shared::taxonomy_lint_vo::LocationList;
+use shared::taxonomy_message_vo::LintMessage;
+use shared::taxonomy_source_vo::SourceContentVO;
+
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
 //
 // ALGORITHM:
@@ -18,22 +35,45 @@
 //      check_surface_roles (no-domain-logic checks) which are the primary entry points.
 //      These trait methods are required by ISurfaceRoleChecker but are intentionally empty.
 use once_cell::sync::Lazy;
-use regex::Regex;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_language_vo::Language as DetLang;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_source_vo::SourceContentVO;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct SurfaceRoleChecker {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl ISurfaceRoleChecker for SurfaceRoleChecker {
+    fn check_smart_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_utility_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_passive_surface(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_fn_count_limit(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_fn_count_limit(source, violations);
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+fn make_adapter(name: &str) -> Option<AdapterName> {
+    AdapterName::new(name).ok()
+}
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;
@@ -66,11 +106,6 @@ static RUST_FN_RE: Lazy<Option<Regex>> =
 
 fn aes406_passive_violation_details(file: &str, details: &str) -> String {
     format!("AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
-}
-
-pub struct SurfaceRoleChecker {}
-fn make_adapter(name: &str) -> Option<AdapterName> {
-    AdapterName::new(name).ok()
 }
 impl Default for SurfaceRoleChecker {
     fn default() -> Self {
@@ -619,30 +654,3 @@ pub fn is_init(f: &FilePath) -> bool {
         || path_str.ends_with("index.js")
 }
 
-impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_utility_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_passive_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_fn_count_limit(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_fn_count_limit(source, violations);
-    }
-}

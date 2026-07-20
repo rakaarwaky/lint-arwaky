@@ -1,16 +1,3 @@
-// PURPOSE: PyRuffAdapter — ILinterAdapterProtocol implementation for Ruff linter integration
-//
-// Executes `ruff check --output-format=json` as a subprocess and parses
-// the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
-// line numbers, severity levels, and rule codes.
-//
-// Key handling:
-//   - Falls back to parent directory if target is a file (Ruff requires a directory)
-//   - Searches for pyproject.toml to determine the correct working directory
-//   - Maps Ruff severity levels (error/warning/info) to AES severity
-//   - Converts relative Ruff paths to absolute project paths
-
-use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -35,38 +22,28 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     default_working_dir, exec_cmd_adapter, has_python_files,
 };
 
+// PURPOSE: PyRuffAdapter — ILinterAdapterProtocol implementation for Ruff linter integration
+//
+// Executes `ruff check --output-format=json` as a subprocess and parses
+// the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
+// line numbers, severity levels, and rule codes.
+//
+// Key handling:
+//   - Falls back to parent directory if target is a file (Ruff requires a directory)
+//   - Searches for pyproject.toml to determine the correct working directory
+//   - Maps Ruff severity levels (error/warning/info) to AES severity
+//   - Converts relative Ruff paths to absolute project paths
+
+use async_trait::async_trait;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct RuffAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
-impl RuffAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "ruff".to_string(),
-        }
-    }
-
-    fn map_severity(&self, severity: &str, _code: &str) -> Severity {
-        match severity {
-            "error" => Severity::HIGH,
-            "warning" => Severity::MEDIUM,
-            "info" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for RuffAdapter {
@@ -178,3 +155,34 @@ impl ILinterAdapterProtocol for RuffAdapter {
         Ok(ComplianceStatus::new(true))
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl RuffAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "ruff".to_string(),
+        }
+    }
+
+    fn map_severity(&self, severity: &str, _code: &str) -> Severity {
+        match severity {
+            "error" => Severity::HIGH,
+            "warning" => Severity::MEDIUM,
+            "info" => Severity::LOW,
+            _ => Severity::MEDIUM,
+        }
+    }
+}
+

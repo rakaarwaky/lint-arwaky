@@ -1,3 +1,12 @@
+use std::path::{Path, PathBuf};
+
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::common::utility_language_detector::is_lintable;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::default_aes_config;
+
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
 //   1. Resolve target directory (default: ".")
@@ -9,16 +18,61 @@
 //   7. For each file, calculate what % of its windows are shared
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
 
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::utility_language_detector::is_lintable;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::default_aes_config;
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CodeDuplicationAnalyzer {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
+    fn handle_duplicates(
+        &self,
+        path: Option<String>,
+    ) -> Vec<AesCodeAnalysisViolation> {
+        let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
+        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));
+        let config = default_aes_config();
+        let ignored_vec: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
+            .collect();
+        let min_lines = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .map(|r| r.code_analysis.min_lines.value as usize)
+            .filter(|&v| v > 0)
+            .unwrap_or(10);
+        let threshold_pct = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .and_then(|r| r.code_analysis.duplication_threshold)
+            .unwrap_or(50.0);
+
+        let dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
+            src.to_string_lossy().to_string(),
+        ) {
+            Ok(dp) => dp,
+            Err(_) => return Vec::new(),
+        };
+        let source_files = crate::agent_code_analysis_orchestrator::collect_source_files(
+            &src,
+            &dir_path,
+            &ignored_vec,
+        );
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        self.check_file_similarity(&file_strs, min_lines, threshold_pct)
+            .into_iter()
+            .map(|(_, v)| v)
+            .collect()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CodeDuplicationAnalyzer {
     pub fn new() -> Self {
@@ -189,53 +243,6 @@ impl CodeDuplicationAnalyzer {
     }
 }
 
-impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(
-        &self,
-        path: Option<String>,
-    ) -> Vec<AesCodeAnalysisViolation> {
-        let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
-        let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));
-        let config = default_aes_config();
-        let ignored_vec: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        let min_lines = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES305")
-            .map(|r| r.code_analysis.min_lines.value as usize)
-            .filter(|&v| v > 0)
-            .unwrap_or(10);
-        let threshold_pct = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES305")
-            .and_then(|r| r.code_analysis.duplication_threshold)
-            .unwrap_or(50.0);
-
-        let dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
-            src.to_string_lossy().to_string(),
-        ) {
-            Ok(dp) => dp,
-            Err(_) => return Vec::new(),
-        };
-        let source_files = crate::agent_code_analysis_orchestrator::collect_source_files(
-            &src,
-            &dir_path,
-            &ignored_vec,
-        );
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        self.check_file_similarity(&file_strs, min_lines, threshold_pct)
-            .into_iter()
-            .map(|(_, v)| v)
-            .collect()
-    }
-}
-
 /// Collect file entries: (PathBuf, content_string) for each lintable file.
 type FileEntry = (PathBuf, String);
 
@@ -329,3 +336,4 @@ fn build_violations(
         ))),
     }]
 }
+

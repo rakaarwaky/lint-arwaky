@@ -1,29 +1,4 @@
-// PURPOSE: TSCAdapter — ILinterAdapterProtocol implementation for TypeScript compiler integration
-//
-// Runs `tsc --noEmit --pretty false <path>` to type-check TypeScript files.
-// Parses compiler output with two regex patterns (parenthesized format and
-// colon-delimited format). apply_fix always returns false (tsc is a compiler).
-//
-// Key details:
-//   - `--noEmit` prevents output files, only runs type checking
-//   - `--pretty false` ensures machine-parseable output
-//   - Two regex patterns handle different tsc output formats across versions
-//   - Skips files that don't end in .ts or .tsx
-//   - All tsc errors are reported as HIGH severity
-
-use regex::Regex;
 use std::sync::OnceLock;
-fn tsc_pattern1() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
-
-fn tsc_pattern2() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
-        .as_ref()
-}
 
 use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -46,8 +21,43 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     resolve_js_working_dir as resolve_working_dir,
 };
 
+// (No protocol implementation found in this file)
+
+// PURPOSE: TSCAdapter — ILinterAdapterProtocol implementation for TypeScript compiler integration
+//
+// Runs `tsc --noEmit --pretty false <path>` to type-check TypeScript files.
+// Parses compiler output with two regex patterns (parenthesized format and
+// colon-delimited format). apply_fix always returns false (tsc is a compiler).
+//
+// Key details:
+//   - `--noEmit` prevents output files, only runs type checking
+//   - `--pretty false` ensures machine-parseable output
+//   - Two regex patterns handle different tsc output formats across versions
+//   - Skips files that don't end in .ts or .tsx
+//   - All tsc errors are reported as HIGH severity
+
+use regex::Regex;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
+}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+fn tsc_pattern1() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^(]+)\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
+}
+
+fn tsc_pattern2() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+)\s+-\s+error\s+(TS\d+):\s+(.*)$").ok())
+        .as_ref()
 }
 
 impl TSCAdapter {
@@ -161,3 +171,4 @@ impl ILinterAdapterProtocol for TSCAdapter {
         noop_apply_fix().await
     }
 }
+

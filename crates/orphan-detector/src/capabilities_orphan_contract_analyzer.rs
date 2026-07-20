@@ -1,5 +1,3 @@
-// PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
-use regex::Regex;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
@@ -10,19 +8,14 @@ use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffi
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use std::sync::OnceLock;
 
+// PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
+use regex::Regex;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ContractOrphanAnalyzer {}
 
-impl Default for ContractOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ContractOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
     fn is_contract_orphan(
@@ -34,6 +27,20 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         all_files: &[String],
     ) -> OrphanIndicatorResult {
         is_contract_orphan(f, root_dir, file_definitions, inheritance_map, all_files)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for ContractOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl ContractOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
@@ -296,3 +303,4 @@ fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
         }
     }
 }
+

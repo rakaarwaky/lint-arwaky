@@ -1,17 +1,3 @@
-// PURPOSE: PyMypyAdapter — ILinterAdapterProtocol implementation for MyPy type checker integration
-//
-// Runs `mypy <path>` on Python files and parses its structured output with
-// two regex patterns (with/without column numbers). Severity is mapped
-// heuristically: notes → LOW, warnings → MEDIUM, errors → HIGH,
-// syntax/parse errors → CRITICAL.
-//
-// Key details:
-//   - `--no-error-summary` avoids summary lines, keeping output parseable
-//   - `--pretty false` ensures machine-parseable single-line output
-//   - Falls back to column-less regex if column-full regex doesn't match
-//   - apply_fix always returns false (mypy is a type checker, not a formatter)
-
-use async_trait::async_trait;
 use regex::Regex;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -35,55 +21,29 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
 };
 
-fn mypy_re_with_col() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
-        .as_ref()
-}
+// PURPOSE: PyMypyAdapter — ILinterAdapterProtocol implementation for MyPy type checker integration
+//
+// Runs `mypy <path>` on Python files and parses its structured output with
+// two regex patterns (with/without column numbers). Severity is mapped
+// heuristically: notes → LOW, warnings → MEDIUM, errors → HIGH,
+// syntax/parse errors → CRITICAL.
+//
+// Key details:
+//   - `--no-error-summary` avoids summary lines, keeping output parseable
+//   - `--pretty false` ensures machine-parseable single-line output
+//   - Falls back to column-less regex if column-full regex doesn't match
+//   - apply_fix always returns false (mypy is a type checker, not a formatter)
 
-fn mypy_re_without_col() -> Option<&'static Regex> {
-    static RE: OnceLock<Option<Regex>> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
-        .as_ref()
-}
+use async_trait::async_trait;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
-impl MyPyAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            bin_path,
-        }
-    }
-
-    fn resolve_executable(&self) -> String {
-        match self.bin_path.as_ref() {
-            Some(p) => p.value.clone(),
-            None => "mypy".to_string(),
-        }
-    }
-
-    fn map_severity(msg_type: &str, msg: &str) -> Severity {
-        let m = msg.to_lowercase();
-        if msg_type == "note" {
-            return Severity::LOW;
-        }
-        if m.contains("syntax") || m.contains("parse") {
-            return Severity::CRITICAL;
-        }
-        if msg_type == "warning" {
-            return Severity::MEDIUM;
-        }
-        Severity::HIGH
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for MyPyAdapter {
@@ -225,3 +185,51 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         noop_apply_fix().await
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+fn mypy_re_with_col() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
+        .as_ref()
+}
+
+fn mypy_re_without_col() -> Option<&'static Regex> {
+    static RE: OnceLock<Option<Regex>> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^([^:]+):(\d+):\s+(\w+):\s+(.+?)\s+\[([\w-]+)\]$").ok())
+        .as_ref()
+}
+
+impl MyPyAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            bin_path,
+        }
+    }
+
+    fn resolve_executable(&self) -> String {
+        match self.bin_path.as_ref() {
+            Some(p) => p.value.clone(),
+            None => "mypy".to_string(),
+        }
+    }
+
+    fn map_severity(msg_type: &str, msg: &str) -> Severity {
+        let m = msg.to_lowercase();
+        if msg_type == "note" {
+            return Severity::LOW;
+        }
+        if m.contains("syntax") || m.contains("parse") {
+            return Severity::CRITICAL;
+        }
+        if msg_type == "warning" {
+            return Severity::MEDIUM;
+        }
+        Severity::HIGH
+    }
+}
+

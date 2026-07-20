@@ -1,5 +1,3 @@
-// PURPOSE: FileSystemMaintenanceAdapter — IFileSystemMaintenanceProtocol implementation for maintenance filesystem ops
-use std::fs;
 use std::path::Path;
 
 use shared::common::taxonomy_path_vo::FilePath;
@@ -7,10 +5,15 @@ use shared::project_setup::contract_filesystem_maintenance_protocol::{
     FileEntry, IFileSystemMaintenanceProtocol,
 };
 
-// Block 1: struct Definition
+// PURPOSE: FileSystemMaintenanceAdapter — IFileSystemMaintenanceProtocol implementation for maintenance filesystem ops
+use std::fs;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct FileSystemMaintenanceAdapter;
 
-// Block 2: impl Port for Struct (Public Contract)
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 #[async_trait::async_trait]
 impl IFileSystemMaintenanceProtocol for FileSystemMaintenanceAdapter {
     async fn read_file(&self, path: &FilePath) -> Result<String, String> {
@@ -65,7 +68,8 @@ impl IFileSystemMaintenanceProtocol for FileSystemMaintenanceAdapter {
     }
 }
 
-// Block 3: constructors & helpers
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl FileSystemMaintenanceAdapter {
     pub fn new() -> Self {
         Self
@@ -119,3 +123,4 @@ fn find_cache_dirs_inner(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<
         }
     }
 }
+

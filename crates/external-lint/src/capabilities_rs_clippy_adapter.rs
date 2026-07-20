@@ -1,20 +1,3 @@
-// PURPOSE: RsClippyAdapter — ILinterAdapterProtocol implementation for Clippy linting integration
-//
-// Executes `cargo clippy --message-format=json` as a subprocess, then parses
-// the JSON output line by line. Clippy outputs one JSON object per diagnostic
-// message, each containing spans (source locations), severity levels, and
-// lint codes.
-//
-// The adapter handles:
-//   - Finding the correct Cargo.toml parent directory
-//   - Parsing the JSON stream (filtering for compiler-message reasons)
-//   - Resolving relative file paths to absolute across workspaces
-//   - Converting Clippy severity levels to AES severity levels
-//   - Falling back to stderr if stdout is empty (Clippy sometimes outputs to stderr)
-//
-// NOTE: apply_fix runs `cargo clippy --fix` which modifies files in place.
-// This is the only adapter that supports auto-fix.
-use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -40,23 +23,15 @@ use tracing::debug;
 
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
 
-impl RustLinterAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            _bin_path: bin_path,
-        }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for RustLinterAdapter {
@@ -211,3 +186,37 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
         Ok(ComplianceStatus::new(true))
     }
 }
+
+// PURPOSE: RsClippyAdapter — ILinterAdapterProtocol implementation for Clippy linting integration
+//
+// Executes `cargo clippy --message-format=json` as a subprocess, then parses
+// the JSON output line by line. Clippy outputs one JSON object per diagnostic
+// message, each containing spans (source locations), severity levels, and
+// lint codes.
+//
+// The adapter handles:
+//   - Finding the correct Cargo.toml parent directory
+//   - Parsing the JSON stream (filtering for compiler-message reasons)
+//   - Resolving relative file paths to absolute across workspaces
+//   - Converting Clippy severity levels to AES severity levels
+//   - Falling back to stderr if stdout is empty (Clippy sometimes outputs to stderr)
+//
+// NOTE: apply_fix runs `cargo clippy --fix` which modifies files in place.
+// This is the only adapter that supports auto-fix.
+use std::path::Path;
+
+impl RustLinterAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            _bin_path: bin_path,
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// (No constructors or helpers found in this file)
+

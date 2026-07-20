@@ -1,6 +1,3 @@
-// PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
-// Uses utility functions directly — no IImportParserProtocol.
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -8,10 +5,16 @@ use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_import_resolver, utility_import_symbol_extractor};
 
+// PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
+// Uses utility functions directly — no IImportParserProtocol.
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct UnusedImportRuleChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
         let Ok(content) = std::fs::read_to_string(path.value()) else { return vec![] };
@@ -65,6 +68,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl Default for UnusedImportRuleChecker {
     fn default() -> Self { Self }
 }
@@ -72,3 +76,4 @@ impl Default for UnusedImportRuleChecker {
 impl UnusedImportRuleChecker {
     pub fn new() -> Self { Self }
 }
+

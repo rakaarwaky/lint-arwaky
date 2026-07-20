@@ -1,19 +1,22 @@
+use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+
 // PURPOSE: CapabilitiesExternalLintSelector — selects adapters based on detected languages
 //
 // Pure business logic: maps language flags to adapter name lists.
 // No I/O, no infrastructure dependencies.
 
 use shared::common::taxonomy_common_vo::bool;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct CapabilitiesExternalLintSelector {
     rust_adapters: Vec<String>,
     python_adapters: Vec<String>,
     js_adapters: Vec<String>,
 }
 
-// ─── Block 2: Public Contract ─────────────────────────────
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     fn select_adapters(
         &self,
@@ -35,7 +38,8 @@ impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     }
 }
 
-// ─── Block 3: Constructors & Helpers ──────────────────────
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl CapabilitiesExternalLintSelector {
     pub fn new(
         rust_adapters: Vec<String>,
@@ -65,3 +69,4 @@ impl CapabilitiesExternalLintSelector {
         )
     }
 }
+

@@ -1,3 +1,16 @@
+
+use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
+use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::taxonomy_setup_contract_vo::{
+    McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
+};
+use shared::taxonomy_suggestion_vo::DescriptionVO;
+
+use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
+use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
+use std::sync::Arc;
+
 // PURPOSE: SetupProcessor — processes project setup steps (env, gitignore, config, hooks)
 //
 // Implements ISetupManagementProtocol — the capabilities layer for project initialization.
@@ -12,28 +25,14 @@
 
 use std::collections::HashMap;
 
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::{
-    McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
-};
-use shared::taxonomy_suggestion_vo::DescriptionVO;
-
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
-use std::sync::Arc;
+// ─── Block 1: Struct Definition ───────────────────────────
 
 /// Business logic for generating setup and configuration artifacts.
 pub struct SetupManagementProcessor {
     installer: Arc<dyn ISetupInstallerProtocol>,
 }
 
-impl SetupManagementProcessor {
-    pub fn new(installer: Arc<dyn ISetupInstallerProtocol>) -> Self {
-        Self { installer }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait::async_trait]
 impl ISetupManagementProtocol for SetupManagementProcessor {
@@ -247,6 +246,14 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl SetupManagementProcessor {
+    pub fn new(installer: Arc<dyn ISetupInstallerProtocol>) -> Self {
+        Self { installer }
+    }
+}
+
 impl SetupManagementProcessor {
     /// Walk the directory tree (depth-limited) looking for source file extensions.
     /// Sets the corresponding `found_*` flag to `true` when a match is found.
@@ -308,3 +315,4 @@ impl SetupManagementProcessor {
         }
     }
 }
+

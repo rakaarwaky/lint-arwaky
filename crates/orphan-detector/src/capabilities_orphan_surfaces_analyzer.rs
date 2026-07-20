@@ -1,9 +1,3 @@
-// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
-// Surface orphan detection per category:
-// - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
-// - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
-// - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -14,45 +8,9 @@ use shared::orphan_detector::utility_orphan_filename::{
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct SurfacesOrphanAnalyzer {}
-
-impl Default for SurfacesOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
-    fn is_surface_orphan(
-        &self,
-        f: &FilePath,
-        alive_files: &ReachabilityResult,
-        definition: Option<&LayerDefinition>,
-    ) -> OrphanIndicatorResult {
-        is_surface_orphan(f, alive_files, definition)
-    }
-}
-
-/// Get surface suffix from filename
-pub fn get_surface_suffix(basename: &str) -> String {
-    file_suffix(basename)
-}
-
-/// Surface category
-pub fn surface_category(suffix: &str) -> &'static str {
-    match suffix {
-        "command" | "controller" | "page" => "smart",
-        "hook" | "store" | "action" | "screen" | "router" => "utility",
-        "component" | "view" | "layout" => "passive",
-        _ => "unknown",
-    }
-}
 
 pub fn is_surface_orphan(
     f: &FilePath,
@@ -310,3 +268,54 @@ pub fn check_surfaces_orphan(
         ));
     }
 }
+
+impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
+    fn is_surface_orphan(
+        &self,
+        f: &FilePath,
+        alive_files: &ReachabilityResult,
+        definition: Option<&LayerDefinition>,
+    ) -> OrphanIndicatorResult {
+        is_surface_orphan(f, alive_files, definition)
+    }
+}
+
+// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
+// Surface orphan detection per category:
+// - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
+// - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
+// - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+
+impl SurfacesOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+/// Get surface suffix from filename
+pub fn get_surface_suffix(basename: &str) -> String {
+    file_suffix(basename)
+}
+
+/// Surface category
+pub fn surface_category(suffix: &str) -> &'static str {
+    match suffix {
+        "command" | "controller" | "page" => "smart",
+        "hook" | "store" | "action" | "screen" | "router" => "utility",
+        "component" | "view" | "layout" => "passive",
+        _ => "unknown",
+    }
+}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for SurfacesOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

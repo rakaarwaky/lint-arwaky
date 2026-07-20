@@ -1,5 +1,3 @@
-// PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
@@ -7,7 +5,53 @@ use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use std::collections::HashSet;
 
+// PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct DiffChecker;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+#[async_trait::async_trait]
+impl IDiffProtocol for DiffChecker {
+    async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
+        let default_branch = self.get_default_branch(path);
+        let _changed_files = self.collect_changed_files(path, &default_branch);
+        LintResultList::new(Vec::new())
+    }
+
+    async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
+        let default_branch = self.get_default_branch(path);
+        let changed_files = self.collect_changed_files(path, &default_branch);
+        let filtered = changed_files.clone();
+        GitDiffResultVO {
+            added: FilePathList::new(Vec::new()),
+            modified: filtered.clone(),
+            deleted: FilePathList::new(Vec::new()),
+            renamed: RenamedFileList::new(vec![]),
+            lintable_files: changed_files.clone(),
+            all_files: changed_files,
+            total_changed: shared::taxonomy_common_vo::Count::new(filtered.values.len() as i64),
+        }
+    }
+
+    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList {
+        let branch = if base.is_empty() || base == "." {
+            self.get_default_branch(path)
+        } else {
+            base.to_string()
+        };
+        self.collect_changed_files(path, &branch)
+    }
+
+    async fn get_default_branch(&self, path: &FilePath) -> String {
+        self.get_default_branch(path)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for DiffChecker {
     fn default() -> Self {
@@ -125,39 +169,3 @@ impl DiffChecker {
     }
 }
 
-#[async_trait::async_trait]
-impl IDiffProtocol for DiffChecker {
-    async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        let default_branch = self.get_default_branch(path);
-        let _changed_files = self.collect_changed_files(path, &default_branch);
-        LintResultList::new(Vec::new())
-    }
-
-    async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
-        let default_branch = self.get_default_branch(path);
-        let changed_files = self.collect_changed_files(path, &default_branch);
-        let filtered = changed_files.clone();
-        GitDiffResultVO {
-            added: FilePathList::new(Vec::new()),
-            modified: filtered.clone(),
-            deleted: FilePathList::new(Vec::new()),
-            renamed: RenamedFileList::new(vec![]),
-            lintable_files: changed_files.clone(),
-            all_files: changed_files,
-            total_changed: shared::taxonomy_common_vo::Count::new(filtered.values.len() as i64),
-        }
-    }
-
-    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList {
-        let branch = if base.is_empty() || base == "." {
-            self.get_default_branch(path)
-        } else {
-            base.to_string()
-        };
-        self.collect_changed_files(path, &branch)
-    }
-
-    async fn get_default_branch(&self, path: &FilePath) -> String {
-        self.get_default_branch(path)
-    }
-}

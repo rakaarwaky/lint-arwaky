@@ -1,3 +1,12 @@
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_line_count_vo::LineCount;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::tui::contract_file_system_protocol::IFileSystemProtocol;
+use shared::tui::taxonomy_file_entry_vo::FileEntry;
+use std::path::Path;
+
+// (No protocol implementation found in this file)
+
 // PURPOSE: FileSystemAdapter — IFileSystemProtocol implementation for TUI filesystem operations
 //
 // Provides directory listing, file preview (line-numbered, with max-line truncation),
@@ -7,14 +16,15 @@
 //   - list_directory: skips hidden files (starting with '.')
 //   - read_file_preview: shows up to max_lines with line numbers, truncated with "more lines" note
 use shared::common::taxonomy_byte_count_vo::ByteCount;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_line_count_vo::LineCount;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::tui::contract_file_system_protocol::IFileSystemProtocol;
-use shared::tui::taxonomy_file_entry_vo::FileEntry;
-use std::path::Path;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct FileSystemAdapter;
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl FileSystemAdapter {
     pub fn new() -> Self {
@@ -111,3 +121,4 @@ impl IFileSystemProtocol for FileSystemAdapter {
             .collect()
     }
 }
+

@@ -1,3 +1,11 @@
+
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::taxonomy_definition_vo::LayerDefinition;
+
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/trait/enum/class (IMandatoryClassProtocol).
 // Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
@@ -14,97 +22,9 @@
 //   4. For each `class Foo {}` (JS/TS empty class) → flag
 use std::path::Path;
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::taxonomy_definition_vo::LayerDefinition;
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MandatoryDefinitionChecker {}
-
-impl Default for MandatoryDefinitionChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MandatoryDefinitionChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-
-/// Helper: check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
-fn rust_declares_type(line: &str) -> bool {
-    let keywords = ["struct", "enum", "trait"];
-    for kw in keywords {
-        if line.contains(kw) && !line.contains('(') {
-            return true;
-        }
-    }
-    false
-}
-
-/// AES303 sub-check 1: file must have at least one struct/enum/trait/class definition
-impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
-    fn check_mandatory_class_definition(
-        &self,
-        file: &str,
-        definition: Option<&LayerDefinition>,
-        content: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
-            Some(name) => name.to_string(),
-            None => return,
-        };
-
-        if matches!(
-            basename.as_str(),
-            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs" | "main.rs"
-        ) {
-            return;
-        }
-        if basename.ends_with("_constant.rs") || basename.ends_with("_constant.py") {
-            return;
-        }
-
-        let def = match definition {
-            Some(d) => d,
-            None => return,
-        };
-        if !def.code_analysis.mandatory_class_definition.value {
-            return;
-        }
-        if def.exceptions.values.contains(&basename) {
-            return;
-        }
-
-        let mut has_class = false;
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("class ")
-                || trimmed.starts_with("export class ")
-                || trimmed.starts_with("export default class ")
-                || rust_declares_type(trimmed)
-            {
-                has_class = true;
-                break;
-            }
-        }
-
-        if !has_class {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES303",
-                Severity::HIGH,
-                AesCodeAnalysisViolation::MandatoryClassDefinition { reason: None }.to_string(),
-            ));
-        }
-    }
-}
 
 /// AES303 sub-check 2: detect empty struct/impl blocks (dead/empty definitions)
 impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
@@ -189,3 +109,91 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
         }
     }
 }
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+/// AES303 sub-check 1: file must have at least one struct/enum/trait/class definition
+impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
+    fn check_mandatory_class_definition(
+        &self,
+        file: &str,
+        definition: Option<&LayerDefinition>,
+        content: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let basename = match Path::new(file).file_name().and_then(|f| f.to_str()) {
+            Some(name) => name.to_string(),
+            None => return,
+        };
+
+        if matches!(
+            basename.as_str(),
+            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs" | "main.rs"
+        ) {
+            return;
+        }
+        if basename.ends_with("_constant.rs") || basename.ends_with("_constant.py") {
+            return;
+        }
+
+        let def = match definition {
+            Some(d) => d,
+            None => return,
+        };
+        if !def.code_analysis.mandatory_class_definition.value {
+            return;
+        }
+        if def.exceptions.values.contains(&basename) {
+            return;
+        }
+
+        let mut has_class = false;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("class ")
+                || trimmed.starts_with("export class ")
+                || trimmed.starts_with("export default class ")
+                || rust_declares_type(trimmed)
+            {
+                has_class = true;
+                break;
+            }
+        }
+
+        if !has_class {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES303",
+                Severity::HIGH,
+                AesCodeAnalysisViolation::MandatoryClassDefinition { reason: None }.to_string(),
+            ));
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for MandatoryDefinitionChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MandatoryDefinitionChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+/// Helper: check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
+fn rust_declares_type(line: &str) -> bool {
+    let keywords = ["struct", "enum", "trait"];
+    for kw in keywords {
+        if line.contains(kw) && !line.contains('(') {
+            return true;
+        }
+    }
+    false
+}
+

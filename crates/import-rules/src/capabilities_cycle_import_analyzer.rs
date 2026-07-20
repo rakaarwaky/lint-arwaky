@@ -1,6 +1,3 @@
-// PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_layer_detector;
@@ -13,11 +10,22 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
 use std::fs;
 
+use async_trait::async_trait;
+
+// (No protocol implementation found in this file)
+
+// PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
+// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct DependencyCycleAnalyzer;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-use async_trait::async_trait;
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 #[async_trait]
 impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol for DependencyCycleAnalyzer {
@@ -44,7 +52,6 @@ impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol 
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for DependencyCycleAnalyzer {
     fn default() -> Self { Self }
 }
@@ -128,3 +135,4 @@ impl DependencyCycleAnalyzer {
         }).collect()
     }
 }
+

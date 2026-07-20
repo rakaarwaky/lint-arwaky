@@ -1,16 +1,3 @@
-// PURPOSE: PrettierAdapter — ILinterAdapterProtocol implementation for Prettier integration
-//
-// Runs `prettier --check <path>` on JS/TS files via
-// resolve_js_cmd (npx). Only files with .ts/.tsx/.js/.jsx extensions are scanned.
-// apply_fix runs `prettier --write <path>` to auto-format.
-//
-// Key details:
-//   - Early-returns empty results for non-JS/TS files
-//   - Uses canonical absolute paths for reliable prettier invocation
-//   - Detects warnings by checking for "[warn]" in combined stdout+stderr
-//   - Reports a single LintResult per file (not per-difference)
-
-use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -31,9 +18,32 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     resolve_js_working_dir as resolve_working_dir,
 };
 
+// (No protocol implementation found in this file)
+
+// PURPOSE: PrettierAdapter — ILinterAdapterProtocol implementation for Prettier integration
+//
+// Runs `prettier --check <path>` on JS/TS files via
+// resolve_js_cmd (npx). Only files with .ts/.tsx/.js/.jsx extensions are scanned.
+// apply_fix runs `prettier --write <path>` to auto-format.
+//
+// Key details:
+//   - Early-returns empty results for non-JS/TS files
+//   - Uses canonical absolute paths for reliable prettier invocation
+//   - Detects warnings by checking for "[warn]" in combined stdout+stderr
+//   - Reports a single LintResult per file (not per-difference)
+
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct PrettierAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl PrettierAdapter {
     pub fn new(
@@ -105,3 +115,4 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         js_apply_fix(self.executor.as_ref(), path, "prettier", "--write").await
     }
 }
+

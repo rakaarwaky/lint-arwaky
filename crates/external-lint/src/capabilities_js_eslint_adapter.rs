@@ -1,17 +1,3 @@
-// PURPOSE: ESLintAdapter — ILinterAdapterProtocol implementation for ESLint integration
-//
-// Executes `npx eslint --format=json` as a subprocess and parses the
-// JSON output. ESLint outputs a JSON array of per-file results, each
-// containing an array of messages with rule IDs, severity, and location.
-//
-// Key handling:
-//   - Resolves the correct working directory (package.json parent)
-//   - Uses npx to find eslint (works for both local and global installs)
-//   - Mirrors Ruff adapter's path-fallback logic for consistency
-//   - Returns empty results for non-JS/TS files (no error)
-//   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
-
-use serde_json::Value;
 use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -35,9 +21,33 @@ use shared::external_lint::taxonomy_external_lint_helper::{
     resolve_js_working_dir as resolve_working_dir,
 };
 
+// (No protocol implementation found in this file)
+
+// PURPOSE: ESLintAdapter — ILinterAdapterProtocol implementation for ESLint integration
+//
+// Executes `npx eslint --format=json` as a subprocess and parses the
+// JSON output. ESLint outputs a JSON array of per-file results, each
+// containing an array of messages with rule IDs, severity, and location.
+//
+// Key handling:
+//   - Resolves the correct working directory (package.json parent)
+//   - Uses npx to find eslint (works for both local and global installs)
+//   - Mirrors Ruff adapter's path-fallback logic for consistency
+//   - Returns empty results for non-JS/TS files (no error)
+//   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
+
+use serde_json::Value;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ESLintAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// (No protocol implementation found in this file)
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ESLintAdapter {
     pub fn new(
@@ -161,3 +171,4 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         js_apply_fix(self.executor.as_ref(), path, "eslint", "--fix").await
     }
 }
+

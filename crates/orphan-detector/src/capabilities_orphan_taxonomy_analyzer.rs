@@ -1,5 +1,3 @@
-// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -8,19 +6,14 @@ use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
+// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct TaxonomyOrphanAnalyzer {}
 
-impl Default for TaxonomyOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TaxonomyOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     fn is_taxonomy_orphan(
@@ -31,6 +24,20 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         is_taxonomy_orphan(f, root_dir, definition, inbound_links)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for TaxonomyOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TaxonomyOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
     }
 }
 
@@ -225,3 +232,4 @@ pub fn check_taxonomy_orphan(
         ));
     }
 }
+

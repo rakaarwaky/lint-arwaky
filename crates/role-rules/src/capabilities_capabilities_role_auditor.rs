@@ -1,3 +1,9 @@
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
+use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
+use shared::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_source_vo::SourceContentVO;
+
 // PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing (missing interface implementation)
 //
 // ALGORITHM:
@@ -9,19 +15,12 @@
 // NOTE: The layer guard is redundant with the caller but kept for defensive programming.
 //      This checker assumes Rust syntax; Python/JS support would need additional parsing.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
+
+// (No constructors or helpers found in this file)
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CapabilitiesRoleChecker {}
-
-impl Default for CapabilitiesRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl CapabilitiesRoleChecker {
     pub fn new() -> Self {
@@ -253,6 +252,8 @@ impl CapabilitiesRoleChecker {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
     fn check_capability_routing(
         &self,
@@ -263,3 +264,12 @@ impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
         self.check_capability_routing(source, layer, violations);
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for CapabilitiesRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+

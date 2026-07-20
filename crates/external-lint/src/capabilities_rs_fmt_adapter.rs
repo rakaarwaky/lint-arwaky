@@ -1,15 +1,3 @@
-// PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
-//
-// Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
-// (not a linter), the adapter parses diff output lines to report each
-// formatting difference as an individual LintResult.
-//
-// Key design decisions:
-//   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
-//   - Uses ICommandExecutorProtocol for subprocess execution with 120s timeout
-//   - apply_fix runs `cargo fmt` (without --check) to auto-format
-//   - Only reports added lines (+ prefix) as violations, not context lines
-use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -34,6 +22,21 @@ use tracing::debug;
 
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
 
+// PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
+//
+// Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
+// (not a linter), the adapter parses diff output lines to report each
+// formatting difference as an individual LintResult.
+//
+// Key design decisions:
+//   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
+//   - Uses ICommandExecutorProtocol for subprocess execution with 120s timeout
+//   - apply_fix runs `cargo fmt` (without --check) to auto-format
+//   - Only reports added lines (+ prefix) as violations, not context lines
+use std::path::Path;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterProtocol.
 ///
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
@@ -43,17 +46,7 @@ pub struct RustFmtAdapter {
     _bin_path: Option<FilePath>,
 }
 
-impl RustFmtAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        bin_path: Option<FilePath>,
-    ) -> Self {
-        Self {
-            executor,
-            _bin_path: bin_path,
-        }
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for RustFmtAdapter {
@@ -161,3 +154,18 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
         Ok(ComplianceStatus::new(true))
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl RustFmtAdapter {
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            _bin_path: bin_path,
+        }
+    }
+}
+

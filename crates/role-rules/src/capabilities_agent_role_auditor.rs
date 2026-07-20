@@ -1,3 +1,8 @@
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
+use shared::taxonomy_source_vo::SourceContentVO;
+
 // PURPOSE: AgentRoleChecker — IAgentRoleChecker for AES405: agent file size limits and any-type checks
 //
 // ALGORITHM:
@@ -12,12 +17,50 @@
 //      These trait methods are required by IAgentRoleChecker but are intentionally
 //      empty for this checker implementation.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_source_vo::SourceContentVO;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct AgentRoleChecker {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IAgentRoleChecker for AgentRoleChecker {
+    fn check_container(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_orchestrator(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_lifecycle(
+        &self,
+        _source: &SourceContentVO,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+    }
+    fn check_file_size_limit(
+        &self,
+        source: &SourceContentVO,
+        max_lines: usize,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_file_size_limit(source, max_lines, violations);
+    }
+    fn check_any_type_annotation(
+        &self,
+        source: &SourceContentVO,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+    ) {
+        self.check_any_type_annotation(source, violations);
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for AgentRoleChecker {
     fn default() -> Self {
@@ -78,38 +121,3 @@ impl AgentRoleChecker {
     }
 }
 
-impl IAgentRoleChecker for AgentRoleChecker {
-    fn check_container(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_orchestrator(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_lifecycle(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-    }
-    fn check_file_size_limit(
-        &self,
-        source: &SourceContentVO,
-        max_lines: usize,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_file_size_limit(source, max_lines, violations);
-    }
-    fn check_any_type_annotation(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_any_type_annotation(source, violations);
-    }
-}

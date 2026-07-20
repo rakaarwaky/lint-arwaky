@@ -1,6 +1,3 @@
-// PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
-
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
@@ -9,24 +6,17 @@ use std::path::Path;
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+// PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
+
+use shared::common::taxonomy_message_vo::LintMessage;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct GitHookAdapter {
     root_dir: FilePath,
 }
 
-impl GitHookAdapter {
-    pub fn new(root_dir: FilePath) -> Self {
-        Self { root_dir }
-    }
-
-    fn git_dir(&self) -> std::path::PathBuf {
-        Path::new(&self.root_dir.value).join(".git")
-    }
-
-    fn is_git_repo(&self) -> bool {
-        let git = self.git_dir();
-        git.exists() && git.is_dir()
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IHookManagerProtocol for GitHookAdapter {
     fn install_pre_commit(
@@ -100,3 +90,21 @@ exit 0
         Ok(SuccessStatus::new(true))
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl GitHookAdapter {
+    pub fn new(root_dir: FilePath) -> Self {
+        Self { root_dir }
+    }
+
+    fn git_dir(&self) -> std::path::PathBuf {
+        Path::new(&self.root_dir.value).join(".git")
+    }
+
+    fn is_git_repo(&self) -> bool {
+        let git = self.git_dir();
+        git.exists() && git.is_dir()
+    }
+}
+

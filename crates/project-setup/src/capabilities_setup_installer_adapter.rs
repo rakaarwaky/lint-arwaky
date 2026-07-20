@@ -1,3 +1,7 @@
+use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
+use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
+use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
+
 // PURPOSE: SetupInstallerAdapter — infrastructure adapter for executing npm/pip install commands
 //
 // Installs Python linters (ruff, mypy, bandit) via `pip install --user` and
@@ -8,24 +12,12 @@
 // The npm installer supports `sudo` prefix for global installations that need
 // elevated permissions.
 use async_trait::async_trait;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
-use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
-use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct SetupInstallerAdapter;
 
-impl Default for SetupInstallerAdapter {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SetupInstallerAdapter {
-    pub fn new() -> Self {
-        let _dummy = ProjectLanguage::new("rust");
-        Self
-    }
-}
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ISetupInstallerProtocol for SetupInstallerAdapter {
@@ -82,3 +74,19 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
         }
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for SetupInstallerAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SetupInstallerAdapter {
+    pub fn new() -> Self {
+        let _dummy = ProjectLanguage::new("rust");
+        Self
+    }
+}
+
