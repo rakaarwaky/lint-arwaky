@@ -7,8 +7,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::{
-    taxonomy_cycle_helper, taxonomy_dummy_helper, taxonomy_parser_helper, taxonomy_unused_helper,
-    utility_import_resolver,
+    utility_cycle_detector, utility_dummy_detector, utility_import_module_parser,
+    utility_import_resolver, utility_import_symbol_extractor,
 };
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
@@ -91,7 +91,7 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
     }
 
     fn extract_import_modules(&self, content: &str) -> Vec<SymbolName> {
-        taxonomy_parser_helper::extract_import_modules(content)
+        utility_import_module_parser::extract_import_modules(content)
     }
 
     fn get_language_from_path(&self, path: &str) -> LanguageVO {
@@ -103,7 +103,7 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
         lines: &[&str],
         lang: LanguageVO,
     ) -> Vec<(LineNumber, LineNumber)> {
-        taxonomy_dummy_helper::dummy_function_ranges(lines, lang)
+        utility_dummy_detector::dummy_function_ranges(lines, lang)
     }
 
     fn get_imported_symbols(
@@ -111,11 +111,11 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
         lines: &[&str],
         lang: LanguageVO,
     ) -> Vec<(SymbolName, LineNumber)> {
-        taxonomy_dummy_helper::imported_symbols(lines, lang)
+        utility_dummy_detector::imported_symbols(lines, lang)
     }
 
     fn get_dummy_impl_traits_with_lines(&self, lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
-        taxonomy_dummy_helper::dummy_impl_traits_with_lines(lines)
+        utility_dummy_detector::dummy_impl_traits_with_lines(lines)
     }
 
     fn is_symbol_used_real(
@@ -129,19 +129,19 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
             .iter()
             .map(|(s, e)| (s.value() as usize, e.value() as usize))
             .collect();
-        taxonomy_dummy_helper::symbol_used_real(lines, symbol, &converted, dummy_impl_traits)
+        utility_dummy_detector::symbol_used_real(lines, symbol, &converted, dummy_impl_traits)
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        taxonomy_cycle_helper::detect_cycle_edges(edges)
+        utility_cycle_detector::detect_cycle_edges(edges)
     }
 
     fn extract_imported_aliases(&self, content: &str) -> HashMap<Identity, Identity> {
-        taxonomy_unused_helper::extract_imported_aliases(content)
+        utility_import_symbol_extractor::extract_imported_aliases(content)
     }
 
     fn extract_exported_symbols(&self, content: &str) -> HashSet<Identity> {
-        taxonomy_unused_helper::extract_exported_symbols(content)
+        utility_import_symbol_extractor::extract_exported_symbols(content)
     }
 
     fn extract_used_symbols(
@@ -149,7 +149,7 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
         content: &str,
         imported_aliases: &HashMap<Identity, Identity>,
     ) -> HashSet<Identity> {
-        taxonomy_unused_helper::extract_used_symbols(content, imported_aliases)
+        utility_import_symbol_extractor::extract_used_symbols(content, imported_aliases)
     }
 
     fn find_import_line_number(&self, content: &str, alias: &str) -> LineNumber {
@@ -157,10 +157,10 @@ impl shared::import_rules::contract_import_parser_protocol::IImportParserProtoco
     }
 
     fn extract_rust_js_imports(&self, content: &str) -> Vec<(SymbolName, LineNumber)> {
-        taxonomy_unused_helper::extract_rust_js_imports(content)
+        utility_import_symbol_extractor::extract_rust_js_imports(content)
     }
 
     fn is_name_used(&self, name: &str, content: &str, exclude_line: LineNumber) -> bool {
-        taxonomy_unused_helper::is_name_used(name, content, exclude_line.value() as usize)
+        utility_import_symbol_extractor::is_name_used(name, content, exclude_line.value() as usize)
     }
 }

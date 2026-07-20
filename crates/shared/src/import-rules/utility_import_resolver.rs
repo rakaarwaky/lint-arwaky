@@ -2,7 +2,7 @@
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::import_rules::taxonomy_path_helper;
+use crate::import_rules::utility_path_normalizer;
 
 /// Convert a Result<FilePath, _> to FilePath, using default on error.
 pub fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePath {
@@ -223,7 +223,7 @@ pub fn extract_module_from_line(line: &LineContentVO) -> Option<Identity> {
 /// Extract layer name from an import segment.
 pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
     let segment_str = segment.value();
-    if let Some(layer) = taxonomy_path_helper::extract_layer_from_prefix(segment_str) {
+    if let Some(layer) = utility_path_normalizer::extract_layer_from_prefix(segment_str) {
         return Some(LayerNameVO::new(layer));
     }
     match segment_str {
