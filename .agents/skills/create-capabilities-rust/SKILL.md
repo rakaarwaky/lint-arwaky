@@ -1,7 +1,7 @@
 ---
 name: create-capabilities-rust
 description: "Create and validate Rust capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
+version: 1.4.0
 category: refactoring
 tags:
   [
@@ -19,6 +19,11 @@ tags:
     error-handling,
     magic-constant,
     imports,
+    role-naming,
+    state-ownership,
+    pipeline-aggregation,
+    no-orchestration,
+    no-domain-definition,
   ]
 triggers:
   - "create capability rust"
@@ -59,16 +64,48 @@ A capabilities file must:
 - use shared VOs for domain data,
 - use Utility standalone functions for low-level technical operations.
 
+## Role Naming (ARCHITECTURE §8)
+
+Capabilities use role suffixes describing their concern. Two families:
+
+**Internal (business logic):**
+
+validator, assessor, calculator, resolver, classifier, selector, mapper, transformer, policy, enricher, evaluator, analyzer, scorer, grader, ranker, filter, checker, reviewer, approver, rejector
+
+**External (adaptation):**
+
+repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
+
+File: `capabilities_<domain>_<role>.rs`
+
+## Dependencies (ARCHITECTURE §8)
+
+- **May depend on:** Taxonomy, Contract, Utility.
+- **Must NOT depend on / import:** other Capabilities, Agent.
+
+Note: do **not** import `infrastructure_*` — that layer no longer exists; its mechanics now live in the Utility layer. Utility is an allowed dependency.
+
+## Special Rules (ARCHITECTURE §8)
+
+- **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
+- **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
+- **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
+- **Contract Implementation:** the capability implements the `protocol_` trait defined in the Contract layer.
+- **State Ownership:** the capability owns business and technical state within its execution scope.
+- **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
+- **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
+- **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
+
 ## Definition of Done
 
 1. ONE implementation struct per file.
 2. Struct implements ONE domain protocol trait in Block 2.
 3. Block 2 contains ONLY the domain protocol trait implementation.
 4. Constructors, std trait impls, private helpers in Block 3.
-5. No locally defined domain data structures.
+5. No locally defined domain models — Entities/Value Objects are consumed from Taxonomy, not defined here.
 6. Service dependencies use DI via `Arc<dyn Trait>`.
 7. Value/configuration fields use shared VOs.
-8. No inter-capability dependencies (capabilities must not import other capabilities).
+8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
 10. `cargo check -p <crate-name>` passes.
 
@@ -127,7 +164,7 @@ See `references/helper-vs-utility.md` for the decision tree.
 
 ### Step 7: Verify Layer Compliance
 
-No forbidden imports, no inter-capability dependencies, no business logic leakage.
+No forbidden imports (Agent, other capabilities), no inter-capability dependencies, no business logic leakage, no domain model definition.
 
 ### Step 8: Verify Error Handling, VO, and Constants
 
@@ -142,8 +179,8 @@ cargo check -p <crate-name>
 ## Quick Commands
 
 ```bash
-# Check forbidden imports (no infrastructure, no agent, no other capabilities)
-rg "^\s*use\s+.*(infrastructure_|agent_|capabilities_)" crates/<crate>/src/capabilities_*.rs
+# Check forbidden imports (no agent, no other capabilities)
+rg "^\s*use\s+.*(agent_|capabilities_)" crates/<crate>/src/capabilities_*.rs
 
 # List protocol trait implementations
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
@@ -151,14 +188,15 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 
 ## Common Mistakes
 
-- Importing other capabilities directly.
-- Defining domain data structs in capabilities files.
+- Importing other capabilities or Agent directly.
+- Defining domain models (Entities, Value Objects) in capabilities files.
 - Using concrete service types as struct fields.
 - Using raw primitives for domain value fields.
 - Putting private helpers in the protocol trait.
 - Putting constructors in the protocol trait.
 - Placing std trait impls before the domain protocol trait.
 - Mixing Block 2 and Block 3 responsibilities.
+- Flow control across capabilities / error-escalation policy (orchestration).
 - Silent error swallowing with `unwrap_or_default()`.
 - Magic constants in capabilities logic.
 - Not delegating low-level technical operations to Utility.
