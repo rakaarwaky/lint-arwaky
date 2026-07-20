@@ -2,16 +2,14 @@
 //
 // The DI container that assembles the external lint subsystem:
 //   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
-//   2. Registers all 8 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
-//   3. Wraps them in a ExternalLintOrchestrator
-//   4. Provides a DefaultPathNormalization that passes paths through unchanged
+//   2. Registers all 9 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
 //
 // Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
+// Path normalization uses shared::common::utility_path_normalization free functions (no DI).
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
@@ -20,7 +18,7 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new(path_norm: Arc<dyn IPathNormalizationProtocol>) -> Self {
+    pub fn new() -> Self {
         let executor: Arc<dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol> =
             Arc::new(crate::capabilities_stdio_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
@@ -30,7 +28,6 @@ impl ExternalLintContainer {
             "ruff".to_string(),
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
                 None,
             )),
         );
@@ -38,7 +35,6 @@ impl ExternalLintContainer {
             "bandit".to_string(),
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
                 None,
             )),
         );
@@ -46,7 +42,6 @@ impl ExternalLintContainer {
             "mypy".to_string(),
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
                 None,
             )),
         );
@@ -54,48 +49,37 @@ impl ExternalLintContainer {
             "eslint".to_string(),
             Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
             )),
         );
         adapters.insert(
             "prettier".to_string(),
-            Arc::new(
-                crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
-                    executor.clone(),
-                    path_norm.clone(),
-                ),
-            ),
+            Arc::new(crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
+                executor.clone(),
+            )),
         );
         adapters.insert(
             "tsc".to_string(),
             Arc::new(crate::capabilities_js_tsc_adapter::TSCAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
             )),
         );
         adapters.insert(
             "clippy".to_string(),
-            Arc::new(
-                crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
-                    executor.clone(),
-                    path_norm.clone(),
-                    None,
-                ),
-            ),
+            Arc::new(crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
+                executor.clone(),
+                None,
+            )),
         );
         adapters.insert(
             "rustfmt".to_string(),
             Arc::new(crate::capabilities_rs_fmt_adapter::RustFmtAdapter::new(
                 executor.clone(),
-                path_norm.clone(),
                 None,
             )),
         );
         adapters.insert(
             "cargo-audit".to_string(),
-            Arc::new(
-                crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(path_norm.clone()),
-            ),
+            Arc::new(crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new()),
         );
 
         Self {
@@ -106,24 +90,10 @@ impl ExternalLintContainer {
     }
 
     pub fn new_default() -> Self {
-        Self::new(Arc::new(DefaultPathNormalization))
+        Self::new()
     }
 
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {
         self.aggregate.clone()
-    }
-}
-
-struct DefaultPathNormalization;
-impl IPathNormalizationProtocol for DefaultPathNormalization {
-    fn normalize_path(&self, path: FilePath) -> FilePath {
-        path
-    }
-    fn resolve_capabilities_path(
-        &self,
-        path: FilePath,
-        _context_path: Option<FilePath>,
-    ) -> FilePath {
-        path
     }
 }

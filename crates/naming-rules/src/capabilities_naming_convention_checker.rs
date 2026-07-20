@@ -7,15 +7,15 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_lint_vo::LocationList;
@@ -35,27 +35,28 @@ static NAMING_REGEX: Lazy<Option<Regex>> =
 impl INamingCheckerProtocol for NamingConventionChecker {
     async fn check_file_naming(
         &self,
-        analyzer: &dyn INamingAnalyzerProtocol,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         for f in &files.values {
             let f_str = f.to_string();
             let filename = match f.rsplit('/').next() {
                 Some(name) => name,
                 None => &f_str,
             };
-            let layer = analyzer.detect_layer(f, root_dir);
-            let def = layer
-                .as_ref()
-                .and_then(|l| analyzer.layer_map().values.get(l));
-            self.check_file_naming(
+            let layer = self._detect_layer(&f_str, &layer_keys);
+            let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
+            let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+            self._check_file_naming(
                 &f_str,
                 filename,
-                &layer,
+                &layer_name,
                 def,
-                analyzer.config(),
+                config,
                 &mut results.values,
             );
         }
@@ -63,7 +64,8 @@ impl INamingCheckerProtocol for NamingConventionChecker {
 
     async fn check_domain_suffixes(
         &self,
-        _analyzer: &dyn INamingAnalyzerProtocol,
+        _config: &ArchitectureConfig,
+        _layer_map: &LayerMapVO,
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
@@ -84,7 +86,13 @@ impl NamingConventionChecker {
         Self {}
     }
 
-    pub fn make_result(
+    fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {
+        let filename = utility_layer_detector::extract_filename(file);
+        utility_layer_detector::detect_layer_from_prefix(filename)
+            .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
+    }
+
+    fn _make_result(
         file: &str,
         code: &str,
         msg: impl Into<String>,
@@ -111,12 +119,12 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 3 words).
-    pub fn check_file_naming(
+    fn _check_file_naming(
         &self,
         file: &str,
         filename: &str,
         layer_name: &Option<LayerNameVO>,
-        definition: Option<&LayerDefinition>,
+        definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
         _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
@@ -136,7 +144,7 @@ impl NamingConventionChecker {
                     .iter()
                     .map(|p| p.trim_end_matches('_').to_string())
                     .collect();
-                violations.push(Self::make_result(
+                violations.push(Self::_make_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::UnknownPrefix {
@@ -156,7 +164,7 @@ impl NamingConventionChecker {
             }
 
             let stem = get_stem(filename).unwrap_or_default();
-            violations.push(Self::make_result(
+            violations.push(Self::_make_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
@@ -184,7 +192,7 @@ impl NamingConventionChecker {
         let stem = get_stem(filename).unwrap_or_default();
 
         if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
-            violations.push(Self::make_result(
+            violations.push(Self::_make_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {

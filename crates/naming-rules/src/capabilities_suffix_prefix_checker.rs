@@ -5,14 +5,15 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
+use shared::common::utility_layer_detector;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_lint_vo::LocationList;
@@ -29,7 +30,8 @@ pub struct SuffixPrefixChecker {}
 impl INamingCheckerProtocol for SuffixPrefixChecker {
     async fn check_file_naming(
         &self,
-        _analyzer: &dyn INamingAnalyzerProtocol,
+        _config: &ArchitectureConfig,
+        _layer_map: &LayerMapVO,
         _files: &FilePathList,
         _root_dir: &FilePath,
         _results: &mut LintResultList,
@@ -37,27 +39,22 @@ impl INamingCheckerProtocol for SuffixPrefixChecker {
         // No-op for suffix/prefix checker
     }
 
-    // Implement check_domain_suffixes from INamingCheckerProtocol trait to perform checks on multiple files.
     async fn check_domain_suffixes(
         &self,
-        analyzer: &dyn INamingAnalyzerProtocol,
+        _config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
-        // Step 1: Iterate over each file path in the checklist.
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         for f in &files.values {
             let f_str = f.to_string();
-            // Step 2: Extract the raw filename from the path.
             let filename = f.rsplit('/').next().unwrap_or(&f_str);
-            // Step 3: Determine the architectural layer for the file.
-            let layer = analyzer.detect_layer(f, root_dir);
-            // Step 4: Fetch layer-specific definition properties.
-            let def = layer
-                .as_ref()
-                .and_then(|l| analyzer.layer_map().values.get(l));
-            // Step 5: Execute the suffix checker function.
-            self.check_domain_suffixes(&f_str, filename, def, &layer, &mut results.values);
+            let layer = self._detect_layer(&f_str, &layer_keys);
+            let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
+            let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+            self._check_domain_suffixes(&f_str, filename, def, &layer_name, &mut results.values);
         }
     }
 }
@@ -74,7 +71,13 @@ impl SuffixPrefixChecker {
         Self {}
     }
 
-    pub fn make_result(
+    fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {
+        let filename = utility_layer_detector::extract_filename(file);
+        utility_layer_detector::detect_layer_from_prefix(filename)
+            .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
+    }
+
+    fn _make_result(
         file: &str,
         code: &str,
         msg: impl Into<String>,
@@ -99,33 +102,30 @@ impl SuffixPrefixChecker {
             related_locations: LocationList::new(),
         }
     }
+
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules).
-    pub fn check_domain_suffixes(
+    fn _check_domain_suffixes(
         &self,
         file: &str,
         filename: &str,
-        definition: Option<&LayerDefinition>,
+        definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
         _layer_name: &Option<LayerNameVO>,
         violations: &mut Vec<LintResult>,
     ) {
-        // Step 1: Skip checking for barrel files and system entry point files.
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
             return;
         }
 
-        // Step 2: Retrieve the layer definition config.
         let def = match definition {
             Some(d) => d,
             None => return,
         };
 
-        // Step 3: Skip validation if the filename matches an exception rule.
         if def.exceptions.values.contains(&filename.to_string()) {
             return;
         }
 
-        // Step 4: Extract the file stem (name without extension) and get the suffix (word after the last underscore).
         let stem = match get_stem(filename) {
             Some(s) => s,
             None => return,
@@ -133,14 +133,13 @@ impl SuffixPrefixChecker {
 
         let suffix = get_suffix(stem);
 
-        // Step 5: Check if the suffix is explicitly forbidden for the current layer.
         if let Some(suf) = &suffix {
             if def.naming.forbidden_suffix.values.iter().any(|v| v == *suf) {
                 let layer_display = _layer_name
                     .as_ref()
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
-                violations.push(Self::make_result(
+                violations.push(Self::_make_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixForbidden {
@@ -160,7 +159,6 @@ impl SuffixPrefixChecker {
             }
         }
 
-        // Step 6: If the layer configuration enforces a strict suffix policy, ensure the suffix matches the allowed list.
         if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
             let valid = match &suffix {
                 Some(s) => def.naming.allowed_suffix.values.iter().any(|v| v == *s),
@@ -173,7 +171,7 @@ impl SuffixPrefixChecker {
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
                 let suffix_display = suffix.unwrap_or("(none)");
-                violations.push(Self::make_result(
+                violations.push(Self::_make_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixMismatch {
@@ -198,5 +196,3 @@ impl SuffixPrefixChecker {
         }
     }
 }
-
-

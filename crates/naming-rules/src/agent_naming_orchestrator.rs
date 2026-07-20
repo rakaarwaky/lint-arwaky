@@ -1,22 +1,15 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
-//
-// Orchestrates 2 naming-related AES rules:
-//   1. AES101: file suffix convention (e.g., `*_vo.rs` for value objects)
-//   2. AES102: filename pattern matching (e.g., snake_case for Rust files)
-//
-// The orchestrator walks the target directory, filters to source files,
-// then delegates to two checkers. Both checkers implement the same
-// INamingCheckerProtocol trait but are configured with different rules.
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use shared::naming_rules::utility_naming_filesystem;
 use shared::taxonomy_common_vo::PatternList;
+use shared::taxonomy_definition_vo::LayerMapVO;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -24,7 +17,8 @@ use std::sync::Arc;
 pub struct NamingOrchestrator {
     naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
     suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-    analyzer: Arc<dyn INamingAnalyzerProtocol>,
+    config: Arc<ArchitectureConfig>,
+    layer_map: Arc<LayerMapVO>,
     ignored_patterns: PatternList,
 }
 
@@ -38,10 +32,10 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let root_dir = target;
 
         self.naming_convention_checker
-            .check_file_naming(self.analyzer.as_ref(), &files, root_dir, &mut results)
+            .check_file_naming(self.config.as_ref(), self.layer_map.as_ref(), &files, root_dir, &mut results)
             .await;
         self.suffix_prefix_checker
-            .check_domain_suffixes(self.analyzer.as_ref(), &files, root_dir, &mut results)
+            .check_domain_suffixes(self.config.as_ref(), self.layer_map.as_ref(), &files, root_dir, &mut results)
             .await;
 
         results.values
@@ -57,9 +51,9 @@ impl NamingOrchestrator {
     pub fn new(
         naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
         suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
-        analyzer: Arc<dyn INamingAnalyzerProtocol>,
+        config: Arc<ArchitectureConfig>,
+        layer_map: Arc<LayerMapVO>,
     ) -> Self {
-        let config = analyzer.config();
         let ignored_patterns = PatternList {
             values: config
                 .ignored_paths
@@ -77,7 +71,8 @@ impl NamingOrchestrator {
         Self {
             naming_convention_checker,
             suffix_prefix_checker,
-            analyzer,
+            config,
+            layer_map,
             ignored_patterns,
         }
     }

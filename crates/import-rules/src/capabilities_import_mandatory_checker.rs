@@ -78,15 +78,15 @@ impl ArchImportMandatoryChecker {
 
         let content = match std::fs::read_to_string(file) { Ok(c) => c, Err(_) => return };
         let file_content = FileContentVO::new(content);
-        let import_lines = utility_import_resolver::parse_import_lines_helper(file_content.value());
-        let stem = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
-        let source_layer = stem.split('_').next().map_or("unknown", |s| s);
+        let import_lines: Vec<(shared::taxonomy_common_vo::LineNumber, shared::taxonomy_layer_vo::LineContentVO)> = utility_import_resolver::parse_import_lines_helper(file_content.value());
+        let stem: &str = basename.rsplit('.').next_back().map_or(basename.as_str(), |s| s);
+        let source_layer: &str = stem.split('_').next().map_or("unknown", |s| s);
 
         for required in &definition.mandatory.values {
             let required_identity = Identity::new(required);
             let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
-            let layer_str = layer.value();
-            let is_present = if suffixes.is_empty() {
+            let layer_str: &str = layer.value();
+            let is_present: bool = if suffixes.is_empty() {
                 import_lines.iter().any(|(_, l)| l.value().contains(layer_str))
             } else {
                 import_lines.iter().any(|(_, l)| utility_import_resolver::import_matches_scope(l, &layer, &suffixes))
