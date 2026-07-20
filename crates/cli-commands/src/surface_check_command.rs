@@ -39,8 +39,6 @@ pub struct CheckContext {
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub language_detector:
-        Arc<dyn shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol>,
 }
 
 pub type OrchestratorFactory = Arc<
@@ -143,9 +141,6 @@ impl CheckCommandsSurface {
                 external_lint: ext.clone(),
                 orphan_orchestrator: oo.clone(),
                 layer_detector: ld.clone(),
-                language_detector: Arc::new(
-                    crate::capabilities_language_detector::CliLanguageDetector::new(),
-                ),
             })
         });
         let ctx = effective_factory(config.clone());
@@ -275,7 +270,7 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let all_files: Vec<String> = shared::common::collect_all_source_files_raw(&scan_root)
+        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
             .iter()
             .map(|f| f.value.clone())
             .collect();

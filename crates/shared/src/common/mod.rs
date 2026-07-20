@@ -1,5 +1,4 @@
 // common — truly shared types used by multiple features
-pub mod contract_language_detector_protocol;
 pub mod taxonomy_action_vo;
 pub use utility_file::{collect_all_source_files, collect_all_source_files_raw, find_workspace_root, scan_directory};
 pub mod taxonomy_adapter_error;
@@ -34,6 +33,4 @@ pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
 pub mod utility_value_object_generator;
-pub mod contract_file_collection_protocol;
-pub mod contract_path_normalization_protocol;
 

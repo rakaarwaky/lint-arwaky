@@ -57,7 +57,6 @@ pub fn handle_check(
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_agg,
             ctx.code_analysis_linter.clone(),
-            ctx.language_detector.clone(),
             "HEAD".to_string(),
         ))
     } else {

@@ -27,9 +27,6 @@ impl GitCommandsSurface {
 pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    language_detector: Arc<
-        dyn shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol,
-    >,
     base: String,
 ) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
@@ -45,10 +42,7 @@ pub async fn handle_git_diff(
         .values
         .iter()
         .filter(|fp| {
-            shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol::is_lintable(
-                language_detector.as_ref(),
-                fp,
-            )
+            shared::common::utility_language_detector::is_lintable(fp)
         })
         .collect();
 
