@@ -4,5 +4,5 @@ class <NameResult>:
     reason: str
 
 class Capabilities<NameCapability>:
-    def analyze(self) -> <NameResult>:
+    def execute(self) -> <NameResult>:
         return <NameResult>(is_valid=True, reason="")

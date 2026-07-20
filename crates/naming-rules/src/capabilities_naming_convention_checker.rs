@@ -1,4 +1,4 @@
-// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 2 words)
+// PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
 use shared::naming_rules::utility_naming::get_stem;
 use async_trait::async_trait;
 use once_cell::sync::Lazy;
@@ -10,6 +10,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -26,7 +27,7 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 pub struct NamingConventionChecker {}
 
 static NAMING_REGEX: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+)+$").ok());
+    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok());
 
 impl Default for NamingConventionChecker {
     fn default() -> Self {
@@ -52,7 +53,7 @@ impl NamingConventionChecker {
             column: ColumnNumber::new(0),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
-            source: Some(AdapterName::raw("architecture")),
+            source: Some(AdapterName::raw(ADAPTER_NAME)),
             severity: sev,
             enclosing_scope: Some(ScopeRef {
                 name: DescriptionVO::new(String::new()),
@@ -65,7 +66,7 @@ impl NamingConventionChecker {
         }
     }
 
-    /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 2 words).
+    /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 3 words).
     pub fn check_file_naming(
         &self,
         file: &str,
@@ -79,7 +80,7 @@ impl NamingConventionChecker {
         const LAYER_PREFIXES: &[&str] = &[
             "taxonomy_",
             "contract_",
-            "capabilities_",
+            "utility_",
             "capabilities_",
             "agent_",
             "surface_",
@@ -128,11 +129,11 @@ impl NamingConventionChecker {
                 file,
                 "AES101",
                 NamingViolation::NamingConvention {
-                    min_words: 2,
+                    min_words: 3,
                     separator: "_".to_string(),
                     reason: Some(LintMessage::new(format!(
                         "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
-                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 2 underscore-separated \
+                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 3 underscore-separated \
                          lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
                         file, stem
                     ))),
@@ -159,13 +160,13 @@ impl NamingConventionChecker {
                 file,
                 "AES101",
                 NamingViolation::NamingConvention {
-                    min_words: 2,
+                    min_words: 3,
                     separator: "_".to_string(),
                     reason: Some(LintMessage::new(format!(
                         "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                         Expected: lowercase alphanumeric words separated by underscores, minimum 2 words. \
+                         Expected: lowercase alphanumeric words separated by underscores, minimum 3 words. \
                          Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
-                         Issue: '{}' may have uppercase characters, wrong separator, or only 1 word.",
+                         Issue: '{}' may have uppercase characters, wrong separator, or fewer than 3 words.",
                         stem, stem
                     ))),
                 }

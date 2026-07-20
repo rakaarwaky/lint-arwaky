@@ -5,7 +5,7 @@ interface <NameResult> {
 }
 
 export class Capabilities<NameCapability> {
-    analyze(): <NameResult> {
+    execute(): <NameResult> {
         return { is_valid: true, reason: '' };
     }
 }

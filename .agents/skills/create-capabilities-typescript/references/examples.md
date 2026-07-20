@@ -3,7 +3,7 @@
 ## BAD: Capability Without Interface (AES403)
 
 ```typescript
-export class FrameComposer {
+export class <NameComposer> {
     composeFrame(): void {
         // public behavior without protocol interface
     }
@@ -13,7 +13,7 @@ export class FrameComposer {
 Fix:
 
 ```typescript
-export class FrameComposer implements IFrameComposerProtocol {
+export class <NameComposer> implements I<NameComposer>Protocol {
     composeFrame(): void {
         // contract implementation
     }

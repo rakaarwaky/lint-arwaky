@@ -28,13 +28,13 @@ fn parse_input(content: &<RawContent>VO) -> Result<<DomainVO>, <Name>ParseError>
 
 ## Rule 3: Check/analysis methods may return `Vec<<ResultVO>>`
 
-For linting/analysis use cases, violations are expected domain outcomes.
+## Rule 3: Analysis methods may return a collection of `<ResultVO>`
 
 ```rust
-fn check_input(source: &<DomainVO>) -> Vec<<ResultVO>> {
-    let mut violations = Vec::new();
+fn execute(input: &<DomainVO>) -> Vec<<ResultVO>> {
+    let mut results = Vec::new();
     // analysis logic
-    violations
+    results
 }
 ```
 
@@ -71,4 +71,4 @@ impl I<NameCapability>Protocol for <NameCapability> {
         Vec::new()
     }
 }
-```
+

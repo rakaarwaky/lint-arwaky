@@ -7,20 +7,20 @@ Domain data MUST use shared VOs, not raw primitives.
 Bad:
 
 ```rust
-pub struct LintResult {
-    pub file_path: String,
-    pub line: u32,
-    pub severity: String,
+pub struct <ResultVO> {
+    pub target: String,
+    pub position: u32,
+    pub level: String,
 }
 ```
 
 Good:
 
 ```rust
-pub struct LintResult {
-    file_path: FilePath,
-    line: <LineNumber>VO,
-    severity: Severity,
+pub struct <ResultVO> {
+    target: <Target>VO,
+    position: <LineNumber>VO,
+    level: <Severity>VO,
 }
 ```
 
@@ -72,7 +72,7 @@ impl <LineNumber>VO {
 Bad:
 
 ```rust
-pub struct RuleSet {
+pub struct <RuleSet>VO {
     pub patterns: Vec<String>,
     pub description: Option<String>,
 }
@@ -81,8 +81,8 @@ pub struct RuleSet {
 Good:
 
 ```rust
-pub struct RuleSet {
-    patterns: PatternList,
-    description: Option<RuleDescription>,
+pub struct <RuleSet>VO {
+    patterns: <PatternList>VO,
+    description: Option<<RuleDescription>VO>,
 }
 ```

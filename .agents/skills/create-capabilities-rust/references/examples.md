@@ -3,9 +3,9 @@
 ## BAD: Capability Without Trait (AES403)
 
 ```rust
-pub struct FrameComposer;
+pub struct <NameComposer>;
 
-impl FrameComposer {
+impl <NameComposer> {
     pub fn compose_frame(&self) {
         // public behavior without protocol trait
     }
@@ -15,9 +15,9 @@ impl FrameComposer {
 Fix:
 
 ```rust
-pub struct FrameComposer;
+pub struct <NameComposer>;
 
-impl IFrameComposerProtocol for FrameComposer {
+impl I<NameComposer>Protocol for <NameComposer> {
     fn compose_frame(&self) {
         // contract implementation
     }

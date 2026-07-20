@@ -3,16 +3,16 @@
 ## BAD: Capability Without Protocol (AES403)
 
 ```python
-class FrameComposer:
+class <NameComposer>:
+
     def compose_frame(self) -> None:
         # public behavior without protocol ABC
         ...
-```
 
 Fix:
 
 ```python
-class FrameComposer(IFrameComposerProtocol):
+class <NameComposer>(I<NameComposer>Protocol):
     def compose_frame(self) -> None:
         # contract implementation
         ...

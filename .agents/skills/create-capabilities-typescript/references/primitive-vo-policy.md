@@ -7,20 +7,20 @@ Domain data MUST use shared VOs, not raw primitives.
 Bad:
 
 ```typescript
-interface LintResult {
-    filePath: string;
-    line: number;
-    severity: string;
+interface <ResultVO> {
+    target: string;
+    position: number;
+    level: string;
 }
 ```
 
 Good:
 
 ```typescript
-interface LintResult {
-    filePath: FilePath;
-    line: <LineNumber>VO;
-    severity: Severity;
+interface <ResultVO> {
+    target: <Target>VO;
+    position: <LineNumber>VO;
+    level: <Severity>VO;
 }
 ```
 
@@ -65,7 +65,7 @@ export class <LineNumber>VO {
 Bad:
 
 ```typescript
-interface RuleSet {
+interface <RuleSet>VO {
     patterns: string[];
     description: string | null;
 }
@@ -74,8 +74,8 @@ interface RuleSet {
 Good:
 
 ```typescript
-interface RuleSet {
-    patterns: PatternList;
-    description: RuleDescription | null;
+interface <RuleSet>VO {
+    patterns: <PatternList>VO;
+    description: <RuleDescription>VO | null;
 }
 ```

@@ -13,9 +13,9 @@ export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
 
     // ─── Block 2: Public Contract (domain protocol ONLY) ──
     execute(input: <DomainVO>): <ResultVO>[] {
-        const violations: <ResultVO>[] = [];
+        const results: <ResultVO>[] = [];
         // domain logic using injected dependencies
-        return violations;
+        return results;
     }
 
     // ─── Block 3: Utility Methods, Factories & Helpers ────

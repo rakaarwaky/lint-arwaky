@@ -15,9 +15,9 @@ pub struct Capabilities<NameCapability> {
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     fn execute(&self, input: &<DomainVO>) -> Vec<<ResultVO>> {
-        let mut violations = Vec::new();
+        let mut results = Vec::new();
         // domain logic using injected dependencies
-        violations
+        results
     }
 }
 

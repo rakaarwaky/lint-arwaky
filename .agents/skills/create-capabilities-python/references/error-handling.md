@@ -24,13 +24,13 @@ def parse_input(content: <RawContent>VO) -> Result[<DomainVO>, <Name>ParseError]
     ...
 ```
 
-## Rule 3: Check/analysis methods may return `list[<ResultVO>]`
+## Rule 3: Analysis methods may return a collection of `<ResultVO>`
 
 ```python
-def check_input(source: <DomainVO>) -> list[<ResultVO>]:
-    violations: list[<ResultVO>] = []
+def execute(input: <DomainVO>) -> list[<ResultVO>]:
+    results: list[<ResultVO>] = []
     # analysis logic
-    return violations
+    return results
 ```
 
 ## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)

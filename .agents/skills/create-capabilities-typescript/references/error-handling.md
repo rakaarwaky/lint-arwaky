@@ -24,13 +24,13 @@ function parseInput(content: <RawContent>VO): Result<<DomainVO>, <Name>ParseErro
 }
 ```
 
-## Rule 3: Check/analysis methods may return `<ResultVO>[]`
+## Rule 3: Analysis methods may return a collection of `<ResultVO>`
 
 ```typescript
-function checkInput(source: <DomainVO>): <ResultVO>[] {
-    const violations: <ResultVO>[] = [];
+function execute(input: <DomainVO>): <ResultVO>[] {
+    const results: <ResultVO>[] = [];
     // analysis logic
-    return violations;
+    return results;
 }
 ```
 

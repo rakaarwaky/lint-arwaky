@@ -8,20 +8,20 @@ Bad:
 
 ```python
 @dataclass
-class LintResult:
-    file_path: str
-    line: int
-    severity: str
+class <ResultVO>:
+    target: str
+    position: int
+    level: str
 ```
 
 Good:
 
 ```python
 @dataclass
-class LintResult:
-    file_path: FilePath
-    line: <LineNumber>VO
-    severity: Severity
+class <ResultVO>:
+    target: <Target>VO
+    position: <LineNumber>VO
+    level: <Severity>VO
 ```
 
 ## Primitive Policy
@@ -64,7 +64,7 @@ Bad:
 
 ```python
 @dataclass(frozen=True)
-class RuleSet:
+class <RuleSet>VO:
     patterns: list[str]
     description: str | None
 ```
@@ -73,7 +73,7 @@ Good:
 
 ```python
 @dataclass(frozen=True)
-class RuleSet:
-    patterns: PatternList
-    description: RuleDescription | None
+class <RuleSet>VO:
+    patterns: <PatternList>VO
+    description: <RuleDescription>VO | None
 ```

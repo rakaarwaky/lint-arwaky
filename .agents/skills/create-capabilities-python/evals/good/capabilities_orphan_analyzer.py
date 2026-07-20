@@ -24,9 +24,9 @@ class Capabilities<NameCapability>(I<NameCapability>Protocol):
 
     # ─── Block 2: Public Contract (domain protocol ONLY) ──
     def execute(self, input: <DomainVO>) -> list[<ResultVO>]:
-        violations: list[<ResultVO>] = []
+        results: list[<ResultVO>] = []
         # domain logic using injected dependencies
-        return violations
+        return results
 
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────
     def __repr__(self) -> str:
