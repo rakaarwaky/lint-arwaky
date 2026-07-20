@@ -1,12 +1,29 @@
 # The 3-Block Structure
 
+Every implementation file MUST follow this order with mandatory block markers:
+
 1. **Block 1 — Class Definition & Constructor**
 2. **Block 2 — Aggregate ABC Method Implementation**
 3. **Block 3 — Dunder Methods, Factories, and Private Helpers**
 
+Each block MUST be preceded by a block marker comment:
+
+```python
+# ─── Block 1: Class Definition & Constructor ───────────────
+```
+
+```python
+# ─── Block 2: Aggregate Method Implementation ──────────────
+```
+
+```python
+# ─── Block 3: Dunder Methods, Factories, Helpers ───────────
+```
+
 ## Block 1 — Class Definition & Constructor
 
 ```python
+# ─── Block 1: Class Definition & Constructor ───────────────
 class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
     def __init__(self, analyzer: I<NameAnalyzer>Protocol):
         self._analyzer = analyzer
@@ -17,6 +34,7 @@ class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
 Block 2 is RESERVED for the domain aggregate ABC methods ONLY.
 
 ```python
+# ─── Block 2: Aggregate Method Implementation ──────────────
 class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
     def execute(self, request: <ScanRequest>VO) -> list[<ResultVO>]:
         # orchestration only
@@ -28,6 +46,7 @@ Do NOT put `__repr__`, `__str__`, `__eq__`, `@classmethod create_default()`, `@s
 ## Block 3 — Dunder Methods, Factories, and Helpers
 
 ```python
+# ─── Block 3: Dunder Methods, Factories, Helpers ───────────
 class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
     def __repr__(self) -> str:
         return "<NameOrchestrator>()"

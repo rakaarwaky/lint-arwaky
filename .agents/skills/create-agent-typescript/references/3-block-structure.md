@@ -1,12 +1,29 @@
 # The 3-Block Structure
 
+Every implementation file MUST follow this order with mandatory block markers:
+
 1. **Block 1 — Class Definition & Constructor**
 2. **Block 2 — Aggregate Interface Method Implementation**
 3. **Block 3 — Utility Methods, Factories, and Private Helpers**
 
+Each block MUST be preceded by a block marker comment:
+
+```typescript
+// ─── Block 1: Class Definition & Constructor ───────────────
+```
+
+```typescript
+// ─── Block 2: Aggregate Method Implementation ──────────────
+```
+
+```typescript
+// ─── Block 3: Utility Methods, Factories, Helpers ──────────
+```
+
 ## Block 1 — Class Definition & Constructor
 
 ```typescript
+// ─── Block 1: Class Definition & Constructor ───────────────
 export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
     constructor(private readonly analyzer: I<NameAnalyzer>Protocol) {}
 }
@@ -17,6 +34,7 @@ export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
 Block 2 is RESERVED for the domain aggregate interface methods ONLY.
 
 ```typescript
+// ─── Block 2: Aggregate Method Implementation ──────────────
 export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
     execute(request: <ScanRequest>VO): <ResultVO>[] {
         // orchestration only
@@ -29,6 +47,7 @@ Do NOT put `toString()`, `toJSON()`, `valueOf()`, `equals()`, `static create()`,
 ## Block 3 — Utility Methods, Factories, and Helpers
 
 ```typescript
+// ─── Block 3: Utility Methods, Factories, Helpers ──────────
 export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
     toString(): string {
         return '<NameOrchestrator>()';

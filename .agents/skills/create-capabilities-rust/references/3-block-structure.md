@@ -1,20 +1,36 @@
 # The 3-Block Structure
 
-Every implementation file MUST follow this order:
+Every implementation file MUST follow this order with mandatory block markers:
 
 1. **Block 1 — Struct Definition**
 2. **Block 2 — Domain Protocol Trait Implementation**
 3. **Block 3 — Constructors, Std Traits, and Private Helpers**
 
+Each block MUST be preceded by a block marker comment:
+
+```rust
+// ─── Block 1: Struct Definition ───────────────────────────
+```
+
+```rust
+// ─── Block 2: Protocol Trait Implementation ───────────────
+```
+
+```rust
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+```
+
 ## Block 1 — Struct Definition
 
 ```rust
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct Capabilities<NameCapability>;
 ```
 
 Or with dependencies:
 
 ```rust
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct Capabilities<NameCapability> {
     collaborator: Arc<dyn I<NameCollaborator>Protocol>,
     store: Arc<dyn I<NameStore>Protocol>,
@@ -27,6 +43,7 @@ pub struct Capabilities<NameCapability> {
 Block 2 is RESERVED for the domain protocol trait ONLY.
 
 ```rust
+// ─── Block 2: Protocol Trait Implementation ───────────────
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     fn execute(
         &self,
@@ -62,6 +79,7 @@ Block 3 contains:
 - domain-specific associated functions used only by this struct
 
 ```rust
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for Capabilities<NameCapability> {
     fn default() -> Self {
         Self

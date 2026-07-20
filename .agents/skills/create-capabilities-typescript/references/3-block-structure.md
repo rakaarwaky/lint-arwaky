@@ -1,14 +1,29 @@
 # The 3-Block Structure
 
-Every implementation file MUST follow this order **within the class body**:
+Every implementation file MUST follow this order **within the class body** with mandatory block markers:
 
 1. **Block 1 — Class Definition & Constructor**
 2. **Block 2 — Domain Protocol Method Implementation**
 3. **Block 3 — Utility Methods, Factories, and Private Helpers**
 
+Each block MUST be preceded by a block marker comment:
+
+```typescript
+// ─── Block 1: Class Definition & Constructor ───────────────
+```
+
+```typescript
+// ─── Block 2: Protocol Method Implementation ───────────────
+```
+
+```typescript
+// ─── Block 3: Utility Methods, Factories, Helpers ──────────
+```
+
 ## Block 1 — Class Definition & Constructor
 
 ```typescript
+// ─── Block 1: Class Definition & Constructor ───────────────
 export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     constructor() {}
 }
@@ -19,6 +34,7 @@ export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
 Block 2 is RESERVED for the domain protocol methods ONLY.
 
 ```typescript
+// ─── Block 2: Protocol Method Implementation ───────────────
 export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     execute(
         input: <DomainVO>,
@@ -34,6 +50,7 @@ Do NOT put these in Block 2: `toString()`, `toJSON()`, `valueOf()`, `equals()`, 
 ## Block 3 — Utility Methods, Factories, and Helpers
 
 ```typescript
+// ─── Block 3: Utility Methods, Factories, Helpers ──────────
 export class Capabilities<NameCapability> implements I<NameCapability>Protocol {
     toString(): string {
         return 'Capabilities<NameCapability>()';

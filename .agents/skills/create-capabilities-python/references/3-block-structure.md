@@ -1,14 +1,29 @@
 # The 3-Block Structure
 
-Every implementation file MUST follow this order **within the class body**:
+Every implementation file MUST follow this order **within the class body** with mandatory block markers:
 
 1. **Block 1 — Class Definition & Constructor**
 2. **Block 2 — Domain Protocol Method Implementation**
 3. **Block 3 — Dunder Methods, Factories, and Private Helpers**
 
+Each block MUST be preceded by a block marker comment:
+
+```python
+# ─── Block 1: Class Definition & Constructor ───────────────
+```
+
+```python
+# ─── Block 2: Protocol Method Implementation ───────────────
+```
+
+```python
+# ─── Block 3: Dunder Methods, Factories, Helpers ───────────
+```
+
 ## Block 1 — Class Definition & Constructor
 
 ```python
+# ─── Block 1: Class Definition & Constructor ───────────────
 class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __init__(self) -> None:
         pass
@@ -19,6 +34,7 @@ class Capabilities<NameCapability>(I<NameCapability>Protocol):
 Block 2 is RESERVED for the domain protocol methods ONLY.
 
 ```python
+# ─── Block 2: Protocol Method Implementation ───────────────
 class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def execute(
         self,
@@ -34,6 +50,7 @@ Do NOT put these in Block 2: `__repr__`, `__str__`, `__eq__`, `__hash__`, `@clas
 ## Block 3 — Dunder Methods, Factories, and Helpers
 
 ```python
+# ─── Block 3: Dunder Methods, Factories, Helpers ───────────
 class Capabilities<NameCapability>(I<NameCapability>Protocol):
     def __repr__(self) -> str:
         return "Capabilities<NameCapability>()"
