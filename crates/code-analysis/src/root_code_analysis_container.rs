@@ -13,7 +13,6 @@ use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProto
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use std::sync::Arc;
@@ -78,8 +77,10 @@ impl CodeAnalysisCheckerContainer {
         let filename = shared::common::utility_layer_detector::extract_filename(file);
         let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
         let keys = shared::common::utility_layer_detector::collect_layer_keys(&self.layer_map);
-        Some(shared::common::utility_layer_detector::resolve_specialized_layer(
-            &layer, file, &keys,
+        Some(shared::taxonomy_layer_vo::LayerNameVO::new(
+            shared::common::utility_layer_detector::resolve_specialized_layer(
+                &layer, file, &keys,
+            ),
         ))
     }
 
