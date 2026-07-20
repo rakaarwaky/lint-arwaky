@@ -4,8 +4,6 @@ See [AGENTS.md](../AGENTS.md) for workspace conventions and [RULES_AES.md](../.a
 
 The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations.
 
-Under this AES revision the old **Infrastructure** layer is replaced by a **Utility** layer. Utility is a standalone layer of free functions — no `struct`, no `trait`, no `contract`. It holds all the hard low-level detail (algorithms, regex, third-party library wiring, file-system walking, process spawning). The business-logic layer (Capabilities) stays clean: it only calls utility functions by clear names. **Ports are removed**; Contract carries only Protocol and Aggregate.
-
 ---
 
 ## Terminology
@@ -109,26 +107,7 @@ Interface definitions — _what_ can be done without _how_. **Ports are removed.
 - **Protocol (`_protocol`)**: Inbound interface implemented by Capabilities. Defines the behavior a caller (Agent/Surface) can rely on, without exposing implementation.
 - **Aggregate (`_aggregate`)**: Composition facade. Exposes a typed entry point so Surfaces do not import Capabilities directly
 
-### 3. Capabilities (`capabilities_` prefix)
-
-Business logic, use-cases, computations. Clean and readable: it calls Utility functions by clear names and never contains low-level detail.
-
-| Category                            | Description                             | Allowed Suffix                              |
-| ----------------------------------- | --------------------------------------- | ------------------------------------------- |
-| **Computation / Calculation** | Score calculation from violation counts | `_calculator`, `_scorer`                |
-| **Validation / Checking**     | Input validation with error returns     | `_checker`, `_validator`                |
-| **Data Transformation**       | Map, filter, reduce on collections      | `_transformer`, `_mapper`, `_filter`  |
-| **Business Rules**            | Conditional blocking based on severity  | `_evaluator`, `_resolver`               |
-| **Information Extraction**    | Parse imports from source code          | `_extractor`, `_classifier`             |
-| **Assessment / Scoring**      | Grade conversion from score values      | `_assessor`, `_auditor`, `_inspector` |
-
-#### Forbidden Logic:
-
-- ❌ Flow control (loops, branching for orchestration) → **Agent**
-- ❌ Domain model definition → **Taxonomy**
-- ❌ Low-level detail (algorithms, regex, I/O, library wiring) → **Utility**
-
-### 4. Utility (`utility_` prefix) — replaces old Infrastructure
+### 3. Utility (`utility_` prefix) — replaces old Infrastructure
 
 Standalone technical implementation. This layer holds the hard, low-level detail that the old Infrastructure layer used to own — but as free functions, not adapters behind ports.
 
@@ -152,9 +131,28 @@ Standalone technical implementation. This layer holds the hard, low-level detail
 
 | Concern                       | Belongs in Capabilities      | Belongs in Utility (standalone)           |
 | ----------------------------- | ---------------------------- | ----------------------------------------- |
-| "collect all source files"    | call`collect_source_files` | the recursive walk + ignore + inode logic |
-| "run the linter"              | call`run_ruff(path)`       | spawn process, capture stdout, parse JSON |
+| "collect all source files"    | call `collect_source_files`  | the recursive walk + ignore + inode logic |
+| "run the linter"              | call `run_ruff(path)`        | spawn process, capture stdout, parse JSON |
 | "is this an import violation" | apply the rule               | regex / alias resolution helper           |
+
+### 4. Capabilities (`capabilities_` prefix)
+
+Business logic, use-cases, computations. Clean and readable: it calls Utility functions by clear names and never contains low-level detail.
+
+| Category                            | Description                             | Allowed Suffix                              |
+| ----------------------------------- | --------------------------------------- | ------------------------------------------- |
+| **Computation / Calculation** | Score calculation from violation counts | `_calculator`, `_scorer`                |
+| **Validation / Checking**     | Input validation with error returns     | `_checker`, `_validator`                |
+| **Data Transformation**       | Map, filter, reduce on collections      | `_transformer`, `_mapper`, `_filter`  |
+| **Business Rules**            | Conditional blocking based on severity  | `_evaluator`, `_resolver`               |
+| **Information Extraction**    | Parse imports from source code          | `_extractor`, `_classifier`             |
+| **Assessment / Scoring**      | Grade conversion from score values      | `_assessor`, `_auditor`, `_inspector` |
+
+#### Forbidden Logic:
+
+- ❌ Flow control (loops, branching for orchestration) → **Agent**
+- ❌ Domain model definition → **Taxonomy**
+- ❌ Low-level detail (algorithms, regex, I/O, library wiring) → **Utility**
 
 ### 5. Agent (`agent_` prefix)
 
