@@ -14,15 +14,14 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
-use import_rules::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer;
-use import_rules::capabilities_filesystem_adapter::OSFileSystemAdapter;
 use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_parser_protocol::ISourceParserProtocol;
-use shared::common::contract_system_protocol::IFileSystemProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::taxonomy_definition_vo::LayerMapVO;
 
 pub struct CliMainEntry {}
 
@@ -58,10 +57,13 @@ fn main() -> ExitCode {
     // precise layer matching in check/scan/orphan commands. This is
     // different from the orphan detector's prefix-based detection.
     let aes_config = default_aes_config();
-    let fs: Arc<dyn IFileSystemProtocol> = Arc::new(OSFileSystemAdapter::new());
-    let parser: Arc<dyn ISourceParserProtocol> = Arc::new(NullSourceParser);
-    let layer_detector: Arc<dyn ILayerDetectionAggregate> =
-        Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
+    let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+    let mut aes_config = aes_config;
+    aes_config.layers = merged_layers;
+    let layer_map = LayerMapVO::new(aes_config.layers.clone());
+    let layer_map_clone = layer_map.clone();
+    let aes_config_clone = aes_config.clone();
+    let layer_detector: Arc<dyn ILayerDetectionAggregate> = Arc::new(LayerDetectorInline { config: aes_config, layer_map });
 
     // ── Phase 2: Create per-project factory (for `scan` command) ─────
     // The scan command discovers workspace members and runs all linters

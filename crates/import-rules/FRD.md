@@ -1,39 +1,21 @@
-# Feature Requirement Document (FRD) - Import Rules
+# FRD — import-rules
 
-See [RULES_AES.md](../../.agents/rules/RULES_AES.md) for AES201-AES205 details and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+## Feature Goal
+The import-rules crate enforces correct structural boundaries and unidirectional dependency flows. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - AES201 Layer Dependency Violation (Unidirectional Flow) — restrict imports by layer hierarchy; lower layers (taxonomy_, contract_) must never import higher layers; utility_ and capabilities_ must not import each other directly, only via contract_ traits.
+  - AES202 Mandatory Layer Imports — verify required layer imports (e.g. capability imports its contract trait; surface entry imports its container).
+  - AES203 Unused Import Detection — flag imported symbols never referenced in the file body.
+  - AES204 Dummy or Forbidden Imports — detect imports pointing to mock, dummy, or forbidden packages in production configs.
+  - AES205 Circular Dependency Cycle Detection — build an import dependency graph across the workspace and flag cycles.
+- Out of scope:
+  - Reachability/orphan analysis (orphan-detector).
+  - Naming-convention checks (naming-rules).
 
-The primary goal of the `import-rules` module is to enforce correct structural boundaries and unidirectional dependency flows. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
-
-## 2. Scope & Requirements
-
-The `import-rules` module analyzes import paths and validates compliance using the following specifications:
-
-- **AES201: Layer Dependency Violation (Unidirectional Flow)**
-
-  - **Requirement**: Restricts imports based on the layer hierarchy. Lower layers (e.g., `taxonomy_`, `contract_`) must never import higher layers (e.g., `capabilities_`, `utility_`, `agent_`, `surface_`).
-  - **Layer Boundary**: `utility_` and `capabilities_` must not import each other directly; they must interact through `contract_` traits.
-- **AES202: Mandatory Layer Imports**
-
-  - **Requirement**: Verifies that specific layers contain required imports (e.g., ensuring a capability layer file correctly imports its corresponding contract trait, or that a surface entry imports its container).
-- **AES203: Unused Import Detection**
-
-  - **Requirement**: Detects and flags imported symbols that are never referenced anywhere within the file body.
-- **AES204: Dummy or Forbidden Imports**
-
-  - **Requirement**: Detects imports that point to mock, dummy, or forbidden packages/modules in production configurations.
-- **AES205: Circular Dependency Cycle Detection**
-
-  - **Requirement**: Builds a dependency graph of imports across all workspace files and detects cycles (e.g., File A imports B, B imports C, C imports A). Circular dependencies must be flagged.
-
----
-
-## 3. Success Indicators
-
-The success of the `import-rules` module is measured by:
-
-- **Zero Dependency Cycles**: All import cycle loops are detected and resolved.
-- **Strict Unidirectional Flow**: Complete blocking of cross-layer violations (e.g., taxonomy files importing orchestration layer code).
-- **Cleaner Namespace**: Prompt warning of unused symbols to maintain clean, lean namespaces.
-- **High Performance**: Graph cycle detection runs within milliseconds using optimized cycle-finding algorithms (e.g., Tarjan's or simple DFS-based cycle detection).
+## Success Indicators
+- [ ] Zero dependency cycles — all import cycle loops are detected and resolved.
+- [ ] Strict unidirectional flow — complete blocking of cross-layer violations.
+- [ ] Cleaner namespace — prompt warning of unused symbols.
+- [ ] High performance — graph cycle detection runs within milliseconds (e.g. Tarjan's or DFS-based).

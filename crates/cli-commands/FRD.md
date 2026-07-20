@@ -1,28 +1,25 @@
-# Feature Requirement Document (FRD) - CLI Commands
+# FRD — cli-commands
 
-See [README.md](../../../README.md) for CLI usage and [SKILL.md](../../../.agents/skills/lint-scan/SKILL.md) for scan patterns.
+## Feature Goal
+The cli-commands crate provides a unified command-line interface (CLI) that drives the entire linting pipeline. It implements surfaces for the main commands: check, scan, fix, git, config, setup, tui, and watch.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - check — check a single file or directory against AES rules.
+  - scan — scan the entire workspace and generate a comprehensive report.
+  - fix — apply automatic fixes to files that violate rules.
+  - git — implement git hooks and diff checks for pre-commit.
+  - config — manage lint_arwaky configuration (initialization, validation, updates).
+  - setup — set up a new project with the AES directory structure.
+  - watch — monitor file changes in real time and run automatic scans.
+  - tui — launch the interactive terminal UI.
+  - Consistent input/output patterns and clear --help documentation for every command.
+- Out of scope:
+  - The lint analysis logic itself (delegated to the rule crates).
+  - The MCP server transport.
 
-The primary purpose of the `cli-commands` module is to provide a unified command-line interface (CLI) for users to run the entire linting pipeline. This module implements surfaces for main commands such as `check`, `scan`, `fix`, `git`, `config`, `setup`, `tui`, and `watch`.
-
-## 2. Requirements & Scope
-
-The `cli-commands` module is responsible for providing command surfaces based on the following specifications:
-
-- **check**: Check a single file or directory against AES rules.
-- **scan**: Scan the entire workspace and generate a comprehensive report.
-- **fix**: Apply automatic fixes to files that violate rules.
-- **git**: Implement git hooks and diff checks for pre-commit.
-- **config**: Manage lint_arwaky configuration (initialization, validation, updates).
-- **setup**: Set up a new project with AES directory structure.
-- **watch**: Monitor file changes in real-time and run automatic scans.
-
-## 3. Success Indicators
-
-The success of the `cli-commands` module is measured by:
-
-- **UX Consistency**: All commands follow a consistent input/output pattern.
-- **Performance**: CLI is responsive with buffered output for large workspaces.
-- **Help Documentation**: Every command has clear `--help` documentation.
-- **Rule Conformance**: When complete, the module itself passes AES rule checks.
+## Success Indicators
+- [ ] UX consistency — all commands follow a consistent input/output pattern.
+- [ ] Performance — CLI is responsive with buffered output for large workspaces.
+- [ ] Help documentation — every command has clear --help documentation.
+- [ ] Rule conformance — the crate itself passes AES rule checks when complete.

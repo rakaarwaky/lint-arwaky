@@ -1,18 +1,8 @@
-// PURPOSE: Module declarations for import-rules (checkers, analyzers, orchestrators)
-pub mod capabilities_dummy_import_checker;
-pub use capabilities_dummy_import_checker::DummyImportChecker;
-pub mod capabilities_import_forbidden_checker;
-pub use capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+// PURPOSE: Module declarations for import-rules (5 capabilities + 5 protocols)
 pub mod capabilities_import_mandatory_checker;
-pub use capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+pub mod capabilities_import_forbidden_checker;
+pub mod capabilities_dummy_import_checker;
 pub mod capabilities_import_unused_checker;
-pub use capabilities_import_unused_checker::UnusedImportRuleChecker;
 pub mod capabilities_cycle_import_analyzer;
-pub use capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-pub mod capabilities_import_parser_adapter;
-pub use capabilities_import_parser_adapter::ImportParserAdapter;
-pub mod capabilities_layer_detector_adapter;
-pub use capabilities_layer_detector_adapter::UtilityLayerDetectorAdapter;
 pub mod agent_import_orchestrator;
-pub use agent_import_orchestrator::ImportOrchestrator;
 pub mod root_import_rules_container;

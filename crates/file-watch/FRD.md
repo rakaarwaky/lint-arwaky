@@ -1,22 +1,21 @@
-# Feature Requirement Document (FRD) - File Watch
+# FRD — file-watch
 
-See [README.md](../../../README.md) for project context and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for layer rules.
+## Feature Goal
+The file-watch crate provides a filesystem monitoring system that detects file changes in real time and automatically re-triggers the linting pipeline. It uses notify and notify-debouncer-mini to optimize performance and avoid redundant processing during rapid changes.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - Recursive filesystem watching of project paths for create/modify/delete events.
+  - Debounced event aggregation so rapid changes do not trigger multiple lint runs.
+  - Automatic re-trigger of the linting pipeline on detected changes.
+  - Configurable watch roots and ignore patterns.
+  - Low resource usage during long-running watches.
+- Out of scope:
+  - The lint analysis itself (delegated to the rule crates).
+  - Serving results over MCP or building the TUI.
 
-The primary purpose of the `file-watch` module is to provide a filesystem monitoring system capable of detecting file changes in real-time and automatically re-triggering the linting pipeline. This module uses `notify` and `notify-debouncer-mini` to optimize performance and avoid redundant processing during rapid changes.
-
-## 2. Requirements & Scope
-
-The `file-watch` module is responsible for monitoring based on the following specifications:
-
----
-
-## 3. Success Indicators
-
-The success of the `file-watch` module is measured by:
-
-- **Responsiveness**: File changes are detected within 100ms-2s depending on debouncing.
-- **Debouncing Effectiveness**: Rapid changes do not trigger multiple lint runs.
-- **Resource Efficiency**: Memory usage remains low during long-running watches.
-- **Rule Conformance**: When complete, the module itself passes AES rule checks.
+## Success Indicators
+- [ ] Responsiveness — file changes detected within 100ms–2s depending on debouncing.
+- [ ] Debouncing effectiveness — rapid changes do not trigger multiple lint runs.
+- [ ] Resource efficiency — memory usage remains low during long-running watches.
+- [ ] Rule conformance — the crate itself passes AES rule checks when complete.

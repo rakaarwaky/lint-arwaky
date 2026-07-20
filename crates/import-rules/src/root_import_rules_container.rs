@@ -1,211 +1,78 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
-use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use shared::common::contract_parser_protocol::ISourceParserProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
-use shared::import_rules::contract_rule_protocol::IArchImportProtocol;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use std::sync::Arc;
 
 pub struct ImportContainer {
-    mandatory: Arc<dyn IArchImportProtocol>,
-    forbidden: Arc<dyn IArchImportProtocol>,
-    intent: Arc<dyn IArchImportProtocol>,
-    unused: Arc<dyn IUnusedImportProtocol>,
-    cycle: Arc<dyn ICycleAnalysisProtocol>,
-    analyzer: Arc<dyn IAnalyzer>,
+    config: ArchitectureConfig,
 }
 
 impl ImportContainer {
-    pub fn new(source_parser: Arc<dyn ISourceParserProtocol>) -> Self {
-        Self::new_with_config(
-            shared::config_system::taxonomy_config_vo::default_aes_config(),
-            source_parser,
-        )
+    pub fn new(_source_parser: Arc<dyn shared::common::contract_parser_protocol::ISourceParserProtocol>) -> Self {
+        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
     }
 
-    pub fn new_with_config(
-        config: ArchitectureConfig,
-        source_parser: Arc<dyn ISourceParserProtocol>,
-    ) -> Self {
-        // NOTE: The 3 thin capability adapters (OSFileSystemAdapter,
-        // ImportParserAdapter, LayerDetectionAnalyzer) were removed and
-        // replaced by shared utility functions (utility_file,
-        // utility_import_resolver, utility_layer_detector). A utility-backed
-        // adapter implementing IImportParserProtocol / IAnalyzer /
-        // ILayerDetectionAggregate must be wired here once the shared
-        // taxonomy VOs and IFileSystemProtocol trait (deleted earlier) are
-        // restored — those deletions currently make the traits unresolved.
-        let parser: Arc<dyn IImportParserProtocol> = Arc::new(crate::capabilities_import_parser_adapter::ImportParserAdapter::new());
-        let analyzer = Arc::new(crate::capabilities_layer_detector_adapter::UtilityLayerDetectorAdapter::new(config.clone(), source_parser));
-
-        let mandatory = Arc::new(
-            crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(
-                parser.clone(),
-            ),
-        );
-        let forbidden = Arc::new(
-            crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new(
-                parser.clone(),
-            ),
-        );
-        let intent = Arc::new(
-            crate::capabilities_dummy_import_checker::DummyImportChecker::new(parser.clone()),
-        );
-        let unused = Arc::new(
-            crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new(parser.clone()),
-        );
-        let cycle = Arc::new(
-            crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(
-                config,
-                parser.clone(),
-            ),
-        );
-
-        Self {
-            mandatory: mandatory.clone(),
-            forbidden: forbidden.clone(),
-            intent: intent.clone(),
-            unused: unused.clone(),
-            cycle: cycle.clone(),
-            analyzer,
-        }
+    pub fn new_with_config(config: ArchitectureConfig) -> Self {
+        Self { config }
     }
 
     pub fn new_default() -> Self {
-        Self::new(Arc::new(NullSourceParser))
+        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
     }
 
-    pub fn mandatory_checker(&self) -> &dyn IArchImportProtocol {
-        &*self.mandatory
+    pub fn mandatory(&self) -> Arc<dyn shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol> {
+        Arc::new(crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new())
     }
 
-    pub fn forbidden_checker(&self) -> &dyn IArchImportProtocol {
-        &*self.forbidden
+    pub fn forbidden(&self) -> Arc<dyn shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol> {
+        Arc::new(crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new())
     }
 
-    pub fn analyzer(&self) -> Arc<dyn IAnalyzer> {
-        self.analyzer.clone()
+    pub fn dummy(&self) -> Arc<dyn shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol> {
+        Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new())
+    }
+
+    pub fn unused(&self) -> Arc<dyn shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol> {
+        Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new())
+    }
+
+    pub fn cycle(&self) -> Arc<dyn shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol> {
+        Arc::new(crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new())
+    }
+
+    pub fn config(&self) -> &ArchitectureConfig {
+        &self.config
     }
 
     pub fn orchestrator(&self) -> Arc<dyn IImportRunnerAggregate> {
         Arc::new(crate::agent_import_orchestrator::ImportOrchestrator::new(
-            self.mandatory.clone(),
-            self.forbidden.clone(),
-            self.intent.clone(),
-            self.unused.clone(),
-            self.cycle.clone(),
-            self.analyzer.clone(),
+            self.mandatory(),
+            self.forbidden(),
+            self.unused(),
+            self.cycle(),
         ))
     }
 }
 
 pub struct NullSourceParser;
-impl ISourceParserProtocol for NullSourceParser {
-    fn extract_imports(
-        &self,
-        _path: &FilePath,
-    ) -> Result<
-        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList,
-        shared::common::taxonomy_parser_error::SourceParserError,
-    > {
-        Ok(shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default())
-    }
-    fn get_raw_symbols(
-        &self,
-        _path: &FilePath,
-    ) -> Result<
-        shared::mcp_server::taxonomy_job_vo::ResponseData,
-        shared::common::taxonomy_parser_error::SourceParserError,
-    > {
-        Ok(shared::mcp_server::taxonomy_job_vo::ResponseData::default())
-    }
-    fn get_class_attributes(
-        &self,
-        _path: &FilePath,
-    ) -> shared::mcp_server::taxonomy_job_vo::ResponseData {
-        shared::mcp_server::taxonomy_job_vo::ResponseData::default()
-    }
-    fn has_all_export(
-        &self,
-        _path: &FilePath,
-    ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
-        shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(false)
-    }
-    fn find_primitive_violations(
-        &self,
-        _path: &FilePath,
-        _primitive_types: &shared::common::taxonomy_naming_list_vo::PrimitiveTypeList,
-    ) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList {
-        shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList::default()
-    }
-    fn find_unused_imports(
-        &self,
-        _path: &FilePath,
-    ) -> shared::code_analysis::taxonomy_import_source_vo::ImportInfoList {
-        shared::code_analysis::taxonomy_import_source_vo::ImportInfoList::default()
-    }
-    fn get_class_definitions(
-        &self,
-        _path: &FilePath,
-    ) -> Result<
-        shared::common::taxonomy_suggestion_vo::MetadataVO,
-        shared::common::taxonomy_parser_error::SourceParserError,
-    > {
-        Ok(shared::common::taxonomy_suggestion_vo::MetadataVO::new(
-            std::collections::HashMap::new(),
-        ))
-    }
-    fn get_function_definitions(
-        &self,
-        _path: &FilePath,
-    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
-        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
-    }
-    fn is_symbol_exported(
-        &self,
-        _path: &FilePath,
-        _symbol: &shared::common::taxonomy_name_vo::SymbolName,
-    ) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus {
-        shared::mcp_server::taxonomy_job_vo::SuccessStatus::new(false)
-    }
-    fn get_class_methods(
-        &self,
-        _path: &FilePath,
-    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
-        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
-    }
-    fn get_class_bases_map(
-        &self,
-        _path: &FilePath,
-    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
-        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
-    }
-    fn get_assignment_targets(
-        &self,
-        _path: &FilePath,
-    ) -> shared::common::taxonomy_suggestion_vo::MetadataVO {
-        shared::common::taxonomy_suggestion_vo::MetadataVO::new(std::collections::HashMap::new())
-    }
-    fn get_control_flow_count(
-        &self,
-        _path: &FilePath,
-    ) -> shared::common::taxonomy_common_vo::Count {
-        shared::common::taxonomy_common_vo::Count::default()
-    }
-    fn is_barrel_file(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO {
-        shared::common::taxonomy_common_vo::BooleanVO::default()
-    }
-    fn get_stem(&self, _path: &FilePath) -> shared::common::taxonomy_name_vo::SymbolName {
-        shared::common::taxonomy_name_vo::SymbolName::new("")
-    }
-    fn is_entry_point(&self, _path: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO {
-        shared::common::taxonomy_common_vo::BooleanVO::default()
-    }
-    fn get_supported_extensions(&self) -> shared::common::taxonomy_common_vo::PatternList {
-        shared::common::taxonomy_common_vo::PatternList::default()
-    }
+impl shared::common::contract_parser_protocol::ISourceParserProtocol for NullSourceParser {
+    fn extract_imports(&self, _: &FilePath) -> Result<shared::code_analysis::taxonomy_import_source_vo::ImportInfoList, shared::common::taxonomy_parser_error::SourceParserError> { Ok(Default::default()) }
+    fn get_raw_symbols(&self, _: &FilePath) -> Result<shared::mcp_server::taxonomy_job_vo::ResponseData, shared::common::taxonomy_parser_error::SourceParserError> { Ok(Default::default()) }
+    fn get_class_attributes(&self, _: &FilePath) -> shared::mcp_server::taxonomy_job_vo::ResponseData { Default::default() }
+    fn has_all_export(&self, _: &FilePath) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus { Default::default() }
+    fn find_primitive_violations(&self, _: &FilePath, _: &shared::common::taxonomy_naming_list_vo::PrimitiveTypeList) -> shared::code_analysis::taxonomy_import_source_vo::PrimitiveViolationList { Default::default() }
+    fn find_unused_imports(&self, _: &FilePath) -> shared::code_analysis::taxonomy_import_source_vo::ImportInfoList { Default::default() }
+    fn get_class_definitions(&self, _: &FilePath) -> Result<shared::common::taxonomy_suggestion_vo::MetadataVO, shared::common::taxonomy_parser_error::SourceParserError> { Ok(Default::default()) }
+    fn get_function_definitions(&self, _: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO { Default::default() }
+    fn is_symbol_exported(&self, _: &FilePath, _: &shared::common::taxonomy_name_vo::SymbolName) -> shared::mcp_server::taxonomy_job_vo::SuccessStatus { Default::default() }
+    fn get_class_methods(&self, _: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO { Default::default() }
+    fn get_class_bases_map(&self, _: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO { Default::default() }
+    fn get_assignment_targets(&self, _: &FilePath) -> shared::common::taxonomy_suggestion_vo::MetadataVO { Default::default() }
+    fn get_control_flow_count(&self, _: &FilePath) -> shared::common::taxonomy_common_vo::Count { Default::default() }
+    fn is_barrel_file(&self, _: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO { Default::default() }
+    fn get_stem(&self, _: &FilePath) -> shared::common::taxonomy_name_vo::SymbolName { Default::default() }
+    fn is_entry_point(&self, _: &FilePath) -> shared::common::taxonomy_common_vo::BooleanVO { Default::default() }
+    fn get_supported_extensions(&self) -> shared::common::taxonomy_common_vo::PatternList { Default::default() }
 }

@@ -1,25 +1,20 @@
-# Feature Requirement Document (FRD) - Maintenance
+# FRD — maintenance
 
-See [README.md](../../../README.md) for project context and [TEST.md](../../../TEST.md) for verification criteria.
+## Feature Goal
+The maintenance crate provides maintenance operations for the lint_arwaky system: dependency updates, security audits, configuration drift detection, and AES rule catalog refresh. It keeps the codebase up-to-date and compliant with standards.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - dep-update — update Rust/Python/JS dependencies across the workspace.
+  - audit — run security audits using cargo-audit, bandit, or external tools.
+  - drift-check — check drift between code and defined AES rules.
+  - rules-refresh — update the AES rule catalog from external sources.
+- Out of scope:
+  - Enforcing AES rules live (delegated to the rule crates).
+  - Project scaffolding (project-setup).
 
-The primary purpose of the `maintenance` module is to provide maintenance operations for the lint_arwaky system, including dependency updates, security audits, configuration drift detection, and AES rule catalog refresh. This module helps keep the codebase up-to-date and compliant with standards.
-
-## 2. Requirements & Scope
-
-The `maintenance` module is responsible for maintenance operations based on the following specifications:
-
-- **dep-update**: Update Rust/Python/JS dependencies across the workspace.
-- **audit**: Run security audits using cargo-audit, bandit, or external tools.
-- **drift-check**: Check drift between code and defined AES rules.
-- **rules-refresh**: Update the AES rule catalog from external sources.
-
-## 3. Success Indicators
-
-The success of the `maintenance` module is measured by:
-
-- **Update Accuracy**: Dependencies are updated with compatible versions.
-- **Audit Coverage**: All vulnerabilities are detected and reported.
-- **Drift Detection**: Differences between code and rules are accurately detected.
-- **Rule Conformance**: When complete, the module's own source complies with AES rules.
+## Success Indicators
+- [ ] Update accuracy — dependencies updated with compatible versions.
+- [ ] Audit coverage — all vulnerabilities detected and reported.
+- [ ] Drift detection — differences between code and rules accurately detected.
+- [ ] Rule conformance — the crate's own source complies with AES rules when complete.

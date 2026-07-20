@@ -93,10 +93,6 @@ pub struct ImportOrchestrator {
 ```markdown
 # FRD — <crate-name>
 
-> Stateless document. Describes the IDEAL TARGET only. Never record progress,
-> status, or current-state notes. If reality diverges from this, update
-> README.md — do NOT add state to this file.
-
 ## Feature Goal
 <One paragraph: what this crate is supposed to accomplish when complete.>
 
@@ -137,7 +133,7 @@ pub struct ImportOrchestrator {
 - Identify public structs and methods
 - Check existing docs (README.md / FRD.md / `///` comments)
 
-### Step 2: Create / Fix FRD.md 
+### Step 2: Create / Fix FRD.md
 
 Write crate-level FRD.md following the FRD template. It MUST contain only:
 
@@ -147,7 +143,7 @@ Write crate-level FRD.md following the FRD template. It MUST contain only:
 
 Strip any state, progress, or "as-built" notes. FRD is the ideal target — it never changes because code isn't done yet.
 
-### Step 3: Create / Update README.md 
+### Step 3: Create / Update README.md
 
 Write README.md reflecting the ACTUAL current state:
 

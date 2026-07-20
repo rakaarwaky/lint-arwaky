@@ -1,28 +1,22 @@
-# Feature Requirement Document (FRD) - Config System
+# FRD — config-system
 
-See [README.md](../../../README.md) for config commands and [ARCHITECTURE.md](../../../ARCHITECTURE.md) for architecture context.
+## Feature Goal
+The config-system crate manages lint_arwaky configuration: loading, parsing, validation, and workspace detection. It reads lint_arwaky.config.*.yaml files and merges them with project-level overrides.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - ConfigLoadingOrchestrator — coordinates the configuration loading process from various sources.
+  - ConfigRulesValidator — validates loaded configuration rules against the defined schema.
+  - WorkspaceDetector — detects Rust workspace roots (Cargo.toml) and common project roots.
+  - ConfigParserProvider — provides parsers for YAML, TOML (Cargo.toml), and other configuration formats.
+  - ConfigYamlReader — reads and parses the main YAML configuration file.
+  - MultiProjectOrchestrator — manages configuration for multiple projects/workspaces simultaneously.
+- Out of scope:
+  - Defining the AES rules themselves.
+  - Applying configuration to file mutation.
 
-The primary purpose of the `config-system` module is to manage lint_arwaky configuration by implementing a loading, parsing, validation, and workspace detection system. This module is responsible for reading `lint_arwaky.config.*.yaml` files and merging them with project-level overrides.
-
-## 2. Requirements & Scope
-
-The `config-system` module is responsible for configuration based on the following specifications:
-
-- **ConfigLoadingOrchestrator**: Coordinates the configuration loading process from various sources.
-- **ConfigRulesValidator**: Validates loaded configuration rules against the defined schema.
-- **WorkspaceDetector**: Detects Rust workspace roots based on Cargo.toml or common project roots.
-- **ConfigParserProvider**: Provides parsers for YAML, TOML (Cargo.toml), and other configuration formats.
-- **ConfigYamlReader**: Reads and parses the main YAML configuration file.
-- **MultiProjectOrchestrator**: Manages configuration for multiple projects/workspaces simultaneously.
-
-
-## 3. Success Indicators
-
-The success of the `config-system` module is measured by:
-
-- **Discovery Reliability**: Workspaces are correctly detected from various project structures.
-- **Validation Accuracy**: Invalid configurations are rejected with clear error messages.
-- **Merge Correctness**: Project-level overrides are merged correctly without conflicts.
-- **Rule Conformance**: When complete, the module itself complies with AES rules in its source code.
+## Success Indicators
+- [ ] Discovery reliability — workspaces are correctly detected from various project structures.
+- [ ] Validation accuracy — invalid configurations are rejected with clear error messages.
+- [ ] Merge correctness — project-level overrides are merged correctly without conflicts.
+- [ ] Rule conformance — the crate itself complies with AES rules in its source code when complete.

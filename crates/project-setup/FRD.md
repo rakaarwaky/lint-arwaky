@@ -1,27 +1,19 @@
-# Feature Requirement Document (FRD) - Project Setup
+# FRD — project-setup
 
-See [README.md](../../../README.md) for setup commands and [DEPLOY.md](../../../DEPLOY.md) for install options.
+## Feature Goal
+The project-setup crate provides scaffolding facilities and doctor checks for new projects. It initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.
 
-## 1. Feature Goal
+## Requirements & Scope
+- In scope:
+  - init — create the AES directory structure (taxonomy, contract, utility, capabilities, agent, surface, root).
+  - doctor — check whether a project is ready for lint_arwaky.
+  - mcp-config — create MCP configuration for AI integration.
+  - ci-templates — provide GitHub Actions templates or CI scripts.
+- Out of scope:
+  - Running the linter (cli-commands).
+  - Dependency updates or audits (maintenance).
 
-The `project-setup` module provides scaffolding facilities and doctor checks for new projects. This module initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.
-
-## 2. Scope & Requirements
-
-The `project-setup` module is responsible for setup based on the following specifications:
-
-**init**: Create AES directory structure (taxonomy, contract, utility, capabilities, agent, surface, root).
-
-**doctor**: Check whether a project is ready for lint_arwaky.
-
-**mcp-config**: Create MCP configuration for AI integration.
-
-**ci-templates**: Provide GitHub Actions templates or CI scripts.
-
-## 3. Success Indicators
-
-The success of the `project-setup` module is measured by:
-
-- **Structure Correctness**: Directories and files are created according to AES patterns (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root).
-- **Template Accuracy**: Created templates are ready to use and meet standards.
-- **CI Integration**: CI workflows can be used immediately without modification.
+## Success Indicators
+- [ ] Structure correctness — directories and files created per AES patterns (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root).
+- [ ] Template accuracy — created templates ready to use and meet standards.
+- [ ] CI integration — CI workflows usable immediately without modification.
