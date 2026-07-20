@@ -33,7 +33,6 @@ async fn main() -> anyhow::Result<()> {
         naming_orchestrator: container.naming_orchestrator,
         orphan_orchestrator: container.orphan_orchestrator,
         layer_detector: container.layer_detector,
-        scanner_provider: container.scanner_provider,
         external_lint: container.external_lint,
         role_orchestrator: container.role_orchestrator,
     });

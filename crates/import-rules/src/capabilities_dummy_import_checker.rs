@@ -20,25 +20,25 @@ impl shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerPr
     fn check_dummy_imports(&self, file: &FilePath, content: &shared::common::taxonomy_source_vo::ContentString,
         violations: &mut Vec<LintResult>, _root_dir: &FilePath) {
         let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_imports(&file.value(), content.value(), violations, &layer_map);
+        self._check_dummy_imports(file.value(), content.value(), violations, &layer_map);
     }
 
     fn check_dummy_functions(&self, file: &FilePath, content: &shared::common::taxonomy_source_vo::ContentString,
         violations: &mut Vec<LintResult>, _root_dir: &FilePath) {
         let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_functions(&file.value(), content.value(), violations, &layer_map);
+        self._check_dummy_functions(file.value(), content.value(), violations, &layer_map);
     }
 
     fn check_dummy_impls(&self, file: &FilePath, content: &shared::common::taxonomy_source_vo::ContentString,
         violations: &mut Vec<LintResult>, _root_dir: &FilePath) {
         let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_impls(&file.value(), content.value(), violations, &layer_map);
+        self._check_dummy_impls(file.value(), content.value(), violations, &layer_map);
     }
 
     fn check_taxonomy_intent(&self, file: &FilePath, content: &shared::common::taxonomy_source_vo::ContentString,
         violations: &mut Vec<LintResult>, _root_dir: &FilePath) {
         let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_taxonomy_intent(&file.value(), content.value(), violations, &layer_map);
+        self._check_taxonomy_intent(file.value(), content.value(), violations, &layer_map);
     }
 
     fn check_layer_contract_intent(&self, _file: &FilePath, _content: &shared::common::taxonomy_source_vo::ContentString,
@@ -46,7 +46,7 @@ impl shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerPr
 
     fn check_surface_logic(&self, file: &FilePath, content: &shared::common::taxonomy_source_vo::ContentString,
         violations: &mut Vec<LintResult>, _root_dir: &FilePath) {
-        self._check_surface_logic(&file.value(), content.value(), violations);
+        self._check_surface_logic(file.value(), content.value(), violations);
     }
 }
 

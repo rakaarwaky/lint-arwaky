@@ -108,7 +108,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                     None => String::new(),
                 };
                 let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    FilePath::new(filename.unwrap_or_default()),
+                    FilePath::new(filename).unwrap_or(path.clone()),
                     Some(path.clone()),
                 );
 

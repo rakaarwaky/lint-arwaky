@@ -10,7 +10,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 pub struct ExternalLintContainer {
@@ -95,5 +94,11 @@ impl ExternalLintContainer {
 
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {
         self.aggregate.clone()
+    }
+}
+
+impl Default for ExternalLintContainer {
+    fn default() -> Self {
+        Self::new()
     }
 }

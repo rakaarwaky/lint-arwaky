@@ -12,7 +12,6 @@
 //   - apply_fix returns true (cargo-audit has no fix command; affected packages
 //     must be updated manually via cargo update)
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -38,6 +37,12 @@ pub struct CargoAuditAdapter {
 impl CargoAuditAdapter {
     pub fn new() -> Self {
         Self {}
+    }
+}
+
+impl Default for CargoAuditAdapter {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

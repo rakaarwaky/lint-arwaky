@@ -12,7 +12,6 @@ use shared::mcp_server::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListComm
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_scanner_provider_protocol::IScannerProviderProtocol;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -108,7 +107,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         None => ".".to_string(),
                     };
                     let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
-                    let source_files = match scanner.scan_directory(&dir_path) {
+                    let source_files = match shared::common::scan_directory(&dir_path) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };
@@ -195,7 +194,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         None => ".".to_string(),
                     };
                     let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
-                    let source_files = match scanner.scan_directory(&dir_path) {
+                    let source_files = match shared::common::scan_directory(&dir_path) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };

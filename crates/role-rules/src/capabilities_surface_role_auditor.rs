@@ -120,7 +120,7 @@ impl SurfaceRoleChecker {
         &self,
         layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
         files: &shared::common::taxonomy_paths_vo::FilePathList,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         for f in &files.values {

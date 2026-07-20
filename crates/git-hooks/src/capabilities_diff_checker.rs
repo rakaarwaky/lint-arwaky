@@ -9,6 +9,12 @@ use std::collections::HashSet;
 
 pub struct DiffChecker;
 
+impl Default for DiffChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DiffChecker {
     pub fn new() -> Self {
         Self

@@ -1,9 +1,9 @@
 // PURPOSE: CliLanguageDetector — ILanguageDetectorProtocol implementation for CLI commands
 //
 // Adapts the pure `detect_language`/`is_lintable` taxonomy utilities to the
-// ILanguageDetectorProtocol contract. No inner struct — the utilities are stateless.
+// ILanguageDetectorProtocol contract. Stateless wrapper, no inner fields.
 use shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol;
-use shared::common::contract_language_detector_protocol::Language;
+use shared::common::taxonomy_language_vo::Language;
 use shared::common::utility_language_detector::{detect_language, is_lintable};
 use shared::common::taxonomy_path_vo::FilePath;
 

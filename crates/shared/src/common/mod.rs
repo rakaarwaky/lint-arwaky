@@ -1,5 +1,7 @@
 // common — truly shared types used by multiple features
+pub mod contract_language_detector_protocol;
 pub mod taxonomy_action_vo;
+pub use utility_file::{collect_all_source_files, collect_all_source_files_raw, find_workspace_root, scan_directory};
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_byte_count_vo;

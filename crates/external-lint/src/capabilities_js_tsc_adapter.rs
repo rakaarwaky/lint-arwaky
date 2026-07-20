@@ -136,7 +136,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
                 };
 
                 let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    FilePath::new(filename.unwrap_or_default()),
+                    FilePath::new(filename).unwrap_or(path.clone()),
                     Some(path.clone()),
                 );
 

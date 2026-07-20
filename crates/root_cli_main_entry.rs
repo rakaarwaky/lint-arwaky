@@ -11,8 +11,8 @@ use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
@@ -51,7 +51,6 @@ fn make_check_context(
         naming_orchestrator: container.naming_orchestrator.clone(),
         external_lint: container.external_lint.clone(),
         role_orchestrator: container.role_orchestrator.clone(),
-        scanner_provider: container.scanner_provider.clone(),
         orphan_orchestrator: container.orphan_orchestrator.clone(),
         layer_detector: layer_detector.clone(),
         language_detector: Arc::new(cli_commands::capabilities_language_detector::CliLanguageDetector::new()),
