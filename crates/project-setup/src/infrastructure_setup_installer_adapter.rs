@@ -8,7 +8,7 @@
 // The npm installer supports `sudo` prefix for global installations that need
 // elevated permissions.
 use async_trait::async_trait;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
+use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
@@ -28,7 +28,7 @@ impl SetupInstallerAdapter {
 }
 
 #[async_trait]
-impl ISetupInstallerPort for SetupInstallerAdapter {
+impl ISetupInstallerProtocol for SetupInstallerAdapter {
     async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
         let status = tokio::process::Command::new("pip")
             .args(["install", "--user"])

@@ -1,8 +1,8 @@
 // PURPOSE: FileSystemMaintenanceAdapter — infrastructure adapter for filesystem operations
 use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_filesystem_maintenance_port::{
-    FileEntry, IFileSystemMaintenancePort,
+use shared::project_setup::contract_filesystem_maintenance_protocol::{
+    FileEntry, IFileSystemMaintenanceProtocol,
 };
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -10,7 +10,7 @@ pub struct FileSystemMaintenanceAdapter;
 
 // ─── Block 2: Public Contract (domain port ONLY) ──────────
 #[async_trait]
-impl IFileSystemMaintenancePort for FileSystemMaintenanceAdapter {
+impl IFileSystemMaintenanceProtocol for FileSystemMaintenanceAdapter {
     async fn read_file(&self, path: &FilePath) -> Result<String, String> {
         std::fs::read_to_string(path.value()).map_err(|e| e.to_string())
     }

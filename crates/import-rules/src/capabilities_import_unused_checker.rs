@@ -9,7 +9,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::sync::Arc;
@@ -24,11 +24,11 @@ use std::sync::Arc;
 ///   4. For Rust/JS: additional extraction of named imports + per-name usage check.
 ///   5. Each unused import becomes an AES203 MEDIUM violation.
 pub struct UnusedImportRuleChecker {
-    parser: Arc<dyn IImportParserPort>,
+    parser: Arc<dyn IImportParserProtocol>,
 }
 
 impl UnusedImportRuleChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+    pub fn new(parser: Arc<dyn IImportParserProtocol>) -> Self {
         Self { parser }
     }
 }

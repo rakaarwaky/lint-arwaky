@@ -1,4 +1,4 @@
-// PURPOSE: FileCollectorProvider — IScannerProviderPort implementation for collecting source files
+// PURPOSE: FileCollectorProvider — IScannerProviderProtocol implementation for collecting source files
 // Infrastructure layer: has I/O (fs::read_dir, symlink handling).
 // Uses taxonomy utilities for pure logic (is_source_file, is_ignored_dir, etc.).
 
@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::contract_scanner_provider_protocol::IScannerProviderProtocol;
 use shared::common::taxonomy_file_utility::{
     collect_source_file, is_ignored_dir, is_path_ignored, is_source_file,
 };
@@ -20,7 +20,7 @@ use shared::config_system::taxonomy_config_vo::default_aes_config;
 pub struct FileCollectorProvider;
 
 // ─── Block 2: Public Contract (domain port ONLY) ──────────
-impl IScannerProviderPort for FileCollectorProvider {
+impl IScannerProviderProtocol for FileCollectorProvider {
     fn scan_directory(&self, path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
         let dir = Path::new(&path.value);
         let mut files = Vec::new();

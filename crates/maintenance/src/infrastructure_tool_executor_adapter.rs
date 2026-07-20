@@ -1,15 +1,15 @@
-// PURPOSE: ToolExecutorAdapter — IToolExecutorPort implementation for running external tools
+// PURPOSE: ToolExecutorAdapter — IToolExecutorProtocol implementation for running external tools
 use std::process::Command;
 
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_tool_executor_port::{IToolExecutorPort, ToolOutput};
+use shared::project_setup::contract_tool_executor_protocol::{IToolExecutorProtocol, ToolOutput};
 
 // Block 1: struct Definition
 pub struct ToolExecutorAdapter;
 
 // Block 2: impl Port for Struct (Public Contract)
 #[async_trait::async_trait]
-impl IToolExecutorPort for ToolExecutorAdapter {
+impl IToolExecutorProtocol for ToolExecutorAdapter {
     async fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput {
         let output = Command::new(name).args(args).output();
         match output {

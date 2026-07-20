@@ -1,4 +1,4 @@
-// PURPOSE: TSCAdapter — ILinterAdapterPort implementation for TypeScript compiler integration
+// PURPOSE: TSCAdapter — ILinterAdapterProtocol implementation for TypeScript compiler integration
 //
 // Runs `tsc --noEmit --pretty false <path>` to type-check TypeScript files.
 // Parses compiler output with two regex patterns (parenthesized format and
@@ -25,13 +25,13 @@ fn tsc_pattern2() -> Option<&'static Regex> {
         .as_ref()
 }
 
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -48,14 +48,14 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 };
 
 pub struct TSCAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    executor: Arc<dyn ICommandExecutorProtocol>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
 }
 
 impl TSCAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        path_norm: Arc<dyn IPathNormalizationProtocol>,
     ) -> Self {
         Self {
             executor,
@@ -65,7 +65,7 @@ impl TSCAdapter {
 }
 
 #[async_trait::async_trait]
-impl ILinterAdapterPort for TSCAdapter {
+impl ILinterAdapterProtocol for TSCAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("tsc")
     }

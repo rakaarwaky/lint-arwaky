@@ -40,7 +40,7 @@ impl TuiContainer {
         let fix_orchestrator = auto_fix_container.orchestrator(false);
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
-        let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_port::IHookManagerPort> =
+        let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol> =
             Arc::new(git_hooks::infrastructure_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),

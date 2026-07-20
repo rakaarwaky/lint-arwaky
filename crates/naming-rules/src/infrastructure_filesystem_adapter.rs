@@ -1,10 +1,10 @@
-// PURPOSE: FileSystemAdapter — INamingFileSystemPort implementation custom-tailored for naming-rules (crawling/walking only)
+// PURPOSE: FileSystemAdapter — INamingFileSystemProtocol implementation custom-tailored for naming-rules (crawling/walking only)
 use async_trait::async_trait;
 
 use shared::common::taxonomy_path_utils_vo::PathUtils;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::contract_naming_filesystem_port::INamingFileSystemPort;
+use shared::naming_rules::contract_naming_filesystem_protocol::INamingFileSystemProtocol;
 use shared::taxonomy_common_vo::PatternList;
 
 pub struct OSFileSystemAdapter {}
@@ -22,7 +22,7 @@ impl Default for OSFileSystemAdapter {
 }
 
 #[async_trait]
-impl INamingFileSystemPort for OSFileSystemAdapter {
+impl INamingFileSystemProtocol for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = std::path::Path::new(&path.value);
         let ignored_refs: Vec<&str> = match ignored_patterns {

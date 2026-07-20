@@ -1,4 +1,4 @@
-// PURPOSE: NotifyWatchProvider — IWatchProviderPort implementation using notify crate (inotify on Linux)
+// PURPOSE: NotifyWatchProvider — IWatchProviderProtocol implementation using notify crate (inotify on Linux)
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -6,7 +6,7 @@ use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
 use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::file_watch::contract_provider_port::IWatchProviderPort;
+use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
@@ -36,7 +36,7 @@ impl NotifyWatchProvider {
 }
 
 #[async_trait::async_trait]
-impl IWatchProviderPort for NotifyWatchProvider {
+impl IWatchProviderProtocol for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
         let path_str = config.path.value.clone();
         let path = std::path::Path::new(&path_str);

@@ -8,7 +8,7 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
@@ -45,11 +45,11 @@ fn os_str_to_str_opt(opt: Option<&std::ffi::OsStr>) -> &str {
 ///   6. `check_surface_logic` — For surface-layer files: if business logic (lint_path, compute_score)
 ///      is called directly instead of being delegated to the aggregate, flag each occurrence.
 pub struct DummyImportChecker {
-    parser: Arc<dyn IImportParserPort>,
+    parser: Arc<dyn IImportParserProtocol>,
 }
 
 impl DummyImportChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+    pub fn new(parser: Arc<dyn IImportParserProtocol>) -> Self {
         Self { parser }
     }
 

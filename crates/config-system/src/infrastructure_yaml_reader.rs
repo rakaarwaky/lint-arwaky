@@ -2,7 +2,7 @@
 // XDG Base Directory Specification compliant config lookup
 use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_reader_port::IConfigReaderPort;
+use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 
 pub struct ConfigYamlReader;
@@ -61,7 +61,7 @@ impl Default for ConfigYamlReader {
 }
 
 #[async_trait]
-impl IConfigReaderPort for ConfigYamlReader {
+impl IConfigReaderProtocol for ConfigYamlReader {
     async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource> {
         let filename = Self::config_filename(language);
         let mut current = std::path::PathBuf::from(&project_root.value);

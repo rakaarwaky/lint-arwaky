@@ -1,4 +1,4 @@
-// PURPOSE: Port: ICommandExecutorPort — trait for executing shell commands and capturing response
+// PURPOSE: Port: ICommandExecutorProtocol — trait for executing shell commands and capturing response
 // AES501: All taxonomy files in cli-commands domain are referenced here.
 use crate::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
 use crate::cli_commands::taxonomy_cli_vo::Cli;

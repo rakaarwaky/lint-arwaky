@@ -1,4 +1,4 @@
-// PURPOSE: INamingFileSystemPort — Local contract trait for naming-rules filesystem operations
+// PURPOSE: INamingFileSystemProtocol — Local contract trait for naming-rules filesystem operations
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;

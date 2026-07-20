@@ -1,4 +1,4 @@
-// PURPOSE: IConfigReaderPort — protocol trait for reading configuration from external sources
+// PURPOSE: IConfigReaderProtocol — protocol trait for reading configuration from external sources
 
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_source_vo::ConfigSource;

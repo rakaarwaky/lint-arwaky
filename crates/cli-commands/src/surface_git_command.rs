@@ -28,7 +28,7 @@ pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     language_detector: Arc<
-        dyn shared::common::contract_language_detector_port::ILanguageDetectorPort,
+        dyn shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol,
     >,
     base: String,
 ) -> ExitCode {
@@ -45,7 +45,7 @@ pub async fn handle_git_diff(
         .values
         .iter()
         .filter(|fp| {
-            shared::common::contract_language_detector_port::ILanguageDetectorPort::is_lintable(
+            shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol::is_lintable(
                 language_detector.as_ref(),
                 fp,
             )

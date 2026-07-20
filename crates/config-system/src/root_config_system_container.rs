@@ -1,12 +1,12 @@
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use shared::config_system::contract_parser_port::IConfigParserPort;
+use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use std::sync::Arc;
 
 pub struct ConfigContainer {
     orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
-    parser: Arc<dyn IConfigParserPort>,
+    parser: Arc<dyn IConfigParserProtocol>,
     validator: Arc<dyn IConfigValidatorProtocol>,
     multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
@@ -45,7 +45,7 @@ impl ConfigContainer {
         self.orchestrator.clone()
     }
 
-    pub fn parser(&self) -> Arc<dyn IConfigParserPort> {
+    pub fn parser(&self) -> Arc<dyn IConfigParserProtocol> {
         self.parser.clone()
     }
 

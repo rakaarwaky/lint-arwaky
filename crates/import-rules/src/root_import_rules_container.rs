@@ -1,9 +1,9 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
 use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
-use shared::common::contract_parser_port::ISourceParserPort;
+use shared::common::contract_parser_protocol::ISourceParserProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::contract_rule_protocol::IArchImportProtocol;
@@ -20,7 +20,7 @@ pub struct ImportContainer {
 }
 
 impl ImportContainer {
-    pub fn new(source_parser: Arc<dyn ISourceParserPort>) -> Self {
+    pub fn new(source_parser: Arc<dyn ISourceParserProtocol>) -> Self {
         Self::new_with_config(
             shared::config_system::taxonomy_config_vo::default_aes_config(),
             source_parser,
@@ -29,10 +29,10 @@ impl ImportContainer {
 
     pub fn new_with_config(
         config: ArchitectureConfig,
-        source_parser: Arc<dyn ISourceParserPort>,
+        source_parser: Arc<dyn ISourceParserProtocol>,
     ) -> Self {
         let fs = Arc::new(crate::infrastructure_filesystem_adapter::OSFileSystemAdapter::new());
-        let parser: Arc<dyn IImportParserPort> =
+        let parser: Arc<dyn IImportParserProtocol> =
             Arc::new(crate::infrastructure_import_parser_adapter::ImportParserAdapter::new());
         let analyzer = Arc::new(
             crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
@@ -104,7 +104,7 @@ impl ImportContainer {
 }
 
 pub struct NullSourceParser;
-impl ISourceParserPort for NullSourceParser {
+impl ISourceParserProtocol for NullSourceParser {
     fn extract_imports(
         &self,
         _path: &FilePath,

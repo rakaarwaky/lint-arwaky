@@ -1,4 +1,4 @@
-// PURPOSE: IGitFileCheckPort — protocol trait for file/directory existence checks
+// PURPOSE: IGitFileCheckProtocol — protocol trait for file/directory existence checks
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

@@ -1,4 +1,4 @@
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
@@ -9,7 +9,7 @@ use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_utility_port::IExternalLintUtilityPort;
+use shared::external_lint::contract_external_lint_utility_protocol::IExternalLintUtilityProtocol;
 use std::path::{Path, PathBuf};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -17,7 +17,7 @@ pub struct ExternalLintUtilityAdapter;
 
 // ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait::async_trait]
-impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
+impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
         match std::fs::canonicalize(path_str) {
             Ok(p) => FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default(),
@@ -151,7 +151,7 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
 
     async fn exec_cmd_scan(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
         working_dir: FilePath,
         timeout_secs: Timeout,
@@ -174,7 +174,7 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
 
     async fn exec_cmd_adapter(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
         working_dir: FilePath,
         timeout_secs: Timeout,
@@ -193,7 +193,7 @@ impl IExternalLintUtilityPort for ExternalLintUtilityAdapter {
 
     async fn js_apply_fix(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         path: &FilePath,
         tool: &str,
         fix_arg: &str,

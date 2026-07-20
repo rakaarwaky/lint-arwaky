@@ -3,7 +3,7 @@ use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
@@ -12,11 +12,11 @@ use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
 pub struct HookManager {
-    hook_adapter: Arc<dyn IHookManagerPort>,
+    hook_adapter: Arc<dyn IHookManagerProtocol>,
 }
 
 impl HookManager {
-    pub fn new(hook_adapter: Arc<dyn IHookManagerPort>) -> Self {
+    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
         Self { hook_adapter }
     }
 }

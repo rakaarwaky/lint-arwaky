@@ -1,8 +1,8 @@
-// PURPOSE: HookAdapter — IHookManagerPort implementation for installing/uninstalling git hook scripts
+// PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::path::Path;
 
@@ -28,7 +28,7 @@ impl GitHookAdapter {
     }
 }
 
-impl IHookManagerPort for GitHookAdapter {
+impl IHookManagerProtocol for GitHookAdapter {
     fn install_pre_commit(
         &self,
         executable_path: &FilePath,

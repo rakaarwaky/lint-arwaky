@@ -1,4 +1,4 @@
-// PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorPort implementation
+// PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorProtocol implementation
 //
 // Scans a directory tree to detect which programming languages are present.
 // Skips node_modules, target, .git, .jj directories.
@@ -8,8 +8,8 @@ use std::path::Path;
 use async_trait::async_trait;
 use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::contract_external_lint_language_detector_port::{
-    DetectedLanguages, IExternalLintLanguageDetectorPort,
+use shared::external_lint::contract_external_lint_language_detector_protocol::{
+    DetectedLanguages, IExternalLintLanguageDetectorProtocol,
 };
 
 const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-Live"];
@@ -19,7 +19,7 @@ pub struct ExternalLintLanguageDetectorAdapter;
 
 // ─── Block 2: Public Contract ─────────────────────────────
 #[async_trait]
-impl IExternalLintLanguageDetectorPort for ExternalLintLanguageDetectorAdapter {
+impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapter {
     async fn detect_languages(&self, path: &FilePath) -> DetectedLanguages {
         let mut has_rs = false;
         let mut has_py = false;

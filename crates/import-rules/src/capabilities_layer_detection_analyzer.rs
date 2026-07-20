@@ -10,8 +10,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use shared::common::contract_parser_port::ISourceParserPort;
-use shared::common::contract_system_port::IFileSystemPort;
+use shared::common::contract_parser_protocol::ISourceParserProtocol;
+use shared::common::contract_system_protocol::IFileSystemProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_vo::ArchitectureRule;
@@ -41,8 +41,8 @@ use std::sync::Arc;
 pub struct LayerDetectionAnalyzer {
     pub config: ArchitectureConfig,
     pub layer_map: LayerMapVO,
-    pub fs: Arc<dyn IFileSystemPort>,
-    pub parser: Arc<dyn ISourceParserPort>,
+    pub fs: Arc<dyn IFileSystemProtocol>,
+    pub parser: Arc<dyn ISourceParserProtocol>,
 }
 
 impl LayerDetectionAnalyzer {
@@ -63,8 +63,8 @@ impl LayerDetectionAnalyzer {
     ///   4. Store the enriched config and build a LayerMapVO for fast lookups.
     pub fn new(
         mut config: ArchitectureConfig,
-        fs: Arc<dyn IFileSystemPort>,
-        parser: Arc<dyn ISourceParserPort>,
+        fs: Arc<dyn IFileSystemProtocol>,
+        parser: Arc<dyn ISourceParserProtocol>,
     ) -> Self {
         // Step 1: Index all rules by layer scope (both base + full scoped)
         let mut rules_by_layer: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
@@ -460,11 +460,11 @@ impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerPro
 
 impl IAnalyzer for LayerDetectionAnalyzer {
     /// Return the filesystem port for file I/O.
-    fn fs(&self) -> &dyn IFileSystemPort {
+    fn fs(&self) -> &dyn IFileSystemProtocol {
         &*self.fs
     }
     /// Return the source parser port for code analysis.
-    fn parser(&self) -> &dyn ISourceParserPort {
+    fn parser(&self) -> &dyn ISourceParserProtocol {
         &*self.parser
     }
     /// Adapter: delegates to internal `detect_module_layer` and wraps result in LayerNameVO.

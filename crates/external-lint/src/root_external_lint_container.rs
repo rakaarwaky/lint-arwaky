@@ -1,17 +1,17 @@
 // PURPOSE: ExternalLintContainer — root layer, wires orchestrator with infrastructure adapters
 //
 // The DI container that assembles the external lint subsystem:
-//   1. Creates a StdioClient (ICommandExecutorPort) for subprocess execution
+//   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
 //   2. Registers all 8 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
 //   3. Wraps them in a ExternalLintOrchestrator
 //   4. Provides a DefaultPathNormalization that passes paths through unchanged
 //
-// Each adapter follows the same pattern: Arc<dyn ILinterAdapterPort> in a HashMap keyed by name.
+// Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
@@ -20,12 +20,12 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
-        let executor: Arc<dyn shared::cli_commands::contract_executor_port::ICommandExecutorPort> =
+    pub fn new(path_norm: Arc<dyn IPathNormalizationProtocol>) -> Self {
+        let executor: Arc<dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol> =
             Arc::new(crate::infrastructure_stdio_client::StdioClient::new(
                 std::time::Duration::from_secs(60),
             ));
-        let mut adapters: HashMap<String, Arc<dyn ILinterAdapterPort>> = HashMap::new();
+        let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
             "ruff".to_string(),
             Arc::new(crate::infrastructure_py_ruff_adapter::RuffAdapter::new(
@@ -115,7 +115,7 @@ impl ExternalLintContainer {
 }
 
 struct DefaultPathNormalization;
-impl IPathNormalizationPort for DefaultPathNormalization {
+impl IPathNormalizationProtocol for DefaultPathNormalization {
     fn normalize_path(&self, path: FilePath) -> FilePath {
         path
     }

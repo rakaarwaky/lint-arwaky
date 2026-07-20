@@ -1,4 +1,4 @@
-// PURPOSE: RsClippyAdapter — ILinterAdapterPort implementation for Clippy linting integration
+// PURPOSE: RsClippyAdapter — ILinterAdapterProtocol implementation for Clippy linting integration
 //
 // Executes `cargo clippy --message-format=json` as a subprocess, then parses
 // the JSON output line by line. Clippy outputs one JSON object per diagnostic
@@ -19,13 +19,13 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde_json::Value;
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -43,15 +43,15 @@ use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_
 
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    executor: Arc<dyn ICommandExecutorProtocol>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
     _bin_path: Option<FilePath>,
 }
 
 impl RustLinterAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        path_norm: Arc<dyn IPathNormalizationProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
@@ -63,7 +63,7 @@ impl RustLinterAdapter {
 }
 
 #[async_trait]
-impl ILinterAdapterPort for RustLinterAdapter {
+impl ILinterAdapterProtocol for RustLinterAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("clippy")
     }

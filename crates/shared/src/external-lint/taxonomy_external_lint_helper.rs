@@ -2,7 +2,7 @@
 // Pure functions: resolve working directories, canonicalize paths,
 // execute commands with error mapping. Used by JS, Python, and RS adapters.
 
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_error::AdapterError;
 use crate::common::taxonomy_adapter_error::ScanError;
@@ -25,7 +25,7 @@ pub fn canonicalize_path(path_str: &str) -> String {
 
 /// Execute a command, mapping execution failures to `LinterOperationError::Scan`.
 pub async fn exec_cmd_scan(
-    executor: &dyn ICommandExecutorPort,
+    executor: &dyn ICommandExecutorProtocol,
     args: Vec<String>,
     working_dir: FilePath,
     timeout_secs: f64,
@@ -52,7 +52,7 @@ pub async fn exec_cmd_scan(
 
 /// Execute a command, mapping execution failures to `LinterOperationError::Adapter`.
 pub async fn exec_cmd_adapter(
-    executor: &dyn ICommandExecutorPort,
+    executor: &dyn ICommandExecutorProtocol,
     args: Vec<String>,
     working_dir: FilePath,
     timeout_secs: f64,
@@ -81,7 +81,7 @@ pub fn default_working_dir(path: &FilePath) -> FilePath {
 /// Applies a JS tool's fix command, returning `Ok(ComplianceStatus::new(true))` on success.
 /// Combines resolve_js_working_dir + canonicalize_path + resolve_js_cmd + exec_cmd_adapter.
 pub async fn js_apply_fix(
-    executor: &dyn ICommandExecutorPort,
+    executor: &dyn ICommandExecutorProtocol,
     path: &FilePath,
     tool: &str,
     fix_arg: &str,

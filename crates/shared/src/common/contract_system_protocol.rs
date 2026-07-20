@@ -1,4 +1,4 @@
-// PURPOSE: IFileSystemPort — protocol trait for filesystem operations (read, write, exists, glob, walk)
+// PURPOSE: IFileSystemProtocol — protocol trait for filesystem operations (read, write, exists, glob, walk)
 
 use async_trait::async_trait;
 

@@ -1,4 +1,4 @@
-// PURPOSE: PyBanditAdapter — ILinterAdapterPort implementation for Bandit security scanner integration
+// PURPOSE: PyBanditAdapter — ILinterAdapterProtocol implementation for Bandit security scanner integration
 //
 // Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
 // security vulnerabilities. Parses JSON output to extract findings (filename,
@@ -14,13 +14,13 @@ use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
 
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -35,15 +35,15 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 };
 
 pub struct BanditAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    executor: Arc<dyn ICommandExecutorProtocol>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
     bin_path: Option<FilePath>,
 }
 
 impl BanditAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        path_norm: Arc<dyn IPathNormalizationProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
@@ -71,7 +71,7 @@ impl BanditAdapter {
 }
 
 #[async_trait]
-impl ILinterAdapterPort for BanditAdapter {
+impl ILinterAdapterProtocol for BanditAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("bandit")
     }

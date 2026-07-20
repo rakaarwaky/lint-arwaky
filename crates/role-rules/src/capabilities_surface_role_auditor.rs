@@ -22,7 +22,7 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::common::contract_language_detector_port::Language as DetLang;
+use shared::common::contract_language_detector_protocol::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;

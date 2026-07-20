@@ -1,4 +1,4 @@
-use crate::cli_commands::contract_executor_port::ICommandExecutorPort;
+use crate::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::{bool, PatternList};
@@ -26,7 +26,7 @@ pub trait IExternalLintUtilityProtocol: Send + Sync {
     fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath;
     async fn exec_cmd_scan(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
         working_dir: FilePath,
         timeout_secs: Timeout,
@@ -35,7 +35,7 @@ pub trait IExternalLintUtilityProtocol: Send + Sync {
     ) -> Result<ResponseData, LinterOperationError>;
     async fn exec_cmd_adapter(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
         working_dir: FilePath,
         timeout_secs: Timeout,
@@ -43,7 +43,7 @@ pub trait IExternalLintUtilityProtocol: Send + Sync {
     ) -> Result<ResponseData, LinterOperationError>;
     async fn js_apply_fix(
         &self,
-        executor: &dyn ICommandExecutorPort,
+        executor: &dyn ICommandExecutorProtocol,
         path: &FilePath,
         tool: &str,
         fix_arg: &str,

@@ -145,7 +145,7 @@ pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
     files
 }
 
-/// Scan a directory and return files as FilePathList (replaces IScannerProviderPort).
+/// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
 pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
     let dir = std::path::Path::new(&path.value);
     if !dir.exists() || !dir.is_dir() {

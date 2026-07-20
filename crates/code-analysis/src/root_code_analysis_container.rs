@@ -141,7 +141,7 @@ impl Default for CodeAnalysisCheckerContainer {
 struct NullFileSystem;
 
 #[async_trait::async_trait]
-impl shared::common::contract_system_port::IFileSystemPort for NullFileSystem {
+impl shared::common::contract_system_protocol::IFileSystemProtocol for NullFileSystem {
     async fn walk(
         &self,
         _path: &FilePath,
@@ -245,7 +245,7 @@ impl shared::common::contract_system_port::IFileSystemPort for NullFileSystem {
 
 struct NullSourceParser;
 
-impl shared::common::contract_parser_port::ISourceParserPort for NullSourceParser {
+impl shared::common::contract_parser_protocol::ISourceParserProtocol for NullSourceParser {
     fn extract_imports(
         &self,
         _path: &FilePath,
@@ -376,11 +376,11 @@ impl shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerPro
 }
 
 impl IAnalyzer for PlaceholderAnalyzer {
-    fn fs(&self) -> &dyn shared::common::contract_system_port::IFileSystemPort {
+    fn fs(&self) -> &dyn shared::common::contract_system_protocol::IFileSystemProtocol {
         static FS: std::sync::OnceLock<NullFileSystem> = std::sync::OnceLock::new();
         FS.get_or_init(|| NullFileSystem)
     }
-    fn parser(&self) -> &dyn shared::common::contract_parser_port::ISourceParserPort {
+    fn parser(&self) -> &dyn shared::common::contract_parser_protocol::ISourceParserProtocol {
         static PARSER: std::sync::OnceLock<NullSourceParser> = std::sync::OnceLock::new();
         PARSER.get_or_init(|| NullSourceParser)
     }

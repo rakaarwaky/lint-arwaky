@@ -1,4 +1,4 @@
-// PURPOSE: IScannerProviderPort — protocol trait for providing language-specific source scanners
+// PURPOSE: IScannerProviderProtocol — protocol trait for providing language-specific source scanners
 
 use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_path_vo::DirectoryPath;

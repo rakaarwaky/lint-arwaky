@@ -15,8 +15,8 @@
 // subsets of these capabilities — the trait bounds reflect the actual
 // dependency requirements.
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
-use crate::common::contract_parser_port::ISourceParserPort;
-use crate::common::contract_system_port::IFileSystemPort;
+use crate::common::contract_parser_protocol::ISourceParserProtocol;
+use crate::common::contract_system_protocol::IFileSystemProtocol;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -38,8 +38,8 @@ use crate::common::taxonomy_paths_vo::FilePathList;
 pub trait IAnalyzer:
     crate::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol + Send + Sync
 {
-    fn fs(&self) -> &dyn IFileSystemPort;
-    fn parser(&self) -> &dyn ISourceParserPort;
+    fn fs(&self) -> &dyn IFileSystemProtocol;
+    fn parser(&self) -> &dyn ISourceParserProtocol;
     fn detect_module_layer(&self, module_path: &FilePath) -> Option<LayerNameVO>;
 }
 
@@ -127,13 +127,13 @@ pub trait INamingRuleProtocol: IArchRuleProtocol + Send + Sync {
         &self,
         files: &FilePathList,
         results: &mut LintResultList,
-        source_parser: &dyn ISourceParserPort,
+        source_parser: &dyn ISourceParserProtocol,
     );
     fn check_function_naming(
         &self,
         files: &FilePathList,
         results: &mut LintResultList,
-        source_parser: &dyn ISourceParserPort,
+        source_parser: &dyn ISourceParserProtocol,
     );
 }
 

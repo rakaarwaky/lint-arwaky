@@ -9,7 +9,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_rule_protocol::{
     IAnalyzer, IArchImportProtocol, IArchRuleProtocol,
 };
@@ -39,11 +39,11 @@ fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePa
 /// Workflow (scope-level):
 ///   - Same logic but reads mandatory from per-rule scope definitions instead.
 pub struct ArchImportMandatoryChecker {
-    parser: Arc<dyn IImportParserPort>,
+    parser: Arc<dyn IImportParserProtocol>,
 }
 
 impl ArchImportMandatoryChecker {
-    pub fn new(parser: Arc<dyn IImportParserPort>) -> Self {
+    pub fn new(parser: Arc<dyn IImportParserProtocol>) -> Self {
         Self { parser }
     }
 

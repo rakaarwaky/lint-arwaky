@@ -16,16 +16,16 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 pub struct ExternalLintOrchestrator {
-    adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>,
+    adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
 }
 
 impl ExternalLintOrchestrator {
-    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterPort>>) -> Self {
+    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
         Self { adapters }
     }
 }
@@ -106,7 +106,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         let mut futures = Vec::new();
         for name in &adapter_names {
             if let Some(adapter) = self.adapters.get(*name) {
-                let adapter: Arc<dyn ILinterAdapterPort> = adapter.clone();
+                let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();
                 let path_clone = path.clone();
                 let name_owned = name.to_string();
                 futures.push(async move {

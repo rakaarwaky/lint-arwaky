@@ -1,7 +1,7 @@
-// PURPOSE: WorkspaceDetector — IWorkspaceDetectorPort implementation for workspace type detection
+// PURPOSE: WorkspaceDetector — IWorkspaceDetectorProtocol implementation for workspace type detection
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
-use shared::config_system::contract_workspace_detector_port::WorkspaceType;
+use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 
 pub struct WorkspaceDetector;
 
@@ -17,7 +17,7 @@ impl Default for WorkspaceDetector {
     }
 }
 
-impl IWorkspaceDetectorPort for WorkspaceDetector {
+impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::Path::new(&path.value).to_path_buf();
 

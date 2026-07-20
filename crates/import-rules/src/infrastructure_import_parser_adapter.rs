@@ -1,8 +1,8 @@
-// PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserPort using standard filesystem and string search utilities
+// PURPOSE: ImportParserAdapter — infrastructure implementation of IImportParserProtocol using standard filesystem and string search utilities
 
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_path_helper;
@@ -44,7 +44,7 @@ impl Default for ImportParserAdapter {
     }
 }
 
-impl IImportParserPort for ImportParserAdapter {
+impl IImportParserProtocol for ImportParserAdapter {
     /// Resolve a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")
     /// into layer + suffix matches. Returns (`LayerNameVO`, `Vec<Identity>`).
     fn resolve_scope(&self, scope: &Identity) -> (LayerNameVO, Vec<Identity>) {

@@ -1,9 +1,9 @@
-// PURPOSE: CliLanguageDetector — ILanguageDetectorPort implementation for CLI commands
+// PURPOSE: CliLanguageDetector — ILanguageDetectorProtocol implementation for CLI commands
 //
 // Adapts the pure `detect_language`/`is_lintable` taxonomy utilities to the
-// ILanguageDetectorPort contract. No inner struct — the utilities are stateless.
-use shared::common::contract_language_detector_port::ILanguageDetectorPort;
-use shared::common::contract_language_detector_port::Language;
+// ILanguageDetectorProtocol contract. No inner struct — the utilities are stateless.
+use shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol;
+use shared::common::contract_language_detector_protocol::Language;
 use shared::common::taxonomy_language_detector_utility::{detect_language, is_lintable};
 use shared::common::taxonomy_path_vo::FilePath;
 
@@ -22,7 +22,7 @@ impl Default for CliLanguageDetector {
     }
 }
 
-impl ILanguageDetectorPort for CliLanguageDetector {
+impl ILanguageDetectorProtocol for CliLanguageDetector {
     fn detect(&self, path: &FilePath) -> Language {
         detect_language(path)
     }

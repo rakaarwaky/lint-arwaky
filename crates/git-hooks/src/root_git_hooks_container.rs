@@ -1,10 +1,10 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
-// Wiring: IHookManagerPort → GitHookAdapter (infrastructure layer)
+// Wiring: IHookManagerProtocol → GitHookAdapter (infrastructure layer)
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use std::sync::Arc;
 
 pub struct GitContainer {
@@ -12,7 +12,7 @@ pub struct GitContainer {
 }
 
 impl GitContainer {
-    pub fn new(hook_adapter: Arc<dyn IHookManagerPort>) -> Self {
+    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
         let diff_protocol: Arc<dyn IDiffProtocol> =
             Arc::new(crate::capabilities_diff_checker::DiffChecker::new());
         let hook_adapter_clone = Arc::clone(&hook_adapter);
@@ -32,7 +32,7 @@ impl GitContainer {
     }
 
     pub fn new_default() -> Self {
-        let hook_adapter: Arc<dyn IHookManagerPort> =
+        let hook_adapter: Arc<dyn IHookManagerProtocol> =
             Arc::new(crate::infrastructure_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),

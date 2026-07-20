@@ -1,4 +1,4 @@
-// PURPOSE: IFileSystemMaintenancePort — protocol trait for filesystem operations needed by maintenance
+// PURPOSE: IFileSystemMaintenanceProtocol — protocol trait for filesystem operations needed by maintenance
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

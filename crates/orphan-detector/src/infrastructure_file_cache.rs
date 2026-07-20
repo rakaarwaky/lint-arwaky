@@ -1,7 +1,7 @@
 use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::orphan_detector::contract_orphan_protocol::IOrphanFileCachePort;
+use shared::orphan_detector::contract_orphan_protocol::IOrphanFileCacheProtocol;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
@@ -14,7 +14,7 @@ thread_local! {
 pub struct OrphanFileCache;
 
 // ─── Block 2: Public Contract (domain port ONLY) ──────────
-impl IOrphanFileCachePort for OrphanFileCache {
+impl IOrphanFileCacheProtocol for OrphanFileCache {
     fn read_cached(&self, path: &FilePath) -> ContentString {
         FILE_CACHE.with(|cache| -> ContentString {
             let mut cache = cache.borrow_mut();

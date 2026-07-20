@@ -1,4 +1,4 @@
-// PURPOSE: RsFmtAdapter — ILinterAdapterPort implementation for rustfmt integration
+// PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
 //
 // Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
 // (not a linter), the adapter parses diff output lines to report each
@@ -6,20 +6,20 @@
 //
 // Key design decisions:
 //   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
-//   - Uses ICommandExecutorPort for subprocess execution with 120s timeout
+//   - Uses ICommandExecutorProtocol for subprocess execution with 120s timeout
 //   - apply_fix runs `cargo fmt` (without --check) to auto-format
 //   - Only reports added lines (+ prefix) as violations, not context lines
 use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -35,20 +35,20 @@ use tracing::debug;
 
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
 
-/// Adapter that wraps `cargo fmt --check` as an ILinterAdapterPort.
+/// Adapter that wraps `cargo fmt --check` as an ILinterAdapterProtocol.
 ///
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
 /// When no Cargo.toml is found, the scan is silently skipped.
 pub struct RustFmtAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    executor: Arc<dyn ICommandExecutorProtocol>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
     _bin_path: Option<FilePath>,
 }
 
 impl RustFmtAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        path_norm: Arc<dyn IPathNormalizationProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
@@ -60,7 +60,7 @@ impl RustFmtAdapter {
 }
 
 #[async_trait]
-impl ILinterAdapterPort for RustFmtAdapter {
+impl ILinterAdapterProtocol for RustFmtAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("rustfmt")
     }

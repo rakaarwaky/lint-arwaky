@@ -12,7 +12,7 @@ use shared::code_analysis::contract_cycle_protocol::ICycleAnalysisProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_parser_port::IImportParserPort;
+use shared::import_rules::contract_import_parser_protocol::IImportParserProtocol;
 use shared::import_rules::contract_rule_protocol::IAnalyzer;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::DependencyEdge;
@@ -36,11 +36,11 @@ fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> FilePa
 ///   5. Every edge that participates in a cycle is reported as a CRITICAL LintResult.
 pub struct DependencyCycleAnalyzer {
     _config: ArchitectureConfig,
-    parser: Arc<dyn IImportParserPort>,
+    parser: Arc<dyn IImportParserProtocol>,
 }
 
 impl DependencyCycleAnalyzer {
-    pub fn new(config: ArchitectureConfig, parser: Arc<dyn IImportParserPort>) -> Self {
+    pub fn new(config: ArchitectureConfig, parser: Arc<dyn IImportParserProtocol>) -> Self {
         Self {
             _config: config,
             parser,

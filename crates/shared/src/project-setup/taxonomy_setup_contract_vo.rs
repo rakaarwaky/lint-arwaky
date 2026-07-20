@@ -1,9 +1,9 @@
 // PURPOSE: SetupContractVOs — value objects used by ISetupManagementProtocol and
-// ISetupInstallerPort contract surface.
+// ISetupInstallerProtocol contract surface.
 //
 // AES402: All primitive `String` / `Result<(), String>` / `Result<_, String>`
 // return types and parameter types in ISetupManagementProtocol and
-// ISetupInstallerPort are replaced with strongly-typed VOs.
+// ISetupInstallerProtocol are replaced with strongly-typed VOs.
 //
 // Naming: these VOs are scoped to the `project-setup` feature (which already
 // has its own `taxonomy_doctor_vo`, `taxonomy_language_vo`, `taxonomy_stats_vo`).

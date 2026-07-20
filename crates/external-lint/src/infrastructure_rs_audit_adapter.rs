@@ -1,4 +1,4 @@
-// PURPOSE: RsAuditAdapter — ILinterAdapterPort implementation for cargo-audit security scanning
+// PURPOSE: RsAuditAdapter — ILinterAdapterProtocol implementation for cargo-audit security scanning
 //
 // Uses the `rustsec` crate directly (not subprocess) to parse Cargo.lock and
 // check against the RustSec Advisory Database. Reports vulnerabilities as
@@ -18,9 +18,9 @@ use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -34,17 +34,17 @@ use tracing::debug;
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_lock_working_dir;
 
 pub struct CargoAuditAdapter {
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
 }
 
 impl CargoAuditAdapter {
-    pub fn new(path_norm: Arc<dyn IPathNormalizationPort>) -> Self {
+    pub fn new(path_norm: Arc<dyn IPathNormalizationProtocol>) -> Self {
         Self { path_norm }
     }
 }
 
 #[async_trait]
-impl ILinterAdapterPort for CargoAuditAdapter {
+impl ILinterAdapterProtocol for CargoAuditAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("cargo-audit")
     }

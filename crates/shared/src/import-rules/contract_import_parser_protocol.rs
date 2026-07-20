@@ -1,4 +1,4 @@
-// PURPOSE: IImportParserPort — contract protocol trait for import parsing utilities
+// PURPOSE: IImportParserProtocol — contract protocol trait for import parsing utilities
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_layer_vo::FileContentVO;
 use crate::common::taxonomy_layer_vo::Identity;

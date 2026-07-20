@@ -18,17 +18,17 @@ impl SourceLanguage {
             return SourceLanguage::Rust;
         };
         match fp.language() {
-            shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
-            shared::common::contract_language_detector_port::Language::Python => {
+            shared::common::contract_language_detector_protocol::Language::Rust => SourceLanguage::Rust,
+            shared::common::contract_language_detector_protocol::Language::Python => {
                 SourceLanguage::Python
             }
-            shared::common::contract_language_detector_port::Language::JavaScript => {
+            shared::common::contract_language_detector_protocol::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
-            shared::common::contract_language_detector_port::Language::TypeScript => {
+            shared::common::contract_language_detector_protocol::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            shared::common::contract_language_detector_port::Language::Unknown => {
+            shared::common::contract_language_detector_protocol::Language::Unknown => {
                 SourceLanguage::Rust
             }
         }

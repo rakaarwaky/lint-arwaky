@@ -1,4 +1,4 @@
-use crate::tui::contract_file_system_port::IFileSystemPort;
+use crate::tui::contract_file_system_protocol::IFileSystemProtocol;
 use crate::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use crate::tui::taxonomy_scan_update_vo::ScanUpdate;
 use crate::tui::taxonomy_state_vo::AppState;
@@ -7,7 +7,7 @@ use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 
 pub struct TuiDependencies {
-    pub fs_port: Arc<dyn IFileSystemPort>,
+    pub fs_port: Arc<dyn IFileSystemProtocol>,
     pub lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 

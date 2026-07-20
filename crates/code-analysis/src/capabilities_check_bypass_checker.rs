@@ -73,7 +73,7 @@ const WORD_PATTERN_TOKENS: &[&str] = &[
 type PhrasePattern = (&'static str, ViolationKind, &'static [SourceLanguage]);
 
 /// Logical source languages recognised by the checker. Mirrors
-/// `shared::common::contract_language_detector_port::Language` but kept
+/// `shared::common::contract_language_detector_protocol::Language` but kept
 /// independent so the checker does not pull in the full detector trait surface.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum SourceLanguage {
@@ -89,17 +89,17 @@ impl SourceLanguage {
             return SourceLanguage::Rust;
         };
         match detect_language(&fp) {
-            shared::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
-            shared::common::contract_language_detector_port::Language::Python => {
+            shared::common::contract_language_detector_protocol::Language::Rust => SourceLanguage::Rust,
+            shared::common::contract_language_detector_protocol::Language::Python => {
                 SourceLanguage::Python
             }
-            shared::common::contract_language_detector_port::Language::JavaScript => {
+            shared::common::contract_language_detector_protocol::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
-            shared::common::contract_language_detector_port::Language::TypeScript => {
+            shared::common::contract_language_detector_protocol::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            shared::common::contract_language_detector_port::Language::Unknown => {
+            shared::common::contract_language_detector_protocol::Language::Unknown => {
                 SourceLanguage::Rust
             }
         }

@@ -5,7 +5,7 @@ use crate::agent_watch_orchestrator::WatchOrchestrator;
 use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::infrastructure_notify_provider::NotifyWatchProvider;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::file_watch::contract_provider_port::IWatchProviderPort;
+use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 
 pub struct FileWatchContainer {
     provider: Arc<NotifyWatchProvider>,
@@ -18,7 +18,7 @@ impl FileWatchContainer {
         }
     }
 
-    pub fn provider(&self) -> Arc<dyn IWatchProviderPort> {
+    pub fn provider(&self) -> Arc<dyn IWatchProviderProtocol> {
         self.provider.clone()
     }
 

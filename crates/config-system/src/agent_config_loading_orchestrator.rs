@@ -2,8 +2,8 @@
 use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
-use shared::config_system::contract_reader_port::IConfigReaderPort;
-use shared::config_system::contract_workspace_detector_port::IWorkspaceDetectorPort;
+use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
+use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_config_vo::default_config_for_language;
 use shared::config_system::taxonomy_config_vo::parse_config_yaml;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
@@ -11,14 +11,14 @@ use shared::config_system::taxonomy_source_vo::ConfigSource;
 use std::sync::Arc;
 
 pub struct ConfigLoadingOrchestrator {
-    workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
-    config_reader: Arc<dyn IConfigReaderPort>,
+    workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
+    config_reader: Arc<dyn IConfigReaderProtocol>,
 }
 
 impl ConfigLoadingOrchestrator {
     pub fn new(
-        workspace_detector: Arc<dyn IWorkspaceDetectorPort>,
-        config_reader: Arc<dyn IConfigReaderPort>,
+        workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
+        config_reader: Arc<dyn IConfigReaderProtocol>,
     ) -> Self {
         Self {
             workspace_detector,
@@ -29,11 +29,11 @@ impl ConfigLoadingOrchestrator {
 
 #[async_trait]
 impl IConfigOrchestrationAggregate for ConfigLoadingOrchestrator {
-    fn workspace_detector(&self) -> Arc<dyn IWorkspaceDetectorPort> {
+    fn workspace_detector(&self) -> Arc<dyn IWorkspaceDetectorProtocol> {
         self.workspace_detector.clone()
     }
 
-    fn config_reader(&self) -> Arc<dyn IConfigReaderPort> {
+    fn config_reader(&self) -> Arc<dyn IConfigReaderProtocol> {
         self.config_reader.clone()
     }
 

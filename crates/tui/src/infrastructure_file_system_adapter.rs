@@ -1,4 +1,4 @@
-// PURPOSE: FileSystemAdapter — IFileSystemPort implementation for TUI filesystem operations
+// PURPOSE: FileSystemAdapter — IFileSystemProtocol implementation for TUI filesystem operations
 //
 // Provides directory listing, file preview (line-numbered, with max-line truncation),
 // path validation, parent resolution, human-readable file sizes, and path splitting.
@@ -10,7 +10,7 @@ use shared::common::taxonomy_byte_count_vo::ByteCount;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::contract_file_system_protocol::IFileSystemProtocol;
 use shared::tui::taxonomy_file_entry_vo::FileEntry;
 use std::path::Path;
 
@@ -28,7 +28,7 @@ impl Default for FileSystemAdapter {
     }
 }
 
-impl IFileSystemPort for FileSystemAdapter {
+impl IFileSystemProtocol for FileSystemAdapter {
     fn list_directory(&self, path: &FilePath) -> Vec<FileEntry> {
         let dir_path = Path::new(path.value());
         let read_dir = match dir_path.read_dir() {

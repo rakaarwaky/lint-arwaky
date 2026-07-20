@@ -1,15 +1,15 @@
-// PURPOSE: GitCommandAdapter — IGitCommandPort implementation for running git commands
+// PURPOSE: GitCommandAdapter — IGitCommandProtocol implementation for running git commands
 use std::process::Command;
 
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_git_command_port::{GitCommandOutput, IGitCommandPort};
+use shared::git_hooks::contract_git_command_protocol::{GitCommandOutput, IGitCommandProtocol};
 
 // Block 1: struct Definition
 pub struct GitCommandAdapter;
 
 // Block 2: impl Port for Struct (Public Contract)
 #[async_trait::async_trait]
-impl IGitCommandPort for GitCommandAdapter {
+impl IGitCommandProtocol for GitCommandAdapter {
     async fn run_git(&self, args: &[&str], dir: &FilePath) -> GitCommandOutput {
         let output = Command::new("git")
             .args(args)

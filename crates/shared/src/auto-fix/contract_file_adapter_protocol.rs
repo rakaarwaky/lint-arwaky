@@ -1,4 +1,4 @@
-// PURPOSE: IFileAdapterPort — protocol trait for file I/O operations
+// PURPOSE: IFileAdapterProtocol — protocol trait for file I/O operations
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 

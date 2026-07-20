@@ -40,7 +40,7 @@ pub struct CheckContext {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub language_detector:
-        Arc<dyn shared::common::contract_language_detector_port::ILanguageDetectorPort>,
+        Arc<dyn shared::common::contract_language_detector_protocol::ILanguageDetectorProtocol>,
 }
 
 pub type OrchestratorFactory = Arc<

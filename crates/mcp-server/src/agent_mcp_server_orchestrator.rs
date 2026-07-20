@@ -12,7 +12,7 @@ use crate::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, Rea
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
+use shared::common::contract_scanner_provider_protocol::IScannerProviderProtocol;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;

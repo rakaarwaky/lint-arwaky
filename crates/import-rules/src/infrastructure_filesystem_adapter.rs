@@ -1,9 +1,9 @@
-// PURPOSE: FileSystemAdapter — IFileSystemPort implementation using std::fs
+// PURPOSE: FileSystemAdapter — IFileSystemProtocol implementation using std::fs
 use async_trait::async_trait;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use shared::common::contract_system_port::IFileSystemPort;
+use shared::common::contract_system_protocol::IFileSystemProtocol;
 use shared::common::taxonomy_filesystem_error::FileSystemError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -75,7 +75,7 @@ impl Default for OSFileSystemAdapter {
 }
 
 #[async_trait]
-impl IFileSystemPort for OSFileSystemAdapter {
+impl IFileSystemProtocol for OSFileSystemAdapter {
     async fn walk(&self, path: &FilePath, ignored_patterns: Option<&PatternList>) -> FilePathList {
         let root = Path::new(&path.value);
         let ignored = match ignored_patterns {

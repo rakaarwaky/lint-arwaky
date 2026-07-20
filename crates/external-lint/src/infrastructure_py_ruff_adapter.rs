@@ -1,4 +1,4 @@
-// PURPOSE: PyRuffAdapter — ILinterAdapterPort implementation for Ruff linter integration
+// PURPOSE: PyRuffAdapter — ILinterAdapterProtocol implementation for Ruff linter integration
 //
 // Executes `ruff check --output-format=json` as a subprocess and parses
 // the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
@@ -14,13 +14,13 @@ use async_trait::async_trait;
 use serde_json::Value;
 use std::sync::Arc;
 
-use shared::cli_commands::contract_executor_port::ICommandExecutorPort;
+use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_adapter_port::ILinterAdapterPort;
+use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_path_normalization_port::IPathNormalizationPort;
+use shared::common::contract_path_normalization_protocol::IPathNormalizationProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -37,15 +37,15 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 };
 
 pub struct RuffAdapter {
-    executor: Arc<dyn ICommandExecutorPort>,
-    path_norm: Arc<dyn IPathNormalizationPort>,
+    executor: Arc<dyn ICommandExecutorProtocol>,
+    path_norm: Arc<dyn IPathNormalizationProtocol>,
     bin_path: Option<FilePath>,
 }
 
 impl RuffAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorPort>,
-        path_norm: Arc<dyn IPathNormalizationPort>,
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        path_norm: Arc<dyn IPathNormalizationProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
@@ -73,7 +73,7 @@ impl RuffAdapter {
 }
 
 #[async_trait]
-impl ILinterAdapterPort for RuffAdapter {
+impl ILinterAdapterProtocol for RuffAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("ruff")
     }

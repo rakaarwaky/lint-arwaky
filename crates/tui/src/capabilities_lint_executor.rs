@@ -10,7 +10,7 @@ use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAg
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_manager_port::IHookManagerPort;
+use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
@@ -70,7 +70,7 @@ pub struct LintExecutor {
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
     maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
-    hook_port: Option<Arc<dyn IHookManagerPort>>,
+    hook_port: Option<Arc<dyn IHookManagerProtocol>>,
     config_orchestrator: Option<Arc<dyn IConfigOrchestrationAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
@@ -115,7 +115,7 @@ impl LintExecutor {
         self
     }
 
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerPort>) -> Self {
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerProtocol>) -> Self {
         self.hook_port = Some(hook_port);
         self
     }

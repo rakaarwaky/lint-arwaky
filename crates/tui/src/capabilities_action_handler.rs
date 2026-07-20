@@ -5,7 +5,7 @@
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_file_system_port::IFileSystemPort;
+use shared::tui::contract_file_system_protocol::IFileSystemProtocol;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
@@ -16,13 +16,13 @@ use std::sync::Arc;
 /// ActionHandler — pure state machine for TUI interaction.
 /// Owns the filesystem adapter and lint executor, bridging UI events to backend operations.
 pub struct ActionHandler {
-    fs_port: Arc<dyn IFileSystemPort>,
+    fs_port: Arc<dyn IFileSystemProtocol>,
     lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 
 impl ActionHandler {
     pub fn new(
-        fs_port: Arc<dyn IFileSystemPort>,
+        fs_port: Arc<dyn IFileSystemProtocol>,
         lint_port: Arc<dyn ILintExecutorProtocol>,
     ) -> Self {
         Self { fs_port, lint_port }

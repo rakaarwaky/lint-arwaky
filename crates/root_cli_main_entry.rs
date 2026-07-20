@@ -20,8 +20,8 @@ use import_rules::root_import_rules_container::NullSourceParser;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_parser_port::ISourceParserPort;
-use shared::common::contract_system_port::IFileSystemPort;
+use shared::common::contract_parser_protocol::ISourceParserProtocol;
+use shared::common::contract_system_protocol::IFileSystemProtocol;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
@@ -58,8 +58,8 @@ fn main() -> ExitCode {
     // precise layer matching in check/scan/orphan commands. This is
     // different from the orphan detector's prefix-based detection.
     let aes_config = default_aes_config();
-    let fs: Arc<dyn IFileSystemPort> = Arc::new(OSFileSystemAdapter::new());
-    let parser: Arc<dyn ISourceParserPort> = Arc::new(NullSourceParser);
+    let fs: Arc<dyn IFileSystemProtocol> = Arc::new(OSFileSystemAdapter::new());
+    let parser: Arc<dyn ISourceParserProtocol> = Arc::new(NullSourceParser);
     let layer_detector: Arc<dyn ILayerDetectionAggregate> =
         Arc::new(LayerDetectionAnalyzer::new(aes_config, fs, parser));
 

@@ -18,17 +18,17 @@ impl SourceLanguage {
             return SourceLanguage::Rust;
         };
         match fp.language() {
-            crate::common::contract_language_detector_port::Language::Rust => SourceLanguage::Rust,
-            crate::common::contract_language_detector_port::Language::Python => {
+            crate::common::contract_language_detector_protocol::Language::Rust => SourceLanguage::Rust,
+            crate::common::contract_language_detector_protocol::Language::Python => {
                 SourceLanguage::Python
             }
-            crate::common::contract_language_detector_port::Language::JavaScript => {
+            crate::common::contract_language_detector_protocol::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
-            crate::common::contract_language_detector_port::Language::TypeScript => {
+            crate::common::contract_language_detector_protocol::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            crate::common::contract_language_detector_port::Language::Unknown => {
+            crate::common::contract_language_detector_protocol::Language::Unknown => {
                 SourceLanguage::Rust
             }
         }

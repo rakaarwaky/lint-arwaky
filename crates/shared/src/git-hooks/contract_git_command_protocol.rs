@@ -1,4 +1,4 @@
-// PURPOSE: IGitCommandPort — protocol trait for executing git commands
+// PURPOSE: IGitCommandProtocol — protocol trait for executing git commands
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

@@ -1,10 +1,10 @@
-// PURPOSE: FileSystemMaintenanceAdapter — IFileSystemMaintenancePort implementation for maintenance filesystem ops
+// PURPOSE: FileSystemMaintenanceAdapter — IFileSystemMaintenanceProtocol implementation for maintenance filesystem ops
 use std::fs;
 use std::path::Path;
 
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_filesystem_maintenance_port::{
-    FileEntry, IFileSystemMaintenancePort,
+use shared::project_setup::contract_filesystem_maintenance_protocol::{
+    FileEntry, IFileSystemMaintenanceProtocol,
 };
 
 // Block 1: struct Definition
@@ -12,7 +12,7 @@ pub struct FileSystemMaintenanceAdapter;
 
 // Block 2: impl Port for Struct (Public Contract)
 #[async_trait::async_trait]
-impl IFileSystemMaintenancePort for FileSystemMaintenanceAdapter {
+impl IFileSystemMaintenanceProtocol for FileSystemMaintenanceAdapter {
     async fn read_file(&self, path: &FilePath) -> Result<String, String> {
         fs::read_to_string(path.value()).map_err(|e| e.to_string())
     }

@@ -5,7 +5,7 @@
 //   - Environment file generation (.env with PHANTOM_ROOT for JS tools)
 //   - MCP configuration generation in 3 formats (Claude, Hermes VS Code)
 //   - Binary discovery for lint-arwaky-mcp (current exe dir, CARGO_HOME, PATH)
-//   - Python and npm adapter installation (via ISetupInstallerPort with retry logic)
+//   - Python and npm adapter installation (via ISetupInstallerProtocol with retry logic)
 //   - Language detection (rust crates/, python pyproject.toml, js package.json)
 //   - Config file template loading from embedded YAML files
 //   - XDG config directory creation
@@ -21,16 +21,16 @@ use shared::project_setup::taxonomy_setup_contract_vo::{
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerPort;
+use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
 use std::sync::Arc;
 
 /// Business logic for generating setup and configuration artifacts.
 pub struct SetupManagementProcessor {
-    installer: Arc<dyn ISetupInstallerPort>,
+    installer: Arc<dyn ISetupInstallerProtocol>,
 }
 
 impl SetupManagementProcessor {
-    pub fn new(installer: Arc<dyn ISetupInstallerPort>) -> Self {
+    pub fn new(installer: Arc<dyn ISetupInstallerProtocol>) -> Self {
         Self { installer }
     }
 }

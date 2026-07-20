@@ -1,5 +1,5 @@
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::orphan_detector::contract_orphan_protocol::IOrphanFileCachePort;
+use crate::orphan_detector::contract_orphan_protocol::IOrphanFileCacheProtocol;
 
 /// Walk parent directories from `start` to locate the workspace root:
 /// a directory that holds a member dir (crates/packages/modules) AND a
@@ -31,7 +31,7 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
 pub fn check_wired_in_container(
     workspace_root: &std::path::Path,
     identifiers: &[String],
-    cache: &dyn IOrphanFileCachePort,
+    cache: &dyn IOrphanFileCacheProtocol,
 ) -> bool {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
@@ -45,7 +45,7 @@ pub fn check_wired_in_container(
 fn check_dir_containers(
     dir: &std::path::Path,
     identifiers: &[String],
-    cache: &dyn IOrphanFileCachePort,
+    cache: &dyn IOrphanFileCacheProtocol,
 ) -> bool {
     if let Ok(fp) = FilePath::new(dir.to_str().unwrap_or("")) {
         let entries = cache.read_dir(&fp);
