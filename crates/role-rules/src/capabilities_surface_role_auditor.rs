@@ -22,8 +22,6 @@ use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::common::contract_language_detector_protocol::Language as DetLang;
-use shared::common::contract_parser_protocol::ISourceParserProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
@@ -120,7 +118,6 @@ impl SurfaceRoleChecker {
     pub async fn check_surface_roles(
         &self,
         layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
-        parser: &dyn ISourceParserProtocol,
         files: &shared::common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
@@ -157,7 +154,7 @@ impl SurfaceRoleChecker {
                     || basename.ends_with("_page")
                     || basename.ends_with("_entry");
                 if !is_smart {
-                    self._check_no_domain_logic(f, &definition, parser, results, "AES406");
+                    self._check_no_domain_logic(f, &definition, results, "AES406");
                 }
             }
         }
@@ -167,12 +164,20 @@ impl SurfaceRoleChecker {
         &self,
         f: &FilePath,
         _definition: &LayerDefinition,
-        parser: &dyn ISourceParserProtocol,
         results: &mut LintResultList,
         code: &str,
     ) {
-        let control_flow_count = parser.get_control_flow_count(f);
-        if control_flow_count.value > 3 {
+        let content = match std::fs::read_to_string(&f.value) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+        let control_flow_count = content.lines().filter(|line| {
+            let t = line.trim();
+            t.starts_with("if ") || t.starts_with("else ") || t.starts_with("for ")
+                || t.starts_with("while ") || t.starts_with("match ") || t.starts_with("switch ")
+                || t.starts_with("try:") || t.starts_with("except") || t.starts_with("catch")
+        }).count();
+        if control_flow_count > 3 {
             results.push(LintResult {
                 file: f.clone(),
                 line: LineNumber::new(0),

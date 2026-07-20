@@ -89,17 +89,17 @@ impl SourceLanguage {
             return SourceLanguage::Rust;
         };
         match detect_language(&fp) {
-            shared::common::contract_language_detector_protocol::Language::Rust => SourceLanguage::Rust,
-            shared::common::contract_language_detector_protocol::Language::Python => {
+            shared::common::taxonomy_language_vo::Language::Rust => SourceLanguage::Rust,
+            shared::common::taxonomy_language_vo::Language::Python => {
                 SourceLanguage::Python
             }
-            shared::common::contract_language_detector_protocol::Language::JavaScript => {
+            shared::common::taxonomy_language_vo::Language::JavaScript => {
                 SourceLanguage::JavaScript
             }
-            shared::common::contract_language_detector_protocol::Language::TypeScript => {
+            shared::common::taxonomy_language_vo::Language::TypeScript => {
                 SourceLanguage::TypeScript
             }
-            shared::common::contract_language_detector_protocol::Language::Unknown => {
+            shared::common::taxonomy_language_vo::Language::Unknown => {
                 SourceLanguage::Rust
             }
         }

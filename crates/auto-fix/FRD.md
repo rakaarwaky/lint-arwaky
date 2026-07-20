@@ -4,11 +4,19 @@
 The auto-fix crate provides an automatic correction mechanism for AES rule violations that can be fixed mechanically. It consumes linting results and applies deterministic corrections to affected source files, reducing the manual workload for developers when fixing errors that can be detected and corrected deterministically.
 
 ## Requirements & Scope
-- AES Fix: Unused Import Correction — automatically remove import lines not referenced in the file (Rust, Python, JavaScript, TypeScript).
-- AES Fix: File Naming Correction — rename files that violate the snake_case convention to the correct format (all supported languages).
-- AES Fix: Bypass Warning Correction — add or fix invalid bypass comments (noqa, type: ignore) to the correct format, or remove them along with the code fix (Python ruff/mypy, JavaScript/TypeScript eslint).
-- AES Fix: Code Format Correction — apply automatic formatting using rustfmt, prettier, or the built-in formatter (Rust, JavaScript/TypeScript).
-- Idempotent, deterministic fixes that do not break code functionality.
+- AES Fix: Unused Import Correction
+  - Requirement: Automatically remove import lines that are not referenced in the file.
+  - Scope: Rust, Python, JavaScript, and TypeScript.
+- AES Fix: File Naming Correction
+  - Requirement: Automatically rename files that violate the snake_case convention to the correct format.
+  - Scope: All supported languages.
+- AES Fix: Bypass Warning Correction
+  - Requirement: Add or fix invalid bypass comments (such as noqa, type: ignore) to the correct format, or remove them along with the code fix.
+  - Scope: Python (ruff, mypy) and JavaScript/TypeScript (eslint).
+- AES Fix: Code Format Correction
+  - Requirement: Apply automatic formatting using rustfmt, prettier, or the built-in formatter.
+  - Scope: Rust, JavaScript/TypeScript.
+- Fixes must be idempotent and deterministic, and must not break code functionality.
 
 ## Success Indicators
 - [ ] Fix accuracy — applied fixes never break code functionality.
