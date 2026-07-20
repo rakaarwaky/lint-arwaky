@@ -2,9 +2,7 @@
 
 See [AGENTS.md](../AGENTS.md) for workspace conventions and [RULES_AES.md](../.agents/rules/RULES_AES.md) for the full rule catalog.
 
-The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations.
-
----
+The **Agentic Engineering System (AES)** is a strictly layered, decoupled, and AI-native architectural pattern. It isolates domain models, protects business logic from low-level detail, and makes the codebase easy for AI agents and LLMs to navigate, understand, and modify without hallucinating architectural violations. The layer set is: Taxonomy, Contract, Utility, Capabilities, Agent, Surface, Root (see below).
 
 ## Terminology
 
@@ -26,7 +24,7 @@ The codebase is divided into distinct horizontal and vertical boundaries. Layers
 
 ### 2. Utility Replaces Infrastructure
 
-The old Infrastructure layer (adapters behind ports) is gone. Its technical responsibilities now live in the **Utility** layer — a standalone layer of free functions. Utility is NOT a subgroup of Capabilities; it is its own layer with its own file prefix (`utility_`).
+The old Infrastructure layer is gone. Its technical responsibilities now live in the **Utility** layer — a standalone layer of free functions (no `struct`/`trait`/`contract`), with its own `utility_` file prefix. Capabilities stays clean by calling utility functions by name.
 
 ### 3. Business Logic Stays Clean
 
@@ -131,8 +129,8 @@ Standalone technical implementation. This layer holds the hard, low-level detail
 
 | Concern                       | Belongs in Capabilities      | Belongs in Utility (standalone)           |
 | ----------------------------- | ---------------------------- | ----------------------------------------- |
-| "collect all source files"    | call `collect_source_files`  | the recursive walk + ignore + inode logic |
-| "run the linter"              | call `run_ruff(path)`        | spawn process, capture stdout, parse JSON |
+| "collect all source files"    | call`collect_source_files` | the recursive walk + ignore + inode logic |
+| "run the linter"              | call`run_ruff(path)`       | spawn process, capture stdout, parse JSON |
 | "is this an import violation" | apply the rule               | regex / alias resolution helper           |
 
 ### 4. Capabilities (`capabilities_` prefix)
@@ -215,46 +213,3 @@ Wiring layer. Responsible for composition and bootstrap. No business logic is al
 - **Entry (`_entry`)**: Binary entry point. Bootstraps the application by creating the composition root (top-level container composing all feature containers) and starting the main loop.
 
 ---
-
-## Quick Reference: Logic Ownership
-
-| Logic Type                           | Layer             | Suffix                                 |
-| ------------------------------------ | ----------------- | -------------------------------------- |
-| **User Input Handling**        | `surface_`      | `_command`, `_controller`          |
-| **UI Rendering**               | `surface_`      | `_view`, `_component`              |
-| **Event Mapping**              | `surface_`      | `_command`, `_action`              |
-| **Routing**                    | `surface_`      | `_router`, `_page`                 |
-| **Computation / Calculation**  | `capabilities_` | `_calculator`, `_scorer`           |
-| **Validation / Checking**      | `capabilities_` | `_checker`, `_validator`           |
-| **Data Transformation**        | `capabilities_` | `_transformer`, `_mapper`          |
-| **Business Rules**             | `capabilities_` | `_evaluator`, `_resolver`          |
-| **Low-level technical detail** | `utility_`      | `_utility`, `_helper`, `_walker` |
-| **External tool execution**    | `utility_`      | `_runner`, `_scanner`              |
-| **Regex / parsing**            | `utility_`      | `_matcher`, `_parser`              |
-| **Looping**                    | `agent_`        | `_orchestrator`                      |
-| **Sequential Steps**           | `agent_`        | `_orchestrator`                      |
-| **Branching (if/match)**       | `agent_`        | `_orchestrator`                      |
-| **Error Handling**             | `agent_`        | `_orchestrator`                      |
-| **Domain Models**              | `taxonomy_`     | `_vo`, `_entity`                   |
-| **Inbound Interfaces**         | `contract_`     | `_protocol`                          |
-| **Facades**                    | `contract_`     | `_aggregate`                         |
-| **Wiring / Bootstrap**         | `root_`         | `_container`, `_entry`             |
-
----
-
-## Architectural Patterns
-
-### Wiring (no Port / no DI-through-trait)
-
-Root container wires Capabilities implementations behind Contract protocols/aggregates. There is no Port abstraction. Capabilities calls Utility functions directly by name; Surfaces reach Capabilities only through the aggregate facade.
-
-### Capabilities → Utility Pattern
-
-Business-logic file calls a clearly named utility function. The utility owns the messy detail (regex, third-party library, recursion, process spawn). Example:
-
-- Capabilities: `let files = collect_source_files(dir);` — one readable line.
-- Utility (`utility_file_collector.rs`): recursive walk, ignore-matching, extension check, symlink/inode handling.
-
-### Data Flow (Surface → Agent → Capability → Utility → Taxonomy)
-
-User presses "c" (check) in TUI. Surface maps key to an internal event via the aggregate. Agent receives the event and delegates to the lint executor. Capabilities runs check logic; when it needs low-level work (file scanning, running a linter) it calls a Utility function. Contract protocol defines the inbound interface the Agent relies on. Utility operates on Taxonomy value objects.
