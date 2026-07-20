@@ -97,9 +97,6 @@ impl CliContainer {
             role_orchestrator: self.role_orchestrator.clone(),
             orphan_orchestrator: self.orphan_orchestrator.clone(),
             layer_detector: self.layer_detector.clone(),
-            language_detector: Arc::new(
-                crate::capabilities_language_detector::CliLanguageDetector::new(),
-            ),
         }
     }
 }

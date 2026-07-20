@@ -53,7 +53,6 @@ fn make_check_context(
         role_orchestrator: container.role_orchestrator.clone(),
         orphan_orchestrator: container.orphan_orchestrator.clone(),
         layer_detector: layer_detector.clone(),
-        language_detector: Arc::new(cli_commands::capabilities_language_detector::CliLanguageDetector::new()),
     }
 }
 
@@ -91,7 +90,6 @@ fn main() -> ExitCode {
             role_orchestrator: role_container.orchestrator(),
             orphan_orchestrator: orphan_container.analyzer(),
             layer_detector: layer_det_clone.clone(),
-            language_detector: Arc::new(cli_commands::capabilities_language_detector::CliLanguageDetector::new()),
         }
     });
 
