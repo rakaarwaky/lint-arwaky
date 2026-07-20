@@ -1,6 +1,6 @@
 ---
 name: create-contract-rust
-description: "Create and validate Rust contract layer files in shared domain: pure trait definitions for ports, protocols, and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
+description: "Create and validate Rust contract layer files in shared domain: pure trait definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
 version: 1.3.0
 category: refactoring
 tags:
@@ -8,7 +8,6 @@ tags:
     rust,
     aes,
     contract,
-    port,
     protocol,
     aggregate,
     trait,
@@ -21,7 +20,6 @@ tags:
 triggers:
   - "create contract rust"
   - "add contract rust"
-  - "create port rust"
   - "create protocol rust"
   - "create aggregate rust"
   - "fix contract rust"
@@ -31,7 +29,6 @@ dependencies: []
 related:
   - create-taxonomy-rust
   - create-capabilities-rust
-  - create-infrastructure-rust
   - create-agent-rust
   - trait-consolidation-rust
   - fix-primitive-to-vo
@@ -49,15 +46,14 @@ They define the **WHAT**: public promises, stable interfaces, polymorphism bound
 
 They MUST NOT define the **HOW**: no implementation, no private helpers, no I/O, no business logic, no layer imports.
 
-Three contract suffixes serve different roles:
+Two contract suffixes serve different roles:
 
-- `_port` → implemented by infrastructure
-- `_protocol` → implemented by capabilities
-- `_aggregate` → implemented by agents
+- `_protocol` → implemented by Capabilities (inbound behavior interface)
+- `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
 
 ## Definition of Done
 
-1. Contract file uses correct suffix: `_port`, `_protocol`, or `_aggregate`.
+1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
 2. Contract contains only trait definitions.
 3. Contract contains no `impl` blocks or default method bodies.
 4. Contract contains no private helper signatures.
@@ -72,19 +68,18 @@ Three contract suffixes serve different roles:
 
 | File | Content |
 |------|---------|
-| `references/contract-roles.md` | Three suffix types and naming convention |
+| `references/contract-roles.md` | Two suffix types and naming convention |
 | `references/purity-imports.md` | AES201 import restrictions |
 | `references/trait-structure-rules.md` | 7 trait structure rules |
 | `references/primitive-vo-policy.md` | Primitive policy table |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 14-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
 | File | Purpose |
 |------|---------|
-| `templates/contract_name_port.rs` | New port trait definition |
 | `templates/contract_name_protocol.rs` | New protocol trait definition |
 | `templates/contract_name_aggregate.rs` | New aggregate trait definition |
 
@@ -96,7 +91,6 @@ Ask: **"Which layer will implement this interface?"**
 
 | Implemented By | Suffix |
 |----------------|--------|
-| Infrastructure | `_port` |
 | Capabilities | `_protocol` |
 | Agent | `_aggregate` |
 
@@ -125,7 +119,7 @@ cargo check -p shared
 rg -n "^\s*pub trait" crates/shared/src/**/contract_*.rs
 
 # Check forbidden imports
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/shared/src/**/contract_*.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_|surface_)" crates/shared/src/**/contract_*.rs
 ```
 
 ## Common Mistakes

@@ -1,15 +1,14 @@
 # Contract Roles
 
-## Three Suffix Types
+## Two Suffix Types
 
-| Suffix         | Role                                               | Implemented By | Example                                   |
-| -------------- | -------------------------------------------------- | -------------- | ----------------------------------------- |
-| `_port`      | Outbound interface needing I/O or external systems | Infrastructure | `contract_file_system_port.rs`          |
-| `_protocol`  | Inbound interface for pure domain behavior         | Capabilities   | `contract_import_forbidden_protocol.rs` |
-| `_aggregate` | Composition facade for orchestration               | Agents         | `contract_import_runner_aggregate.rs`   |
+| Suffix         | Role                                               | Implemented By | Used By  | Example                                   |
+| -------------- | -------------------------------------------------- | -------------- | -------- | ----------------------------------------- |
+| `_protocol`  | Inbound interface for behavior                     | Capabilities   | Agent    | `contract_import_forbidden_protocol.rs` |
+| `_aggregate` | Facade for feature behavior access                 | Agent          | Surface  | `contract_import_runner_aggregate.rs`   |
 
 ## Naming Convention
 
 Pattern: `contract_<concept>_<role_suffix>.rs`
 
-Trait names MUST use: `I<Name>Port`, `I<Name>Protocol`, `I<Name>Aggregate`
+Trait names MUST use: `I<Name>Protocol`, `I<Name>Aggregate`

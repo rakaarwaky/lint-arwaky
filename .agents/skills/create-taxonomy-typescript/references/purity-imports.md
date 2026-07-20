@@ -4,14 +4,13 @@ Taxonomy must remain pure and stable.
 
 ## Allowed Dependencies
 
-| Taxonomy Type | May Import From                              | Must Not Import From                                                |
-| ------------- | -------------------------------------------- | ------------------------------------------------------------------- |
-| `_vo`       | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
-| `_entity`   | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
-| `_error`    | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
-| `_event`    | other taxonomy types, stdlib                | capabilities, infrastructure, agents, surface, root, contracts, I/O |
-| `_constant` | only core/static values                      | external layer imports, I/O, functions                              |
-| `_utility`  | taxonomy types, pure stdlib helpers         | capabilities, infrastructure, agents, surface, root, contracts, I/O |
+| Taxonomy Type | May Import From                              | Must Not Import From                                          |
+| ------------- | -------------------------------------------- | ------------------------------------------------------------- |
+| `_vo`       | other taxonomy types, stdlib                | capabilities, agents, surface, root, contracts, I/O           |
+| `_entity`   | other taxonomy types, stdlib                | capabilities, agents, surface, root, contracts, I/O           |
+| `_error`    | other taxonomy types, stdlib                | capabilities, agents, surface, root, contracts, I/O           |
+| `_event`    | other taxonomy types, stdlib                | capabilities, agents, surface, root, contracts, I/O           |
+| `_constant` | only core/static values                      | external layer imports, I/O, functions                         |
 
 ## Taxonomy May Contain
 

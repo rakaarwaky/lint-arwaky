@@ -4,25 +4,24 @@
 
 | Allowed                                      | Forbidden                                             |
 | -------------------------------------------- | ----------------------------------------------------- |
-| Computation, validation, calculation         | File I/O (`open()`, `Path()`, `os.`)                  |
-| Data transformation, business rules          | Network calls (`requests.`, `httpx.`)                 |
-| Domain behavior using shared models          | Database operations (`sqlite3.`, `asyncpg.`)          |
-| Protocol/ABC implementation                  | Direct stdout/stderr printing                         |
-| Private helpers supporting the impl class    | Direct environment/system-clock/global-state mutation |
-| Calling injected port/protocol traits        | Direct import from `infrastructure_*`                 |
-|                                              | Direct import from `agent_*`                          |
-|                                              | Direct dependency on concrete `capabilities_*` modules |
-|                                              | Locally defined domain data structures                |
+| Computation, validation, calculation         | Direct import from `agent_*`                          |
+| Data transformation, business rules          | Direct dependency on concrete `capabilities_*` modules |
+| Domain behavior using shared models          | Locally defined domain data structures                |
+| Protocol/ABC implementation                  |                                                       |
+| External adaptation (I/O, API calls, DB)     |                                                       |
+| Private helpers supporting the impl class    |                                                       |
+| Calling injected port/protocol traits        |                                                       |
+| Calling Utility standalone functions         |                                                       |
 
 ## Allowed Dependencies
 
 - `shared/*`
 - taxonomy VOs
 - taxonomy constants
-- taxonomy utilities
-- protocol/port ABCs
+- protocol ABCs
+- Utility standalone functions
 
 ## Forbidden Dependencies
 
-- concrete infrastructure implementations
 - concrete agent implementations
+- concrete capabilities implementations (no inter-capability deps)

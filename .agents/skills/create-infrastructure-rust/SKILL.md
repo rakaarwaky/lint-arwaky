@@ -1,155 +1,48 @@
 ---
 name: create-infrastructure-rust
-description: "Create and validate Rust infrastructure layer files following AES rules: I/O and external integration only, zero business logic, 3-block structure, one impl struct per file, port trait contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
+description: "DEPRECATED: Infrastructure layer has been merged into Capabilities in the new AES architecture. Use create-capabilities-rust instead. Capabilities now handles both business logic AND external adaptation (I/O, API calls, database access)."
+version: 2.0.0
 category: refactoring
 tags:
   [
     rust,
     aes,
     infrastructure,
-    port,
-    structure,
-    aes404,
-    3-block-structure,
-    di,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
+    deprecated,
+    capabilities,
   ]
 triggers:
   - "create infrastructure rust"
   - "add infrastructure rust"
-  - "fix infrastructure structure rust"
-  - "create port rust"
-  - "infrastructure missing port rust"
-  - "check infrastructure rust"
-  - "audit infrastructure rust"
 dependencies: []
 related:
   - create-capabilities-rust
-  - create-agent-rust
-  - enforce-1-struct-per-file-rust
-  - trait-consolidation-rust
-  - module_logic_validator-rust
-  - fix-infrastructure-structure-rust
-  - create-missing-ports-rust
 ---
 
-# create-infrastructure-rust
+# create-infrastructure-rust — DEPRECATED
 
-## Purpose
+## ⚠️ This Skill Is Deprecated
 
-Create and validate Rust **infrastructure layer** files following clean architecture / AES rules.
+The Infrastructure layer has been **removed** in the new AES architecture (v2.0).
 
-An infrastructure file must contain **I/O and external system integration only**:
+Infrastructure responsibilities (I/O and external system integration) have been **merged into the Capabilities layer**.
 
-- file system access, network calls, database access, external API calls,
-- environment/system integration, technical mapping, serialization/deserialization,
-- error mapping, adapter implementation for port traits.
+## What Changed
 
-Infrastructure MUST NOT contain business logic.
+| Before (v1.x) | After (v2.0) |
+|----------------|--------------|
+| Infrastructure layer: I/O only | **Removed** |
+| Capabilities layer: business logic only | Now includes **business logic + external adaptation** |
+| `_port` contract suffix | **Removed** — use `_protocol` instead |
 
-## Definition of Done
+## Migration
 
-1. ONE implementation struct per file.
-2. Struct implements ONE domain port trait in Block 2.
-3. Block 2 contains ONLY the port trait implementation.
-4. Constructors, std trait impls, private helpers in Block 3.
-5. Zero business logic.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via `Arc<dyn Trait>`.
-8. Value/configuration fields use shared VOs.
-9. I/O errors are propagated explicitly.
-10. `cargo check -p <crate-name>` passes.
+- Use **create-capabilities-rust** for all new files
+- Existing `infrastructure_*.rs` files should be refactored into `capabilities_*.rs`
+- Existing `contract_*_port.rs` files should be refactored into `contract_*_protocol.rs`
+- Capabilities can now perform I/O directly (file access, network calls, database operations)
+- Capabilities must use Utility standalone functions for low-level technical mechanics
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, trait placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO rules |
-| `references/error-handling.md` | 4 error handling rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 23-item verification checklist |
-
-## Templates
-
-| File | Purpose |
-|------|---------|
-| `templates/infrastructure_name.rs` | New infrastructure implementation file |
-| `templates/contract_name_port.rs` | New port trait definition |
-
-## Workflow
-
-### Step 1: Analyze File Responsibility
-
-Read the file and ask: **"Is this pure I/O or external system integration?"**
-
-If yes → keep as infrastructure. If it contains business logic → move to capabilities.
-
-### Step 2: Check for Missing Port
-
-Does the infrastructure struct implement a port trait? If no → create one.
-
-### Step 3: Create Port File if Missing
-
-Create `contract_<name>_port.rs` in the appropriate shared domain folder.
-
-### Step 4: Enforce 3-Block Structure
-
-Reorganize: struct definition → port trait impl → constructors/std traits/helpers.
-
-### Step 5: Verify Struct Discipline
-
-One struct, no local data structs, DI via `Arc<dyn Trait>`, shared VOs.
-
-### Step 6: Verify Helper vs Utility Boundary
-
-See `references/helper-vs-utility.md` for the decision tree.
-
-### Step 7: Verify Layer Compliance
-
-No forbidden imports, no business logic, no local domain data definitions.
-
-### Step 8: Verify Error Handling, VO, and Constants
-
-See `references/error-handling.md` and `references/primitive-vo-policy.md`.
-
-### Step 9: Verify Compilation
-
-```bash
-cargo check -p <crate-name>
-```
-
-## Quick Commands
-
-```bash
-# List port trait implementations
-rg -n "impl\s+I[A-Za-z0-9_]+Port\s+for" crates/<crate>/src/infrastructure_*.rs
-
-# Check business logic keywords
-rg "is_orphan|analyze|validate|calculate|compute|business" crates/<crate>/src/infrastructure_*.rs
-
-# Check forbidden imports
-rg "^\s*use\s+.*(capabilities_|agent_)" crates/<crate>/src/infrastructure_*.rs
-```
-
-## Common Mistakes
-
-- Putting business logic in infrastructure.
-- Defining domain data structs in infrastructure files.
-- Using concrete service types as struct fields.
-- Using raw primitives for domain value fields.
-- Putting private helpers in the port trait.
-- Putting constructors in the port trait.
-- Placing std trait impls before the port trait.
-- Mixing Block 2 and Block 3 responsibilities.
-- Keeping reusable, domain-agnostic utility functions inside Block 3.
-- Silent error swallowing with `unwrap_or_default()`.
-- Magic constants in infrastructure logic.
-- Infrastructure returning lint results directly.
+See [create-capabilities-rust](../create-capabilities-rust/SKILL.md) for the current architecture rules.

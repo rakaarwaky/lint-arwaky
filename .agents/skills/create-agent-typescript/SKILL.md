@@ -30,7 +30,6 @@ triggers:
 dependencies: []
 related:
   - create-capabilities-typescript
-  - create-infrastructure-typescript
   - create-taxonomy-typescript
   - enforce-1-class-per-file-typescript
   - trait-consolidation-typescript
@@ -42,11 +41,15 @@ related:
 
 ## Purpose
 
-Create and validate TypeScript **agent layer** files following clean architecture / AES rules.
+Create and validate TypeScript **agent layer** files following AES rules.
 
-An agent file must contain **orchestration / pipeline execution only**.
+An agent file contains **orchestration / pipeline execution only**.
 
-Agents coordinate capabilities, infrastructure ports, and shared taxonomy types, but agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+Agents coordinate capabilities into executable flows. They control sequence and movement, not business calculation.
+
+Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+
+Agents depend ONLY on Taxonomy and Contract layers. They must be completely ignorant of Capabilities and Utility implementations.
 
 ## Definition of Done
 
@@ -56,7 +59,7 @@ Agents coordinate capabilities, infrastructure ports, and shared taxonomy types,
 4. Utility methods, static factories, private helpers in Block 3.
 5. Zero I/O, zero business logic, zero domain computation.
 6. No locally defined domain data structures.
-7. Service dependencies use DI via port interfaces.
+7. Service dependencies use DI via aggregate/protocol interfaces.
 8. Value/configuration fields use shared VOs.
 9. Aggregate signatures use shared VOs for domain data.
 10. `npx tsc --noEmit` passes.
@@ -69,11 +72,11 @@ Agents coordinate capabilities, infrastructure ports, and shared taxonomy types,
 | `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
 | `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
 | `references/computation-detection.md` | Computation detection rules |
-| `references/error-handling.md` | 4 error handling rules |
+| `references/error-handling.md` | Error handling rules |
 | `references/primitive-vo-policy.md` | Primitive policy table, VO rules |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 25-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
@@ -88,7 +91,7 @@ Agents coordinate capabilities, infrastructure ports, and shared taxonomy types,
 
 Read the file and ask: **"Is this orchestration only?"**
 
-If yes → keep as agent. If it contains computation → capabilities, I/O → infrastructure, domain data → taxonomy.
+If yes → keep as agent. If it contains computation → capabilities, domain data → taxonomy.
 
 ### Step 2: Check for Missing Aggregate
 
@@ -133,8 +136,8 @@ grep -n "implements I[A-Za-z0-9_]*Aggregate" packages/*/src/agent_*.ts
 # Check computation patterns
 grep -n "\.length\|\.reduce\|\.map\|\.filter" packages/*/src/agent_*.ts
 
-# Check forbidden imports
-grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*infrastructure_" packages/*/src/agent_*.ts
+# Check forbidden imports (agent must only depend on taxonomy + contract)
+grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*infrastructure_\|^\s*from\s+.*utility_" packages/*/src/agent_*.ts
 ```
 
 ## Common Mistakes

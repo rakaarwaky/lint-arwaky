@@ -4,8 +4,8 @@
 
 | Type            | Suffixes                                             | Can Import From                   | Forbidden                                                              | Description                                     |
 | --------------- | ---------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
-| Smart Surface   | `_command`, `_controller`, `_page`, `_entry` | taxonomy,`contract_*_aggregate` | capabilities, infrastructure, concrete agents, concrete smart surfaces | Entry point/controller; delegates to aggregates |
-| Utility Surface | `_hook`, `_store`, `_action`, `_screen`      | taxonomy, passive surfaces        | smart surfaces, capabilities, infrastructure, agents                   | Thin event/state adapter                        |
+| Smart Surface   | `_command`, `_controller`, `_page`, `_entry` | taxonomy,`contract_*_aggregate` | capabilities, concrete agents, concrete smart surfaces | Entry point/controller; delegates to aggregates |
+| Utility Surface | `_hook`, `_store`, `_action`, `_screen`      | taxonomy, passive surfaces        | smart surfaces, capabilities, agents                   | Thin event/state adapter                        |
 | Passive Surface | `_component`, `_view`, `_layout`               | taxonomy only                     | all other layers, orchestration, business logic                        | Pure rendering/display                          |
 
 ## Smart Surface
@@ -21,7 +21,6 @@ Forbidden:
 
 ```rust
 use crate::capabilities_my_checker::MyChecker;
-use crate::infrastructure_adapter::FileAdapter;
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 ```
 
@@ -40,7 +39,6 @@ Forbidden:
 ```rust
 use crate::surface_check_command::CheckCommand;
 use crate::capabilities_my_checker::MyChecker;
-use crate::infrastructure_adapter::FileAdapter;
 ```
 
 ## Passive Surface
@@ -56,5 +54,4 @@ Forbidden:
 ```rust
 use crate::surface_check_command::CheckCommand;
 use crate::capabilities_my_checker::MyChecker;
-use crate::infrastructure_adapter::FileAdapter;
 ```

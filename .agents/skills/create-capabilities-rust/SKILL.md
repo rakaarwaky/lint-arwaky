@@ -1,6 +1,6 @@
 ---
 name: create-capabilities-rust
-description: "Create and validate Rust capabilities layer files following AES rules: pure domain behavior, zero I/O, 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate Rust capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
 version: 1.3.0
 category: refactoring
 tags:
@@ -30,7 +30,6 @@ triggers:
   - "audit capabilities rust"
 dependencies: []
 related:
-  - create-infrastructure-rust
   - create-agent-rust
   - enforce-1-struct-per-file-rust
   - trait-consolidation-rust
@@ -43,17 +42,22 @@ related:
 
 ## Purpose
 
-Create and validate Rust **capabilities layer** files following clean architecture / AES rules.
+Create and validate Rust **capabilities layer** files following AES rules.
 
-A capabilities file must contain **pure domain behavior**:
+A capabilities file contains the **concrete implementation** of the system's behavior. This layer encapsulates both:
 
-- no I/O, no infrastructure detail, no agent detail,
-- no locally defined domain data structures,
-- one implementation struct per file,
-- one domain protocol trait as the public contract,
-- strict 3-block structure,
-- dependency injection for service collaborators,
-- shared VOs for domain data.
+- **Business logic**: computations, validations, transformations, assessments
+- **External adaptation**: database access, third-party API calls, file system access, infrastructure mechanics
+
+Capabilities hide these implementations behind Contracts, keeping behavior modular, swappable, and fully isolated from orchestration.
+
+A capabilities file must:
+
+- implement one domain protocol trait,
+- follow strict 3-block structure,
+- use dependency injection for service collaborators (`Arc<dyn Trait>`),
+- use shared VOs for domain data,
+- use Utility standalone functions for low-level technical operations.
 
 ## Definition of Done
 
@@ -61,11 +65,11 @@ A capabilities file must contain **pure domain behavior**:
 2. Struct implements ONE domain protocol trait in Block 2.
 3. Block 2 contains ONLY the domain protocol trait implementation.
 4. Constructors, std trait impls, private helpers in Block 3.
-5. Zero I/O, zero side-effecting infrastructure calls.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via `Arc<dyn Trait>`.
-8. Value/configuration fields use shared VOs.
-9. Reusable, stateless, domain-agnostic functions extracted to `*_utility.rs`.
+5. No locally defined domain data structures.
+6. Service dependencies use DI via `Arc<dyn Trait>`.
+7. Value/configuration fields use shared VOs.
+8. No inter-capability dependencies (capabilities must not import other capabilities).
+9. Low-level technical operations delegate to Utility standalone functions.
 10. `cargo check -p <crate-name>` passes.
 
 ## References
@@ -78,10 +82,10 @@ Read these files for detailed rules:
 | `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
 | `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
 | `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules |
-| `references/error-handling.md` | 4 error handling rules with examples |
+| `references/error-handling.md` | Error handling rules with examples |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 24-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
@@ -97,9 +101,9 @@ Use these templates when creating new files:
 
 ### Step 1: Analyze File Responsibility
 
-Read the file and ask: **"Is this pure domain behavior?"**
+Read the file and ask: **"Does this implement protocol behavior?"**
 
-If yes → keep as capabilities. If no → move I/O to infrastructure.
+If yes → keep as capabilities. If no → check if it's orchestration (→ agent), domain data (→ taxonomy), or pure technical mechanics (→ utility).
 
 ### Step 2: Check Missing Trait (AES403)
 
@@ -123,7 +127,7 @@ See `references/helper-vs-utility.md` for the decision tree.
 
 ### Step 7: Verify Layer Compliance
 
-No forbidden imports, no I/O, no business logic leakage.
+No forbidden imports, no inter-capability dependencies, no business logic leakage.
 
 ### Step 8: Verify Error Handling, VO, and Constants
 
@@ -138,11 +142,8 @@ cargo check -p <crate-name>
 ## Quick Commands
 
 ```bash
-# Check I/O in capabilities (AES404)
-rg "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/<crate>/src/capabilities_*.rs
-
-# Check forbidden imports
-rg "^\s*use\s+.*(infrastructure_|agent_)" crates/<crate>/src/capabilities_*.rs
+# Check forbidden imports (no infrastructure, no agent, no other capabilities)
+rg "^\s*use\s+.*(infrastructure_|agent_|capabilities_)" crates/<crate>/src/capabilities_*.rs
 
 # List protocol trait implementations
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
@@ -150,7 +151,7 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 
 ## Common Mistakes
 
-- Putting I/O in capabilities.
+- Importing other capabilities directly.
 - Defining domain data structs in capabilities files.
 - Using concrete service types as struct fields.
 - Using raw primitives for domain value fields.
@@ -158,6 +159,6 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 - Putting constructors in the protocol trait.
 - Placing std trait impls before the domain protocol trait.
 - Mixing Block 2 and Block 3 responsibilities.
-- Keeping reusable, domain-agnostic utility functions inside Block 3.
 - Silent error swallowing with `unwrap_or_default()`.
 - Magic constants in capabilities logic.
+- Not delegating low-level technical operations to Utility.

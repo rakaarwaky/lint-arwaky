@@ -34,7 +34,6 @@ triggers:
 dependencies: []
 related:
   - create-capabilities-typescript
-  - create-infrastructure-typescript
   - create-agent-typescript
   - create-contract-typescript
   - create-taxonomy-typescript
@@ -60,7 +59,6 @@ It is responsible for:
 The surface layer MUST NOT:
 
 - import capabilities directly,
-- import infrastructure directly,
 - import concrete agent classes directly,
 - contain business logic,
 - contain domain computation,
@@ -73,7 +71,7 @@ The surface layer MUST NOT:
 3. Smart surface imports only taxonomy and aggregate contracts.
 4. Utility surface imports only taxonomy and passive surfaces.
 5. Passive surface imports only taxonomy.
-6. No surface file imports capabilities, infrastructure, or concrete agents.
+6. No surface file imports capabilities or concrete agents.
 7. Smart surface delegates to aggregates via `I<Name>Aggregate`.
 8. Utility surface does not import concrete smart surfaces.
 9. Passive surface contains only rendering/display logic.
@@ -123,7 +121,7 @@ Create `surface_<concept>_<suffix>.ts` in the appropriate feature package.
 
 ### Step 4: Verify Role Compliance
 
-No capabilities imports, no infrastructure imports, no concrete agent imports, no business logic, no domain computation, no I/O.
+No capabilities imports, no concrete agent imports, no business logic, no domain computation, no I/O.
 
 ### Step 5: Verify DI and VO Usage
 
@@ -143,7 +141,7 @@ npx tsc --noEmit
 
 ```bash
 # Check forbidden lower-layer imports
-grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*infrastructure_\|^\s*from\s+.*agent_" packages/*/src/surface_*.ts
+grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*agent_" packages/*/src/surface_*.ts
 
 # Check TypeScript
 npx tsc --noEmit
@@ -152,9 +150,8 @@ npx tsc --noEmit
 ## Common Mistakes
 
 - Importing capabilities directly in surface files.
-- Importing infrastructure directly in surface files.
 - Importing concrete agent classes in surface files.
-- Smart surface calling capabilities or infrastructure directly.
+- Smart surface calling capabilities directly.
 - Utility surface importing concrete smart surface.
 - Passive surface containing business logic.
 - Defining domain data interfaces in surface files.

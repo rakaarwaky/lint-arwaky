@@ -1,6 +1,6 @@
 ---
 name: create-capabilities-typescript
-description: "Create and validate TypeScript capabilities layer files following AES rules: pure domain behavior, zero I/O, 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate TypeScript capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
 version: 1.3.0
 category: refactoring
 tags:
@@ -30,7 +30,6 @@ triggers:
   - "audit capabilities typescript"
 dependencies: []
 related:
-  - create-infrastructure-typescript
   - create-agent-typescript
   - enforce-1-class-per-file-typescript
   - trait-consolidation-typescript
@@ -43,17 +42,22 @@ related:
 
 ## Purpose
 
-Create and validate TypeScript **capabilities layer** files following clean architecture / AES rules.
+Create and validate TypeScript **capabilities layer** files following AES rules.
 
-A capabilities file must contain **pure domain behavior**:
+A capabilities file contains the **concrete implementation** of the system's behavior. This layer encapsulates both:
 
-- no I/O, no infrastructure detail, no agent detail,
-- no locally defined domain data structures,
-- one implementation class per file,
-- one domain protocol interface as the public contract,
-- strict 3-block structure,
-- dependency injection for service collaborators,
-- shared VOs for domain data.
+- **Business logic**: computations, validations, transformations, assessments
+- **External adaptation**: database access, third-party API calls, file system access, infrastructure mechanics
+
+Capabilities hide these implementations behind Contracts, keeping behavior modular, swappable, and fully isolated from orchestration.
+
+A capabilities file must:
+
+- implement one domain protocol interface,
+- follow strict 3-block structure,
+- use dependency injection for service collaborators,
+- use shared VOs for domain data,
+- use Utility standalone functions for low-level technical operations.
 
 ## Definition of Done
 
@@ -61,11 +65,11 @@ A capabilities file must contain **pure domain behavior**:
 2. Class implements ONE domain protocol interface.
 3. Block 2 contains ONLY domain protocol method implementations.
 4. Utility methods, static factories, private helpers in Block 3.
-5. Zero I/O, zero side-effecting infrastructure calls.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via protocol interfaces.
-8. Value/configuration fields use shared VOs.
-9. Reusable, stateless, domain-agnostic functions extracted to `*_utility.ts`.
+5. No locally defined domain data structures.
+6. Service dependencies use DI via protocol interfaces.
+7. Value/configuration fields use shared VOs.
+8. No inter-capability dependencies (capabilities must not import other capabilities).
+9. Low-level technical operations delegate to Utility standalone functions.
 10. `npx tsc --noEmit` passes.
 
 ## References
@@ -76,10 +80,10 @@ A capabilities file must contain **pure domain behavior**:
 | `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
 | `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
 | `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules |
-| `references/error-handling.md` | 4 error handling rules with examples |
+| `references/error-handling.md` | Error handling rules with examples |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 23-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
@@ -92,9 +96,9 @@ A capabilities file must contain **pure domain behavior**:
 
 ### Step 1: Analyze File Responsibility
 
-Read the file and ask: **"Is this pure domain behavior?"**
+Read the file and ask: **"Does this implement protocol behavior?"**
 
-If yes → keep as capabilities. If no → move I/O to infrastructure.
+If yes → keep as capabilities. If no → check if it's orchestration (→ agent), domain data (→ taxonomy), or pure technical mechanics (→ utility).
 
 ### Step 2: Check Missing Interface (AES403)
 
@@ -118,7 +122,7 @@ See `references/helper-vs-utility.md` for the decision tree.
 
 ### Step 7: Verify Layer Compliance
 
-No forbidden imports, no I/O, no business logic leakage.
+No forbidden imports, no inter-capability dependencies, no business logic leakage.
 
 ### Step 8: Verify Error Handling, VO, and Constants
 
@@ -133,11 +137,8 @@ npx tsc --noEmit
 ## Quick Commands
 
 ```bash
-# Check I/O in capabilities (AES404)
-grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/capabilities_*.ts
-
-# Check forbidden imports
-grep -n "^\s*from\s+.*infrastructure_\|^\s*from\s+.*agent_" packages/*/src/capabilities_*.ts
+# Check forbidden imports (no infrastructure, no agent, no other capabilities)
+grep -n "^\s*from\s+.*infrastructure_\|^\s*from\s+.*agent_\|^\s*from\s+.*capabilities_" packages/*/src/capabilities_*.ts
 
 # List protocol interface implementations
 grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
@@ -145,13 +146,13 @@ grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
 
 ## Common Mistakes
 
-- Putting I/O in capabilities.
+- Importing other capabilities directly.
 - Defining domain data interfaces in capabilities files.
 - Using concrete service types as constructor fields.
 - Putting private helpers in the protocol interface.
 - Putting constructors in the protocol interface.
 - Placing utility methods before the domain protocol methods.
 - Mixing Block 2 and Block 3 responsibilities.
-- Keeping reusable, domain-agnostic utility functions inside Block 3.
 - Silent error swallowing with `?? ''` or `|| 0`.
 - Magic constants in capabilities logic.
+- Not delegating low-level technical operations to Utility.

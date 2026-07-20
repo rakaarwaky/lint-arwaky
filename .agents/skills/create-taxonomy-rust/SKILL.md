@@ -1,6 +1,6 @@
 ---
 name: create-taxonomy-rust
-description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, constants, and reusable utilities. Ensures domain data lives only in shared taxonomy."
+description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
 version: 1.3.0
 category: refactoring
 tags:
@@ -14,7 +14,6 @@ tags:
     error,
     event,
     constant,
-    utility,
     aes201,
     primitive-to-vo,
   ]
@@ -30,7 +29,6 @@ triggers:
 dependencies: []
 related:
   - create-capabilities-rust
-  - create-infrastructure-rust
   - create-agent-rust
   - enforce-1-struct-per-file-rust
   - trait-consolidation-rust
@@ -44,23 +42,25 @@ related:
 
 Create and validate Rust **taxonomy layer** files inside `crates/shared/src/<domain>/`.
 
+Taxonomy is the domain foundation layer. It defines the stable language of the domain and must remain free from technical or behavioral concerns.
+
 Taxonomy is the single source of truth for:
 
 - value objects, entities, domain errors, domain events,
-- constants, pure reusable utility functions.
+- constants (compile-time literal values).
 
-No domain data structures may be defined in capabilities, infrastructure, agents, surface, or root/container layers.
+No domain data structures may be defined in capabilities, agent, surface, or root layers.
 
 ## Definition of Done
 
 1. Domain data structures live in `shared/taxonomy`.
 2. Taxonomy file naming uses allowed strict suffixes.
-3. Taxonomy files do not import from capability, infrastructure, agent, surface, or root layers.
-4. Utility functions are stateless, domain-agnostic, and reusable. I/O is allowed in utilities.
+3. Taxonomy files do not import from capability, agent, surface, or root layers.
+4. Taxonomy files contain no I/O and no side effects.
 5. Value objects validate on construction.
-7. Public domain contracts use VOs instead of raw primitives.
-8. New taxonomy modules are registered in `mod.rs`.
-9. `cargo check -p shared` passes.
+6. Public domain contracts use VOs instead of raw primitives.
+7. New taxonomy modules are registered in `mod.rs`.
+8. `cargo check -p shared` passes.
 
 ## References
 
@@ -68,11 +68,10 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 |------|---------|
 | `references/purity-imports.md` | AES201 import restrictions, allowed/forbidden dependencies |
 | `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns |
-| `references/utility-functions.md` | The Ultimate Boundary, good/bad utility examples |
 | `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 20-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
@@ -81,7 +80,6 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 | `templates/taxonomy_name_vo.rs` | New value object file |
 | `templates/taxonomy_name_error.rs` | New error type file |
 | `templates/taxonomy_name_constant.rs` | New constants file |
-| `templates/taxonomy_name_utility.rs` | New utility function file |
 
 ## Workflow
 
@@ -97,7 +95,7 @@ Choose the correct domain directory under `crates/shared/src/<domain>/`.
 
 ### Step 3: Create or Update Taxonomy File
 
-Use the correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`.
+Use the correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`.
 
 ### Step 4: Register Module
 
@@ -109,7 +107,7 @@ Replace local definitions with imports from taxonomy.
 
 ### Step 6: Verify Purity
 
-No imports from layers. I/O is allowed in utility functions.
+No imports from layers. No I/O in taxonomy files.
 
 ### Step 7: Verify Primitive-to-VO Compliance
 
@@ -138,8 +136,6 @@ rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/share
 - Importing contract traits into taxonomy files.
 - Using wrong suffix for taxonomy files.
 - Forgetting to register taxonomy modules in `mod.rs`.
-- Putting domain knowledge into `*_utility.rs`.
-- Putting single-consumer helpers into `*_utility.rs`.
 - Exposing public raw `String` fields in VOs.
 - Creating VOs without validation when domain invariants exist.
 - Duplicating taxonomy types across domains.

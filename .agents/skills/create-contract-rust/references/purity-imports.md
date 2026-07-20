@@ -4,7 +4,6 @@
 
 | Contract File               | May Import From                                                                |
 | --------------------------- | ------------------------------------------------------------------------------ |
-| `contract_*_port.rs`      | taxonomy types, other contract types, std marker traits, async_trait if needed |
 | `contract_*_protocol.rs`  | taxonomy types, other contract types, std marker traits, async_trait if needed |
 | `contract_*_aggregate.rs` | taxonomy types, other contract types, std marker traits, async_trait if needed |
 
@@ -13,7 +12,6 @@
 Contract files MUST NOT import from:
 
 - `capabilities_*`
-- `infrastructure_*`
 - `agent_*`
 - `surface_*`
 - root/container modules

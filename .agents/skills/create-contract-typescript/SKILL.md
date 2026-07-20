@@ -1,6 +1,6 @@
 ---
 name: create-contract-typescript
-description: "Create and validate TypeScript contract layer files in shared domain: pure interface definitions for ports, protocols, and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
+description: "Create and validate TypeScript contract layer files in shared domain: pure interface definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
 version: 1.3.0
 category: refactoring
 tags:
@@ -8,7 +8,6 @@ tags:
     typescript,
     aes,
     contract,
-    port,
     protocol,
     aggregate,
     interface,
@@ -20,7 +19,6 @@ tags:
 triggers:
   - "create contract typescript"
   - "add contract typescript"
-  - "create port typescript"
   - "create protocol typescript"
   - "create aggregate typescript"
   - "fix contract typescript"
@@ -30,7 +28,6 @@ dependencies: []
 related:
   - create-taxonomy-typescript
   - create-capabilities-typescript
-  - create-infrastructure-typescript
   - create-agent-typescript
   - interface-consolidation-typescript
   - fix-primitive-to-vo
@@ -48,15 +45,14 @@ They define the **WHAT**: public promises, stable interfaces, polymorphism bound
 
 They MUST NOT define the **HOW**: no implementation, no private helpers, no I/O, no business logic, no layer imports.
 
-Three contract suffixes serve different roles:
+Two contract suffixes serve different roles:
 
-- `_port` → implemented by infrastructure
-- `_protocol` → implemented by capabilities
-- `_aggregate` → implemented by agents
+- `_protocol` → implemented by Capabilities (inbound behavior interface)
+- `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
 
 ## Definition of Done
 
-1. Contract file uses correct suffix: `_port`, `_protocol`, or `_aggregate`.
+1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
 2. Contract contains only interface definitions.
 3. Contract contains no method implementations or private helper signatures.
 4. Interface is exported with `export interface`.
@@ -70,19 +66,18 @@ Three contract suffixes serve different roles:
 
 | File | Content |
 |------|---------|
-| `references/contract-roles.md` | Three suffix types and naming convention |
+| `references/contract-roles.md` | Two suffix types and naming convention |
 | `references/purity-imports.md` | AES201 import restrictions |
 | `references/interface-structure-rules.md` | 7 interface structure rules |
 | `references/primitive-vo-policy.md` | Primitive policy table |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 12-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
 | File | Purpose |
 |------|---------|
-| `templates/contract_name_port.ts` | New port interface definition |
 | `templates/contract_name_protocol.ts` | New protocol interface definition |
 | `templates/contract_name_aggregate.ts` | New aggregate interface definition |
 
@@ -94,7 +89,6 @@ Ask: **"Which layer will implement this interface?"**
 
 | Implemented By | Suffix |
 |----------------|--------|
-| Infrastructure | `_port` |
 | Capabilities | `_protocol` |
 | Agent | `_aggregate` |
 
@@ -120,10 +114,10 @@ npx tsc --noEmit
 
 ```bash
 # List contract interfaces
-grep -n "^export interface I[A-Za-z0-9_]*Port\|^export interface I[A-Za-z0-9_]*Protocol\|^export interface I[A-Za-z0-9_]*Aggregate" packages/shared/src/**/contract_*.ts
+grep -n "^export interface I[A-Za-z0-9_]*Protocol\|^export interface I[A-Za-z0-9_]*Aggregate" packages/shared/src/**/contract_*.ts
 
 # Check forbidden imports
-grep -n "from.*capabilities_\|from.*infrastructure_\|from.*agent_\|from.*surface_" packages/shared/src/*/contract_*.ts
+grep -n "from.*capabilities_\|from.*agent_\|from.*surface_" packages/shared/src/*/contract_*.ts
 ```
 
 ## Common Mistakes

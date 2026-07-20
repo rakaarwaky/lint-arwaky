@@ -1,6 +1,6 @@
 ---
 name: create-contract-python
-description: "Create and validate Python contract layer files in shared domain: pure ABC definitions for ports, protocols, and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
+description: "Create and validate Python contract layer files in shared domain: pure ABC definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
 version: 1.3.0
 category: refactoring
 tags:
@@ -8,7 +8,6 @@ tags:
     python,
     aes,
     contract,
-    port,
     protocol,
     aggregate,
     abc,
@@ -20,7 +19,6 @@ tags:
 triggers:
   - "create contract python"
   - "add contract python"
-  - "create port python"
   - "create protocol python"
   - "create aggregate python"
   - "fix contract python"
@@ -30,7 +28,6 @@ dependencies: []
 related:
   - create-taxonomy-python
   - create-capabilities-python
-  - create-infrastructure-python
   - create-agent-python
   - trait-consolidation-python
   - fix-primitive-to-vo
@@ -48,15 +45,14 @@ They define the **WHAT**: public promises, stable interfaces, polymorphism bound
 
 They MUST NOT define the **HOW**: no implementation, no private helpers, no I/O, no business logic, no layer imports.
 
-Three contract suffixes serve different roles:
+Two contract suffixes serve different roles:
 
-- `_port` → implemented by infrastructure
-- `_protocol` → implemented by capabilities
-- `_aggregate` → implemented by agents
+- `_protocol` → implemented by Capabilities (inbound behavior interface)
+- `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
 
 ## Definition of Done
 
-1. Contract file uses correct suffix: `_port`, `_protocol`, or `_aggregate`.
+1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
 2. Contract contains only ABC definitions.
 3. Contract contains no method implementations or default method bodies.
 4. Contract contains no private helper signatures.
@@ -71,19 +67,18 @@ Three contract suffixes serve different roles:
 
 | File | Content |
 |------|---------|
-| `references/contract-roles.md` | Three suffix types and naming convention |
+| `references/contract-roles.md` | Two suffix types and naming convention |
 | `references/purity-imports.md` | AES201 import restrictions |
 | `references/abc-structure-rules.md` | 7 ABC structure rules |
 | `references/primitive-vo-policy.md` | Primitive policy table |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 13-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
 | File | Purpose |
 |------|---------|
-| `templates/contract_name_port.py` | New port ABC definition |
 | `templates/contract_name_protocol.py` | New protocol ABC definition |
 | `templates/contract_name_aggregate.py` | New aggregate ABC definition |
 
@@ -95,7 +90,6 @@ Ask: **"Which layer will implement this interface?"**
 
 | Implemented By | Suffix |
 |----------------|--------|
-| Infrastructure | `_port` |
 | Capabilities | `_protocol` |
 | Agent | `_aggregate` |
 
@@ -121,10 +115,10 @@ python -c "import <module>"
 
 ```bash
 # List contract ABCs
-grep -n "^class I[A-Za-z0-9_]*Port\|^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/shared/src/**/contract_*.py
+grep -n "^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/shared/src/**/contract_*.py
 
 # Check forbidden imports
-grep -n "from capabilities_\|from infrastructure_\|from agent_\|from surface_" modules/shared/src/*/contract_*.py
+grep -n "from capabilities_\|from agent_\|from surface_" modules/shared/src/*/contract_*.py
 ```
 
 ## Common Mistakes

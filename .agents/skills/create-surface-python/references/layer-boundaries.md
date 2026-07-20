@@ -4,8 +4,8 @@
 
 | Type            | Suffixes                                             | Can Import From                   | Forbidden                                                              | Description                                     |
 | --------------- | ---------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
-| Smart Surface   | `_command`, `_controller`, `_page`, `_entry` | taxonomy,`contract_*_aggregate` | capabilities, infrastructure, concrete agents, concrete smart surfaces | Entry point/controller; delegates to aggregates |
-| Utility Surface | `_hook`, `_store`, `_action`, `_screen`      | taxonomy, passive surfaces        | smart surfaces, capabilities, infrastructure, agents                   | Thin event/state adapter                        |
+| Smart Surface   | `_command`, `_controller`, `_page`, `_entry` | taxonomy,`contract_*_aggregate` | capabilities, concrete agents, concrete smart surfaces | Entry point/controller; delegates to aggregates |
+| Utility Surface | `_hook`, `_store`, `_action`, `_screen`      | taxonomy, passive surfaces        | smart surfaces, capabilities, agents                   | Thin event/state adapter                        |
 | Passive Surface | `_component`, `_view`, `_layout`               | taxonomy only                     | all other layers, orchestration, business logic                        | Pure rendering/display                          |
 
 ## Smart Surface
@@ -21,7 +21,6 @@ Forbidden:
 
 ```python
 from capabilities_my_checker import MyChecker
-from infrastructure_adapter import FileAdapter
 from agent_import_runner import ImportRunner
 ```
 
@@ -40,7 +39,6 @@ Forbidden:
 ```python
 from surface_check_command import CheckCommand
 from capabilities_my_checker import MyChecker
-from infrastructure_adapter import FileAdapter
 ```
 
 ## Passive Surface
@@ -56,5 +54,4 @@ Forbidden:
 ```python
 from surface_check_command import CheckCommand
 from capabilities_my_checker import MyChecker
-from infrastructure_adapter import FileAdapter
 ```

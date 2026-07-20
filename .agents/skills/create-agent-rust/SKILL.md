@@ -30,7 +30,6 @@ triggers:
 dependencies: []
 related:
   - create-capabilities-rust
-  - create-infrastructure-rust
   - create-taxonomy-rust
   - enforce-1-struct-per-file-rust
   - trait-consolidation-rust
@@ -42,11 +41,15 @@ related:
 
 ## Purpose
 
-Create and validate Rust **agent layer** files following clean architecture / AES rules.
+Create and validate Rust **agent layer** files following AES rules.
 
-An agent file must contain **orchestration / pipeline execution only**.
+An agent file contains **orchestration / pipeline execution only**.
 
-Agents coordinate capabilities, infrastructure ports, and shared taxonomy types, but agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+Agents coordinate capabilities into executable flows. They control sequence and movement, not business calculation.
+
+Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+
+Agents depend ONLY on Taxonomy and Contract layers. They must be completely ignorant of Capabilities and Utility implementations.
 
 ## Definition of Done
 
@@ -69,11 +72,11 @@ Agents coordinate capabilities, infrastructure ports, and shared taxonomy types,
 | `references/3-block-structure.md` | Block 1/2/3 definitions, trait placement rules |
 | `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
 | `references/computation-detection.md` | Computation detection rules, forbidden/allowed patterns |
-| `references/error-handling.md` | 4 error handling rules |
+| `references/error-handling.md` | Error handling rules |
 | `references/primitive-vo-policy.md` | Primitive policy table, VO rules |
 | `references/examples.md` | All BAD/GOOD code examples |
 | `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 27-item verification checklist |
+| `references/checklist.md` | Verification checklist |
 
 ## Templates
 
@@ -89,7 +92,7 @@ Agents coordinate capabilities, infrastructure ports, and shared taxonomy types,
 
 Read the file and ask: **"Is this orchestration only?"**
 
-If yes → keep as agent. If it contains computation → capabilities, I/O → infrastructure, domain data → taxonomy.
+If yes → keep as agent. If it contains computation → capabilities, domain data → taxonomy.
 
 ### Step 2: Check for Missing Aggregate
 
@@ -134,8 +137,8 @@ rg -n "impl\s+I[A-Za-z0-9_]+Aggregate\s+for" crates/<crate>/src/agent_*.rs
 # Check computation patterns
 rg "\.sum\(\)|\.len\(\)|\.map\(|\.fold\(" crates/<crate>/src/agent_*.rs
 
-# Check forbidden imports
-rg "^\s*use\s+.*(capabilities_|infrastructure_|surface_)" crates/<crate>/src/agent_*.rs
+# Check forbidden imports (agent must only depend on taxonomy + contract)
+rg "^\s*use\s+.*(capabilities_|infrastructure_|utility_)" crates/<crate>/src/agent_*.rs
 ```
 
 ## Common Mistakes

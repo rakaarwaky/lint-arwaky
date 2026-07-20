@@ -34,7 +34,6 @@ triggers:
 dependencies: []
 related:
   - create-capabilities-rust
-  - create-infrastructure-rust
   - create-agent-rust
   - create-contract-rust
   - create-taxonomy-rust
@@ -60,7 +59,6 @@ It is responsible for:
 The surface layer MUST NOT:
 
 - import capabilities directly,
-- import infrastructure directly,
 - import concrete agent structs directly,
 - contain business logic,
 - contain domain computation,
@@ -73,7 +71,7 @@ The surface layer MUST NOT:
 3. Smart surface imports only taxonomy and aggregate contracts.
 4. Utility surface imports only taxonomy and passive surfaces.
 5. Passive surface imports only taxonomy.
-6. No surface file imports capabilities, infrastructure, or concrete agents.
+6. No surface file imports capabilities or concrete agents.
 7. Smart surface delegates to aggregates via `Arc<dyn IAggregate>`.
 8. Utility surface does not import concrete smart surfaces.
 9. Passive surface contains only rendering/display logic.
@@ -123,7 +121,7 @@ Create `surface_<concept>_<suffix>.rs` in the appropriate feature crate.
 
 ### Step 4: Verify Role Compliance
 
-No capabilities imports, no infrastructure imports, no concrete agent imports, no business logic, no domain computation, no I/O.
+No capabilities imports, no concrete agent imports, no business logic, no domain computation, no I/O.
 
 ### Step 5: Verify DI and VO Usage
 
@@ -143,7 +141,7 @@ cargo check -p <crate-name>
 
 ```bash
 # Check forbidden lower-layer imports
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_)" crates/*/src/surface_*.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_)" crates/*/src/surface_*.rs
 
 # Check possible unwrap usage
 rg "unwrap\(\)|unwrap_or_default\(\)" crates/*/src/surface_*.rs
@@ -152,9 +150,8 @@ rg "unwrap\(\)|unwrap_or_default\(\)" crates/*/src/surface_*.rs
 ## Common Mistakes
 
 - Importing capabilities directly in surface files.
-- Importing infrastructure directly in surface files.
 - Importing concrete agent structs in surface files.
-- Smart surface calling capabilities or infrastructure directly.
+- Smart surface calling capabilities directly.
 - Utility surface importing concrete smart surface.
 - Passive surface containing business logic.
 - Defining domain data structs in surface files.
