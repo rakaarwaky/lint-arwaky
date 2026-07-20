@@ -1,3 +1,5 @@
+// PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
+use regex::Regex;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -10,9 +12,6 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use std::collections::HashMap;
 use std::sync::OnceLock;
-
-// PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
-use regex::Regex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -98,41 +97,36 @@ impl Default for OrphanGraphResolver {
     }
 }
 
-/// Cached regexes (Perf 1): compiled once via OnceLock.
-static PUB_MOD_PATH_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static PLAIN_MOD_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static IMPORT_RE: OnceLock<Option<Regex>> = OnceLock::new();
-static INH_RE: OnceLock<Option<Regex>> = OnceLock::new();
-
-fn pub_mod_path_re() -> Option<&'static Regex> {
-    PUB_MOD_PATH_RE
-        .get_or_init(|| {
-            Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok()
-        })
-        .as_ref()
-}
-
-fn plain_mod_re() -> Option<&'static Regex> {
-    PLAIN_MOD_RE
-        .get_or_init(|| Regex::new(r"(?:pub\s+)?mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
-        .as_ref()
-}
-
-fn import_re() -> Option<&'static Regex> {
-    IMPORT_RE
-        .get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
-        .as_ref()
-}
-
-fn inh_re() -> Option<&'static Regex> {
-    INH_RE
-        .get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-        .as_ref()
-}
-
 impl OrphanGraphResolver {
     pub fn new() -> Self {
         Self {}
+    }
+
+    /// Cached regexes (Perf 1): compiled once via OnceLock.
+    fn pub_mod_path_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| {
+            Regex::new(r#"#\[path\s*=\s*"([^"]+)"\]\s*(?:pub\s+)?mod\s+([a-zA-Z_]+)"#).ok()
+        })
+        .as_ref()
+    }
+
+    fn plain_mod_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"(?:pub\s+)?mod\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok())
+            .as_ref()
+    }
+
+    fn import_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
+            .as_ref()
+    }
+
+    fn inh_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
+            .as_ref()
     }
 
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
@@ -213,7 +207,7 @@ impl OrphanGraphResolver {
             };
 
             // Pass 1: #[path = "..."] pub mod (Bug 14 fix — link only the referenced file)
-            if let Some(re) = pub_mod_path_re() {
+            if let Some(re) = Self::pub_mod_path_re() {
                 for cap in re.captures_iter(&content) {
                     let mod_path = cap[1].to_string();
                     let base_dir = match std::path::Path::new(f).parent() {
@@ -236,7 +230,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 2: plain mod (Bug 10 fix)
-            if let Some(re) = plain_mod_re() {
+            if let Some(re) = Self::plain_mod_re() {
                 for cap in re.captures_iter(&content) {
                     let mod_name = cap[1].to_string();
                     let parent = match std::path::Path::new(f).parent() {
@@ -268,7 +262,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 3: use/import/from
-            let Some(import_re) = import_re() else {
+            let Some(import_re) = Self::import_re() else {
                 continue;
             };
             for cap in import_re.captures_iter(&content) {
@@ -454,7 +448,7 @@ impl OrphanGraphResolver {
             }
 
             // Pass 4: Python class inheritance
-            if let Some(re) = inh_re() {
+            if let Some(re) = Self::inh_re() {
                 for cap in re.captures_iter(&content) {
                     for base in cap[1].split(',') {
                         inheritance_map

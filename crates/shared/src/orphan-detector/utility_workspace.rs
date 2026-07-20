@@ -79,3 +79,24 @@ fn check_dir_containers(
     }
     false
 }
+
+/// Walk directory and collect paths of all source files (*.rs, *.py, *.ts, *.js, etc.)
+pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
+    if let Ok(fp) = FilePath::new(dir.to_str().unwrap_or("")) {
+        let entries = utility_file_cache::read_dir(&fp);
+        for entry_path in &entries {
+            let path = std::path::Path::new(entry_path.value());
+            if path.is_dir() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if name == "target" || name == ".git" || name == "node_modules" {
+                    continue;
+                }
+                collect_source_files(path, files);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                    files.push(entry_path.value().to_string());
+                }
+            }
+        }
+    }
+}

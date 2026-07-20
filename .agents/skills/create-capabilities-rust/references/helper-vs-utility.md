@@ -32,7 +32,7 @@ impl ContractRoleChecker {
 }
 ```
 
-## Extract to Utility (`*_utility.rs`)
+## Extract to Utility (`utility_.rs`)
 
 Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 
@@ -53,7 +53,7 @@ pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
 
 ## I/O Rule
 
-A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
+A function with I/O can be a  utility if it is stateless, domain-agnostic, and reusable.
 
 ```rust
 // OK in taxonomy utility — stateless, domain-agnostic, reusable
