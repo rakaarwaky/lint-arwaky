@@ -7,7 +7,6 @@ use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -76,7 +75,6 @@ pub struct LintExecutor {
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
     layer_detector: Option<Arc<dyn ILayerDetectionAggregate>>,
-    scanner_provider: Option<Arc<dyn IScannerProviderPort>>,
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
@@ -95,7 +93,6 @@ impl LintExecutor {
             external_lint: None,
             orphan_aggregate: None,
             layer_detector: None,
-            scanner_provider: None,
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
@@ -140,11 +137,9 @@ impl LintExecutor {
         mut self,
         orphan_aggregate: Arc<dyn IOrphanAggregate>,
         layer_detector: Arc<dyn ILayerDetectionAggregate>,
-        scanner_provider: Arc<dyn IScannerProviderPort>,
     ) -> Self {
         self.orphan_aggregate = Some(orphan_aggregate);
         self.layer_detector = Some(layer_detector);
-        self.scanner_provider = Some(scanner_provider);
         self
     }
 
@@ -268,9 +263,8 @@ impl LintExecutor {
                 let mut all_results = Vec::new();
 
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
-                let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .unwrap_or_else(|| std::path::PathBuf::from(path));
+                let scan_root = shared::common::find_workspace_root(path)
+                    .unwrap_or_else(|| std::path::PathBuf::from(path));
                 let all_source_files: Vec<String> =
                     shared::common::collect_all_source_files(&scan_root)
                         .iter()
@@ -413,17 +407,16 @@ impl LintExecutor {
         }
 
         // 6. Orphan detection (AES501-506)
-        if let (Some(ref orphan_agg), Some(ref layer_det), Some(ref scanner)) = (
-            &self.orphan_aggregate,
-            &self.layer_detector,
-            &self.scanner_provider,
-        ) {
+        if let (Some(ref orphan_agg), Some(ref layer_det)) =
+            (&self.orphan_aggregate, &self.layer_detector)
+        {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
-            let source_files = match scanner.scan_directory(&dir_path) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
+            let source_files =
+                match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+                    Ok(list) => list.values,
+                    Err(_) => Vec::new(),
+                };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
                 let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
@@ -500,29 +493,25 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn orphan(&self, path: &str) -> LintExecutionResult {
-        match (
-            &self.orphan_aggregate,
-            &self.layer_detector,
-            &self.scanner_provider,
-        ) {
-            (Some(orphan_agg), Some(layer_det), Some(scanner)) => {
+        match (&self.orphan_aggregate, &self.layer_detector) {
+            (Some(orphan_agg), Some(layer_det)) => {
                 // Resolve workspace root like CLI does
-                let scan_root =
-                    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_else(|| path.to_string());
+                let scan_root = shared::common::find_workspace_root(path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
-                let source_files = match scanner.scan_directory(&dir_path) {
-                    Ok(list) => list.values,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Orphan detection for {}\nFailed to scan directory: {}",
-                            path, e
-                        ));
-                    }
-                };
+                let source_files =
+                    match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
+                        Ok(list) => list.values,
+                        Err(e) => {
+                            return LintExecutionResult::failure(format!(
+                                "Orphan detection for {}\nFailed to scan directory: {}",
+                                path, e
+                            ));
+                        }
+                    };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
@@ -636,15 +625,13 @@ impl ILintExecutorProtocol for LintExecutor {
     fn duplicates(&self, path: &str) -> LintExecutionResult {
         let analyzer =
             code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
-        let scan_root = shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+        let scan_root = shared::common::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let scanner =
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new();
-        let source_files = match scanner.scan_directory(&dir_path) {
+        let source_files = match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };

@@ -37,8 +37,6 @@ pub struct CheckContext {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider:
-        Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub language_detector:
@@ -57,8 +55,6 @@ pub struct CheckCommandsSurface {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub scanner_provider:
-        Arc<dyn shared::common::contract_scanner_provider_port::IScannerProviderPort>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
@@ -73,7 +69,6 @@ impl CheckCommandsSurface {
             import_orchestrator: ctx.import_orchestrator,
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
-            scanner_provider: ctx.scanner_provider,
             orphan_orchestrator: ctx.orphan_orchestrator,
             layer_detector: ctx.layer_detector,
             multi_project_orchestrator: None,
@@ -92,7 +87,6 @@ impl CheckCommandsSurface {
             import_orchestrator: ctx.import_orchestrator,
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
-            scanner_provider: ctx.scanner_provider,
             orphan_orchestrator: ctx.orphan_orchestrator,
             layer_detector: ctx.layer_detector,
             multi_project_orchestrator,
@@ -139,7 +133,6 @@ impl CheckCommandsSurface {
             let io = self.import_orchestrator.clone();
             let ro = self.role_orchestrator.clone();
             let ext = self.external_lint.clone();
-            let sp = self.scanner_provider.clone();
             let oo = self.orphan_orchestrator.clone();
             let ld = self.layer_detector.clone();
             Arc::new(move |_cfg: ArchitectureConfig| CheckContext {
@@ -148,7 +141,6 @@ impl CheckCommandsSurface {
                 import_orchestrator: io.clone(),
                 role_orchestrator: ro.clone(),
                 external_lint: ext.clone(),
-                scanner_provider: sp.clone(),
                 orphan_orchestrator: oo.clone(),
                 layer_detector: ld.clone(),
                 language_detector: Arc::new(
@@ -185,12 +177,8 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
-        let orphan_results = self.run_orphan_detection_pass(
-            path,
-            &self.scanner_provider,
-            &self.orphan_orchestrator,
-            &self.layer_detector,
-        );
+        let orphan_results =
+            self.run_orphan_detection_pass(path, &self.orphan_orchestrator, &self.layer_detector);
         all_results.extend(orphan_results);
 
         let violation_count = self.filter_and_display_results(
@@ -211,16 +199,13 @@ impl CheckCommandsSurface {
     fn run_orphan_detection_pass(
         &self,
         path: &str,
-        scanner_provider: &Arc<
-            dyn shared::common::contract_scanner_provider_port::IScannerProviderPort,
-        >,
         orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
         layer_detector: &Arc<dyn ILayerDetectionAggregate>,
     ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let source_files = match scanner_provider.scan_directory(&dir_path) {
+        let source_files = match shared::common::taxonomy_file_utility::scan_directory(&dir_path) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };

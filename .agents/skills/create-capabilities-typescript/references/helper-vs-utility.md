@@ -51,25 +51,22 @@ export function matchWholeToken(haystack: string, needle: string): boolean {
 }
 ```
 
-## I/O Blocker
+## I/O Rule
 
-A function may be stateless, but if it performs I/O, it MUST NOT become a taxonomy utility.
-
-It also MUST NOT stay in capabilities.
+A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
 
 ```typescript
-// BAD in capabilities layer
-function readConfig(filePath: string): string | null {
-    return fs.readFileSync(filePath, 'utf-8'); // I/O
+// OK in taxonomy utility — stateless, domain-agnostic, reusable
+function walkSourceFiles(dir: string, files: string[], ignored: string[]): void {
+    // I/O is allowed in taxonomy utilities
 }
 ```
 
 Rule:
 
 ```text
-Stateless + I/O = infrastructure/port implementation
-NOT taxonomy utility
-NOT capabilities layer
+Stateless + I/O + domain-agnostic + reusable = taxonomy utility
+Stateless + I/O + domain-specific = infrastructure/port implementation
 ```
 
 ## Decision Tree
@@ -83,9 +80,6 @@ Found reusable code in capabilities?
   ├─ Does it need this or class state?
   │   └─ YES → keep as helper/method in Block 3
   │
-  ├─ Does it perform I/O or side effects?
-  │   └─ YES → move to infrastructure/port implementation
-  │
-  └─ Is it stateless, pure, domain-agnostic, and reusable?
-      └─ YES → extract to shared taxonomy utility
+  └─ Is it stateless, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility (I/O allowed)
 ```

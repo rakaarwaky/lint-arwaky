@@ -1,4 +1,5 @@
 // PURPOSE: taxonomy_language_info_vo — shared language detection value object for role auditors
+use shared::common::taxonomy_language_detector_utility::detect_language;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::SourceContentVO;
@@ -18,13 +19,13 @@ pub struct LanguageInfo {
 impl LanguageInfo {
     /// Detect language from a `SourceContentVO`.
     pub fn new(source: &SourceContentVO) -> Self {
-        let lang = source.file_path.language();
+        let lang = detect_language(&source.file_path);
         Self::flags_from_lang(lang)
     }
 
     /// Detect language from a raw `FilePath`.
     pub fn new_from_path(fp: &FilePath) -> Self {
-        let lang = fp.language();
+        let lang = detect_language(fp);
         Self::flags_from_lang(lang)
     }
 

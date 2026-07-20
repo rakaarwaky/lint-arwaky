@@ -23,9 +23,11 @@ Extract ONLY if ALL of these are true:
 4. Domain-agnostic: does not know business or adapter rules.
 5. Reusable: useful for multiple infrastructure/capabilities/modules.
 
-## I/O Blocker
+## I/O Rule
 
-Stateless + I/O = infrastructure/port implementation, NOT taxonomy utility.
+A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
+
+Stateless + I/O + domain-specific = infrastructure/port implementation.
 
 ## Decision Tree
 
@@ -38,9 +40,6 @@ Found reusable code in infrastructure?
   ├─ Does it need self or class state?
   │   └─ YES → keep as helper/method in Block 3
   │
-  ├─ Does it perform I/O or side effects?
-  │   └─ YES → keep in infrastructure, not utility
-  │
-  └─ Is it stateless, pure, domain-agnostic, and reusable?
-      └─ YES → extract to shared taxonomy utility
+  └─ Is it stateless, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility (I/O allowed)
 ```

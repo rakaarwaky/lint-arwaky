@@ -1,21 +1,17 @@
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use std::collections::HashSet;
-use std::sync::Arc;
 
-pub struct DiffChecker {
-    _scanner: Arc<dyn IScannerProviderPort>,
-}
+pub struct DiffChecker;
 
 impl DiffChecker {
-    pub fn new(scanner: Arc<dyn IScannerProviderPort>) -> Self {
-        Self { _scanner: scanner }
+    pub fn new() -> Self {
+        Self
     }
 
     fn get_default_branch(&self, project_path: &FilePath) -> String {

@@ -121,7 +121,7 @@ pub fn check_infrastructure_orphan(
     let mut wired = false;
     for cf in files {
         let cb = shared::orphan_detector::taxonomy_orphan_filename_utility::file_basename(cf);
-        let csuffix = shared::orphan_detector::taxonomy_orphan_filename_utility::file_suffix(cb);
+        let csuffix = shared::orphan_detector::taxonomy_orphan_filename_utility::file_suffix(&cb);
         if csuffix != "container" {
             continue;
         }

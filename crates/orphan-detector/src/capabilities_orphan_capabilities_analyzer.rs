@@ -205,7 +205,7 @@ pub fn is_infra_cap_orphan_raw(
     let mut is_wired = false;
     for cf in all_files {
         let cb = file_basename(cf);
-        let csuffix = file_suffix(cb);
+        let csuffix = file_suffix(&cb);
         if csuffix != "container" {
             continue;
         }
@@ -255,7 +255,7 @@ pub fn check_capabilities_orphan(
     let mut wired = false;
     for cf in files {
         let cb = file_basename(cf);
-        let csuffix = file_suffix(cb);
+        let csuffix = file_suffix(&cb);
         if csuffix != "container" {
             continue;
         }

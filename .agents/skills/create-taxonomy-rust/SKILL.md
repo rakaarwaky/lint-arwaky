@@ -1,6 +1,6 @@
 ---
 name: create-taxonomy-rust
-description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, constants, and pure reusable utilities. Ensures domain data lives only in shared taxonomy and remains pure."
+description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, constants, and reusable utilities. Ensures domain data lives only in shared taxonomy."
 version: 1.3.0
 category: refactoring
 tags:
@@ -56,9 +56,8 @@ No domain data structures may be defined in capabilities, infrastructure, agents
 1. Domain data structures live in `shared/taxonomy`.
 2. Taxonomy file naming uses allowed strict suffixes.
 3. Taxonomy files do not import from capability, infrastructure, agent, surface, or root layers.
-4. Taxonomy files contain no I/O and no side effects.
-5. Utility functions are stateless, pure, domain-agnostic, and reusable.
-6. Value objects validate on construction.
+4. Utility functions are stateless, domain-agnostic, and reusable. I/O is allowed in utilities.
+5. Value objects validate on construction.
 7. Public domain contracts use VOs instead of raw primitives.
 8. New taxonomy modules are registered in `mod.rs`.
 9. `cargo check -p shared` passes.
@@ -110,7 +109,7 @@ Replace local definitions with imports from taxonomy.
 
 ### Step 6: Verify Purity
 
-No imports from layers, no I/O in taxonomy files.
+No imports from layers. I/O is allowed in utility functions.
 
 ### Step 7: Verify Primitive-to-VO Compliance
 
@@ -130,9 +129,6 @@ rg -n "^\s*pub struct|^\s*pub enum" crates/<crate>/src --glob '!**/shared/**'
 
 # Check forbidden imports in taxonomy files
 rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/shared/src/**/taxonomy_*.rs
-
-# Check possible I/O in taxonomy files
-rg -n "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/shared/src/**/taxonomy_*.rs
 ```
 
 ## Common Mistakes
@@ -147,4 +143,3 @@ rg -n "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/shared/src/**/taxo
 - Exposing public raw `String` fields in VOs.
 - Creating VOs without validation when domain invariants exist.
 - Duplicating taxonomy types across domains.
-- Creating taxonomy utility functions with I/O.

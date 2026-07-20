@@ -118,7 +118,7 @@ pub fn is_surface_orphan(
         }
     }
 
-    let suffix = get_surface_suffix(basename);
+    let suffix = get_surface_suffix(&basename);
     let category = surface_category(&suffix);
     OrphanIndicatorResult::new(
         true,
@@ -180,7 +180,7 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
 pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
     let fp = f.value();
     let basename = file_basename(fp);
-    let suffix = get_surface_suffix(basename);
+    let suffix = get_surface_suffix(&basename);
     let category = surface_category(&suffix);
     let stem = file_stem(fp);
 
@@ -190,7 +190,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             let mut imported_by_entry_or_router = false;
             for cf in all_files {
                 let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cf_suffix = get_surface_suffix(&cb);
                 // Entry point or router
                 if cb.starts_with("cli_")
                     || cb.starts_with("mcp_")
@@ -227,7 +227,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             let mut imported_by_smart = false;
             for cf in all_files {
                 let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cf_suffix = get_surface_suffix(&cb);
                 if surface_category(&cf_suffix) == "smart" {
                     if let Ok(c) = std::fs::read_to_string(cf) {
                         if c.contains(&stem) {
@@ -259,7 +259,7 @@ pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndica
             let mut imported = false;
             for cf in all_files {
                 let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(cb);
+                let cf_suffix = get_surface_suffix(&cb);
                 let cat = surface_category(&cf_suffix);
                 if cat == "smart" || cat == "utility" {
                     if let Ok(c) = std::fs::read_to_string(cf) {

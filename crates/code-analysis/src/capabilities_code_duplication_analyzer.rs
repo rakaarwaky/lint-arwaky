@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::contract_system_port::IFileSystemPort;
-use shared::common::taxonomy_language_detector_helper::LanguageDetector;
+use shared::common::taxonomy_language_detector_utility::is_lintable;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
@@ -41,8 +41,7 @@ impl CodeDuplicationAnalyzer {
         files: &[String],
         min_dup_lines: usize,
     ) -> Vec<AesCodeAnalysisViolation> {
-        let detector = LanguageDetector::new();
-        let entries = collect_file_entries(files, &detector);
+        let entries = collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
         let blocks = scan_duplicate_blocks(entries, min_dup_lines);
         build_violations(&blocks, total_loc, min_dup_lines)
@@ -179,8 +178,7 @@ impl CodeDuplicationAnalyzer {
         min_dup_lines: usize,
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let detector = LanguageDetector::new();
-        let entries = collect_file_entries(files, &detector);
+        let entries = collect_file_entries(files);
         self.check_file_similarity_entries(
             &entries
                 .iter()
@@ -243,14 +241,14 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 /// Collect file entries: (PathBuf, content_string) for each lintable file.
 type FileEntry = (PathBuf, String);
 
-fn collect_file_entries(files: &[String], detector: &LanguageDetector) -> Vec<FileEntry> {
+fn collect_file_entries(files: &[String]) -> Vec<FileEntry> {
     let mut out = Vec::new();
     for file_str in files {
         let fp = match FilePath::new(file_str.clone()) {
             Ok(f) => f,
             Err(_) => continue,
         };
-        if !detector.is_lintable(&fp) {
+        if !is_lintable(&fp) {
             continue;
         }
         let content = match std::fs::read_to_string(&fp.value) {

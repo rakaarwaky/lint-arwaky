@@ -5,10 +5,10 @@
 A function belongs in `*_utility.rs` ONLY if ALL of these are true:
 
 1. Stateless: no `&self`, no struct field access.
-2. Pure: input A always produces output B.
-3. No side effects: no I/O, no randomness, no global mutation.
-4. Domain-agnostic: does not know business rules.
-5. Multi-consumer reusable: useful for multiple modules/layers.
+2. Domain-agnostic: does not know business rules.
+3. Multi-consumer reusable: useful for multiple modules/layers.
+
+I/O is allowed in utility functions (e.g., `walk_source_files`, `default_ignored_paths`).
 
 ## Good Utility Example
 

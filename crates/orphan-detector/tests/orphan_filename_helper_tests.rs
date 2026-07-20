@@ -54,7 +54,7 @@ fn suffix_gets_last_part() {
 
 #[test]
 fn suffix_no_underscore_empty() {
-    assert_eq!(file_suffix("checker.rs"), "checker");
+    assert_eq!(file_suffix("checker.rs"), "");
 }
 
 #[test]
@@ -69,5 +69,5 @@ fn suffix_py_file() {
 
 #[test]
 fn suffix_single_underscore_prefix() {
-    assert_eq!(file_suffix("_helper.rs"), "helper.rs");
+    assert_eq!(file_suffix("_helper.rs"), "helper");
 }

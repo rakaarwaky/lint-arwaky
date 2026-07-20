@@ -27,7 +27,6 @@ pub struct McpServerDependencies {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub scanner_provider: Arc<dyn IScannerProviderPort>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
 }
@@ -42,7 +41,7 @@ impl McpServerOrchestrator {
     }
 }
 
-use shared::common::taxonomy_workspace_helper::find_workspace_root;
+use shared::common::find_workspace_root;
 
 #[async_trait::async_trait]
 impl IMcpServerAggregate for McpServerOrchestrator {
@@ -80,7 +79,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
                 let layer_det = self.deps.layer_detector.clone();
-                let scanner = self.deps.scanner_provider.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -168,7 +166,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
                 let layer_det = self.deps.layer_detector.clone();
-                let scanner = self.deps.scanner_provider.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();

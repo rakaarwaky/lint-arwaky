@@ -20,7 +20,7 @@ use crate::surface_check_command::{CheckCommandsSurface, OrchestratorFactory};
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    shared::common::taxonomy_workspace_helper::find_workspace_root(path)
+    shared::common::find_workspace_root(path)
 }
 
 /// check = self-lint (AES analysis on current project, same algorithm as scan)

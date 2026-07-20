@@ -1,7 +1,6 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
 // Wiring: IHookManagerPort → GitHookAdapter (infrastructure layer)
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
@@ -13,12 +12,9 @@ pub struct GitContainer {
 }
 
 impl GitContainer {
-    pub fn new(
-        scanner: Arc<dyn IScannerProviderPort>,
-        hook_adapter: Arc<dyn IHookManagerPort>,
-    ) -> Self {
+    pub fn new(hook_adapter: Arc<dyn IHookManagerPort>) -> Self {
         let diff_protocol: Arc<dyn IDiffProtocol> =
-            Arc::new(crate::capabilities_diff_checker::DiffChecker::new(scanner));
+            Arc::new(crate::capabilities_diff_checker::DiffChecker::new());
         let hook_adapter_clone = Arc::clone(&hook_adapter);
         let hook_protocol: Arc<dyn IHookProtocol> = Arc::new(
             crate::capabilities_hook_manager::HookManager::new(hook_adapter_clone),
@@ -41,9 +37,7 @@ impl GitContainer {
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
             ));
-        let scanner: Arc<dyn IScannerProviderPort> =
-            Arc::new(shared::common::FileCollectorProvider::new());
-        Self::new(scanner, hook_adapter)
+        Self::new(hook_adapter)
     }
 
     pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {

@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -20,7 +19,6 @@ pub struct CliContainer {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub scanner_provider: Arc<dyn IScannerProviderPort>,
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
@@ -60,10 +58,6 @@ impl CliContainer {
         let orphan_orchestrator = orphan_container.analyzer();
         let layer_detector = orphan_container.layer_detector();
 
-        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
-        );
-
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.multi_project_orchestrator();
 
@@ -78,7 +72,6 @@ impl CliContainer {
             external_lint,
             orphan_orchestrator,
             layer_detector,
-            scanner_provider,
             git_aggregate,
             multi_project_orchestrator,
         }
@@ -91,7 +84,6 @@ impl CliContainer {
             naming_orchestrator: self.naming_orchestrator.clone(),
             external_lint: self.external_lint.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
-            scanner_provider: self.scanner_provider.clone(),
             orphan_orchestrator: self.orphan_orchestrator.clone(),
             layer_detector: self.layer_detector.clone(),
             language_detector: Arc::new(

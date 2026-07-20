@@ -147,4 +147,3 @@ grep -n "open(\|Path(\|os\." modules/shared/src/*/taxonomy_*.py
 - Exposing public raw `str` fields in VOs.
 - Creating VOs without validation when domain invariants exist.
 - Duplicating taxonomy types across domains.
-- Creating taxonomy utility functions with I/O.

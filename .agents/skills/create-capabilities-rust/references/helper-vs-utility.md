@@ -51,25 +51,22 @@ pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
 }
 ```
 
-## I/O Blocker
+## I/O Rule
 
-A function may be stateless, but if it performs I/O, it MUST NOT become a taxonomy utility.
-
-It also MUST NOT stay in capabilities.
+A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
 
 ```rust
-// BAD in capabilities layer
-fn read_config(file_path: &str) -> Option<String> {
-    std::fs::read_to_string(file_path).ok()
+// OK in taxonomy utility — stateless, domain-agnostic, reusable
+pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    // I/O is allowed in taxonomy utilities
 }
 ```
 
 Rule:
 
 ```text
-Stateless + I/O = infrastructure/port implementation
-NOT taxonomy utility
-NOT capabilities layer
+Stateless + I/O + domain-agnostic + reusable = taxonomy utility
+Stateless + I/O + domain-specific = infrastructure/port implementation
 ```
 
 ## Decision Tree
@@ -83,9 +80,6 @@ Found reusable code in capabilities?
   ├─ Does it need &self or struct state?
   │   └─ YES → keep as helper/method in Block 3
   │
-  ├─ Does it perform I/O or side effects?
-  │   └─ YES → move to infrastructure/port implementation
-  │
-  └─ Is it stateless, pure, domain-agnostic, and reusable?
-      └─ YES → extract to shared taxonomy utility
+  └─ Is it stateless, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility (I/O allowed)
 ```

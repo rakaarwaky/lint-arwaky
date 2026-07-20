@@ -147,4 +147,3 @@ grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/shared/src/*/taxonomy
 - Exposing public raw `string` fields in VOs.
 - Creating VOs without validation when domain invariants exist.
 - Duplicating taxonomy types across domains.
-- Creating taxonomy utility functions with I/O.

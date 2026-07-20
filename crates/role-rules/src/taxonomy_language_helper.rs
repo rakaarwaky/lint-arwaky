@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_language_helper — shared language detection utility for role auditors
 // Eliminates boilerplate: every role auditor was repeating the same 5-line language detection pattern.
-use shared::common::taxonomy_language_detector_helper::LanguageDetector;
+use shared::common::taxonomy_language_detector_utility::detect_language as detect_lang;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_source_vo::SourceContentVO;
@@ -13,17 +13,15 @@ pub struct LanguageInfo {
     pub lang: DetLang,
 }
 
-/// Detect language from a `SourceContentVO` using the shared `LanguageDetector`.
+/// Detect language from a `SourceContentVO` using the shared utility.
 pub fn detect_language(source: &SourceContentVO) -> LanguageInfo {
-    let detector = LanguageDetector::new();
-    let lang = detector.detect(&source.file_path);
+    let lang = detect_lang(&source.file_path);
     flags_from_lang(lang)
 }
 
 /// Detect language from a raw `FilePath`.
 pub fn detect_language_from_path(fp: &FilePath) -> LanguageInfo {
-    let detector = LanguageDetector::new();
-    let lang = detector.detect(fp);
+    let lang = detect_lang(fp);
     flags_from_lang(lang)
 }
 

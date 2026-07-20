@@ -5,7 +5,6 @@ use crate::infrastructure_file_system_adapter::FileSystemAdapter;
 use crate::surface_tui_command::TuiCommandSurface;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use maintenance::root_maintenance_container::MaintenanceContainer;
-use shared::common::contract_scanner_provider_port::IScannerProviderPort;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use std::sync::Arc;
@@ -55,9 +54,6 @@ impl TuiContainer {
         let naming_container =
             naming_rules::root_naming_rules_container::NamingContainer::new_default();
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();
-        let scanner_provider: Arc<dyn IScannerProviderPort> = Arc::new(
-            shared::common::infrastructure_file_collector_provider::FileCollectorProvider::new(),
-        );
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate)
                 .with_fix(fix_orchestrator)
@@ -68,7 +64,6 @@ impl TuiContainer {
                 .with_orphan(
                     orphan_container.analyzer(),
                     orphan_container.layer_detector(),
-                    scanner_provider,
                 )
                 .with_external_lint(external_lint_container.aggregate())
                 .with_import_orchestrator(import_container.orchestrator())

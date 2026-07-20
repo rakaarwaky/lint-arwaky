@@ -21,9 +21,11 @@ Extract ONLY if ALL of these are true:
 4. Domain-agnostic: does not know business or orchestration rules.
 5. Reusable: useful for multiple modules/layers.
 
-## I/O Blocker
+## I/O Rule
 
-Stateless + I/O = infrastructure/port implementation, NOT taxonomy utility, NOT agent layer.
+A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
+
+Stateless + I/O + domain-specific = infrastructure/port implementation.
 
 ## Decision Tree
 
@@ -36,9 +38,6 @@ Found reusable code in agent?
   ├─ Does it need &self or struct state?
   │   └─ YES → keep as helper/method in Block 3
   │
-  ├─ Does it perform I/O or side effects?
-  │   └─ YES → move to infrastructure/port implementation
-  │
-  └─ Is it stateless, pure, domain-agnostic, and reusable?
-      └─ YES → extract to shared taxonomy utility
+  └─ Is it stateless, domain-agnostic, and reusable?
+      └─ YES → extract to shared taxonomy utility (I/O allowed)
 ```

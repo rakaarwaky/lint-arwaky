@@ -55,9 +55,12 @@ pub fn collect_source_files(
     dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    shared::common::taxonomy_file_collector_helper::collect_source_files(
-        root_dir, dir_path, ignored,
-    )
+    let mut files = Vec::new();
+    let path = std::path::Path::new(&dir_path.value);
+    if path.is_dir() {
+        shared::common::taxonomy_file_utility::walk_source_files(path, &mut files, ignored);
+    }
+    files
 }
 
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.

@@ -9,20 +9,21 @@ pub fn file_basename(path: &str) -> String {
     }
 }
 
-/// Extract stem from basename: "checker.rs" → "checker", "lib.rs" → "lib"
+/// Extract stem from path: "checker.rs" → "checker", "capabilities_checker.rs" → "capabilities_checker"
 pub fn file_stem(path: &str) -> String {
     let base = file_basename(path);
-    match base.rsplit_once('.') {
-        Some((stem, _)) => stem.to_string(),
-        None => base,
+    if let Some(pos) = base.rfind('.') {
+        base[..pos].to_string()
+    } else {
+        base
     }
 }
 
-/// Extract suffix after last underscore: "capabilities_checker.rs" → "checker"
+/// Extract suffix after last underscore in stem: "capabilities_checker.rs" → "checker"
 pub fn file_suffix(path: &str) -> String {
-    let base = file_basename(path);
-    match base.rsplit_once('_') {
-        Some((_, suffix)) => suffix.to_string(),
-        None => base,
+    let st = file_stem(path);
+    match st.rfind('_') {
+        Some(pos) => st[pos + 1..].to_string(),
+        None => String::new(),
     }
 }
