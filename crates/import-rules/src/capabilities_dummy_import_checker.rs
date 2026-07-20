@@ -70,8 +70,7 @@ impl DummyImportChecker {
     fn _check_dummy_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>, layer_map: &shared::taxonomy_definition_vo::LayerMapVO) {
         let lines: Vec<&str> = content.lines().collect();
         let lang: LanguageVO = LanguageVO::from_path(file);
-        let dummy_ranges: Vec<(usize, usize)> = utility_dummy_detector::dummy_function_ranges(&lines, lang)
-            .into_iter().map(|(s, e)| (s.value() as usize, e.value() as usize)).collect();
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
         let dummy_impl_traits: Vec<String> = utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
             .into_iter().map(|(t, _)| t.value().to_string()).collect();
         let layer_name: String = self._detect_layer(file, layer_map);
@@ -132,9 +131,8 @@ impl DummyImportChecker {
     fn _check_taxonomy_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>, layer_map: &shared::taxonomy_definition_vo::LayerMapVO) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let layer_name = self._detect_layer(file, layer_map);
-        let dummy_ranges: Vec<(usize, usize)> = utility_dummy_detector::dummy_function_ranges(&lines, lang)
-            .into_iter().map(|(s, e)| (s.value() as usize, e.value() as usize)).collect();
+        let _layer_name = self._detect_layer(file, layer_map);
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
         let dummy_impl_traits: Vec<String> = utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
             .into_iter().map(|(t, _)| t.value().to_string()).collect();
         let imported = utility_dummy_detector::imported_symbols(&lines, lang);

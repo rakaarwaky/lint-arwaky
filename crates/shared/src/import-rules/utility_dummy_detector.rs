@@ -51,6 +51,7 @@ pub fn symbol_used_real(
     dummy_ranges: &[(LineNumber, LineNumber)],
     dummy_impl_traits: &[String],
 ) -> bool {
+    let dummy_ranges_usize: Vec<(usize, usize)> = dummy_ranges.iter().map(|(a, b)| (a.value() as usize, b.value() as usize)).collect();
     if (symbol.starts_with('I')
         && symbol.len() > 1
         && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))
@@ -108,7 +109,7 @@ pub fn symbol_used_real(
         let line_no = idx + 1;
         let trimmed = line.trim();
 
-        if in_dummy_range(line_no, dummy_ranges)
+        if in_dummy_range(line_no, &dummy_ranges_usize)
             || trimmed.starts_with("use ")
             || trimmed.starts_with("import ")
             || trimmed.starts_with("from ")

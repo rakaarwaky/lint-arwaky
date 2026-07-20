@@ -23,6 +23,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
@@ -131,15 +132,13 @@ impl SurfaceRoleChecker {
             let keys = shared::common::utility_layer_detector::collect_layer_keys(layer_map);
             let layer_vo = shared::common::utility_layer_detector::resolve_specialized_layer(&layer, &f.value, &keys);
 
-            let is_surface = layer_vo == layer_surfaces()
-                || layer_vo
-                    .value
-                    .starts_with(&format!("{}(", layer_surfaces().value));
+            let is_surface = layer_vo == layer_surfaces().value
+                || layer_vo.starts_with(&format!("{}(", layer_surfaces().value));
             if !is_surface {
                 continue;
             }
 
-            let definition = match layer_map.values.get(&layer_vo) {
+            let definition = match layer_map.values.get(&shared::taxonomy_layer_vo::LayerNameVO::new(&layer_vo)) {
                 Some(d) => d.clone(),
                 None => continue,
             };

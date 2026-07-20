@@ -17,7 +17,9 @@ use std::fs;
 pub struct DependencyCycleAnalyzer;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-#[async_trait::async_trait]
+use async_trait::async_trait;
+
+#[async_trait]
 impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol for DependencyCycleAnalyzer {
     fn scan(&self, config: &ArchitectureConfig, layer_map: &LayerMapVO, files: &[FilePath], root_dir: &FilePath) -> Vec<LintResult> {
         let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
