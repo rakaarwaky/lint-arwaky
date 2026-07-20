@@ -34,6 +34,6 @@ pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
 pub mod utility_value_object_generator;
-pub mod contract_path_normalization_protocol;
 pub mod contract_file_collection_protocol;
+pub mod contract_path_normalization_protocol;
 
