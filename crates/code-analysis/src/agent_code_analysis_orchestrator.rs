@@ -129,7 +129,7 @@ impl CodeAnalysisOrchestrator {
 
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
-        let config = self.container.analyzer().config();
+        let config = self.container.config();
         let ignored: Vec<String> = config
             .ignored_paths
             .values

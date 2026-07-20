@@ -24,10 +24,18 @@ impl TuiContainer {
         // to work in the TUI.
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_default();
-        let analyzer = import_container.analyzer();
+        let (config, layer_map) = {
+            let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
+            let (merged, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+            let mut c = aes_config;
+            c.layers = merged;
+            let lm = shared::taxonomy_definition_vo::LayerMapVO::new(c.layers.clone());
+            (c, lm)
+        };
         let checker_container =
             code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                analyzer.clone(),
+                config,
+                layer_map,
             );
         init_global_checker(Arc::new(checker_container));
 

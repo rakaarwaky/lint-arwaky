@@ -115,7 +115,7 @@ pub fn extract_filename(file_path: &str) -> &str {
 
 /// Collect layer keys as strings from a LayerMapVO.
 pub fn collect_layer_keys(layer_map: &LayerMapVO) -> Vec<String> {
-    layer_map.keys().map(|k| k.to_string()).collect()
+    layer_map.values.keys().map(|k| k.to_string()).collect()
 }
 
 /// Look up a LayerDefinition by layer name string.

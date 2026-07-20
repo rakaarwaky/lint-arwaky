@@ -1,7 +1,9 @@
 // import-rules — taxonomy and contract types
-pub mod contract_import_parser_protocol;
+pub mod contract_import_mandatory_protocol;
+pub mod contract_import_forbidden_protocol;
+pub mod contract_dummy_import_protocol;
+pub mod contract_cycle_import_protocol;
 pub mod contract_import_runner_aggregate;
-pub mod contract_rule_protocol;
 pub mod contract_unused_import_protocol;
 pub mod taxonomy_dependency_edge_vo;
 pub mod taxonomy_import_rule_vo;

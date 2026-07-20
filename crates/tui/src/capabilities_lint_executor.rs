@@ -276,22 +276,16 @@ impl LintExecutor {
                     let import_container =
                         import_rules::root_import_rules_container::ImportContainer::new_with_config(
                             ws.config.clone(),
-                            Arc::new(import_rules::root_import_rules_container::NullSourceParser),
                         );
                     let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::new(
-                            import_container.analyzer(),
-                        );
+                        naming_rules::root_naming_rules_container::NamingContainer::new_default();
                     let role_container =
                         role_rules::root_role_rules_container::RoleContainer::new_with_config(
                             ws.config.clone(),
                         );
-                    let analyzer = import_container.analyzer();
                     let code_analysis_linter =
-                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_analyzer(
-                            analyzer,
-                        )
-                        .code_analysis_linter();
+                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
+                            .code_analysis_linter();
 
                     let mut ws_results = Vec::new();
 

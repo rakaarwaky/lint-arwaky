@@ -13,7 +13,6 @@ use std::path::{Path, PathBuf};
 
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::contract_system_protocol::IFileSystemProtocol;
 use shared::common::utility_language_detector::is_lintable;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -194,7 +193,6 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,
         path: Option<String>,
-        _fs: &dyn IFileSystemProtocol,
     ) -> Vec<AesCodeAnalysisViolation> {
         let root = crate::agent_code_analysis_orchestrator::resolve_target(path);
         let src = crate::agent_code_analysis_orchestrator::detect_source_dir(Path::new(&root));

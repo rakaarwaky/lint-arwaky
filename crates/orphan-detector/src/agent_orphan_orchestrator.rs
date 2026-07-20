@@ -51,7 +51,7 @@ pub struct ArchOrphanAnalyzer {
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-    capabilities_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
+    infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
     agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
 }
@@ -62,7 +62,7 @@ impl ArchOrphanAnalyzer {
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
         contract_analyzer: Arc<dyn IContractOrphanProtocol>,
         capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        capabilities_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
+        infrastructure_analyzer: Arc<dyn IInfrastructureOrphanProtocol>,
         agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
         surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     ) -> Self {
@@ -71,7 +71,7 @@ impl ArchOrphanAnalyzer {
             taxonomy_analyzer,
             contract_analyzer,
             capabilities_analyzer,
-            capabilities_analyzer,
+            infrastructure_analyzer,
             agent_analyzer,
             surfaces_analyzer,
         }

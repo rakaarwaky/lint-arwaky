@@ -23,15 +23,26 @@ pub struct CliContainer {
     pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
+fn make_layer_map() -> (shared::config_system::taxonomy_config_vo::ArchitectureConfig, shared::taxonomy_definition_vo::LayerMapVO) {
+    let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
+    let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(&aes_config);
+    let mut config = aes_config;
+    config.layers = merged_layers;
+    let layer_map = shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone());
+    (config, layer_map)
+}
+
 impl CliContainer {
     pub fn new_default() -> Self {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_default();
-        let analyzer = import_container.analyzer();
+
+        let (config, layer_map) = make_layer_map();
 
         let checker_container =
             code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                analyzer.clone(),
+                config.clone(),
+                layer_map.clone(),
             );
         code_analysis::agent_code_analysis_orchestrator::init_global_checker(Arc::new(
             checker_container,
@@ -46,7 +57,7 @@ impl CliContainer {
         let role_orchestrator = role_container.orchestrator();
 
         let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::new(analyzer);
+            naming_rules::root_naming_rules_container::NamingContainer::new_default();
         let naming_orchestrator = naming_container.orchestrator();
 
         let external_lint_container =

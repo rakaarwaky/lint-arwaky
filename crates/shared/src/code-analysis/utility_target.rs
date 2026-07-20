@@ -1,5 +1,6 @@
 // PURPOSE: taxonomy_target_utility — pure utility functions for path resolution and source detection
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use crate::common::utility_file::walk_source_files;
 use std::path::Path;
 
 /// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
@@ -24,8 +25,12 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
 /// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
 pub fn collect_source_files(
     root_dir: &Path,
-    dir_path: &DirectoryPath,
+    _dir_path: &DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
-    dir_path.collect_source_files(root_dir, ignored)
+    let mut files = Vec::new();
+    if root_dir.is_dir() {
+        walk_source_files(root_dir, &mut files, ignored);
+    }
+    files
 }

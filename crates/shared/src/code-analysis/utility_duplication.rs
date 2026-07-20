@@ -91,7 +91,7 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
             Ok(f) => f,
             Err(_) => continue,
         };
-        if !fp.is_lintable() {
+        if !crate::common::utility_language_detector::is_lintable(&fp) {
             continue;
         }
         let content = match std::fs::read_to_string(&fp.value) {
