@@ -3,6 +3,7 @@ use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleCh
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::utility_language_detector::detect_language_info_from_source;
 
 // PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing (missing interface implementation)
 //
@@ -38,7 +39,7 @@ impl CapabilitiesRoleChecker {
         }
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::utility_language_detector::detect_language(source);
+        let li = detect_language_info_from_source(source);
 
         if li.is_rs {
             self._check_rust_routing(file, content, violations);

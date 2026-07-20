@@ -4,6 +4,7 @@ use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::utility_language_detector::detect_language_info_from_source;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -549,7 +550,7 @@ impl ContractRoleChecker {
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = crate::utility_language_detector::detect_language(source);
+        let li = detect_language_info_from_source(source);
         let is_rs = li.is_rs;
         let is_py = li.is_py;
         let is_js = li.is_js;

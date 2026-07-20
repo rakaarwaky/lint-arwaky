@@ -7,6 +7,7 @@ use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::utility_language_detector::detect_language_info_from_source;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -97,7 +98,7 @@ impl TaxonomyRoleChecker {
     fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let file = source.file_path.value();
         let content = source.content.value();
-        let li = shared::common::utility_language_detector::detect_language_info_from_source(source);
+        let li = detect_language_info_from_source(source);
         let primitives: &[&str] = match li.lang {
             DetLang::Rust => Self::RUST_PRIMITIVES,
             DetLang::Python => Self::PY_PRIMITIVES,

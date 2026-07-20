@@ -14,6 +14,7 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::utility_language_detector::{detect_language_info, detect_language_info_from_source};
 
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
 //
@@ -131,7 +132,7 @@ impl SurfaceRoleChecker {
     pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
-        let li = shared::common::utility_language_detector::detect_language_info_from_source(source);
+        let li = detect_language_info_from_source(source);
         let fn_keyword = if li.is_py {
             "def "
         } else if li.is_js {
@@ -288,7 +289,7 @@ impl SurfaceRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
         let mut violations: Vec<String> = Vec::new();
-        let li = shared::common::utility_language_detector::detect_language_info(f);
+        let li = detect_language_info(f);
 
         match li.lang {
             DetLang::Rust => self._check_rust_passive(f, &lines, &mut violations),
