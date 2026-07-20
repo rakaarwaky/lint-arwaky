@@ -6,7 +6,7 @@
 
 The `naming-rules` feature enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root). By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos and lets developers recognize a component's architectural role from its name alone.
 
-## Requirements & Scope
+## Scope & Requirements
 
 The `naming-rules` feature audits naming compliance of every scanned source file against the following rules:
 

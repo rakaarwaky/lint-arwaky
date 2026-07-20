@@ -1,5 +1,9 @@
 // PURPOSE: Layer detection utility — pure function, simple prefix check
+use std::collections::HashMap;
 use std::path::Path;
+
+use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use crate::taxonomy_layer_vo::LayerNameVO;
 
 /// Detect architectural layer from filename prefix.
 ///
@@ -97,5 +101,38 @@ pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<Strin
     }
 
     None
+}
+
+/// Extract filename from file path.
+///
+/// Returns the filename (last component) as a string slice, or empty string if extraction fails.
+pub fn extract_filename(file_path: &str) -> &str {
+    Path::new(file_path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Collect layer keys as strings from a LayerMapVO.
+pub fn collect_layer_keys(layer_map: &LayerMapVO) -> Vec<String> {
+    layer_map.keys().map(|k| k.to_string()).collect()
+}
+
+/// Look up a LayerDefinition by layer name string.
+///
+/// Tries direct lookup first, then falls back to base name (before parenthesis).
+pub fn get_layer_def<'a>(
+    layer: &str,
+    layers: &'a HashMap<LayerNameVO, LayerDefinition>,
+) -> Option<&'a LayerDefinition> {
+    layers
+        .get(&LayerNameVO::new(layer))
+        .or_else(|| {
+            let base = match layer.split('(').next() {
+                Some(s) => s,
+                None => layer,
+            };
+            layers.get(&LayerNameVO::new(base))
+        })
 }
 

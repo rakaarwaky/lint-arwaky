@@ -31,16 +31,16 @@ impl ImportContainer {
         config: ArchitectureConfig,
         source_parser: Arc<dyn ISourceParserProtocol>,
     ) -> Self {
-        let fs = Arc::new(crate::capabilities_filesystem_adapter::OSFileSystemAdapter::new());
-        let parser: Arc<dyn IImportParserProtocol> =
-            Arc::new(crate::capabilities_import_parser_adapter::ImportParserAdapter::new());
-        let analyzer = Arc::new(
-            crate::capabilities_layer_detection_analyzer::LayerDetectionAnalyzer::new(
-                config.clone(),
-                fs,
-                source_parser,
-            ),
-        );
+        // NOTE: The 3 thin capability adapters (OSFileSystemAdapter,
+        // ImportParserAdapter, LayerDetectionAnalyzer) were removed and
+        // replaced by shared utility functions (utility_file,
+        // utility_import_resolver, utility_layer_detector). A utility-backed
+        // adapter implementing IImportParserProtocol / IAnalyzer /
+        // ILayerDetectionAggregate must be wired here once the shared
+        // taxonomy VOs and IFileSystemProtocol trait (deleted earlier) are
+        // restored — those deletions currently make the traits unresolved.
+        let parser: Arc<dyn IImportParserProtocol> = Arc::new(UtilityImportParserAdapter::new());
+        let analyzer = Arc::new(UtilityLayerDetectorAdapter::new(config.clone(), source_parser));
 
         let mandatory = Arc::new(
             crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(

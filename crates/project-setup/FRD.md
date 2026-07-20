@@ -6,7 +6,7 @@ See [README.md](../../../README.md) for setup commands and [DEPLOY.md](../../../
 
 The `project-setup` module provides scaffolding facilities and doctor checks for new projects. This module initializes projects with AES-compliant directory layouts, sets up MCP configuration, and provides CI/CD templates for lint_arwaky integration.
 
-## 2. Requirements & Scope
+## 2. Scope & Requirements
 
 The `project-setup` module is responsible for setup based on the following specifications:
 
