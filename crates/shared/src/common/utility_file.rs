@@ -268,6 +268,45 @@ fn walk_rs_files_inner(
     }
 }
 
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file_sync(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Get file basename (filename without directory path).
+pub fn get_basename(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Get file stem (filename without extension and directory).
+pub fn get_file_stem(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Check if path is a directory.
+pub fn is_directory(path: &str) -> bool {
+    std::path::Path::new(path).is_dir()
+}
+
+/// Check if path is a file.
+pub fn is_file(path: &str) -> bool {
+    std::path::Path::new(path).is_file()
+}
+
+/// Get parent directory path.
+pub fn get_parent(path: &str) -> &str {
+    std::path::Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .unwrap_or("")
+}
+
 /// Walk up from `start` looking for workspace root markers.
 /// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
 pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {

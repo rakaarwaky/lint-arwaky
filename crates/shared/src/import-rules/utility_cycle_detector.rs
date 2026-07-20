@@ -14,7 +14,7 @@ pub fn normalize_to_layer(name: &str) -> String {
         "taxonomy_",
         "contract_",
         "capabilities_",
-        "infrastructure_",
+        "utility_",
         "agent_",
         "surface_",
     ];

@@ -11,7 +11,7 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
         ("taxonomy_", "taxonomy"),
         ("contract_", "contract"),
         ("capabilities_", "capabilities"),
-        ("infrastructure_", "infrastructure"),
+        ("utility_", "utility"),
         ("agent_", "agent"),
         ("surface_", "surfaces"),
         ("root_", "root"),
