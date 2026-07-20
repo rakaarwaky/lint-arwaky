@@ -1,5 +1,6 @@
 // common — truly shared types used by multiple features
 pub mod taxonomy_action_vo;
+pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_byte_count_vo;
 pub mod taxonomy_common_error;
@@ -8,37 +9,26 @@ pub mod taxonomy_definition_vo;
 pub mod taxonomy_display_content_vo;
 pub mod taxonomy_duration_vo;
 pub mod taxonomy_error_vo;
+pub mod taxonomy_filesystem_error;
 pub mod taxonomy_job_id_vo;
 pub mod taxonomy_job_vo;
+pub mod taxonomy_language_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_line_count_vo;
 pub mod taxonomy_lint_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
+pub mod taxonomy_naming_list_vo;
+pub mod taxonomy_parser_error;
+pub mod taxonomy_paths_vo;
+pub mod taxonomy_path_utils_vo;
+pub mod taxonomy_path_vo;
 pub mod taxonomy_response_data_vo;
 pub mod taxonomy_severity_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
-
-// from file-system/ (foundational, multi-feature)
-pub mod contract_system_protocol;
-pub mod taxonomy_filesystem_error;
-
-// from source-parsing/ (foundational, multi-feature)
-pub mod contract_language_detector_protocol;
-pub mod contract_parser_protocol;
-pub mod contract_path_normalization_protocol;
-pub mod contract_scanner_provider_protocol;
-pub mod taxonomy_adapter_error;
 pub mod utility_file;
 pub mod utility_language_detector;
-pub mod taxonomy_language_vo;
-pub mod taxonomy_naming_list_vo;
-pub mod taxonomy_parser_error;
-pub mod taxonomy_path_utils_vo;
-pub mod taxonomy_path_vo;
-pub mod taxonomy_paths_vo;
-pub use utility_file::{
-    collect_all_source_files, collect_all_source_files_raw, find_workspace_root, scan_directory,
-    walk_rs_files,
-};
+pub mod utility_layer_detector;
+pub mod utility_value_object_generator;
+
