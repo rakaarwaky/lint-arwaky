@@ -13,12 +13,11 @@ related:
   - lint-arwaky-cli
   - fix-naming
 ---
-
 # add-docs-rust
 
 ## Rules
 
-- Crate-level `README.md` MUST exist in every crate directory
+- Crate-level `FRD.md` MUST exist in every crate directory
 - All public structs and methods MUST have `///` doc comments (visible in `cargo doc`)
 - Doc comments MUST explain "what" and "why", not "how" (code shows how)
 - Example code in doc comments MUST be valid Rust
@@ -29,7 +28,7 @@ Add crate-level documentation: `README.md` for entry points and `///` doc commen
 
 ## When to Use
 
-- New crate has no `README.md`
+- New crate has no `FRD.md`
 - Public structs/methods lack `///` doc comments
 - `cargo doc` output is incomplete or missing
 - User asks to document the crate or add docs
@@ -38,7 +37,7 @@ Add crate-level documentation: `README.md` for entry points and `///` doc commen
 
 > **"Can a newcomer understand this crate's purpose in 30 seconds?"**
 
-If no -> **Add README.md**
+If no -> **Add FRD.md**
 
 > **"Will this struct appear in `cargo doc`?"**
 
@@ -46,111 +45,37 @@ If no (only `//` comments) -> **Convert to `///` doc comments**
 
 ## Detection Patterns
 
-### Missing README (Create)
+### Missing FRD.md (Create)
 
 ```
-crates/<import-rules>/
+crates/<name-folder>/
 ├── src/
-│   ├── lib.rs        # has module declarations, no README nearby
+│   ├── lib.rs      
 │   └── ...
-└── tests/            # no README.md in crate directory
+├── tests/          
+└── FRD.md
 ```
 
 ### Missing Doc Comments (Add)
 
 ```rust
-// [FORBIDDEN] Only // comment — won't appear in cargo doc
+// PURPOSE expalin file in one sentence
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
 }
 
 // [OK] /// doc comment — appears in cargo doc
-/// Orchestrates AES201-AES205 import rule checks.
+/// Orchestrates <name-feature>.
 ///
 /// Execution order:
-/// 1. Mandatory imports (concurrent)
-/// 2. Forbidden imports (concurrent)
-/// 3. Sequential checks
-/// 4. Cycle detection (last, requires full graph)
+/// 1. 
+/// 2. 
+/// 3. 
+/// 4. 
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
 }
 ```
-
-## README.md Template
-
-````markdown
-# <Crate Name>
-
-## Purpose
-
-Brief description of what this crate does and its role in the larger system.
-
-## Architecture
-
-Follows the 7-layer AES architecture:
-
-| Layer          | Files                 | Responsibility                |
-| -------------- | --------------------- | ----------------------------- |
-| Agent          | `agent_*.rs`          | Orchestration, no computation |
-| Capabilities   | `capabilities_*.rs`   | Business logic, no I/O        |
-| Infrastructure | `infrastructure_*.rs` | I/O abstractions              |
-
-## AES Rules Implemented
-
-| Rule   | Description       | Checker                              |
-| ------ | ----------------- | ------------------------------------ |
-| AES201 | Forbidden imports | `CapabilitiesImportForbiddenChecker` |
-| AES202 | Mandatory imports | `CapabilitiesImportMandatoryChecker` |
-| ...    | ...               | ...                                  |
-
-## Public API
-
-```rust
-use import_rules::*;
-
-let container = ImportContainer::new(/* args */);
-let orchestrator = container.orchestrator();
-```
-````
-
-## Testing
-
-```bash
-cargo test -p import_rules
-```
-
-````
-
-## Doc Comment Template
-
-```rust
-/// Short summary (one line).
-///
-/// Longer explanation if needed. Explain:
-/// - What this struct/type does
-/// - Why it exists
-/// - Key invariants
-///
-/// # Example
-/// ```
-/// let instance = MyType::new();
-/// ```
-pub struct MyType { ... }
-
-/// Does X with Y.
-///
-/// # Arguments
-/// - `param`: description
-///
-/// # Returns
-/// - `Ok(T)` on success
-/// - `Err(E)` on failure (describe when)
-///
-/// # Panics
-/// - Describe if any
-pub fn my_method(&self, param: &Type) -> Result<T, E> { ... }
-````
 
 ## Workflow
 
@@ -160,15 +85,13 @@ pub fn my_method(&self, param: &Type) -> Result<T, E> { ... }
 - Identify public structs and methods
 - Check existing docs
 
-### Step 2: Create README.md
+### Step 2: Create FRD.md
 
-Write crate-level README.md following the template above. Include:
+Write crate-level FRD.md following the template above. Include:
 
-- Purpose (one sentence)
-- Architecture overview (layer table)
-- AES rules implemented
-- Public API example
-- Test commands
+1. Feature Goal
+2. Requirements & Scope
+3. Success Indicators
 
 ### Step 3: Add Doc Comments
 
@@ -178,31 +101,3 @@ For each public struct and method:
 2. Add summary line
 3. Add explanation if >10 lines of logic
 4. Add `# Example` block if applicable
-
-### Step 4: Verify
-
-```bash
-# Generate docs locally
-cargo doc --no-deps -p <crate-name> --open
-
-# Check no public items lack docs
-cargo doc --no-deps -p <crate-name> 2>&1 | grep -i "missing"
-```
-
-## Quick Commands
-
-```bash
-# View generated docs
-cargo doc --no-deps -p import_rules --open
-
-# Find public items without doc comments
-rg "^pub (struct|fn|trait|enum)" crates/import-rules/src/ | while read line; do
-  file=$(echo "$line" | cut -d: -f1)
-  linenum=$(echo "$line" | cut -d: -f2)
-  prev_line=$((linenum - 1))
-  head -n "$prev_line" "$file" | tail -1 | grep -q "^///" || echo "$file:$linenum NEEDS DOC"
-done
-
-# Check README exists
-ls crates/import-rules/README.md
-```
