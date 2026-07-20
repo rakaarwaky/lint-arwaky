@@ -1,6 +1,5 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_file_system_protocol::IFileSystemProtocol;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
@@ -12,14 +11,15 @@ use std::sync::Arc;
 // Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
+use super::utility_file_system;
 use shared::common::taxonomy_line_count_vo::LineCount;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// ActionHandler — pure state machine for TUI interaction.
-/// Owns the filesystem adapter and lint executor, bridging UI events to backend operations.
+/// Owns the lint executor, bridging UI events to backend operations.
+/// Filesystem operations use direct utility calls instead of protocol ports.
 pub struct ActionHandler {
-    fs_port: Arc<dyn IFileSystemProtocol>,
     lint_port: Arc<dyn ILintExecutorProtocol>,
 }
 
@@ -103,11 +103,8 @@ impl IActionHandlerProtocol for ActionHandler {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ActionHandler {
-    pub fn new(
-        fs_port: Arc<dyn IFileSystemProtocol>,
-        lint_port: Arc<dyn ILintExecutorProtocol>,
-    ) -> Self {
-        Self { fs_port, lint_port }
+    pub fn new(lint_port: Arc<dyn ILintExecutorProtocol>) -> Self {
+        Self { lint_port }
     }
 
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
@@ -238,7 +235,7 @@ impl ActionHandler {
             // ---- Path dialog: confirm typed path ----
             TuiEvent::PathConfirm => {
                 let path = FilePath::new(state.path_input.clone()).unwrap_or_default();
-                if self.fs_port.is_valid_directory(&path) {
+                if utility_file_system::is_valid_directory(&path) {
                     state.project_root = state.path_input.clone();
                     state.current_dir = state.path_input.clone();
                     state.show_path_dialog = false;
@@ -300,7 +297,7 @@ impl ActionHandler {
     /// Navigate to the parent directory, clamped to the project root boundary.
     fn navigate_back(&self, state: &mut AppState) {
         let current = FilePath::new(state.current_dir.clone()).unwrap_or_default();
-        if let Some(parent) = self.fs_port.parent_directory(&current) {
+        if let Some(parent) = utility_file_system::parent_directory(&current) {
             if parent.value.starts_with(&state.project_root) {
                 state.current_dir = parent.value.clone();
                 self.load_directory(state, &state.current_dir.clone());
@@ -325,7 +322,7 @@ impl ActionHandler {
     /// Resets selection and scroll position after loading.
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
-        state.entries = self.fs_port.list_directory(&fp);
+        state.entries = utility_file_system::list_directory(&fp);
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
@@ -345,7 +342,7 @@ impl ActionHandler {
     fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let max_lines = LineCount::new(100);
-        state.preview_text = self.fs_port.read_file_preview(&fp, &max_lines).to_string();
+        state.preview_text = utility_file_system::read_file_preview(&fp, max_lines.value()).to_string();
         state.preview_mode = PreviewMode::FileContent;
     }
 

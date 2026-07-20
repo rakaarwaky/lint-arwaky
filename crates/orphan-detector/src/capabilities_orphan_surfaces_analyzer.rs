@@ -1,3 +1,5 @@
+// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -9,6 +11,33 @@ use shared::taxonomy_definition_vo::LayerDefinition;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct SurfacesOrphanAnalyzer {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
+    fn is_surface_orphan(
+        &self,
+        f: &FilePath,
+        alive_files: &ReachabilityResult,
+        definition: Option<&LayerDefinition>,
+    ) -> OrphanIndicatorResult {
+        is_surface_orphan(f, alive_files, definition)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl SurfacesOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Default for SurfacesOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 pub fn is_surface_orphan(
     f: &FilePath,
@@ -34,7 +63,7 @@ pub fn is_surface_orphan(
         // Check if this surface is imported by any entry or router file
         let root = std::path::Path::new(".");
         if let Ok(workspace_root) =
-            crate::capabilities_orphan_capabilities_analyzer::find_workspace_root(root)
+            shared::orphan_detector::utility_workspace::find_workspace_root(root)
         {
             if let Ok(imported) = check_imported_by_entry_or_router(&workspace_root, &stem) {
                 if imported {
@@ -133,163 +162,6 @@ fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io:
     Ok(false)
 }
 
-pub fn is_surface_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicatorResult {
-    let fp = f.value();
-    let basename = file_basename(fp);
-    let suffix = get_surface_suffix(&basename);
-    let category = surface_category(&suffix);
-    let stem = file_stem(fp);
-
-    match category {
-        // Smart surface: must be imported by entry point or router
-        "smart" => {
-            let mut imported_by_entry_or_router = false;
-            for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(&cb);
-                // Entry point or router
-                if cb.starts_with("cli_")
-                    || cb.starts_with("mcp_")
-                    || cf_suffix == "entry"
-                    || cf_suffix == "router"
-                {
-                    if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&stem) {
-                            imported_by_entry_or_router = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            OrphanIndicatorResult::new(
-                !imported_by_entry_or_router,
-                AesOrphanViolation::SurfaceOrphan {
-                    category: "smart",
-                    stem: stem.clone(),
-                    reason: Some(
-                        format!(
-                            "Smart surface '{}' not imported by any entry point or router.",
-                            stem
-                        )
-                        .into(),
-                    ),
-                }
-                .to_string(),
-                Severity::HIGH,
-            )
-        }
-        // Utility surface: must be imported by smart surface
-        "utility" => {
-            let mut imported_by_smart = false;
-            for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(&cb);
-                if surface_category(&cf_suffix) == "smart" {
-                    if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&stem) {
-                            imported_by_smart = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            OrphanIndicatorResult::new(
-                !imported_by_smart,
-                AesOrphanViolation::SurfaceOrphan {
-                    category: "utility",
-                    stem: stem.clone(),
-                    reason: Some(
-                        format!(
-                            "Utility surface '{}' not imported by any smart surface.",
-                            stem
-                        )
-                        .into(),
-                    ),
-                }
-                .to_string(),
-                Severity::HIGH,
-            )
-        }
-        // Passive surface: must be imported by smart or utility surface
-        "passive" => {
-            let mut imported = false;
-            for cf in all_files {
-                let cb = file_basename(cf);
-                let cf_suffix = get_surface_suffix(&cb);
-                let cat = surface_category(&cf_suffix);
-                if cat == "smart" || cat == "utility" {
-                    if let Ok(c) = std::fs::read_to_string(cf) {
-                        if c.contains(&stem) {
-                            imported = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            OrphanIndicatorResult::new(
-                !imported,
-                AesOrphanViolation::SurfaceOrphan {
-                    category: "passive",
-                    stem: stem.clone(),
-                    reason: Some(
-                        format!(
-                            "Passive surface '{}' not imported by any smart or utility surface.",
-                            stem
-                        )
-                        .into(),
-                    ),
-                }
-                .to_string(),
-                Severity::HIGH,
-            )
-        }
-        _ => OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
-    }
-}
-
-pub fn check_surfaces_orphan(
-    fp: &str,
-    all_files: &[String],
-    violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-) {
-    let fp_vo = match FilePath::new(fp.to_string()) {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-    let result = is_surface_orphan_raw(&fp_vo, all_files);
-    if result.is_orphan {
-        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
-            fp,
-            &result.reason,
-            result.severity,
-            "AES506",
-        ));
-    }
-}
-
-impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
-    fn is_surface_orphan(
-        &self,
-        f: &FilePath,
-        alive_files: &ReachabilityResult,
-        definition: Option<&LayerDefinition>,
-    ) -> OrphanIndicatorResult {
-        is_surface_orphan(f, alive_files, definition)
-    }
-}
-
-// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
-// Surface orphan detection per category:
-// - Smart surface (_command, _controller, _page, _entry): must be imported by entry or router
-// - Utility surface (_hook, _store, _action, _screen, _router): must be imported by smart surface
-// - Passive surface (_component, _view, _layout): must be imported by smart or utility surface
-use shared::cli_commands::taxonomy_severity_vo::Severity;
-
-impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
 
 /// Get surface suffix from filename
 pub fn get_surface_suffix(basename: &str) -> String {
@@ -305,21 +177,3 @@ pub fn surface_category(suffix: &str) -> &'static str {
         _ => "unknown",
     }
 }
-
-// (No protocol implementation found in this file)
-
-impl Default for SurfacesOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-// (No protocol implementation found in this file)
-
-// (No constructors or helpers found in this file)
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-// (No constructors or helpers found in this file)

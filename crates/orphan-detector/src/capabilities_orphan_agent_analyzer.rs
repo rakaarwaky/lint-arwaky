@@ -1,14 +1,12 @@
+// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
-use std::sync::OnceLock;
-
-// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
-// Agent is orphan if the contract aggregate it implements is NOT called by any surface or container.
 use regex::Regex;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -28,6 +26,12 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl AgentOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {
@@ -85,12 +89,6 @@ pub fn extract_aggregate_traits(content: &str) -> Vec<String> {
     traits.sort();
     traits.dedup();
     traits
-}
-
-impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
-    }
 }
 
 /// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
@@ -179,25 +177,4 @@ pub fn is_agent_orphan_raw(f: &FilePath, all_files: &[String]) -> OrphanIndicato
     }
 
     OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-}
-
-pub fn check_agent_orphan(
-    fp: &str,
-    _basename: &str,
-    files: &[String],
-    violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-) {
-    let fp_vo = match FilePath::new(fp.to_string()) {
-        Ok(p) => p,
-        Err(_) => return,
-    };
-    let result = is_agent_orphan_raw(&fp_vo, files);
-    if result.is_orphan {
-        violations.push(crate::agent_orphan_orchestrator::mk_orphan_result(
-            fp,
-            &result.reason,
-            result.severity,
-            "AES505",
-        ));
-    }
 }

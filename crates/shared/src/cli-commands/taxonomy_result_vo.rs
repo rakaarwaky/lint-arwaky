@@ -55,6 +55,26 @@ impl LintResult {
         }
     }
 
+    /// Specialized constructor for orphan detection results (no enclosing scope).
+    pub fn new_orphan(
+        file: &str,
+        msg: impl Into<String>,
+        sev: Severity,
+        code: &str,
+    ) -> Self {
+        Self {
+            file: FilePath::new(file.to_string()).unwrap_or_default(),
+            line: LineNumber::new(0),
+            column: ColumnNumber::new(0),
+            code: ErrorCode::raw(code),
+            message: LintMessage::new(msg),
+            source: Some(AdapterName::raw("architecture")),
+            severity: sev,
+            enclosing_scope: None,
+            related_locations: LocationList::new(),
+        }
+    }
+
     pub fn position(&self) -> Position {
         Position {
             line: self.line.clone(),

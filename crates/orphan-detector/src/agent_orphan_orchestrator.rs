@@ -10,7 +10,7 @@
 // layers have different definition/reachability criteria:
 //   - Taxonomy:  checked via inbound links (imports from other files)
 //   - Contract:  checked via file definitions + inheritance map
-//   - Infrastructure/Capabilities: checked via alive set (reachability)
+//   - Capabilities: checked via alive set (reachability) + container wiring
 //   - Agent:     checked via cross-file references
 //   - Surfaces:  checked via alive set + optional entry detection
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -364,18 +364,3 @@ impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
     }
 }
 
-pub fn mk_orphan_result(file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
-    LintResult {
-        file: FilePath {
-            value: file.to_string(),
-        },
-        line: LineNumber::new(0),
-        column: ColumnNumber::new(0),
-        code: ErrorCode::raw(code),
-        message: LintMessage::new(msg),
-        source: Some(AdapterName::raw("architecture")),
-        severity: sev,
-        enclosing_scope: None,
-        related_locations: LocationList::new(),
-    }
-}

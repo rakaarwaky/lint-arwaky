@@ -1,6 +1,5 @@
 use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
-use crate::capabilities_file_system_adapter::FileSystemAdapter;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
 use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
@@ -15,7 +14,6 @@ impl TuiContainer {
     pub fn run() -> anyhow::Result<()> {
         crate::root_logging_entry::init()?;
         tracing::info!(target = "tui", "TUI container starting");
-        let fs_adapter = Arc::new(FileSystemAdapter::new());
 
         // Initialize the global checker singleton so that
         // CodeAnalysisOrchestrator (used by LintExecutor::scan/check)
@@ -80,7 +78,7 @@ impl TuiContainer {
                 .with_multi_project_orchestrator(config_container.multi_project_orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
-            Arc::new(ActionHandler::new(fs_adapter, lint_executor));
+            Arc::new(ActionHandler::new(lint_executor));
         let tui_aggregate: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(action_handler));
         let surface = TuiCommandSurface::new(tui_aggregate);
         surface.run()?;
