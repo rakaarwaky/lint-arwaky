@@ -7,7 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
-use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX};
+use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -158,7 +158,7 @@ impl SuffixPrefixChecker {
         }
 
         // Step 6: If the layer configuration enforces a strict suffix policy, ensure the suffix matches the allowed list.
-        if def.naming.suffix_policy.value == "strict" {
+        if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
             let valid = match &suffix {
                 Some(s) => def.naming.allowed_suffix.values.iter().any(|v| v == *s),
                 None => false,

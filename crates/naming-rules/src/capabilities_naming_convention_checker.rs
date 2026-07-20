@@ -10,7 +10,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_analyzer_protocol::INamingAnalyzerProtocol;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
-use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX};
+use shared::naming_rules::taxonomy_naming_constant::{ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR};
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -120,15 +120,7 @@ impl NamingConventionChecker {
         _config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
-        const LAYER_PREFIXES: &[&str] = &[
-            "taxonomy_",
-            "contract_",
-            "utility_",
-            "capabilities_",
-            "agent_",
-            "surface_",
-            "root_",
-        ];
+        let layer_prefixes = LAYER_PREFIXES;
 
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
@@ -139,8 +131,8 @@ impl NamingConventionChecker {
             let stem = get_stem(filename).unwrap_or_default();
             let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
 
-            if !actual_prefix.is_empty() && !LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
-                let allowed: Vec<String> = LAYER_PREFIXES
+            if !actual_prefix.is_empty() && !layer_prefixes.iter().any(|p| stem.starts_with(p)) {
+                let allowed: Vec<String> = layer_prefixes
                     .iter()
                     .map(|p| p.trim_end_matches('_').to_string())
                     .collect();
@@ -154,7 +146,7 @@ impl NamingConventionChecker {
                             "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
                              Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
                              Likely causes: typo in the prefix name, or the file is in the wrong directory.",
-                            actual_prefix, LAYER_PREFIXES.len()
+                            actual_prefix, layer_prefixes.len()
                         ))),
                     }
                     .to_string(),
@@ -169,7 +161,7 @@ impl NamingConventionChecker {
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
                     min_words: 3,
-                    separator: "_".to_string(),
+                    separator: SNAKE_CASE_SEPARATOR.to_string(),
                     reason: Some(LintMessage::new(format!(
                         "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
                          the 'prefix_concept_suffix' naming pattern. Files must contain at least 3 underscore-separated \
@@ -197,7 +189,7 @@ impl NamingConventionChecker {
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
                     min_words: 3,
-                    separator: "_".to_string(),
+                    separator: SNAKE_CASE_SEPARATOR.to_string(),
                     reason: Some(LintMessage::new(format!(
                         "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
                          Expected: lowercase alphanumeric words separated by underscores, minimum 3 words. \
