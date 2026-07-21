@@ -40,8 +40,8 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let content = utility_file_cache::read_cached(&path);
             let mut identifiers: Vec<String> = Vec::new();
             let content_ref = content.value();
-            identifiers.extend(extract_struct_names(&content_ref));
-            identifiers.extend(extract_trait_names(&content_ref));
+            identifiers.extend(extract_struct_names(content_ref));
+            identifiers.extend(extract_trait_names(content_ref));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem
@@ -100,7 +100,7 @@ impl CapabilitiesOrphanAnalyzer {
         workspace_root: &std::path::Path,
     ) -> Option<Vec<std::path::PathBuf>> {
         if let Ok(mut guard) = self.container_cache.lock() {
-            if let Some((ref cached_root, ref cached_files)) = *guard {
+            if let Some((cached_root, cached_files)) = &*guard {
                 if cached_root == workspace_root {
                     return Some(cached_files.clone());
                 }

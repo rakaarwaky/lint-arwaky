@@ -15,13 +15,15 @@ impl OrphanContainer {
     }
 
     pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
-        let mut config = ArchitectureConfig::default();
-        config.ignored_paths = shared::common::taxonomy_paths_vo::FilePathList::new(
-            ignored_paths
-                .into_iter()
-                .filter_map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).ok())
-                .collect(),
-        );
+        let config = ArchitectureConfig {
+            ignored_paths: shared::common::taxonomy_paths_vo::FilePathList::new(
+                ignored_paths
+                    .into_iter()
+                    .filter_map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).ok())
+                    .collect(),
+            ),
+            ..Default::default()
+        };
         Self::new_with_config(config)
     }
 

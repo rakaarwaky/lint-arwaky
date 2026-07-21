@@ -451,7 +451,7 @@ impl OrphanGraphResolver {
                                     .and_then(|s| s.to_str())
                                     .unwrap_or_default();
                                 let normalized_stem =
-                                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem);
+                                    shared::orphan_detector::utility_orphan::normalize_module_component(stem);
                                 if (stem == module_name || normalized_stem == module_name)
                                     && path_str != *f
                                 {

@@ -321,10 +321,11 @@ impl ContractOrphanAnalyzer {
             }
 
             // Rust: impl Trait for Type / impl<T> Trait for Type
-            if trimmed.starts_with("impl") && trimmed.contains(" for ") {
-                if trimmed.contains(trait_name) {
-                    return true;
-                }
+            if trimmed.starts_with("impl")
+                && trimmed.contains(" for ")
+                && trimmed.contains(trait_name)
+            {
+                return true;
             }
 
             // Python: class Foo(Trait): / class Foo(Base, Trait):
