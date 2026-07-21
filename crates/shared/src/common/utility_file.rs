@@ -2,6 +2,9 @@
 // Single source of truth for file walking, ignored path matching, source file detection,
 // and workspace root detection.
 
+#[cfg(unix)]
+use std::os::unix::fs::MetadataExt;
+
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -126,7 +129,6 @@ pub fn default_ignored_paths() -> Vec<String> {
 
 #[cfg(unix)]
 fn get_inode(meta: &std::fs::Metadata) -> u64 {
-    use std::os::unix::fs::MetadataExt;
     meta.ino()
 }
 

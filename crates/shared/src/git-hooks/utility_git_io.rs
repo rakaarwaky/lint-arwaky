@@ -1,4 +1,7 @@
 // PURPOSE: Git I/O utility — stateless git command execution and file operation helpers
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 use std::path::Path;
 use std::process::Command;
 
@@ -47,7 +50,6 @@ pub fn metadata<P: AsRef<Path>>(path: P) -> std::io::Result<std::fs::Metadata> {
 /// Set permissions on a file.
 #[cfg(unix)]
 pub fn set_permissions<P: AsRef<Path>>(path: P, mode: u32) -> std::io::Result<()> {
-    use std::os::unix::fs::PermissionsExt;
     let mut perms = std::fs::metadata(&path)?.permissions();
     perms.set_mode(mode);
     std::fs::set_permissions(path, perms)
