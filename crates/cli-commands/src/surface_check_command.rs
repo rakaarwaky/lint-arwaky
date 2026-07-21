@@ -45,14 +45,6 @@ impl CheckCommandsSurface {
     ///
     /// This is a thin wrapper that delegates to the agent layer (IAnalysisPipelineAggregate).
     pub fn scan(&self, path: &str, filter: Option<&str>, format: Format) -> ExitCode {
-        let path_obj = match FilePath::new(path.to_string()) {
-            Ok(fp) => fp,
-            Err(_) => {
-                eprintln!("[error] invalid path: {path}");
-                return ExitCode::from(2);
-            }
-        };
-
         // Construct request and delegate to agent layer
         let request = ScanRequest {
             target: ScanTarget::new(path.to_string()),
@@ -121,11 +113,7 @@ impl CheckCommandsSurface {
         };
 
         let workspaces = match rt.block_on(orchestrator.discover_workspaces(&path_obj)) {
-            Ok(ws) => ws,
-            Err(_) => {
-                eprintln!("[error] workspace discovery failed");
-                return ExitCode::from(2);
-            }
+            ws => ws,
         };
 
         if workspaces.is_empty() {
@@ -135,6 +123,7 @@ impl CheckCommandsSurface {
 
         // Filter to specific member if requested
         let workspaces = if let Some(member_name) = member {
+            let all_workspaces = workspaces.clone();
             let filtered: Vec<_> = workspaces
                 .into_iter()
                 .filter(|ws| {
@@ -149,7 +138,7 @@ impl CheckCommandsSurface {
                 eprintln!("[error] no workspace member matching '{member_name}'");
                 eprintln!();
                 eprintln!("Available members:");
-                for ws in &workspaces {
+                for ws in &all_workspaces {
                     let name = std::path::Path::new(&ws.path.value)
                         .file_name()
                         .map(|n| n.to_string_lossy())

@@ -1,46 +1,21 @@
 ---
 name: create-capabilities-rust
 description: "Create and validate Rust capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.4.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    capability,
-    protocol,
-    structure,
-    aes402,
-    aes403,
-    aes404,
-    3-block-structure,
-    di,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-    role-naming,
-    state-ownership,
-    pipeline-aggregation,
-    no-orchestration,
-    no-domain-definition,
-  ]
-triggers:
-  - "create capability rust"
-  - "add capability rust"
-  - "fix capability structure rust"
-  - "create trait rust"
-  - "capability missing trait rust"
-  - "check capabilities rust"
-  - "audit capabilities rust"
-dependencies: []
-related:
-  - create-agent-rust
-  - enforce-1-struct-per-file-rust
-  - trait-consolidation-rust
-  - module_logic_validator-rust
-  - fix-capability-structure-rust
-  - create-missing-protocols-rust
+metadata:
+    tags: [rust, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
+    triggers:
+        - "create capability rust"
+        - "add capability rust"
+        - "fix capability structure rust"
+        - "create trait rust"
+        - "capability missing trait rust"
+        - "check capabilities rust"
+        - "audit capabilities rust"
+    dependencies: []
+    related:
+        - create-agent-rust
+        - create-contract-rust
+        - create-taxonomy-rust
 ---
 
 # create-capabilities-rust

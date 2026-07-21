@@ -1,36 +1,21 @@
 ---
 name: create-contract-typescript
 description: "Create and validate TypeScript contract layer files in shared domain: pure interface definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    contract,
-    protocol,
-    aggregate,
-    interface,
-    shared,
-    aes201,
-    di,
-    vo,
-  ]
-triggers:
-  - "create contract typescript"
-  - "add contract typescript"
-  - "create protocol typescript"
-  - "create aggregate typescript"
-  - "fix contract typescript"
-  - "check contract typescript"
-  - "audit contract typescript"
-dependencies: []
-related:
-  - create-taxonomy-typescript
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - interface-consolidation-typescript
-  - fix-primitive-to-vo
+metadata:
+    tags: [typescript, aes, contract, protocol, aggregate, interface, shared, di, vo]
+    triggers:
+        - "create contract typescript"
+        - "add contract typescript"
+        - "create protocol typescript"
+        - "create aggregate typescript"
+        - "fix contract typescript"
+        - "check contract typescript"
+        - "audit contract typescript"
+    dependencies: []
+    related:
+        - create-taxonomy-typescript
+        - create-capabilities-typescript
+        - create-agent-typescript
 ---
 
 # create-contract-typescript

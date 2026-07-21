@@ -1,44 +1,24 @@
 ---
 name: create-surface-rust
 description: "Create and validate Rust surface layer files following AES406: smart/utility/passive surfaces, strict import rules, delegate to aggregates, zero direct lower-layer imports, zero business logic, VO-based state, and explicit error handling."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    surface,
-    command,
-    controller,
-    component,
-    hook,
-    store,
-    action,
-    view,
-    entry,
-    structure,
-    aes406,
-    vo,
-    di,
-  ]
-triggers:
-  - "create surface rust"
-  - "add surface rust"
-  - "fix surface rust"
-  - "create command rust"
-  - "create component rust"
-  - "create hook rust"
-  - "create store rust"
-  - "surface role violation rust"
-  - "audit surface rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-agent-rust
-  - create-contract-rust
-  - create-taxonomy-rust
-  - enforce-1-struct-per-file-rust
-  - module_logic_validator-rust
+metadata:
+    tags: [rust, aes, surface, command, controller, component, hook, store, action, view, aes406, vo]
+    triggers:
+        - "create surface rust"
+        - "add surface rust"
+        - "fix surface rust"
+        - "create command rust"
+        - "create component rust"
+        - "create hook rust"
+        - "create store rust"
+        - "surface role violation rust"
+        - "audit surface rust"
+    dependencies: []
+    related:
+        - create-capabilities-rust
+        - create-agent-rust
+        - create-contract-rust
+        - create-taxonomy-rust
 ---
 
 # create-surface-rust

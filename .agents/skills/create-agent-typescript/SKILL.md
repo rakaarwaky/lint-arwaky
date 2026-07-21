@@ -1,40 +1,22 @@
 ---
 name: create-agent-typescript
 description: "Create and validate TypeScript agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one class per file, aggregate interface contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    agent,
-    aggregate,
-    structure,
-    3-block-structure,
-    di,
-    orchestration,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-  ]
-triggers:
-  - "create agent typescript"
-  - "add agent typescript"
-  - "fix agent structure typescript"
-  - "create aggregate typescript"
-  - "agent missing aggregate typescript"
-  - "validate agent logic typescript"
-  - "check agent typescript"
-  - "audit agent typescript"
-dependencies: []
-related:
-  - create-capabilities-typescript
-  - create-taxonomy-typescript
-  - enforce-1-class-per-file-typescript
-  - trait-consolidation-typescript
-  - module_logic_validator-typescript
-  - fix-agent-di
+metadata:
+    tags: [typescript, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
+    triggers:
+        - "create agent typescript"
+        - "add agent typescript"
+        - "fix agent structure typescript"
+        - "create aggregate typescript"
+        - "agent missing aggregate typescript"
+        - "validate agent logic typescript"
+        - "check agent typescript"
+        - "audit agent typescript"
+    dependencies: []
+    related:
+        - create-capabilities-typescript
+        - create-taxonomy-typescript
+        - create-contract-typescript
 ---
 
 # create-agent-typescript

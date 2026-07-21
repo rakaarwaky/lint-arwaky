@@ -65,6 +65,30 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
+    pub fn new(
+        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+        external_lint: Arc<dyn IExternalLintAggregate>,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+        format: Format,
+    ) -> Self {
+        Self {
+            code_analysis_linter,
+            naming_orchestrator,
+            import_orchestrator,
+            external_lint,
+            role_orchestrator,
+            orphan_orchestrator,
+            config_orchestrator,
+            format,
+            filter: None,
+            member: None,
+        }
+    }
+
     /// Run the full analysis pipeline on a target path.
     ///
     /// This is the core scan pipeline. It runs all 6 linter groups in the

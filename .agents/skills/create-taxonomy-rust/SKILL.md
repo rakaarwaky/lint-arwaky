@@ -1,39 +1,22 @@
 ---
 name: create-taxonomy-rust
 description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    taxonomy,
-    shared,
-    vo,
-    entity,
-    error,
-    event,
-    constant,
-    aes201,
-    primitive-to-vo,
-  ]
-triggers:
-  - "create taxonomy rust"
-  - "add taxonomy rust"
-  - "move dataclass to taxonomy rust"
-  - "create vo rust"
-  - "create error taxonomy rust"
-  - "create constant taxonomy rust"
-  - "check taxonomy rust"
-  - "audit taxonomy rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-agent-rust
-  - enforce-1-struct-per-file-rust
-  - trait-consolidation-rust
-  - fix-primitive-to-vo
-  - fix-magic-constant
+metadata:
+    tags: [rust, aes, taxonomy, shared, vo, entity, error, event, constant, primitive-to-vo]
+    triggers:
+        - "create taxonomy rust"
+        - "add taxonomy rust"
+        - "move dataclass to taxonomy rust"
+        - "create vo rust"
+        - "create error taxonomy rust"
+        - "create constant taxonomy rust"
+        - "check taxonomy rust"
+        - "audit taxonomy rust"
+    dependencies: []
+    related:
+        - create-capabilities-rust
+        - create-agent-rust
+        - create-contract-rust
 ---
 # create-taxonomy-rust
 

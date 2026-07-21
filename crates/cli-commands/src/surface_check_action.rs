@@ -10,13 +10,17 @@ use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use crate::surface_check_command::CheckCommandsSurface;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
+use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
@@ -26,8 +30,9 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 /// check = self-lint (AES analysis on current project, same algorithm as scan)
 pub fn handle_check(
     path: Option<FilePath>,
-    git_diff: bool,
+    _git_diff: bool,
     pipeline: Arc<dyn IAnalysisPipelineAggregate>,
+    report_formatter: Arc<dyn IReportFormatterAggregate>,
     filter: Option<String>,
     _git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
     _config: ArchitectureConfig,
@@ -42,20 +47,15 @@ pub fn handle_check(
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    if git_diff {
-        // Git diff mode not yet supported — delegate to self-lint path
-        let surface = CheckCommandsSurface::new(pipeline, format.clone(), None);
-        surface.scan(&root, filter.as_deref(), format)
-    } else {
-        let surface = CheckCommandsSurface::new(pipeline, format.clone(), None);
-        surface.scan(&root, filter.as_deref(), format)
-    }
+    let surface = CheckCommandsSurface::new(pipeline, report_formatter, None);
+    surface.scan(&root, filter.as_deref(), format)
 }
 
 /// scan = AES analysis on external project + external adapters
 pub fn handle_scan(
     path: Option<FilePath>,
     pipeline: Arc<dyn IAnalysisPipelineAggregate>,
+    report_formatter: Arc<dyn IReportFormatterAggregate>,
     multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     filter: Option<String>,
     member: Option<String>,
@@ -70,7 +70,7 @@ pub fn handle_scan(
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let surface = CheckCommandsSurface::new(pipeline, format.clone(), multi_project_orchestrator);
+    let surface = CheckCommandsSurface::new(pipeline, report_formatter, multi_project_orchestrator);
     surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format)
 }
 

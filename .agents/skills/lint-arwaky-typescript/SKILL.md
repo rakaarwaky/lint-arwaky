@@ -1,17 +1,17 @@
 ---
 name: lint-arwaky-typescript
 description: "Run lint-arwaky CLI scanner and MCP server for TypeScript projects — validate AES compliance, check layer violations, and fix architecture issues."
-version: 1.0.0
-category: tooling
-tags: [typescript, lint, aes, compliance, scanning, mcp]
-triggers:
-  - "lint arwaky typescript"
-  - "scan typescript project"
-  - "verify aes compliance typescript"
-dependencies: []
-related:
-  - module_logic_validator-typescript
-  - fix-cross-import-typescript
+metadata:
+    tags: [typescript, lint, aes, compliance, scanning, mcp]
+    triggers:
+        - "lint arwaky typescript"
+        - "scan typescript project"
+        - "verify aes compliance typescript"
+    dependencies: []
+    related:
+        - cleanup-files-typescript
+        - create-capabilities-typescript
+---
 ---
 
 # lint-arwaky-typescript

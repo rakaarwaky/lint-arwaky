@@ -1,17 +1,16 @@
 ---
 name: create-test-typescript
 description: "Create comprehensive test suites for TypeScript modules following Vitest/Jest conventions and project testing standards."
-version: 1.0.0
-category: testing
-tags: [typescript, testing, vitest, jest, mocking, fixtures]
-triggers:
-  - "create test typescript"
-  - "add tests typescript"
-  - "write unit tests typescript"
-dependencies: []
-related:
-  - add-docs-typescript
-  - cleanup-files-typescript
+metadata:
+    tags: [typescript, testing, vitest, jest, mocking, fixtures]
+    triggers:
+        - "create test typescript"
+        - "add tests typescript"
+        - "write unit tests typescript"
+    dependencies: []
+    related:
+        - add-docs-typescript
+        - cleanup-files-typescript
 ---
 
 # create-test-typescript

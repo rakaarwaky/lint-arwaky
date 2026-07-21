@@ -1,36 +1,21 @@
 ---
 name: create-contract-python
 description: "Create and validate Python contract layer files in shared domain: pure ABC definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    contract,
-    protocol,
-    aggregate,
-    abc,
-    shared,
-    aes201,
-    di,
-    vo,
-  ]
-triggers:
-  - "create contract python"
-  - "add contract python"
-  - "create protocol python"
-  - "create aggregate python"
-  - "fix contract python"
-  - "check contract python"
-  - "audit contract python"
-dependencies: []
-related:
-  - create-taxonomy-python
-  - create-capabilities-python
-  - create-agent-python
-  - trait-consolidation-python
-  - fix-primitive-to-vo
+metadata:
+    tags: [python, aes, contract, protocol, aggregate, abc, shared, di, vo]
+    triggers:
+        - "create contract python"
+        - "add contract python"
+        - "create protocol python"
+        - "create aggregate python"
+        - "fix contract python"
+        - "check contract python"
+        - "audit contract python"
+    dependencies: []
+    related:
+        - create-taxonomy-python
+        - create-capabilities-python
+        - create-agent-python
 ---
 
 # create-contract-python

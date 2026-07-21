@@ -1,18 +1,17 @@
 ---
 name: consolidate-files-typescript
 description: "Consolidate multiple TypeScript files into single cohesive modules following single responsibility principle."
-version: 1.0.0
-category: refactoring
-tags: [typescript, consolidation, single-responsibility, refactoring, structure]
-triggers:
-  - "consolidate typescript"
-  - "merge files typescript"
-  - "combine modules typescript"
-dependencies: []
-related:
-  - add-docs-typescript
-  - cleanup-files-typescript
-  - create-capabilities-typescript
+metadata:
+    tags: [typescript, consolidation, single-responsibility, refactoring, structure]
+    triggers:
+        - "consolidate typescript"
+        - "merge files typescript"
+        - "combine modules typescript"
+    dependencies: []
+    related:
+        - add-docs-typescript
+        - cleanup-files-typescript
+        - create-capabilities-typescript
 ---
 
 # consolidate-files-typescript

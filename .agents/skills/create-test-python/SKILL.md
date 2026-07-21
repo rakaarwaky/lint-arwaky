@@ -1,17 +1,16 @@
 ---
 name: create-test-python
 description: "Create comprehensive test suites for Python modules following pytest conventions and project testing standards."
-version: 1.0.0
-category: testing
-tags: [python, testing, pytest, unittest, mocking, fixtures]
-triggers:
-  - "create test python"
-  - "add tests python"
-  - "write unit tests python"
-dependencies: []
-related:
-  - add-docs-python
-  - cleanup-files-python
+metadata:
+    tags: [python, testing, pytest, unittest, mocking, fixtures]
+    triggers:
+        - "create test python"
+        - "add tests python"
+        - "write unit tests python"
+    dependencies: []
+    related:
+        - add-docs-python
+        - cleanup-files-python
 ---
 
 # create-test-python

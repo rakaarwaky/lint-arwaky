@@ -1,5 +1,5 @@
 ---
-name: build-verify
+name: build-verify-all
 description: "Build workspace and verify clean compile, then optionally run tests. Use after code edits to catch regressions early."
 metadata:
     tags: [rust, build, verify, test, cargo]

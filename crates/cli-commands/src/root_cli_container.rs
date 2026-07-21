@@ -4,6 +4,7 @@ use std::sync::Arc;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
+use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -95,15 +96,15 @@ impl CliContainer {
 
         // Wire analysis pipeline orchestrator
         let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(agent_analysis_pipeline_orchestrator::AnalysisPipelineOrchestrator::new(
+            Arc::new(crate::AnalysisPipelineOrchestrator::new(
                 code_analysis_linter.clone(),
-                import_orchestrator.clone(),
                 naming_orchestrator.clone(),
+                import_orchestrator.clone(),
                 external_lint.clone(),
                 role_orchestrator.clone(),
                 orphan_orchestrator.clone(),
                 multi_project_orchestrator.clone(),
-                report_formatter_agg.clone(),
+                Format::Text,
             ));
 
         Self {

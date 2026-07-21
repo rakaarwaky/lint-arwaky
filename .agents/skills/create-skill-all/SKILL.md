@@ -1,5 +1,5 @@
 ---
-name: authoring-skills
+name: create-skill-all
 description: Guides creation of effective SKILL.md files following agent skill best practices. Use when the user asks to create, write, structure, improve, or validate a Skill, SKILL.md file, or agent skill instructions.
 metadata:
     tags: [skill, agent, authoring, skill-writing, skill-creation, skill-validation]

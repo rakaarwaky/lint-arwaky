@@ -1,40 +1,22 @@
 ---
 name: create-agent-rust
 description: "Create and validate Rust agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one impl struct per file, aggregate contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    agent,
-    aggregate,
-    structure,
-    3-block-structure,
-    di,
-    orchestration,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-  ]
-triggers:
-  - "create agent rust"
-  - "add agent rust"
-  - "fix agent structure rust"
-  - "create aggregate rust"
-  - "agent missing aggregate rust"
-  - "validate agent logic rust"
-  - "check agent rust"
-  - "audit agent rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-taxonomy-rust
-  - enforce-1-struct-per-file-rust
-  - trait-consolidation-rust
-  - module_logic_validator-rust
-  - fix-agent-di
+metadata:
+    tags: [rust, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
+    triggers:
+        - "create agent rust"
+        - "add agent rust"
+        - "fix agent structure rust"
+        - "create aggregate rust"
+        - "agent missing aggregate rust"
+        - "validate agent logic rust"
+        - "check agent rust"
+        - "audit agent rust"
+    dependencies: []
+    related:
+        - create-capabilities-rust
+        - create-taxonomy-rust
+        - create-contract-rust
 ---
 
 # create-agent-rust

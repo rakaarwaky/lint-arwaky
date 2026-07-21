@@ -69,6 +69,7 @@ fn main() -> ExitCode {
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             git_diff,
             container.pipeline_aggregate(),
+            container.report_formatter.clone(),
             filter,
             None,
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
@@ -81,6 +82,7 @@ fn main() -> ExitCode {
         } => surface_check_action::handle_scan(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             container.pipeline_aggregate(),
+            container.report_formatter.clone(),
             Some(container.multi_project_orchestrator.clone()),
             filter,
             member,

@@ -1,33 +1,19 @@
 ---
 name: create-utility-rust
 description: "Create and validate Rust utility layer files following AES rules: stateless standalone functions, no struct, no trait impl, pure functions, domain-agnostic, reusable across modules."
-version: 1.0.0
-category: creation
-tags:
-  [
-    rust,
-    aes,
-    utility,
-    stateless,
-    pure-functions,
-    domain-agnostic,
-    reusability,
-    taxonomy,
-    no-struct,
-    no-trait,
-    architecture,
-  ]
-triggers:
-  - "create utility rust"
-  - "add utility rust"
-  - "extract to utility rust"
-  - "move to utility rust"
-  - "check utility rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - cleanup-files-rust
-  - consolidate-files-rust
+metadata:
+    tags: [rust, aes, utility, stateless, pure-functions, domain-agnostic, reusability, taxonomy]
+    triggers:
+        - "create utility rust"
+        - "add utility rust"
+        - "extract to utility rust"
+        - "move to utility rust"
+        - "check utility rust"
+    dependencies: []
+    related:
+        - create-capabilities-rust
+        - cleanup-files-rust
+        - consolidate-files-rust
 ---
 
 # create-utility-rust

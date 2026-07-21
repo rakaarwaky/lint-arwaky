@@ -1,33 +1,22 @@
 ---
 name: create-root-typescript
 description: "Create and validate TypeScript root layer files: composition root that wires Capabilities to Contract interfaces/aggregates and bootstraps the application. Container connects implementations, Entry starts the system."
-version: 2.0.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    root,
-    container,
-    entry,
-    composition,
-    di,
-    wiring,
-  ]
-triggers:
-  - "create root typescript"
-  - "add root typescript"
-  - "create container typescript"
-  - "create entry typescript"
-  - "wire dependencies typescript"
-  - "check root typescript"
-  - "audit root typescript"
-dependencies: []
-related:
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - create-contract-typescript
-  - create-taxonomy-typescript
+metadata:
+    tags: [typescript, aes, root, container, entry, composition, di, wiring]
+    triggers:
+        - "create root typescript"
+        - "add root typescript"
+        - "create container typescript"
+        - "create entry typescript"
+        - "wire dependencies typescript"
+        - "check root typescript"
+        - "audit root typescript"
+    dependencies: []
+    related:
+        - create-capabilities-typescript
+        - create-agent-typescript
+        - create-contract-typescript
+        - create-taxonomy-typescript
 ---
 
 # create-root-typescript

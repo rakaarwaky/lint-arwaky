@@ -1,40 +1,22 @@
 ---
 name: create-agent-python
 description: "Create and validate Python agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one class per file, aggregate ABC contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    agent,
-    aggregate,
-    structure,
-    3-block-structure,
-    di,
-    orchestration,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-  ]
-triggers:
-  - "create agent python"
-  - "add agent python"
-  - "fix agent structure python"
-  - "create aggregate python"
-  - "agent missing aggregate python"
-  - "validate agent logic python"
-  - "check agent python"
-  - "audit agent python"
-dependencies: []
-related:
-  - create-capabilities-python
-  - create-taxonomy-python
-  - enforce-1-class-per-file-python
-  - trait-consolidation-python
-  - module_logic_validator-python
-  - fix-agent-di
+metadata:
+    tags: [python, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
+    triggers:
+        - "create agent python"
+        - "add agent python"
+        - "fix agent structure python"
+        - "create aggregate python"
+        - "agent missing aggregate python"
+        - "validate agent logic python"
+        - "check agent python"
+        - "audit agent python"
+    dependencies: []
+    related:
+        - create-capabilities-python
+        - create-taxonomy-python
+        - create-contract-python
 ---
 
 # create-agent-python

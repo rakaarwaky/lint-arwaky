@@ -1,44 +1,24 @@
 ---
 name: create-surface-python
 description: "Create and validate Python surface layer files following AES406: smart/utility/passive surfaces, strict import rules, delegate to aggregates, zero direct lower-layer imports, zero business logic, VO-based state, and explicit error handling."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    surface,
-    command,
-    controller,
-    component,
-    hook,
-    store,
-    action,
-    view,
-    entry,
-    structure,
-    aes406,
-    vo,
-    di,
-  ]
-triggers:
-  - "create surface python"
-  - "add surface python"
-  - "fix surface python"
-  - "create command python"
-  - "create component python"
-  - "create hook python"
-  - "create store python"
-  - "surface role violation python"
-  - "audit surface python"
-dependencies: []
-related:
-  - create-capabilities-python
-  - create-agent-python
-  - create-contract-python
-  - create-taxonomy-python
-  - enforce-1-class-per-file-python
-  - module_logic_validator-python
+metadata:
+    tags: [python, aes, surface, command, controller, component, hook, store, action, view, aes406, vo]
+    triggers:
+        - "create surface python"
+        - "add surface python"
+        - "fix surface python"
+        - "create command python"
+        - "create component python"
+        - "create hook python"
+        - "create store python"
+        - "surface role violation python"
+        - "audit surface python"
+    dependencies: []
+    related:
+        - create-capabilities-python
+        - create-agent-python
+        - create-contract-python
+        - create-taxonomy-python
 ---
 
 # create-surface-python

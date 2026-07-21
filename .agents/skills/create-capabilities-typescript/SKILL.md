@@ -1,46 +1,21 @@
 ---
 name: create-capabilities-typescript
 description: "Create and validate TypeScript capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.4.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    capability,
-    protocol,
-    structure,
-    aes402,
-    aes403,
-    aes404,
-    3-block-structure,
-    di,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-    role-naming,
-    state-ownership,
-    pipeline-aggregation,
-    no-orchestration,
-    no-domain-definition,
-  ]
-triggers:
-  - "create capability typescript"
-  - "add capability typescript"
-  - "fix capability structure typescript"
-  - "create protocol typescript"
-  - "capability missing protocol typescript"
-  - "check capabilities typescript"
-  - "audit capabilities typescript"
-dependencies: []
-related:
-  - create-agent-typescript
-  - enforce-1-class-per-file-typescript
-  - trait-consolidation-typescript
-  - module_logic_validator-typescript
-  - fix-capability-structure-typescript
-  - create-missing-protocols-typescript
+metadata:
+    tags: [typescript, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
+    triggers:
+        - "create capability typescript"
+        - "add capability typescript"
+        - "fix capability structure typescript"
+        - "create protocol typescript"
+        - "capability missing protocol typescript"
+        - "check capabilities typescript"
+        - "audit capabilities typescript"
+    dependencies: []
+    related:
+        - create-agent-typescript
+        - create-contract-typescript
+        - create-taxonomy-typescript
 ---
 
 # create-capabilities-typescript

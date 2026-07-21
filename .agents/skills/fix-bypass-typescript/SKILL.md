@@ -1,16 +1,15 @@
 ---
 name: fix-bypass-typescript
 description: "Fix TypeScript bypass comments (@ts-ignore, @ts-expect-error) by addressing root causes instead of suppressing errors."
-version: 1.0.0
-category: refactoring
-tags: [typescript, bypass, comments, type-hints, refactoring]
-triggers:
-  - "fix bypass typescript"
-  - "remove ts-ignore typescript"
-  - "remove ts-expect-error typescript"
-dependencies: []
-related:
-  - module_logic_validator-typescript
+metadata:
+    tags: [typescript, bypass, comments, type-hints, refactoring, ts-ignore]
+    triggers:
+        - "fix bypass typescript"
+        - "remove ts-ignore typescript"
+        - "remove ts-expect-error typescript"
+    dependencies: []
+    related:
+        - cleanup-files-typescript
 ---
 
 # fix-bypass-typescript

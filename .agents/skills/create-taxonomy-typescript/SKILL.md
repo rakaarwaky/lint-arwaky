@@ -1,39 +1,22 @@
 ---
 name: create-taxonomy-typescript
 description: "Create and validate TypeScript taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    taxonomy,
-    shared,
-    vo,
-    entity,
-    error,
-    event,
-    constant,
-    aes201,
-    primitive-to-vo,
-  ]
-triggers:
-  - "create taxonomy typescript"
-  - "add taxonomy typescript"
-  - "move dataclass to taxonomy typescript"
-  - "create vo typescript"
-  - "create error taxonomy typescript"
-  - "create constant taxonomy typescript"
-  - "check taxonomy typescript"
-  - "audit taxonomy typescript"
-dependencies: []
-related:
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - enforce-1-class-per-file-typescript
-  - interface-consolidation-typescript
-  - fix-primitive-to-vo
-  - fix-magic-constant
+metadata:
+    tags: [typescript, aes, taxonomy, shared, vo, entity, error, event, constant, primitive-to-vo]
+    triggers:
+        - "create taxonomy typescript"
+        - "add taxonomy typescript"
+        - "move dataclass to taxonomy typescript"
+        - "create vo typescript"
+        - "create error taxonomy typescript"
+        - "create constant taxonomy typescript"
+        - "check taxonomy typescript"
+        - "audit taxonomy typescript"
+    dependencies: []
+    related:
+        - create-capabilities-typescript
+        - create-agent-typescript
+        - create-contract-typescript
 ---
 
 # create-taxonomy-typescript

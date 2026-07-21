@@ -1,46 +1,21 @@
 ---
 name: create-capabilities-python
 description: "Create and validate Python capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one class per file, protocol ABC contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.4.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    capability,
-    protocol,
-    structure,
-    aes402,
-    aes403,
-    aes404,
-    3-block-structure,
-    di,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-    role-naming,
-    state-ownership,
-    pipeline-aggregation,
-    no-orchestration,
-    no-domain-definition,
-  ]
-triggers:
-  - "create capability python"
-  - "add capability python"
-  - "fix capability structure python"
-  - "create protocol python"
-  - "capability missing protocol python"
-  - "check capabilities python"
-  - "audit capabilities python"
-dependencies: []
-related:
-  - create-agent-python
-  - enforce-1-class-per-file-python
-  - trait-consolidation-python
-  - module_logic_validator-python
-  - fix-capability-structure-python
-  - create-missing-protocols-python
+metadata:
+    tags: [python, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
+    triggers:
+        - "create capability python"
+        - "add capability python"
+        - "fix capability structure python"
+        - "create protocol python"
+        - "capability missing protocol python"
+        - "check capabilities python"
+        - "audit capabilities python"
+    dependencies: []
+    related:
+        - create-agent-python
+        - create-contract-python
+        - create-taxonomy-python
 ---
 
 # create-capabilities-python

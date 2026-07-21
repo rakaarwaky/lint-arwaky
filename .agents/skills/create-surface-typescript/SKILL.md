@@ -1,44 +1,24 @@
 ---
 name: create-surface-typescript
 description: "Create and validate TypeScript surface layer files following AES406: smart/utility/passive surfaces, strict import rules, delegate to aggregates, zero direct lower-layer imports, zero business logic, VO-based state, and explicit error handling."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    surface,
-    command,
-    controller,
-    component,
-    hook,
-    store,
-    action,
-    view,
-    entry,
-    structure,
-    aes406,
-    vo,
-    di,
-  ]
-triggers:
-  - "create surface typescript"
-  - "add surface typescript"
-  - "fix surface typescript"
-  - "create command typescript"
-  - "create component typescript"
-  - "create hook typescript"
-  - "create store typescript"
-  - "surface role violation typescript"
-  - "audit surface typescript"
-dependencies: []
-related:
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - create-contract-typescript
-  - create-taxonomy-typescript
-  - enforce-1-class-per-file-typescript
-  - module_logic_validator-typescript
+metadata:
+    tags: [typescript, aes, surface, command, controller, component, hook, store, action, view, aes406, vo]
+    triggers:
+        - "create surface typescript"
+        - "add surface typescript"
+        - "fix surface typescript"
+        - "create command typescript"
+        - "create component typescript"
+        - "create hook typescript"
+        - "create store typescript"
+        - "surface role violation typescript"
+        - "audit surface typescript"
+    dependencies: []
+    related:
+        - create-capabilities-typescript
+        - create-agent-typescript
+        - create-contract-typescript
+        - create-taxonomy-typescript
 ---
 
 # create-surface-typescript

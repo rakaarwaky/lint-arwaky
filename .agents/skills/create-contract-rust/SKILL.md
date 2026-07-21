@@ -1,37 +1,21 @@
 ---
 name: create-contract-rust
 description: "Create and validate Rust contract layer files in shared domain: pure trait definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    contract,
-    protocol,
-    aggregate,
-    trait,
-    shared,
-    aes201,
-    object-safety,
-    di,
-    vo,
-  ]
-triggers:
-  - "create contract rust"
-  - "add contract rust"
-  - "create protocol rust"
-  - "create aggregate rust"
-  - "fix contract rust"
-  - "check contract rust"
-  - "audit contract rust"
-dependencies: []
-related:
-  - create-taxonomy-rust
-  - create-capabilities-rust
-  - create-agent-rust
-  - trait-consolidation-rust
-  - fix-primitive-to-vo
+metadata:
+    tags: [rust, aes, contract, protocol, aggregate, trait, shared, di, vo]
+    triggers:
+        - "create contract rust"
+        - "add contract rust"
+        - "create protocol rust"
+        - "create aggregate rust"
+        - "fix contract rust"
+        - "check contract rust"
+        - "audit contract rust"
+    dependencies: []
+    related:
+        - create-taxonomy-rust
+        - create-capabilities-rust
+        - create-agent-rust
 ---
 
 # create-contract-rust

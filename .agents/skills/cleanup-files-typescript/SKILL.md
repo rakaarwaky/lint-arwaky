@@ -1,66 +1,24 @@
 ---
 name: cleanup-files-typescript
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across TypeScript packages to reduce bloat and improve signal-to-noise ratio."
-version: 2.0.0
-category: cleanup
-tags:
-  [
-    typescript,
-    cleanup,
-    bloat,
-    stubs,
-    thin-wrappers,
-    dead-code,
-    orphan,
-    unused-files,
-    unused-imports,
-    unused-exports,
-    eslint,
-    prettier,
-    knip,
-    formatting,
-    refactoring,
-    mvp,
-    barrel-files,
-    type-only,
-  ]
-triggers:
-  - "cleanup typescript"
-  - "clean bloat typescript"
-  - "fix formatting typescript"
-  - "remove unused imports typescript"
-  - "remove stubs typescript"
-  - "remove thin wrappers typescript"
-  - "find unused files typescript"
-  - "find dead code typescript"
-  - "find orphan files typescript"
-  - "remove dead code typescript"
-  - "cleanup package typescript"
-  - "remove unused exports typescript"
-  - "clean barrel files typescript"
-dependencies: []
-related:
-  - add-docs-typescript
-  - consolidate-files-typescript
-  - module_logic_validator-typescript
-changelog:
-  - version: 2.0.0
-    changes:
-      - "Complete rewrite: combined file-level and function-level cleanup"
-      - "Added Fundamental Question framework with TypeScript-specific keep/remove criteria"
-      - "Added multi-pattern orphan detection (imports, index.ts barrels, dynamic import(), path aliases, package.json exports)"
-      - "Added TypeScript-specific edge cases: .d.ts, declare, type-only exports, decorators, @ts-ignore, barrel files, side-effect imports"
-      - "Added stub / thin wrapper / duplicate / overengineered detection patterns"
-      - "Added git safety/rollback workflow"
-      - "Added approval workflow and dry-run mode"
-      - "Added knip as primary unused-export/file detection tool"
-      - "Added tsc --noEmit --noUnusedLocals for compiler-level detection"
-      - "Added categorization table, decision flowchart, and per-file reporting"
-      - "Added exceptions list for TypeScript-specific protected files"
-      - "Added monorepo / workspace awareness"
-  - version: 1.0.0
-    changes:
-      - "Initial cleanup skill: unused imports, Prettier formatting, ESLint check"
+metadata:
+    tags: [typescript, cleanup, bloat, stubs, thin-wrappers, dead-code, orphan, unused-files, eslint, prettier, knip]
+    triggers:
+        - "cleanup typescript"
+        - "clean bloat typescript"
+        - "fix formatting typescript"
+        - "remove unused imports typescript"
+        - "remove stubs typescript"
+        - "remove thin wrappers typescript"
+        - "find unused files typescript"
+        - "find dead code typescript"
+        - "remove dead code typescript"
+        - "cleanup package typescript"
+        - "remove unused exports typescript"
+    dependencies: []
+    related:
+        - add-docs-typescript
+        - consolidate-files-typescript
 ---
 
 # cleanup-typescript
