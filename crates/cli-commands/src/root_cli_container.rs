@@ -2,7 +2,6 @@
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -18,7 +17,6 @@ pub struct CliContainer {
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
 }
@@ -64,7 +62,6 @@ impl CliContainer {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
         let orphan_orchestrator = orphan_container.analyzer();
-        let layer_detector = orphan_container.layer_detector();
 
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.orchestrator();
@@ -79,7 +76,6 @@ impl CliContainer {
             role_orchestrator,
             external_lint,
             orphan_orchestrator,
-            layer_detector,
             git_aggregate,
             multi_project_orchestrator,
         }
@@ -93,7 +89,6 @@ impl CliContainer {
             external_lint: self.external_lint.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
             orphan_orchestrator: self.orphan_orchestrator.clone(),
-            layer_detector: self.layer_detector.clone(),
         }
     }
 }

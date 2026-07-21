@@ -2,7 +2,6 @@ use crate::capabilities_report_formatter::ReportFormatterHelper;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
@@ -38,7 +37,6 @@ pub struct LintExecutor {
     config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
-    layer_detector: Option<Arc<dyn ILayerDetectionAggregate>>,
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
@@ -112,8 +110,8 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn orphan(&self, path: &str) -> LintExecutionResult {
-        match (&self.orphan_aggregate, &self.layer_detector) {
-            (Some(orphan_agg), Some(layer_det)) => {
+        match &self.orphan_aggregate {
+            Some(orphan_agg) => {
                 // Resolve workspace root like CLI does
                 let scan_root = shared::common::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
@@ -140,7 +138,7 @@ impl ILintExecutorProtocol for LintExecutor {
                         0,
                     );
                 }
-                let results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, &scan_root);
+                let results = orphan_agg.check_orphans(&file_strs, &scan_root);
                 let count = results.len();
                 let mut output = format!(
                     "Orphan detection for {}\nScanned {} files in {}\n",
@@ -536,7 +534,6 @@ impl LintExecutor {
             config_orchestrator: None,
             external_lint: None,
             orphan_aggregate: None,
-            layer_detector: None,
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
@@ -579,10 +576,8 @@ impl LintExecutor {
     pub fn with_orphan(
         mut self,
         orphan_aggregate: Arc<dyn IOrphanAggregate>,
-        layer_detector: Arc<dyn ILayerDetectionAggregate>,
     ) -> Self {
         self.orphan_aggregate = Some(orphan_aggregate);
-        self.layer_detector = Some(layer_detector);
         self
     }
 
@@ -805,12 +800,9 @@ impl LintExecutor {
                     ws_results.extend(role_results);
 
                     // 6. Orphan detection (AES501-506)
-                    if let (Some(ref orphan_agg), Some(ref layer_det)) =
-                        (&self.orphan_aggregate, &self.layer_detector)
-                    {
+                    if let Some(ref orphan_agg) = &self.orphan_aggregate {
                         if !all_source_files.is_empty() {
                             let orphan_results = orphan_agg.check_orphans(
-                                layer_det.as_ref(),
                                 &all_source_files,
                                 &scan_root.to_string_lossy(),
                             );
@@ -893,9 +885,7 @@ impl LintExecutor {
         }
 
         // 6. Orphan detection (AES501-506)
-        if let (Some(ref orphan_agg), Some(ref layer_det)) =
-            (&self.orphan_aggregate, &self.layer_detector)
-        {
+        if let Some(ref orphan_agg) = self.orphan_aggregate {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
             let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
@@ -904,7 +894,7 @@ impl LintExecutor {
             };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
-                let orphan_results = orphan_agg.check_orphans(layer_det.as_ref(), &file_strs, path);
+                let orphan_results = orphan_agg.check_orphans(&file_strs, path);
                 all_results.extend(orphan_results);
             }
         }

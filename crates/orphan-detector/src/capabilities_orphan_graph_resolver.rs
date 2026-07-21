@@ -57,7 +57,11 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                 .iter()
                 .filter(|f| {
                     let basename = f.rsplit('/').next().unwrap_or(f);
-                    basename.ends_with("_entry.rs")
+                    basename.ends_with("_container.rs")
+                        || basename.ends_with("_container.py")
+                        || basename.ends_with("_container.ts")
+                        || basename.ends_with("_container.js")
+                        || basename.ends_with("_entry.rs")
                         || basename.ends_with("_entry.py")
                         || basename.ends_with("_entry.ts")
                         || basename.ends_with("_entry.js")
@@ -66,6 +70,8 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                         || basename == "lib.rs"
                         || basename == "main.py"
                         || basename == "__main__.py"
+                        || basename == "main.ts"
+                        || basename == "main.js"
                         || basename == "index.ts"
                         || basename == "index.js"
                 })
@@ -194,6 +200,9 @@ impl OrphanGraphResolver {
             }
         }
 
+        // Build crate module index for hyphen-aware resolution
+        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
+
         // Perf 8: Single-pass file reading
         for f in files {
             import_graph.entry(f.clone()).or_default();
@@ -211,14 +220,18 @@ impl OrphanGraphResolver {
                 for cap in re.captures_iter(&content) {
                     let mod_path = cap[1].to_string();
                     let base_dir = match std::path::Path::new(f).parent() {
-                        Some(p) => p.to_string_lossy().to_string(),
-                        None => String::from("."),
+                        Some(p) => p.to_path_buf(),
+                        None => continue,
                     };
-                    let resolved = if mod_path.starts_with('/') {
-                        mod_path.clone()
-                    } else {
-                        format!("{}/{}", base_dir, mod_path)
+                    let root_path = std::path::Path::new(root_dir);
+                    let Some(resolved_path) = shared::orphan_detector::utility_orphan_path::resolve_module_path(
+                        root_path,
+                        &base_dir,
+                        &mod_path,
+                    ) else {
+                        continue;
                     };
+                    let resolved = resolved_path.to_string_lossy().to_string();
                     if shared::orphan_detector::utility_orphan_io::is_file(
                         &std::path::PathBuf::from(&resolved),
                     ) && resolved != *f
@@ -417,7 +430,19 @@ impl OrphanGraphResolver {
                     let segments: Vec<&str> = rest.split("::").collect();
                     if !segments.is_empty() {
                         let module_name = segments[0];
-                        // Bug 3: no ./ prefix — store resolved paths verbatim
+                        // Use crate module index for hyphen-aware resolution
+                        if let Some(resolved) = Self::resolve_workspace_module(
+                            &crate_module_index, crate_name, &segments, f,
+                        ) {
+                            Self::add_edge(
+                                &mut import_graph,
+                                &mut inbound_links,
+                                f,
+                                &resolved,
+                            );
+                            continue;
+                        }
+                        // Fallback: scan directory (original approach)
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
                             let entries =
                                 shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
@@ -427,7 +452,11 @@ impl OrphanGraphResolver {
                                     .file_stem()
                                     .and_then(|s| s.to_str())
                                     .unwrap_or_default();
-                                if stem == module_name && path_str != *f {
+                                let normalized_stem =
+                                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem);
+                                if (stem == module_name || normalized_stem == module_name)
+                                    && path_str != *f
+                                {
                                     import_graph
                                         .entry(f.clone())
                                         .or_default()
@@ -466,5 +495,99 @@ impl OrphanGraphResolver {
             InheritanceMap::new(inheritance_map),
             FileDefinitionMap::new(file_definitions),
         )
+    }
+
+    fn build_crate_module_index(
+        crate_src_dirs: &HashMap<String, std::path::PathBuf>,
+    ) -> HashMap<String, HashMap<String, String>> {
+        let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
+        for (crate_name, src_dir) in crate_src_dirs {
+            let mut module_map: HashMap<String, String> = HashMap::new();
+            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
+            for (_name, path_str, _is_dir) in entries {
+                if !path_str.ends_with(".rs")
+                    && !path_str.ends_with(".py")
+                    && !path_str.ends_with(".ts")
+                    && !path_str.ends_with(".js")
+                {
+                    continue;
+                }
+                let path = std::path::PathBuf::from(&path_str);
+                let stem = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                if stem.is_empty() {
+                    continue;
+                }
+                module_map.insert(stem.clone(), path_str.clone());
+                module_map.insert(
+                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem),
+                    path_str.clone(),
+                );
+                // For mod.rs / __init__.py / index.ts: map by parent dir name
+                if stem == "mod" || stem == "__init__" || stem == "index" {
+                    if let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
+                        let parent = parent_dir.to_string_lossy().to_string();
+                        module_map.insert(parent.clone(), path_str.clone());
+                        module_map.insert(
+                            shared::orphan_detector::utility_orphan::normalize_module_component(
+                                &parent,
+                            ),
+                            path_str.clone(),
+                        );
+                    }
+                }
+            }
+            let normalized_name =
+                shared::orphan_detector::utility_orphan::normalize_module_component(crate_name);
+            index.insert(crate_name.clone(), module_map.clone());
+            index.insert(normalized_name, module_map);
+        }
+        index
+    }
+
+    fn resolve_workspace_module(
+        index: &HashMap<String, HashMap<String, String>>,
+        crate_name: &str,
+        segments: &[&str],
+        current_file: &str,
+    ) -> Option<String> {
+        let map = index.get(crate_name)?;
+        let seg_str = segments.join("/");
+        let normalized = shared::orphan_detector::utility_orphan::normalize_module_path(&seg_str);
+        if let Some(path) = map.get(&normalized) {
+            if path != current_file {
+                return Some(path.clone());
+            }
+        }
+        for i in (1..segments.len()).rev() {
+            let candidate = segments[..i].join("/");
+            let normalized =
+                shared::orphan_detector::utility_orphan::normalize_module_path(&candidate);
+            if let Some(path) = map.get(&normalized) {
+                if path != current_file {
+                    return Some(path.clone());
+                }
+            }
+        }
+        None
+    }
+
+    fn add_edge(
+        import_graph: &mut HashMap<String, Vec<String>>,
+        inbound_links: &mut HashMap<String, Vec<String>>,
+        source: &str,
+        target: &str,
+    ) {
+        import_graph
+            .entry(source.to_string())
+            .or_default()
+            .push(target.to_string());
+        inbound_links
+            .entry(target.to_string())
+            .or_default()
+            .push(source.to_string());
     }
 }

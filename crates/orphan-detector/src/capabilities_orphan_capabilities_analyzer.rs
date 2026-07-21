@@ -9,10 +9,13 @@ use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_workspace::{check_wired_in_container, find_workspace_root};
+use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CapabilitiesOrphanAnalyzer {}
+pub struct CapabilitiesOrphanAnalyzer {
+    container_cache: Mutex<Option<(std::path::PathBuf, Vec<std::path::PathBuf>)>>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -53,9 +56,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 .collect();
             identifiers.push(pascal_stem);
 
-            // Search for container files in workspace root
+            // Search for container files in workspace root (cached)
             let root = std::path::Path::new(root_dir.value());
             if let Ok(workspace_root) = find_workspace_root(root) {
+                let _container_files = self.cached_container_files(&workspace_root);
                 let wired = check_wired_in_container(&workspace_root, &identifiers);
                 if wired {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
@@ -85,6 +89,47 @@ impl Default for CapabilitiesOrphanAnalyzer {
 
 impl CapabilitiesOrphanAnalyzer {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            container_cache: Mutex::new(None),
+        }
+    }
+
+    fn cached_container_files(
+        &self,
+        workspace_root: &std::path::Path,
+    ) -> Option<Vec<std::path::PathBuf>> {
+        if let Ok(mut guard) = self.container_cache.lock() {
+            if let Some((ref cached_root, ref cached_files)) = *guard {
+                if cached_root == workspace_root {
+                    return Some(cached_files.clone());
+                }
+            }
+            // Cache miss: find container files
+            let mut container_files = Vec::new();
+            for dir_name in &["crates", "packages", "modules"] {
+                let dir = workspace_root.join(dir_name);
+                if dir.is_dir() {
+                    let files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                    for file_path in &files {
+                        if let Some(name) = std::path::Path::new(file_path)
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                        {
+                            if name.ends_with("_container.rs")
+                                || name.ends_with("_container.py")
+                                || name.ends_with("_container.ts")
+                                || name.ends_with("_container.js")
+                            {
+                                container_files.push(std::path::PathBuf::from(file_path));
+                            }
+                        }
+                    }
+                }
+            }
+            *guard = Some((workspace_root.to_path_buf(), container_files.clone()));
+            Some(container_files)
+        } else {
+            None
+        }
     }
 }

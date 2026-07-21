@@ -95,16 +95,20 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             "taxonomy"
         };
 
-        OrphanIndicatorResult::new(
-            is_orphan,
-            AesOrphanViolation::TaxonomyOrphan {
-                stem,
-                category,
-                reason: None,
-            }
-            .to_string(),
-            Severity::LOW,
-        )
+        if is_orphan {
+            OrphanIndicatorResult::new(
+                true,
+                AesOrphanViolation::TaxonomyOrphan {
+                    stem: stem.clone(),
+                    category,
+                    reason: Some(format!("Taxonomy '{}' is not imported by any file outside taxonomy.", stem).into()),
+                }
+                .to_string(),
+                Severity::LOW,
+            )
+        } else {
+            OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        }
     }
 }
 

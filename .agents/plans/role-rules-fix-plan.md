@@ -27,6 +27,7 @@
 
 ### P1.1 — Fix `surface` vs `surfaces` layer mismatch
 
+**Skill**: `create-utility-rust` — stateless constant map, domain-agnostic.
 **File**: `crates/shared/src/common/utility_layer_detector.rs`
 **Severity**: CRITICAL
 **AES Code**: AES406
@@ -64,6 +65,7 @@ const PREFIX_MAP: &[(&str, &str)] = &[
 
 ### P1.2 — Fix router misclassification (smart vs utility)
 
+**Skill**: `create-agent-rust` — classification logic is domain knowledge; ideally belongs in a capabilities helper. However, this is a simple pattern match used for orchestration routing, not business computation. Acceptable in agent if kept as a pure helper function.
 **File**: `crates/role-rules/src/agent_role_orchestrator.rs`
 **Severity**: CRITICAL
 **AES Code**: AES406
@@ -137,6 +139,7 @@ if basename.ends_with("_command")
 
 ### P1.3 — Implement `check_passive_surface()` (currently no-op)
 
+**Skill**: `create-capabilities-rust` — implementing protocol method, allowed.
 **File**: `crates/role-rules/src/capabilities_surface_role_auditor.rs`
 **Severity**: CRITICAL
 **AES Code**: AES406
@@ -215,6 +218,7 @@ fn _check_passive_source(
 
 ### P2.1 — Fix AES405 `any` detection false positives
 
+**Skill**: `create-capabilities-rust` — adding regex + comment stripping to capabilities, allowed.
 **File**: `crates/role-rules/src/capabilities_agent_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES405
@@ -285,6 +289,7 @@ fn check_any_type_annotation(
 
 ### P2.2 — Fix AES403 Rust routing (inherent impls accepted)
 
+**Skill**: `create-capabilities-rust` — rewriting protocol implementation check, allowed.
 **File**: `crates/role-rules/src/capabilities_capabilities_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES403
@@ -404,6 +409,7 @@ fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<Li
 
 ### P2.3 — Fix AES402 Python/TS primitive false positives
 
+**Skill**: `create-utility-rust` — adding token-aware helpers, stateless standalone functions.
 **File**: `crates/shared/src/common/utility_signature_parser.rs`
 **Severity**: HIGH
 **AES Code**: AES402
@@ -502,6 +508,7 @@ if trimmed.starts_with("def ") && (trimmed.contains(':') || trimmed.contains("->
 
 ### P2.4 — Fix `extract_trait_method_signatures` invalid boolean logic
 
+**Skill**: `create-utility-rust` — rewriting utility function, stateless standalone.
 **File**: `crates/shared/src/common/utility_signature_parser.rs`
 **Severity**: HIGH
 **AES Code**: AES402
@@ -568,6 +575,7 @@ pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
 
 ### P2.5 — Fix forbidden inheritance grouped import parsing
 
+**Skill**: `create-capabilities-rust` — adding import parser helper to capabilities, allowed.
 **File**: `crates/role-rules/src/capabilities_contract_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES013
@@ -688,6 +696,7 @@ for (line_no, line) in content.lines().enumerate() {
 
 ### P2.6 — Fix Rust passive-surface private method counting
 
+**Skill**: `create-capabilities-rust` — changing regex and adding helper, allowed.
 **File**: `crates/role-rules/src/capabilities_surface_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES406
@@ -729,6 +738,7 @@ fn rust_fn_end_line(lines: &[&str], start: usize) -> usize {
 
 ### P2.7 — Fix JS class regex (misses non-exported classes)
 
+**Skill**: `create-capabilities-rust` — changing regex, allowed.
 **File**: `crates/role-rules/src/capabilities_surface_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES406
@@ -751,6 +761,7 @@ static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| {
 
 ### P2.8 — Fix nesting depth hardcoded 4-space assumption
 
+**Skill**: `create-capabilities-rust` — rewriting nesting check, allowed.
 **File**: `crates/role-rules/src/capabilities_surface_role_auditor.rs`
 **Severity**: HIGH
 **AES Code**: AES406
@@ -811,6 +822,7 @@ fn _check_method_nesting(
 
 ### P3.1 — Fix AES403 contract raw `&str` parameter
 
+**Skill**: `create-contract-rust` — `&str` is acceptable per user decision, no change needed.
 **File**: `crates/shared/src/role-rules/contract_capabilities_role_protocol.rs`
 **Severity**: MEDIUM
 **AES Code**: AES402
@@ -822,6 +834,7 @@ fn _check_method_nesting(
 
 ### P3.2 — Fix AES405 contract raw `usize` parameter
 
+**Skill**: `create-contract-rust` — replacing primitive with `Count` VO, must remain object-safe.
 **File**: `crates/shared/src/role-rules/contract_agent_role_protocol.rs`
 **Severity**: MEDIUM
 **AES Code**: AES402
@@ -890,6 +903,7 @@ use shared::common::taxonomy_common_vo::Count;
 
 ### P4.1 — Implement utility purity checker
 
+**Skill**: `create-capabilities-rust` — new capabilities file, must follow 3-block structure (struct → protocol impl → constructors/helpers).
 **File**: `crates/role-rules/src/capabilities_utility_role_auditor.rs` (NEW)
 **Severity**: MEDIUM
 **AES Code**: AES404
@@ -1025,12 +1039,15 @@ Wire into orchestrator:
 }
 ```
 
+**Module registration:** Add `pub mod capabilities_utility_role_auditor;` to `crates/role-rules/src/mod.rs`.
+
 ---
 
 ## Phase 5: Performance Fixes (MEDIUM)
 
 ### P5.1 — Add `tokio::task::spawn_blocking` for filesystem I/O
 
+**Skill**: `create-agent-rust` — agent must have "zero I/O." Using `spawn_blocking` delegates I/O to a thread pool, which is a performance optimization. The agent itself doesn't perform I/O directly. Acceptable if the blocking task is a pure function call. If tokio is not a dependency, document the limitation instead.
 **File**: `crates/role-rules/src/agent_role_orchestrator.rs`
 **Severity**: MEDIUM
 **AES Code**: N/A (performance)
@@ -1072,6 +1089,7 @@ Note: Requires `RoleOrchestrator` to implement `Clone` or use `Arc` wrapping for
 
 ### P5.2 — Fix `line: 0` precision reporting
 
+**Skill**: `create-capabilities-rust` — fixing line number reporting in capabilities, allowed.
 **File**: Multiple files
 **Severity**: MEDIUM
 **AES Code**: AES403, AES405, AES406
@@ -1090,6 +1108,7 @@ Replace `line: 0` with `line: 1` in all three locations.
 
 ### P6.1 — Document AES013 in FRD
 
+**Skill**: `add-docs-rust` — documenting architecture rule in FRD.
 **File**: FRD document
 **Severity**: LOW
 **AES Code**: AES013
@@ -1108,6 +1127,7 @@ Any `impl Trait for X` or equivalent that uses a disallowed trait is flagged as 
 
 ### P6.2 — Deprecate AES401-R2 (VO primitive check)
 
+**Skill**: `add-docs-rust` — updating FRD documentation, deprecating rule.
 **File**: FRD document
 **Severity**: LOW
 **AES Code**: AES401-R2
@@ -1128,6 +1148,7 @@ Remove or mark `check_vo_impl()` as deprecated in code.
 
 ### P6.3 — Add measurable acceptance criteria to FRD
 
+**Skill**: `add-docs-rust` — adding acceptance criteria to FRD.
 **File**: FRD document
 **Severity**: LOW
 **Problem**: No acceptance criteria, no test scenarios, no measurable thresholds.
@@ -1149,6 +1170,30 @@ Remove or mark `check_vo_impl()` as deprecated in code.
 
 ---
 
+## Execution Order
+
+1. **Phase 1** (P1.1-P1.3): CRITICAL fixes — layer mismatch, router classification, passive surface.
+   - **Verify:** `cargo check -p role-rules && cargo check -p shared`
+2. **Phase 2** (P2.1-P2.8): HIGH false positive/negative fixes. Can run in parallel with Phase 1.
+   - **Verify:** `cargo check -p role-rules && cargo check -p shared`
+3. **Phase 3** (P3.1-P3.2): MEDIUM contract cleanup. Depends on Phase 2 (signature parser changes).
+   - **Verify:** `cargo check -p shared && cargo check -p role-rules`
+4. **Phase 4** (P4.1): MEDIUM new capability. Independent.
+   - **Verify:** `cargo check -p role-rules`
+5. **Phase 5** (P5.1-P5.2): MEDIUM performance. Independent.
+   - **Verify:** `cargo check -p role-rules`
+6. **Phase 6** (P6.1-P6.3): LOW documentation. Independent.
+
+**Final verification (all phases complete):**
+```bash
+cargo fmt --all
+cargo clippy --all-targets -- -D warnings
+cargo test --workspace
+cargo run --bin lint-arwaky-cli -- check .
+```
+
+---
+
 ## Summary
 
 | Phase | Items | Severity | Description |
@@ -1161,3 +1206,21 @@ Remove or mark `check_vo_impl()` as deprecated in code.
 | 6 | P6.1-P6.3 | LOW | FRD documentation updates |
 
 **Total**: 17 items across 6 phases.
+
+---
+
+## Files Summary
+
+### New files (1)
+- `crates/role-rules/src/capabilities_utility_role_auditor.rs` — AES404 utility purity checker
+
+### Modified files (8)
+- `crates/shared/src/common/utility_layer_detector.rs` — fix surface/surfaces prefix map (P1.1)
+- `crates/shared/src/common/utility_signature_parser.rs` — token-aware helpers, fix trait extraction (P2.3, P2.4)
+- `crates/shared/src/role-rules/contract_agent_role_protocol.rs` — replace `usize` with `Count` VO (P3.2)
+- `crates/role-rules/src/agent_role_orchestrator.rs` — fix router classification, add spawn_blocking (P1.2, P5.1)
+- `crates/role-rules/src/capabilities_agent_role_auditor.rs` — fix any detection, line precision (P2.1, P5.2)
+- `crates/role-rules/src/capabilities_capabilities_role_auditor.rs` — fix routing check (P2.2)
+- `crates/role-rules/src/capabilities_contract_role_auditor.rs` — fix import parsing (P2.5)
+- `crates/role-rules/src/capabilities_surface_role_auditor.rs` — fix passive surface, regex, nesting (P1.3, P2.6, P2.7, P2.8, P5.2)
+- `crates/role-rules/src/mod.rs` — register new capabilities_utility_role_auditor module (P4.1)

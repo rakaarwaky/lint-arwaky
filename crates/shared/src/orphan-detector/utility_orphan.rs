@@ -38,3 +38,140 @@ pub fn extract_trait_names(content: &str) -> Vec<String> {
     }
     names
 }
+
+pub fn normalize_module_component(value: &str) -> String {
+    value.replace('-', "_").replace('.', "_")
+}
+
+pub fn normalize_module_path(value: &str) -> String {
+    value
+        .split('/')
+        .map(normalize_module_component)
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+pub fn contains_delimited(content: &str, token: &str) -> bool {
+    if content.contains(token) {
+        let delimiters = [' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\''];
+        for i in 0..content.len().saturating_sub(token.len()) {
+            if content[i..].starts_with(token) {
+                let before = if i == 0 { ' ' } else { content.as_bytes()[i - 1] as char };
+                let after = content.as_bytes().get(i + token.len()).copied().map(|c| c as char).unwrap_or(' ');
+                let boundary_before = before.is_whitespace() || delimiters.contains(&before);
+                let boundary_after = after.is_whitespace() || delimiters.contains(&after) || after == '\n' || after == '\r';
+                if boundary_before && boundary_after {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+pub fn import_tokens(path: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let path = path.replace('\\', "/");
+    let path = path.trim_start_matches('/');
+
+    let stem = std::path::Path::new(&path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
+    if stem.is_empty() {
+        return tokens;
+    }
+
+    tokens.push(stem.clone());
+
+    let normalized_stem = normalize_module_component(&stem);
+    if normalized_stem != stem {
+        tokens.push(normalized_stem);
+    }
+
+    let parts: Vec<&str> = path.split('/').collect();
+    if parts.len() >= 2 {
+        let parent = parts[parts.len() - 2];
+        let partial = format!("{}/{}", parent, stem);
+        tokens.push(partial.clone());
+        tokens.push(partial.replace('/', "::"));
+
+        let normalized_partial = normalize_module_path(&partial);
+        if normalized_partial != partial {
+            tokens.push(normalized_partial.clone());
+            tokens.push(normalized_partial.replace('/', "::"));
+        }
+    }
+
+    for i in 2..parts.len() {
+        let partial = parts[parts.len() - i..].join("/");
+        tokens.push(partial);
+    }
+
+    let source_prefixes = ["crate::", "shared::", "self::", "super::"];
+    let existing: Vec<String> = tokens.clone();
+    for prefix in &source_prefixes {
+        for tok in &existing {
+            tokens.push(format!("{prefix}{tok}"));
+        }
+    }
+
+    tokens.sort();
+    tokens.dedup();
+    tokens
+}
+
+pub fn has_trait_implementation(content: &str, trait_name: &str) -> bool {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("//")
+            || trimmed.starts_with("/*")
+            || trimmed.starts_with('*')
+            || trimmed.starts_with('#')
+        {
+            continue;
+        }
+        if trimmed.starts_with("impl") && trimmed.contains(" for ") {
+            let after_impl = &trimmed[4..].trim();
+            let trait_part = match after_impl.find(" for ") {
+                Some(pos) => after_impl[..pos].trim(),
+                None => continue,
+            };
+            let trait_part = trait_part
+                .trim_start_matches('<')
+                .split('>')
+                .next()
+                .unwrap_or(trait_part);
+            if trait_part == trait_name
+                || trait_part.ends_with(trait_name)
+                || trait_name.ends_with(trait_part)
+            {
+                return true;
+            }
+        }
+        if let Some(class_pos) = trimmed.find("class ") {
+            let after_class = &trimmed[class_pos + 6..];
+            if let Some(paren_pos) = after_class.find('(') {
+                let bases = &after_class[paren_pos + 1..];
+                if let Some(close_paren) = bases.find(')') {
+                    for base in bases[..close_paren].split(',') {
+                        if base.trim() == trait_name {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(impl_pos) = trimmed.find(" implements ") {
+            let after_impl = &trimmed[impl_pos + 13..];
+            for iface in after_impl.split(',') {
+                let iface = iface.trim().trim_end_matches('{').trim();
+                if iface == trait_name {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}

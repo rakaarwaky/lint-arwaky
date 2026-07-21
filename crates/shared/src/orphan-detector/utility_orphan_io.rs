@@ -1,11 +1,28 @@
 // PURPOSE: utility_orphan_io — stateless I/O utilities for orphan detection graph building
 use std::path::Path;
 
-/// Read file contents, returning empty string on error.
+/// Outcome of reading a file — either content or diagnostic info.
+pub enum FileReadOutcome {
+    Content(String),
+    Unreadable { path: String, reason: String },
+}
+
+/// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
     match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => String::new(),
+    }
+}
+
+/// Read file with diagnostic info — returns content or error details.
+pub fn read_file_with_diagnostic(path: &str) -> FileReadOutcome {
+    match std::fs::read_to_string(path) {
+        Ok(content) => FileReadOutcome::Content(content),
+        Err(err) => FileReadOutcome::Unreadable {
+            path: path.to_string(),
+            reason: err.to_string(),
+        },
     }
 }
 

@@ -1,3 +1,4 @@
+pub mod contract_layer_detection_protocol;
 pub mod contract_orphan_aggregate;
 pub mod contract_orphan_graph_resolver_protocol;
 pub mod contract_orphan_protocol;
@@ -7,6 +8,7 @@ pub mod taxonomy_violation_orphan_vo;
 pub mod utility_file_cache;
 pub mod utility_orphan;
 pub mod utility_orphan_filename;
+pub mod utility_orphan_path;
 pub mod utility_orphan_io;
 pub mod utility_workspace;
 pub use taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};

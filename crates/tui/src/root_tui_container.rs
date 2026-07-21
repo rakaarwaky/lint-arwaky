@@ -58,10 +58,7 @@ impl TuiContainer {
                 .with_hook_port(hook_adapter)
                 .with_config(config_container.orchestrator())
                 .with_maintenance(maintenance_container.orchestrator())
-                .with_orphan(
-                    orphan_container.analyzer(),
-                    orphan_container.layer_detector(),
-                )
+                .with_orphan(orphan_container.analyzer())
                 .with_external_lint(external_lint_container.aggregate())
                 .with_import_orchestrator(import_container.orchestrator())
                 .with_naming_orchestrator(naming_container.orchestrator())

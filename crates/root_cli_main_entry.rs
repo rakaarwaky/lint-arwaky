@@ -12,63 +12,12 @@ use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
-use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
 
-struct CliLayerDetector {
-    config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-    layer_map: shared::taxonomy_definition_vo::LayerMapVO,
-}
-
-impl ILayerDetectionAggregate for CliLayerDetector {
-    fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let filename = shared::common::utility_layer_detector::extract_filename(file_path);
-        let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
-        let keys = shared::common::utility_layer_detector::collect_layer_keys(&self.layer_map);
-        Some(
-            shared::common::utility_layer_detector::resolve_specialized_layer(
-                &layer, file_path, &keys,
-            ),
-        )
-    }
-    fn get_layer_def(
-        &self,
-        layer: &str,
-    ) -> Option<shared::taxonomy_definition_vo::LayerDefinition> {
-        shared::common::utility_layer_detector::get_layer_def(layer, &self.config.layers).cloned()
-    }
-    fn get_orphan_entry_points(&self) -> Vec<String> {
-        vec![
-            "_container.rs".into(),
-            "_container.py".into(),
-            "_container.ts".into(),
-            "_container.js".into(),
-            "_entry.rs".into(),
-            "_entry.py".into(),
-            "_entry.ts".into(),
-            "_entry.js".into(),
-            "main.rs".into(),
-            "lib.rs".into(),
-            "main.py".into(),
-            "main.ts".into(),
-            "main.js".into(),
-            "index.ts".into(),
-            "index.js".into(),
-        ]
-    }
-    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
-        &self.config
-    }
-}
-
-fn make_check_context(
-    container: &CliContainer,
-    layer_detector: &Arc<dyn ILayerDetectionAggregate>,
-) -> surface_check_command::CheckContext {
+fn make_check_context(container: &CliContainer) -> surface_check_command::CheckContext {
     surface_check_command::CheckContext {
         code_analysis_linter: container.code_analysis_linter.clone(),
         import_orchestrator: container.import_orchestrator.clone(),
@@ -76,26 +25,13 @@ fn make_check_context(
         external_lint: container.external_lint.clone(),
         role_orchestrator: container.role_orchestrator.clone(),
         orphan_orchestrator: container.orphan_orchestrator.clone(),
-        layer_detector: layer_detector.clone(),
     }
-}
-
-fn make_layer_detector() -> Arc<dyn ILayerDetectionAggregate> {
-    let aes_config = default_aes_config();
-    let (merged_layers, _) =
-        shared::config_system::utility_config_merger::merge_config(&aes_config);
-    let mut config = aes_config;
-    config.layers = merged_layers;
-    let layer_map = shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone());
-    Arc::new(CliLayerDetector { config, layer_map })
 }
 
 fn main() -> ExitCode {
     let container = CliContainer::new_default();
-    let layer_detector = make_layer_detector();
 
     let ext_lint_clone = container.external_lint.clone();
-    let layer_det_clone = layer_detector.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
@@ -117,7 +53,6 @@ fn main() -> ExitCode {
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
             orphan_orchestrator: orphan_container.analyzer(),
-            layer_detector: layer_det_clone.clone(),
         }
     });
 
@@ -153,7 +88,7 @@ fn main() -> ExitCode {
         } => surface_check_action::handle_check(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             git_diff,
-            make_check_context(&container, &layer_detector),
+            make_check_context(&container),
             filter,
             Some(container.git_aggregate.clone()),
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
@@ -165,7 +100,7 @@ fn main() -> ExitCode {
             format,
         } => surface_check_action::handle_scan(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
-            make_check_context(&container, &layer_detector),
+            make_check_context(&container),
             Some(container.multi_project_orchestrator.clone()),
             factory,
             filter,
@@ -227,7 +162,6 @@ fn main() -> ExitCode {
         Commands::Orphan { path } => {
             let surface = surface_check_command::CheckCommandsSurface::new(make_check_context(
                 &container,
-                &layer_detector,
             ));
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
