@@ -218,7 +218,7 @@ impl CheckCommandsSurface {
         all_results: Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
         path: &str,
         filter: Option<&str>,
-        reporter: Arc<dyn ICodeAnalysisAggregate>,
+        _reporter: Arc<dyn ICodeAnalysisAggregate>,
         format: &Format,
     ) -> usize {
         let canonical_scan_path = std::path::PathBuf::from(path);
@@ -245,32 +245,13 @@ impl CheckCommandsSurface {
                 .collect()
         };
         let violation_count = filtered_results.len();
-        match format {
-            Format::Text => {
-                let results_list = LintResultList::new(filtered_results);
-                let report_path =
-                    match shared::common::taxonomy_path_vo::FilePath::new(path.to_string()) {
-                        Ok(fp) => fp,
-                        Err(_) => shared::common::taxonomy_path_vo::FilePath {
-                            value: path.to_string(),
-                        },
-                    };
-                println!("{}", reporter.format_report(&results_list, &report_path));
-            }
-            Format::Json => {
-                let json = serde_json::to_string_pretty(&filtered_results)
-                    .unwrap_or_else(|_| "[]".to_string());
-                println!("{json}");
-            }
-            Format::Sarif => {
-                let sarif = self.format_sarif_output(&filtered_results);
-                println!("{sarif}");
-            }
-            Format::Junit => {
-                let junit = self.format_junit_output(&filtered_results);
-                println!("{junit}");
-            }
-        }
+        // Delegate formatting to the report formatter aggregate (capabilities layer)
+        let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
+            filtered_results,
+            vec![],
+        );
+        let output = self.report_formatter.format(&report, *format);
+        println!("{output}");
         violation_count
     }
 
