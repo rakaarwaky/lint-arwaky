@@ -12,6 +12,9 @@ use crossterm::terminal::{
 };
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
+use ratatui::style::{Color, Style};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::Paragraph;
 use ratatui::Terminal;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
@@ -273,10 +276,6 @@ fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
 }
 
 fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
-    use ratatui::style::{Color, Style};
-    use ratatui::text::{Line, Span};
-    use ratatui::widgets::Paragraph;
-
     let line = Line::from(vec![
         Span::styled(" lint-arwaky TUI ", Style::default().fg(Color::Cyan)),
         Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),

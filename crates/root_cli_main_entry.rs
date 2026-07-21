@@ -262,10 +262,10 @@ fn main() -> ExitCode {
                 }
             }
         }
-        Commands::Init { global } => {
+        Commands::Init => {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
-            cli_commands::surface_setup_command::handle_init(setup_container.aggregate(), global)
+            cli_commands::surface_setup_command::handle_init(setup_container.aggregate())
         }
         Commands::Install { sudo } => {
             let setup_container =

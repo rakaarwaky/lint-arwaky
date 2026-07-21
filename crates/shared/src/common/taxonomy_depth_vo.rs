@@ -27,4 +27,3 @@ impl std::fmt::Display for DepthCount {
         write!(f, "{}", self.value)
     }
 }
-

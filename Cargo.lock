@@ -421,6 +421,7 @@ dependencies = [
  "naming_rules-lint-arwaky",
  "orphan_detector-lint-arwaky",
  "project_setup-lint-arwaky",
+ "regex",
  "role_rules-lint-arwaky",
  "serde",
  "serde_json",

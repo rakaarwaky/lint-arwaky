@@ -5,10 +5,10 @@ pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, Com
 pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
 pub mod agent_analysis_pipeline_orchestrator;
 pub use agent_analysis_pipeline_orchestrator::AnalysisPipelineOrchestrator;
-pub mod agent_json_formatter;
-pub mod agent_junit_formatter;
-pub mod agent_sarif_formatter;
-pub mod agent_text_formatter;
+pub mod capabilities_json_formatter;
+pub mod capabilities_junit_formatter;
+pub mod capabilities_sarif_formatter;
+pub mod capabilities_text_formatter;
 pub mod surface_check_command;
 pub use surface_check_command::CheckCommandsSurface;
 pub mod surface_check_action;

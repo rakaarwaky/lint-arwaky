@@ -72,8 +72,8 @@ impl AnalysisPipelineOrchestrator {
     /// same order every time and collects results into a ScanReport.
     pub async fn run_pipeline(&self, request: ScanRequest) -> Result<ScanReport, PipelineError> {
         let target = &request.target.value;
-        let path_obj = FilePath::new(target.to_string())
-            .map_err(|e| PipelineError::InvalidPath(e))?;
+        let path_obj =
+            FilePath::new(target.to_string()).map_err(|e| PipelineError::InvalidPath(e))?;
 
         let mut all_results = Vec::new();
         let mut diagnostics = Vec::new();
@@ -89,20 +89,17 @@ impl AnalysisPipelineOrchestrator {
         ));
 
         // 2-5. Run async linter groups concurrently
-        let rt = tokio::runtime::Runtime::new().map_err(|e| {
-            PipelineError::Analysis(format!("failed to create runtime: {e}"))
-        })?;
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| PipelineError::Analysis(format!("failed to create runtime: {e}")))?;
 
-        let (naming_results, import_results, external_results, role_results) = rt.block_on(
-            async {
-                tokio::join!(
-                    self.naming_orchestrator.run_audit(&path_obj),
-                    self.import_orchestrator.run_audit(&path_obj),
-                    self.external_lint.scan_all(&path_obj),
-                    self.role_orchestrator.run_audit(&path_obj),
-                )
-            },
-        );
+        let (naming_results, import_results, external_results, role_results) = rt.block_on(async {
+            tokio::join!(
+                self.naming_orchestrator.run_audit(&path_obj),
+                self.import_orchestrator.run_audit(&path_obj),
+                self.external_lint.scan_all(&path_obj),
+                self.role_orchestrator.run_audit(&path_obj),
+            )
+        });
 
         // Report audit failures instead of silently discarding them
         match naming_results {
@@ -183,17 +180,16 @@ impl AnalysisPipelineOrchestrator {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        self.orphan_orchestrator.check_orphans(&file_strs, orphan_scan_root)
+        self.orphan_orchestrator
+            .check_orphans(&file_strs, orphan_scan_root)
     }
 
     /// Filter results to the target path and return formatted output string.
-    pub fn format_results(
-        &self,
-        results: Vec<LintResult>,
-        path: &str,
-    ) -> String {
+    pub fn format_results(&self, results: Vec<LintResult>, path: &str) -> String {
         let canonical_scan_path = std::path::PathBuf::from(path);
-        let canonical_scan_path = canonical_scan_path.canonicalize().unwrap_or(canonical_scan_path);
+        let canonical_scan_path = canonical_scan_path
+            .canonicalize()
+            .unwrap_or(canonical_scan_path);
         let cwd = crate::surface_common_command::current_dir();
 
         // Filter results to the target path (P2.3: use Path::starts_with)
@@ -207,11 +203,11 @@ impl AnalysisPipelineOrchestrator {
 
         match self.format {
             Format::Text => {
-                let results_list = shared::cli_commands::taxonomy_result_vo::LintResultList::new(
-                    filtered_results,
-                );
+                let results_list =
+                    shared::cli_commands::taxonomy_result_vo::LintResultList::new(filtered_results);
                 let report_path = FilePath::new(path.to_string()).unwrap_or_default();
-                self.code_analysis_linter.format_report(&results_list, &report_path)
+                self.code_analysis_linter
+                    .format_report(&results_list, &report_path)
             }
             Format::Json => {
                 serde_json::to_string_pretty(&filtered_results).unwrap_or_else(|_| "[]".to_string())
@@ -222,10 +218,7 @@ impl AnalysisPipelineOrchestrator {
     }
 
     /// Format results as a SARIF 2.1.0 JSON string.
-    fn format_sarif_output(
-        &self,
-        results: &[LintResult],
-    ) -> String {
+    fn format_sarif_output(&self, results: &[LintResult]) -> String {
         #[derive(serde::Serialize)]
         struct SarifLog {
             #[serde(rename = "$schema")]
@@ -287,13 +280,15 @@ impl AnalysisPipelineOrchestrator {
         }
 
         // Map Severity → SARIF level
-        fn severity_to_sarif_level(sev: &shared::cli_commands::taxonomy_severity_vo::Severity) -> &'static str {
+        fn severity_to_sarif_level(
+            sev: &shared::cli_commands::taxonomy_severity_vo::Severity,
+        ) -> &'static str {
             match sev {
-                shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL |
-                shared::cli_commands::taxonomy_severity_vo::Severity::HIGH => "error",
+                shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
+                | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH => "error",
                 shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM => "warning",
-                shared::cli_commands::taxonomy_severity_vo::Severity::LOW |
-                shared::cli_commands::taxonomy_severity_vo::Severity::INFO => "note",
+                shared::cli_commands::taxonomy_severity_vo::Severity::LOW
+                | shared::cli_commands::taxonomy_severity_vo::Severity::INFO => "note",
             }
         }
 
@@ -337,20 +332,17 @@ impl AnalysisPipelineOrchestrator {
     }
 
     /// Format results as JUnit XML.
-    fn format_junit_output(
-        &self,
-        results: &[LintResult],
-    ) -> String {
+    fn format_junit_output(&self, results: &[LintResult]) -> String {
         let total = results.len();
         let failures: Vec<_> = results
             .iter()
             .filter(|r| {
                 matches!(
                     r.severity,
-                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::HIGH |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::LOW
+                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::LOW
                 )
             })
             .collect();

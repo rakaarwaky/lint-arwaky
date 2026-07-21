@@ -27,9 +27,9 @@ fn redact_secrets(content: &str) -> String {
         let words: Vec<String> = result.split_whitespace().map(|s| s.to_string()).collect();
         for word in &words {
             if word.len() >= 40
-                && word.chars().all(|c| {
-                    c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '=')
-                })
+                && word
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '='))
             {
                 result = result.replacen(word, "[REDACTED]", 1);
             }
@@ -78,4 +78,3 @@ pub async fn handle_config_show(
     }
     ExitCode::SUCCESS
 }
-

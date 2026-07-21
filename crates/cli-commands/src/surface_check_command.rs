@@ -217,7 +217,9 @@ impl CheckCommandsSurface {
         format: &Format,
     ) -> usize {
         let canonical_scan_path = std::path::PathBuf::from(path);
-        let canonical_scan_path = canonical_scan_path.canonicalize().unwrap_or(canonical_scan_path);
+        let canonical_scan_path = canonical_scan_path
+            .canonicalize()
+            .unwrap_or(canonical_scan_path);
         let cwd = crate::surface_common_command::current_dir();
         // P2.3: use Path::starts_with (component-aware) instead of string prefix matching
         let filtered_results: Vec<_> = if let Some(code) = filter {
@@ -409,14 +411,13 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> =
-            shared::common::collect_all_source_files_raw(&scan_root)
-                .iter()
-                .map(|f| f.value.clone())
-                .collect();
+        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
 
         let multi = workspaces.len() > 1;
-        if multi {
+        if multi && matches!(format, Format::Text) {
             println!(
                 "Lint Arwaky v{} (Multi-Workspace Mode)",
                 env!("CARGO_PKG_VERSION")
@@ -485,9 +486,7 @@ impl CheckCommandsSurface {
             all_results.extend(role_results);
 
             // Filter results to only those in this workspace member's path
-            let ws_canonical = std::path::Path::new(&ws.path.value)
-                .canonicalize()
-                .ok();
+            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
             let cwd_for_ws = match std::env::current_dir() {
                 Ok(d) => d,
                 Err(_) => std::path::PathBuf::new(),
@@ -509,7 +508,10 @@ impl CheckCommandsSurface {
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
-                            && (ws_canonical.as_ref().map(|c| abs_path.starts_with(c)).unwrap_or(false)
+                            && (ws_canonical
+                                .as_ref()
+                                .map(|c| abs_path.starts_with(c))
+                                .unwrap_or(false)
                                 || abs_path.starts_with(&ws_fallback))
                     })
                     .collect()
@@ -533,7 +535,10 @@ impl CheckCommandsSurface {
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
-                            && (ws_canonical.as_ref().map(|c| abs_path.starts_with(c)).unwrap_or(false)
+                            && (ws_canonical
+                                .as_ref()
+                                .map(|c| abs_path.starts_with(c))
+                                .unwrap_or(false)
                                 || abs_path.starts_with(&ws_fallback))
                     })
                     .cloned()
@@ -558,7 +563,7 @@ impl CheckCommandsSurface {
 
             global_all_results.extend(member_results.clone());
 
-            if multi {
+            if multi && matches!(format, Format::Text) {
                 let total = member_results.len();
                 println!("── [{ws_type}] {ws_name} — {total} violations ──");
                 if !member_results.is_empty() {

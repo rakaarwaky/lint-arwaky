@@ -35,10 +35,7 @@ pub async fn handle_git_diff(
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
 
     // P2.5: use user-provided path instead of hardcoded "."
-    let project_path = FilePath::new(
-        project_path.unwrap_or(".").to_string(),
-    )
-    .unwrap_or_default();
+    let project_path = FilePath::new(project_path.unwrap_or(".").to_string()).unwrap_or_default();
 
     let changed_files = git_aggregate
         .diff_protocol()

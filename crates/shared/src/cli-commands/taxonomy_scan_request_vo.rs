@@ -21,17 +21,14 @@ impl Default for ScanTarget {
 }
 
 /// Mode of analysis to run.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum ScanMode {
+    #[default]
     Check,
     Scan,
-    Ci { threshold: u32 },
-}
-
-impl Default for ScanMode {
-    fn default() -> Self {
-        Self::Check
-    }
+    Ci {
+        threshold: u32,
+    },
 }
 
 /// Request to run the full analysis pipeline.
