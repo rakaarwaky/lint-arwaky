@@ -202,7 +202,7 @@ Unbounded `join_all()` spawns one future per workspace member. For large monorep
 - `contract_config_orchestrator_aggregate.rs` — removed accessor methods (P5.1)
 - `contract_workspace_detector_protocol.rs` — added `discover_workspace_members` (P1.2)
 - `capabilities_yaml_reader.rs` — depth 3, aliases, local-only listing, XDG hardening (P2.3/P4.x)
-- `capabilities_workspace_detector_provider.rs` — async I/O, discover_workspace_members (P1.2/P6.1)
+- `capabilities_workspace_detector.rs` — async I/O, discover_workspace_members (P1.2/P6.1)
 - `agent_config_orchestrator.rs` — uses contracts, bounded concurrency, caching (P1.3/P6.2/P6.3)
 - `root_config_system_container.rs` — exposes reader via `reader()` method
 - `mod.rs` (shared) — registers new modules
