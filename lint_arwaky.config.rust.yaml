@@ -157,7 +157,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -170,7 +169,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -183,7 +181,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -196,7 +193,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "capabilities",
               "contract(aggregate)",
@@ -207,7 +203,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+            ["agent", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
@@ -232,7 +228,7 @@ architecture:
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surfaces", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -249,7 +245,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -267,7 +262,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -285,7 +279,6 @@ architecture:
             [
               "agent",
               "contract",
-              "infrastructure",
               "capabilities",
               "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
               "root",
@@ -300,7 +293,6 @@ architecture:
               "taxonomy",
               "contract",
               "capabilities",
-              "infrastructure",
               "agent",
               "surfaces",
             ]
@@ -312,8 +304,6 @@ architecture:
             - layer: "contract"
               purpose: "implement"
             - layer: "capabilities"
-              purpose: "implement"
-            - layer: "infrastructure"
               purpose: "implement"
             - layer: "agent"
               purpose: "implement"
@@ -339,7 +329,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -355,7 +344,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -371,7 +359,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -387,7 +374,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "capabilities",
               "contract(aggregate)",
@@ -403,7 +389,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+            ["agent", "surfaces", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -432,7 +418,7 @@ architecture:
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surfaces", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -449,7 +435,6 @@ architecture:
               "taxonomy",
               "contract",
               "capabilities",
-              "infrastructure",
               "agent",
               "surfaces",
             ]
@@ -462,8 +447,6 @@ architecture:
               purpose: "implement"
             - layer: "capabilities"
               purpose: "implement"
-            - layer: "infrastructure"
-              purpose: "implement"
             - layer: "agent"
               purpose: "implement"
             - layer: "surfaces"
@@ -475,7 +458,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -493,7 +475,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -511,7 +492,6 @@ architecture:
             [
               "agent",
               "contract",
-              "infrastructure",
               "capabilities",
               "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
               "root",

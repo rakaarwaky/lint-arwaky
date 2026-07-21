@@ -8,6 +8,7 @@
 //     as auto-fail regardless of score.
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_threshold_vo::Threshold;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -54,19 +55,22 @@ pub fn current_dir() -> std::path::PathBuf {
 
 pub fn run_ci_analysis(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    path: Option<String>,
-    threshold: u32,
+    path: Option<FilePath>,
+    threshold: Threshold,
 ) -> ExitCode {
     use shared::cli_commands::taxonomy_severity_vo::Severity;
-    let root = path.unwrap_or_else(|| ".".to_string());
+    let root = match path {
+        Some(p) => p,
+        None => FilePath::new(".").unwrap_or_default(),
+    };
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
     let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score as u32) < threshold;
+    let below_threshold = (score.value() as u32) < threshold.value();
 
     println!("Architecture Compliance CI");
-    println!("Score: {:.1} / 100", score);
-    println!("Threshold: {}", threshold);
+    println!("Score: {:.1} / 100", score.value());
+    println!("Threshold: {}", threshold.value());
     println!();
 
     let mut reasons: Vec<String> = Vec::new();
@@ -76,7 +80,8 @@ pub fn run_ci_analysis(
     if below_threshold {
         reasons.push(format!(
             "Score below threshold ({:.1} < {})",
-            score, threshold
+            score.value(),
+            threshold.value()
         ));
     }
 

@@ -12,6 +12,9 @@ use std::process::ExitCode;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_git_vo::GitBranchName;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -25,7 +28,7 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 
 /// check = self-lint (AES analysis on current project, same algorithm as scan)
 pub fn handle_check(
-    path: Option<String>,
+    path: Option<FilePath>,
     git_diff: bool,
     ctx: crate::surface_check_command::CheckContext,
     filter: Option<String>,
@@ -33,8 +36,8 @@ pub fn handle_check(
     config: ArchitectureConfig,
     format: Format,
 ) -> ExitCode {
-    let root = match path {
-        Some(p) => p,
+    let root = match &path {
+        Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     // Validate path exists before scanning
@@ -57,7 +60,7 @@ pub fn handle_check(
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_agg,
             ctx.code_analysis_linter.clone(),
-            "HEAD".to_string(),
+            GitBranchName::new("HEAD"),
         ))
     } else {
         let surface = CheckCommandsSurface::new(ctx);
@@ -67,7 +70,7 @@ pub fn handle_check(
 
 /// scan = AES analysis on external project + external adapters
 pub fn handle_scan(
-    path: Option<String>,
+    path: Option<FilePath>,
     ctx: crate::surface_check_command::CheckContext,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
@@ -75,8 +78,8 @@ pub fn handle_scan(
     member: Option<String>,
     format: Format,
 ) -> ExitCode {
-    let root = match path {
-        Some(p) => p,
+    let root = match &path {
+        Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     // Validate path exists before scanning
@@ -90,8 +93,8 @@ pub fn handle_scan(
 
 pub fn handle_ci(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    path: Option<String>,
-    threshold: u32,
+    path: Option<FilePath>,
+    threshold: Threshold,
 ) -> ExitCode {
     crate::surface_common_command::run_ci_analysis(code_analysis_linter, path, threshold)
 }

@@ -40,7 +40,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
           "root",
@@ -54,7 +53,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
           "root",
@@ -112,60 +110,6 @@ architecture:
                   "aggregate",
                   "utility",
                 ]
-        infrastructure:
-          suffix:
-            - flexible:
-                [
-                  "adapter",
-                  "provider",
-                  "scanner",
-                  "client",
-                  "schemas",
-                  "lifespan",
-                  "wrapper",
-                  "tracer",
-                  "tracker",
-                  "variants",
-                  "detector",
-                  "patterns",
-                  "system",
-                  "repository",
-                  "cache",
-                  "loader",
-                  "writer",
-                  "reader",
-                  "driver",
-                  "connector",
-                  "gateway",
-                  "serializer",
-                  "encoder",
-                  "decoder",
-                  "fetcher",
-                  "watcher",
-                  "indexer",
-                  "dispatcher",
-                  "recorder",
-                  "proxy",
-                  "publisher",
-                  "subscriber",
-                  "listener",
-                  "poller",
-                  "streamer",
-                  "utility",
-                  "helper",
-                ]
-            - forbidden:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant",
-                  "constants",
-                  "port",
-                  "protocol",
-                  "aggregate",
-                ]
         agent:
           suffix:
             - strict: ["orchestrator"]
@@ -196,7 +140,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -208,7 +151,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -221,7 +163,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -234,7 +175,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "contract",
               "capabilities",
@@ -247,7 +187,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "surfaces",
               "capabilities",
               "contract(aggregate)",
@@ -258,27 +197,14 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+            ["agent", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-          allowed_imports:
-            - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
-            - layer: "contract(protocol|aggregate)"
-              purpose: "call"
-
-        - scope: "infrastructure"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
-          forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -296,7 +222,7 @@ architecture:
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surfaces", "capabilities", "root"]
 
         - scope: "surfaces(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
@@ -304,7 +230,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -317,7 +242,6 @@ architecture:
           forbidden:
             [
               "agent",
-              "infrastructure",
               "capabilities",
               "contract(port)",
               "contract(protocol)",
@@ -332,7 +256,6 @@ architecture:
             [
               "agent",
               "contract",
-              "infrastructure",
               "capabilities",
               "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
               "root",
@@ -345,7 +268,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -355,20 +277,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-          allowed_imports:
-            - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
-            - layer: "contract(protocol|aggregate)"
-              purpose: "call"
-
-        - scope: "infrastructure"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
-          forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -384,7 +293,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -396,7 +304,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -409,7 +316,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -421,7 +327,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -435,7 +340,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -449,7 +353,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -462,7 +365,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -486,7 +388,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -507,11 +408,6 @@ architecture:
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions: ["__init__.py", "__main__.py", "main.py"]
-
-    AES404:
-      enabled: true
-      scope: ["infrastructure"]
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES405:
@@ -544,11 +440,6 @@ architecture:
     AES503:
       enabled: true
       scope: ["capabilities"]
-      entry_points: []
-
-    AES504:
-      enabled: true
-      scope: ["infrastructure"]
       entry_points: []
 
     AES505:

@@ -1,3 +1,4 @@
+use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
@@ -38,17 +39,17 @@ impl IDiffProtocol for DiffChecker {
         }
     }
 
-    async fn get_changed_files(&self, path: &FilePath, base: &str) -> FilePathList {
-        let branch = if base.is_empty() || base == "." {
+    async fn get_changed_files(&self, path: &FilePath, base: &GitBranchName) -> FilePathList {
+        let branch_str = if base.value().is_empty() || base.value() == "." {
             self.get_default_branch(path)
         } else {
-            base.to_string()
+            base.value().to_string()
         };
-        self.collect_changed_files(path, &branch)
+        self.collect_changed_files(path, &branch_str)
     }
 
-    async fn get_default_branch(&self, path: &FilePath) -> String {
-        self.get_default_branch(path)
+    async fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
+        GitBranchName::new(self.get_default_branch(path))
     }
 }
 
