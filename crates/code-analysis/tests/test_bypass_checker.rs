@@ -4,6 +4,7 @@
 use code_analysis_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::code_analysis::utility_bypass::{is_inside_string_or_char, strip_trailing_comment};
 use shared::common::taxonomy_common_vo::PatternList;
 
 fn create_checker() -> BypassChecker {
@@ -724,4 +725,113 @@ fn main() {}
         violations.is_empty(),
         "XXX in comments should be skipped (not a runtime bypass)"
     );
+}
+
+// ─── False positive fixes: trailing comments ───────────────
+
+#[test]
+fn test_trailing_comment_allow_not_detected() {
+    let checker = create_checker();
+    // Line starts with code, not // — trailing comment should be ignored
+    let content = r#"mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']), // #[allow("#;
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert!(
+        violations.is_empty(),
+        "Trailing // #[allow( in comment should not be detected"
+    );
+}
+
+#[test]
+fn test_code_with_trailing_comment_unwrap_detected() {
+    let checker = create_checker();
+    // Real unwrap in code, trailing comment is irrelevant
+    let content = "let x = foo.unwrap(); // some comment";
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert_eq!(
+        violations.len(),
+        1,
+        "Real .unwrap() should still be detected"
+    );
+}
+
+// ─── False positive fixes: string literals ─────────────────
+
+#[test]
+fn test_string_literal_todo_not_detected() {
+    let checker = create_checker();
+    let content = r#"inner.starts_with("todo!(")"#;
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert!(
+        violations.is_empty(),
+        "todo! inside a string literal should not be detected"
+    );
+}
+
+#[test]
+fn test_string_literal_unwrap_not_detected() {
+    let checker = create_checker();
+    let content = r#"let pattern = "unwrap";"#;
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert!(
+        violations.is_empty(),
+        "unwrap inside a string literal should not be detected"
+    );
+}
+
+#[test]
+fn test_string_literal_panic_not_detected() {
+    let checker = create_checker();
+    let content = r#"msg.contains("panic!")"#;
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert!(
+        violations.is_empty(),
+        "panic! inside a string literal should not be detected"
+    );
+}
+
+#[test]
+fn test_string_literal_expect_not_detected() {
+    let checker = create_checker();
+    let content = r#"inner.starts_with("unimplemented!(")"#;
+    let mut violations = Vec::new();
+    checker.check_bypass_comments("test.rs", content, &mut violations);
+    assert!(
+        violations.is_empty(),
+        "unimplemented! inside a string literal should not be detected"
+    );
+}
+
+// ─── Utility function tests ────────────────────────────────
+
+#[test]
+fn test_strip_trailing_comment_basic() {
+    assert_eq!(strip_trailing_comment("code // comment"), "code ");
+    assert_eq!(strip_trailing_comment("no comment here"), "no comment here");
+    assert_eq!(strip_trailing_comment("// full comment"), "");
+}
+
+#[test]
+fn test_strip_trailing_comment_in_string() {
+    // // inside a string should NOT be treated as a comment
+    assert_eq!(
+        strip_trailing_comment(r#"s.contains("//")"#),
+        r#"s.contains("//")"#
+    );
+}
+
+#[test]
+fn test_is_inside_string_or_char() {
+    // Position 9 is inside the string "unwrap"
+    assert!(is_inside_string_or_char(r#"foo("unwrap")"#, 9));
+    // Position 3 is outside the string
+    assert!(!is_inside_string_or_char(r#"foo("unwrap")"#, 3));
+    // Position 5 is inside the char literal '\''
+    assert!(is_inside_string_or_char("c = '\\''", 5));
+    // Position 4 is the start of the char literal, not inside
+    assert!(!is_inside_string_or_char("c = '\\''", 4));
 }

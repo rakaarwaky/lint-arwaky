@@ -52,14 +52,16 @@ def _rel_display(path: Path, project_root: Path) -> str:
 
 
 def prompt_file(sources: list[Path]) -> Path:
-    """TUI-style ranger-like file picker using curses.
+    """Ranger-style directory tree picker using curses.
 
-    Supports:
-      - Arrow keys / j/k to navigate
-      - Page Up / Page Down
-      - Type text to filter (substring match)
-      - Number input (e.g. '106') to jump
-      - Enter to select, 'q' or Ctrl-C to quit
+    Navigate through directories like ranger:
+      - ↑↓/j/k: move selection up/down
+      - Enter on directory: cd into it
+      - Enter on file: select it
+      - ← / Backspace: go up one level (to parent dir)
+      - Page Up / Page Down: scroll page
+      - Type text: filter current listing
+      - q: quit
 
     Falls back to numbered list if stdin is not a TTY.
     """
@@ -69,9 +71,6 @@ def prompt_file(sources: list[Path]) -> Path:
 
     project_root = resolve_project_root()
 
-    # Pre-compute display strings
-    display = [_rel_display(s, project_root) for s in sources]
-
     def _run(stdscr):
         stdscr.keypad(True)
         stdscr.erase()
@@ -80,11 +79,12 @@ def prompt_file(sources: list[Path]) -> Path:
         curses.start_color()
         curses.use_default_colors()
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_WHITE)   # selected
-        curses.init_pair(2, curses.COLOR_GREEN, -1)                    # header
-        curses.init_pair(3, curses.COLOR_YELLOW, -1)                   # filter
+        curses.init_pair(2, curses.COLOR_GREEN, -1)                    # header/dir
+        curses.init_pair(3, curses.COLOR_YELLOW, -1)                   # filter/input
+        curses.init_pair(4, curses.COLOR_CYAN, -1)                     # file
 
         max_y, max_x = stdscr.getmaxyx()
-        header_lines = 4  # title, hint, filter, separator
+        header_lines = 3  # title, path, separator
         list_start = header_lines
         list_end = max_y - 1  # reserve bottom line for status
 
@@ -93,21 +93,69 @@ def prompt_file(sources: list[Path]) -> Path:
         if view_h < 1:
             view_h = max_y - 2
 
-        scroll = 0
+        # Build directory tree from sources
+        # Each node: {"name": str, "path": Path, "is_dir": bool, "children": list}
+        def build_tree(paths: list[Path]) -> dict:
+            root: dict = {"name": "", "path": project_root, "is_dir": True, "children": []}
+            for p in paths:
+                parts = p.relative_to(project_root).parts
+                current = root
+                for part in parts:
+                    found = False
+                    for child in current["children"]:
+                        if child["name"] == part and child["path"] == current["path"] / part:
+                            current = child
+                            found = True
+                            break
+                    if not found:
+                        new_path = current["path"] / part
+                        is_last = parts[-1] == part and len(parts) > 0
+                        if is_last and p.suffix in SUPPORTED_EXTENSIONS:
+                            # This is a file (last segment)
+                            child = {"name": part, "path": new_path, "is_dir": False}
+                            current["children"].append(child)
+                        else:
+                            # This is a directory or intermediate segment
+                            child = {"name": part, "path": new_path, "is_dir": True, "children": []}
+                            current["children"].append(child)
+                            current = child
+            return root
+
+        root_tree = build_tree(sources)
+        nav_stack: list[dict] = [root_tree]  # directory stack
         selected = 0
         filter_text = ""
-        num_buf = ""
+
+        def get_current_dir() -> dict:
+            return nav_stack[-1]
+
+        def get_sorted_children(dir_node: dict) -> list[dict]:
+            """Sort: directories first, then files, both alphabetically."""
+            children = dir_node["children"]
+            dirs = sorted([c for c in children if c["is_dir"]], key=lambda c: c["name"].lower())
+            files = sorted([c for c in children if not c["is_dir"]], key=lambda c: c["name"].lower())
+            return dirs + files
 
         def draw():
-            nonlocal scroll, selected, filter_text
+            nonlocal selected, filter_text
             stdscr.erase()
 
             # Header
             title = "=== Lint Arwaky File Exporter ==="
-            hint = "↑↓/j/k: navigate  pgup/pgdn: page  type: filter  <num>: jump  Enter: select  q: quit"
             try:
                 stdscr.addstr(0, 0, title, curses.color_pair(2) | curses.A_BOLD)
-                stdscr.addstr(1, 0, hint, curses.color_pair(2))
+            except curses.error:
+                pass
+
+            # Current path
+            current_dir = get_current_dir()
+            path_parts = []
+            for node in nav_stack:
+                if node["name"]:
+                    path_parts.append(node["name"])
+            display_path = "/" + "/".join(path_parts) if path_parts else "/"
+            try:
+                stdscr.addstr(1, 0, f"  {display_path}", curses.A_DIM)
             except curses.error:
                 pass
 
@@ -123,59 +171,55 @@ def prompt_file(sources: list[Path]) -> Path:
             except curses.error:
                 pass
 
-            # Compute visible range
-            filtered_indices = list(range(len(display)))
+            # Get children and apply filter
+            children = get_sorted_children(current_dir)
             if filter_text:
-                filtered_indices = [i for i in range(len(display)) if filter_text.lower() in display[i].lower()]
+                filtered = [c for c in children if filter_text.lower() in c["name"].lower()]
+            else:
+                filtered = children
 
-            if not filtered_indices:
+            # Clamp selected
+            if selected >= len(filtered):
+                selected = max(0, len(filtered) - 1)
+            if selected < 0:
+                selected = 0
+
+            # Compute scroll
+            scroll = 0
+            vis = filtered[scroll:scroll + view_h]
+            while not vis and len(filtered) > 0:
+                vis = filtered[:view_h]
+
+            for idx, item in enumerate(vis):
+                y = list_start + 1 + idx
+                if y > list_end:
+                    break
+
+                # Truncate line to fit width
+                name = item["name"]
+                if len(name) > max_x - 5:
+                    name = name[:max_x - 6] + "…"
+
+                is_selected = (idx == selected)
+                icon = "📁 " if item["is_dir"] else "📄 "
+
                 try:
-                    stdscr.addstr(list_start, 0, "  (no matches)", curses.A_DIM)
+                    if is_selected:
+                        stdscr.addstr(y, 2, f"> {icon}{name}", curses.color_pair(1))
+                    else:
+                        stdscr.addstr(y, 2, f"  {icon}{name}", curses.A_DIM)
                 except curses.error:
                     pass
-            else:
-                # Clamp selected to filtered range
-                if selected >= len(filtered_indices):
-                    selected = len(filtered_indices) - 1
-                if selected < 0:
-                    selected = 0
 
-                # Compute scroll
-                vis = filtered_indices[scroll:scroll + view_h]
-                if not vis:
-                    scroll = max(0, selected - view_h // 2)
-                    vis = filtered_indices[scroll:scroll + view_h]
-
-                for idx, real_idx in enumerate(vis):
-                    y = list_start + 1 + idx
-                    if y > list_end:
-                        break
-                    line = display[real_idx]
-                    is_selected = (real_idx == selected)
-
-                    # Truncate line to fit width
-                    if len(line) > max_x - 3:
-                        line = line[:max_x - 4] + "…"
-
-                    try:
-                        if is_selected:
-                            stdscr.addstr(y, 2, f"> {line}", curses.color_pair(1))
-                        else:
-                            stdscr.addstr(y, 2, f"  {line}")
-                    except curses.error:
-                        pass
-
-                # Update scroll if selection moves out of view
-                sel_pos = filtered_indices.index(selected) if selected in filtered_indices else -1
-                if sel_pos < 0 or sel_pos >= len(filtered_indices):
-                    scroll = 0
-                elif sel_pos < scroll:
-                    scroll = sel_pos
-                elif sel_pos >= scroll + view_h:
-                    scroll = sel_pos - view_h + 1
+            # Update scroll if selection moves out of view
+            sel_pos = selected
+            if sel_pos < scroll:
+                scroll = sel_pos
+            elif sel_pos >= scroll + view_h:
+                scroll = sel_pos - view_h + 1
 
             # Bottom status
-            status = f"  {len(filtered_indices)}/{len(display)} files  |  [{selected + 1}]"
+            status = f"  {len(filtered)} entries  |  [{selected + 1}]  ←/⎵:parent  ⏎:open/select  q:quit"
             try:
                 stdscr.addstr(list_end, 0, status, curses.A_DIM)
             except curses.error:
@@ -192,59 +236,53 @@ def prompt_file(sources: list[Path]) -> Path:
                 print("\nExiting.")
                 sys.exit(0)
 
-            elif ch in (curses.KEY_UP, ord('k'), ord('j')):
-                if ch == curses.KEY_UP or ch == ord('k'):
-                    selected = max(0, selected - 1)
-                else:
-                    selected = min(len(display) - 1, selected + 1)
-
-            elif ch in (curses.KEY_DOWN,):
-                selected = min(len(display) - 1, selected + 1)
+            elif ch in (curses.KEY_UP, ord('k')):
+                selected = max(0, selected - 1)
+            elif ch in (curses.KEY_DOWN, ord('j')):
+                children = get_sorted_children(get_current_dir())
+                if filter_text:
+                    children = [c for c in children if filter_text.lower() in c["name"].lower()]
+                selected = min(len(children) - 1, selected + 1)
 
             elif ch == curses.KEY_PPAGE:  # Page Up
                 selected = max(0, selected - view_h)
             elif ch == curses.KEY_NPAGE:  # Page Down
-                selected = min(len(display) - 1, selected + view_h)
+                children = get_sorted_children(get_current_dir())
+                if filter_text:
+                    children = [c for c in children if filter_text.lower() in c["name"].lower()]
+                selected = min(len(children) - 1, selected + view_h)
 
-            elif ch == 10 or ch == 13:  # Enter
-                if selected < len(sources):
-                    return sources[selected]
+            elif ch == 10 or ch == 13:  # Enter — open directory or select file
+                children = get_sorted_children(get_current_dir())
+                if filter_text:
+                    filtered = [c for c in children if filter_text.lower() in c["name"].lower()]
+                    item = filtered[selected]
+                else:
+                    item = children[selected]
 
-            elif ch == 27:  # Escape — clear filter
-                filter_text = ""
-                num_buf = ""
+                if item["is_dir"]:
+                    # cd into directory
+                    nav_stack.append(item)
+                    selected = 0
+                    filter_text = ""
+                elif not item["is_dir"]:
+                    # Select file
+                    return item["path"]
+
+            elif ch in (27, 260):  # Escape or Left Arrow — go up one level
+                if len(nav_stack) > 1:
+                    nav_stack.pop()
+                    selected = 0
+                    filter_text = ""
+
             elif ch == 9:  # Tab — clear filter
                 filter_text = ""
-                num_buf = ""
 
-            elif 32 <= ch < 127:  # Printable char
+            elif 32 <= ch < 127:  # Printable char — type to filter
                 c = chr(ch)
-
-                # Number input (accumulate digits)
-                if c.isdigit():
-                    num_buf += c
-                    # Try to jump after a few digits or after timeout
-                    try:
-                        idx = int(num_buf) - 1
-                        if 0 <= idx < len(sources):
-                            selected = idx
-                            draw()
-                    except ValueError:
-                        pass
-
-                    # If user types non-digit, treat as filter text
-                    if not c.isdigit():
-                        num_buf = ""
-                        if filter_text:
-                            filter_text += c
-                        else:
-                            filter_text = c
-                elif c == 'q':
-                    pass  # handled above
-                else:
-                    num_buf = ""
-                    if len(filter_text) < 80:
-                        filter_text += c
+                if len(filter_text) < 80:
+                    filter_text += c
+                    selected = 0
 
             draw()
 

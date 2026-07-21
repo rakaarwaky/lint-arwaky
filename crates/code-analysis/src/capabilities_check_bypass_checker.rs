@@ -124,8 +124,11 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
+            // Strip trailing comments before checking (e.g. `code // #[allow(`)
+            let code_portion = strip_trailing_comment(t);
+
             // Allow attribute: rustc annotation attributes → BYPASS_COMMENT (always).
-            if starts_with_allow_attr(t) {
+            if starts_with_allow_attr(code_portion) {
                 violations.push(LintResult::new_arch(
                     file,
                     i + 1,
@@ -138,16 +141,23 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
 
             // Use guarded match arms (P1.2 fix: eliminates clippy::collapsible_match)
-            let t_lower = t.to_lowercase();
+            let t_lower = code_portion.to_lowercase();
             for (idx, _p) in lowered_patterns.iter().enumerate() {
                 let p_str = &effective_patterns.values[idx];
                 let requires_method_call = matches!(p_str.as_str(), "unwrap" | "expect");
 
+                // Find pattern position in code portion (not in comments)
+                let pattern_pos = t_lower.find(_p.as_str()).unwrap_or(usize::MAX);
+
                 match p_str.as_str() {
                     p if Self::is_word_pattern_token(p)
-                        && matches_word_token(t, p, requires_method_call)
-                        && !(p == "unwrap" && Self::has_safe_unwrap_variant(t)) =>
+                        && matches_word_token(code_portion, p, requires_method_call)
+                        && !(p == "unwrap" && Self::has_safe_unwrap_variant(code_portion)) =>
                     {
+                        // Skip if pattern is inside a string literal
+                        if is_inside_string_or_char(t, pattern_pos) {
+                            continue;
+                        }
                         let vo = match Self::classify_token(p) {
                             ViolationKind::UnwrapExpect => {
                                 AesCodeAnalysisViolation::UnwrapExpect { reason: None }
@@ -175,9 +185,12 @@ impl IBypassCheckerProtocol for BypassChecker {
 
                     p if !Self::is_word_pattern_token(p)
                         && !p.is_empty()
-                        && t_lower.contains(p)
-                        && !t.trim_start().starts_with('"') =>
+                        && t_lower.contains(p) =>
                     {
+                        // Skip if pattern is inside a string literal
+                        if is_inside_string_or_char(t, pattern_pos) {
+                            continue;
+                        }
                         violations.push(LintResult::new_arch(
                             file,
                             i + 1,
@@ -194,7 +207,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             i += 1;
 
             // Language-scoped phrase patterns (P1.9: only after main pattern match).
-            let line_lc = t.to_lowercase();
+            let line_lc = code_portion.to_lowercase();
             match language {
                 Language::Python => {
                     if line_lc.contains("raise notimplementederror")

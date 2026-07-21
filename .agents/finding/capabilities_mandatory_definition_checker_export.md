@@ -2358,6 +2358,108 @@ pub fn is_ident_start(b: u8) -> bool {
     b.is_ascii_alphabetic() || b == b'_'
 }
 
+/// Strip trailing `// ...` comment from a line, respecting string literals.
+/// Returns the code portion only (everything before the first unquoted `//`).
+pub fn strip_trailing_comment(line: &str) -> &str {
+    let bytes = line.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_string = false;
+    let mut in_char = false;
+
+    while i < len {
+        let b = bytes[i];
+
+        // Handle string boundaries
+        if b == b'"' && !in_char {
+            if in_string {
+                // Check for escaped quote
+                if i > 0 && bytes[i - 1] == b'\\' {
+                    i += 1;
+                    continue;
+                }
+                in_string = false;
+            } else {
+                in_string = true;
+            }
+            i += 1;
+            continue;
+        }
+
+        // Handle char boundaries
+        if b == b'\'' && !in_string {
+            if in_char {
+                if i > 0 && bytes[i - 1] == b'\\' {
+                    i += 1;
+                    continue;
+                }
+                in_char = false;
+            } else {
+                in_char = true;
+            }
+            i += 1;
+            continue;
+        }
+
+        // Skip content inside strings/chars
+        if in_string || in_char {
+            i += 1;
+            continue;
+        }
+
+        // Detect `//` comment start
+        if b == b'/' && i + 1 < len && bytes[i + 1] == b'/' {
+            return &line[..i];
+        }
+
+        i += 1;
+    }
+
+    line
+}
+
+/// Check if a byte position in a line is inside a string or char literal.
+pub fn is_inside_string_or_char(line: &str, pos: usize) -> bool {
+    let bytes = line.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_string = false;
+    let mut in_char = false;
+
+    while i < len && i < pos {
+        let b = bytes[i];
+
+        if b == b'"' && !in_char {
+            if in_string && i > 0 && bytes[i - 1] == b'\\' {
+                i += 1;
+                continue;
+            }
+            in_string = !in_string;
+            i += 1;
+            continue;
+        }
+
+        if b == b'\'' && !in_string {
+            if in_char && i > 0 && bytes[i - 1] == b'\\' {
+                i += 1;
+                continue;
+            }
+            in_char = !in_char;
+            i += 1;
+            continue;
+        }
+
+        if in_string || in_char {
+            i += 1;
+            continue;
+        }
+
+        i += 1;
+    }
+
+    in_string || in_char
+}
+
 /// Check if a line starts with a Rust bypass attribute (`#[allow(...)`, `#[expect(...)`,
 /// `#![allow(...)]`, `#![expect(...)]`, `#![warn(...)]`, `#[warn(...)]`,
 /// `#[clippy::allow(...)]`, etc.), constructed without the literal prefixes appearing
