@@ -3,6 +3,7 @@ use futures::stream::{self, StreamExt};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
+use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -18,6 +19,7 @@ use std::sync::Mutex;
 pub struct ConfigOrchestrator {
     workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
     config_reader: Arc<dyn IConfigReaderProtocol>,
+    validator: Arc<dyn IConfigValidatorProtocol>,
     config_cache: Mutex<HashMap<String, Arc<ArchitectureConfig>>>,
 }
 
@@ -25,12 +27,18 @@ impl ConfigOrchestrator {
     pub fn new(
         workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
         config_reader: Arc<dyn IConfigReaderProtocol>,
+        validator: Arc<dyn IConfigValidatorProtocol>,
     ) -> Self {
         Self {
             workspace_detector,
             config_reader,
+            validator,
             config_cache: Mutex::new(HashMap::new()),
         }
+    }
+
+    pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
+        &self.validator
     }
 }
 
