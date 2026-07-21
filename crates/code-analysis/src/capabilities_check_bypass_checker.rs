@@ -13,7 +13,8 @@ use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
     AesCodeAnalysisViolation, Language, ViolationKind,
 };
 use shared::code_analysis::utility_bypass::{
-    matches_word_token, skip_brace_block, skip_cfg_test_block, starts_with_allow_attr,
+    is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
+    starts_with_allow_attr, strip_trailing_comment,
 };
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::taxonomy_common_vo::PatternList;
@@ -68,16 +69,29 @@ impl IBypassCheckerProtocol for BypassChecker {
         };
 
         // P2.5 fix: line-by-line scan instead of allocating full lowercase copy
+        let language = code_analysis_language_from_file(file);
         let has_bypass_token = content.lines().any(|line| {
             let trimmed = line.trim();
             // Skip comments and doc comments
             if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
                 return false;
             }
-            let lc = line.to_lowercase();
-            effective_patterns.iter().any(|p| lc.contains(p.as_str()))
-                || lc.contains("raise ")
-                || lc.contains("throw new")
+            // Strip trailing comments before checking (e.g. `code // #[allow(`)
+            let code_portion = strip_trailing_comment(trimmed);
+            let lc = code_portion.to_lowercase();
+            if effective_patterns.iter().any(|p| lc.contains(p.as_str())) {
+                return true;
+            }
+            // Check #[allow]/#[expect]/#[warn] attributes
+            if starts_with_allow_attr(code_portion) {
+                return true;
+            }
+            // Language-specific phrase patterns
+            match language {
+                Language::Python => lc.contains("raise ") || lc.contains("assert false"),
+                Language::JavaScript | Language::TypeScript => lc.contains("throw new"),
+                _ => false,
+            }
         });
         if !has_bypass_token {
             return;
@@ -89,7 +103,6 @@ impl IBypassCheckerProtocol for BypassChecker {
             .map(|p| p.to_lowercase())
             .collect();
 
-        let language = code_analysis_language_from_file(file);
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
         while i < lines.len() {
@@ -311,8 +324,8 @@ impl BypassChecker {
         let len = bytes.len();
         let mut i = 0;
         while i < len {
-            // Find ".unwrap" occurrences
-            if bytes[i..].starts_with(b".unwrap") && (i == 0 || !b_is_ident(bytes[i - 1])) {
+            // Find ".unwrap" occurrences — the dot prefix is sufficient to identify a method call
+            if bytes[i..].starts_with(b".unwrap") {
                 i += 7; // skip past ".unwrap"
                         // Check if followed by '(', '!', or '_' (method call)
                 if i < len {
@@ -345,8 +358,4 @@ impl BypassChecker {
         // No unsafe .unwrap() found — all are safe variants
         true
     }
-}
-
-fn b_is_ident(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || b == b'_'
 }
