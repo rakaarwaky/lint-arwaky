@@ -22,6 +22,7 @@ orphan_detector = { package = "orphan_detector-lint-arwaky", path = "crates/orph
 project_setup = { package = "project_setup-lint-arwaky", path = "crates/project-setup", version = "1.10.106" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.10.106" }
 role_rules = { package = "role_rules-lint-arwaky", path = "crates/role-rules", version = "1.10.106" }
+report_formatter = { package = "report_formatter-lint-arwaky", path = "crates/report-formatter", version = "1.10.106" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0", features = ["derive"] }
@@ -99,6 +100,7 @@ orphan_detector.workspace = true
 project_setup.workspace = true
 maintenance.workspace = true
 role_rules.workspace = true
+report_formatter.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true

@@ -1,0 +1,18 @@
+[package]
+name = "report_formatter-lint-arwaky"
+version = "1.10.106"
+edition = "2021"
+description = "Report formatting capabilities (text, JSON, SARIF, JUnit) implementing IReportFormatterProtocol."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+shared.workspace = true
+code_analysis.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true

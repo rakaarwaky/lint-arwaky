@@ -422,6 +422,7 @@ dependencies = [
  "orphan_detector-lint-arwaky",
  "project_setup-lint-arwaky",
  "regex",
+ "report_formatter-lint-arwaky",
  "role_rules-lint-arwaky",
  "serde",
  "serde_json",
@@ -2610,6 +2611,7 @@ dependencies = [
  "project_setup-lint-arwaky",
  "rand 0.10.1",
  "regex",
+ "report_formatter-lint-arwaky",
  "reqwest",
  "rmcp",
  "role_rules-lint-arwaky",
@@ -3393,6 +3395,17 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "report_formatter-lint-arwaky"
+version = "1.10.106"
+dependencies = [
+ "async-trait",
+ "code_analysis-lint-arwaky",
+ "serde",
+ "serde_json",
+ "shared-lint-arwaky",
+]
 
 [[package]]
 name = "reqwest"

@@ -74,22 +74,21 @@ impl CliContainer {
 
         // Wire up report formatter capabilities → aggregate
         let text_formatter: Arc<dyn IReportFormatterProtocol> = Arc::new(
-            crate::capabilities_text_formatter::TextFormatter::new(code_analysis_linter.clone()),
+            report_formatter::TextFormatter::new(code_analysis_linter.clone()),
         );
         let json_formatter: Arc<dyn IReportFormatterProtocol> =
-            Arc::new(crate::capabilities_json_formatter::JsonFormatter::new());
+            Arc::new(report_formatter::JsonFormatter::new());
         let sarif_formatter: Arc<dyn IReportFormatterProtocol> =
-            Arc::new(crate::capabilities_sarif_formatter::SarifFormatter::new());
+            Arc::new(report_formatter::SarifFormatter::new());
         let junit_formatter: Arc<dyn IReportFormatterProtocol> =
-            Arc::new(crate::capabilities_junit_formatter::JunitFormatter::new());
-        let report_formatter: Arc<dyn IReportFormatterAggregate> = Arc::new(
-            crate::agent_report_formatter_orchestrator::ReportFormatterOrchestrator::new(
+            Arc::new(report_formatter::JunitFormatter::new());
+        let report_formatter_agg: Arc<dyn IReportFormatterAggregate> =
+            Arc::new(report_formatter::ReportFormatterOrchestrator::new(
                 text_formatter,
                 json_formatter,
                 sarif_formatter,
                 junit_formatter,
-            ),
-        );
+            ));
 
         Self {
             code_analysis_linter,
@@ -100,7 +99,7 @@ impl CliContainer {
             orphan_orchestrator,
             git_aggregate,
             multi_project_orchestrator,
-            report_formatter,
+            report_formatter: report_formatter_agg,
         }
     }
 
