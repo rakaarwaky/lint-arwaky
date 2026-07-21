@@ -32,7 +32,6 @@ async fn main() -> anyhow::Result<()> {
         import_orchestrator: container.import_orchestrator,
         naming_orchestrator: container.naming_orchestrator,
         orphan_orchestrator: container.orphan_orchestrator,
-        layer_detector: container.layer_detector,
         external_lint: container.external_lint,
         role_orchestrator: container.role_orchestrator,
     });

@@ -18,15 +18,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
     fn is_surface_orphan(
         &self,
         f: &FilePath,
+        root_dir: &FilePath,
         alive_files: &ReachabilityResult,
         _definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
-        let alive: Vec<String> = alive_files
-            .paths
-            .iter()
-            .map(|fp| fp.value().to_string())
-            .collect();
-        let is_reachable = alive.contains(&f.value().to_string());
+        let is_reachable = alive_files.paths.contains(f);
         if is_reachable {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -39,7 +35,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let content = shared::orphan_detector::utility_orphan_io::read_file_safe(fp_val);
         if !content.is_empty() {
             // Check if this surface is imported by any entry or router file
-            let root = std::path::Path::new(".");
+            let root = std::path::Path::new(root_dir.value());
             if let Ok(workspace_root) =
                 shared::orphan_detector::utility_workspace::find_workspace_root(root)
             {
@@ -116,8 +112,14 @@ impl SurfacesOrphanAnalyzer {
                         let is_entry_or_router = name.starts_with("root_")
                             || name.starts_with("cli_")
                             || name.starts_with("mcp_")
+                            || name.starts_with("surface_")
                             || name.contains("_entry")
-                            || name.contains("_router");
+                            || name.contains("_router")
+                            || name.contains("_container")
+                            || matches!(name,
+                                "main.rs" | "lib.rs" | "main.py" | "__main__.py"
+                                | "main.ts" | "main.js" | "index.ts" | "index.js"
+                            );
                         if is_entry_or_router
                             && (name.ends_with(".rs")
                                 || name.ends_with(".py")

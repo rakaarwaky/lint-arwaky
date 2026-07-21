@@ -15,7 +15,7 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
@@ -73,7 +73,7 @@ pub fn handle_check(
 pub fn handle_scan(
     path: Option<FilePath>,
     ctx: CheckContext,
-    multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+    multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,
     member: Option<String>,

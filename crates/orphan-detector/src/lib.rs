@@ -1,5 +1,6 @@
 /// PURPOSE: Module declarations for orphan-detector (orchestrator, analyzers, container)
 pub mod agent_orphan_orchestrator;
+pub mod capabilities_layer_detector;
 pub mod capabilities_orphan_agent_analyzer;
 pub mod capabilities_orphan_capabilities_analyzer;
 pub mod capabilities_orphan_contract_analyzer;

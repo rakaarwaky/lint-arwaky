@@ -54,6 +54,7 @@ pub trait IUtilityOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         all_files: &[String],
+        inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult;
 }
 
@@ -70,6 +71,7 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
     fn is_surface_orphan(
         &self,
         f: &FilePath,
+        root_dir: &FilePath,
         alive_files: &ReachabilityResult,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult;

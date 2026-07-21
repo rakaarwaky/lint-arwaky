@@ -14,13 +14,11 @@
 // each member gets its own language-specific configuration.
 use std::process::ExitCode;
 use std::sync::Arc;
-
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -38,7 +36,6 @@ pub struct CheckContext {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
 }
 
 pub type OrchestratorFactory = Arc<
@@ -54,8 +51,7 @@ pub struct CheckCommandsSurface {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+    pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub factory: Option<OrchestratorFactory>,
 }
 
@@ -68,7 +64,6 @@ impl CheckCommandsSurface {
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
             orphan_orchestrator: ctx.orphan_orchestrator,
-            layer_detector: ctx.layer_detector,
             multi_project_orchestrator: None,
             factory: None,
         }
@@ -76,7 +71,7 @@ impl CheckCommandsSurface {
 
     pub fn new_with_factory(
         ctx: CheckContext,
-        multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+        multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
         factory: OrchestratorFactory,
     ) -> Self {
         Self {
@@ -86,7 +81,6 @@ impl CheckCommandsSurface {
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
             orphan_orchestrator: ctx.orphan_orchestrator,
-            layer_detector: ctx.layer_detector,
             multi_project_orchestrator,
             factory: Some(factory),
         }
@@ -132,7 +126,6 @@ impl CheckCommandsSurface {
             let ro = self.role_orchestrator.clone();
             let ext = self.external_lint.clone();
             let oo = self.orphan_orchestrator.clone();
-            let ld = self.layer_detector.clone();
             Arc::new(move |_cfg: ArchitectureConfig| CheckContext {
                 code_analysis_linter: cal.clone(),
                 naming_orchestrator: no.clone(),
@@ -140,7 +133,6 @@ impl CheckCommandsSurface {
                 role_orchestrator: ro.clone(),
                 external_lint: ext.clone(),
                 orphan_orchestrator: oo.clone(),
-                layer_detector: ld.clone(),
             })
         });
         let ctx = effective_factory(config.clone());
@@ -173,7 +165,7 @@ impl CheckCommandsSurface {
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
         let orphan_results =
-            self.run_orphan_detection_pass(path, &self.orphan_orchestrator, &self.layer_detector);
+            self.run_orphan_detection_pass(path, &self.orphan_orchestrator);
         all_results.extend(orphan_results);
 
         let violation_count = self.filter_and_display_results(
@@ -195,7 +187,6 @@ impl CheckCommandsSurface {
         &self,
         path: &str,
         orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
-        layer_detector: &Arc<dyn ILayerDetectionAggregate>,
     ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
@@ -205,7 +196,7 @@ impl CheckCommandsSurface {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        orphan_orchestrator.check_orphans(layer_detector.as_ref(), &file_strs, orphan_scan_root)
+        orphan_orchestrator.check_orphans(&file_strs, orphan_scan_root)
     }
 
     /// Filter results to the target path and display the report.
@@ -291,11 +282,7 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection with workspace root
-        let all_results = self.orphan_orchestrator.check_orphans(
-            self.layer_detector.as_ref(),
-            &all_files,
-            &scan_root.to_string_lossy(),
-        );
+        let all_results = self.orphan_orchestrator.check_orphans(&all_files, &scan_root.to_string_lossy());
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();
@@ -429,11 +416,7 @@ impl CheckCommandsSurface {
         let mut global_all_results = Vec::new();
 
         // Hoist orphan detection before per-workspace loop (#107 P1 #7)
-        let _orphan_results_all = self.orphan_orchestrator.check_orphans(
-            self.layer_detector.as_ref(),
-            &all_source_files,
-            &scan_root.to_string_lossy(),
-        );
+        let _orphan_results_all = self.orphan_orchestrator.check_orphans(&all_source_files, &scan_root.to_string_lossy());
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {

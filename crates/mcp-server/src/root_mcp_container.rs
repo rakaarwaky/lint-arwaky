@@ -2,7 +2,6 @@
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -14,7 +13,6 @@ pub struct McpContainer {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
 }
@@ -49,7 +47,6 @@ impl McpContainer {
         let orphan_container =
             orphan_detector::root_orphan_detector_container::OrphanContainer::new();
         let orphan_orchestrator = orphan_container.analyzer();
-        let layer_detector = orphan_container.layer_detector();
 
         let ext_container =
             external_lint::root_external_lint_container::ExternalLintContainer::new_default();
@@ -63,7 +60,6 @@ impl McpContainer {
             import_orchestrator,
             naming_orchestrator,
             orphan_orchestrator,
-            layer_detector,
             external_lint,
             role_orchestrator,
         }

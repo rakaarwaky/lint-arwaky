@@ -1,6 +1,5 @@
 // config-system — taxonomy and contract types
-pub mod contract_multi_project_orchestrator_aggregate;
-pub mod contract_orchestration_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_parser_protocol;
 pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;

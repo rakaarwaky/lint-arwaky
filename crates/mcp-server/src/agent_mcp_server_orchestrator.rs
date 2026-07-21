@@ -9,7 +9,6 @@
 // server event loop is async. spawn_blocking bridges the two worlds.
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -27,7 +26,6 @@ pub struct McpServerDependencies {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
 }
@@ -79,7 +77,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let role_orch = self.deps.role_orchestrator.clone();
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
-                let layer_det = self.deps.layer_detector.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -118,11 +115,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     };
                     let file_strs: Vec<String> =
                         source_files.iter().map(|f| f.value.clone()).collect();
-                    let orphan_results = orphan_orch.check_orphans(
-                        layer_det.as_ref(),
-                        &file_strs,
-                        &orphan_scan_root,
-                    );
+                    let orphan_results = orphan_orch.check_orphans(&file_strs, &orphan_scan_root);
                     all_results.extend(orphan_results);
 
                     let report = linter.format_report(
@@ -169,7 +162,6 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let role_orch = self.deps.role_orchestrator.clone();
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
-                let layer_det = self.deps.layer_detector.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -209,11 +201,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     };
                     let file_strs: Vec<String> =
                         source_files.iter().map(|f| f.value.clone()).collect();
-                    let orphan_results = orphan_orch.check_orphans(
-                        layer_det.as_ref(),
-                        &file_strs,
-                        &orphan_scan_root,
-                    );
+                    let orphan_results = orphan_orch.check_orphans(&file_strs, &orphan_scan_root);
                     all_results.extend(orphan_results);
 
                     let score = linter.calc_score(&all_results);
