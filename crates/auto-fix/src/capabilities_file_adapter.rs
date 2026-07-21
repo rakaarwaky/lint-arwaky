@@ -1,6 +1,6 @@
-use shared::auto_fix::utility_auto_fix_io as af_io;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::utility_file;
 
 // PURPOSE: FileAdapter — capabilities layer for file I/O operations
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
@@ -13,18 +13,18 @@ pub struct FileAdapter;
 
 impl IFileAdapterProtocol for FileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
-        if !af_io::path_exists(&path.value) {
+        if !utility_file::path_exists(&path.value) {
             return None;
         }
-        af_io::read_file(&path.value).map(ContentString::new)
+        utility_file::read_file_generic(&path.value).ok().map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
-        af_io::write_file(&path.value, &content.value)
+        utility_file::write_file(&path.value, &content.value).is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {
-        af_io::path_exists(&path.value)
+        utility_file::path_exists(&path.value)
     }
 }
 

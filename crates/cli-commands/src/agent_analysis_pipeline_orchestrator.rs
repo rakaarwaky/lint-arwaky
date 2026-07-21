@@ -95,7 +95,7 @@ impl AnalysisPipelineOrchestrator {
         let mut diagnostics = Vec::new();
 
         // 1. Run AES analysis (AES301-305) — file lines, bypass, mandatory defs
-        let aes_results = self.code_analysis_linter.run_code_analysis(&path_obj);
+        let aes_results = self.code_analysis_linter().run_code_analysis(&path_obj);
         let aes_count = aes_results.len();
         all_results.extend(aes_results.values);
         diagnostics.push(PipelineDiagnostic::new(
@@ -106,10 +106,10 @@ impl AnalysisPipelineOrchestrator {
 
         // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
         let (naming_results, import_results, external_results, role_results) = tokio::join!(
-            self.naming_orchestrator.run_audit(&path_obj),
-            self.import_orchestrator.run_audit(&path_obj),
-            self.external_lint.scan_all(&path_obj),
-            self.role_orchestrator.run_audit(&path_obj),
+            self.naming_orchestrator().run_audit(&path_obj),
+            self.import_orchestrator().run_audit(&path_obj),
+            self.external_lint().scan_all(&path_obj),
+            self.role_orchestrator().run_audit(&path_obj),
         );
 
         // Report audit failures instead of silently discarding them
@@ -186,7 +186,7 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
+        let ignored = self.config_orchestrator().ignored_paths(orphan_scan_root);
         let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
@@ -285,15 +285,15 @@ impl AnalysisPipelineOrchestrator {
             let mut all_results = Vec::new();
 
             // 1. Run AES analysis
-            let aes_results = self.code_analysis_linter.run_code_analysis(&ws.path);
+            let aes_results = self.code_analysis_linter().run_code_analysis(&ws.path);
             all_results.extend(aes_results.values);
 
             // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
             let (naming_results, import_results, external_results, role_results) = tokio::join!(
-                self.naming_orchestrator.run_audit(&ws.path),
-                self.import_orchestrator.run_audit(&ws.path),
-                self.external_lint.scan_all(&ws.path),
-                self.role_orchestrator.run_audit(&ws.path),
+                self.naming_orchestrator().run_audit(&ws.path),
+                self.import_orchestrator().run_audit(&ws.path),
+                self.external_lint().scan_all(&ws.path),
+                self.role_orchestrator().run_audit(&ws.path),
             );
 
             match naming_results {
