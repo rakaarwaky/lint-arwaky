@@ -32,6 +32,18 @@ impl IBypassCheckerProtocol for BypassChecker {
         let mut in_clippy_section = false;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
+
+            // Skip empty lines and TOML full-line comments
+            if t.is_empty() || t.starts_with('#') {
+                continue;
+            }
+
+            // Strip trailing TOML comments outside strings before comparing values
+            let t = Self::strip_toml_comment(t).trim();
+            if t.is_empty() {
+                continue;
+            }
+
             if t.starts_with("[workspace.lints.clippy]") || t.starts_with("[lints.clippy]") {
                 in_clippy_section = true;
                 continue;
@@ -43,7 +55,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                 }
                 if let Some(eq_pos) = t.find('=') {
                     let val = t[eq_pos + 1..].trim();
-                    if val == "\"allow\"" || val == "'allow'" {
+                    if Self::cargo_value_is_allow(val) {
                         violations.push(LintResult::new_arch(
                             "Cargo.toml",
                             i + 1,
@@ -68,28 +80,41 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
         };
 
-        // P2.5 fix: line-by-line scan instead of allocating full lowercase copy
+        // P2.4 fix: precompute lowered patterns once per file scan
+        // Use to_ascii_lowercase for stable byte offsets (fix #8)
+        let lowered_patterns: Vec<String> = effective_patterns
+            .iter()
+            .map(|p| p.to_ascii_lowercase())
+            .collect();
+
         let language = code_analysis_language_from_file(file);
+
+        // Early bailout scan — checks full lowered line for non-word bypass patterns
+        // so comment-based bypasses like `// eslint-disable` are not missed (fix #3)
         let has_bypass_token = content.lines().any(|line| {
             let trimmed = line.trim();
-            // Skip comments and doc comments
-            if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+            if trimmed.is_empty() {
                 return false;
             }
-            // Strip trailing comments before checking (e.g. `code // #[allow(`)
-            let code_portion = strip_trailing_comment(trimmed);
-            let lc = code_portion.to_lowercase();
-            if effective_patterns.iter().any(|p| lc.contains(p.as_str())) {
+            let full_lower = trimmed.to_ascii_lowercase();
+            if lowered_patterns
+                .iter()
+                .any(|p| full_lower.contains(p.as_str()))
+            {
                 return true;
             }
-            // Check #[allow]/#[expect]/#[warn] attributes
+            let code_portion = Self::code_portion_for_language(trimmed, language);
             if starts_with_allow_attr(code_portion) {
                 return true;
             }
-            // Language-specific phrase patterns
+            let code_lower = code_portion.to_ascii_lowercase();
             match language {
-                Language::Python => lc.contains("raise ") || lc.contains("assert false"),
-                Language::JavaScript | Language::TypeScript => lc.contains("throw new"),
+                Language::Python => {
+                    code_lower.contains("raise notimplementederror")
+                        || code_lower.contains("raise notimplemented")
+                        || code_lower.contains("assert false")
+                }
+                Language::JavaScript | Language::TypeScript => code_lower.contains("throw new"),
                 _ => false,
             }
         });
@@ -97,24 +122,47 @@ impl IBypassCheckerProtocol for BypassChecker {
             return;
         }
 
-        // P2.4 fix: precompute lowered patterns once per file scan
-        let lowered_patterns: Vec<String> = effective_patterns
-            .iter()
-            .map(|p| p.to_lowercase())
-            .collect();
-
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
+        // Fix #10: track block comment state across lines
+        let mut in_block_comment = false;
+
         while i < lines.len() {
             let t = lines[i].trim();
+            let line_number = i + 1;
 
-            // Skip comments — documentation references to patterns are not runtime violations
-            if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
+            // Fix #10: handle block comment state
+            if in_block_comment {
+                if t.contains("*/") {
+                    in_block_comment = false;
+                }
                 i += 1;
                 continue;
             }
-            // Skip test modules — unwrap/panic is normal in tests
-            if t.starts_with("#[cfg(test)]") {
+
+            // Skip line comments — documentation references to patterns are not runtime violations
+            if t.starts_with("//") {
+                i += 1;
+                continue;
+            }
+
+            // Fix #10: detect start of block comment
+            if t.starts_with("/*") {
+                if !t.contains("*/") || t.find("*/").unwrap_or(0) < t.find("/*").unwrap_or(0) {
+                    in_block_comment = true;
+                }
+                i += 1;
+                continue;
+            }
+
+            // Skip doc comment continuation lines
+            if t.starts_with('*') {
+                i += 1;
+                continue;
+            }
+
+            // Fix #9: skip test modules — support cfg(all(test, ...)) and similar
+            if Self::is_cfg_test_block(t) {
                 i = skip_cfg_test_block(&lines, i);
                 continue;
             }
@@ -124,14 +172,14 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
-            // Strip trailing comments before checking (e.g. `code // #[allow(`)
-            let code_portion = strip_trailing_comment(t);
+            let is_comment_line = Self::is_comment_line(t, language);
+            let code_portion = Self::code_portion_for_language(t, language);
 
             // Allow attribute: rustc annotation attributes → BYPASS_COMMENT (always).
-            if starts_with_allow_attr(code_portion) {
+            if !is_comment_line && starts_with_allow_attr(code_portion) {
                 violations.push(LintResult::new_arch(
                     file,
-                    i + 1,
+                    line_number,
                     "AES304",
                     Severity::CRITICAL,
                     AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
@@ -140,25 +188,32 @@ impl IBypassCheckerProtocol for BypassChecker {
                 continue;
             }
 
-            // Use guarded match arms (P1.2 fix: eliminates clippy::collapsible_match)
-            let t_lower = code_portion.to_lowercase();
-            for (idx, _p) in lowered_patterns.iter().enumerate() {
-                let p_str = &effective_patterns.values[idx];
-                let requires_method_call = matches!(p_str.as_str(), "unwrap" | "expect");
+            let full_lower = t.to_ascii_lowercase();
+            let code_lower = code_portion.to_ascii_lowercase();
+            let mut matched = false;
 
-                // Find pattern position in code portion (not in comments)
-                let pattern_pos = t_lower.find(_p.as_str()).unwrap_or(usize::MAX);
+            for lower_p in lowered_patterns.iter() {
+                let token = lower_p.as_str();
 
-                match p_str.as_str() {
-                    p if Self::is_word_pattern_token(p)
-                        && matches_word_token(code_portion, p, requires_method_call)
-                        && !(p == "unwrap" && Self::has_safe_unwrap_variant(code_portion)) =>
+                if Self::is_word_pattern_token(token) {
+                    // Word tokens like unwrap/panic must not be reported from comment text
+                    if is_comment_line {
+                        continue;
+                    }
+
+                    // Fix #5: skip if pattern not found
+                    let pattern_pos = match code_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+
+                    // Fix #6: pass false for requires_method_call to detect bare unwrap()
+                    if matches_word_token(code_lower.as_str(), token, false)
+                        && !(token == "unwrap"
+                            && Self::has_safe_unwrap_variant(code_lower.as_str()))
+                        && !is_inside_string_or_char(code_portion, pattern_pos)
                     {
-                        // Skip if pattern is inside a string literal
-                        if is_inside_string_or_char(t, pattern_pos) {
-                            continue;
-                        }
-                        let vo = match Self::classify_token(p) {
+                        let vo = match Self::classify_token(token) {
                             ViolationKind::UnwrapExpect => {
                                 AesCodeAnalysisViolation::UnwrapExpect { reason: None }
                             }
@@ -175,81 +230,83 @@ impl IBypassCheckerProtocol for BypassChecker {
                         };
                         violations.push(LintResult::new_arch(
                             file,
-                            i + 1,
+                            line_number,
                             "AES304",
                             Severity::CRITICAL,
                             vo.to_string(),
                         ));
+                        matched = true;
                         break;
                     }
-
-                    p if !Self::is_word_pattern_token(p)
-                        && !p.is_empty()
-                        && t_lower.contains(p) =>
-                    {
-                        // Skip if pattern is inside a string literal
-                        if is_inside_string_or_char(t, pattern_pos) {
-                            continue;
-                        }
+                } else if !token.is_empty() {
+                    // Non-word patterns: noqa, type: ignore, eslint-disable, etc.
+                    // These must be detected even inside comments
+                    let pattern_pos = match full_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+                    if !is_inside_string_or_char(t, pattern_pos) {
                         violations.push(LintResult::new_arch(
                             file,
-                            i + 1,
+                            line_number,
                             "AES304",
                             Severity::CRITICAL,
                             AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                         ));
+                        matched = true;
                         break;
                     }
+                }
+            }
 
+            // Fix #1: use stable line_number captured before i += 1
+            if !matched && !is_comment_line {
+                match language {
+                    Language::Python => {
+                        if code_lower.contains("raise notimplementederror")
+                            || code_lower.contains("raise notimplemented")
+                        {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Unimplemented { reason: None }
+                                    .to_string(),
+                            ));
+                        } else if code_lower.contains("assert false") {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                            ));
+                        }
+                    }
+                    Language::JavaScript | Language::TypeScript => {
+                        let throw_patterns = [
+                            "throw new error",
+                            "throw new typeerror",
+                            "throw new rangeerror",
+                            "throw new referenceerror",
+                            "throw new syntaxerror",
+                        ];
+                        if throw_patterns.iter().any(|p| code_lower.contains(p)) {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                            ));
+                        }
+                    }
                     _ => {}
                 }
             }
-            i += 1;
 
-            // Language-scoped phrase patterns (P1.9: only after main pattern match).
-            let line_lc = code_portion.to_lowercase();
-            match language {
-                Language::Python => {
-                    if line_lc.contains("raise notimplementederror")
-                        || line_lc.contains("raise notimplemented")
-                    {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Unimplemented { reason: None }.to_string(),
-                        ));
-                    } else if line_lc.contains("assert false") {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
-                        ));
-                    }
-                }
-                Language::JavaScript | Language::TypeScript => {
-                    let throw_patterns = [
-                        "throw new error",
-                        "throw new typeerror",
-                        "throw new rangeerror",
-                        "throw new referenceerror",
-                        "throw new syntaxerror",
-                    ];
-                    if throw_patterns.iter().any(|p| line_lc.contains(p)) {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
-                        ));
-                    }
-                }
-                _ => {} // Rust handled above via config patterns
-            }
+            i += 1;
         }
     }
 }
@@ -295,7 +352,7 @@ impl BypassChecker {
         }
     }
 
-    /// P1.2 fix: Tokens that require call-site style matching rather than plain contains.
+    /// Tokens that require call-site style matching rather than plain contains.
     fn is_word_pattern_token(token: &str) -> bool {
         matches!(
             token,
@@ -303,7 +360,7 @@ impl BypassChecker {
         )
     }
 
-    /// P1.7 fix: Default fallback bypass patterns when config provides none.
+    /// Default fallback bypass patterns when config provides none.
     fn default_forbidden_bypass() -> PatternList {
         PatternList {
             values: vec![
@@ -329,37 +386,34 @@ impl BypassChecker {
         }
     }
 
-    /// P1.9 fix: Check if the line has ONLY safe `.unwrap_or*()` variants (no unsafe `.unwrap(`).
-    /// Returns true if all `.unwrap` calls on this line are safe variants like `.unwrap_or()`,
-    /// `.unwrap_or_else()`, `.unwrap_or_default()`. Returns false if unsafe `.unwrap(` is found.
+    /// Fix #7: Check if the line has ONLY safe `.unwrap_or*()` variants.
+    /// Matches only known safe variants: unwrap_or, unwrap_or_else, unwrap_or_default.
     fn has_safe_unwrap_variant(line: &str) -> bool {
         let bytes = line.as_bytes();
         let len = bytes.len();
         let mut i = 0;
         while i < len {
-            // Find ".unwrap" occurrences — the dot prefix is sufficient to identify a method call
             if bytes[i..].starts_with(b".unwrap") {
                 i += 7; // skip past ".unwrap"
-                        // Check if followed by '(', '!', or '_' (method call)
                 if i < len {
                     match bytes[i] {
                         b'(' | b'!' => {
-                            // This is an unsafe .unwrap() call — return false
                             return false;
                         }
                         b'_' => {
-                            // Check if it's a safe variant: unwrap_or, unwrap_or_else, unwrap_or_default
                             i += 1;
                             let rest = &bytes[i..];
-                            if rest.starts_with(b"or") || rest.starts_with(b"Or") {
-                                // Safe variant — continue checking for more .unwrap calls
+                            // Fix #7: match only known safe variants
+                            if rest.starts_with(b"or(")
+                                || rest.starts_with(b"or_else(")
+                                || rest.starts_with(b"or_default(")
+                            {
                                 continue;
                             }
                             // Unknown variant — treat as unsafe
                             return false;
                         }
                         _ => {
-                            // Not a method call — just a variable/field name containing "unwrap"
                             i += 1;
                             continue;
                         }
@@ -368,7 +422,97 @@ impl BypassChecker {
             }
             i += 1;
         }
-        // No unsafe .unwrap() found — all are safe variants
         true
+    }
+
+    /// Fix #9: Detect cfg(test) blocks including cfg(all(test, ...)) variants.
+    fn is_cfg_test_block(line: &str) -> bool {
+        if line.starts_with("#[cfg(test)]") {
+            return true;
+        }
+        // Support #[cfg(all(test, ...))] and similar patterns
+        if line.starts_with("#[cfg(all(") && line.contains("test") {
+            return true;
+        }
+        false
+    }
+
+    /// Returns the code portion of a line for language-sensitive checks.
+    fn code_portion_for_language(line: &str, language: Language) -> &str {
+        match language {
+            Language::Python => Self::strip_python_comment(line),
+            _ => strip_trailing_comment(line),
+        }
+    }
+
+    /// Conservative full-line comment detection.
+    fn is_comment_line(line: &str, language: Language) -> bool {
+        match language {
+            Language::Python => line.starts_with('#'),
+            Language::Rust | Language::JavaScript | Language::TypeScript => {
+                line.starts_with("//") || line.starts_with("/*") || line.starts_with('*')
+            }
+        }
+    }
+
+    /// Strip trailing Python `# ...` comments outside simple string literals.
+    fn strip_python_comment(line: &str) -> &str {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        let mut in_string = false;
+        let mut quote: u8 = b'"';
+
+        while i < len {
+            let b = bytes[i];
+            if in_string {
+                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
+                    in_string = false;
+                }
+            } else if b == b'"' || b == b'\'' {
+                in_string = true;
+                quote = b;
+            } else if b == b'#' {
+                return &line[..i];
+            }
+            i += 1;
+        }
+        line
+    }
+
+    /// Fix #4: Strip trailing TOML `# ...` comments outside simple string literals.
+    fn strip_toml_comment(line: &str) -> &str {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        let mut in_string = false;
+        let mut quote: u8 = b'"';
+
+        while i < len {
+            let b = bytes[i];
+            if in_string {
+                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
+                    in_string = false;
+                }
+            } else if b == b'"' || b == b'\'' {
+                in_string = true;
+                quote = b;
+            } else if b == b'#' {
+                return &line[..i];
+            }
+            i += 1;
+        }
+        line
+    }
+
+    /// Fix #4: Detect Cargo lint values that effectively silence lints.
+    /// Handles: "allow", 'allow', { level = "allow" }, { level = 'allow', priority = -1 }
+    fn cargo_value_is_allow(value: &str) -> bool {
+        let value = value.trim();
+        if value == "\"allow\"" || value == "'allow'" {
+            return true;
+        }
+        let normalized: String = value.chars().filter(|c| !c.is_whitespace()).collect();
+        normalized.contains("\"allow\"") || normalized.contains("'allow'")
     }
 }
