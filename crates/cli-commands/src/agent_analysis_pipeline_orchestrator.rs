@@ -65,25 +65,18 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
-        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+        deps: shared::cli_commands::taxonomy_lint_dependencies_vo::LintDependencies,
         format: Format,
     ) -> Self {
         Self {
-            code_analysis_linter,
-            naming_orchestrator,
-            import_orchestrator,
-            external_lint,
-            role_orchestrator,
-            orphan_orchestrator,
-            config_orchestrator,
+            code_analysis_linter: deps.code_analysis_linter,
+            naming_orchestrator: deps.naming_orchestrator,
+            import_orchestrator: deps.import_orchestrator,
+            external_lint: deps.external_lint,
+            role_orchestrator: deps.role_orchestrator,
+            orphan_orchestrator: deps.orphan_orchestrator,
+            config_orchestrator: deps.config_orchestrator,
             format,
             filter: None,
             member: None,

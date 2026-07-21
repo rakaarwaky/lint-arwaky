@@ -4,5 +4,4 @@ pub mod contract_fix_aggregate;
 pub mod contract_fix_protocol;
 pub mod taxonomy_fix_applied_event;
 pub mod taxonomy_fix_vo;
-pub mod utility_auto_fix_io;
 pub mod utility_symbol_renamer;

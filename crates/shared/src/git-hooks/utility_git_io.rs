@@ -2,7 +2,6 @@
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
-use crate::common::utility_file;
 use std::path::Path;
 use std::process::Command;
 
@@ -38,11 +37,6 @@ pub fn create_dir_all<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     std::fs::create_dir_all(path)
 }
 
-/// Write content to a file.
-pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
-    utility_file::write_file(path, contents)
-}
-
 /// Get metadata for a file/directory.
 pub fn metadata<P: AsRef<Path>>(path: P) -> std::io::Result<std::fs::Metadata> {
     std::fs::metadata(path)
@@ -59,19 +53,4 @@ pub fn set_permissions<P: AsRef<Path>>(path: P, mode: u32) -> std::io::Result<()
 /// Remove a file.
 pub fn remove_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
     std::fs::remove_file(path)
-}
-
-/// Check if a path exists.
-pub fn path_exists<P: AsRef<Path>>(path: P) -> bool {
-    utility_file::path_exists(path)
-}
-
-/// Check if a path is a file.
-pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-    utility_file::is_file_generic(path)
-}
-
-/// Check if a path is a directory.
-pub fn is_dir<P: AsRef<Path>>(path: P) -> bool {
-    utility_file::is_dir(path)
 }

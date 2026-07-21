@@ -1,4 +1,5 @@
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::utility_git_io as git_io;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
@@ -50,7 +51,7 @@ exit 0
 ",
             exe_str
         );
-        git_io::write_file(&hook_path, &hook_content).map_err(|e| {
+        utility_file::write_file(&hook_path, &hook_content).map_err(|e| {
             shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
                 "Failed to write hook: {}",
                 e
@@ -74,7 +75,7 @@ exit 0
             return Ok(SuccessStatus::new(false));
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
-        if git_io::path_exists(&hook_path) {
+        if utility_file::path_exists(&hook_path) {
             git_io::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to remove hook: {}", e),
@@ -98,6 +99,6 @@ impl GitHookAdapter {
 
     fn is_git_repo(&self) -> bool {
         let git = self.git_dir();
-        git_io::is_dir(&git)
+        utility_file::is_dir(&git)
     }
 }
