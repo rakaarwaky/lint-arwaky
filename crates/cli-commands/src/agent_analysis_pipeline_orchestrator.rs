@@ -110,18 +110,13 @@ impl AnalysisPipelineOrchestrator {
             DiagnosticSeverity::Info,
         ));
 
-        // 2-5. Run async linter groups concurrently
-        let rt = tokio::runtime::Runtime::new()
-            .map_err(|e| PipelineError::Analysis(format!("failed to create runtime: {e}")))?;
-
-        let (naming_results, import_results, external_results, role_results) = rt.block_on(async {
-            tokio::join!(
-                self.naming_orchestrator.run_audit(&path_obj),
-                self.import_orchestrator.run_audit(&path_obj),
-                self.external_lint.scan_all(&path_obj),
-                self.role_orchestrator.run_audit(&path_obj),
-            )
-        });
+        // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
+        let (naming_results, import_results, external_results, role_results) = tokio::join!(
+            self.naming_orchestrator.run_audit(&path_obj),
+            self.import_orchestrator.run_audit(&path_obj),
+            self.external_lint.scan_all(&path_obj),
+            self.role_orchestrator.run_audit(&path_obj),
+        );
 
         // Report audit failures instead of silently discarding them
         match naming_results {
@@ -286,18 +281,13 @@ impl AnalysisPipelineOrchestrator {
             let aes_results = self.code_analysis_linter.run_code_analysis(&ws.path);
             all_results.extend(aes_results.values);
 
-            // 2-5. Run async linter groups concurrently
-            let rt = tokio::runtime::Runtime::new()
-                .map_err(|e| PipelineError::Analysis(format!("failed to create runtime: {e}")))?;
-
-            let (naming_results, import_results, external_results, role_results) = rt.block_on(async {
-                tokio::join!(
-                    self.naming_orchestrator.run_audit(&ws.path),
-                    self.import_orchestrator.run_audit(&ws.path),
-                    self.external_lint.scan_all(&ws.path),
-                    self.role_orchestrator.run_audit(&ws.path),
-                )
-            });
+            // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
+            let (naming_results, import_results, external_results, role_results) = tokio::join!(
+                self.naming_orchestrator.run_audit(&ws.path),
+                self.import_orchestrator.run_audit(&ws.path),
+                self.external_lint.scan_all(&ws.path),
+                self.role_orchestrator.run_audit(&ws.path),
+            );
 
             match naming_results {
                 Ok(values) => all_results.extend(values),

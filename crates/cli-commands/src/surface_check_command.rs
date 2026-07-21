@@ -54,8 +54,8 @@ impl CheckCommandsSurface {
             format: format.clone(),
         };
 
-        // Run pipeline via contract
-        let rt = match crate::surface_common_command::create_runtime() {
+        // Run pipeline via contract — use current-thread runtime to avoid nested runtime panic
+        let rt = match crate::surface_common_command::create_current_thread_runtime() {
             Ok(r) => r,
             Err(_) => return ExitCode::from(2),
         };
@@ -107,7 +107,8 @@ impl CheckCommandsSurface {
             }
         };
 
-        let rt = match crate::surface_common_command::create_runtime() {
+        // Use current-thread runtime — multi-threaded runtime causes nested runtime panic
+        let rt = match crate::surface_common_command::create_current_thread_runtime() {
             Ok(r) => r,
             Err(_) => return ExitCode::from(2),
         };
