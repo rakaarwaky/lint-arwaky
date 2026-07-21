@@ -1,4 +1,4 @@
-// PURPOSE: INamingCheckerProtocol — protocol trait for naming check capabilities
+// PURPOSE: Segregated protocol traits for naming check capabilities
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
@@ -7,7 +7,7 @@ use crate::taxonomy_definition_vo::LayerMapVO;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait INamingCheckerProtocol: Send + Sync {
+pub trait INamingConventionChecker: Send + Sync {
     async fn check_file_naming(
         &self,
         config: &ArchitectureConfig,
@@ -16,6 +16,10 @@ pub trait INamingCheckerProtocol: Send + Sync {
         root_dir: &FilePath,
         results: &mut LintResultList,
     );
+}
+
+#[async_trait]
+pub trait ISuffixPrefixChecker: Send + Sync {
     async fn check_domain_suffixes(
         &self,
         config: &ArchitectureConfig,

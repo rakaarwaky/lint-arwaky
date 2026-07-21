@@ -1,9 +1,13 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::common::taxonomy_adapter_error::ScanError;
+use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::{
+    INamingConventionChecker, ISuffixPrefixChecker,
+};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use shared::taxonomy_common_vo::PatternList;
@@ -13,8 +17,8 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct NamingOrchestrator {
-    naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
-    suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
+    naming_convention_checker: Arc<dyn INamingConventionChecker>,
+    suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
     config: Arc<ArchitectureConfig>,
     layer_map: Arc<LayerMapVO>,
     ignored_patterns: PatternList,
@@ -23,7 +27,16 @@ pub struct NamingOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl INamingRunnerAggregate for NamingOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+    async fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
+        let target_path = Path::new(&target.value);
+
+        if !target_path.exists() {
+            return Err(ScanError::new(
+                target.clone(),
+                ErrorMessage::new("target path does not exist"),
+            ));
+        }
+
         let mut results = LintResultList::new(Vec::new());
         let all_files = shared::naming_rules::utility_naming_filesystem::walk_recursive(
             target,
@@ -50,7 +63,7 @@ impl INamingRunnerAggregate for NamingOrchestrator {
             )
             .await;
 
-        results.values
+        Ok(results.values)
     }
 
     fn name(&self) -> &str {
@@ -61,8 +74,8 @@ impl INamingRunnerAggregate for NamingOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl NamingOrchestrator {
     pub fn new(
-        naming_convention_checker: Arc<dyn INamingCheckerProtocol>,
-        suffix_prefix_checker: Arc<dyn INamingCheckerProtocol>,
+        naming_convention_checker: Arc<dyn INamingConventionChecker>,
+        suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
         config: Arc<ArchitectureConfig>,
         layer_map: Arc<LayerMapVO>,
     ) -> Self {

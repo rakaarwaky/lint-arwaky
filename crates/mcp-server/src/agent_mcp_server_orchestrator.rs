@@ -93,7 +93,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         }
                     };
 
-                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj));
+                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj))
+                        .unwrap_or_default();
                     all_results.extend(naming_results);
                     let import_results = rt.block_on(import_orch.run_audit(&path_obj));
                     all_results.extend(import_results);
@@ -180,7 +181,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         }
                     };
 
-                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj));
+                    let naming_results = rt.block_on(naming_orch.run_audit(&path_obj))
+                        .unwrap_or_default();
                     all_results.extend(naming_results);
                     let import_results = rt.block_on(import_orch.run_audit(&path_obj));
                     all_results.extend(import_results);

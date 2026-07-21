@@ -1,25 +1,3 @@
-Below are the three deliverables, Raka:
-
-1. `report.md`
-2. GitHub Issue template
-3. Git diff patch
-
-I also corrected the layer mapping according to your confirmation:
-
-> The valid layer name is `surface`, not `surfaces`.
-> The file prefix remains `surface_`.
-
-So this mapping:
-
-```rust
-("surface_", "surfaces")
-```
-
-is treated as a bug and is fixed to:
-
-```rust
-surface_ -> surface
-```
 
 ---
 
