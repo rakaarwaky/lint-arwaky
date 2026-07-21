@@ -41,39 +41,13 @@ pub struct AnalysisPipelineOrchestrator {
 }
 
 impl AnalysisPipelineOrchestrator {
-    /// Create a new orchestrator with all subsystem dependencies.
-    pub fn new(
-        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        format: Format,
-        filter: Option<String>,
-        member: Option<String>,
-    ) -> Self {
-        Self {
-            code_analysis_linter,
-            naming_orchestrator,
-            import_orchestrator,
-            external_lint,
-            role_orchestrator,
-            orphan_orchestrator,
-            format,
-            filter,
-            member,
-        }
-    }
-
     /// Run the full analysis pipeline on a target path.
     ///
     /// This is the core scan pipeline. It runs all 6 linter groups in the
     /// same order every time and collects results into a ScanReport.
     pub async fn run_pipeline(&self, request: ScanRequest) -> Result<ScanReport, PipelineError> {
         let target = &request.target.value;
-        let path_obj =
-            FilePath::new(target.to_string()).map_err(|e| PipelineError::InvalidPath(e))?;
+        let path_obj = FilePath::new(target.to_string()).map_err(PipelineError::InvalidPath)?;
 
         let mut all_results = Vec::new();
         let mut diagnostics = Vec::new();
