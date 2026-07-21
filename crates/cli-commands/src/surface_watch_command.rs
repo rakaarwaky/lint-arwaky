@@ -8,6 +8,7 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
@@ -25,9 +26,9 @@ impl WatchCommandsSurface {
     }
 }
 
-pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<String>) -> ExitCode {
+pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<FilePath>) -> ExitCode {
     let root = match path {
-        Some(p) => p,
+        Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     let config = WatchConfig::from_path(root);

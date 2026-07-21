@@ -504,6 +504,25 @@ architecture:
           "tui_main_entry.js",
         ]
 
+    AES404:
+      enabled: true
+      scope: ["utility"]
+      exceptions:
+        [
+          "index.ts",
+          "index.js",
+          "index.tsx",
+          "index.jsx",
+          "main.ts",
+          "main.js",
+          "cli_main_entry.ts",
+          "cli_main_entry.js",
+          "mcp_main_entry.ts",
+          "mcp_main_entry.js",
+          "tui_main_entry.ts",
+          "tui_main_entry.js",
+        ]
+
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
@@ -564,6 +583,12 @@ architecture:
     AES503:
       enabled: true
       scope: ["capabilities"]
+      entry_points:
+        ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
+
+    AES504:
+      enabled: true
+      scope: ["utility"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 

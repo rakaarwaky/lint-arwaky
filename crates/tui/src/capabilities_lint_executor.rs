@@ -49,7 +49,8 @@ pub struct LintExecutor {
 
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
+        let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
         let output = ReportFormatterHelper::format_results(&results);
         LintExecutionResult {
@@ -78,7 +79,8 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let results = self.code_analysis.run_code_analysis(path);
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
+                let results = self.code_analysis.run_code_analysis(&fp);
                 let count_before = results.len();
                 let output = format!("[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.", mode, path, count_before, path);
                 LintExecutionResult {
@@ -91,10 +93,11 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
-        let results = self.code_analysis.run_code_analysis(path);
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
+        let results = self.code_analysis.run_code_analysis(&fp);
         let score = self.code_analysis.calc_score(&results.values);
         let has_critical = self.code_analysis.check_critical(&results.values);
-        let pass = score >= flags.threshold as f64 && !has_critical;
+        let pass = score.value() >= flags.threshold as f64 && !has_critical;
         let status = if pass { "PASS" } else { "FAIL" };
         let output = format!("CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}", path, score, flags.threshold, results.len(), has_critical, status);
         if pass {
@@ -765,7 +768,8 @@ impl LintExecutor {
                     let mut ws_results = Vec::new();
 
                     // 1. AES code analysis
-                    let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+                    let aes_fp = shared::common::taxonomy_path_vo::FilePath::new(ws.path.value.clone()).unwrap_or_default();
+                    let aes_results = code_analysis_linter.run_code_analysis(&aes_fp);
                     ws_results.extend(aes_results.values);
 
                     // 2. Naming rules audit (AES101-102)
@@ -833,7 +837,8 @@ impl LintExecutor {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
-        let aes_results = self.code_analysis.run_code_analysis(path);
+        let aes_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
+        let aes_results = self.code_analysis.run_code_analysis(&aes_fp);
         all_results.extend(aes_results.values);
 
         let rt = match tokio::runtime::Runtime::new() {

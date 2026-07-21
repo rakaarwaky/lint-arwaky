@@ -17,6 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
@@ -43,7 +44,8 @@ impl WatchOrchestrator {
         println!();
 
         // Initial full lint
-        let results = self.linter.run_code_analysis_path(&path);
+        let fp = FilePath::new(path.clone()).unwrap_or_default();
+        let results = self.linter.run_code_analysis_path(&fp);
         let score = self.linter.calc_score(&results);
         println!("[initial] {} violations, score {:.1}", results.len(), score);
 
@@ -59,7 +61,8 @@ impl WatchOrchestrator {
             tokio::select! {
                 Ok(event) = rx.recv() => {
                     if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
-                        let lint_results = self.linter.run_code_analysis_path(&event.path);
+                        let event_fp = FilePath::new(&event.path).unwrap_or_default();
+                        let lint_results = self.linter.run_code_analysis_path(&event_fp);
                         let lint_score = self.linter.calc_score(&lint_results);
                         println!(
                             "[change] {} | {} violations, score {:.1}",

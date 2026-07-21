@@ -410,6 +410,11 @@ architecture:
       max_impl: 5
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
+    AES404:
+      enabled: true
+      scope: ["utility"]
+      exceptions: ["__init__.py", "__main__.py", "main.py"]
+
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
@@ -440,6 +445,11 @@ architecture:
     AES503:
       enabled: true
       scope: ["capabilities"]
+      entry_points: []
+
+    AES504:
+      enabled: true
+      scope: ["utility"]
       entry_points: []
 
     AES505:

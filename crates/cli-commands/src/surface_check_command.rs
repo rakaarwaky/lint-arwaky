@@ -154,7 +154,7 @@ impl CheckCommandsSurface {
         let mut all_results = Vec::new();
 
         // 1. Run AES analysis (same algorithm for check and scan)
-        let aes_results = code_analysis_linter.run_code_analysis(path);
+        let aes_results = code_analysis_linter.run_code_analysis(&path_obj);
         all_results.extend(aes_results.values);
 
         // 2-5. Run async linter groups concurrently

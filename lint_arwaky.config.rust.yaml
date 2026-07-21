@@ -45,6 +45,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -58,6 +59,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -67,10 +69,58 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
+            - strict: ["vo", "entity", "error", "event", "constant"]
         contract:
           suffix:
             - strict: ["port", "protocol", "aggregate"]
+        utility:
+          suffix:
+            - flexible:
+                [
+                  "parser",
+                  "splitter",
+                  "trimmer",
+                  "slugifier",
+                  "sanitizer",
+                  "normalizer",
+                  "extractor",
+                  "replacer",
+                  "converter",
+                  "counter",
+                  "resolver",
+                  "detector",
+                  "builder",
+                  "joiner",
+                  "serializer",
+                  "deserializer",
+                  "encoder",
+                  "decoder",
+                  "hasher",
+                  "generator",
+                  "formatter",
+                  "comparator",
+                  "differ",
+                  "matcher",
+                  "checker",
+                  "calculator",
+                  "mapper",
+                  "merger",
+                  "grouper",
+                  "sorter",
+                  "deduplicator",
+                  "printer",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "port",
+                  "protocol",
+                  "aggregate",
+                ]
         capabilities:
           suffix:
             - flexible:
@@ -144,6 +194,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -183,6 +234,19 @@ architecture:
               "agent",
               "surfaces",
               "contract",
+              "utility",
+              "capabilities",
+              "root",
+            ]
+
+        - scope: "utility"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "surfaces",
+              "contract",
               "capabilities",
               "root",
             ]
@@ -207,7 +271,7 @@ architecture:
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
-          allowed: ["taxonomy", "contract"]
+          allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["surfaces", "agent", "capabilities", "root"]
@@ -217,6 +281,8 @@ architecture:
             - layer: "contract(port)"
               purpose: "implement"
             - layer: "contract(protocol|aggregate)"
+              purpose: "call"
+            - layer: "utility"
               purpose: "call"
 
         - scope: "agent(orchestrator)"
@@ -316,6 +382,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -506,6 +573,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -526,6 +594,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -544,6 +613,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -556,6 +626,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -569,6 +640,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -582,6 +654,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -594,6 +667,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -623,6 +697,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -645,6 +720,11 @@ architecture:
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+
+    AES404:
+      enabled: true
+      scope: ["utility"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES405:
@@ -678,6 +758,11 @@ architecture:
     AES503:
       enabled: true
       scope: ["capabilities"]
+      entry_points: []
+
+    AES504:
+      enabled: true
+      scope: ["utility"]
       entry_points: []
 
     AES505:

@@ -43,9 +43,9 @@ The recommended folder structure follows this order:
 _Example feature crate `crates|packages|modules/<name-features>/`_
 
 ```text
-surfaces_<domain>_<role>.rs/py/ts               ← surfaces layer
-capabilities_<domain>_<role>.rs/py/ts           ← capabilities layer
-agent_<domain>_orchestrator.rs/py/ts            ← agent layer
+surfaces_<concern>_<role>.rs/py/ts               ← surfaces layer
+capabilities_<concern>_<role>.rs/py/ts           ← capabilities layer
+agent_<concern>_orchestrator.rs/py/ts            ← agent layer
 ```
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
@@ -55,13 +55,13 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 `crates|packages|modules/shared/<common>or<domain-folder>`
 
 ```text
-contract_<domain>_protocol.rs/py/ts             ← contract layer
-contract_<domain>_aggregate.rs/py/ts            ← contract layer
-taxonomy_<domain>_vo.rs/py/ts                   ← taxonomy layer
-taxonomy_<domain>_event.rs/py/ts                ← taxonomy layer
-taxonomy_<domain>_entity.rs/py/ts               ← taxonomy layer
-taxonomy_<domain>_constant.rs/py/ts             ← taxonomy layer
-utility_<domain>_<role>.rs/py/ts                ← utility layer
+contract_<concern>_protocol.rs/py/ts             ← contract layer
+contract_<concern>_aggregate.rs/py/ts            ← contract layer
+taxonomy_<concern>_vo.rs/py/ts                   ← taxonomy layer
+taxonomy_<concern>_event.rs/py/ts                ← taxonomy layer
+taxonomy_<concern>_entity.rs/py/ts               ← taxonomy layer
+taxonomy_<concern>_constant.rs/py/ts             ← taxonomy layer
+utility_<concern>_<role>.rs/py/ts                ← utility layer
 ```
 
 `shared` folder groups by domain. Use `shared/common/` for generic files.

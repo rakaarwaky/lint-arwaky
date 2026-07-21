@@ -83,10 +83,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
-                    let aes_results = linter.run_code_analysis_path(&path);
-                    all_results.extend(aes_results);
-
                     let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    let aes_results = linter.run_code_analysis_path(&path_obj);
+                    all_results.extend(aes_results);
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
                         Err(_) => {
@@ -126,7 +125,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         &shared::cli_commands::taxonomy_result_vo::LintResultList::new(
                             all_results.clone(),
                         ),
-                        &path,
+                        &path_obj,
                     );
                     serde_json::json!({
                         "status": "success",
@@ -170,10 +169,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
-                    let aes_results = linter.run_code_analysis_path(&path);
+                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
+                    let aes_results = linter.run_code_analysis_path(&path_obj);
                     all_results.extend(aes_results);
 
-                    let path_obj = FilePath::new(path.clone()).unwrap_or_default();
                     let rt = match tokio::runtime::Runtime::new() {
                         Ok(r) => r,
                         Err(_) => {
@@ -210,7 +209,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     all_results.extend(orphan_results);
 
                     let score = linter.calc_score(&all_results);
-                    let pass = score >= threshold as f64;
+                    let pass = score.value() >= threshold as f64;
                     serde_json::json!({
                         "status": if pass { "pass" } else { "fail" },
                         "action": "ci",

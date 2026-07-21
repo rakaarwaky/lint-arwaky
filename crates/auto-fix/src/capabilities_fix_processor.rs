@@ -23,7 +23,7 @@ pub struct LintFixProcessor {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
-        let results = self.linter.run_code_analysis(&path.value).values;
+        let results = self.linter.run_code_analysis(path).values;
 
         let naming_violations: Vec<_> = results
             .iter()
@@ -104,7 +104,7 @@ impl IFixProtocol for LintFixProcessor {
                     .join("\n")
             )
         } else if fixed_count > 0 {
-            let after_results = self.linter.run_code_analysis(&path.value).values;
+            let after_results = self.linter.run_code_analysis(path).values;
             let remaining = after_results.len();
             format!(
                 "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",

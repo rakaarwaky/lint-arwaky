@@ -74,13 +74,16 @@ pub async fn handle_doctor(
 
 pub async fn handle_security(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    path: Option<String>,
+    path: Option<FilePath>,
 ) -> ExitCode {
-    let target = match path {
-        Some(p) => p,
+    let target = match &path {
+        Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp = match path {
+        Some(p) => p,
+        None => FilePath::new(".").unwrap_or_default(),
+    };
     println!("Security Vulnerability Scan — {}", target);
     println!();
 
@@ -111,13 +114,16 @@ pub async fn handle_security(
 
 pub async fn handle_dependencies(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    path: Option<String>,
+    path: Option<FilePath>,
 ) -> ExitCode {
-    let target = match path {
-        Some(p) => p,
+    let target = match &path {
+        Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(target.clone()).unwrap_or_default();
+    let fp = match path {
+        Some(p) => p,
+        None => FilePath::new(".").unwrap_or_default(),
+    };
     println!("Dependency Report — {}", target);
     println!();
 
