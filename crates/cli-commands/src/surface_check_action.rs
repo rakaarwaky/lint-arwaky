@@ -6,11 +6,12 @@
 //   - ci:     CI-mode with threshold comparison and critical-violation auto-fail
 //
 // find_workspace_root walks up from the given path looking for Cargo.toml/crates/packages/modules.
+use std::collections::BTreeMap;
+use std::process::ExitCode;
 use std::sync::Arc;
 
-use std::process::ExitCode;
-
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -105,9 +106,6 @@ pub fn handle_ci(
 
 /// Default check = self-lint when no args provided (runs `lint_path(".")`)
 pub fn handle_default_check(project_root: &str) -> ExitCode {
-    use shared::cli_commands::taxonomy_severity_vo::Severity;
-    use std::collections::BTreeMap;
-
     let results = code_analysis::lint_path(project_root);
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));
