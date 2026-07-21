@@ -31,34 +31,15 @@ use std::sync::Arc;
 ///   6. Orphan detection (AES501-506)
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AnalysisPipelineOrchestrator {
-    deps: shared::cli_commands::taxonomy_lint_dependencies_vo::LintDependencies,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    external_lint: Arc<dyn IExternalLintAggregate>,
+    role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     format: Format,
     filter: Option<String>,
-}
-
-// Accessors for struct fields
-impl AnalysisPipelineOrchestrator {
-    fn code_analysis_linter(&self) -> &Arc<dyn ICodeAnalysisAggregate> {
-        &self.deps.code_analysis_linter
-    }
-    fn naming_orchestrator(&self) -> &Arc<dyn INamingRunnerAggregate> {
-        &self.deps.naming_orchestrator
-    }
-    fn import_orchestrator(&self) -> &Arc<dyn IImportRunnerAggregate> {
-        &self.deps.import_orchestrator
-    }
-    fn external_lint(&self) -> &Arc<dyn IExternalLintAggregate> {
-        &self.deps.external_lint
-    }
-    fn role_orchestrator(&self) -> &Arc<dyn IRoleRunnerAggregate> {
-        &self.deps.role_orchestrator
-    }
-    fn orphan_orchestrator(&self) -> &Arc<dyn IOrphanAggregate> {
-        &self.deps.orphan_orchestrator
-    }
-    fn config_orchestrator(&self) -> &Arc<dyn IConfigOrchestratorAggregate> {
-        &self.deps.config_orchestrator
-    }
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -83,12 +64,25 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
-        deps: shared::cli_commands::taxonomy_lint_dependencies_vo::LintDependencies,
+        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+        external_lint: Arc<dyn IExternalLintAggregate>,
+        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         format: Format,
     ) -> Self {
         Self {
-            deps,
+            code_analysis_linter,
+            naming_orchestrator,
+            import_orchestrator,
+            external_lint,
+            role_orchestrator,
+            orphan_orchestrator,
+            config_orchestrator,
             format,
             filter: None,
         }
@@ -106,7 +100,7 @@ impl AnalysisPipelineOrchestrator {
         let mut diagnostics = Vec::new();
 
         // 1. Run AES analysis (AES301-305) — file lines, bypass, mandatory defs
-        let aes_results = self.code_analysis_linter().run_code_analysis(&path_obj);
+        let aes_results = self.code_analysis_linter.run_code_analysis(&path_obj);
         let aes_count = aes_results.len();
         all_results.extend(aes_results.values);
         diagnostics.push(PipelineDiagnostic::new(
@@ -117,10 +111,10 @@ impl AnalysisPipelineOrchestrator {
 
         // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
         let (naming_results, import_results, external_results, role_results) = tokio::join!(
-            self.naming_orchestrator().run_audit(&path_obj),
-            self.import_orchestrator().run_audit(&path_obj),
-            self.external_lint().scan_all(&path_obj),
-            self.role_orchestrator().run_audit(&path_obj),
+            self.naming_orchestrator.run_audit(&path_obj),
+            self.import_orchestrator.run_audit(&path_obj),
+            self.external_lint.scan_all(&path_obj),
+            self.role_orchestrator.run_audit(&path_obj),
         );
 
         // Report audit failures instead of silently discarding them
@@ -197,13 +191,13 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let ignored = self.config_orchestrator().ignored_paths(orphan_scan_root);
+        let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
         let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        self.orphan_orchestrator()
+        self.orphan_orchestrator
             .check_orphans(&file_strs, orphan_scan_root)
     }
 
@@ -229,7 +223,7 @@ impl AnalysisPipelineOrchestrator {
                 let results_list =
                     shared::cli_commands::taxonomy_result_vo::LintResultList::new(filtered_results);
                 let report_path = FilePath::new(path.to_string()).unwrap_or_default();
-                self.code_analysis_linter()
+                self.code_analysis_linter
                     .format_report(&results_list, &report_path)
             }
             Format::Json => {
@@ -248,7 +242,7 @@ impl AnalysisPipelineOrchestrator {
     pub async fn run_pipeline_with_discovery(&self) -> Result<ScanReport, PipelineError> {
         // Discover workspaces
         let workspaces = self
-            .config_orchestrator()
+            .config_orchestrator
             .discover_workspaces(
                 &FilePath::new(".".to_string())
                     .map_err(|e| PipelineError::InvalidPath(e.to_string()))?,
@@ -277,7 +271,7 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(".")
             .unwrap_or(std::path::PathBuf::from("."));
         let ignored = self
-            .config_orchestrator()
+            .config_orchestrator
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
         let all_source_files: Vec<String> = {
@@ -289,22 +283,22 @@ impl AnalysisPipelineOrchestrator {
 
         // Run orphan detection once across all workspace members
         let orphan_results_all = self
-            .orphan_orchestrator()
+            .orphan_orchestrator
             .check_orphans(&all_source_files, scan_root.to_str().unwrap_or("."));
 
         for ws in &workspaces {
             let mut all_results = Vec::new();
 
             // 1. Run AES analysis
-            let aes_results = self.code_analysis_linter().run_code_analysis(&ws.path);
+            let aes_results = self.code_analysis_linter.run_code_analysis(&ws.path);
             all_results.extend(aes_results.values);
 
             // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
             let (naming_results, import_results, external_results, role_results) = tokio::join!(
-                self.naming_orchestrator().run_audit(&ws.path),
-                self.import_orchestrator().run_audit(&ws.path),
-                self.external_lint().scan_all(&ws.path),
-                self.role_orchestrator().run_audit(&ws.path),
+                self.naming_orchestrator.run_audit(&ws.path),
+                self.import_orchestrator.run_audit(&ws.path),
+                self.external_lint.scan_all(&ws.path),
+                self.role_orchestrator.run_audit(&ws.path),
             );
 
             match naming_results {
@@ -413,7 +407,7 @@ impl AnalysisPipelineOrchestrator {
             None => std::path::PathBuf::from("."),
         };
         let ignored = self
-            .config_orchestrator()
+            .config_orchestrator
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root, &ignored)
             .iter()
@@ -430,7 +424,7 @@ impl AnalysisPipelineOrchestrator {
 
         // Run orphan detection with workspace root
         let all_results = self
-            .orphan_orchestrator()
+            .orphan_orchestrator
             .check_orphans(&all_files, &scan_root.to_string_lossy());
 
         // Filter results for the specific file — canonicalize for robust comparison
