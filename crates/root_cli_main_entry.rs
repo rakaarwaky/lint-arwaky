@@ -6,13 +6,13 @@ use std::sync::Arc;
 
 use cli_commands::surface_check_action;
 use cli_commands::surface_check_command;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
@@ -303,6 +303,7 @@ fn main() -> ExitCode {
             let config_container =
                 config_system::root_config_system_container::ConfigContainer::new();
             let config_orchestrator = config_container.orchestrator();
+            let config_reader = config_container.reader();
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
@@ -312,6 +313,7 @@ fn main() -> ExitCode {
             };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
+                config_reader,
             ))
         }
     }

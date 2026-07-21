@@ -1,9 +1,9 @@
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):

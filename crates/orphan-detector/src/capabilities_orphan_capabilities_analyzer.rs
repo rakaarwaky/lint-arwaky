@@ -39,8 +39,9 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let path = FilePath::new(fp).unwrap_or_default();
             let content = utility_file_cache::read_cached(&path);
             let mut identifiers: Vec<String> = Vec::new();
-            identifiers.extend(extract_struct_names(&content.value()));
-            identifiers.extend(extract_trait_names(&content.value()));
+            let content_ref = content.value();
+            identifiers.extend(extract_struct_names(&content_ref));
+            identifiers.extend(extract_trait_names(&content_ref));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem

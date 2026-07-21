@@ -40,7 +40,7 @@ pub fn extract_trait_names(content: &str) -> Vec<String> {
 }
 
 pub fn normalize_module_component(value: &str) -> String {
-    value.replace('-', "_").replace('.', "_")
+    value.replace(['-', '.'], "_")
 }
 
 pub fn normalize_module_path(value: &str) -> String {

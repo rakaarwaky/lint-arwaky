@@ -23,7 +23,7 @@ impl McpContainer {
             import_rules::root_import_rules_container::ImportContainer::new_default();
 
         let (config, layer_map) = {
-            let aes_config = shared::config_system::taxonomy_config_vo::default_aes_config();
+            let aes_config = shared::config_system::utility_config_defaults::default_aes_config();
             let (merged, _) =
                 shared::config_system::utility_config_merger::merge_config(&aes_config);
             let mut c = aes_config;

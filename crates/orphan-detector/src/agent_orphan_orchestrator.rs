@@ -40,6 +40,7 @@ pub struct ArchOrphanAnalyzer {
 }
 
 impl ArchOrphanAnalyzer {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         resolver: Arc<dyn IOrphanGraphResolverProtocol>,
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,

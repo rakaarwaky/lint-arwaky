@@ -63,8 +63,6 @@ Allowed branch naming:
 
 - `main`
 - `develop`
-- `features/<name>`
-- `fix/<name>`
 
 When merging a PR to develop:
 

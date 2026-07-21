@@ -1,7 +1,7 @@
 // PURPOSE: DepthCount — value object for directory scan depth
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DepthCount {
     pub value: usize,
 }
@@ -28,8 +28,3 @@ impl std::fmt::Display for DepthCount {
     }
 }
 
-impl Default for DepthCount {
-    fn default() -> Self {
-        Self { value: 0 }
-    }
-}

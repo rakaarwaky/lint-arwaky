@@ -9,10 +9,7 @@ pub enum FileReadOutcome {
 
 /// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
-    match std::fs::read_to_string(path) {
-        Ok(c) => c,
-        Err(_) => String::new(),
-    }
+    std::fs::read_to_string(path).unwrap_or_default()
 }
 
 /// Read file with diagnostic info — returns content or error details.
