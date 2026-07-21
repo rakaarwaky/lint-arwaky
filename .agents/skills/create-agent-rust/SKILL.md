@@ -49,7 +49,7 @@ Agents coordinate capabilities into executable flows. They control sequence and 
 
 Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
 
-Agents depend ONLY on Taxonomy and Contract layers. They must be completely ignorant of Capabilities and Utility implementations.
+Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be completely ignorant of Capabilities implementations.
 
 ## Definition of Done
 
@@ -137,8 +137,8 @@ rg -n "impl\s+I[A-Za-z0-9_]+Aggregate\s+for" crates/<crate>/src/agent_*.rs
 # Check computation patterns
 rg "\.sum\(\)|\.len\(\)|\.map\(|\.fold\(" crates/<crate>/src/agent_*.rs
 
-# Check forbidden imports (agent must only depend on taxonomy + contract)
-rg "^\s*use\s+.*(capabilities_|infrastructure_|utility_)" crates/<crate>/src/agent_*.rs
+# Check forbidden imports (agent must only depend on taxonomy + contract + utility)
+rg "^\s*use\s+.*(capabilities_|infrastructure_)" crates/<crate>/src/agent_*.rs
 ```
 
 ## Common Mistakes

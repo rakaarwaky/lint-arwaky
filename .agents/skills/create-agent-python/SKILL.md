@@ -49,7 +49,7 @@ Agents coordinate capabilities into executable flows. They control sequence and 
 
 Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
 
-Agents depend ONLY on Taxonomy and Contract layers. They must be completely ignorant of Capabilities and Utility implementations.
+Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be completely ignorant of Capabilities implementations.
 
 ## Definition of Done
 
@@ -136,8 +136,8 @@ grep -n "class.*I[A-Za-z0-9_]*Aggregate" modules/*/src/agent_*.py
 # Check computation patterns
 grep -n "sum(\|len(\|\.iter\(\)\|\.map(" modules/*/src/agent_*.py
 
-# Check forbidden imports (agent must only depend on taxonomy + contract)
-grep -n "^\s*from\s+.*(capabilities_|infrastructure_|utility_)" modules/*/src/agent_*.py
+# Check forbidden imports (agent must only depend on taxonomy + contract + utility)
+grep -n "^\s*from\s+.*(capabilities_|infrastructure_)" modules/*/src/agent_*.py
 ```
 
 ## Common Mistakes

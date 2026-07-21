@@ -6,7 +6,6 @@ use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::contract_orphan_protocol::{
@@ -30,7 +29,6 @@ use std::sync::Arc;
 
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-    layer_detector: Arc<dyn ILayerDetectionProtocol>,
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
@@ -43,7 +41,6 @@ pub struct ArchOrphanAnalyzer {
 impl ArchOrphanAnalyzer {
     pub fn new(
         resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-        layer_detector: Arc<dyn ILayerDetectionProtocol>,
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
         contract_analyzer: Arc<dyn IContractOrphanProtocol>,
         capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
@@ -54,7 +51,6 @@ impl ArchOrphanAnalyzer {
     ) -> Self {
         Self {
             resolver,
-            layer_detector,
             taxonomy_analyzer,
             contract_analyzer,
             capabilities_analyzer,
@@ -122,13 +118,17 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 Err(_) => continue,
             };
 
-            let detection = match self.layer_detector.detect_layer(&file_fp, &self.config) {
-                Some(d) => d,
+            let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
+            let base_layer = match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
+                Some(l) => l,
                 None => continue,
             };
-            let layer_str = detection.layer_name;
-            let definition = match detection.definition {
-                Some(d) => d,
+            let layer_keys: Vec<String> = self.config.layers.keys().map(|k| k.value.to_string()).collect();
+            let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
+                &base_layer, file_fp.value(), &layer_keys,
+            );
+            let definition = match shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers) {
+                Some(d) => d.clone(),
                 None => continue,
             };
 

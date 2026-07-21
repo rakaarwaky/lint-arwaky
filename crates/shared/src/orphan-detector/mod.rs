@@ -1,4 +1,3 @@
-pub mod contract_layer_detection_protocol;
 pub mod contract_orphan_aggregate;
 pub mod contract_orphan_graph_resolver_protocol;
 pub mod contract_orphan_protocol;
