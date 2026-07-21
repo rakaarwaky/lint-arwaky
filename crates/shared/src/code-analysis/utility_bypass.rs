@@ -11,18 +11,25 @@ pub fn is_ident_start(b: u8) -> bool {
     b.is_ascii_alphabetic() || b == b'_'
 }
 
-/// Check if a line starts with `#[allow(` or `#[expect(`, constructed without the
-/// literal prefixes appearing in source to avoid AES304 self-flagging.
+/// Check if a line starts with a Rust bypass attribute (`#[allow(...)`, `#[expect(...)`,
+/// `#![allow(...)]`, `#![expect(...)]`, `#![warn(...)]`, `#[warn(...)]`,
+/// `#[clippy::allow(...)]`, etc.), constructed without the literal prefixes appearing
+/// in source to avoid AES304 self-flagging.
 pub fn starts_with_allow_attr(line: &str) -> bool {
-    static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
+    static PREFIXES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
     let prefixes = PREFIXES.get_or_init(|| {
-        let a: String = ['#', '[', 'a', 'l', 'l', 'o', 'w', '('].iter().collect();
-        let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']
-            .iter()
-            .collect();
-        [a, e]
+        let mk = |chars: &[char]| chars.iter().collect::<String>();
+        vec![
+            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']),             // #[allow(
+            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']),         // #[expect(
+            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),                    // #[warn(
+            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']),         // #![allow(
+            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']),     // #![expect(
+            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']),              // #![warn(
+            mk(&['#', '[', 'c', 'l', 'i', 'p', 'p', 'y', ':', ':', 'a', 'l', 'l', 'o', 'w', '(']), // #[clippy::allow(
+        ]
     });
-    line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])
+    prefixes.iter().any(|prefix| line.starts_with(prefix))
 }
 
 /// Returns true if `line` (already trimmed) contains `token` invoked as a method call or macro.
@@ -114,4 +121,110 @@ pub fn matches_keyword_token(line: &str, token: &str) -> bool {
         i += 1;
     }
     false
+}
+
+/// Skip a brace-delimited block starting at `start`.
+///
+/// Returns the index of the first line after the block.
+/// If the starting line is already balanced or has no opening brace,
+/// returns `start + 1`.
+pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
+    if start >= lines.len() {
+        return start;
+    }
+
+    let mut depth = lines[start].matches('{').count() as i32
+        - lines[start].matches('}').count() as i32;
+    let mut idx = start + 1;
+
+    if depth <= 0 {
+        return idx;
+    }
+
+    while idx < lines.len() {
+        depth += lines[idx].matches('{').count() as i32
+            - lines[idx].matches('}').count() as i32;
+        idx += 1;
+
+        if depth <= 0 {
+            break;
+        }
+    }
+
+    idx
+}
+
+/// Skip a `#[cfg(test)]` module block when present.
+///
+/// If the attribute is followed by a test module, returns the first line
+/// after that module. Otherwise, returns `start + 1`, skipping only the
+/// attribute line.
+pub fn skip_cfg_test_block(lines: &[&str], start: usize) -> usize {
+    if start >= lines.len() {
+        return start;
+    }
+
+    let mut idx = start + 1;
+
+    // Skip blank lines and additional attributes.
+    while idx < lines.len() {
+        let t = lines[idx].trim();
+        if t.is_empty() || t.starts_with('#') {
+            idx += 1;
+            continue;
+        }
+        break;
+    }
+
+    if idx >= lines.len() {
+        return idx;
+    }
+
+    let t = lines[idx].trim();
+    let is_mod = t.split_whitespace().any(|w| w == "mod");
+
+    // Not a module attribute; skip only the attribute line.
+    if !is_mod {
+        return start + 1;
+    }
+
+    // Module declaration without body, e.g. `mod tests;`.
+    if t.ends_with(';') && !t.contains('{') {
+        return idx + 1;
+    }
+
+    let mut depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
+    idx += 1;
+
+    // The module body opened and closed on the same line, e.g. `mod tests {}`.
+    if depth <= 0 && t.contains('{') {
+        return idx;
+    }
+
+    // Look for an opening brace on following lines.
+    if depth <= 0 {
+        while idx < lines.len() {
+            let st = lines[idx].trim();
+            depth += st.matches('{').count() as i32 - st.matches('}').count() as i32;
+            idx += 1;
+
+            if depth > 0 {
+                break;
+            }
+
+            // Opened and closed immediately on the next line.
+            if depth <= 0 && st.contains('{') {
+                return idx;
+            }
+        }
+    }
+
+    // Consume until the module body closes.
+    while idx < lines.len() && depth > 0 {
+        let st = lines[idx].trim();
+        depth += st.matches('{').count() as i32 - st.matches('}').count() as i32;
+        idx += 1;
+    }
+
+    idx
 }

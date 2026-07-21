@@ -39,13 +39,15 @@ impl CodeAnalysisCheckerContainer {
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
             .unwrap_or_default();
+        // P1.6 fix: wire config into duplication analyzer via from_config()
+        let dup_analyzer = CodeDuplicationAnalyzer::from_config(Arc::new(config.clone()));
         Self {
             config,
             layer_map,
             bypass_checker: Arc::new(bypass),
             mandatory_definition_checker: mandatory,
             line_checker: Arc::new(ArchLineChecker {}),
-            code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),
+            code_duplication_analyzer: Arc::new(dup_analyzer),
         }
     }
 

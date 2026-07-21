@@ -1,11 +1,15 @@
 // PURPOSE: Stateless utility functions for mandatory definition checking (AES303)
 // Extracted from capabilities_mandatory_definition_checker.rs — pure functions, no &self, no I/O
 
-/// Check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
+use super::utility_bypass::matches_keyword_token;
+
+/// Check if a line declares a Rust struct/enum/trait using word-boundary matching.
+/// Handles visibility modifiers (pub, pub(crate)), tuple structs, and avoids
+/// substring false-positives like "obstruction", "structure", "instruction".
 pub fn rust_declares_type(line: &str) -> bool {
     let keywords = ["struct", "enum", "trait"];
     for kw in keywords {
-        if line.contains(kw) && !line.contains('(') {
+        if matches_keyword_token(line, kw) {
             return true;
         }
     }

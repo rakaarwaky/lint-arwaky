@@ -3,6 +3,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::code_analysis::utility_bypass::skip_cfg_test_block;
 use shared::code_analysis::utility_mandatory::rust_declares_type;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
@@ -33,21 +34,16 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
-        let mut in_test_module = false;
         while i < lines.len() {
             let t = lines[i].trim();
-            // Skip test modules
+            // Skip #[cfg(test)] modules correctly — advance past the entire block
             if t.starts_with("#[cfg(test)]") {
-                in_test_module = true;
-                i += 1;
+                i = skip_cfg_test_block(&lines, i);
                 continue;
             }
-            if in_test_module {
-                i += 1;
-                continue;
-            }
-            // Rust: unit struct `struct Foo;` (tuple structs `struct Foo(i32);` excluded)
-            if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
+            // Rust: unit struct `struct Foo;` or `pub struct Foo;` (tuple structs excluded)
+            let stripped = Self::strip_visibility(t);
+            if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(') {
                 // Skip if followed by impl block or attribute (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
@@ -97,8 +93,8 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     }
                 }
             }
-            // JS/TS: empty class `class Foo {}` or `class Foo extends Bar {}`
-            if t.starts_with("class ") && t.ends_with("{}") {
+            // JS/TS: empty class/interface `class Foo {}`, `export class Foo {}`, `interface Bar {}`
+            if Self::is_empty_js_declaration(t) {
                 violations.push(LintResult::new_arch(
                     file,
                     i + 1,
@@ -183,5 +179,71 @@ impl Default for MandatoryDefinitionChecker {
 impl MandatoryDefinitionChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    /// Strip Rust visibility modifiers from the beginning of a line.
+    /// Handles `pub`, `pub(crate)`, `pub(crate)`, `pub(super)`, etc.
+    /// P1.10 fix: enables detection of `pub struct Foo;` as unit struct.
+    fn strip_visibility(line: &str) -> &str {
+        let trimmed = line.trim();
+        if trimmed.starts_with("pub ") || trimmed.starts_with("pub(") {
+            // Skip past the visibility modifier
+            if let Some(rest) = trimmed.strip_prefix("pub ") {
+                rest
+            } else if let Some(rest) = trimmed.strip_prefix("pub(") {
+                // Find closing paren for pub(crate), pub(super), etc.
+                if let Some(end_paren) = rest.find(')') {
+                    let after = &rest[end_paren + 1..];
+                    // Skip any whitespace after the closing paren
+                    after.trim_start()
+                } else {
+                    trimmed
+                }
+            } else {
+                trimmed
+            }
+        } else {
+            trimmed
+        }
+    }
+
+    /// Detect JS/TS empty class or interface declarations.
+    /// Handles `class Foo {}`, `export class Foo {}`, `export default class Foo {}`.
+    /// P1.11 fix: replaces simple `t.starts_with("class ")` check.
+    fn is_empty_js_declaration(line: &str) -> bool {
+        let code = line
+            .split_once("//")
+            .map(|(code, _comment)| code)
+            .unwrap_or(line);
+
+        let compact: String = code.split_whitespace().collect();
+
+        compact.ends_with("{}") && Self::js_ts_declares_primary_symbol(code)
+    }
+
+    /// Detect JS/TS primary symbols: class or interface.
+    fn js_ts_declares_primary_symbol(line: &str) -> bool {
+        let code = line
+            .split_once("//")
+            .map(|(code, _comment)| code)
+            .unwrap_or(line);
+
+        let tokens: Vec<&str> = code.split_whitespace().collect();
+
+        if let Some(pos) = tokens
+            .iter()
+            .position(|tok| *tok == "class" || *tok == "interface")
+        {
+            if pos == 0 {
+                return true;
+            }
+
+            return matches!(
+                tokens[pos - 1],
+                "export" | "default" | "abstract" | "declare"
+            );
+        }
+
+        false
     }
 }

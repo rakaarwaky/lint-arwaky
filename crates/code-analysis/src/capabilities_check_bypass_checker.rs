@@ -12,7 +12,9 @@ use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
     AesCodeAnalysisViolation, Language, ViolationKind,
 };
-use shared::code_analysis::utility_bypass::{matches_word_token, starts_with_allow_attr};
+use shared::code_analysis::utility_bypass::{
+    matches_word_token, skip_brace_block, skip_cfg_test_block, starts_with_allow_attr,
+};
 use shared::common::taxonomy_common_vo::PatternList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -55,40 +57,49 @@ impl IBypassCheckerProtocol for BypassChecker {
 
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let patterns = &self.rule.forbidden_bypass;
-        // Early-exit: skip scan if file contains none of the bypass-related tokens
-        let content_lower = content.to_lowercase();
-        let has_bypass_token = patterns
-            .values
-            .iter()
-            .any(|p| content_lower.contains(p.as_str()))
-            || content_lower.contains("raise ")
-            || content_lower.contains("throw new");
+        // P1.7 fix: use fallback default patterns when config is empty
+        let effective_patterns = if patterns.values.is_empty() {
+            Self::default_forbidden_bypass()
+        } else {
+            PatternList { values: patterns.values.clone() }
+        };
+
+        // P2.5 fix: line-by-line scan instead of allocating full lowercase copy
+        let has_bypass_token = content.lines().any(|line| {
+            let lc = line.to_lowercase();
+            effective_patterns
+                .iter()
+                .any(|p| lc.contains(p.as_str()))
+                || lc.contains("raise ")
+                || lc.contains("throw new")
+        });
         if !has_bypass_token {
             return;
         }
 
+        // P2.4 fix: precompute lowered patterns once per file scan
+        let lowered_patterns: Vec<String> =
+            effective_patterns.iter().map(|p| p.to_lowercase()).collect();
+
         let language = Language::from_file(file);
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        while i < lines.len() {
+            let t = lines[i].trim();
+
             // Skip doc comments — documentation references to patterns are not runtime violations
             if t.starts_with("///") || t.starts_with("//!") {
+                i += 1;
                 continue;
             }
             // Skip test modules — unwrap/panic is normal in tests
             if t.starts_with("#[cfg(test)]") {
+                i = skip_cfg_test_block(&lines, i);
                 continue;
             }
-            // Skip static Lazy<Regex> initialization (multiline)
+            // Skip static Lazy<Regex> multiline initialization blocks
             if t.contains("static ") && t.contains("Lazy") {
-                let depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
-                let mut d = depth;
-                for subsequent_line in content.lines().skip(i + 1) {
-                    let st = subsequent_line.trim();
-                    d += st.matches('{').count() as i32 - st.matches('}').count() as i32;
-                    if d <= 0 {
-                        break;
-                    }
-                }
+                i = skip_brace_block(&lines, i);
                 continue;
             }
 
@@ -101,23 +112,22 @@ impl IBypassCheckerProtocol for BypassChecker {
                     Severity::CRITICAL,
                     AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                 ));
+                i += 1;
                 continue;
             }
 
-            // Match forbidden-bypass patterns from config.
+            // Use guarded match arms (P1.2 fix: eliminates clippy::collapsible_match)
             let t_lower = t.to_lowercase();
-            for p in &patterns.values {
-                let p_str = p.as_str();
-                if matches!(
-                    p_str,
-                    "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable"
-                ) {
-                    if matches_word_token(t, p_str, matches!(p_str, "unwrap" | "expect")) {
-                        // Safe .unwrap_or*() variants don't panic — skip.
-                        if p_str == "unwrap" && t.contains(".unwrap_or") {
-                            continue;
-                        }
-                        let vo = match Self::classify_token(p_str) {
+            for (idx, _p) in lowered_patterns.iter().enumerate() {
+                let p_str = &effective_patterns.values[idx];
+                let requires_method_call = matches!(p_str.as_str(), "unwrap" | "expect");
+
+                match p_str.as_str() {
+                    p if Self::is_word_pattern_token(p)
+                        && matches_word_token(t, p, requires_method_call)
+                        && !(p == "unwrap" && Self::has_safe_unwrap_variant(t)) =>
+                    {
+                        let vo = match Self::classify_token(p) {
                             ViolationKind::UnwrapExpect => {
                                 AesCodeAnalysisViolation::UnwrapExpect { reason: None }
                             }
@@ -141,19 +151,27 @@ impl IBypassCheckerProtocol for BypassChecker {
                         ));
                         break;
                     }
-                } else if !p_str.is_empty() && t_lower.contains(&p_str.to_lowercase()) {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        i + 1,
-                        "AES304",
-                        Severity::CRITICAL,
-                        AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
-                    ));
-                    break;
+
+                    p if !Self::is_word_pattern_token(p)
+                        && !p.is_empty()
+                        && t_lower.contains(p) =>
+                    {
+                        violations.push(LintResult::new_arch(
+                            file,
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
+                            AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                        ));
+                        break;
+                    }
+
+                    _ => {}
                 }
             }
+            i += 1;
 
-            // Language-scoped phrase patterns.
+            // Language-scoped phrase patterns (P1.9: only after main pattern match).
             let line_lc = t.to_lowercase();
             match language {
                 Language::Python => {
@@ -178,11 +196,16 @@ impl IBypassCheckerProtocol for BypassChecker {
                     }
                 }
                 Language::JavaScript | Language::TypeScript => {
-                    if line_lc.contains("throw new error")
-                        || line_lc.contains("throw new typeerror")
-                        || line_lc.contains("throw new rangeerror")
-                        || line_lc.contains("throw new referenceerror")
-                        || line_lc.contains("throw new syntaxerror")
+                    let throw_patterns = [
+                        "throw new error",
+                        "throw new typeerror",
+                        "throw new rangeerror",
+                        "throw new referenceerror",
+                        "throw new syntaxerror",
+                    ];
+                    if throw_patterns
+                        .iter()
+                        .any(|p| line_lc.contains(p))
                     {
                         violations.push(LintResult::new_arch(
                             file,
@@ -239,4 +262,86 @@ impl BypassChecker {
             _ => ViolationKind::BypassComment,
         }
     }
+
+    /// P1.2 fix: Tokens that require call-site style matching rather than plain contains.
+    fn is_word_pattern_token(token: &str) -> bool {
+        matches!(
+            token,
+            "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable"
+        )
+    }
+
+    /// P1.7 fix: Default fallback bypass patterns when config provides none.
+    fn default_forbidden_bypass() -> PatternList {
+        use shared::common::taxonomy_common_vo::PatternList;
+        PatternList {
+            values: vec![
+                "unwrap".to_string(),
+                "expect".to_string(),
+                "panic".to_string(),
+                "todo".to_string(),
+                "unimplemented".to_string(),
+                "unreachable".to_string(),
+                // Python bypass patterns
+                "type: ignore".to_string(),
+                "noqa".to_string(),
+                // JS/TS bypass patterns
+                "@ts-ignore".to_string(),
+                "@ts-expect-error".to_string(),
+                "eslint-disable".to_string(),
+                "lint-disable".to_string(),
+                // Generic fallback
+                "FIXME".to_string(),
+                "HACK".to_string(),
+                "XXX".to_string(),
+            ],
+        }
+    }
+
+    /// P1.9 fix: Check if the line has ONLY safe `.unwrap_or*()` variants (no unsafe `.unwrap(`).
+    /// Returns true if all `.unwrap` calls on this line are safe variants like `.unwrap_or()`,
+    /// `.unwrap_or_else()`, `.unwrap_or_default()`. Returns false if unsafe `.unwrap(` is found.
+    fn has_safe_unwrap_variant(line: &str) -> bool {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        while i < len {
+            // Find ".unwrap" occurrences
+            if bytes[i..].starts_with(b".unwrap") && (i == 0 || !b_is_ident(bytes[i - 1])) {
+                i += 7; // skip past ".unwrap"
+                // Check if followed by '(', '!', or '_' (method call)
+                if i < len {
+                    match bytes[i] {
+                        b'(' | b'!' => {
+                            // This is an unsafe .unwrap() call — return false
+                            return false;
+                        }
+                        b'_' => {
+                            // Check if it's a safe variant: unwrap_or, unwrap_or_else, unwrap_or_default
+                            i += 1;
+                            let rest = &bytes[i..];
+                            if rest.starts_with(b"or") || rest.starts_with(b"Or") {
+                                // Safe variant — continue checking for more .unwrap calls
+                                continue;
+                            }
+                            // Unknown variant — treat as unsafe
+                            return false;
+                        }
+                        _ => {
+                            // Not a method call — just a variable/field name containing "unwrap"
+                            i += 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+            i += 1;
+        }
+        // No unsafe .unwrap() found — all are safe variants
+        true
+    }
+}
+
+fn b_is_ident(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b == b'_'
 }
