@@ -69,6 +69,11 @@ impl IBypassCheckerProtocol for BypassChecker {
 
         // P2.5 fix: line-by-line scan instead of allocating full lowercase copy
         let has_bypass_token = content.lines().any(|line| {
+            let trimmed = line.trim();
+            // Skip comments and doc comments
+            if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+                return false;
+            }
             let lc = line.to_lowercase();
             effective_patterns.iter().any(|p| lc.contains(p.as_str()))
                 || lc.contains("raise ")
@@ -157,7 +162,8 @@ impl IBypassCheckerProtocol for BypassChecker {
 
                     p if !Self::is_word_pattern_token(p)
                         && !p.is_empty()
-                        && t_lower.contains(p) =>
+                        && t_lower.contains(p)
+                        && !t.trim_start().starts_with('"') =>
                     {
                         violations.push(LintResult::new_arch(
                             file,

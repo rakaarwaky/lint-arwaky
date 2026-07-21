@@ -64,7 +64,6 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
