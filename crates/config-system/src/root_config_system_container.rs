@@ -1,14 +1,12 @@
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use std::sync::Arc;
 
 pub struct ConfigContainer {
-    orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
+    orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     parser: Arc<dyn IConfigParserProtocol>,
     validator: Arc<dyn IConfigValidatorProtocol>,
-    multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
 }
 
 impl Default for ConfigContainer {
@@ -25,23 +23,17 @@ impl ConfigContainer {
 
         Self {
             orchestrator: Arc::new(
-                crate::agent_config_loading_orchestrator::ConfigLoadingOrchestrator::new(
-                    workspace_detector.clone(),
-                    yaml_reader.clone(),
-                ),
-            ),
-            parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),
-            validator: Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new()),
-            multi_project_orchestrator: Arc::new(
-                crate::agent_multi_project_orchestrator::MultiProjectOrchestrator::new(
+                crate::agent_config_orchestrator::ConfigOrchestrator::new(
                     workspace_detector,
                     yaml_reader,
                 ),
             ),
+            parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),
+            validator: Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new()),
         }
     }
 
-    pub fn orchestrator(&self) -> Arc<dyn IConfigOrchestrationAggregate> {
+    pub fn orchestrator(&self) -> Arc<dyn IConfigOrchestratorAggregate> {
         self.orchestrator.clone()
     }
 
@@ -51,9 +43,5 @@ impl ConfigContainer {
 
     pub fn validator(&self) -> Arc<dyn IConfigValidatorProtocol> {
         self.validator.clone()
-    }
-
-    pub fn multi_project_orchestrator(&self) -> Arc<dyn MultiProjectOrchestratorAggregate> {
-        self.multi_project_orchestrator.clone()
     }
 }

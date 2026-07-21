@@ -1,10 +1,10 @@
 // PURPOSE: ConfigCommandsSurface — CLI surface for config show
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
 pub async fn handle_config_show(
-    config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
+    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
 ) -> ExitCode {
     let project_root =
         shared::common::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default();

@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -20,7 +20,7 @@ pub struct CliContainer {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
-    pub multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
+    pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
 }
 
 fn make_layer_map() -> (
@@ -67,7 +67,7 @@ impl CliContainer {
         let layer_detector = orphan_container.layer_detector();
 
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
-        let multi_project_orchestrator = config_container.multi_project_orchestrator();
+        let multi_project_orchestrator = config_container.orchestrator();
 
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
         let git_aggregate = git_container.aggregate();

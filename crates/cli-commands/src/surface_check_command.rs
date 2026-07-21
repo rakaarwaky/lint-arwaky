@@ -14,13 +14,12 @@
 // each member gets its own language-specific configuration.
 use std::process::ExitCode;
 use std::sync::Arc;
-
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -55,7 +54,7 @@ pub struct CheckCommandsSurface {
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub layer_detector: Arc<dyn ILayerDetectionAggregate>,
-    pub multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+    pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub factory: Option<OrchestratorFactory>,
 }
 
@@ -76,7 +75,7 @@ impl CheckCommandsSurface {
 
     pub fn new_with_factory(
         ctx: CheckContext,
-        multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
+        multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
         factory: OrchestratorFactory,
     ) -> Self {
         Self {

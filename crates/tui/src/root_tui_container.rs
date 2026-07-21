@@ -66,7 +66,7 @@ impl TuiContainer {
                 .with_import_orchestrator(import_container.orchestrator())
                 .with_naming_orchestrator(naming_container.orchestrator())
                 .with_role_orchestrator(role_container.orchestrator())
-                .with_multi_project_orchestrator(config_container.multi_project_orchestrator()),
+                .with_multi_project_orchestrator(config_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(lint_executor));

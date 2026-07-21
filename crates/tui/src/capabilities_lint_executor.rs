@@ -3,8 +3,7 @@ use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
-use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
-use shared::config_system::contract_orchestration_aggregate::IConfigOrchestrationAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -36,14 +35,13 @@ pub struct LintExecutor {
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
     maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
     hook_port: Option<Arc<dyn IHookManagerProtocol>>,
-    config_orchestrator: Option<Arc<dyn IConfigOrchestrationAggregate>>,
+    config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
     layer_detector: Option<Arc<dyn ILayerDetectionAggregate>>,
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
-    multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -542,7 +540,6 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
-            multi_project_orchestrator: None,
         }
     }
 
@@ -568,7 +565,7 @@ impl LintExecutor {
 
     pub fn with_config(
         mut self,
-        config_orchestrator: Arc<dyn IConfigOrchestrationAggregate>,
+        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     ) -> Self {
         self.config_orchestrator = Some(config_orchestrator);
         self
@@ -615,9 +612,9 @@ impl LintExecutor {
 
     pub fn with_multi_project_orchestrator(
         mut self,
-        multi_project_orchestrator: Arc<dyn MultiProjectOrchestratorAggregate>,
+        multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     ) -> Self {
-        self.multi_project_orchestrator = Some(multi_project_orchestrator);
+        self.config_orchestrator = Some(multi_project_orchestrator);
         self
     }
 
@@ -733,8 +730,8 @@ impl LintExecutor {
 
 impl LintExecutor {
     fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
-        // If we have multi_project_orchestrator, we check for workspace members.
-        if let Some(ref multi_project) = self.multi_project_orchestrator {
+        // If we have config_orchestrator, we check for workspace members.
+        if let Some(ref multi_project) = self.config_orchestrator {
             let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
                 .unwrap_or_default();
             let rt = match tokio::runtime::Runtime::new() {
