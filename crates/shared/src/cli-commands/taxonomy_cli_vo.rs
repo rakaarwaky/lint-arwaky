@@ -88,12 +88,6 @@ pub enum Commands {
         path: Option<String>,
     },
 
-    /// Detect code duplication
-    Duplicates {
-        /// Path to analyze
-        path: Option<String>,
-    },
-
     /// Scan for library vulnerabilities
     Dependencies {
         /// Path to scan

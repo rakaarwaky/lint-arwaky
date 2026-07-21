@@ -38,3 +38,4 @@ git_hooks.workspace = true
 file_watch.workspace = true
 project_setup.workspace = true
 maintenance.workspace = true
+regex.workspace = true

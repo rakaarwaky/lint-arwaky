@@ -160,8 +160,15 @@ impl CheckCommandsSurface {
                 role_orchestrator.run_audit(&path_obj),
             )
         });
-        all_results.extend(naming_results.unwrap_or_default());
-        all_results.extend(import_results.unwrap_or_default());
+        // P2.9: report audit failures instead of silently discarding them
+        match naming_results {
+            Ok(values) => all_results.extend(values),
+            Err(e) => eprintln!("[warn] naming audit failed: {e}"),
+        }
+        match import_results {
+            Ok(values) => all_results.extend(values),
+            Err(e) => eprintln!("[warn] import audit failed: {e}"),
+        }
         all_results.extend(external_results.values);
         all_results.extend(role_results);
 
@@ -209,15 +216,16 @@ impl CheckCommandsSurface {
         reporter: Arc<dyn ICodeAnalysisAggregate>,
         format: &Format,
     ) -> usize {
-        let canonical_scan_path = crate::surface_common_command::canonicalize_path(path);
+        let canonical_scan_path = std::path::PathBuf::from(path);
+        let canonical_scan_path = canonical_scan_path.canonicalize().unwrap_or(canonical_scan_path);
         let cwd = crate::surface_common_command::current_dir();
+        // P2.3: use Path::starts_with (component-aware) instead of string prefix matching
         let filtered_results: Vec<_> = if let Some(code) = filter {
             all_results
                 .into_iter()
                 .filter(|r| {
                     let abs_path = cwd.join(&r.file.value);
-                    r.code.code() == code
-                        && abs_path.to_string_lossy().starts_with(&canonical_scan_path)
+                    r.code.code() == code && abs_path.starts_with(&canonical_scan_path)
                 })
                 .collect()
         } else {
@@ -225,7 +233,7 @@ impl CheckCommandsSurface {
                 .into_iter()
                 .filter(|r| {
                     let abs_path = cwd.join(&r.file.value);
-                    abs_path.to_string_lossy().starts_with(&canonical_scan_path)
+                    abs_path.starts_with(&canonical_scan_path)
                 })
                 .collect()
         };
@@ -363,7 +371,7 @@ impl CheckCommandsSurface {
             return self.scan(path, filter, default_config, format);
         }
 
-        // Filter to specific member if requested
+        // Filter to specific member if requested (P2.10: use exact matching, not substring)
         let workspaces = if let Some(member_name) = member {
             let filtered: Vec<_> = workspaces
                 .into_iter()
@@ -372,7 +380,8 @@ impl CheckCommandsSurface {
                         .file_name()
                         .map(|n| n.to_string_lossy())
                         .unwrap_or_default();
-                    ws_file.contains(member_name) || ws.path.value.contains(member_name)
+                    // Exact match on filename or full path, not substring
+                    ws_file == member_name || ws.path.value == member_name
                 })
                 .collect();
             if filtered.is_empty() {
@@ -463,27 +472,45 @@ impl CheckCommandsSurface {
                         role_orchestrator.run_audit(&ws.path),
                     )
                 });
-            all_results.extend(naming_results.unwrap_or_default());
-            all_results.extend(import_results.unwrap_or_default());
+            // P2.9: report audit failures instead of silently discarding them
+            match naming_results {
+                Ok(values) => all_results.extend(values),
+                Err(e) => eprintln!("[warn] naming audit failed: {e}"),
+            }
+            match import_results {
+                Ok(values) => all_results.extend(values),
+                Err(e) => eprintln!("[warn] import audit failed: {e}"),
+            }
             all_results.extend(external_results.values);
             all_results.extend(role_results);
 
             // Filter results to only those in this workspace member's path
-            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+            let ws_canonical = std::path::Path::new(&ws.path.value)
+                .canonicalize()
+                .ok();
             let cwd_for_ws = match std::env::current_dir() {
                 Ok(d) => d,
                 Err(_) => std::path::PathBuf::new(),
             };
+            // P2.4: build fallback path when canonicalization fails — never default to true
+            let ws_fallback = {
+                let raw = std::path::Path::new(&ws.path.value);
+                if raw.is_absolute() {
+                    raw.to_path_buf()
+                } else {
+                    cwd_for_ws.join(raw)
+                }
+            };
+            let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
+
             let filtered_results: Vec<_> = if let Some(code) = filter {
                 all_results
                     .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
-                            && ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(true)
+                            && (ws_canonical.as_ref().map(|c| abs_path.starts_with(c)).unwrap_or(false)
+                                || abs_path.starts_with(&ws_fallback))
                     })
                     .collect()
             } else {
@@ -494,22 +521,20 @@ impl CheckCommandsSurface {
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(true)
+                            .unwrap_or(abs_path.starts_with(&ws_fallback))
                     })
                     .collect()
             };
 
-            // Filter orphan results to this workspace member's path
+            // Filter orphan results to this workspace member's path (P2.4: same fallback logic)
             let filtered_orphans: Vec<_> = if let Some(code) = filter {
                 _orphan_results_all
                     .iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
                         r.code.code() == code
-                            && ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(true)
+                            && (ws_canonical.as_ref().map(|c| abs_path.starts_with(c)).unwrap_or(false)
+                                || abs_path.starts_with(&ws_fallback))
                     })
                     .cloned()
                     .collect()
@@ -521,7 +546,7 @@ impl CheckCommandsSurface {
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(true)
+                            .unwrap_or(abs_path.starts_with(&ws_fallback))
                     })
                     .cloned()
                     .collect()
