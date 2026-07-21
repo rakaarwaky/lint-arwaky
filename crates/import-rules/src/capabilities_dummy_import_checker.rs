@@ -92,6 +92,13 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     }
 }
 
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for DummyImportChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DummyImportChecker {
     pub fn new() -> Self {
         Self

@@ -19,8 +19,6 @@
 
 use std::path::Path;
 use std::sync::Arc;
-use std::sync::OnceLock;
-
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -32,38 +30,6 @@ use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
-static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
-
-/// Initialize the global checker container. Must be called before using CodeAnalysisOrchestrator.
-pub fn init_global_checker(container: Arc<CodeAnalysisCheckerContainer>) {
-    GLOBAL_CONTAINER.set(container).ok();
-}
-
-/// Detect source directory from project root (packages/, crates/, modules/).
-pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
-    for name in &["packages", "crates", "modules"] {
-        let candidate = project_root.join(name);
-        if candidate.is_dir() {
-            return candidate;
-        }
-    }
-    project_root.to_path_buf()
-}
-
-/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
-pub fn collect_source_files(
-    _root_dir: &Path,
-    dir_path: &DirectoryPath,
-    ignored: &[String],
-) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    let path = std::path::Path::new(&dir_path.value);
-    if path.is_dir() {
-        shared::common::utility_file::walk_source_files(path, &mut files, ignored);
-    }
-    files
-}
-
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
@@ -72,14 +38,6 @@ pub struct CodeAnalysisOrchestrator {
 impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-/// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
-pub fn resolve_target(path: Option<String>) -> String {
-    match path {
-        Some(p) => p,
-        None => ".".to_string(),
     }
 }
 
@@ -102,13 +60,9 @@ pub fn has_critical(results: &[LintResult]) -> bool {
 }
 
 impl CodeAnalysisOrchestrator {
-    /// Create a new orchestrator. Falls back to a default container if init_global_checker not called.
     pub fn new() -> Self {
         Self {
-            container: match GLOBAL_CONTAINER.get().cloned() {
-                Some(c) => c,
-                None => Arc::new(CodeAnalysisCheckerContainer::default()),
-            },
+            container: Arc::new(CodeAnalysisCheckerContainer::default()),
         }
     }
 
@@ -119,7 +73,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = detect_source_dir(root);
+        let src_dir = shared::code_analysis::utility_target::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -141,7 +95,9 @@ impl CodeAnalysisOrchestrator {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let files = collect_source_files(src_dir, &dir_path, &ignored);
+        let files = shared::code_analysis::utility_target::collect_source_files(
+            src_dir, &dir_path, &ignored,
+        );
         if files.is_empty() {
             return Vec::new();
         }
@@ -175,10 +131,24 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
-                    self.container
-                        .bypass_checker()
-                        .check_cargo_toml(&cargo_content, &mut violations);
+                match shared::code_analysis::utility_file_reader::read_lintable_file(
+                    &cargo_path.to_string_lossy(),
+                ) {
+                    Ok(Some(cargo_content)) => {
+                        self.container
+                            .bypass_checker()
+                            .check_cargo_toml(&cargo_content, &mut violations);
+                    }
+                    Ok(None) => {}
+                    Err(e) => {
+                        violations.push(LintResult::new_arch(
+                            &cargo_path.to_string_lossy(),
+                            0,
+                            "AES000",
+                            Severity::LOW,
+                            format!("Cargo.toml skipped: {}", e),
+                        ));
+                    }
                 }
             }
         }
@@ -188,9 +158,28 @@ impl CodeAnalysisOrchestrator {
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-            let c = match std::fs::read_to_string(file) {
-                Ok(content) => content,
-                Err(_) => continue,
+            let c = match shared::code_analysis::utility_file_reader::read_lintable_file(file) {
+                Ok(Some(content)) => content,
+                Ok(None) => {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES301",
+                        Severity::LOW,
+                        "File skipped: exceeds maximum lintable size (2 MiB)".to_string(),
+                    ));
+                    continue;
+                }
+                Err(e) => {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES000",
+                        Severity::LOW,
+                        format!("File skipped: {}", e),
+                    ));
+                    continue;
+                }
             };
             entries.push((file.clone(), c.clone()));
 
@@ -231,8 +220,20 @@ impl CodeAnalysisOrchestrator {
         }
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
-        let min_dup_lines: usize = 5;
-        let threshold_pct: f64 = 50.0;
+        // P1.5 fix: read thresholds from config instead of hardcoding
+        let min_dup_lines = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .map(|r| r.code_analysis.min_lines.value as usize)
+            .filter(|&v| v > 0)
+            .unwrap_or(10);
+        let threshold_pct = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .and_then(|r| r.code_analysis.duplication_threshold)
+            .unwrap_or(50.0);
         let dup_violations = self
             .container
             .duplication_checker()
@@ -295,6 +296,11 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        Vec::new()
+        self.container
+            .config()
+            .rules
+            .iter()
+            .map(|r| r.code_analysis.clone())
+            .collect()
     }
 }

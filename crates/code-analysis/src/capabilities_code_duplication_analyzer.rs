@@ -1,7 +1,7 @@
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
@@ -15,10 +15,14 @@ use shared::config_system::taxonomy_config_vo::default_aes_config;
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CodeDuplicationAnalyzer {}
+pub struct CodeDuplicationAnalyzer {
+    /// P1.6 fix: carry injected config instead of calling default_aes_config()
+    config: Arc<ArchitectureConfig>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -27,7 +31,8 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         let root = shared::code_analysis::utility_target::resolve_target(path);
         let src =
             shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
-        let config = default_aes_config();
+        // P1.6 fix: use injected config (self.config) instead of default_aes_config()
+        let config = self.config.as_ref();
         let ignored_vec: Vec<String> = config
             .ignored_paths
             .values
@@ -70,8 +75,16 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CodeDuplicationAnalyzer {
+    /// P1.6 fix: new() uses default config; prefer from_config() for injected config
     pub fn new() -> Self {
-        Self {}
+        Self {
+            config: Arc::new(ArchitectureConfig::default()),
+        }
+    }
+
+    /// Create with an injected ArchitectureConfig (P1.6 fix).
+    pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
+        Self { config }
     }
 }
 
@@ -117,75 +130,85 @@ impl CodeDuplicationAnalyzer {
             return Vec::new();
         }
 
-        // u32 String Interning (Fix 3.1): intern normalized window keys to u32 IDs
-        let mut interner: HashMap<String, u32> = HashMap::new();
-        let mut interned_keys: Vec<String> = Vec::new();
-        let mut get_id = |key: String| -> u32 {
-            if let Some(&id) = interner.get(&key) {
-                return id;
-            }
-            let id = interner.len() as u32;
-            interned_keys.push(key.clone());
-            interner.insert(key, id);
-            id
-        };
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
-        // Build global map: interned key id → Vec<(file_idx, line_number)>
-        let mut global: HashMap<u32, Vec<(usize, usize)>> = HashMap::new();
+        // P2.1/P2.2/P2.3 fix: Hash-based dedup with single-pass normalization.
+        // - Store normalized window hash → file indices (P2.3: no line tuples)
+        // - Normalize each window only once (P2.1: cache per-file hashes)
+        // - Remove unused interned_keys storage (P2.2)
+
+        fn hash_key(key: &str) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            key.hash(&mut hasher);
+            hasher.finish()
+        }
+
+        // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
+        // P2.3: HashMap<u64, HashSet<usize>> — hash-based, file-only
+        let mut global: HashMap<u64, HashSet<usize>> = HashMap::new();
+        let mut file_unique_hashes: Vec<Vec<u64>> = vec![Vec::new(); entries.len()];
+
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
             }
-            for (li, w) in lines.windows(min_dup_lines).enumerate() {
+            let mut file_hashes: HashSet<u64> = HashSet::new();
+            for w in lines.windows(min_dup_lines) {
+                // P2.1: normalize once — cache hash for second pass
                 let key = shared::code_analysis::utility_duplication::normalize_window(w);
-                let id = get_id(key);
-                global.entry(id).or_default().push((fi, li + 1));
+                let id = hash_key(&key);
+                global.entry(id).or_default().insert(fi);
+                file_hashes.insert(id);
             }
+            file_unique_hashes[fi] = file_hashes.into_iter().collect();
         }
 
-        // Identify keys that appear in 2+ different files
-        let shared_ids: HashSet<u32> = global
+        // Identify keys that appear in 2+ different files (P2.3: use u64 hash)
+        let shared_ids: HashSet<u64> = global
             .iter()
-            .filter(|(_, locs)| {
-                let unique_files: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
-                unique_files.len() > 1
-            })
+            .filter(|(_, file_indices)| file_indices.len() > 1)
             .map(|(id, _)| *id)
             .collect();
 
-        // Build O(1) file_to_others map (Fix 3.2)
+        // Count shared windows per file using cached hashes (P2.1: no re-normalization)
+        let mut shared_counts: Vec<usize> = vec![0; entries.len()];
+        for fi in 0..entries.len() {
+            if entries[fi].1.len() < min_dup_lines {
+                continue;
+            }
+            for hash in &file_unique_hashes[fi] {
+                if shared_ids.contains(hash) {
+                    shared_counts[fi] += 1;
+                }
+            }
+        }
+
+        // Build O(1) file_to_others map
         let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
-        for locs in global.values() {
-            let unique: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
-            if unique.len() > 1 {
-                for &fi in &unique {
-                    for &other in &unique {
+        for file_indices in global.values() {
+            if file_indices.len() > 1 {
+                let unique: Vec<usize> = file_indices.iter().copied().collect();
+                for fi in &unique {
+                    for other in &unique {
                         if other != fi {
-                            file_to_others[fi].insert(other);
+                            file_to_others[*fi].insert(*other);
                         }
                     }
                 }
             }
         }
 
-        // Per-file similarity calculation
+        // Generate violations
         let mut violations = Vec::new();
-        for (fi, (file_path, content)) in entries.iter().enumerate() {
-            let lines: Vec<&str> = content.lines().collect();
+        for (fi, (file_path, _)) in entries.iter().enumerate() {
+            let lines: Vec<&str> = entries[fi].1.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
             }
             let total_win = lines.len() - min_dup_lines + 1;
-            let shared_count = lines
-                .windows(min_dup_lines)
-                .enumerate()
-                .filter(|(_, w)| {
-                    let key = shared::code_analysis::utility_duplication::normalize_window(w);
-                    let id = get_id(key);
-                    shared_ids.contains(&id)
-                })
-                .count();
+            let shared_count = shared_counts[fi];
 
             let pct = shared_count as f64 / total_win as f64 * 100.0;
             if pct > threshold_pct {

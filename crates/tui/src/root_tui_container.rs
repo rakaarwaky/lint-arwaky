@@ -2,7 +2,6 @@ use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
-use code_analysis::agent_code_analysis_orchestrator::init_global_checker;
 use maintenance::root_maintenance_container::MaintenanceContainer;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
@@ -15,11 +14,6 @@ impl TuiContainer {
         crate::root_logging_entry::init()?;
         tracing::info!(target = "tui", "TUI container starting");
 
-        // Initialize the global checker singleton so that
-        // CodeAnalysisOrchestrator (used by LintExecutor::scan/check)
-        // gets a real LayerDetectionAnalyzer instead of PlaceholderAnalyzer.
-        // This is required for layer-dependent checks (AES205, AES302, etc.)
-        // to work in the TUI.
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_default();
         let (config, layer_map) = {
@@ -31,14 +25,11 @@ impl TuiContainer {
             let lm = shared::taxonomy_definition_vo::LayerMapVO::new(c.layers.clone());
             (c, lm)
         };
-        let checker_container =
-            code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                config, layer_map,
-            );
-        init_global_checker(Arc::new(checker_container));
 
         let code_analysis_container =
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new();
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
+                config, layer_map,
+            );
         let code_analysis_aggregate = code_analysis_container.code_analysis_linter();
         let auto_fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(
             code_analysis_aggregate.clone(),

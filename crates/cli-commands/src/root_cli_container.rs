@@ -43,18 +43,11 @@ impl CliContainer {
 
         let (config, layer_map) = make_layer_map();
 
-        let checker_container =
-            code_analysis::root_code_analysis_container::CodeAnalysisCheckerContainer::new(
-                config.clone(),
-                layer_map.clone(),
-            );
-        code_analysis::agent_code_analysis_orchestrator::init_global_checker(Arc::new(
-            checker_container,
-        ));
-
         let code_analysis_linter =
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-                .code_analysis_linter();
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
+                config, layer_map,
+            )
+            .code_analysis_linter();
         let import_orchestrator = import_container.orchestrator();
 
         let role_container = role_rules::root_role_rules_container::RoleContainer::new();

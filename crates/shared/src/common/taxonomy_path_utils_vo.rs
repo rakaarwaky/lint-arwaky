@@ -1,4 +1,5 @@
 pub struct PathUtils;
+use std::fs;
 
 impl PathUtils {
     /// Walk a directory recursively, collecting files while skipping ignored patterns.
@@ -12,8 +13,6 @@ impl PathUtils {
         dir: &std::path::Path,
         ignored: &[&str],
     ) -> Vec<std::path::PathBuf> {
-        use std::fs;
-
         let mut results = Vec::new();
 
         if !dir.is_dir() {
