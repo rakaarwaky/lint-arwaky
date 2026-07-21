@@ -115,4 +115,61 @@ impl CliContainer {
             report_formatter: self.report_formatter.clone(),
         }
     }
+
+    pub fn orchestrator_factory(&self) -> crate::surface_check_command::OrchestratorFactory {
+        let ext_lint_clone = self.external_lint.clone();
+        let report_formatter_clone = self.report_formatter.clone();
+        Arc::new(move |config| {
+            let import_container =
+                import_rules::root_import_rules_container::ImportContainer::new_with_config(
+                    config.clone(),
+                );
+            let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+                std::sync::Arc::new(config.clone()),
+                std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
+                    config.layers.clone(),
+                )),
+            );
+            let role_container =
+                role_rules::root_role_rules_container::RoleContainer::new_with_config(
+                    config.clone(),
+                );
+            let arch_linter =
+                code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
+                    config.clone(),
+                    shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone()),
+                )
+                .code_analysis_linter();
+            let orphan_container =
+                orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    config.clone(),
+                );
+            crate::surface_check_command::CheckContext {
+                code_analysis_linter: arch_linter,
+                import_orchestrator: import_container.orchestrator(),
+                naming_orchestrator: naming_container.orchestrator(),
+                external_lint: ext_lint_clone.clone(),
+                role_orchestrator: role_container.orchestrator(),
+                orphan_orchestrator: orphan_container.analyzer(),
+                report_formatter: report_formatter_clone.clone(),
+            }
+        })
+    }
+
+    pub fn fix_orchestrator_factory(
+        &self,
+    ) -> std::sync::Arc<
+        dyn Fn(
+                bool,
+            ) -> std::sync::Arc<
+                dyn shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate,
+            > + Send
+            + Sync,
+    > {
+        let fix_linter = self.code_analysis_linter.clone();
+        Arc::new(move |dry_run| {
+            auto_fix::root_auto_fix_container::AutoFixContainer::new(fix_linter.clone())
+                .orchestrator(dry_run)
+        })
+    }
 }

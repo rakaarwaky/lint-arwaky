@@ -102,3 +102,84 @@ pub fn handle_ci(
 ) -> ExitCode {
     crate::surface_common_command::run_ci_analysis(code_analysis_linter, path, threshold)
 }
+
+/// Default check = self-lint when no args provided (runs `lint_path(".")`)
+pub fn handle_default_check(project_root: &str) -> ExitCode {
+    use shared::cli_commands::taxonomy_severity_vo::Severity;
+    use std::collections::BTreeMap;
+
+    let results = code_analysis::lint_path(project_root);
+    let mut lines: Vec<String> = Vec::new();
+    lines.push("=".repeat(60));
+    lines.push("  AES Architecture Compliance Report (Self-Lint)".to_string());
+    lines.push("=".repeat(60));
+    lines.push(format!("  Project: {}", project_root));
+    lines.push(format!("  Files scanned: {}", results.len()));
+    lines.push("=".repeat(60));
+    lines.push("".to_string());
+    let mut critical = Vec::new();
+    let mut high = Vec::new();
+    let mut medium = Vec::new();
+    let mut low = Vec::new();
+    for r in &results {
+        match r.severity {
+            Severity::CRITICAL => critical.push(r),
+            Severity::HIGH => high.push(r),
+            Severity::MEDIUM => medium.push(r),
+            Severity::LOW => low.push(r),
+            _ => medium.push(r),
+        }
+    }
+    for (sev, items) in [
+        ("CRITICAL", &critical),
+        ("HIGH", &high),
+        ("MEDIUM", &medium),
+        ("LOW", &low),
+    ] {
+        if items.is_empty() {
+            continue;
+        }
+        lines.push(format!("  [{}] {} violations", sev, items.len()));
+        lines.push("-".repeat(60));
+        for r in items.iter() {
+            lines.push(format!("  [{}] {}", r.code, r.file.value));
+            for msg_line in r.message.value.lines() {
+                lines.push(format!("    {}", msg_line));
+            }
+        }
+        lines.push("".to_string());
+    }
+    let total = results.len();
+    let mut per_code: BTreeMap<String, usize> = BTreeMap::new();
+    for r in &results {
+        *per_code.entry(r.code.to_string()).or_insert(0) += 1;
+    }
+    lines.push("=".repeat(60));
+    lines.push(format!("  Total AES Violations: {}", total));
+    lines.push(format!(
+        "  Total Category AES Violations: {}",
+        per_code.len()
+    ));
+    if !per_code.is_empty() {
+        lines.push("-".repeat(60));
+        for (code, count) in &per_code {
+            lines.push(format!("  {}: {}", code, count));
+        }
+    }
+    lines.push("".to_string());
+    if total == 0 {
+        lines.push("  Status: PASS - No AES violations detected".to_string());
+    } else {
+        lines.push("  Status: FAIL - AES violations detected".to_string());
+    }
+    lines.push("=".repeat(60));
+    println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
+    println!("Scanning: {}", project_root);
+    println!();
+    println!("{}", lines.join("\n"));
+    if total > 0 {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}

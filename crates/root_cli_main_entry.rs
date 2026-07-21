@@ -1,39 +1,22 @@
 // PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
-use std::collections::BTreeMap;
 use std::env;
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use cli_commands::surface_check_action;
-use cli_commands::surface_check_command;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::lint_path;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 
 pub struct CliMainEntry {}
 
-fn make_check_context(container: &CliContainer) -> surface_check_command::CheckContext {
-    surface_check_command::CheckContext {
-        code_analysis_linter: container.code_analysis_linter.clone(),
-        import_orchestrator: container.import_orchestrator.clone(),
-        naming_orchestrator: container.naming_orchestrator.clone(),
-        external_lint: container.external_lint.clone(),
-        role_orchestrator: container.role_orchestrator.clone(),
-        orphan_orchestrator: container.orphan_orchestrator.clone(),
-        report_formatter: container.report_formatter.clone(),
-    }
-}
-
 fn main() -> ExitCode {
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
-        return run_default_check(".");
+        return surface_check_action::handle_default_check(".");
     }
 
     let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
@@ -75,58 +58,8 @@ fn main() -> ExitCode {
     }
 
     let container = CliContainer::new_default();
-
-    let ext_lint_clone = container.external_lint.clone();
-    let report_formatter_clone = container.report_formatter.clone();
-    let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
-        let import_container =
-            import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                config.clone(),
-            );
-        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-            std::sync::Arc::new(config.clone()),
-            std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
-                config.layers.clone(),
-            )),
-        );
-        let role_container =
-            role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());
-        let arch_linter =
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
-                config.clone(),
-                shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone()),
-            )
-            .code_analysis_linter();
-        let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
-                config.clone(),
-            );
-
-        surface_check_command::CheckContext {
-            code_analysis_linter: arch_linter,
-            import_orchestrator: import_container.orchestrator(),
-            naming_orchestrator: naming_container.orchestrator(),
-            external_lint: ext_lint_clone.clone(),
-            role_orchestrator: role_container.orchestrator(),
-            orphan_orchestrator: orphan_container.analyzer(),
-            report_formatter: report_formatter_clone.clone(),
-        }
-    });
-
-    let fix_linter = container.code_analysis_linter.clone();
-    let fix_orchestrator_factory: Arc<
-        dyn Fn(
-                bool,
-            )
-                -> Arc<dyn shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate>
-            + Send
-            + Sync,
-    > = Arc::new(move |dry_run| {
-        auto_fix::root_auto_fix_container::AutoFixContainer::new(fix_linter.clone())
-            .orchestrator(dry_run)
-    });
-
     let filter = cli.filter.clone();
+
     match cli.command {
         Commands::Check {
             path,
@@ -135,7 +68,7 @@ fn main() -> ExitCode {
         } => surface_check_action::handle_check(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             git_diff,
-            make_check_context(&container),
+            container.check_context(),
             filter,
             Some(container.git_aggregate.clone()),
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
@@ -147,9 +80,9 @@ fn main() -> ExitCode {
             format,
         } => surface_check_action::handle_scan(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
-            make_check_context(&container),
+            container.check_context(),
             Some(container.multi_project_orchestrator.clone()),
-            factory,
+            container.orchestrator_factory(),
             filter,
             member,
             format,
@@ -158,7 +91,7 @@ fn main() -> ExitCode {
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             dry_run,
             container.code_analysis_linter.clone(),
-            fix_orchestrator_factory,
+            container.fix_orchestrator_factory(),
         ),
         Commands::Ci { path, threshold } => surface_check_action::handle_ci(
             container.code_analysis_linter.clone(),
@@ -181,8 +114,9 @@ fn main() -> ExitCode {
             ))
         }
         Commands::Orphan { path } => {
-            let surface =
-                surface_check_command::CheckCommandsSurface::new(make_check_context(&container));
+            let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
+                container.check_context(),
+            );
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }
@@ -222,8 +156,9 @@ fn main() -> ExitCode {
         }
         Commands::Watch { path } => {
             let fwatch_container = file_watch::FileWatchContainer::new();
-            let watch_agg: Arc<dyn shared::file_watch::contract_watch_aggregate::IWatchAggregate> =
-                fwatch_container.orchestrator(container.code_analysis_linter.clone());
+            let watch_agg: std::sync::Arc<
+                dyn shared::file_watch::contract_watch_aggregate::IWatchAggregate,
+            > = fwatch_container.orchestrator(container.code_analysis_linter.clone());
             surface_watch_command::handle_watch(
                 watch_agg,
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
@@ -325,83 +260,6 @@ fn main() -> ExitCode {
         }
         // P3.3: these are handled by early-exit above — unreachable here
         Commands::Version | Commands::Adapters => unreachable!(),
-    }
-}
-
-fn run_default_check(project_root: &str) -> ExitCode {
-    let results = lint_path(project_root);
-    let mut lines: Vec<String> = Vec::new();
-    lines.push("=".repeat(60));
-    lines.push("  AES Architecture Compliance Report (Self-Lint)".to_string());
-    lines.push("=".repeat(60));
-    lines.push(format!("  Project: {}", project_root));
-    lines.push(format!("  Files scanned: {}", results.len()));
-    lines.push("=".repeat(60));
-    lines.push("".to_string());
-    let mut critical = Vec::new();
-    let mut high = Vec::new();
-    let mut medium = Vec::new();
-    let mut low = Vec::new();
-    for r in &results {
-        match r.severity {
-            Severity::CRITICAL => critical.push(r),
-            Severity::HIGH => high.push(r),
-            Severity::MEDIUM => medium.push(r),
-            Severity::LOW => low.push(r),
-            _ => medium.push(r),
-        }
-    }
-    for (sev, items) in [
-        ("CRITICAL", &critical),
-        ("HIGH", &high),
-        ("MEDIUM", &medium),
-        ("LOW", &low),
-    ] {
-        if items.is_empty() {
-            continue;
-        }
-        lines.push(format!("  [{}] {} violations", sev, items.len()));
-        lines.push("-".repeat(60));
-        for r in items.iter() {
-            lines.push(format!("  [{}] {}", r.code, r.file.value));
-            for msg_line in r.message.value.lines() {
-                lines.push(format!("    {}", msg_line));
-            }
-        }
-        lines.push("".to_string());
-    }
-    let total = results.len();
-    let mut per_code: BTreeMap<String, usize> = BTreeMap::new();
-    for r in &results {
-        *per_code.entry(r.code.to_string()).or_insert(0) += 1;
-    }
-    lines.push("=".repeat(60));
-    lines.push(format!("  Total AES Violations: {}", total));
-    lines.push(format!(
-        "  Total Category AES Violations: {}",
-        per_code.len()
-    ));
-    if !per_code.is_empty() {
-        lines.push("-".repeat(60));
-        for (code, count) in &per_code {
-            lines.push(format!("  {}: {}", code, count));
-        }
-    }
-    lines.push("".to_string());
-    if total == 0 {
-        lines.push("  Status: PASS - No AES violations detected".to_string());
-    } else {
-        lines.push("  Status: FAIL - AES violations detected".to_string());
-    }
-    lines.push("=".repeat(60));
-    println!("Lint Arwaky v{} (AES Self-Lint)", env!("CARGO_PKG_VERSION"));
-    println!("Scanning: {}", project_root);
-    println!();
-    println!("{}", lines.join("\n"));
-    if total > 0 {
-        ExitCode::from(1)
-    } else {
-        ExitCode::SUCCESS
     }
 }
 

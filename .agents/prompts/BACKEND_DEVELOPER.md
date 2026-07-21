@@ -49,6 +49,7 @@ When your review is complete, save the report to:
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Breach of AES layering, security risk, data leak
 - 🟡 **WARNING** — Convention deviation, maintainability concern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement
