@@ -10,21 +10,6 @@ pub fn canonicalize_path(path_str: &str) -> PathBuf {
     }
 }
 
-/// Check if a path is a file.
-pub fn is_file(path: &Path) -> bool {
-    utility_file::is_file_generic(path)
-}
-
-/// Check if a path is a directory.
-pub fn is_dir(path: &Path) -> bool {
-    utility_file::is_dir(path)
-}
-
-/// Check if a path exists.
-pub fn path_exists(path: &Path) -> bool {
-    utility_file::path_exists(path)
-}
-
 /// Scan directory entries, returning vector of (file_name, file_path, is_dir) tuples.
 pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
     let mut entries = Vec::new();
@@ -56,11 +41,6 @@ pub fn has_python_files(dir_path: &Path) -> bool {
         }
     }
     false
-}
-
-/// Read file contents, returning empty string on error.
-pub fn read_file_safe(path: &str) -> String {
-    utility_file::read_file_safe(path)
 }
 
 /// Check if a configuration file exists at the given path.

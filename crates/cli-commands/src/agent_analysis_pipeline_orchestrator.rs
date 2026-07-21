@@ -31,16 +31,35 @@ use std::sync::Arc;
 ///   6. Orphan detection (AES501-506)
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AnalysisPipelineOrchestrator {
-    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    pub external_lint: Arc<dyn IExternalLintAggregate>,
-    pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub format: Format,
-    pub filter: Option<String>,
-    pub member: Option<String>,
+    deps: shared::cli_commands::taxonomy_lint_dependencies_vo::LintDependencies,
+    format: Format,
+    filter: Option<String>,
+    member: Option<String>,
+}
+
+// Accessors for struct fields
+impl AnalysisPipelineOrchestrator {
+    fn code_analysis_linter(&self) -> &Arc<dyn ICodeAnalysisAggregate> {
+        &self.deps.code_analysis_linter
+    }
+    fn naming_orchestrator(&self) -> &Arc<dyn INamingRunnerAggregate> {
+        &self.deps.naming_orchestrator
+    }
+    fn import_orchestrator(&self) -> &Arc<dyn IImportRunnerAggregate> {
+        &self.deps.import_orchestrator
+    }
+    fn external_lint(&self) -> &Arc<dyn IExternalLintAggregate> {
+        &self.deps.external_lint
+    }
+    fn role_orchestrator(&self) -> &Arc<dyn IRoleRunnerAggregate> {
+        &self.deps.role_orchestrator
+    }
+    fn orphan_orchestrator(&self) -> &Arc<dyn IOrphanAggregate> {
+        &self.deps.orphan_orchestrator
+    }
+    fn config_orchestrator(&self) -> &Arc<dyn IConfigOrchestratorAggregate> {
+        &self.deps.config_orchestrator
+    }
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -70,13 +89,7 @@ impl AnalysisPipelineOrchestrator {
         format: Format,
     ) -> Self {
         Self {
-            code_analysis_linter: deps.code_analysis_linter,
-            naming_orchestrator: deps.naming_orchestrator,
-            import_orchestrator: deps.import_orchestrator,
-            external_lint: deps.external_lint,
-            role_orchestrator: deps.role_orchestrator,
-            orphan_orchestrator: deps.orphan_orchestrator,
-            config_orchestrator: deps.config_orchestrator,
+            deps,
             format,
             filter: None,
             member: None,

@@ -2,11 +2,12 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_file;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_file_read, utility_import_resolver};
+use shared::import_rules::utility_import_resolver;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 
@@ -105,7 +106,7 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -187,7 +188,7 @@ impl ArchImportForbiddenChecker {
             .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };

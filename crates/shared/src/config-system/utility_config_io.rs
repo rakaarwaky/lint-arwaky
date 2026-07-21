@@ -1,23 +1,8 @@
-// PURPOSE: Config I/O utility — file read and path existence helpers
+// PURPOSE: Config I/O utility — async file read and path confinement helpers
 use crate::common::utility_file;
 use std::path::Path;
 
 pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20; // 1 MiB
-
-/// Check if a path exists (blocking).
-pub fn path_exists<P: AsRef<Path>>(path: P) -> bool {
-    utility_file::path_exists(path)
-}
-
-/// Check if a path is a file (blocking).
-pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-    utility_file::is_file_generic(path)
-}
-
-/// Sync read file to string.
-pub fn read_file_sync<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {
-    utility_file::read_file_generic(path)
-}
 
 /// Async read file to string.
 pub async fn read_file_async<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {

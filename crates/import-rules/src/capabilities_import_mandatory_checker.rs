@@ -104,7 +104,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -167,7 +167,7 @@ impl ArchImportMandatoryChecker {
             .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
