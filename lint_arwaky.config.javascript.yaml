@@ -71,10 +71,57 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant", "utility"]
+            - strict: ["vo", "entity", "error", "event", "constant"]
         contract:
           suffix:
             - strict: ["protocol", "aggregate"]
+        utility:
+          suffix:
+            - flexible:
+                [
+                  "parser",
+                  "splitter",
+                  "trimmer",
+                  "slugifier",
+                  "sanitizer",
+                  "normalizer",
+                  "extractor",
+                  "replacer",
+                  "converter",
+                  "counter",
+                  "resolver",
+                  "detector",
+                  "builder",
+                  "joiner",
+                  "serializer",
+                  "deserializer",
+                  "encoder",
+                  "decoder",
+                  "hasher",
+                  "generator",
+                  "formatter",
+                  "comparator",
+                  "differ",
+                  "matcher",
+                  "checker",
+                  "calculator",
+                  "mapper",
+                  "merger",
+                  "grouper",
+                  "sorter",
+                  "deduplicator",
+                  "printer",
+                ]
+            - forbidden:
+                [
+                  "vo",
+                  "entity",
+                  "error",
+                  "event",
+                  "constant",
+                  "protocol",
+                  "aggregate",
+                ]
         capabilities:
           suffix:
             - flexible:
