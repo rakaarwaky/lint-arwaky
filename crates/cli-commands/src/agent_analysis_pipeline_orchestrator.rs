@@ -34,7 +34,6 @@ pub struct AnalysisPipelineOrchestrator {
     deps: shared::cli_commands::taxonomy_lint_dependencies_vo::LintDependencies,
     format: Format,
     filter: Option<String>,
-    member: Option<String>,
 }
 
 // Accessors for struct fields
@@ -92,7 +91,6 @@ impl AnalysisPipelineOrchestrator {
             deps,
             format,
             filter: None,
-            member: None,
         }
     }
 
@@ -266,7 +264,7 @@ impl AnalysisPipelineOrchestrator {
                 mode: shared::cli_commands::taxonomy_scan_request_vo::ScanMode::default(),
                 filter: self.filter.clone(),
                 member: None,
-                format: self.format.clone(),
+                format: self.format,
             };
             return self.run(request).await;
         }
