@@ -2,6 +2,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
@@ -44,8 +45,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            let other_content =
-                shared::orphan_detector::utility_orphan_io::read_file_safe(other_file);
+            let other_content = utility_file::read_file_safe(other_file);
             if other_content.is_empty() {
                 continue;
             }

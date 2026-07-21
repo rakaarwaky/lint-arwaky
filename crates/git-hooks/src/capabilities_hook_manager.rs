@@ -7,7 +7,6 @@ use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::git_hooks::utility_git_io as git_io;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 

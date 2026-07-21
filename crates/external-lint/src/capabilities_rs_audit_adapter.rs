@@ -5,6 +5,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -98,9 +99,8 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         let mut ignored_advisories = std::collections::HashSet::new();
         let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
         let deny_toml_str = deny_toml_path.to_string_lossy();
-        if shared::external_lint::utility_external_lint_io::is_file(&deny_toml_path) {
-            let content =
-                shared::external_lint::utility_external_lint_io::read_file_safe(&deny_toml_str);
+        if utility_file::is_file_generic(&deny_toml_path) {
+            let content = utility_file::read_file_safe(&deny_toml_str);
             if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
                 if let Some(advisories) = deny_cfg.get("advisories") {
                     if let Some(ignore) = advisories.get("ignore") {

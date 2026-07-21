@@ -4,6 +4,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -50,7 +51,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if shared::external_lint::utility_external_lint_io::is_file(Path::new(path_str))
+        if utility_file::is_file_generic(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
