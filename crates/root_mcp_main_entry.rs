@@ -34,6 +34,7 @@ async fn main() -> anyhow::Result<()> {
         orphan_orchestrator: container.orphan_orchestrator,
         external_lint: container.external_lint,
         role_orchestrator: container.role_orchestrator,
+        config_orchestrator: container.config_orchestrator,
     });
 
     // Start serving the MCP protocol over standard I/O.

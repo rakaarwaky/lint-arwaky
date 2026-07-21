@@ -10,7 +10,6 @@ use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::utility_config_defaults::default_aes_config;
 
 /// Check if a file extension is a known source file.
 pub fn is_source_file(ext: &str) -> bool {
@@ -103,39 +102,11 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
     false
 }
 
-/// Build default ignored paths from config, with a hardcoded safety net for
-/// build artifacts and dependency trees that must never be linted.
-pub fn default_ignored_paths() -> Vec<String> {
-    let mut ignored: Vec<String> = vec![
-        "target".to_string(),
-        "test-workspaces".to_string(),
-        ".mimocode".to_string(),
-        ".agents".to_string(),
-        "node_modules".to_string(),
-        "build.rs".to_string(),
-        // P3.2: additional common build/ignore directories
-        ".git".to_string(),
-        "dist".to_string(),
-        "build".to_string(),
-        "coverage".to_string(),
-        ".venv".to_string(),
-    ];
-    let config = default_aes_config();
-    for fp in config.ignored_paths.values.iter() {
-        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && !ignored.contains(&v) {
-            ignored.push(v);
-        }
-    }
-    ignored
-}
-
 /// Collect all lintable source files from a directory tree.
-pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
+pub fn collect_all_source_files(dir: &Path, ignored_paths: &[String]) -> Vec<FilePath> {
     let mut files = Vec::new();
     if dir.exists() && dir.is_dir() {
-        let ignored = default_ignored_paths();
-        walk_source_files(dir, &mut files, &ignored);
+        walk_source_files(dir, &mut files, ignored_paths);
     }
     files
 }
@@ -151,12 +122,15 @@ pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
 }
 
 /// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
-pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
+pub fn scan_directory(
+    path: &DirectoryPath,
+    ignored_paths: &[String],
+) -> Result<FilePathList, FileSystemError> {
     let dir = std::path::Path::new(&path.value);
     if !dir.exists() || !dir.is_dir() {
         return Ok(FilePathList { values: vec![] });
     }
-    let files = collect_all_source_files(dir);
+    let files = collect_all_source_files(dir, ignored_paths);
     Ok(FilePathList { values: files })
 }
 

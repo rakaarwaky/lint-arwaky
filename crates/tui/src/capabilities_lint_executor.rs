@@ -119,15 +119,21 @@ impl ILintExecutorProtocol for LintExecutor {
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
-                let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
-                    Ok(list) => list.values,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Orphan detection for {}\nFailed to scan directory: {}",
-                            path, e
-                        ));
-                    }
-                };
+                let ignored = self
+                    .config_orchestrator
+                    .as_ref()
+                    .map(|o| o.ignored_paths(&scan_root))
+                    .unwrap_or_default();
+                let source_files =
+                    match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+                        Ok(list) => list.values,
+                        Err(e) => {
+                            return LintExecutionResult::failure(format!(
+                                "Orphan detection for {}\nFailed to scan directory: {}",
+                                path, e
+                            ));
+                        }
+                    };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
@@ -245,7 +251,12 @@ impl ILintExecutorProtocol for LintExecutor {
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
+        let ignored = self
+            .config_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(&scan_root))
+            .unwrap_or_default();
+        let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
@@ -742,8 +753,13 @@ impl LintExecutor {
                 // Collect ALL source files from workspace root for cross-workspace orphan detection
                 let scan_root = shared::common::find_workspace_root(path)
                     .unwrap_or_else(|| std::path::PathBuf::from(path));
+                let ignored = self
+                    .config_orchestrator
+                    .as_ref()
+                    .map(|o| o.ignored_paths(scan_root.to_str().unwrap_or(".")))
+                    .unwrap_or_default();
                 let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root)
+                    shared::common::collect_all_source_files(&scan_root, &ignored)
                         .iter()
                         .map(|f| f.value.clone())
                         .collect();
@@ -888,10 +904,16 @@ impl LintExecutor {
         if let Some(ref orphan_agg) = self.orphan_aggregate {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
-            let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
+            let ignored = self
+                .config_orchestrator
+                .as_ref()
+                .map(|o| o.ignored_paths(path))
+                .unwrap_or_default();
+            let source_files =
+                match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+                    Ok(list) => list.values,
+                    Err(_) => Vec::new(),
+                };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
                 let orphan_results = orphan_agg.check_orphans(&file_strs, path);

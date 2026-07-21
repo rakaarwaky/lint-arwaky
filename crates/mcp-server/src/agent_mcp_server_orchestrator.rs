@@ -10,6 +10,7 @@
 use rmcp::handler::server::wrapper::Parameters;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
@@ -28,6 +29,7 @@ pub struct McpServerDependencies {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -77,6 +79,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let role_orch = self.deps.role_orchestrator.clone();
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
+                let config_orch = self.deps.config_orchestrator.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -109,7 +112,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         None => ".".to_string(),
                     };
                     let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
-                    let source_files = match shared::common::scan_directory(&dir_path) {
+                    let ignored = config_orch.ignored_paths(&orphan_scan_root);
+                    let source_files = match shared::common::scan_directory(&dir_path, &ignored) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };
@@ -162,6 +166,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let role_orch = self.deps.role_orchestrator.clone();
                 let ext_lint = self.deps.external_lint.clone();
                 let orphan_orch = self.deps.orphan_orchestrator.clone();
+                let config_orch = self.deps.config_orchestrator.clone();
 
                 let join_result = tokio::task::spawn_blocking(move || {
                     let mut all_results = Vec::new();
@@ -195,7 +200,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         None => ".".to_string(),
                     };
                     let dir_path = DirectoryPath::new(orphan_scan_root.clone()).unwrap_or_default();
-                    let source_files = match shared::common::scan_directory(&dir_path) {
+                    let ignored = config_orch.ignored_paths(&orphan_scan_root);
+                    let source_files = match shared::common::scan_directory(&dir_path, &ignored) {
                         Ok(list) => list.values,
                         Err(_) => Vec::new(),
                     };

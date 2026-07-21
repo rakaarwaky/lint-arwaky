@@ -169,4 +169,28 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
         config
     }
+
+    fn ignored_paths(&self, project_root: &str) -> Vec<String> {
+        let mut ignored: Vec<String> = vec![
+            "target".to_string(),
+            "test-workspaces".to_string(),
+            ".mimocode".to_string(),
+            ".agents".to_string(),
+            "node_modules".to_string(),
+            "build.rs".to_string(),
+            ".git".to_string(),
+            "dist".to_string(),
+            "build".to_string(),
+            "coverage".to_string(),
+            ".venv".to_string(),
+        ];
+        let config = self.load_config_sync(project_root);
+        for fp in config.ignored_paths.values.iter() {
+            let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
+            if !v.is_empty() && !ignored.contains(&v) {
+                ignored.push(v);
+            }
+        }
+        ignored
+    }
 }

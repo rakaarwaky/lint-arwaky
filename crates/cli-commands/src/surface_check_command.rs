@@ -206,7 +206,12 @@ impl CheckCommandsSurface {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
+        let ignored = self
+            .multi_project_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(orphan_scan_root))
+            .unwrap_or_default();
+        let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
@@ -264,7 +269,12 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
+        let ignored = self
+            .multi_project_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(scan_root.to_str().unwrap_or(".")))
+            .unwrap_or_default();
+        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root, &ignored)
             .iter()
             .map(|f| f.value.clone())
             .collect();
@@ -396,10 +406,16 @@ impl CheckCommandsSurface {
             Some(r) => r,
             None => std::path::PathBuf::from(path),
         };
-        let all_source_files: Vec<String> = shared::common::collect_all_source_files(&scan_root)
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        let ignored = self
+            .multi_project_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(scan_root.to_str().unwrap_or(".")))
+            .unwrap_or_default();
+        let all_source_files: Vec<String> =
+            shared::common::collect_all_source_files(&scan_root, &ignored)
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         let multi = workspaces.len() > 1;
         if multi && matches!(format, Format::Text) {

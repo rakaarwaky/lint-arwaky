@@ -20,4 +20,7 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
     /// Synchronous config loading for container initialization.
     /// Searches workspace root for config YAML, falls back to embedded defaults.
     fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+
+    /// Get ignored paths from config (hardcoded defaults + config values).
+    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
 }

@@ -10,7 +10,7 @@
 - [ ] Constructors are not declared in the aggregate.
 - [ ] Std trait impls are in Block 3.
 - [ ] Agent-specific helpers may remain in Block 3.
-- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*_utility.rs`.
+- [ ] Reusable, stateless, domain-agnostic functions are extracted to `*utility_.rs`.
 - [ ] No reusable utility-like functions remain inside Block 3.
 - [ ] Generic aggregate methods are object-safe or bounded with `where Self: Sized`.
 - [ ] One file contains exactly one implementation struct.

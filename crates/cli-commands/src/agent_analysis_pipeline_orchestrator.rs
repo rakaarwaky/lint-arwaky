@@ -12,6 +12,7 @@ use shared::cli_commands::taxonomy_scan_report_vo::{
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -35,6 +36,7 @@ pub struct AnalysisPipelineOrchestrator {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub format: Format,
     pub filter: Option<String>,
     pub member: Option<String>,
@@ -149,7 +151,8 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
+        let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
+        let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
