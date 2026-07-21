@@ -205,7 +205,7 @@ impl AnalysisPipelineOrchestrator {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        self.orphan_orchestrator
+        self.orphan_orchestrator()
             .check_orphans(&file_strs, orphan_scan_root)
     }
 
@@ -231,7 +231,7 @@ impl AnalysisPipelineOrchestrator {
                 let results_list =
                     shared::cli_commands::taxonomy_result_vo::LintResultList::new(filtered_results);
                 let report_path = FilePath::new(path.to_string()).unwrap_or_default();
-                self.code_analysis_linter
+                self.code_analysis_linter()
                     .format_report(&results_list, &report_path)
             }
             Format::Json => {
@@ -250,7 +250,7 @@ impl AnalysisPipelineOrchestrator {
     pub async fn run_pipeline_with_discovery(&self) -> Result<ScanReport, PipelineError> {
         // Discover workspaces
         let workspaces = self
-            .config_orchestrator
+            .config_orchestrator()
             .discover_workspaces(
                 &FilePath::new(".".to_string())
                     .map_err(|e| PipelineError::InvalidPath(e.to_string()))?,
@@ -266,7 +266,7 @@ impl AnalysisPipelineOrchestrator {
                 mode: shared::cli_commands::taxonomy_scan_request_vo::ScanMode::default(),
                 filter: self.filter.clone(),
                 member: None,
-                format: std::mem::clone(&self.format),
+                format: self.format.clone(),
             };
             return self.run(request).await;
         }
