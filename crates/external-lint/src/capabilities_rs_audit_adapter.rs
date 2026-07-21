@@ -99,7 +99,8 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
         let deny_toml_str = deny_toml_path.to_string_lossy();
         if shared::external_lint::utility_external_lint_io::is_file(&deny_toml_path) {
-            let content = shared::external_lint::utility_external_lint_io::read_file_safe(&deny_toml_str);
+            let content =
+                shared::external_lint::utility_external_lint_io::read_file_safe(&deny_toml_str);
             if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
                 if let Some(advisories) = deny_cfg.get("advisories") {
                     if let Some(ignore) = advisories.get("ignore") {

@@ -178,13 +178,11 @@ fn main() -> ExitCode {
             container.code_analysis_linter.clone(),
             fix_orchestrator_factory,
         ),
-        Commands::Ci { path, threshold } => {
-            surface_check_action::handle_ci(
-                container.code_analysis_linter.clone(),
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                Threshold::new(threshold),
-            )
-        }
+        Commands::Ci { path, threshold } => surface_check_action::handle_ci(
+            container.code_analysis_linter.clone(),
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            Threshold::new(threshold),
+        ),
         Commands::Doctor => {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();

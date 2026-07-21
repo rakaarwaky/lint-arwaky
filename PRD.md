@@ -187,20 +187,29 @@ Taxonomy types and contract traits. Zero dependency on other workspace crates.
 | FR-056 | External project scan (`scan [path]`)                  |
 | FR-057 | Apply safe fixes (`fix [path] [--dry-run]`)            |
 | FR-059 | CI mode with exit codes (`ci [path] --threshold <N>`)  |
+| FR-060 | Environment diagnostics (`doctor`)                      |
+| FR-063 | Scan for security vulnerabilities (`security [path]`)  |
 | FR-064 | List adapters (`adapters`)                             |
 | FR-065 | Show config (`config show`)                            |
 | FR-066 | Display version (`version`)                            |
+| FR-067 | Detect code duplication (`duplicates [path]`)          |
+| FR-068 | Scan for library vulnerabilities (`dependencies [path]`) |
 | FR-092 | Orphan file check (`orphan <path>`)                    |
+| FR-093 | Watch and lint on changes (`watch [path]`)             |
+| FR-094 | Install git pre-commit hook (`install-hook`)          |
+| FR-095 | Uninstall git pre-commit hook (`uninstall-hook`)      |
+| FR-096 | Create default config (`init`)                         |
+| FR-097 | Install default configs (`install`)                    |
+| FR-098 | Print MCP server config (`mcp-config --client <name>`) |
 | FR-115 | CLI via`clap` 4.6 subcommand groups                    |
 
 ### 5.17 `mcp-server` — MCP Server
 
 | ID     | Requirement                                        |
 | ------ | -------------------------------------------------- |
-| FR-100 | MCP server via JSON-RPC 2.0 (`mcp-sdk-rs` 0.3.4) |
+| FR-100 | MCP server via JSON-RPC 2.0 (`rmcp` crate)       |
 | FR-101 | MCP tool:`execute_command(action, args)`         |
 | FR-102 | MCP tool:`list_commands(domain)`                 |
-| FR-103 | MCP tool:`command_schema(tool_name)`             |
 | FR-104 | MCP tool:`read_skill(section)`                   |
 | FR-105 | MCP tool:`health_check()`                        |
 

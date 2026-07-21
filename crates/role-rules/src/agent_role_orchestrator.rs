@@ -7,7 +7,7 @@
 //
 // ALGORITHM:
 //   1. run_all_role_checks iterates files, extracts filename prefix (first underscore-segment).
-//   2. Matches prefix to layer (taxonomy, contract, capabilities, infrastructure, agent,
+//   2. Matches prefix to layer (taxonomy, contract, utility, capabilities, agent,
 //      surfaces, root/lib/mod) and dispatches to the corresponding role checker.
 //   3. Each checker receives the SourceContentVO (file path + content + language) and
 //      returns violations via the violations Vec.
@@ -75,7 +75,7 @@ impl RoleOrchestrator {
     /// checker. Each layer has specific rules:
     ///   - agent: file size, type annotations, container/orchestrator/lifecycle
     ///   - surface: function count, smart vs utility vs passive classification
-    ///   - infrastructure: port implementation checks
+    ///   - utility: stateless standalone function checks
     ///   - contract: port vs protocol differentiation
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
@@ -160,6 +160,10 @@ impl RoleOrchestrator {
                 "capabilities" | "capability" => {
                     let checker = self.aggregate.capabilities();
                     checker.check_capability_routing(&source_vo, "capabilities", violations);
+                }
+                "utility" => {
+                    // Utility layer: stateless standalone functions, no role checks needed
+                    // Utility files are validated by naming convention only
                 }
                 "taxonomy" => {
                     let checker = self.aggregate.taxonomy();

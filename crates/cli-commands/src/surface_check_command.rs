@@ -241,12 +241,13 @@ impl CheckCommandsSurface {
         match format {
             Format::Text => {
                 let results_list = LintResultList::new(filtered_results);
-                let report_path = match shared::common::taxonomy_path_vo::FilePath::new(path.to_string()) {
-                    Ok(fp) => fp,
-                    Err(_) => shared::common::taxonomy_path_vo::FilePath {
-                        value: path.to_string(),
-                    },
-                };
+                let report_path =
+                    match shared::common::taxonomy_path_vo::FilePath::new(path.to_string()) {
+                        Ok(fp) => fp,
+                        Err(_) => shared::common::taxonomy_path_vo::FilePath {
+                            value: path.to_string(),
+                        },
+                    };
                 println!("{}", reporter.format_report(&results_list, &report_path));
             }
             Format::Json => {

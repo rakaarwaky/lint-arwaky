@@ -1,6 +1,6 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
-// Wiring: IHookManagerProtocol → GitHookAdapter (infrastructure layer)
+// Wiring: IHookManagerProtocol → GitHookAdapter (capabilities layer)
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;

@@ -198,7 +198,11 @@ impl OrphanGraphResolver {
         for f in files {
             import_graph.entry(f.clone()).or_default();
             let content = utility_orphan_io::read_file_safe(f);
-            if content.is_empty() && !shared::orphan_detector::utility_orphan_io::is_file(&std::path::PathBuf::from(f)) {
+            if content.is_empty()
+                && !shared::orphan_detector::utility_orphan_io::is_file(&std::path::PathBuf::from(
+                    f,
+                ))
+            {
                 continue;
             }
 
@@ -215,7 +219,10 @@ impl OrphanGraphResolver {
                     } else {
                         format!("{}/{}", base_dir, mod_path)
                     };
-                    if shared::orphan_detector::utility_orphan_io::is_file(&std::path::PathBuf::from(&resolved)) && resolved != *f {
+                    if shared::orphan_detector::utility_orphan_io::is_file(
+                        &std::path::PathBuf::from(&resolved),
+                    ) && resolved != *f
+                    {
                         import_graph
                             .entry(f.clone())
                             .or_default()
@@ -412,7 +419,8 @@ impl OrphanGraphResolver {
                         let module_name = segments[0];
                         // Bug 3: no ./ prefix — store resolved paths verbatim
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
+                            let entries =
+                                shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
                             for (_name, path_str, _is_dir) in entries {
                                 let path = std::path::PathBuf::from(&path_str);
                                 let stem = path

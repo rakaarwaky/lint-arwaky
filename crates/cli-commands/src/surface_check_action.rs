@@ -19,8 +19,8 @@ use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiP
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
-use crate::surface_check_command::{CheckCommandsSurface, OrchestratorFactory};
 use crate::surface_check_command::CheckContext;
+use crate::surface_check_command::{CheckCommandsSurface, OrchestratorFactory};
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {

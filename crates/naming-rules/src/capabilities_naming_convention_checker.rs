@@ -1,7 +1,6 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
 use async_trait::async_trait;
 use regex::Regex;
-use std::sync::OnceLock;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -14,6 +13,7 @@ use shared::naming_rules::taxonomy_naming_constant::{
     SNAKE_CASE_SEPARATOR,
 };
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
+use shared::naming_rules::utility_naming::get_stem;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -24,7 +24,7 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use shared::naming_rules::utility_naming::get_stem;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -51,8 +51,10 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 None => &f_str,
             };
             let layer: Option<String> = self._detect_layer(&f_str, &layer_keys);
-            let layer_name: Option<LayerNameVO> = layer.as_ref().map(|l: &String| LayerNameVO::new(l.clone()));
-            let def: Option<&shared::taxonomy_definition_vo::LayerDefinition> = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+            let layer_name: Option<LayerNameVO> =
+                layer.as_ref().map(|l: &String| LayerNameVO::new(l.clone()));
+            let def: Option<&shared::taxonomy_definition_vo::LayerDefinition> =
+                layer_name.as_ref().and_then(|l| layer_map.values.get(l));
             self._check_file_naming(
                 &f_str,
                 filename,
@@ -78,7 +80,6 @@ impl INamingCheckerProtocol for NamingConventionChecker {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-
 impl Default for NamingConventionChecker {
     fn default() -> Self {
         Self::new()
@@ -93,7 +94,8 @@ impl NamingConventionChecker {
     /// Cached naming regex (snake_case with min 3 words).
     fn naming_regex() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok()).as_ref()
+        RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok())
+            .as_ref()
     }
 
     fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {

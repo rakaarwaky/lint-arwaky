@@ -1,4 +1,5 @@
 // common — truly shared types used by multiple features
+pub mod contract_executor_protocol;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_list_vo;
 pub use utility_file::{
@@ -18,8 +19,8 @@ pub mod taxonomy_filesystem_error;
 pub mod taxonomy_git_vo;
 pub mod taxonomy_job_id_vo;
 pub mod taxonomy_job_vo;
-pub mod taxonomy_language_vo;
 pub mod taxonomy_language_info_vo;
+pub mod taxonomy_language_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_line_count_vo;
 pub mod taxonomy_lint_vo;
@@ -29,12 +30,13 @@ pub mod taxonomy_naming_list_vo;
 pub mod taxonomy_package_name_vo;
 pub mod taxonomy_parser_error;
 pub mod taxonomy_path_utils_vo;
-pub mod taxonomy_percentage_vo;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
+pub mod taxonomy_percentage_vo;
 pub mod taxonomy_response_data_vo;
 pub mod taxonomy_severity_vo;
 pub mod taxonomy_source_vo;
+pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
 pub mod utility_file;

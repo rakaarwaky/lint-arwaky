@@ -56,12 +56,7 @@ impl LintResult {
     }
 
     /// Specialized constructor for orphan detection results (no enclosing scope).
-    pub fn new_orphan(
-        file: &str,
-        msg: impl Into<String>,
-        sev: Severity,
-        code: &str,
-    ) -> Self {
+    pub fn new_orphan(file: &str, msg: impl Into<String>, sev: Severity, code: &str) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(0),

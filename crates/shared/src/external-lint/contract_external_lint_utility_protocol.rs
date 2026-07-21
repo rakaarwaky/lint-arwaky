@@ -1,4 +1,4 @@
-use crate::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
+use crate::common::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::{bool, PatternList};

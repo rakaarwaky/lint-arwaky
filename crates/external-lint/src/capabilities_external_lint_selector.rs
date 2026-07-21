@@ -3,7 +3,7 @@ use shared::external_lint::contract_external_lint_selector_protocol::IExternalLi
 // PURPOSE: CapabilitiesExternalLintSelector — selects adapters based on detected languages
 //
 // Pure business logic: maps language flags to adapter name lists.
-// No I/O, no infrastructure dependencies.
+// No I/O, no external dependencies.
 
 use shared::common::taxonomy_common_vo::bool;
 

@@ -210,7 +210,8 @@ impl MaintenanceChecker {
             }
         } else {
             // Python project: use bandit with JSON output, parse results array
-            let (s, _, _) = dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
+            let (s, _, _) =
+                dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
                 if let Some(results) = json.get("results").and_then(|r| r.as_array()) {
@@ -231,7 +232,10 @@ impl MaintenanceChecker {
                             Some(s) => s.to_string(),
                             None => String::new(),
                         };
-                        let line = r.get("line_number").and_then(|l| l.as_u64()).unwrap_or_default();
+                        let line = r
+                            .get("line_number")
+                            .and_then(|l| l.as_u64())
+                            .unwrap_or_default();
                         findings.push(SecurityFinding {
                             severity,
                             test_id,
@@ -333,7 +337,8 @@ impl MaintenanceChecker {
         } else {
             let pyproject = std::path::Path::new(root).join("pyproject.toml");
             if pyproject.exists() {
-                let content = dep_io::read_dependency_file(&pyproject).map_err(|e| e.to_string())?;
+                let content =
+                    dep_io::read_dependency_file(&pyproject).map_err(|e| e.to_string())?;
                 let mut dependencies = Vec::new();
                 for line in content.lines() {
                     let t = line.trim();

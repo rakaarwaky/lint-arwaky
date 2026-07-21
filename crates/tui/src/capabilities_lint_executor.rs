@@ -1,3 +1,4 @@
+use crate::capabilities_report_formatter::ReportFormatterHelper;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -14,10 +15,10 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
+use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
 use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
 
@@ -52,7 +53,8 @@ impl ILintExecutorProtocol for LintExecutor {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
-        let output = ReportFormatterHelper::format_results(&results);
+        let formatter = ReportFormatterHelper::new();
+        let output = formatter.format_results(&results).to_string();
         LintExecutionResult {
             output,
             violation_count: count,
@@ -255,7 +257,11 @@ impl ILintExecutorProtocol for LintExecutor {
 
         let entries = shared::code_analysis::utility_duplication::collect_file_entries(&file_strs);
         let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(entries, 10);
-        let violations = shared::code_analysis::utility_duplication::build_violations(&blocks, file_strs.len() * 100, 10);
+        let violations = shared::code_analysis::utility_duplication::build_violations(
+            &blocks,
+            file_strs.len() * 100,
+            10,
+        );
         let count = violations.len();
         let mut output = format!(
             "Duplication detection for {}\nScanned {} files\n",
@@ -616,13 +622,15 @@ impl LintExecutor {
     }
 
     pub fn format_results(&self, results: &LintResultList) -> String {
-        ReportFormatterHelper::format_results(results)
+        let formatter = ReportFormatterHelper::new();
+        formatter.format_results(results).to_string()
     }
 
     fn format_doctor_report(
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_doctor_report(diagnostics)
+        let formatter = ReportFormatterHelper::new();
+        formatter.format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
@@ -673,13 +681,15 @@ impl LintExecutor {
     }
 
     fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        ReportFormatterHelper::format_dependency_report(path, report)
+        let formatter = ReportFormatterHelper::new();
+        formatter.format_dependency_report(path, report)
     }
 
     fn format_config_result(
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        ReportFormatterHelper::format_config_result(result)
+        let formatter = ReportFormatterHelper::new();
+        formatter.format_config_result(result)
     }
 
     /// Check if a binary is available in the system PATH.
@@ -768,7 +778,9 @@ impl LintExecutor {
                     let mut ws_results = Vec::new();
 
                     // 1. AES code analysis
-                    let aes_fp = shared::common::taxonomy_path_vo::FilePath::new(ws.path.value.clone()).unwrap_or_default();
+                    let aes_fp =
+                        shared::common::taxonomy_path_vo::FilePath::new(ws.path.value.clone())
+                            .unwrap_or_default();
                     let aes_results = code_analysis_linter.run_code_analysis(&aes_fp);
                     ws_results.extend(aes_results.values);
 
@@ -837,7 +849,8 @@ impl LintExecutor {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
-        let aes_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
+        let aes_fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
         let aes_results = self.code_analysis.run_code_analysis(&aes_fp);
         all_results.extend(aes_results.values);
 

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::naming_rules::taxonomy_suffix_vo::SuffixVO;
+use crate::common::taxonomy_suffix_vo::SuffixVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CustomMessageVO {

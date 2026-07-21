@@ -1,5 +1,5 @@
 // PURPOSE: AesRoleViolation — violation messages for role rules (AES401-406)
-use crate::code_analysis::taxonomy_violation_code_analysis_vo::Language;
+use crate::common::taxonomy_language_vo::Language;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_name_vo::SymbolName;
 use std::fmt;
@@ -128,22 +128,20 @@ fn write_violation(
                         FIX: Distribute logic or route commands to multiple distinct capabilities."
             )
         }
-        AesRoleViolation::InfrastructureNoPort { reason } => {
+        AesRoleViolation::UtilityRole { reason } => {
             let why = resolve_why(
                 reason,
-                "file has 'infrastructure_' prefix but no port/protocol import — this file is \
-                 broken/useless. Either it is not real infrastructure (rename or delete), or \
-                 a proper contract port requirement has not been created yet (create the port \
-                 first, then implement it here)",
+                "file has 'utility_' prefix but does not contain stateless standalone functions — \
+                 this file may be misplaced. Utility files must contain only pure, stateless \
+                 functions that depend only on taxonomy.",
             );
             write!(
                 f,
-                "AES404 INFRASTRUCTURE_ROLE: Infrastructure file has no port trait/protocol \
-                        implementation.\n\
+                "AES404 UTILITY_ROLE: Utility file does not follow utility layer conventions.\n\
                         WHY? {why}\n\
-                        FIX: Rename the file if it is not infrastructure, delete if obsolete, \
-                        or create the required contract port/protocol first then implement it \
-                        here."
+                        FIX: Ensure the file contains only stateless standalone functions. \
+                        If this is not a utility file, rename it to use the correct layer prefix. \
+                        If obsolete, delete the file and remove its module declaration."
             )
         }
         AesRoleViolation::StatelessExecution { reason } => {
@@ -164,14 +162,14 @@ fn write_violation(
             let why = resolve_why(
                 reason,
                 "Agents must focus on high-level orchestration policies and not import \
-                 infrastructure adapters directly.",
+                 concrete implementations directly.",
             );
             write!(
                 f,
                 "AES405 AGENT_ROLE: Low-level implementation details imported.\n\
                         WHY? {why}\n\
                         FIX: Reference components using their contract interfaces instead of \
-                        concrete infrastructure types."
+                        concrete types."
             )
         }
         AesRoleViolation::CoordinatesMultiple { reason } => {
@@ -313,8 +311,8 @@ pub enum AesRoleViolation {
     SingleBottleneck {
         reason: Option<LintMessage>,
     },
-    // AES404 — Infrastructure role
-    InfrastructureNoPort {
+    // AES404 — Utility role
+    UtilityRole {
         reason: Option<LintMessage>,
     },
     // AES405 — Agent role

@@ -89,11 +89,11 @@ impl fmt::Display for NamingViolation {
                     FIX: \
                      If this is business logic → move to the capabilities_ layer \
                      with an allowed suffix (e.g., analyzer, checker, processor). \
-                     If this is I/O or external system access → move to the infrastructure_ layer \
-                     with an allowed suffix (e.g., adapter, provider, scanner). \
+                     If this is stateless technical mechanics → move to the utility_ layer \
+                     with an allowed suffix (e.g., parser, formatter, detector). \
                      If this is a shared interface → create a contract_ file with ONLY the trait definition \
-                     (port/protocol/aggregate), no implementation logic. \
-                     Implement the trait in capabilities_ or infrastructure_.",
+                     (protocol/aggregate), no implementation logic. \
+                     Implement the trait in capabilities_.",
                     layer_name, forbidden_suffix, why
                 )
             }
@@ -121,11 +121,11 @@ impl fmt::Display for NamingViolation {
                      → rename suffix to one of: {}. \
                      If this file contains business logic (algorithms, analysis, parsing, formatting) \
                      → move to capabilities_ layer. \
-                     If this file performs I/O (filesystem, network, process execution) \
-                     → move to infrastructure_ layer. \
+                     If this file contains stateless technical mechanics (parsing, formatting, detection) \
+                     → move to utility_ layer. \
                      If this logic must be shared across crates \
-                     → create a contract_ file with ONLY the trait definition (port/protocol/aggregate), \
-                       then implement that trait in a capabilities_ or infrastructure_ file. \
+                     → create a contract_ file with ONLY the trait definition (protocol/aggregate), \
+                       then implement that trait in a capabilities_ file. \
                        Contract files must NOT contain implementation logic.",
                     layer_name, used_suffix, why, layer_name, allowed_str
                 )

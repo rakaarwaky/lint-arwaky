@@ -33,7 +33,10 @@ pub fn run_external_command_in(
     args: &[&str],
     current_dir: &str,
 ) -> (String, String, bool) {
-    let output = Command::new(name).args(args).current_dir(current_dir).output();
+    let output = Command::new(name)
+        .args(args)
+        .current_dir(current_dir)
+        .output();
 
     match output {
         Ok(o) => (

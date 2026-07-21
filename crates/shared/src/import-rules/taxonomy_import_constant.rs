@@ -27,8 +27,8 @@ pub const DERIVE_MACROS: &[&str] = &[
 pub const LAYER_PREFIXES: &[(&str, &str)] = &[
     ("taxonomy_", "taxonomy"),
     ("contract_", "contract"),
+    ("utility_", "utility"),
     ("capabilities_", "capabilities"),
-    ("infrastructure_", "infrastructure"),
     ("agent_", "agent"),
     ("surface_", "surfaces"),
     ("root_", "root"),

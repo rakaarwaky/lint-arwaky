@@ -4,11 +4,10 @@
 The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the linting pipeline as tools and resources accessible by AI agents. It enables lint_arwaky integration with IDEs and other AI tools through a standard protocol.
 
 ## Requirements & Scope
-- lint_scan — scan the workspace and return violation results.
-- lint_fix — apply automatic fixes to specified files.
-- lint_check — check a single file against AES rules.
-- lint_config — manage lint_arwaky configuration.
-- lint_setup — set up a new project with the AES structure.
+- execute_command — execute any CLI command via the MCP interface.
+- list_commands — list available CLI commands with descriptions and examples.
+- read_skill — read SKILL.md documentation by section.
+- health_check — check system health: adapters and system state.
 - JSON-RPC conformance; tool discovery by AI clients.
 
 ## Success Indicators

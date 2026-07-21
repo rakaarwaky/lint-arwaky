@@ -1,7 +1,7 @@
 // PURPOSE: NamingRuleVO — value object containing naming convention and suffix policy rule definitions
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::naming_rules::taxonomy_suffix_vo::SuffixPolicyVO;
+use crate::common::taxonomy_suffix_vo::SuffixPolicyVO;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

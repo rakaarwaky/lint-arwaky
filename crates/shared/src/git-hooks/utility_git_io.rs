@@ -4,10 +4,7 @@ use std::process::Command;
 
 /// Execute a git command and return stdout/stderr/success status.
 pub fn run_git_command(args: &[&str], dir: &str) -> (String, String, bool) {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(dir)
-        .output();
+    let output = Command::new("git").args(args).current_dir(dir).output();
 
     match output {
         Ok(o) => (

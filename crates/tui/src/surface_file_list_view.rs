@@ -117,8 +117,8 @@ fn layer_color(layer: &AesLayer) -> Color {
     match layer {
         AesLayer::Taxonomy => Color::Cyan,
         AesLayer::Contract => Color::Blue,
+        AesLayer::Utility => Color::Yellow,
         AesLayer::Capabilities => Color::Magenta,
-        AesLayer::Infrastructure => Color::Yellow,
         AesLayer::Agent => Color::Green,
         AesLayer::Surfaces => Color::Red,
         AesLayer::Root => Color::White,

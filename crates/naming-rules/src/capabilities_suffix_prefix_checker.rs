@@ -22,7 +22,6 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
-
 use shared::naming_rules::utility_naming::{get_stem, get_suffix};
 
 // ─── Block 1: Struct Definition ───────────────────────────

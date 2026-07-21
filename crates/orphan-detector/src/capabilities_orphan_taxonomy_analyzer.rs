@@ -69,7 +69,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                             stem: stem.clone(),
                             category: "taxonomy",
                             reason: Some(
-                                format!("Taxonomy '{}' is not imported by any contract.", stem).into(),
+                                format!("Taxonomy '{}' is not imported by any contract.", stem)
+                                    .into(),
                             ),
                         }
                         .to_string(),
@@ -139,7 +140,8 @@ impl TaxonomyOrphanAnalyzer {
                 }
                 let path = std::path::PathBuf::from(&path_str);
                 if path.extension().is_some_and(|e| e == "rs") {
-                    let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&path_str);
+                    let content =
+                        shared::orphan_detector::utility_orphan_io::read_file_safe(&path_str);
                     if content.contains(&search) {
                         return true;
                     }

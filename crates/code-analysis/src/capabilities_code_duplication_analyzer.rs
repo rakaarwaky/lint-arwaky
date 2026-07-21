@@ -25,7 +25,8 @@ pub struct CodeDuplicationAnalyzer {}
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation> {
         let root = shared::code_analysis::utility_target::resolve_target(path);
-        let src = shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
+        let src =
+            shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
         let config = default_aes_config();
         let ignored_vec: Vec<String> = config
             .ignored_paths
@@ -90,8 +91,15 @@ impl CodeDuplicationAnalyzer {
     ) -> Vec<AesCodeAnalysisViolation> {
         let entries = shared::code_analysis::utility_duplication::collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
-        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(entries, min_dup_lines);
-        shared::code_analysis::utility_duplication::build_violations(&blocks, total_loc, min_dup_lines)
+        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(
+            entries,
+            min_dup_lines,
+        );
+        shared::code_analysis::utility_duplication::build_violations(
+            &blocks,
+            total_loc,
+            min_dup_lines,
+        )
     }
 
     /// File-level similarity analysis using pre-read entries.

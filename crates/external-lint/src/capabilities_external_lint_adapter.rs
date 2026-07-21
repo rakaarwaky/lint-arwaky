@@ -1,4 +1,4 @@
-use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;

@@ -1,4 +1,4 @@
-// PURPOSE: ExternalLintContainer — root layer, wires orchestrator with infrastructure adapters
+// PURPOSE: ExternalLintContainer — root layer, wires orchestrator with utility adapters
 //
 // The DI container that assembles the external lint subsystem:
 //   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
@@ -20,7 +20,7 @@ pub struct ExternalLintContainer {
 impl ExternalLintContainer {
     pub fn new() -> Self {
         let executor: Arc<
-            dyn shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol,
+            dyn shared::common::contract_executor_protocol::ICommandExecutorProtocol,
         > = Arc::new(crate::capabilities_stdio_client::StdioClient::new(
             Timeout::new(60.0),
         ));

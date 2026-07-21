@@ -2,8 +2,8 @@
 // Pure functions: resolve working directories, canonicalize paths,
 // execute commands with error mapping. Used by JS, Python, and RS adapters.
 
-use crate::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
+use crate::common::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::common::taxonomy_adapter_error::AdapterError;
 use crate::common::taxonomy_adapter_error::ScanError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;

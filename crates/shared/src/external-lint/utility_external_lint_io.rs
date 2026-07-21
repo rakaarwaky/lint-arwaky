@@ -126,6 +126,9 @@ pub fn is_executable_in_path(executable: &str) -> bool {
 
 /// Check if a local bin executable exists.
 pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
-    let local_bin = working_dir.join("node_modules").join(".bin").join(executable);
+    let local_bin = working_dir
+        .join("node_modules")
+        .join(".bin")
+        .join(executable);
     local_bin.is_file()
 }

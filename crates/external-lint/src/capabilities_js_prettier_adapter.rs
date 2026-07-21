@@ -32,7 +32,7 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 //   - Detects warnings by checking for "[warn]" in combined stdout+stderr
 //   - Reports a single LintResult per file (not per-difference)
 
-use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

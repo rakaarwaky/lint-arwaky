@@ -9,7 +9,9 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::{AesCodeAnalysisViolation, Language, ViolationKind};
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
+    AesCodeAnalysisViolation, Language, ViolationKind,
+};
 use shared::code_analysis::utility_bypass::{matches_word_token, starts_with_allow_attr};
 use shared::common::taxonomy_common_vo::PatternList;
 
@@ -106,7 +108,10 @@ impl IBypassCheckerProtocol for BypassChecker {
             let t_lower = t.to_lowercase();
             for p in &patterns.values {
                 let p_str = p.as_str();
-                if matches!(p_str, "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable") {
+                if matches!(
+                    p_str,
+                    "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable"
+                ) {
                     if matches_word_token(t, p_str, matches!(p_str, "unwrap" | "expect")) {
                         // Safe .unwrap_or*() variants don't panic — skip.
                         if p_str == "unwrap" && t.contains(".unwrap_or") {
@@ -119,9 +124,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             ViolationKind::Panic => {
                                 AesCodeAnalysisViolation::Panic { reason: None }
                             }
-                            ViolationKind::Todo => {
-                                AesCodeAnalysisViolation::Todo { reason: None }
-                            }
+                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo { reason: None },
                             ViolationKind::Unimplemented => {
                                 AesCodeAnalysisViolation::Unimplemented { reason: None }
                             }
@@ -130,13 +133,20 @@ impl IBypassCheckerProtocol for BypassChecker {
                             }
                         };
                         violations.push(LintResult::new_arch(
-                            file, i + 1, "AES304", Severity::CRITICAL, vo.to_string(),
+                            file,
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
+                            vo.to_string(),
                         ));
                         break;
                     }
                 } else if !p_str.is_empty() && t_lower.contains(&p_str.to_lowercase()) {
                     violations.push(LintResult::new_arch(
-                        file, i + 1, "AES304", Severity::CRITICAL,
+                        file,
+                        i + 1,
+                        "AES304",
+                        Severity::CRITICAL,
                         AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                     ));
                     break;
@@ -147,24 +157,38 @@ impl IBypassCheckerProtocol for BypassChecker {
             let line_lc = t.to_lowercase();
             match language {
                 Language::Python => {
-                    if line_lc.contains("raise notimplementederror") || line_lc.contains("raise notimplemented") {
+                    if line_lc.contains("raise notimplementederror")
+                        || line_lc.contains("raise notimplemented")
+                    {
                         violations.push(LintResult::new_arch(
-                            file, i + 1, "AES304", Severity::CRITICAL,
+                            file,
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
                             AesCodeAnalysisViolation::Unimplemented { reason: None }.to_string(),
                         ));
                     } else if line_lc.contains("assert false") {
                         violations.push(LintResult::new_arch(
-                            file, i + 1, "AES304", Severity::CRITICAL,
+                            file,
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
                             AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
                         ));
                     }
                 }
                 Language::JavaScript | Language::TypeScript => {
-                    if line_lc.contains("throw new error") || line_lc.contains("throw new typeerror")
-                        || line_lc.contains("throw new rangeerror") || line_lc.contains("throw new referenceerror")
-                        || line_lc.contains("throw new syntaxerror") {
+                    if line_lc.contains("throw new error")
+                        || line_lc.contains("throw new typeerror")
+                        || line_lc.contains("throw new rangeerror")
+                        || line_lc.contains("throw new referenceerror")
+                        || line_lc.contains("throw new syntaxerror")
+                    {
                         violations.push(LintResult::new_arch(
-                            file, i + 1, "AES304", Severity::CRITICAL,
+                            file,
+                            i + 1,
+                            "AES304",
+                            Severity::CRITICAL,
                             AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
                         ));
                     }
@@ -215,5 +239,4 @@ impl BypassChecker {
             _ => ViolationKind::BypassComment,
         }
     }
-}      
- 
+}

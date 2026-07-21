@@ -1,13 +1,12 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
-use shared::common::taxonomy_language_vo::Language as DetLang;
+use shared::common::taxonomy_language_vo::Language;
+use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::common::utility_language_detector::detect_language_info_from_source;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -100,9 +99,9 @@ impl TaxonomyRoleChecker {
         let content = source.content.value();
         let li = detect_language_info_from_source(source);
         let primitives: &[&str] = match li.lang {
-            DetLang::Rust => Self::RUST_PRIMITIVES,
-            DetLang::Python => Self::PY_PRIMITIVES,
-            DetLang::JavaScript | DetLang::TypeScript => Self::JS_PRIMITIVES,
+            Language::Rust => Self::RUST_PRIMITIVES,
+            Language::Python => Self::PY_PRIMITIVES,
+            Language::JavaScript | Language::TypeScript => Self::JS_PRIMITIVES,
             _ => return,
         };
         let is_rs = li.is_rs;

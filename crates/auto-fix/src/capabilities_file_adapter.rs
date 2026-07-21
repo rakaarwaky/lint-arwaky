@@ -2,7 +2,7 @@ use shared::auto_fix::utility_auto_fix_io as af_io;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 
-// PURPOSE: FileAdapter — infrastructure layer for file I/O operations
+// PURPOSE: FileAdapter — capabilities layer for file I/O operations
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────

@@ -1,5 +1,4 @@
 // PURPOSE: SuffixPolicyVO, SuffixVO — value objects for suffix naming rules
-use crate::common::taxonomy_common_vo::PatternList;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
@@ -16,5 +15,5 @@ impl SuffixPolicyVO {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct SuffixVO {
-    pub values: PatternList,
+    pub values: crate::common::taxonomy_common_vo::PatternList,
 }

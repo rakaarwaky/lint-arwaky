@@ -106,9 +106,11 @@ impl SurfacesOrphanAnalyzer {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
             if shared::orphan_detector::utility_orphan_io::is_dir(&dir) {
-                let files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                let files =
+                    shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
                 for file_path in &files {
-                    if let Some(name) = std::path::Path::new(file_path).file_name()
+                    if let Some(name) = std::path::Path::new(file_path)
+                        .file_name()
                         .and_then(|n| n.to_str())
                     {
                         let is_entry_or_router = name.starts_with("root_")
@@ -122,7 +124,10 @@ impl SurfacesOrphanAnalyzer {
                                 || name.ends_with(".ts")
                                 || name.ends_with(".js"))
                         {
-                            let content = shared::orphan_detector::utility_orphan_io::read_file_safe(file_path);
+                            let content =
+                                shared::orphan_detector::utility_orphan_io::read_file_safe(
+                                    file_path,
+                                );
                             if content.contains(id) {
                                 return true;
                             }

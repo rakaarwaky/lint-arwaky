@@ -136,12 +136,7 @@ impl DiffChecker {
 
     fn try_ls_files(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
         let (stdout, _, success) = git_io::run_git_command(
-            &[
-                "ls-files",
-                "--modified",
-                "--others",
-                "--exclude-standard",
-            ],
+            &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,
         );
         if success {

@@ -218,7 +218,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        setup_io::write_file_content(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
+        setup_io::write_file_content(filename, content)
+            .map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,

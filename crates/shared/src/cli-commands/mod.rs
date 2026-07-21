@@ -1,5 +1,4 @@
 // cli-commands — taxonomy and contract types
-pub mod contract_executor_protocol;
 pub mod taxonomy_catalog_constant;
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;

@@ -62,54 +62,54 @@ impl fmt::Display for AesImportViolation {
                     None => {
                         let src = source_layer.value();
                         if src == "taxonomy(vo)" {
-                            "Taxonomy Value Objects (VO) must remain completely pure and cannot import agents, infrastructure, surfaces, contracts, capabilities, or root components.".to_string()
+                            "Taxonomy Value Objects (VO) must remain completely pure and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
                         } else if src == "taxonomy(entity)"
                             || src == "taxonomy(error)"
                             || src == "taxonomy(event)"
                         {
-                            "Taxonomy Entities, Errors, and Events can only import taxonomy VOs/constants and are forbidden from importing agents, infrastructure, surfaces, contracts, or capabilities.".to_string()
+                            "Taxonomy Entities, Errors, and Events can only import taxonomy VOs/constants and are forbidden from importing agents, surfaces, contracts, utility, or capabilities.".to_string()
                         } else if src == "taxonomy(constant)" {
-                            "Taxonomy Constants must remain pure static value declarations and cannot import agents, infrastructure, surfaces, contracts, capabilities, or root components.".to_string()
-                        } else if src == "contract(port)" || src == "contract(protocol)" {
-                            "Contract Ports and Protocols represent pure interface definitions and are forbidden from importing agents, infrastructure, surfaces, capabilities, aggregates, or root components.".to_string()
+                            "Taxonomy Constants must remain pure static value declarations and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
+                        } else if src == "contract(protocol)" {
+                            "Contract Protocols represent pure interface definitions and are forbidden from importing agents, surfaces, capabilities, utility, aggregates, or root components.".to_string()
                         } else if src == "contract(aggregate)" {
-                            "Contract Aggregates represent high-level composition/DI contracts and must not import agents, infrastructure, surfaces, capabilities, or root components.".to_string()
+                            "Contract Aggregates represent high-level composition/DI contracts and must not import agents, surfaces, capabilities, utility, or root components.".to_string()
+                        } else if src == "utility" {
+                            "Utility files contain stateless standalone functions and must only import taxonomy. They cannot import agents, surfaces, contracts, capabilities, or root components.".to_string()
                         } else if src == "capabilities" {
-                            "Capabilities implement domain business logic and must never depend on infrastructure adapters, agents, or UI/surfaces.".to_string()
-                        } else if src == "infrastructure" {
-                            "Infrastructure adapters implement technology-specific protocols and must never import surfaces, capabilities, agents, or root components directly.".to_string()
+                            "Capabilities implement domain business logic and must never depend on agents, UI/surfaces, or other capabilities.".to_string()
                         } else if src == "agent(container)" {
                             "Agent Containers handle dependency injection and are forbidden from importing UI/surfaces or root components.".to_string()
                         } else if src == "agent(orchestrator)" {
-                            "Agent Orchestrators coordinate flows and are forbidden from importing UI/surfaces, infrastructure adapters, capabilities, or root components.".to_string()
+                            "Agent Orchestrators coordinate flows and are forbidden from importing UI/surfaces, capabilities, or root components.".to_string()
                         } else if src == "agent(lifecycle)" {
-                            "Agent Lifecycles manage agent states and are forbidden from importing orchestrators/containers, infrastructure, capabilities, surfaces, or root components.".to_string()
+                            "Agent Lifecycles manage agent states and are forbidden from importing orchestrators/containers, capabilities, surfaces, or root components.".to_string()
                         } else if src == "surfaces(command)"
                             || src == "surfaces(controller)"
                             || src == "surfaces(page)"
                             || src == "surfaces(entry)"
                         {
-                            "Smart Surfaces act as user/CLI entry points and must never import agents, infrastructure, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).".to_string()
+                            "Smart Surfaces act as user/CLI entry points and must never import agents, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).".to_string()
                         } else if src == "surfaces(hook)"
                             || src == "surfaces(store)"
                             || src == "surfaces(action)"
                             || src == "surfaces(screen)"
                             || src == "surfaces(router)"
                         {
-                            "Surface utility components (hooks, stores, routers) manage local state and must never import agents, infrastructure, capabilities, or ports/protocols.".to_string()
+                            "Surface utility components (hooks, stores, routers) manage local state and must never import agents, capabilities, or ports/protocols.".to_string()
                         } else if src == "surfaces(component)"
                             || src == "surfaces(view)"
                             || src == "surfaces(layout)"
                         {
-                            "Passive Surface components (views, layouts) render UI and are forbidden from importing agents, contracts, infrastructure, capabilities, or smart surfaces.".to_string()
+                            "Passive Surface components (views, layouts) render UI and are forbidden from importing agents, contracts, capabilities, or smart surfaces.".to_string()
                         } else if src.starts_with("taxonomy") {
                             "Taxonomy must remain pure and free from framework/layer dependencies to ensure domain model integrity.".to_string()
                         } else if src.starts_with("contract") {
-                            "Contract interfaces represent pure specifications and must not depend on capabilities, infrastructure, or agent implementations.".to_string()
+                            "Contract interfaces represent pure specifications and must not depend on capabilities, utility, or agent implementations.".to_string()
                         } else if src.starts_with("agent") {
                             "Agent orchestrators and containers must never depend on the UI/surface layer to maintain clean separation of concerns.".to_string()
                         } else if src.starts_with("surfaces") {
-                            "Surfaces are external I/O boundaries and must never bypass contract aggregates to depend on capabilities, agent internals, or infrastructure.".to_string()
+                            "Surfaces are external I/O boundaries and must never bypass contract aggregates to depend on capabilities, agent internals, or utility.".to_string()
                         } else {
                             format!("Layer '{}' must not depend on '{}' to maintain architectural boundaries.", source_layer, forbidden_layer)
                         }
@@ -134,14 +134,14 @@ impl fmt::Display for AesImportViolation {
                         "Taxonomy Value Objects define domain primitives — they must import contracts to declare their structural contract.".to_string()
                     } else if src == "taxonomy(entity)" {
                         "Taxonomy Entities model domain state — they must import aggregator contracts to participate in business operations.".to_string()
-                    } else if src == "contract(port)" || src == "contract(protocol)" {
-                        "Contract ports define service boundaries — they must import contract aggregate types to compose cross-cutting workflows.".to_string()
+                    } else if src == "contract(protocol)" {
+                        "Contract protocols define service boundaries — they must import contract aggregate types to compose cross-cutting workflows.".to_string()
                     } else if src == "contract(aggregate)" {
-                        "Contract aggregates orchestrate cross-layer collaboration — they must import all relevant port/protocol contracts.".to_string()
+                        "Contract aggregates orchestrate cross-layer collaboration — they must import all relevant protocol contracts.".to_string()
+                    } else if src == "utility" {
+                        "Utility files contain stateless standalone functions — they must import taxonomy to access domain types.".to_string()
                     } else if src == "capabilities" {
                         "Capabilities implement business rules — they MUST import contract protocols to know what interface to honor. Missing contract protocol means broken/useless capability or missing requirement.".to_string()
-                    } else if src == "infrastructure" {
-                        "Infrastructure adapters MUST import contract ports — without a port reference this file is broken/useless. Either rename/delete if not real infrastructure, or create the required contract port first.".to_string()
                     } else if src == "agent(container)" {
                         "Agent containers wire dependencies at startup — they must import service contracts to register all concrete implementations.".to_string()
                     } else if src == "agent(orchestrator)" {

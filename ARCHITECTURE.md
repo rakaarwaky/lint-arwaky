@@ -43,7 +43,7 @@ The recommended folder structure follows this order:
 _Example feature crate `crates|packages|modules/<name-features>/`_
 
 ```text
-surfaces_<concern>_<role>.rs/py/ts               ← surfaces layer
+surface_<concern>_<role>.rs/py/ts                ← surface layer
 capabilities_<concern>_<role>.rs/py/ts           ← capabilities layer
 agent_<concern>_orchestrator.rs/py/ts            ← agent layer
 ```

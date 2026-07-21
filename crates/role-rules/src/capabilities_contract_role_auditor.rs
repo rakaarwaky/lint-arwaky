@@ -1,6 +1,6 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language;
+use shared::common::taxonomy_language_vo::Language;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
@@ -29,19 +29,13 @@ pub struct ContractRoleChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IContractRoleChecker for ContractRoleChecker {
-    fn check_port(
-        &self,
-        source: &SourceContentVO,
-    ) -> Vec<LintResult> {
+    fn check_port(&self, source: &SourceContentVO) -> Vec<LintResult> {
         let mut violations = Vec::new();
         self.check_contract_primitive(source, &mut violations);
         violations
     }
 
-    fn check_protocol(
-        &self,
-        source: &SourceContentVO,
-    ) -> Vec<LintResult> {
+    fn check_protocol(&self, source: &SourceContentVO) -> Vec<LintResult> {
         let mut violations = Vec::new();
         self.check_contract_primitive(source, &mut violations);
         violations

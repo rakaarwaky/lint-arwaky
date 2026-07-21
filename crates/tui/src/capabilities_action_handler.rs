@@ -343,7 +343,8 @@ impl ActionHandler {
     fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let max_lines = LineCount::new(100);
-        state.preview_text = utility_file_system::read_file_preview(&fp, max_lines.value()).to_string();
+        state.preview_text =
+            utility_file_system::read_file_preview(&fp, max_lines.value()).to_string();
         state.preview_mode = PreviewMode::FileContent;
     }
 

@@ -2,7 +2,7 @@ use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
-// PURPOSE: SetupInstallerAdapter — infrastructure adapter for executing npm/pip install commands
+// PURPOSE: SetupInstallerAdapter — capabilities adapter for executing npm/pip install commands
 //
 // Installs Python linters (ruff, mypy, bandit) via `pip install --user` and
 // JS linters (eslint, prettier, typescript) via `npm install -g`.

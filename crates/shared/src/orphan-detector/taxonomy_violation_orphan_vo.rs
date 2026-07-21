@@ -18,6 +18,10 @@ pub enum AesOrphanViolation {
         stem: String,
         reason: Option<LintMessage>,
     },
+    UtilityOrphan {
+        stem: String,
+        reason: Option<LintMessage>,
+    },
     AgentOrphan {
         agg_name: String,
         reason: Option<LintMessage>,
@@ -82,6 +86,16 @@ impl fmt::Display for AesOrphanViolation {
                     ),
                 };
                 write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs via `use {}::...;` and wire it into the container's constructor. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem, stem)
+            }
+            AesOrphanViolation::UtilityOrphan { stem, reason } => {
+                let why = match reason.as_ref() {
+                    Some(r) => r.to_string(),
+                    None => format!(
+                        "Utility file '{}' is not imported by any capabilities or other layer file.",
+                        stem
+                    ),
+                };
+                write!(f, "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality. Utility files must be consumed by other layers. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem)
             }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = match reason.as_ref() {

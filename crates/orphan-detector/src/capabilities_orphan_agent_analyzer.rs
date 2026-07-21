@@ -25,7 +25,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
             c if c.is_empty() => {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-            },
+            }
             c => c,
         };
 

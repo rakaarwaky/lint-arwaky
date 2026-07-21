@@ -29,10 +29,7 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
 
 /// Returns true if any container/entry file under the workspace root references
 /// one of `identifiers`.
-pub fn check_wired_in_container(
-    workspace_root: &std::path::Path,
-    identifiers: &[String],
-) -> bool {
+pub fn check_wired_in_container(workspace_root: &std::path::Path, identifiers: &[String]) -> bool {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
         if dir.is_dir() && check_dir_containers(&dir, identifiers) {
@@ -42,10 +39,7 @@ pub fn check_wired_in_container(
     false
 }
 
-fn check_dir_containers(
-    dir: &std::path::Path,
-    identifiers: &[String],
-) -> bool {
+fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
     if let Ok(fp) = FilePath::new(dir.to_str().unwrap_or("")) {
         let entries = utility_file_cache::read_dir(&fp);
         for entry_path in &entries {

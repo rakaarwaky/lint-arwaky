@@ -1,9 +1,9 @@
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::common::utility_language_detector::detect_language_info_from_source;
 
 // PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing (missing interface implementation)
 //
@@ -20,7 +20,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CapabilitiesRoleChecker {}
-
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 

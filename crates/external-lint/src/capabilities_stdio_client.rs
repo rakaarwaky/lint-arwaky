@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use shared::cli_commands::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::mcp_server::taxonomy_job_vo::ResponseData;
 use shared::taxonomy_common_vo::PatternList;

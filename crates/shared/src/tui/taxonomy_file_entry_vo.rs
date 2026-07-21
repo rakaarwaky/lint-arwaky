@@ -4,8 +4,8 @@ use std::path::Path;
 pub enum AesLayer {
     Taxonomy,
     Contract,
+    Utility,
     Capabilities,
-    Infrastructure,
     Agent,
     Surfaces,
     Root,
@@ -17,8 +17,8 @@ impl AesLayer {
         match self {
             AesLayer::Taxonomy => "[tax]",
             AesLayer::Contract => "[con]",
+            AesLayer::Utility => "[uti]",
             AesLayer::Capabilities => "[cap]",
-            AesLayer::Infrastructure => "[inf]",
             AesLayer::Agent => "[agt]",
             AesLayer::Surfaces => "[sur]",
             AesLayer::Root => "[root]",
@@ -30,8 +30,8 @@ impl AesLayer {
         match self {
             AesLayer::Taxonomy => 14,
             AesLayer::Contract => 12,
+            AesLayer::Utility => 11,
             AesLayer::Capabilities => 13,
-            AesLayer::Infrastructure => 11,
             AesLayer::Agent => 10,
             AesLayer::Surfaces => 9,
             AesLayer::Root => 15,
@@ -49,10 +49,10 @@ impl AesLayer {
             AesLayer::Taxonomy
         } else if stem.starts_with("contract_") {
             AesLayer::Contract
+        } else if stem.starts_with("utility_") {
+            AesLayer::Utility
         } else if stem.starts_with("capabilities_") {
             AesLayer::Capabilities
-        } else if stem.starts_with("infrastructure_") {
-            AesLayer::Infrastructure
         } else if stem.starts_with("agent_") {
             AesLayer::Agent
         } else if stem.starts_with("surface_") {

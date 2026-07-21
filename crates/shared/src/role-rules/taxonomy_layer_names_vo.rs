@@ -7,6 +7,7 @@ use crate::role_rules::taxonomy_layer_names_constant::LAYER_GLOBAL;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_ROOT;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_SURFACES;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_TAXONOMY;
+use crate::role_rules::taxonomy_layer_names_constant::LAYER_UTILITY;
 
 /// Value object holding the set of core layer names.
 pub struct LayerNames {}
@@ -22,6 +23,9 @@ pub fn layer_taxonomy() -> LayerNameVO {
 }
 pub fn layer_contract() -> LayerNameVO {
     LayerNameVO::new(LAYER_CONTRACT)
+}
+pub fn layer_utility() -> LayerNameVO {
+    LayerNameVO::new(LAYER_UTILITY)
 }
 pub fn layer_surfaces() -> LayerNameVO {
     LayerNameVO::new(LAYER_SURFACES)
@@ -39,6 +43,7 @@ pub fn all_core_layers() -> Vec<LayerNameVO> {
         layer_capabilities(),
         layer_taxonomy(),
         layer_contract(),
+        layer_utility(),
         layer_surfaces(),
         layer_root(),
     ]
