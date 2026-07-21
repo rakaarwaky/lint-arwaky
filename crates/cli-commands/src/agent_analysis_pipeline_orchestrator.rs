@@ -65,6 +65,7 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
         naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -242,16 +243,24 @@ impl AnalysisPipelineOrchestrator {
     /// filters results to each member's path, and aggregates into a single ScanReport.
     pub async fn run_pipeline_with_discovery(&self) -> Result<ScanReport, PipelineError> {
         // Discover workspaces
-        let workspaces = self.config_orchestrator.discover_workspaces(&FilePath::new(".".to_string()).map_err(|e| PipelineError::InvalidPath(e.to_string()))?).await;
+        let workspaces = self
+            .config_orchestrator
+            .discover_workspaces(
+                &FilePath::new(".".to_string())
+                    .map_err(|e| PipelineError::InvalidPath(e.to_string()))?,
+            )
+            .await;
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode
             let request = ScanRequest {
-                target: shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(".".to_string()),
+                target: shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(
+                    ".".to_string(),
+                ),
                 mode: shared::cli_commands::taxonomy_scan_request_vo::ScanMode::default(),
                 filter: self.filter.clone(),
                 member: None,
-                format: self.format.clone(),
+                format: std::mem::clone(&self.format),
             };
             return self.run(request).await;
         }
@@ -261,8 +270,11 @@ impl AnalysisPipelineOrchestrator {
         let global_diagnostics = Vec::new();
 
         // Collect ALL source files from workspace root for cross-workspace orphan detection
-        let scan_root = crate::surface_check_action::find_workspace_root(".").unwrap_or(std::path::PathBuf::from("."));
-        let ignored = self.config_orchestrator.ignored_paths(scan_root.to_str().unwrap_or("."));
+        let scan_root = crate::surface_check_action::find_workspace_root(".")
+            .unwrap_or(std::path::PathBuf::from("."));
+        let ignored = self
+            .config_orchestrator
+            .ignored_paths(scan_root.to_str().unwrap_or("."));
         let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
         let all_source_files: Vec<String> = {
             match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
@@ -272,7 +284,9 @@ impl AnalysisPipelineOrchestrator {
         };
 
         // Run orphan detection once across all workspace members
-        let orphan_results_all = self.orphan_orchestrator.check_orphans(&all_source_files, scan_root.to_str().unwrap_or("."));
+        let orphan_results_all = self
+            .orphan_orchestrator
+            .check_orphans(&all_source_files, scan_root.to_str().unwrap_or("."));
 
         for ws in &workspaces {
             let mut all_results = Vec::new();
@@ -394,7 +408,9 @@ impl AnalysisPipelineOrchestrator {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
-        let ignored = self.config_orchestrator.ignored_paths(scan_root.to_str().unwrap_or("."));
+        let ignored = self
+            .config_orchestrator
+            .ignored_paths(scan_root.to_str().unwrap_or("."));
         let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root, &ignored)
             .iter()
             .map(|f| f.value.clone())
@@ -409,7 +425,9 @@ impl AnalysisPipelineOrchestrator {
         };
 
         // Run orphan detection with workspace root
-        let all_results = self.orphan_orchestrator.check_orphans(&all_files, &scan_root.to_string_lossy());
+        let all_results = self
+            .orphan_orchestrator
+            .check_orphans(&all_files, &scan_root.to_string_lossy());
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();

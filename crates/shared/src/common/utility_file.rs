@@ -85,10 +85,8 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
 
         // Handle target/* patterns (prefix with wildcard)
         if let Some(prefix) = pat.strip_suffix("/*") {
-            if !prefix.is_empty() {
-                if segments.first() == Some(&prefix) {
-                    return true;
-                }
+            if !prefix.is_empty() && segments.first() == Some(&prefix) {
+                return true;
             }
             continue;
         }

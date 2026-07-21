@@ -1,4 +1,5 @@
 // PURPOSE: IExternalLintPathProtocol — protocol for path operations in external lint
+use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use crate::common::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -6,7 +7,6 @@ use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use crate::common::taxonomy_response_data_vo::ResponseData;
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 use async_trait::async_trait;
 
 // ─── Path Operations ──────────────────────────────────────

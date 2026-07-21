@@ -51,7 +51,7 @@ impl CheckCommandsSurface {
             mode: ScanMode::Scan,
             filter: filter.map(String::from),
             member: None,
-            format: format.clone(),
+            format,
         };
 
         // Run pipeline via contract — use current-thread runtime to avoid nested runtime panic
@@ -113,9 +113,7 @@ impl CheckCommandsSurface {
             Err(_) => return ExitCode::from(2),
         };
 
-        let workspaces = match rt.block_on(orchestrator.discover_workspaces(&path_obj)) {
-            ws => ws,
-        };
+        let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
 
         if workspaces.is_empty() {
             // No workspaces discovered — fall back to single-scan mode
@@ -203,7 +201,8 @@ impl CheckCommandsSurface {
             let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
 
             let filtered_results: Vec<_> = if let Some(code) = filter {
-                report.results
+                report
+                    .results
                     .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
@@ -216,7 +215,8 @@ impl CheckCommandsSurface {
                     })
                     .collect()
             } else {
-                report.results
+                report
+                    .results
                     .into_iter()
                     .filter(|r| {
                         let abs_path = cwd_for_ws.join(&r.file.value);
@@ -254,8 +254,7 @@ impl CheckCommandsSurface {
                         cwd_for_ws.join(raw)
                     }
                 };
-                let ws_fallback =
-                    std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
+                let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
 
                 let member_results: Vec<_> = if let Some(code) = filter {
                     global_all_results
@@ -323,7 +322,10 @@ impl CheckCommandsSurface {
         };
 
         // Call agent layer for orphan detection
-        let file_results = match self.pipeline.check_orphan_single_file(file_path, &scan_root.to_string_lossy()) {
+        let file_results = match self
+            .pipeline
+            .check_orphan_single_file(file_path, &scan_root.to_string_lossy())
+        {
             Ok(results) => results,
             Err(e) => {
                 eprintln!("[error] orphan check failed: {e}");
@@ -332,7 +334,10 @@ impl CheckCommandsSurface {
         };
 
         if file_results.is_empty() {
-            println!("  {} is NOT an orphan (reachable from entry point)", file_path);
+            println!(
+                "  {} is NOT an orphan (reachable from entry point)",
+                file_path
+            );
         } else {
             println!("  {} is an ORPHAN:", file_path);
             for r in &file_results {
@@ -359,6 +364,7 @@ impl CheckCommandsSurface {
     }
 
     /// Print multi-workspace text summary.
+    #[allow(dead_code)]
     fn print_multi_workspace_summary(
         &self,
         global_all_results: &[LintResult],

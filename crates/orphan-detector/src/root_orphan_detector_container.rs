@@ -60,3 +60,9 @@ impl OrphanContainer {
         self.analyzer.clone()
     }
 }
+
+impl Default for OrphanContainer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
