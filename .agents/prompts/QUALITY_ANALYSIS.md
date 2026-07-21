@@ -49,6 +49,7 @@ When your review is complete, save the report to:
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Functional bug, data corruption, broken behavior
 - 🟡 **WARNING** — Edge case failure, performance concern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

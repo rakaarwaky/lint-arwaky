@@ -29,6 +29,19 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
+/// Dependencies for ArchOrphanAnalyzer to avoid too_many_arguments.
+pub struct ArchOrphanDeps {
+    pub resolver: Arc<dyn IOrphanGraphResolverProtocol>,
+    pub taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
+    pub contract_analyzer: Arc<dyn IContractOrphanProtocol>,
+    pub capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
+    pub utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
+    pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
+    pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    pub config: ArchitectureConfig,
+}
+
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
@@ -153,26 +166,16 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-        taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
-        contract_analyzer: Arc<dyn IContractOrphanProtocol>,
-        capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
-        agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
-        surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
-        config: ArchitectureConfig,
-    ) -> Self {
+    pub fn new(deps: ArchOrphanDeps) -> Self {
         Self {
-            resolver,
-            taxonomy_analyzer,
-            contract_analyzer,
-            capabilities_analyzer,
-            utility_analyzer,
-            agent_analyzer,
-            surfaces_analyzer,
-            config,
+            resolver: deps.resolver,
+            taxonomy_analyzer: deps.taxonomy_analyzer,
+            contract_analyzer: deps.contract_analyzer,
+            capabilities_analyzer: deps.capabilities_analyzer,
+            utility_analyzer: deps.utility_analyzer,
+            agent_analyzer: deps.agent_analyzer,
+            surfaces_analyzer: deps.surfaces_analyzer,
+            config: deps.config,
         }
     }
 

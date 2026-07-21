@@ -44,7 +44,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             Ok(Some(source)) => {
                 let cache_key = source.path.to_string();
                 let mut parsed = {
-                    let mut cache = self.config_cache.lock().unwrap();
+                    let mut cache = self.config_cache.lock().unwrap_or_else(|e| e.into_inner());
                     cache
                         .entry(cache_key.clone())
                         .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))

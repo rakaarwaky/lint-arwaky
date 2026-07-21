@@ -10,7 +10,6 @@ use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::cli_commands::taxonomy_scan_request_vo::{ScanMode, ScanRequest, ScanTarget};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use std::collections::HashMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -361,78 +360,5 @@ impl CheckCommandsSurface {
                 abs_path.starts_with(&canonical_scan_path)
             })
             .collect()
-    }
-
-    /// Print multi-workspace text summary.
-    #[allow(dead_code)]
-    fn print_multi_workspace_summary(
-        &self,
-        global_all_results: &[LintResult],
-        workspaces: &[shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo],
-        member: Option<&str>,
-    ) {
-        let mut global_all_counts: HashMap<String, usize> = HashMap::new();
-        for r in global_all_results {
-            *global_all_counts.entry(r.code.to_string()).or_insert(0) += 1;
-        }
-        let global_total = global_all_results.len();
-        let global_code_counts: HashMap<String, usize> = global_all_counts
-            .iter()
-            .filter(|(code, _)| code.starts_with("AES"))
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
-        let global_unique_codes = global_code_counts.len();
-        let external_code_counts: HashMap<String, usize> = global_all_counts
-            .iter()
-            .filter(|(code, _)| !code.starts_with("AES"))
-            .map(|(k, v)| (k.clone(), *v))
-            .collect();
-        let global_unique_external = external_code_counts.len();
-
-        println!("============================================================");
-        println!("  Combined Multi-Workspace Report Summary");
-        println!("============================================================");
-        println!("  Total Workspace Members: {}", workspaces.len());
-        println!("  Total Unique AES Codes: {global_unique_codes}");
-        if global_unique_external > 0 {
-            println!("  Total Unique External Codes: {global_unique_external}");
-        }
-        println!("  Total Violations: {global_total}");
-        println!();
-        let mut sorted: Vec<_> = global_code_counts.into_iter().collect();
-        sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-        for (code, count) in &sorted {
-            println!("  {code}: {count}");
-        }
-        if !external_code_counts.is_empty() {
-            println!();
-            println!("  ── External Lint Codes ──");
-            let mut ext_sorted: Vec<_> = external_code_counts.into_iter().collect();
-            ext_sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
-            for (code, count) in &ext_sorted {
-                println!("  {code}: {count}");
-            }
-        }
-
-        if member.is_none() {
-            println!();
-            println!("============================================================");
-            println!("  Scan Individual Members");
-            println!("============================================================");
-            println!("  To scan a specific workspace member:");
-            println!("    lint-arwaky-cli scan . --member <name>");
-            println!();
-            println!("  Available members:");
-            for ws in workspaces {
-                let name = std::path::Path::new(&ws.path.value)
-                    .file_name()
-                    .map(|n| n.to_string_lossy())
-                    .unwrap_or_default();
-                println!("    - {} ({})", name, ws.workspace_type);
-            }
-            println!();
-            println!("  Filter by AES rule code:");
-            println!("    lint-arwaky-cli scan . --filter AES204");
-        }
     }
 }
