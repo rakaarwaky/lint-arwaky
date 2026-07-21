@@ -51,7 +51,7 @@ impl NamingContainer {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for NamingContainer {
     fn default() -> Self {
-        let config = Arc::new(ArchitectureConfig::default());
+        let config = Arc::new(shared::config_system::utility_config_defaults::default_aes_config());
         let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
         Self::new(config, layer_map)
     }

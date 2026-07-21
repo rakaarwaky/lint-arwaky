@@ -11,7 +11,7 @@ pub struct OrphanContainer {
 
 impl OrphanContainer {
     pub fn new() -> Self {
-        Self::new_with_config(ArchitectureConfig::default())
+        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
     }
 
     pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
