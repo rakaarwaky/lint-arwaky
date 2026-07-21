@@ -71,6 +71,30 @@ impl CliContainer {
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
         let git_aggregate = git_container.aggregate();
 
+        // Wire up report formatter capabilities → aggregate
+        let text_formatter: Arc<
+            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+        > = Arc::new(crate::capabilities_text_formatter::TextFormatter::new(
+            code_analysis_linter.clone(),
+        ));
+        let json_formatter: Arc<
+            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+        > = Arc::new(crate::capabilities_json_formatter::JsonFormatter::new());
+        let sarif_formatter: Arc<
+            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+        > = Arc::new(crate::capabilities_sarif_formatter::SarifFormatter::new());
+        let junit_formatter: Arc<
+            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+        > = Arc::new(crate::capabilities_junit_formatter::JunitFormatter::new());
+        let report_formatter: Arc<dyn IReportFormatterAggregate> = Arc::new(
+            crate::agent_report_formatter_orchestrator::ReportFormatterOrchestrator::new(
+                text_formatter,
+                json_formatter,
+                sarif_formatter,
+                junit_formatter,
+            ),
+        );
+
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -80,6 +104,7 @@ impl CliContainer {
             orphan_orchestrator,
             git_aggregate,
             multi_project_orchestrator,
+            report_formatter,
         }
     }
 
@@ -91,6 +116,7 @@ impl CliContainer {
             external_lint: self.external_lint.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
             orphan_orchestrator: self.orphan_orchestrator.clone(),
+            report_formatter: self.report_formatter.clone(),
         }
     }
 }

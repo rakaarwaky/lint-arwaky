@@ -12,6 +12,7 @@
 // The OrchestratorFactory type enables the `scan` command to create
 // fresh per-project DI containers for each workspace member, so that
 // each member gets its own language-specific configuration.
+use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -38,6 +39,7 @@ pub struct CheckContext {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
 }
 
 pub type OrchestratorFactory = Arc<
@@ -53,6 +55,7 @@ pub struct CheckCommandsSurface {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
     pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub factory: Option<OrchestratorFactory>,
 }
@@ -66,6 +69,7 @@ impl CheckCommandsSurface {
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
             orphan_orchestrator: ctx.orphan_orchestrator,
+            report_formatter: ctx.report_formatter,
             multi_project_orchestrator: None,
             factory: None,
         }
@@ -83,6 +87,7 @@ impl CheckCommandsSurface {
             naming_orchestrator: ctx.naming_orchestrator,
             role_orchestrator: ctx.role_orchestrator,
             orphan_orchestrator: ctx.orphan_orchestrator,
+            report_formatter: ctx.report_formatter,
             multi_project_orchestrator,
             factory: Some(factory),
         }
