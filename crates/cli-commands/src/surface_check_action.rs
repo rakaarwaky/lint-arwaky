@@ -44,20 +44,20 @@ pub fn handle_check(
     // Validate path exists before scanning
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::FAILURE;
+        return ExitCode::from(2);
     }
     if git_diff {
         let git_agg = match git_aggregate {
             Some(g) => g,
             None => {
                 eprintln!("[error] git hooks not available");
-                return ExitCode::FAILURE;
+                return ExitCode::from(2);
             }
         };
         // P2.5: pass user-provided path and filter to git-diff handler
         let rt = match crate::surface_common_command::create_current_thread_runtime() {
             Ok(r) => r,
-            Err(_) => return ExitCode::FAILURE,
+            Err(_) => return ExitCode::from(2),
         };
         rt.block_on(crate::surface_git_command::handle_git_diff(
             git_agg,
@@ -89,7 +89,7 @@ pub fn handle_scan(
     // Validate path exists before scanning
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::FAILURE;
+        return ExitCode::from(2);
     }
     let surface = CheckCommandsSurface::new_with_factory(ctx, multi_project_orchestrator, factory);
     surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format)

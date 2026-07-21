@@ -143,7 +143,7 @@ pub async fn handle_dependencies(
         }
         Err(e) => {
             println!("{e}");
-            return ExitCode::from(1);
+            return ExitCode::from(2);
         }
     }
 

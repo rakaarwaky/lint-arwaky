@@ -14,6 +14,8 @@
 // each member gets its own language-specific configuration.
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
@@ -119,7 +121,7 @@ impl CheckCommandsSurface {
         let path_obj = crate::surface_common_command::resolve_file_path(path);
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => return ExitCode::FAILURE,
+            Err(_) => return ExitCode::from(2),
         };
 
         // Determine dynamic orchestrators based on detected language config
@@ -131,6 +133,7 @@ impl CheckCommandsSurface {
             let ro = self.role_orchestrator.clone();
             let ext = self.external_lint.clone();
             let oo = self.orphan_orchestrator.clone();
+            let rf = self.report_formatter.clone();
             Arc::new(move |_cfg: ArchitectureConfig| CheckContext {
                 code_analysis_linter: cal.clone(),
                 naming_orchestrator: no.clone(),
@@ -138,6 +141,7 @@ impl CheckCommandsSurface {
                 role_orchestrator: ro.clone(),
                 external_lint: ext.clone(),
                 orphan_orchestrator: oo.clone(),
+                report_formatter: rf.clone(),
             })
         });
         let ctx = effective_factory(config.clone());
@@ -198,7 +202,7 @@ impl CheckCommandsSurface {
         &self,
         path: &str,
         orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
-    ) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {
+    ) -> Vec<LintResult> {
         let scan_root = crate::surface_check_action::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
@@ -213,7 +217,7 @@ impl CheckCommandsSurface {
     /// Filter results to the target path and display the report.
     fn filter_and_display_results(
         &self,
-        all_results: Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        all_results: Vec<LintResult>,
         path: &str,
         filter: Option<&str>,
         _reporter: Arc<dyn ICodeAnalysisAggregate>,
@@ -244,10 +248,7 @@ impl CheckCommandsSurface {
         };
         let violation_count = filtered_results.len();
         // Delegate formatting to the report formatter aggregate (capabilities layer)
-        let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
-            filtered_results,
-            vec![],
-        );
+        let report = ScanReport::new(filtered_results, vec![]);
         let output = self.report_formatter.format(&report, *format);
         println!("{output}");
         violation_count
@@ -332,7 +333,7 @@ impl CheckCommandsSurface {
             Ok(fp) => fp,
             Err(_) => {
                 eprintln!("[error] invalid path: {path}");
-                return ExitCode::from(1);
+                return ExitCode::from(2);
             }
         };
 
@@ -340,13 +341,13 @@ impl CheckCommandsSurface {
             Some(o) => o.clone(),
             None => {
                 eprintln!("[error] multi-project orchestrator not available");
-                return ExitCode::from(1);
+                return ExitCode::from(2);
             }
         };
 
         let rt = match crate::surface_common_command::create_runtime() {
             Ok(r) => r,
-            Err(_) => return ExitCode::from(1),
+            Err(_) => return ExitCode::from(2),
         };
         let workspaces = rt.block_on(orchestrator.discover_workspaces(&path_obj));
         let all_workspaces = workspaces.clone();
@@ -383,7 +384,7 @@ impl CheckCommandsSurface {
                 }
                 eprintln!();
                 eprintln!("Usage: lint-arwaky-cli scan {path} --member <name>");
-                return ExitCode::from(1);
+                return ExitCode::from(2);
             }
             filtered
         } else {
@@ -567,10 +568,7 @@ impl CheckCommandsSurface {
                 println!();
             } else {
                 // Single workspace — delegate formatting to aggregate
-                let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
-                    member_results.clone(),
-                    vec![],
-                );
+                let report = ScanReport::new(member_results.clone(), vec![]);
                 let output = self.report_formatter.format(&report, format);
                 println!("{output}");
             }
@@ -583,10 +581,7 @@ impl CheckCommandsSurface {
                 }
                 _ => {
                     // Delegate non-text formatting to aggregate
-                    let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
-                        global_all_results.clone(),
-                        vec![],
-                    );
+                    let report = ScanReport::new(global_all_results.clone(), vec![]);
                     let output = self.report_formatter.format(&report, format);
                     println!("{output}");
                 }
@@ -602,7 +597,7 @@ impl CheckCommandsSurface {
     /// Print multi-workspace text summary (extracted from scan_with_discovery).
     fn print_multi_workspace_summary(
         &self,
-        global_all_results: &[shared::cli_commands::taxonomy_result_vo::LintResult],
+        global_all_results: &[LintResult],
         workspaces: &[shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo],
         member: Option<&str>,
     ) {

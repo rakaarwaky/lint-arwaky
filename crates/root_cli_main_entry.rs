@@ -164,7 +164,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
                 orchestrator,
@@ -185,7 +185,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_security(
                 orchestrator,
@@ -201,7 +201,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             rt.block_on(
                 cli_commands::surface_maintenance_command::handle_dependencies(
@@ -228,7 +228,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             let exe_path = default_file_path("lint-arwaky".to_string());
             match rt.block_on(aggregate.install_hook(&exe_path)) {
@@ -242,7 +242,7 @@ fn main() -> ExitCode {
                 }
                 Err(e) => {
                     eprintln!("Failed to install pre-commit hook: {:?}", e);
-                    ExitCode::FAILURE
+                    ExitCode::from(2)
                 }
             }
         }
@@ -255,7 +255,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             match rt.block_on(aggregate.uninstall_hook()) {
                 Ok(status) if status.value => {
@@ -286,7 +286,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             rt.block_on(cli_commands::surface_setup_command::handle_install(
                 setup_orchestrator,
@@ -306,13 +306,15 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::FAILURE,
+                Err(_) => return ExitCode::from(2),
             };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
                 config_reader,
             ))
         }
+        // P3.3: these are handled by early-exit above — unreachable here
+        Commands::Version | Commands::Adapters => unreachable!(),
     }
 }
 

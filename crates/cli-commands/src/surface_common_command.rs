@@ -18,7 +18,7 @@ pub fn create_runtime() -> Result<tokio::runtime::Runtime, ExitCode> {
         Ok(r) => Ok(r),
         Err(_) => {
             eprintln!("[error] failed to create tokio runtime");
-            Err(ExitCode::FAILURE)
+            Err(ExitCode::from(2))
         }
     }
 }
@@ -31,7 +31,7 @@ pub fn create_current_thread_runtime() -> Result<tokio::runtime::Runtime, ExitCo
         Ok(r) => Ok(r),
         Err(_) => {
             eprintln!("[error] failed to create tokio runtime");
-            Err(ExitCode::FAILURE)
+            Err(ExitCode::from(2))
         }
     }
 }
