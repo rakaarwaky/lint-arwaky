@@ -3,6 +3,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
+use shared::git_hooks::utility_git_io as git_io;
 use std::collections::HashSet;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
@@ -65,18 +66,15 @@ impl DiffChecker {
     }
 
     fn get_default_branch(&self, project_path: &FilePath) -> String {
-        let result = std::process::Command::new("git")
-            .args(["symbolic-ref", "refs/remotes/origin/HEAD"])
-            .current_dir(&project_path.value)
-            .output()
-            .ok();
-        if let Some(output) = result {
-            if output.status.success() {
-                let ref_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if let Some(branch) = ref_str.rsplit('/').next() {
-                    if !branch.is_empty() {
-                        return branch.to_string();
-                    }
+        let (stdout, _, success) = git_io::run_git_command(
+            &["symbolic-ref", "refs/remotes/origin/HEAD"],
+            &project_path.value,
+        );
+        if success {
+            let ref_str = stdout.trim().to_string();
+            if let Some(branch) = ref_str.rsplit('/').next() {
+                if !branch.is_empty() {
+                    return branch.to_string();
                 }
             }
         }
@@ -111,19 +109,12 @@ impl DiffChecker {
         variant: &str,
         project_path: &FilePath,
     ) -> bool {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["diff", "--name-only", variant])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
+        let (stdout, _, success) =
+            git_io::run_git_command(&["diff", "--name-only", variant], &project_path.value);
+        if success {
+            for line in git_io::parse_output_lines(&stdout) {
+                if let Ok(fp) = FilePath::new(&line) {
+                    changed_set.insert(fp);
                 }
             }
         }
@@ -131,38 +122,31 @@ impl DiffChecker {
     }
 
     fn try_fallback_head(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["diff", "--name-only", "HEAD"])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
+        let (stdout, _, success) =
+            git_io::run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
+        if success {
+            for line in git_io::parse_output_lines(&stdout) {
+                if let Ok(fp) = FilePath::new(&line) {
+                    changed_set.insert(fp);
                 }
             }
         }
     }
 
     fn try_ls_files(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        if let Ok(output) = std::process::Command::new("git")
-            .args(["ls-files", "--modified", "--others", "--exclude-standard"])
-            .current_dir(&project_path.value)
-            .output()
-        {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let line = line.trim();
-                    if !line.is_empty() {
-                        if let Ok(fp) = FilePath::new(line) {
-                            changed_set.insert(fp);
-                        }
-                    }
+        let (stdout, _, success) = git_io::run_git_command(
+            &[
+                "ls-files",
+                "--modified",
+                "--others",
+                "--exclude-standard",
+            ],
+            &project_path.value,
+        );
+        if success {
+            for line in git_io::parse_output_lines(&stdout) {
+                if let Ok(fp) = FilePath::new(&line) {
+                    changed_set.insert(fp);
                 }
             }
         }

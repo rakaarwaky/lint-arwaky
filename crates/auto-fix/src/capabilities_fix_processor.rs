@@ -2,6 +2,7 @@
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::auto_fix::utility_auto_fix_io as af_io;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -197,13 +198,12 @@ impl LintFixProcessor {
     }
 
     fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
+        if !af_io::path_exists(file_path) {
             return false;
         }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
+        let content = match af_io::read_file(file_path) {
+            Some(c) => c,
+            None => return false,
         };
         let lines: Vec<&str> = content.lines().collect();
         if (line as usize) > lines.len() || line == 0 {
@@ -258,17 +258,16 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        std::fs::write(path, result).is_ok()
+        af_io::write_file(file_path, result)
     }
 
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() {
+        if !af_io::path_exists(file_path) {
             return false;
         }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return false,
+        let content = match af_io::read_file(file_path) {
+            Some(c) => c,
+            None => return false,
         };
         let lines: Vec<&str> = content.lines().collect();
         if (line as usize) > lines.len() || line == 0 {
@@ -294,7 +293,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        std::fs::write(path, result).is_ok()
+        af_io::write_file(file_path, result)
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
@@ -308,19 +307,18 @@ impl LintFixProcessor {
     }
 
     fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> usize {
-        let path = std::path::Path::new(file_path);
-        if !path.exists() || !path.is_file() {
+        if !af_io::path_exists(file_path) || !af_io::path_exists(file_path) {
             return 0;
         }
-        let content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return 0,
+        let content = match af_io::read_file(file_path) {
+            Some(c) => c,
+            None => return 0,
         };
         if !content.contains(old_name) {
             return 0;
         }
         let new_content = content.replace(old_name, new_name);
-        if new_content != content && std::fs::write(path, &new_content).is_ok() {
+        if new_content != content && af_io::write_file(file_path, &new_content) {
             return 1;
         }
         0

@@ -1,8 +1,4 @@
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::project_setup::taxonomy_doctor_vo::{
-    DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
-    ToolchainDiagnostics,
-};
+use shared::common::taxonomy_path_vo::FilePath;
 
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
 //
@@ -17,7 +13,14 @@ use shared::project_setup::taxonomy_doctor_vo::{
 //
 //   3. run_dependency_report: parses Cargo.lock (Rust), pyproject.toml, or
 //      requirements.txt to list direct and transitive dependencies.
-use shared::common::taxonomy_path_vo::FilePath;
+
+use shared::common::utility_process as proc_io;
+use shared::maintenance::utility_dependency_io as dep_io;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::project_setup::taxonomy_doctor_vo::{
+    DependencyInfo, DependencyReport, SecurityFinding, SecurityScanReport, ToolStatus,
+    ToolchainDiagnostics,
+};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -61,22 +64,17 @@ impl MaintenanceChecker {
         // Required tools (cargo, rustfmt, clippy, git) must be found — their
         // status is "FAIL" if missing. Optional tools get "WARN" on failure.
         let check_tool = |name: &str, args: &[&str], required: bool| -> ToolStatus {
-            let output = std::process::Command::new(name).args(args).output();
-            let (status, version) = match output {
-                Ok(o) if o.status.success() => {
-                    let ver = match String::from_utf8_lossy(&o.stdout).lines().next() {
-                        Some(v) => v.trim().to_string(),
-                        None => String::new(),
-                    };
-                    ("OK".to_string(), ver)
-                }
-                _ => {
-                    if required {
-                        ("FAIL".to_string(), "NOT FOUND".to_string())
-                    } else {
-                        ("WARN".to_string(), "NOT FOUND".to_string())
-                    }
-                }
+            let (stdout, _, success) = proc_io::run_command(name, args);
+            let (status, version) = if success {
+                let ver = match stdout.lines().next() {
+                    Some(v) => v.trim().to_string(),
+                    None => String::new(),
+                };
+                ("OK".to_string(), ver)
+            } else if required {
+                ("FAIL".to_string(), "NOT FOUND".to_string())
+            } else {
+                ("WARN".to_string(), "NOT FOUND".to_string())
             };
             ToolStatus {
                 name: name.to_string(),
@@ -99,8 +97,8 @@ impl MaintenanceChecker {
         ];
 
         let mut js_tools = vec![check_tool("node", &["--version"], false)];
-        let eslint_local = std::path::Path::new("node_modules/.bin/eslint");
-        let eslint_status = if eslint_local.exists() {
+        let eslint_local = "node_modules/.bin/eslint";
+        let eslint_status = if shared::common::utility_file::is_file(eslint_local) {
             ToolStatus {
                 name: "eslint (local)".to_string(),
                 status: "OK".to_string(),
@@ -113,8 +111,8 @@ impl MaintenanceChecker {
         };
         js_tools.push(eslint_status);
 
-        let prettier_local = std::path::Path::new("node_modules/.bin/prettier");
-        let prettier_status = if prettier_local.exists() {
+        let prettier_local = "node_modules/.bin/prettier";
+        let prettier_status = if shared::common::utility_file::is_file(prettier_local) {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
@@ -127,8 +125,8 @@ impl MaintenanceChecker {
         };
         js_tools.push(prettier_status);
 
-        let tsc_local = std::path::Path::new("node_modules/.bin/tsc");
-        let tsc_status = if tsc_local.exists() {
+        let tsc_local = "node_modules/.bin/tsc";
+        let tsc_status = if shared::common::utility_file::is_file(tsc_local) {
             ToolStatus {
                 name: "tsc (local)".to_string(),
                 status: "OK".to_string(),
@@ -165,121 +163,90 @@ impl MaintenanceChecker {
         // Rust project: use cargo-audit with JSON output, parse vulnerabilities
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
-            let output = std::process::Command::new("cargo")
-                .args(["audit", "--json"])
-                .current_dir(root)
-                .output();
-            match output {
-                Ok(o) => {
-                    let s = String::from_utf8_lossy(&o.stdout);
-                    let mut findings = Vec::new();
-                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
-                        if let Some(list) = json
-                            .get("vulnerabilities")
-                            .and_then(|v| v.get("list"))
-                            .and_then(|l| l.as_array())
+            let (s, _, _) = dep_io::run_external_command_in("cargo", &["audit", "--json"], root);
+            let mut findings = Vec::new();
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
+                if let Some(list) = json
+                    .get("vulnerabilities")
+                    .and_then(|v| v.get("list"))
+                    .and_then(|l| l.as_array())
+                {
+                    for adv in list {
+                        let pkg = match adv
+                            .get("package")
+                            .and_then(|p| p.get("name"))
+                            .and_then(|n| n.as_str())
                         {
-                            for adv in list {
-                                let pkg = match adv
-                                    .get("package")
-                                    .and_then(|p| p.get("name"))
-                                    .and_then(|n| n.as_str())
-                                {
-                                    Some(s) => s.to_string(),
-                                    None => "unknown".to_string(),
-                                };
-                                let severity = match adv.get("severity").and_then(|s| s.as_str()) {
-                                    Some(s) => s.to_string(),
-                                    None => "unknown".to_string(),
-                                };
-                                let cve = match adv
-                                    .get("advisory")
-                                    .and_then(|a| a.get("id"))
-                                    .and_then(|i| i.as_str())
-                                {
-                                    Some(s) => s.to_string(),
-                                    None => "unknown".to_string(),
-                                };
-                                findings.push(SecurityFinding {
-                                    severity,
-                                    test_id: cve,
-                                    file: pkg,
-                                    line: 0,
-                                    issue: "Advisory vulnerability".to_string(),
-                                });
-                            }
-                        }
-                    }
-                    SecurityScanReport {
-                        language: "Rust".to_string(),
-                        tool_name: "cargo-audit".to_string(),
-                        findings,
-                        tool_installed: true,
+                            Some(s) => s.to_string(),
+                            None => "unknown".to_string(),
+                        };
+                        let severity = match adv.get("severity").and_then(|s| s.as_str()) {
+                            Some(s) => s.to_string(),
+                            None => "unknown".to_string(),
+                        };
+                        let cve = match adv
+                            .get("advisory")
+                            .and_then(|a| a.get("id"))
+                            .and_then(|i| i.as_str())
+                        {
+                            Some(s) => s.to_string(),
+                            None => "unknown".to_string(),
+                        };
+                        findings.push(SecurityFinding {
+                            severity,
+                            test_id: cve,
+                            file: pkg,
+                            line: 0,
+                            issue: "Advisory vulnerability".to_string(),
+                        });
                     }
                 }
-                Err(_) => SecurityScanReport {
-                    language: "Rust".to_string(),
-                    tool_name: "cargo-audit".to_string(),
-                    findings: Vec::new(),
-                    tool_installed: false,
-                },
+            }
+            SecurityScanReport {
+                language: "Rust".to_string(),
+                tool_name: "cargo-audit".to_string(),
+                findings,
+                tool_installed: true,
             }
         } else {
             // Python project: use bandit with JSON output, parse results array
-            let output = std::process::Command::new("bandit")
-                .args(["-r", "--format", "json", root])
-                .output();
-            match output {
-                Ok(o) => {
-                    let s = String::from_utf8_lossy(&o.stdout);
-                    let mut findings = Vec::new();
-                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
-                        if let Some(results) = json.get("results").and_then(|r| r.as_array()) {
-                            for r in results {
-                                let test_id = match r.get("test_id").and_then(|t| t.as_str()) {
-                                    Some(s) => s.to_string(),
-                                    None => String::new(),
-                                };
-                                let issue = match r.get("issue_text").and_then(|t| t.as_str()) {
-                                    Some(s) => s.to_string(),
-                                    None => String::new(),
-                                };
-                                let severity =
-                                    match r.get("issue_severity").and_then(|s| s.as_str()) {
-                                        Some(s) => s.to_string(),
-                                        None => String::new(),
-                                    };
-                                let fname = match r.get("filename").and_then(|f| f.as_str()) {
-                                    Some(s) => s.to_string(),
-                                    None => String::new(),
-                                };
-                                let line = r
-                                    .get("line_number")
-                                    .and_then(|l| l.as_u64())
-                                    .unwrap_or_default();
-                                findings.push(SecurityFinding {
-                                    severity,
-                                    test_id,
-                                    file: fname,
-                                    line,
-                                    issue,
-                                });
-                            }
-                        }
-                    }
-                    SecurityScanReport {
-                        language: "Python".to_string(),
-                        tool_name: "bandit".to_string(),
-                        findings,
-                        tool_installed: true,
+            let (s, _, _) = dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
+            let mut findings = Vec::new();
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
+                if let Some(results) = json.get("results").and_then(|r| r.as_array()) {
+                    for r in results {
+                        let test_id = match r.get("test_id").and_then(|t| t.as_str()) {
+                            Some(s) => s.to_string(),
+                            None => String::new(),
+                        };
+                        let issue = match r.get("issue_text").and_then(|t| t.as_str()) {
+                            Some(s) => s.to_string(),
+                            None => String::new(),
+                        };
+                        let severity = match r.get("issue_severity").and_then(|s| s.as_str()) {
+                            Some(s) => s.to_string(),
+                            None => String::new(),
+                        };
+                        let fname = match r.get("filename").and_then(|f| f.as_str()) {
+                            Some(s) => s.to_string(),
+                            None => String::new(),
+                        };
+                        let line = r.get("line_number").and_then(|l| l.as_u64()).unwrap_or_default();
+                        findings.push(SecurityFinding {
+                            severity,
+                            test_id,
+                            file: fname,
+                            line,
+                            issue,
+                        });
                     }
                 }
-                Err(_) => SecurityScanReport {
-                    language: "Python".to_string(),
-                    tool_name: "bandit".to_string(),
-                    findings: Vec::new(),
-                    tool_installed: false,
-                },
+            }
+            SecurityScanReport {
+                language: "Python".to_string(),
+                tool_name: "bandit".to_string(),
+                findings,
+                tool_installed: true,
             }
         }
     }
@@ -292,7 +259,7 @@ impl MaintenanceChecker {
         // Try Rust Cargo.lock first (most detailed), then pyproject.toml, then requirements.txt
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
-            let content = std::fs::read_to_string(&cargo_lock).map_err(|e| e.to_string())?;
+            let content = dep_io::read_dependency_file(&cargo_lock).map_err(|e| e.to_string())?;
             let mut in_package = false;
             let mut pkg_name = String::new();
             let mut pkg_version = String::new();
@@ -300,7 +267,7 @@ impl MaintenanceChecker {
 
             let cargo_toml = std::path::Path::new(root).join("Cargo.toml");
             let mut direct_deps = std::collections::HashSet::new();
-            if let Ok(toml_content) = std::fs::read_to_string(&cargo_toml) {
+            if let Ok(toml_content) = dep_io::read_dependency_file(&cargo_toml) {
                 // Parse [dependencies] section to identify direct dependencies
                 let mut in_deps = false;
                 for line in toml_content.lines() {
@@ -366,7 +333,7 @@ impl MaintenanceChecker {
         } else {
             let pyproject = std::path::Path::new(root).join("pyproject.toml");
             if pyproject.exists() {
-                let content = std::fs::read_to_string(&pyproject).map_err(|e| e.to_string())?;
+                let content = dep_io::read_dependency_file(&pyproject).map_err(|e| e.to_string())?;
                 let mut dependencies = Vec::new();
                 for line in content.lines() {
                     let t = line.trim();
@@ -393,7 +360,7 @@ impl MaintenanceChecker {
             } else {
                 let reqs = std::path::Path::new(root).join("requirements.txt");
                 if reqs.exists() {
-                    let content = std::fs::read_to_string(&reqs).map_err(|e| e.to_string())?;
+                    let content = dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
                     let mut dependencies = Vec::new();
                     for line in content.lines() {
                         let t = line.trim();

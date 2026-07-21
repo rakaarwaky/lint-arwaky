@@ -1,5 +1,6 @@
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
+use shared::config_system::utility_config_io as config_io;
 
 // PURPOSE: WorkspaceDetector — IWorkspaceDetectorProtocol implementation for workspace type detection
 use shared::common::taxonomy_path_vo::FilePath;
@@ -12,18 +13,18 @@ pub struct WorkspaceDetector;
 
 impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
-        let path_buf = std::path::Path::new(&path.value).to_path_buf();
+        let path_buf = std::path::PathBuf::from(&path.value);
 
         // 1. Check for explicit language markers in the workspace directory itself
-        if path_buf.join("Cargo.toml").exists() {
+        if config_io::path_exists(path_buf.join("Cargo.toml")) {
             return WorkspaceType::Rust;
         }
-        if path_buf.join("package.json").exists() {
+        if config_io::path_exists(path_buf.join("package.json")) {
             return WorkspaceType::TypeScript;
         }
-        if path_buf.join("pyproject.toml").exists()
-            || path_buf.join("setup.py").exists()
-            || path_buf.join("requirements.txt").exists()
+        if config_io::path_exists(path_buf.join("pyproject.toml"))
+            || config_io::path_exists(path_buf.join("setup.py"))
+            || config_io::path_exists(path_buf.join("requirements.txt"))
         {
             return WorkspaceType::Python;
         }
@@ -43,15 +44,15 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 2 {
-            if current.join("Cargo.toml").exists() {
+            if config_io::path_exists(current.join("Cargo.toml")) {
                 return WorkspaceType::Rust;
             }
-            if current.join("package.json").exists() {
+            if config_io::path_exists(current.join("package.json")) {
                 return WorkspaceType::TypeScript;
             }
-            if current.join("pyproject.toml").exists()
-                || current.join("setup.py").exists()
-                || current.join("requirements.txt").exists()
+            if config_io::path_exists(current.join("pyproject.toml"))
+                || config_io::path_exists(current.join("setup.py"))
+                || config_io::path_exists(current.join("requirements.txt"))
             {
                 return WorkspaceType::Python;
             }
@@ -67,10 +68,10 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     }
 
     fn is_workspace(&self, path: &FilePath) -> bool {
-        let root = std::path::Path::new(&path.value);
+        let root = std::path::PathBuf::from(&path.value);
         ["crates", "packages", "modules"]
             .iter()
-            .any(|dir| root.join(dir).is_dir())
+            .any(|dir| config_io::path_exists(root.join(dir)))
     }
 }
 

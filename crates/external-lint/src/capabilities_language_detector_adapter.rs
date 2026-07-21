@@ -5,6 +5,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_language_detector_protocol::{
     DetectedLanguages, IExternalLintLanguageDetectorProtocol,
 };
+use shared::external_lint::utility_external_lint_io as ext_io;
 
 // PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorProtocol implementation
 //
@@ -27,7 +28,7 @@ impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapt
         let mut has_js = false;
 
         let root_path = Path::new(&path.value);
-        if root_path.is_file() {
+        if ext_io::is_file(root_path) {
             Self::detect_from_file(root_path, &mut has_rs, &mut has_py, &mut has_js);
         } else {
             Self::detect_in_dir(root_path, &mut has_rs, &mut has_py, &mut has_js);
@@ -51,28 +52,22 @@ impl ExternalLintLanguageDetectorAdapter {
     }
 
     fn detect_in_dir(dir: &Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let name = match path.file_name() {
-                        Some(n) => n.to_string_lossy(),
-                        None => continue,
-                    };
-                    if !SKIP_DIRS.contains(&name.as_ref()) {
-                        Self::detect_in_dir(&path, has_rs, has_py, has_js);
-                    }
-                } else if let Some(ext) = path.extension() {
-                    match ext.to_str() {
-                        Some("rs") => *has_rs = true,
-                        Some("py") => *has_py = true,
-                        Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
-                        _ => {}
-                    }
+        let entries = ext_io::scan_directory(dir);
+        for (name, path_str, is_dir_entry) in entries {
+            if is_dir_entry {
+                if !SKIP_DIRS.contains(&name.as_str()) {
+                    Self::detect_in_dir(Path::new(&path_str), has_rs, has_py, has_js);
                 }
-                if *has_rs && *has_py && *has_js {
-                    break;
+            } else if let Some(ext) = Path::new(&path_str).extension() {
+                match ext.to_str() {
+                    Some("rs") => *has_rs = true,
+                    Some("py") => *has_py = true,
+                    Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
+                    _ => {}
                 }
+            }
+            if *has_rs && *has_py && *has_js {
+                break;
             }
         }
     }

@@ -5,10 +5,9 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::utility_import_resolver;
+use shared::import_rules::{utility_file_read, utility_import_resolver};
 use shared::taxonomy_definition_vo::LayerDefinition;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
-use std::fs;
 
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -105,9 +104,9 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match fs::read_to_string(file) {
-            Ok(c) => c,
-            Err(_) => return,
+        let content = match utility_file_read::read_file(file) {
+            Some(c) => c,
+            None => return,
         };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
         let layer_name_vo = LayerNameVO::new(layer_name);
@@ -187,9 +186,9 @@ impl ArchImportForbiddenChecker {
             .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match fs::read_to_string(file) {
-            Ok(c) => c,
-            Err(_) => return,
+        let content = match utility_file_read::read_file(file) {
+            Some(c) => c,
+            None => return,
         };
         let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
         if import_lines.is_empty() {

@@ -18,6 +18,7 @@ use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 use shared::tui::taxonomy_report_formatter_helper::ReportFormatterHelper;
+use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
@@ -488,7 +489,7 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn adapters(&self) -> LintExecutionResult {
-        let adapters = discover_adapters();
+        let adapters = Self::discover_adapters();
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
@@ -516,46 +517,6 @@ impl ILintExecutorProtocol for LintExecutor {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-fn is_binary_available(b: &str) -> bool {
-    std::process::Command::new("sh")
-        .args(["-c", &format!("command -v {} >/dev/null 2>&1", b)])
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
-}
-
-pub fn discover_adapters() -> Vec<AdapterInfo> {
-    let mut list = vec![
-        ("ast_rust_scanner", "Rust AST (built-in)", true),
-        ("ast_py_scanner", "Python AST (built-in)", true),
-        ("ast_js_scanner", "JS/TS AST (built-in)", true),
-    ]
-    .into_iter()
-    .map(|(n, l, i)| AdapterInfo {
-        name: n.into(),
-        label: l.into(),
-        installed: i,
-    })
-    .collect::<Vec<_>>();
-    for (b, l) in [
-        ("clippy", "Clippy (Rust)"),
-        ("ruff", "Ruff (Python)"),
-        ("mypy", "MyPy (Python)"),
-        ("bandit", "Bandit (Python)"),
-        ("radon", "Radon (Python metrics)"),
-        ("eslint", "ESLint (JavaScript)"),
-        ("prettier", "Prettier (JavaScript)"),
-        ("tsc", "TypeScript Compiler"),
-    ] {
-        list.push(AdapterInfo {
-            name: b.into(),
-            label: l.into(),
-            installed: is_binary_available(b),
-        });
-    }
-    list
-}
 
 impl LintExecutor {
     pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
@@ -716,6 +677,44 @@ impl LintExecutor {
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
         ReportFormatterHelper::format_config_result(result)
+    }
+
+    /// Check if a binary is available in the system PATH.
+    fn is_binary_available(b: &str) -> bool {
+        tui_io::is_binary_available(b)
+    }
+
+    /// Discover available linter adapters and check binary availability.
+    fn discover_adapters() -> Vec<AdapterInfo> {
+        let mut list = vec![
+            ("ast_rust_scanner", "Rust AST (built-in)", true),
+            ("ast_py_scanner", "Python AST (built-in)", true),
+            ("ast_js_scanner", "JS/TS AST (built-in)", true),
+        ]
+        .into_iter()
+        .map(|(n, l, i)| AdapterInfo {
+            name: n.into(),
+            label: l.into(),
+            installed: i,
+        })
+        .collect::<Vec<_>>();
+        for (b, l) in [
+            ("clippy", "Clippy (Rust)"),
+            ("ruff", "Ruff (Python)"),
+            ("mypy", "MyPy (Python)"),
+            ("bandit", "Bandit (Python)"),
+            ("radon", "Radon (Python metrics)"),
+            ("eslint", "ESLint (JavaScript)"),
+            ("prettier", "Prettier (JavaScript)"),
+            ("tsc", "TypeScript Compiler"),
+        ] {
+            list.push(AdapterInfo {
+                name: b.into(),
+                label: l.into(),
+                installed: Self::is_binary_available(b),
+            });
+        }
+        list
     }
 }
 

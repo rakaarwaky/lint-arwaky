@@ -39,3 +39,6 @@ pub mod orphan_detector;
 pub mod project_setup;
 #[path = "role-rules/mod.rs"]
 pub mod role_rules;
+
+#[path = "maintenance/mod.rs"]
+pub mod maintenance;

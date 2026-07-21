@@ -2,6 +2,7 @@
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::tui::taxonomy_file_entry_vo::FileEntry;
+use std::io::Write;
 use std::path::Path;
 
 /// List directory entries, skipping hidden files (starting with '.').
@@ -89,4 +90,36 @@ pub fn path_components(path: &FilePath) -> Vec<FilePath> {
                 .and_then(|s| FilePath::new(s.to_string()).ok())
         })
         .collect()
+}
+
+/// Copy text to the system clipboard.
+/// Tries arboard first (if available), falls back to xclip/wl-copy shell commands.
+/// Returns true if copy succeeded, false otherwise.
+pub fn copy_text_to_clipboard(text: &str) -> bool {
+    // Try arboard first
+    #[cfg(not(test))]
+    {
+        if let Ok(mut clipboard) = arboard::Clipboard::new() {
+            if clipboard.set_text(text).is_ok() {
+                return true;
+            }
+        }
+    }
+
+    // Fallback to shell commands: xclip → wl-copy
+    let success = std::process::Command::new("sh")
+        .arg("-c")
+        .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null")
+        .stdin(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            if let Some(ref mut stdin) = child.stdin {
+                let _ = stdin.write_all(text.as_bytes());
+            }
+            child.wait()
+        })
+        .map(|status| status.success())
+        .unwrap_or(false);
+
+    success
 }

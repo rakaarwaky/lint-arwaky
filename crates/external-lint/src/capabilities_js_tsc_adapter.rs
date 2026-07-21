@@ -54,7 +54,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if Path::new(path_str).is_file()
+        if shared::external_lint::utility_external_lint_io::is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
         {

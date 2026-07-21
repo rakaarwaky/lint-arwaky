@@ -1,6 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::config_system::utility_config_io as config_io;
 
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
 // XDG Base Directory Specification compliant config lookup
@@ -21,7 +22,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 
         while !current.as_os_str().is_empty() && depth < 2 {
             let candidate = current.join(&filename);
-            if let Ok(content) = tokio::fs::read_to_string(&candidate).await {
+            if let Ok(content) = config_io::read_file_async(&candidate).await {
                 return Some(ConfigSource::new(
                     language,
                     candidate.to_string_lossy().to_string(),
@@ -85,7 +86,7 @@ impl ConfigYamlReader {
         }
 
         for path in &candidates {
-            match tokio::fs::read_to_string(path).await {
+            match config_io::read_file_async(path).await {
                 Ok(content) => {
                     return Some(ConfigSource::new(
                         language,

@@ -1,9 +1,9 @@
 
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_command_protocol::{GitCommandOutput, IGitCommandProtocol};
+use shared::git_hooks::utility_git_io as git_io;
 
 // PURPOSE: GitCommandAdapter — IGitCommandProtocol implementation for running git commands
-use std::process::Command;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -14,21 +14,11 @@ pub struct GitCommandAdapter;
 #[async_trait::async_trait]
 impl IGitCommandProtocol for GitCommandAdapter {
     async fn run_git(&self, args: &[&str], dir: &FilePath) -> GitCommandOutput {
-        let output = Command::new("git")
-            .args(args)
-            .current_dir(dir.value())
-            .output();
-        match output {
-            Ok(o) => GitCommandOutput {
-                stdout: String::from_utf8_lossy(&o.stdout).to_string(),
-                stderr: String::from_utf8_lossy(&o.stderr).to_string(),
-                success: o.status.success(),
-            },
-            Err(_) => GitCommandOutput {
-                stdout: String::new(),
-                stderr: "Failed to execute git".to_string(),
-                success: false,
-            },
+        let (stdout, stderr, success) = git_io::run_git_command(args, &dir.value);
+        GitCommandOutput {
+            stdout,
+            stderr,
+            success,
         }
     }
 

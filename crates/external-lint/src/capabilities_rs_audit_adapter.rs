@@ -97,16 +97,16 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 
         let mut ignored_advisories = std::collections::HashSet::new();
         let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
-        if deny_toml_path.exists() {
-            if let Ok(content) = std::fs::read_to_string(&deny_toml_path) {
-                if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
-                    if let Some(advisories) = deny_cfg.get("advisories") {
-                        if let Some(ignore) = advisories.get("ignore") {
-                            if let Some(ignore_arr) = ignore.as_array() {
-                                for val in ignore_arr {
-                                    if let Some(id) = val.as_str() {
-                                        ignored_advisories.insert(id.to_string());
-                                    }
+        let deny_toml_str = deny_toml_path.to_string_lossy();
+        if shared::external_lint::utility_external_lint_io::is_file(&deny_toml_path) {
+            let content = shared::external_lint::utility_external_lint_io::read_file_safe(&deny_toml_str);
+            if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
+                if let Some(advisories) = deny_cfg.get("advisories") {
+                    if let Some(ignore) = advisories.get("ignore") {
+                        if let Some(ignore_arr) = ignore.as_array() {
+                            for val in ignore_arr {
+                                if let Some(id) = val.as_str() {
+                                    ignored_advisories.insert(id.to_string());
                                 }
                             }
                         }

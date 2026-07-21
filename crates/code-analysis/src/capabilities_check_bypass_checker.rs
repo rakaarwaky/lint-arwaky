@@ -215,4 +215,5 @@ impl BypassChecker {
             _ => ViolationKind::BypassComment,
         }
     }
-}
+}      
+ 

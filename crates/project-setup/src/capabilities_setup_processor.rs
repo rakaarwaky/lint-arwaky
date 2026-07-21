@@ -1,9 +1,11 @@
 use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::common::utility_process as proc_io;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
     McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
 };
+use shared::project_setup::utility_setup_io as setup_io;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
@@ -106,19 +108,11 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                 return McpBinaryNameVO::new(c.clone());
             }
         }
-        let which_output = match std::process::Command::new("which")
-            .arg("lint-arwaky-mcp")
-            .output()
-            .ok()
-            .and_then(|o| {
-                if o.status.success() {
-                    Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
-                } else {
-                    None
-                }
-            }) {
-            Some(output) => output,
-            None => "lint-arwaky-mcp".to_string(),
+        let (stdout, _, success) = proc_io::run_command("which", &["lint-arwaky-mcp"]);
+        let which_output = if success && !stdout.is_empty() {
+            stdout.trim().to_string()
+        } else {
+            "lint-arwaky-mcp".to_string()
         };
         McpBinaryNameVO::new(which_output)
     }
@@ -224,7 +218,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        std::fs::write(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
+        setup_io::write_file_content(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,
@@ -236,7 +230,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
             .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
-        std::fs::create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
+        setup_io::create_dir(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(config_dir)
     }
 
@@ -269,12 +263,11 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let entries = match std::fs::read_dir(dir) {
+        let entries = match setup_io::read_dir_entries(dir) {
             Ok(e) => e,
             Err(_) => return,
         };
-        for entry in entries.flatten() {
-            let path = entry.path();
+        for path in entries {
             if path.is_dir() {
                 let name = path.file_name().unwrap_or_default().to_string_lossy();
                 if name.starts_with('.')

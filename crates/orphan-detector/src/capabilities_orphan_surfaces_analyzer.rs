@@ -36,18 +36,13 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let basename = file_basename(fp_val);
         let stem = file_stem(fp_val);
 
-        if let Ok(content) = std::fs::read_to_string(fp_val) {
+        let content = shared::orphan_detector::utility_orphan_io::read_file_safe(fp_val);
+        if !content.is_empty() {
             // Check if this surface is imported by any entry or router file
             let root = std::path::Path::new(".");
             if let Ok(workspace_root) =
                 shared::orphan_detector::utility_workspace::find_workspace_root(root)
             {
-                if let Ok(imported) = Self::check_imported_by_entry_or_router(&workspace_root, &stem) {
-                    if imported {
-                        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-                    }
-                }
-
                 // Also check for function/struct names from the surface file
                 let mut identifiers: Vec<String> = Vec::new();
                 // Extract pub fn names
@@ -71,10 +66,8 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                 }
 
                 for id in &identifiers {
-                    if let Ok(imported) = Self::check_imported_by_entry_or_router(&workspace_root, id) {
-                        if imported {
-                            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-                        }
+                    if Self::is_identifier_imported(&workspace_root, id) {
+                        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                     }
                 }
             }
@@ -108,49 +101,37 @@ impl SurfacesOrphanAnalyzer {
         Self {}
     }
 
-    fn check_imported_by_entry_or_router(
-        workspace_root: &std::path::Path,
-        stem: &str,
-    ) -> Result<bool, std::io::Error> {
+    /// Check if identifier is imported by any entry or router file.
+    fn is_identifier_imported(workspace_root: &std::path::Path, id: &str) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
-            if dir.is_dir() && Self::check_dir_imports(&dir, stem)? {
-                return Ok(true);
-            }
-        }
-        Ok(false)
-    }
-
-    fn check_dir_imports(dir: &std::path::Path, stem: &str) -> Result<bool, std::io::Error> {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    if Self::check_dir_imports(&path, stem)? {
-                        return Ok(true);
-                    }
-                } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                    let is_entry_or_router = name.starts_with("root_")
-                        || name.starts_with("cli_")
-                        || name.starts_with("mcp_")
-                        || name.contains("_entry")
-                        || name.contains("_router");
-                    if is_entry_or_router
-                        && (name.ends_with(".rs")
-                            || name.ends_with(".py")
-                            || name.ends_with(".ts")
-                            || name.ends_with(".js"))
+            if shared::orphan_detector::utility_orphan_io::is_dir(&dir) {
+                let files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                for file_path in &files {
+                    if let Some(name) = std::path::Path::new(file_path).file_name()
+                        .and_then(|n| n.to_str())
                     {
-                        if let Ok(content) = std::fs::read_to_string(&path) {
-                            if content.contains(stem) {
-                                return Ok(true);
+                        let is_entry_or_router = name.starts_with("root_")
+                            || name.starts_with("cli_")
+                            || name.starts_with("mcp_")
+                            || name.contains("_entry")
+                            || name.contains("_router");
+                        if is_entry_or_router
+                            && (name.ends_with(".rs")
+                                || name.ends_with(".py")
+                                || name.ends_with(".ts")
+                                || name.ends_with(".js"))
+                        {
+                            let content = shared::orphan_detector::utility_orphan_io::read_file_safe(file_path);
+                            if content.contains(id) {
+                                return true;
                             }
                         }
                     }
                 }
             }
         }
-        Ok(false)
+        false
     }
 
     /// Get surface suffix from filename

@@ -22,9 +22,11 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         all_files: &[String],
     ) -> OrphanIndicatorResult {
         let fp = f.value();
-        let content = match std::fs::read_to_string(fp) {
-            Ok(c) => c,
-            Err(_) => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
+        let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
+            c if c.is_empty() => {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+            },
+            c => c,
         };
 
         // Step 1: Find aggregate traits this agent implements
@@ -50,11 +52,10 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                 if !is_surface && !is_container {
                     continue;
                 }
-                if let Ok(c) = std::fs::read_to_string(cf) {
-                    if c.contains(agg_name) {
-                        any_called = true;
-                        break;
-                    }
+                let c = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
+                if c.contains(agg_name) {
+                    any_called = true;
+                    break;
                 }
             }
             if any_called {

@@ -10,4 +10,5 @@ pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_layer_names_vo;
 pub mod taxonomy_role_rule_vo;
 pub mod taxonomy_violation_role_vo;
+pub mod utility_role_io;
 pub use taxonomy_violation_role_vo::AesRoleViolation;

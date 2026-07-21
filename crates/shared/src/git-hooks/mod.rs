@@ -7,4 +7,5 @@ pub mod taxonomy_diff_result_vo;
 pub mod taxonomy_git_diff_data_vo;
 pub mod taxonomy_hook_error;
 pub mod utility_file_system_checker;
+pub mod utility_git_io;
 

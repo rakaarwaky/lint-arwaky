@@ -13,6 +13,7 @@ use std::sync::Arc;
 
 use super::utility_file_system;
 use shared::common::taxonomy_line_count_vo::LineCount;
+use shared::tui::utility_tui_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -394,7 +395,7 @@ impl ActionHandler {
     }
 
     /// Copy the current preview content to the system clipboard.
-    /// Uses arboard if available, falls back to xclip/wl-copy shell commands.
+    /// Delegates I/O to utility_file_system::copy_text_to_clipboard().
     fn copy_to_clipboard(&self, state: &mut AppState) {
         let text = state.preview_text.clone();
         if text.is_empty() {
@@ -402,33 +403,7 @@ impl ActionHandler {
             return;
         }
 
-        let mut success = false;
-
-        // Try arboard first
-        #[cfg(not(test))]
-        {
-            if let Ok(mut clipboard) = arboard::Clipboard::new() {
-                success = clipboard.set_text(&text).is_ok();
-            }
-        }
-
-        // Fallback to shell commands: xclip → wl-copy
-        if !success {
-            use std::io::Write;
-            success = std::process::Command::new("sh")
-                .arg("-c")
-                .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null")
-                .stdin(std::process::Stdio::piped())
-                .spawn()
-                .and_then(|mut child| {
-                    if let Some(ref mut stdin) = child.stdin {
-                        let _ = stdin.write_all(text.as_bytes());
-                    }
-                    child.wait()
-                })
-                .map(|status| status.success())
-                .unwrap_or(false);
-        }
+        let success = utility_file_system::copy_text_to_clipboard(&text);
 
         if success {
             state.set_status("Copied to clipboard!");
@@ -438,6 +413,7 @@ impl ActionHandler {
     }
 
     /// Copy the current preview content to a file `lint-results.txt` in the current directory.
+    /// Delegates I/O to utility_tui_io::write_text_to_file().
     fn copy_to_file(&self, state: &mut AppState) {
         let text = &state.preview_text;
         if text.is_empty() {
@@ -446,7 +422,7 @@ impl ActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match std::fs::write(path, text) {
+        match utility_tui_io::write_text_to_file(path, text) {
             Ok(()) => state.set_status("Saved to lint-results.txt"),
             Err(e) => state.set_status(format!("Save failed: {e}")),
         }

@@ -8,6 +8,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
+use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace::collect_source_files;
 use std::sync::OnceLock;
 
@@ -29,10 +30,10 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         let fp = f.value();
         let suffix = file_suffix(fp);
 
-        let content = match std::fs::read_to_string(fp) {
-            Ok(c) => c,
-            Err(_) => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
-        };
+        let content = orphan_io::read_file_safe(fp);
+        if content.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
 
         let trait_name = Self::extract_contract_trait_name(&content);
         let trait_name = match trait_name {
@@ -67,19 +68,18 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             if !is_target_layer && !is_container_impl {
                 continue;
             }
-            if let Ok(c) = std::fs::read_to_string(cf) {
-                if c.contains(&format!("impl {} for", trait_name))
-                    || c.lines().any(|ln| {
-                        let t = ln.trim();
-                        t.starts_with("impl") && t.contains(&trait_name) && t.contains(" for")
-                    })
-                    || c.contains(&format!("class {}(\\(", trait_name))
-                    || c.contains(&format!("class {} ", trait_name))
-                    || c.contains(&format!("class {}:", trait_name))
-                {
-                    has_impl = true;
-                    break;
-                }
+            let c = orphan_io::read_file_safe(cf);
+            if c.contains(&format!("impl {} for", trait_name))
+                || c.lines().any(|ln| {
+                    let t = ln.trim();
+                    t.starts_with("impl") && t.contains(&trait_name) && t.contains(" for")
+                })
+                || c.contains(&format!("class {}(\\(", trait_name))
+                || c.contains(&format!("class {} ", trait_name))
+                || c.contains(&format!("class {}:", trait_name))
+            {
+                has_impl = true;
+                break;
             }
         }
 
@@ -127,11 +127,10 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 if !is_orchestrator && !is_container && !is_capabilities && !is_surface {
                     continue;
                 }
-                if let Ok(c) = std::fs::read_to_string(cf) {
-                    if c.contains(&trait_name) {
-                        called_by_impl_or_user = true;
-                        break;
-                    }
+                let c = orphan_io::read_file_safe(cf);
+                if c.contains(&trait_name) {
+                    called_by_impl_or_user = true;
+                    break;
                 }
             }
             if !called_by_impl_or_user {
@@ -171,11 +170,10 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 if !is_surface && !is_container {
                     continue;
                 }
-                if let Ok(c) = std::fs::read_to_string(cf) {
-                    if c.contains(&trait_name) {
-                        called_by_surface_or_container = true;
-                        break;
-                    }
+                let c = orphan_io::read_file_safe(cf);
+                if c.contains(&trait_name) {
+                    called_by_surface_or_container = true;
+                    break;
                 }
             }
             if !called_by_surface_or_container {

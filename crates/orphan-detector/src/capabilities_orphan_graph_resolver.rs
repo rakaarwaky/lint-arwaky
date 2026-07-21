@@ -10,6 +10,7 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 use shared::orphan_detector::utility_orphan_filename::file_stem;
+use shared::orphan_detector::utility_orphan_io;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
@@ -176,23 +177,18 @@ impl OrphanGraphResolver {
         let root_path = std::path::Path::new(root_dir);
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if let Ok(entries) = std::fs::read_dir(&ws_path) {
-                for entry in entries.flatten() {
-                    if let Ok(ft) = entry.file_type() {
-                        if !ft.is_dir() {
-                            continue;
-                        }
-                    } else {
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, path_str, is_dir_entry) in entries {
+                    if !is_dir_entry {
                         continue;
                     }
-                    if let Some(name) = entry.file_name().to_str().map(|s| s.to_string()) {
-                        workspace_modules.insert(name.clone());
-                        workspace_modules.insert(name.replace('-', "_"));
-                        let src_dir = entry.path().join("src");
-                        if src_dir.is_dir() {
-                            crate_src_dirs.insert(name.clone(), src_dir.clone());
-                            crate_src_dirs.insert(name.replace('-', "_"), src_dir);
-                        }
+                    workspace_modules.insert(name.clone());
+                    workspace_modules.insert(name.replace('-', "_"));
+                    let src_dir = std::path::PathBuf::from(&path_str).join("src");
+                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                        crate_src_dirs.insert(name.clone(), src_dir.clone());
+                        crate_src_dirs.insert(name.replace('-', "_"), src_dir);
                     }
                 }
             }
@@ -201,10 +197,10 @@ impl OrphanGraphResolver {
         // Perf 8: Single-pass file reading
         for f in files {
             import_graph.entry(f.clone()).or_default();
-            let content = match std::fs::read_to_string(f) {
-                Ok(c) => c,
-                Err(_) => continue,
-            };
+            let content = utility_orphan_io::read_file_safe(f);
+            if content.is_empty() && !shared::orphan_detector::utility_orphan_io::is_file(&std::path::PathBuf::from(f)) {
+                continue;
+            }
 
             // Pass 1: #[path = "..."] pub mod (Bug 14 fix — link only the referenced file)
             if let Some(re) = Self::pub_mod_path_re() {
@@ -219,7 +215,7 @@ impl OrphanGraphResolver {
                     } else {
                         format!("{}/{}", base_dir, mod_path)
                     };
-                    if std::path::Path::new(&resolved).exists() && resolved != *f {
+                    if shared::orphan_detector::utility_orphan_io::is_file(&std::path::PathBuf::from(&resolved)) && resolved != *f {
                         import_graph
                             .entry(f.clone())
                             .or_default()
@@ -244,7 +240,7 @@ impl OrphanGraphResolver {
                         parent.join(&mod_name).join("__init__.py"),
                     ];
                     for candidate in &candidates {
-                        if candidate.is_file() {
+                        if shared::orphan_detector::utility_orphan_io::is_file(candidate) {
                             if let Some(path_str) = candidate.to_str() {
                                 let resolved = path_str.to_string();
                                 if resolved != *f {
@@ -416,25 +412,22 @@ impl OrphanGraphResolver {
                         let module_name = segments[0];
                         // Bug 3: no ./ prefix — store resolved paths verbatim
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
-                            if let Ok(entries) = std::fs::read_dir(src_dir) {
-                                for entry in entries.flatten() {
-                                    let path = entry.path();
-                                    if let Some(path_str) = path.to_str() {
-                                        let stem = path
-                                            .file_stem()
-                                            .and_then(|s| s.to_str())
-                                            .unwrap_or_default();
-                                        if stem == module_name && path_str != *f {
-                                            import_graph
-                                                .entry(f.clone())
-                                                .or_default()
-                                                .push(path_str.to_string());
-                                            inbound_links
-                                                .entry(path_str.to_string())
-                                                .or_default()
-                                                .push(f.clone());
-                                        }
-                                    }
+                            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
+                            for (_name, path_str, _is_dir) in entries {
+                                let path = std::path::PathBuf::from(&path_str);
+                                let stem = path
+                                    .file_stem()
+                                    .and_then(|s| s.to_str())
+                                    .unwrap_or_default();
+                                if stem == module_name && path_str != *f {
+                                    import_graph
+                                        .entry(f.clone())
+                                        .or_default()
+                                        .push(path_str.to_string());
+                                    inbound_links
+                                        .entry(path_str.to_string())
+                                        .or_default()
+                                        .push(f.clone());
                                 }
                             }
                         }

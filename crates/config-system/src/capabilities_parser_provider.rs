@@ -2,8 +2,8 @@ use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
+use shared::config_system::utility_config_io as config_io;
 use shared::taxonomy_common_error::ErrorMessage;
-use std::path::Path;
 
 // (No protocol implementation found in this file)
 
@@ -18,9 +18,9 @@ pub struct ConfigParserProvider {}
 
 impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
-        let p = Path::new(&path.value);
+        let p = &path.value;
         let err_path = path.clone();
-        let content = match std::fs::read_to_string(p) {
+        let content = match config_io::read_file_sync(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
@@ -41,9 +41,9 @@ impl IConfigParserProtocol for ConfigParserProvider {
     }
 
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
-        let p = Path::new(&path.value);
+        let p = &path.value;
         let err_path = path.clone();
-        let content = match std::fs::read_to_string(p) {
+        let content = match config_io::read_file_sync(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {

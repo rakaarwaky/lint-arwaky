@@ -4,11 +4,10 @@ use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::DependencyEdge;
-use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
+use shared::import_rules::{utility_cycle_detector, utility_file_read, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
-use std::fs;
 
 use async_trait::async_trait;
 
@@ -109,9 +108,9 @@ impl DependencyCycleAnalyzer {
                     continue;
                 }
             }
-            let content = match fs::read_to_string(file) {
-                Ok(c) => c,
-                Err(_) => continue,
+            let content = match utility_file_read::read_file(file) {
+                Some(c) => c,
+                None => continue,
             };
 
             let filename = utility_layer_detector::extract_filename(file);

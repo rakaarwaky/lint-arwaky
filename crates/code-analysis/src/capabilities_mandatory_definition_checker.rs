@@ -3,6 +3,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::code_analysis::utility_mandatory::rust_declares_type;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
@@ -24,6 +25,8 @@ use std::path::Path;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MandatoryDefinitionChecker {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 /// AES303 sub-check 2: detect empty struct/impl blocks (dead/empty definitions)
 impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
@@ -109,8 +112,6 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
     }
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
-
 /// AES303 sub-check 1: file must have at least one struct/enum/trait/class definition
 impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
     fn check_mandatory_class_definition(
@@ -183,15 +184,4 @@ impl MandatoryDefinitionChecker {
     pub fn new() -> Self {
         Self {}
     }
-}
-
-/// Helper: check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
-fn rust_declares_type(line: &str) -> bool {
-    let keywords = ["struct", "enum", "trait"];
-    for kw in keywords {
-        if line.contains(kw) && !line.contains('(') {
-            return true;
-        }
-    }
-    false
 }

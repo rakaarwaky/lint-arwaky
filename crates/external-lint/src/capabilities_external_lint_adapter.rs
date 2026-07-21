@@ -10,7 +10,7 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_utility_protocol::IExternalLintUtilityProtocol;
-use std::path::{Path, PathBuf};
+use shared::external_lint::utility_external_lint_io as ext_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -21,10 +21,8 @@ pub struct ExternalLintUtilityAdapter;
 #[async_trait::async_trait]
 impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
-        match std::fs::canonicalize(path_str) {
-            Ok(p) => FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default(),
-            Err(_) => FilePath::new(path_str.to_string()).unwrap_or_default(),
-        }
+        let p = ext_io::canonicalize_path(path_str);
+        FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default()
     }
 
     fn default_working_dir(&self, path: &FilePath) -> FilePath {
@@ -33,10 +31,10 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
 
     fn has_python_files(&self, path: &FilePath) -> bool {
         let p = std::path::Path::new(&path.value);
-        if !p.exists() {
+        if !ext_io::path_exists(p) {
             return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
-        if p.is_file() {
+        if ext_io::is_file(p) {
             return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
         }
         if let Ok(dir) = DirectoryPath::new(path.value.clone()) {
@@ -52,11 +50,9 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         args: PatternList,
         working_dir: &FilePath,
     ) -> PatternList {
-        let local_bin = Path::new(&working_dir.value)
-            .join("node_modules")
-            .join(".bin")
-            .join(executable);
-        if local_bin.exists() {
+        let wd = std::path::Path::new(&working_dir.value);
+        if ext_io::has_local_bin(wd, executable) {
+            let local_bin = wd.join("node_modules").join(".bin").join(executable);
             let mut cmd = vec![local_bin.to_string_lossy().to_string()];
             cmd.extend(args.values);
             return PatternList::new(cmd);
@@ -73,32 +69,26 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
 
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
         let path_str = &path.value;
-        if let Ok(abs_path) = std::fs::canonicalize(path_str) {
-            let mut current = if abs_path.is_file() {
-                abs_path
-                    .parent()
-                    .map(|p| p.to_path_buf())
-                    .unwrap_or_else(|| PathBuf::from("."))
-            } else {
-                abs_path.clone()
-            };
-            for _ in 0..10 {
-                if current.join("lint_arwaky.config.yaml").is_file()
-                    || current.join("lint_arwaky.config.python.yaml").is_file()
-                    || current.join("package.json").is_file()
-                    || current.join(".git").is_dir()
-                {
-                    return FilePath::new(current.to_string_lossy().to_string())
-                        .unwrap_or_default();
-                }
-                match current.parent() {
-                    Some(parent) => current = parent.to_path_buf(),
-                    None => break,
-                }
+        let abs_path = ext_io::canonicalize_path(path_str);
+        let mut current = if ext_io::is_file(&abs_path) {
+            abs_path
+                .parent()
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| PathBuf::from("."))
+        } else {
+            abs_path.clone()
+        };
+        for _ in 0..10 {
+            if ext_io::has_config_file(&current) {
+                return FilePath::new(current.to_string_lossy().to_string())
+                    .unwrap_or_default();
             }
-            return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+            match current.parent() {
+                Some(parent) => current = parent.to_path_buf(),
+                None => break,
+            }
         }
-        FilePath::new(".".to_string()).unwrap_or_default()
+        FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default()
     }
 
     fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
@@ -106,22 +96,8 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         if path_str.is_empty() {
             return path.clone();
         }
-        let current = Path::new(path_str);
-        if current.is_dir() {
-            if current.join("Cargo.toml").exists() {
-                return path.clone();
-            }
-        } else if let Some(parent) = current.parent() {
-            if parent.join("Cargo.toml").exists() {
-                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| path.clone());
-            }
-            if let Some(grandparent) = parent.parent() {
-                if grandparent.join("Cargo.toml").exists() {
-                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                        .unwrap_or_else(|_| path.clone());
-                }
-            }
+        if let Some(resolved) = ext_io::has_cargo_toml(path_str) {
+            return FilePath::new(resolved).unwrap_or_else(|_| path.clone());
         }
         FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
     }
@@ -131,22 +107,8 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         if path_str.is_empty() {
             return path.clone();
         }
-        let current = Path::new(path_str);
-        if current.is_dir() {
-            if current.join("Cargo.lock").exists() {
-                return path.clone();
-            }
-        } else if let Some(parent) = current.parent() {
-            if parent.join("Cargo.lock").exists() {
-                return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
-                    .unwrap_or_else(|_| path.clone());
-            }
-            if let Some(grandparent) = parent.parent() {
-                if grandparent.join("Cargo.lock").exists() {
-                    return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
-                        .unwrap_or_else(|_| path.clone());
-                }
-            }
+        if let Some(resolved) = ext_io::has_cargo_lock(path_str) {
+            return FilePath::new(resolved).unwrap_or_else(|_| path.clone());
         }
         FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
     }
@@ -224,34 +186,11 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     }
 
     fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
-        let Ok(entries) = std::fs::read_dir(&dir.value) else {
-            return bool::new(false);
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                if let Ok(sub_dir) = DirectoryPath::new(path.to_string_lossy().to_string()) {
-                    if self.has_py_in_dir(&sub_dir).value {
-                        return bool::new(true);
-                    }
-                }
-            } else if path.extension().map(|e| e == "py").unwrap_or(false) {
-                return bool::new(true);
-            }
-        }
-        bool::new(false)
+        ext_io::has_python_files(&dir.value)
     }
 
     fn is_in_path(&self, executable: &str) -> bool {
-        if let Ok(path_var) = std::env::var("PATH") {
-            for path_dir in std::env::split_paths(&path_var) {
-                let path = path_dir.join(executable);
-                if path.is_file() {
-                    return bool::new(true);
-                }
-            }
-        }
-        bool::new(false)
+        ext_io::is_executable_in_path(executable)
     }
 }
 

@@ -132,18 +132,16 @@ impl TaxonomyOrphanAnalyzer {
         }
         let search = format!("crate::{}", stem);
         if let Some(parent) = std::path::Path::new(file_path).parent() {
-            if let Ok(entries) = std::fs::read_dir(parent) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path == std::path::Path::new(file_path) {
-                        continue;
-                    }
-                    if path.extension().is_some_and(|e| e == "rs") {
-                        if let Ok(content) = std::fs::read_to_string(&path) {
-                            if content.contains(&search) {
-                                return true;
-                            }
-                        }
+            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(parent);
+            for (_name, path_str, _is_dir) in entries {
+                if path_str == file_path {
+                    continue;
+                }
+                let path = std::path::PathBuf::from(&path_str);
+                if path.extension().is_some_and(|e| e == "rs") {
+                    let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&path_str);
+                    if content.contains(&search) {
+                        return true;
                     }
                 }
             }

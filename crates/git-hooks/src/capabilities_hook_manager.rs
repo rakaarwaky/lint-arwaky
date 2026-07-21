@@ -6,6 +6,7 @@ use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::utility_git_io as git_io;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
@@ -39,15 +40,14 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if std::path::Path::new(&config_file).exists() {
+        if git_io::path_exists(&config_file) {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
     }
 
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
-        let config_file = std::path::Path::new(&request.config_path);
-        if !config_file.exists() {
+        if !git_io::path_exists(&request.config_path) {
             return DescriptionVO::new(format!("Config file not found: {}", request.config_path));
         }
         let verb = if request.remove { "Removed" } else { "Added" };
@@ -55,13 +55,11 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let p1 = std::path::Path::new(path1);
-        let p2 = std::path::Path::new(path2);
-        let both_exist = p1.exists() && p2.exists();
-        let both_files = p1.is_file() && p2.is_file();
+        let both_exist = git_io::path_exists(path1) && git_io::path_exists(path2);
+        let both_files = git_io::is_file(path1) && git_io::is_file(path2);
         let status = match (both_exist, both_files) {
             (false, _) => {
-                if !p1.exists() {
+                if !git_io::path_exists(path1) {
                     GitDiffStatus::MissingFirst
                 } else {
                     GitDiffStatus::MissingSecond

@@ -1,10 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::git_hooks::utility_git_io as git_io;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
-use std::path::Path;
-
-#[cfg(unix)]
-use std::os::unix::fs::PermissionsExt;
 
 // PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 
@@ -27,7 +24,12 @@ impl IHookManagerProtocol for GitHookAdapter {
             return Ok(SuccessStatus::new(false));
         }
         let hooks_dir = self.git_dir().join("hooks");
-        let _ = std::fs::create_dir_all(&hooks_dir);
+        git_io::create_dir_all(&hooks_dir).map_err(|e| {
+            shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
+                "Failed to create hooks dir: {}",
+                e
+            )))
+        })?;
         let hook_path = hooks_dir.join("pre-commit");
         let exe_str = if executable_path.value.is_empty() {
             "lint-arwaky"
@@ -48,7 +50,7 @@ exit 0
 ",
             exe_str
         );
-        std::fs::write(&hook_path, &hook_content).map_err(|e| {
+        git_io::write_file(&hook_path, &hook_content).map_err(|e| {
             shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
                 "Failed to write hook: {}",
                 e
@@ -56,15 +58,7 @@ exit 0
         })?;
         #[cfg(unix)]
         {
-            let mut perms = std::fs::metadata(&hook_path)
-                .map_err(|e| {
-                    shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
-                        format!("Failed to get metadata: {}", e),
-                    ))
-                })?
-                .permissions();
-            perms.set_mode(0o755);
-            std::fs::set_permissions(&hook_path, perms).map_err(|e| {
+            git_io::set_permissions(&hook_path, 0o755).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to set permissions: {}", e),
                 ))
@@ -80,8 +74,8 @@ exit 0
             return Ok(SuccessStatus::new(false));
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
-        if hook_path.exists() {
-            std::fs::remove_file(&hook_path).map_err(|e| {
+        if git_io::path_exists(&hook_path) {
+            git_io::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to remove hook: {}", e),
                 ))
@@ -99,11 +93,11 @@ impl GitHookAdapter {
     }
 
     fn git_dir(&self) -> std::path::PathBuf {
-        Path::new(&self.root_dir.value).join(".git")
+        std::path::PathBuf::from(&self.root_dir.value).join(".git")
     }
 
     fn is_git_repo(&self) -> bool {
         let git = self.git_dir();
-        git.exists() && git.is_dir()
+        git_io::is_dir(&git)
     }
 }

@@ -7,6 +7,7 @@ pub mod taxonomy_violation_orphan_vo;
 pub mod utility_file_cache;
 pub mod utility_orphan;
 pub mod utility_orphan_filename;
+pub mod utility_orphan_io;
 pub mod utility_workspace;
 pub use taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
 pub use taxonomy_violation_orphan_vo::AesOrphanViolation;

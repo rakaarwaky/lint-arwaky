@@ -7,6 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
+use shared::role_rules::utility_role_io as role_io;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -209,7 +210,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match std::fs::read_to_string(&f.value) {
+        let content = match role_io::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -282,7 +283,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match std::fs::read_to_string(f.to_string()) {
+        let content = match role_io::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };
