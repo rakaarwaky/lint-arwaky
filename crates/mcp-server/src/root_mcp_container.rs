@@ -2,7 +2,6 @@
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;

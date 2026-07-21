@@ -13,7 +13,6 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_file;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::utility_config_merger::merge_config;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
@@ -162,8 +161,7 @@ impl ImportOrchestrator {
         dummy: Arc<dyn IDummyImportCheckerProtocol>,
         config: ArchitectureConfig,
     ) -> Self {
-        let (merged_layers, _) = merge_config(&config);
-        let layer_map = LayerMapVO::new(merged_layers);
+        let layer_map = LayerMapVO::new(config.layers.clone());
         let ignored_paths: Vec<String> = config
             .ignored_paths
             .values

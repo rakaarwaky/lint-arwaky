@@ -18,10 +18,6 @@ impl ImportContainer {
         Self { config }
     }
 
-    pub fn new_default() -> Self {
-        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
-    }
-
     /// Create from config orchestrator — the canonical way per AES architecture.
     pub fn from_orchestrator(
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
