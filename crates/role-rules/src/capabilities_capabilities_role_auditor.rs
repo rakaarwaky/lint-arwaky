@@ -19,9 +19,29 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-// (No constructors or helpers found in this file)
-
 pub struct CapabilitiesRoleChecker {}
+
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
+    fn check_capability_routing(
+        &self,
+        source: &SourceContentVO,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        self.check_capability_routing(source, layer, violations);
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for CapabilitiesRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl CapabilitiesRoleChecker {
     pub fn new() -> Self {
@@ -250,26 +270,5 @@ impl CapabilitiesRoleChecker {
                 ));
             }
         }
-    }
-}
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-
-impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
-    fn check_capability_routing(
-        &self,
-        source: &SourceContentVO,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        self.check_capability_routing(source, layer, violations);
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for CapabilitiesRoleChecker {
-    fn default() -> Self {
-        Self::new()
     }
 }

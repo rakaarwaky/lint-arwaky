@@ -215,21 +215,21 @@ impl TaxonomyRoleChecker {
     }
 
     fn check_entity_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_entity") {
+        if !Self::has_suffix(source.file_path.value(), "_entity") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     fn check_error_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_error") {
+        if !Self::has_suffix(source.file_path.value(), "_error") {
             return;
         }
         Self::scan_primitives(source, violations);
     }
 
     fn check_event_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !has_suffix(source.file_path.value(), "_event") {
+        if !Self::has_suffix(source.file_path.value(), "_event") {
             return;
         }
         Self::scan_primitives(source, violations);
@@ -284,13 +284,13 @@ impl TaxonomyRoleChecker {
             }
         }
     }
-}
 
-fn has_suffix(file: &str, suffix: &str) -> bool {
-    let path = Path::new(file);
-    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-        stem.ends_with(suffix)
-    } else {
-        false
+    fn has_suffix(file: &str, suffix: &str) -> bool {
+        let path = Path::new(file);
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+            stem.ends_with(suffix)
+        } else {
+            false
+        }
     }
 }

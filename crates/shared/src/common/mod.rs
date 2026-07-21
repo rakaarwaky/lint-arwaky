@@ -37,3 +37,9 @@ pub mod utility_layer_detector;
 pub mod utility_path_normalization;
 pub mod utility_process;
 pub mod utility_value_object_generator;
+pub use utility_signature_parser::{
+    extract_python_method_signatures, extract_trait_method_signatures,
+    extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
+    signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
+};
+pub mod utility_signature_parser;

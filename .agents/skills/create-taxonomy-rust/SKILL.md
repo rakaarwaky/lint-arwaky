@@ -35,7 +35,6 @@ related:
   - fix-primitive-to-vo
   - fix-magic-constant
 ---
-
 # create-taxonomy-rust
 
 ## Purpose
@@ -64,22 +63,22 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/purity-imports.md` | AES201 import restrictions, allowed/forbidden dependencies |
-| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns |
-| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                 | Content                                                    |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `references/purity-imports.md`     | AES201 import restrictions, allowed/forbidden dependencies |
+| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns          |
+| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules              |
+| `references/examples.md`           | All BAD/GOOD code examples                                 |
+| `references/commands.md`           | Quick heuristic check commands                             |
+| `references/checklist.md`          | Verification checklist                                     |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/taxonomy_name_vo.rs` | New value object file |
-| `templates/taxonomy_name_error.rs` | New error type file |
-| `templates/taxonomy_name_constant.rs` | New constants file |
+| File                                    | Purpose               |
+| --------------------------------------- | --------------------- |
+| `templates/taxonomy_name_vo.rs`       | New value object file |
+| `templates/taxonomy_name_error.rs`    | New error type file   |
+| `templates/taxonomy_name_constant.rs` | New constants file    |
 
 ## Workflow
 

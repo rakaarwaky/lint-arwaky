@@ -645,12 +645,6 @@ architecture:
           "main.rs",
           "lib.rs",
           "mod.rs",
-          "taxonomy_fix_applied_event.rs",
-          "contract_fix_aggregate.rs",
-          "taxonomy_fix_vo.rs",
-          "contract_fix_protocol.rs",
-          "contract_executor_port.rs",
-          "taxonomy_symbol_renamer_utility.rs",
         ]
       scope:
         [
