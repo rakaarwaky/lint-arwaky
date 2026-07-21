@@ -26,6 +26,7 @@ fn make_check_context(container: &CliContainer) -> surface_check_command::CheckC
         external_lint: container.external_lint.clone(),
         role_orchestrator: container.role_orchestrator.clone(),
         orphan_orchestrator: container.orphan_orchestrator.clone(),
+        report_formatter: container.report_formatter.clone(),
     }
 }
 
@@ -76,6 +77,7 @@ fn main() -> ExitCode {
     let container = CliContainer::new_default();
 
     let ext_lint_clone = container.external_lint.clone();
+    let report_formatter_clone = container.report_formatter.clone();
     let factory: surface_check_command::OrchestratorFactory = Arc::new(move |config| {
         let import_container =
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
@@ -97,6 +99,7 @@ fn main() -> ExitCode {
             external_lint: ext_lint_clone.clone(),
             role_orchestrator: role_container.orchestrator(),
             orphan_orchestrator: orphan_container.analyzer(),
+            report_formatter: report_formatter_clone.clone(),
         }
     });
 
