@@ -46,10 +46,10 @@ impl JunitFormatter {
             .filter(|r| {
                 matches!(
                     r.severity,
-                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::HIGH |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM |
-                        shared::cli_commands::taxonomy_severity_vo::Severity::LOW
+                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM
+                        | shared::cli_commands::taxonomy_severity_vo::Severity::LOW
                 )
             })
             .count();
@@ -113,7 +113,8 @@ pub fn format_report_default(report: &ScanReport) -> String {
     output.push_str(&format!("Diagnostics: {}\n", report.diagnostics.len()));
 
     // Group violations by code
-    let mut code_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut code_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
     for r in &report.results {
         *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
     }
@@ -130,7 +131,10 @@ pub fn format_report_default(report: &ScanReport) -> String {
     if !report.diagnostics.is_empty() {
         output.push_str("\nDiagnostics:\n");
         for d in &report.diagnostics {
-            output.push_str(&format!("  [{}/:{:?}] {}\n", d.source, d.severity, d.message));
+            output.push_str(&format!(
+                "  [{}/:{:?}] {}\n",
+                d.source, d.severity, d.message
+            ));
         }
     }
 

@@ -1,45 +1,17 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
 //
 // Three subcommands:
-//   - init:        writes lint_arwaky.config.<lang>.yaml (local) or global XDG configs
+//   - init:        writes lint_arwaky.config.<lang>.yaml (local)
 //   - install:     pip install Python adapters (ruff, mypy, bandit) + npm install JS adapters (eslint, prettier, typescript)
 //   - mcp-config:  prints MCP client config JSON for Claude/Cursor/Windsurf/Copilot
 //
 // Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
 
-/// Trusted documentation bundled at compile time — prevents supply-chain risk from copying
-/// untrusted project content into global XDG config directory.
-struct TrustedDoc {
-    name: &'static str,
-    content: &'static str,
-}
-
-const TRUSTED_DOCS: &[TrustedDoc] = &[
-    TrustedDoc { name: "SKILL.md", content: include_str!("assets/SKILL.md") },
-    TrustedDoc { name: "ARCHITECTURE.md", content: include_str!("assets/ARCHITECTURE.md") },
-    TrustedDoc { name: "MIGRATION_RUST.md", content: include_str!("assets/MIGRATION_RUST.md") },
-    TrustedDoc {
-        name: "MIGRATION_PYTHON.md",
-        content: include_str!("assets/MIGRATION_PYTHON.md"),
-    },
-    TrustedDoc {
-        name: "MIGRATION_TYPESCRIPT.md",
-        content: include_str!("assets/MIGRATION_TYPESCRIPT.md"),
-    },
-    TrustedDoc { name: "RULES_AES.md", content: include_str!("assets/RULES_AES.md") },
-];
-
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-pub fn handle_init(
-    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
-    global: bool,
-) -> ExitCode {
-    if global {
-        return handle_init_global(setup_orchestrator);
-    }
+pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
     // 1. Write language config files
     let mut all_ok = true;
     let languages = setup_orchestrator.detect_languages();
@@ -99,74 +71,6 @@ pub fn handle_init(
         }
     } else {
         println!("Warning: could not determine XDG config dir");
-    }
-
-    if all_ok {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
-}
-
-fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
-    let config_dir = match setup_orchestrator.create_global_config_dir() {
-        Ok(d) => d,
-        Err(_) => {
-            println!("Error: Could not determine or create XDG config directory");
-            return ExitCode::from(1);
-        }
-    };
-
-    println!("Installing default configs to: {}", config_dir.display());
-
-    let configs = [
-        (
-            "lint_arwaky.config.rust.yaml",
-            setup_orchestrator.get_config_template("rust"),
-        ),
-        (
-            "lint_arwaky.config.python.yaml",
-            setup_orchestrator.get_config_template("python"),
-        ),
-        (
-            "lint_arwaky.config.javascript.yaml",
-            setup_orchestrator.get_config_template("javascript"),
-        ),
-    ];
-
-    let mut all_ok = true;
-    for (filename, content) in &configs {
-        let target = config_dir.join(filename);
-        let target_str = target.to_string_lossy();
-        if setup_orchestrator.file_exists(&target_str) {
-            println!("  {filename} — already exists, skipping");
-        } else {
-            match setup_orchestrator.write_config_file(&target_str, content) {
-                Ok(_) => println!("  {filename} — created"),
-                Err(e) => {
-                    println!("  {filename} — error: {e}");
-                    all_ok = false;
-                }
-            }
-        }
-    }
-
-    // Distribute TRUSTED docs (bundled at compile time) to XDG config.
-    // Uses include_str! bundled content — never reads from project root.
-    for doc in TRUSTED_DOCS {
-        let target = config_dir.join(doc.name);
-        let target_str = target.to_string_lossy();
-        if setup_orchestrator.file_exists(&target_str) {
-            println!("  {} — already exists, skipping", doc.name);
-            continue;
-        }
-        match std::fs::write(&target, doc.content) {
-            Ok(_) => println!("  {} — created", doc.name),
-            Err(e) => {
-                println!("  {} — error: {e}", doc.name);
-                all_ok = false;
-            }
-        }
     }
 
     if all_ok {
@@ -317,9 +221,9 @@ fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
                 path.display()
             ));
         }
-        return path.canonicalize().map_err(|e| {
-            format!("cannot canonicalize LINT_ARWAKY_MCP_BIN: {e}")
-        });
+        return path
+            .canonicalize()
+            .map_err(|e| format!("cannot canonicalize LINT_ARWAKY_MCP_BIN: {e}"));
     }
 
     // 2. Sibling of current executable

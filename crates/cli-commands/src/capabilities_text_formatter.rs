@@ -9,21 +9,30 @@ use std::sync::Arc;
 
 /// TextFormatter — produces human-readable text output from ScanReport.
 pub struct TextFormatter {
-    code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+    code_analysis_linter:
+        Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
 impl TextFormatter {
     /// Create a new text formatter.
-    pub fn new(code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>) -> Self {
-        Self { code_analysis_linter }
+    pub fn new(
+        code_analysis_linter: Arc<
+            dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
+        >,
+    ) -> Self {
+        Self {
+            code_analysis_linter,
+        }
     }
 
     /// Format the scan report into human-readable text.
     pub fn format_text(&self, report: &ScanReport) -> String {
         // Reconstruct a FilePath for the code analysis formatter
-        let results_list = shared::cli_commands::taxonomy_result_vo::LintResultList::new(report.results.clone());
+        let results_list =
+            shared::cli_commands::taxonomy_result_vo::LintResultList::new(report.results.clone());
         let report_path = shared::common::taxonomy_path_vo::FilePath::default();
-        self.code_analysis_linter.format_report(&results_list, &report_path)
+        self.code_analysis_linter
+            .format_report(&results_list, &report_path)
     }
 }
 
@@ -54,7 +63,8 @@ pub fn format_report_default(report: &ScanReport) -> String {
     }
 
     // Group violations by code
-    let mut code_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut code_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
     for r in &report.results {
         *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
     }
@@ -71,7 +81,10 @@ pub fn format_report_default(report: &ScanReport) -> String {
     if !report.diagnostics.is_empty() {
         output.push_str("\nDiagnostics:\n");
         for d in &report.diagnostics {
-            output.push_str(&format!("  [{}/:{:?}] {}\n", d.source, d.severity, d.message));
+            output.push_str(&format!(
+                "  [{}/:{:?}] {}\n",
+                d.source, d.severity, d.message
+            ));
         }
     }
 
