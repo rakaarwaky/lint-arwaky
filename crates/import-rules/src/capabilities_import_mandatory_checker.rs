@@ -3,11 +3,13 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_file_read, utility_import_resolver};
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
+use shared::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
@@ -28,8 +30,8 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 
     async fn run_mandatory_imports(
         &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
         results: &mut LintResultList,
@@ -106,10 +108,8 @@ impl ArchImportMandatoryChecker {
             None => return,
         };
         let file_content = FileContentVO::new(content);
-        let import_lines: Vec<(
-            shared::taxonomy_common_vo::LineNumber,
-            shared::taxonomy_layer_vo::LineContentVO,
-        )> = utility_import_resolver::parse_import_lines_helper(file_content.value());
+        let import_lines: Vec<(LineNumber, LineContentVO)> =
+            utility_import_resolver::parse_import_lines_helper(file_content.value());
         let stem: &str = basename
             .rsplit('.')
             .next_back()
@@ -149,7 +149,7 @@ impl ArchImportMandatoryChecker {
     fn _check_scope_mandatory_imports(
         &self,
         file: &str,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {

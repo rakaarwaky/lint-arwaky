@@ -42,3 +42,14 @@ pub const PYTHON_ENTRY_FILES: &[&str] = &["__init__.py"];
 
 /// Source code file extensions for file collection.
 pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
+
+/// Directories to skip during file collection (build artifacts, dependencies, caches).
+pub const DEFAULT_SKIP_DIRS: &[&str] = &[
+    ".git",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    ".venv",
+    "__pycache__",
+];

@@ -1,6 +1,7 @@
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -10,13 +11,14 @@ use shared::import_rules::{
     utility_cycle_detector, utility_file_read, utility_import_module_parser,
 };
 use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;
+use shared::taxonomy_name_vo::SymbolName;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
 
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -42,7 +44,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
-        files: &shared::common::taxonomy_paths_vo::FilePathList,
+        files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
@@ -51,15 +53,12 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         results.values.extend(cycle_violations);
     }
 
-    fn detect_cycle_edges(
-        &self,
-        edges: &[DependencyEdge],
-    ) -> Vec<shared::taxonomy_name_vo::SymbolName> {
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
         utility_cycle_detector::detect_cycle_edges(edges)
     }
 
-    fn normalize_to_layer(&self, name: &str) -> shared::taxonomy_layer_vo::LayerNameVO {
-        shared::taxonomy_layer_vo::LayerNameVO::new(name.split('_').next().unwrap_or(name))
+    fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
+        LayerNameVO::new(name.split('_').next().unwrap_or(name))
     }
 }
 
@@ -126,30 +125,16 @@ impl DependencyCycleAnalyzer {
                 let module_value = module.value();
                 let is_crate_import = module_value.starts_with("crate::")
                     || module_value.starts_with("lint_arwaky::");
-                let layer_prefixes = [
-                    "taxonomy_",
-                    "contract_",
-                    "capabilities_",
-                    "utility_",
-                    "agent_",
-                    "surface_",
-                ];
-                let layer_names = [
-                    "taxonomy",
-                    "contract",
-                    "capabilities",
-                    "utility",
-                    "agent",
-                    "surface",
-                ];
                 let is_cross_layer_crate = if is_crate_import {
                     let stripped = module_value
                         .strip_prefix("crate::")
                         .or_else(|| module_value.strip_prefix("lint_arwaky::"))
                         .unwrap_or("");
                     let first_segment = stripped.split("::").next().unwrap_or("");
-                    layer_prefixes.iter().any(|p| stripped.starts_with(p))
-                        || layer_names.contains(&first_segment)
+                    layer_keys.iter().any(|k| {
+                        let prefix = format!("{}_", k);
+                        stripped.starts_with(&prefix)
+                    }) || layer_keys.iter().any(|k| k == first_segment)
                 } else {
                     false
                 };
@@ -164,10 +149,8 @@ impl DependencyCycleAnalyzer {
                 } else {
                     module_value
                 };
-                let module_layer_names: Vec<String> =
-                    layer_map.values.keys().map(|k| k.to_string()).collect();
                 if let Some(target_layer) =
-                    utility_layer_detector::detect_module_layer(module_path, &module_layer_names)
+                    utility_layer_detector::detect_module_layer(module_path, &layer_keys)
                 {
                     let target_layer_str = match target_layer.split('(').next() {
                         Some(p) => p.to_string(),

@@ -1,12 +1,15 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
+use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
@@ -26,70 +29,66 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn check_dummy_imports(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_imports(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_imports(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_dummy_functions(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_functions(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_functions(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_dummy_impls(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_impls(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_impls(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_taxonomy_intent(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_taxonomy_intent(file.value(), content.value(), violations, &layer_map);
+        Self::_check_taxonomy_intent(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_layer_contract_intent(
         &self,
         _file: &FilePath,
-        _content: &shared::common::taxonomy_source_vo::ContentString,
+        _content: &ContentString,
         _violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
     ) {
     }
 
     fn check_surface_logic(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
     ) {
-        self._check_surface_logic(file.value(), content.value(), violations);
-    }
-}
-
-impl Default for DummyImportChecker {
-    fn default() -> Self {
-        Self
+        Self::_check_surface_logic(file.value(), content.value(), violations);
     }
 }
 
@@ -98,11 +97,7 @@ impl DummyImportChecker {
         Self
     }
 
-    fn _detect_layer(
-        &self,
-        file: &str,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
-    ) -> String {
+    fn _detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let filename: &str = utility_layer_detector::extract_filename(file);
         match utility_layer_detector::detect_layer_from_prefix(filename) {
@@ -114,11 +109,10 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_imports(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang: LanguageVO = LanguageVO::from_path(file);
@@ -128,7 +122,7 @@ impl DummyImportChecker {
                 .into_iter()
                 .map(|(t, _)| t.value().to_string())
                 .collect();
-        let layer_name: String = self._detect_layer(file, layer_map);
+        let layer_name: String = Self::_detect_layer(file, layer_map);
 
         for (symbol, line_no) in utility_dummy_detector::imported_symbols(&lines, lang) {
             let symbol_str = symbol.value().to_string();
@@ -145,7 +139,7 @@ impl DummyImportChecker {
                     source_layer: LayerNameVO::new(layer_name.clone()),
                     import_type: SymbolName::new(symbol_str),
                     intent: SymbolName::new("Use imported symbols in real logic, not only in dummy functions or stubs"),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                    reason: Some(LintMessage::new(
                         "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings."
                     )),
                 }.to_string(),
@@ -154,15 +148,14 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_functions(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let layer_name = self._detect_layer(file, layer_map);
+        let layer_name = Self::_detect_layer(file, layer_map);
 
         for (start, end) in utility_dummy_detector::dummy_function_ranges(&lines, lang) {
             violations.push(LintResult::new_arch(
@@ -176,7 +169,7 @@ impl DummyImportChecker {
                     intent: SymbolName::new(
                         "Remove dummy functions that exist only to silence unused import checks",
                     ),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(format!(
+                    reason: Some(LintMessage::new(format!(
                         "Dummy function range ends at line {}",
                         end
                     ))),
@@ -187,14 +180,13 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_impls(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
-        let layer_name = self._detect_layer(file, layer_map);
+        let layer_name = Self::_detect_layer(file, layer_map);
 
         for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
             violations.push(LintResult::new_arch(
@@ -208,7 +200,7 @@ impl DummyImportChecker {
                     intent: SymbolName::new(
                         "Implement contract methods with real behavior instead of empty/todo stubs",
                     ),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                    reason: Some(LintMessage::new(
                         "Trait implementations with empty bodies violate the contract abstraction.",
                     )),
                 }
@@ -218,15 +210,14 @@ impl DummyImportChecker {
     }
 
     fn _check_taxonomy_intent(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let _layer_name = self._detect_layer(file, layer_map);
+        let _layer_name = Self::_detect_layer(file, layer_map);
         let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
         let dummy_impl_traits: Vec<String> =
             utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
@@ -312,7 +303,7 @@ impl DummyImportChecker {
                         source_layer: LayerNameVO::new("surfaces"),
                         import_type: SymbolName::new("taxonomy"),
                         intent: SymbolName::new("Use taxonomy Value Objects in function signatures instead of primitives"),
-                        reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                        reason: Some(LintMessage::new(
                             "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose."
                         )),
                     }.to_string(),
@@ -321,59 +312,7 @@ impl DummyImportChecker {
         }
     }
 
-    fn _check_aggregate_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = LanguageVO::from_path(file);
-        let imported = utility_dummy_detector::imported_symbols(&lines, lang);
-        let aggregate_types: Vec<String> = imported
-            .into_iter()
-            .filter(|(s, _)| s.value().ends_with("Aggregate"))
-            .map(|(s, _)| s.value().to_string())
-            .collect();
-
-        for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
-            let is_phantom = match lang {
-                LanguageVO::Rust => trimmed.contains("PhantomData"),
-                LanguageVO::Python => trimmed.contains("TYPE_CHECKING"),
-                LanguageVO::JavaScript => {
-                    trimmed.contains("@ts-ignore") || trimmed.contains("@ts-expect")
-                }
-                LanguageVO::Unknown => false,
-            };
-            if is_phantom {
-                for agg_type in &aggregate_types {
-                    if trimmed.contains(agg_type) {
-                        let real_count = lines
-                            .iter()
-                            .filter(|l| {
-                                let t = l.trim();
-                                t.contains(agg_type)
-                                    && !t.contains("PhantomData")
-                                    && !t.contains("fn _use_")
-                                    && !t.starts_with("//")
-                                    && !t.starts_with("use ")
-                                    && !t.starts_with("import ")
-                                    && !t.starts_with("from ")
-                            })
-                            .count();
-                        if real_count == 0 {
-                            violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::HIGH,
-                                AesImportViolation::ImportIntentViolation {
-                                    source_layer: LayerNameVO::new("surfaces"),
-                                    import_type: SymbolName::new(agg_type.to_string()),
-                                    intent: SymbolName::new("Call aggregate functions instead of using PhantomData"),
-                                    reason: Some(shared::taxonomy_message_vo::LintMessage::new("Aggregate in PhantomData is never instantiated — dead code.")),
-                                }.to_string(),
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn _check_surface_logic(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
         let logic_patterns = [
@@ -403,7 +342,7 @@ impl DummyImportChecker {
                             source_layer: LayerNameVO::new("surfaces"),
                             import_type: SymbolName::new(pattern.to_string()),
                             intent: SymbolName::new(format!("Delegate to aggregate instead of calling '{}' directly", pattern)),
-                            reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                            reason: Some(LintMessage::new(
                                 "Surface-layer code must delegate business logic to the aggregate layer."
                             )),
                         }.to_string(),
