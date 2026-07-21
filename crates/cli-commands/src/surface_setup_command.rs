@@ -5,7 +5,30 @@
 //   - install:     pip install Python adapters (ruff, mypy, bandit) + npm install JS adapters (eslint, prettier, typescript)
 //   - mcp-config:  prints MCP client config JSON for Claude/Cursor/Windsurf/Copilot
 //
-// Binary resolution for mcp-config: checks sibling of current exe first, falls back to PATH.
+// Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
+
+/// Trusted documentation bundled at compile time — prevents supply-chain risk from copying
+/// untrusted project content into global XDG config directory.
+struct TrustedDoc {
+    name: &'static str,
+    content: &'static str,
+}
+
+const TRUSTED_DOCS: &[TrustedDoc] = &[
+    TrustedDoc { name: "SKILL.md", content: include_str!("assets/SKILL.md") },
+    TrustedDoc { name: "ARCHITECTURE.md", content: include_str!("assets/ARCHITECTURE.md") },
+    TrustedDoc { name: "MIGRATION_RUST.md", content: include_str!("assets/MIGRATION_RUST.md") },
+    TrustedDoc {
+        name: "MIGRATION_PYTHON.md",
+        content: include_str!("assets/MIGRATION_PYTHON.md"),
+    },
+    TrustedDoc {
+        name: "MIGRATION_TYPESCRIPT.md",
+        content: include_str!("assets/MIGRATION_TYPESCRIPT.md"),
+    },
+    TrustedDoc { name: "RULES_AES.md", content: include_str!("assets/RULES_AES.md") },
+];
+
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -128,36 +151,21 @@ fn handle_init_global(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> 
         }
     }
 
-    // Distribute docs + SKILL.md from project root to XDG config
-    let doc_files = [
-        "SKILL.md",
-        "ARCHITECTURE.md",
-        "MIGRATION_RUST.md",
-        "MIGRATION_PYTHON.md",
-        "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
-    ];
-    for doc in &doc_files {
-        let target = config_dir.join(doc);
+    // Distribute TRUSTED docs (bundled at compile time) to XDG config.
+    // Uses include_str! bundled content — never reads from project root.
+    for doc in TRUSTED_DOCS {
+        let target = config_dir.join(doc.name);
         let target_str = target.to_string_lossy();
         if setup_orchestrator.file_exists(&target_str) {
-            println!("  {doc} — already exists, skipping");
+            println!("  {} — already exists, skipping", doc.name);
             continue;
         }
-        match std::fs::read_to_string(doc) {
-            Ok(content) => {
-                if let Some(parent) = target.parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-                match setup_orchestrator.write_config_file(&target_str, &content) {
-                    Ok(_) => println!("  {doc} — created"),
-                    Err(e) => {
-                        println!("  {doc} — error: {e}");
-                        all_ok = false;
-                    }
-                }
+        match std::fs::write(&target, doc.content) {
+            Ok(_) => println!("  {} — created", doc.name),
+            Err(e) => {
+                println!("  {} — error: {e}", doc.name);
+                all_ok = false;
             }
-            Err(_) => println!("  {doc} — not found in project root, skipping"),
         }
     }
 
@@ -283,13 +291,49 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
 }
 
 fn which_mcp_binary() -> String {
+    match resolve_mcp_binary() {
+        Ok(path) => path.to_string_lossy().into_owned(),
+        Err(_) => {
+            // Fail closed — do not fall back to bare PATH lookup.
+            // Caller should handle the error gracefully; we provide a fallback hint.
+            "lint-arwaky-mcp".to_string()
+        }
+    }
+}
+
+/// Resolve the MCP binary to an absolute canonicalized path.
+///
+/// Resolution order:
+///   1. LINT_ARWAKY_MCP_BIN env var (explicit override)
+///   2. Sibling of current executable
+///   3. Fail closed — no bare PATH fallback (prevents PATH hijacking)
+fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
+    // 1. Explicit override
+    if let Ok(explicit) = std::env::var("LINT_ARWAKY_MCP_BIN") {
+        let path = std::path::PathBuf::from(&explicit);
+        if !path.is_file() {
+            return Err(format!(
+                "LINT_ARWAKY_MCP_BIN points to non-file: {}",
+                path.display()
+            ));
+        }
+        return path.canonicalize().map_err(|e| {
+            format!("cannot canonicalize LINT_ARWAKY_MCP_BIN: {e}")
+        });
+    }
+
+    // 2. Sibling of current executable
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             let sibling = dir.join("lint-arwaky-mcp");
-            if sibling.exists() {
-                return sibling.to_string_lossy().to_string();
+            if sibling.is_file() {
+                return sibling
+                    .canonicalize()
+                    .map_err(|e| format!("cannot canonicalize sibling: {e}"));
             }
         }
     }
-    "lint-arwaky-mcp".to_string()
+
+    // 3. Do NOT fall back to bare PATH — fail closed (P1.2)
+    Err("lint-arwaky-mcp not found. Set LINT_ARWAKY_MCP_BIN to an absolute path.".into())
 }

@@ -2,9 +2,6 @@
 // Single source of truth for file walking, ignored path matching, source file detection,
 // and workspace root detection.
 
-#[cfg(unix)]
-use std::os::unix::fs::MetadataExt;
-
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -116,6 +113,12 @@ pub fn default_ignored_paths() -> Vec<String> {
         ".agents".to_string(),
         "node_modules".to_string(),
         "build.rs".to_string(),
+        // P3.2: additional common build/ignore directories
+        ".git".to_string(),
+        "dist".to_string(),
+        "build".to_string(),
+        "coverage".to_string(),
+        ".venv".to_string(),
     ];
     let config = default_aes_config();
     for fp in config.ignored_paths.values.iter() {
@@ -125,16 +128,6 @@ pub fn default_ignored_paths() -> Vec<String> {
         }
     }
     ignored
-}
-
-#[cfg(unix)]
-fn get_inode(meta: &std::fs::Metadata) -> u64 {
-    meta.ino()
-}
-
-#[cfg(not(unix))]
-fn get_inode(_meta: &std::fs::Metadata) -> u64 {
-    0
 }
 
 /// Collect all lintable source files from a directory tree.
@@ -169,9 +162,10 @@ pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemEr
 
 /// Walk a directory tree collecting all source files, skipping ignored directories.
 /// Symlink targets outside the root directory are pruned to prevent path traversal.
+/// Uses canonical-path-based visited set (works on all platforms).
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<PathBuf>::new();
     walk_source_files_inner(&root, files, ignored, &mut visited)
 }
 
@@ -179,7 +173,7 @@ fn walk_source_files_inner(
     dir: &Path,
     files: &mut Vec<FilePath>,
     ignored: &[String],
-    visited: &mut HashSet<u64>,
+    visited: &mut HashSet<PathBuf>,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -194,11 +188,11 @@ fn walk_source_files_inner(
                         if !target.starts_with(dir) {
                             continue;
                         }
+                        // Use canonical path instead of inode (P2.1)
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
                             if target_meta.is_dir() {
                                 walk_source_files_inner(&target, files, ignored, visited);
                             } else if target_meta.is_file() {
@@ -217,11 +211,10 @@ fn walk_source_files_inner(
                 if dir_name == "tests" {
                     continue;
                 }
-                if let Ok(meta) = fs::metadata(&path) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
+                // Use canonical path instead of inode (P2.1)
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
                 }
                 walk_source_files_inner(&path, files, ignored, visited);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
@@ -235,9 +228,10 @@ fn walk_source_files_inner(
 
 /// Walk a directory tree collecting all .rs files.
 /// Contained to `dir` (symlink targets outside the root are pruned).
+/// Uses canonical-path-based visited set (works on all platforms).
 pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<PathBuf>::new();
     walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
 }
 
@@ -245,7 +239,7 @@ fn walk_rs_files_inner(
     dir: &Path,
     cb: &mut dyn FnMut(PathBuf),
     ignored: &[String],
-    visited: &mut HashSet<u64>,
+    visited: &mut HashSet<PathBuf>,
     root: &Path,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
@@ -260,11 +254,11 @@ fn walk_rs_files_inner(
                         if !target.starts_with(root) {
                             continue;
                         }
+                        // Use canonical path instead of inode (P2.1)
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
                             if target_meta.is_dir() {
                                 walk_rs_files_inner(&target, cb, ignored, visited, root);
                             } else if target_meta.is_file()
@@ -279,11 +273,10 @@ fn walk_rs_files_inner(
                 }
             }
             if p.is_dir() {
-                if let Ok(meta) = fs::metadata(&p) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
+                // Use canonical path instead of inode (P2.1)
+                let canonical = std::fs::canonicalize(&p).unwrap_or_else(|_| p.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
                 }
                 walk_rs_files_inner(&p, cb, ignored, visited, root);
             } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {

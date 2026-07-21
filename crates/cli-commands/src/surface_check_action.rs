@@ -54,6 +54,7 @@ pub fn handle_check(
                 return ExitCode::FAILURE;
             }
         };
+        // P2.5: pass user-provided path and filter to git-diff handler
         let rt = match crate::surface_common_command::create_current_thread_runtime() {
             Ok(r) => r,
             Err(_) => return ExitCode::FAILURE,
@@ -62,6 +63,8 @@ pub fn handle_check(
             git_agg,
             ctx.code_analysis_linter.clone(),
             GitBranchName::new("HEAD"),
+            Some(&root),
+            filter.as_deref(),
         ))
     } else {
         let surface = CheckCommandsSurface::new(ctx);

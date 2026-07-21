@@ -93,8 +93,9 @@ pub async fn handle_security(
     println!("Tool: {}", report.tool_name);
 
     if !report.tool_installed {
-        println!("{} not available. Please install it.", report.tool_name);
-        return ExitCode::SUCCESS;
+        eprintln!("Error: {} is not installed.", report.tool_name);
+        // P5.1: return exit code 3 (tool missing) instead of success
+        return ExitCode::from(3);
     }
 
     println!("Findings: {}", report.findings.len());
@@ -142,6 +143,7 @@ pub async fn handle_dependencies(
         }
         Err(e) => {
             println!("{e}");
+            return ExitCode::from(1);
         }
     }
 

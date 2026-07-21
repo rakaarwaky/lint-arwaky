@@ -33,11 +33,6 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli security /path",
     ),
     (
-        "duplicates",
-        "Code duplication detection",
-        "lint-arwaky-cli duplicates /path",
-    ),
-    (
         "dependencies",
         "Dependency vulnerability scan",
         "lint-arwaky-cli dependencies .",

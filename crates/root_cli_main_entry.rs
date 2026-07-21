@@ -10,10 +10,9 @@ use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use code_analysis::{lint_path, CodeDuplicationAnalyzer};
+use code_analysis::lint_path;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 
@@ -182,18 +181,6 @@ fn main() -> ExitCode {
                 orchestrator,
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
             ))
-        }
-        Commands::Duplicates { path } => {
-            let dup_analyzer = CodeDuplicationAnalyzer::new();
-            let violations = dup_analyzer.handle_duplicates(path);
-            if violations.is_empty() {
-                println!("No duplicate code blocks detected.");
-            } else {
-                for v in &violations {
-                    println!("{}", <String as From<_>>::from(v.clone()));
-                }
-            }
-            ExitCode::SUCCESS
         }
         Commands::Dependencies { path } => {
             let maintenance_container =

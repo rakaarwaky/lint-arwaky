@@ -66,7 +66,8 @@ pub fn run_ci_analysis(
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
     let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score.value() as u32) < threshold.value();
+    // P2.7: compare as floats, not truncated u32
+    let below_threshold = score.value() < threshold.value() as f64;
 
     println!("Architecture Compliance CI");
     println!("Score: {:.1} / 100", score.value());
