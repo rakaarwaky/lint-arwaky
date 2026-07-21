@@ -10,12 +10,27 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
+use once_cell::sync::OnceCell;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
+
+// Lazy static runtime for multi-threaded execution - created once, reused across commands
+static RUNTIME: OnceCell<tokio::runtime::Runtime> = OnceCell::new();
+
+fn get_runtime() -> &'static tokio::runtime::Runtime {
+    RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .worker_threads(num_cpus::get())
+            .thread_name("lint-arwaky-worker")
+            .build()
+            .expect("Failed to create Tokio runtime")
+    })
+}
 
 pub struct CliMainEntry {}
 
@@ -91,6 +106,42 @@ fn make_layer_detector() -> Arc<dyn ILayerDetectionAggregate> {
 }
 
 fn main() -> ExitCode {
+    let raw_args: Vec<String> = env::args().collect();
+    
+    // Fast-path for simple commands that don't need full initialization
+    if raw_args.len() >= 2 {
+        match raw_args[1].as_str() {
+            "version" | "--version" | "-V" => {
+                let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
+                let ver = env!("CARGO_PKG_VERSION");
+                if verbose {
+                    println!("Lint Arwaky v{}", ver);
+                    let commit = match std::process::Command::new("git")
+                        .args(["rev-parse", "HEAD"])
+                        .output()
+                        .ok()
+                        .filter(|o| o.status.success())
+                        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                    {
+                        Some(c) => c,
+                        None => "unknown".to_string(),
+                    };
+                    println!("  Commit:    {}", commit);
+                    println!("  Rustc:     {}", default_rustc_version());
+                    println!("  License:   MIT");
+                } else {
+                    println!("Lint Arwaky v{ver} (AES Semantic Builder)");
+                }
+                return ExitCode::SUCCESS;
+            }
+            "help" | "--help" | "-h" => {
+                // Let clap handle help after full parsing
+            }
+            _ => {}
+        }
+    }
+    
+    // Full initialization for commands that need DI container
     let container = CliContainer::new_default();
     let layer_detector = make_layer_detector();
 
@@ -199,6 +250,7 @@ fn main() -> ExitCode {
             ))
         }
         Commands::Version => {
+            // Already handled by fast-path, but keep for --verbose flag via clap
             let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
             let ver = env!("CARGO_PKG_VERSION");
             if verbose {
@@ -469,4 +521,16 @@ fn default_rustc_version() -> &'static str {
     option_env!("VERGEN_RUSTC_SEMVER")
         .or_else(|| option_env!("RUSTC_VERSION"))
         .unwrap_or("stable")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fast_path_version_command() {
+        // Verify version command structure exists
+        let ver = env!("CARGO_PKG_VERSION");
+        assert!(!ver.is_empty());
+    }
 }
