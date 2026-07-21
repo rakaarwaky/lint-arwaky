@@ -101,13 +101,13 @@ async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
 
 ---
 
-### P1.3 — Orchestrator must use parser contract
+### P1.3 — Orchestrator may call utility directly (architecture updated)
 
-**Skill**: `create-agent-rust` — agent must depend only on Taxonomy and Contract, not call utility functions directly.
+**Skill**: `create-agent-rust` — agent may now depend on Utility per updated ARCHITECTURE.md §9.
 **File**: `crates/config-system/src/agent_config_orchestrator.rs`
-**Severity**: HIGH
-**AES Code**: AES violation (Agent bypasses Contract)
-**Problem**: Line 127: `parse_config_yaml(&source.raw_content)` — direct call to utility function, bypassing `IConfigParserProtocol`.
+**Severity**: LOW (now allowed)
+**AES Code**: No violation (Agent→Utility allowed by architecture update)
+**Change**: No fix needed. `parse_config_yaml(&source.raw_content)` is a valid direct utility call.
 
 **Before** (line 127):
 ```rust

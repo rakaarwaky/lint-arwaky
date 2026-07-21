@@ -272,7 +272,6 @@ impl BypassChecker {
 
     /// P1.7 fix: Default fallback bypass patterns when config provides none.
     fn default_forbidden_bypass() -> PatternList {
-        use shared::common::taxonomy_common_vo::PatternList;
         PatternList {
             values: vec![
                 "unwrap".to_string(),

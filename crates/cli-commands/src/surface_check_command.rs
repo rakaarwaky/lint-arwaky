@@ -14,6 +14,7 @@
 // each member gets its own language-specific configuration.
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
@@ -23,6 +24,7 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use std::collections::HashMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -608,8 +610,6 @@ impl CheckCommandsSurface {
         &self,
         results: &[shared::cli_commands::taxonomy_result_vo::LintResult],
     ) -> String {
-        use shared::cli_commands::taxonomy_severity_vo::Severity;
-
         #[derive(serde::Serialize)]
         struct SarifLog {
             #[serde(rename = "$schema")]
@@ -727,7 +727,6 @@ impl CheckCommandsSurface {
         let failures: Vec<_> = results
             .iter()
             .filter(|r| {
-                use shared::cli_commands::taxonomy_severity_vo::Severity;
                 matches!(
                     r.severity,
                     Severity::CRITICAL | Severity::HIGH | Severity::MEDIUM | Severity::LOW
@@ -777,8 +776,6 @@ impl CheckCommandsSurface {
         workspaces: &[shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo],
         member: Option<&str>,
     ) {
-        use std::collections::HashMap;
-
         let mut global_all_counts: HashMap<String, usize> = HashMap::new();
         for r in global_all_results {
             *global_all_counts.entry(r.code.to_string()).or_insert(0) += 1;

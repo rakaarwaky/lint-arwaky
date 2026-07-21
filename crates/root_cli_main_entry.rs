@@ -1,10 +1,12 @@
 // PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
+use std::collections::BTreeMap;
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
 
 use cli_commands::surface_check_action;
 use cli_commands::surface_check_command;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use cli_commands::surface_fix_command;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
@@ -316,8 +318,6 @@ fn main() -> ExitCode {
 }
 
 fn run_default_check(project_root: &str) -> ExitCode {
-    use shared::cli_commands::taxonomy_severity_vo::Severity;
-    use std::collections::BTreeMap;
     let results = lint_path(project_root);
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

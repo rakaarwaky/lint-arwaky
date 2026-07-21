@@ -1,7 +1,7 @@
 # Orphan Detector Fix Plan
 
 > Generated from BA, QA, and Backend reports. All findings validated against source code.
-> User decisions applied: AES503=architecture correct, Agent-Utility=violation, Performance=hybrid, ILayerDetectionAggregate=remove, Path security=include, Severity=adjust.
+> User decisions applied: AES503=architecture correct, Agent-Utility=allowed (config YAML + ARCHITECTURE.md updated), Performance=hybrid, ILayerDetectionAggregate=remove, Path security=include, Severity=adjust.
 
 ---
 
@@ -339,63 +339,13 @@ pub trait IOrphanAggregate: Send + Sync {
 }
 ```
 
-### P3.4 — Update check_orphans to use layer detection via contract (not direct utility import)
+### P3.4 — Update check_orphans to call utility_layer_detector directly
 
-**Skill:** `create-agent-rust` — "Agent depends ONLY on Taxonomy and Contract." Direct `utility_layer_detector` import violates this.
+**Architecture update:** Agent layer may now import Utility directly (ARCHITECTURE.md §9 updated, 3 config YAMLs updated). No need for ILayerDetectionProtocol wrapper.
 
-**Approach:** Create a `ILayerDetectionProtocol` contract + `CapabilitiesLayerDetector` capabilities impl, then inject via DI into the agent.
+**Approach:** Call `shared::common::utility_layer_detector` functions directly in `check_orphans`.
 
-**Step A — Create contract `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs` (NEW):**
-
-```rust
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::taxonomy_config_vo::ArchitectureConfig;
-
-pub struct LayerDetectionResult {
-    pub layer_name: String,
-    pub definition: Option<crate::taxonomy_config_vo::LayerDefinition>,
-}
-
-pub trait ILayerDetectionProtocol: Send + Sync {
-    fn detect_layer(&self, file: &FilePath, config: &ArchitectureConfig) -> Option<LayerDetectionResult>;
-}
-```
-
-**Step B — Create capabilities `crates/orphan-detector/src/capabilities_layer_detector.rs` (NEW):**
-
-```rust
-use shared::orphan_detector::contract_layer_detection_protocol::{ILayerDetectionProtocol, LayerDetectionResult};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-
-pub struct CapabilitiesLayerDetector;
-
-impl ILayerDetectionProtocol for CapabilitiesLayerDetector {
-    fn detect_layer(&self, file: &FilePath, config: &ArchitectureConfig) -> Option<LayerDetectionResult> {
-        let filename = shared::common::utility_layer_detector::extract_filename(file.value());
-        let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
-        let layer_keys: Vec<String> = config.layers.keys().map(|k| k.value.to_string()).collect();
-        let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
-            &base_layer, file.value(), &layer_keys,
-        );
-        let definition = shared::common::utility_layer_detector::get_layer_def(&layer_str, &config.layers);
-        Some(LayerDetectionResult { layer_name: layer_str, definition: definition.cloned() })
-    }
-}
-```
-
-**Step C — Update `ArchOrphanAnalyzer` to accept `Arc<dyn ILayerDetectionProtocol>` via DI:**
-
-```rust
-pub struct ArchOrphanAnalyzer {
-    resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-    layer_detector: Arc<dyn ILayerDetectionProtocol>,  // ADD
-    // ... 6 analyzers
-    config: ArchitectureConfig,
-}
-```
-
-**Step D — Update `check_orphans` to use injected protocol:**
+**Updated `check_orphans`:**
 
 ```rust
 fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
@@ -423,14 +373,17 @@ fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
     for f in files {
         let file_fp = match FilePath::new(f.clone()) { Ok(fp) => fp, Err(_) => continue };
 
-        // Use injected protocol — no direct utility import in agent
-        let detection = match self.layer_detector.detect_layer(&file_fp, &self.config) {
-            Some(d) => d,
+        let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
+        let base_layer = match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
+            Some(l) => l,
             None => continue,
         };
-        let layer_str = detection.layer_name;
-        let definition = match detection.definition {
-            Some(d) => d,
+        let layer_keys: Vec<String> = self.config.layers.keys().map(|k| k.value.to_string()).collect();
+        let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
+            &base_layer, file_fp.value(), &layer_keys,
+        );
+        let definition = match shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers) {
+            Some(d) => d.clone(),
             None => continue,
         };
 
@@ -455,25 +408,6 @@ fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
         }
     }
     results
-}
-
-fn get_orphan_entry_points(&self) -> Vec<String> {
-    let mut entry_points = vec![
-        "_container.rs".into(), "_container.py".into(),
-        "_container.ts".into(), "_container.js".into(),
-        "_entry.rs".into(), "_entry.py".into(),
-        "_entry.ts".into(), "_entry.js".into(),
-        "main.rs".into(), "lib.rs".into(),
-        "main.py".into(), "__main__.py".into(),
-        "main.ts".into(), "main.js".into(),
-        "index.ts".into(), "index.js".into(),
-    ];
-    for layer_def in self.config.layers.values() {
-        entry_points.extend(layer_def.orphan.orphan_entry_points.values.iter().cloned());
-    }
-    entry_points.sort();
-    entry_points.dedup();
-    entry_points
 }
 ```
 
@@ -1027,22 +961,22 @@ let is_reachable = alive_files.paths.contains(f);
 
 ---
 
-## Phase 6: Agent Layer Violation (Medium)
+## Phase 6: Agent Layer — Utility imports now allowed (Resolved)
 
-### P6.1 — Remove Utility imports from Agent orchestrator
+### P6.1 — Agent→Utility imports allowed by architecture update
 
-**File:** `crates/orphan-detector/src/agent_orphan_orchestrator.rs`
+**Decision:** ARCHITECTURE.md §9 updated to allow Agent to depend on Utility. Config YAMLs (rust/python/javascript) updated — `agent(orchestrator)` `allowed` includes `"utility"`.
 
-**Problem:** Agent layer imports `utility_orphan_io`, `utility_orphan_filename`, `utility_workspace`. ARCHITECTURE.md §9 says Agent may depend only on Taxonomy and Contract.
+**Rationale:** Agent orchestrator needs utility functions for graph traversal (`_trace_reachability`, `_evaluate_layer`) and layer detection. Wrapping these in a Capabilities layer just to satisfy the old Agent→Utility rule added unnecessary complexity (`ILayerDetectionProtocol` contract + `CapabilitiesLayerDetector`). Simpler to allow Agent→Utility directly.
 
-**Resolved by P3.4:** Layer detection now goes through `ILayerDetectionProtocol` contract + `CapabilitiesLayerDetector` capabilities impl. Agent no longer imports `utility_layer_detector` directly.
+**Files deleted:**
+- `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs`
+- `crates/shared/src/code-analysis/contract_layer_detection_protocol.rs`
+- `crates/orphan-detector/src/capabilities_layer_detector.rs`
 
-**Remaining violations (deferred):** `_trace_reachability` and `_evaluate_layer` still call utility functions directly for graph operations. Full resolution requires:
-1. Create `ITraceReachabilityProtocol` contract in shared
-2. Create `CapabilitiesGraphTraversal` capabilities impl
-3. Inject via DI into `ArchOrphanAnalyzer`
+**Config changes:** `"utility"` added to agent's `allowed` and `allowed_imports` in all 3 config YAMLs.
 
-**Tracking:** Create follow-up task "Move graph traversal from Agent to Capabilities layer" with acceptance criteria: `cargo run --bin lint-arwaky-cli -- check .` reports 0 agent-utility import violations in `agent_orphan_orchestrator.rs`.
+**ARCHITECTURE.md §9 updated:** "Agent may depend only on Taxonomy, Contract, and Utility."
 
 ---
 
@@ -1114,16 +1048,15 @@ pub fn read_file_with_diagnostic(path: &str) -> FileReadOutcome {
    - **Verify:** `cargo check -p shared && cargo check -p orphan-detector`
 2. **Phase 2** (P2.1-P2.3): Config — wire ignored_paths, inject real config. No dependencies.
    - **Verify:** `cargo check -p orphan-detector`
-3. **Phase 3** (P3.1-P3.5): Remove ILayerDetectionAggregate, add ILayerDetectionProtocol + CapabilitiesLayerDetector. Depends on Phase 2.
+3. **Phase 3** (P3.1-P3.5): Remove ILayerDetectionAggregate, call utility_layer_detector directly. Depends on Phase 2.
    - **Verify:** `cargo check -p shared && cargo check -p orphan-detector`
 4. **Phase 4** (P4.1-P4.8): Correctness fixes. Can run in parallel with Phase 3.
    - **Verify:** `cargo check -p orphan-detector`
 5. **Phase 5** (P5.1-P5.3): Performance. Can run in parallel with Phase 4.
    - **Verify:** `cargo check -p orphan-detector`
-6. **Phase 6** (P6.1): Agent layer violation — remaining utility imports in orchestrator.
-   - **Status:** Partially resolved by P3.4 (layer detection via protocol). Remaining: `_trace_reachability` and `_evaluate_layer` still call utility functions directly.
-   - **Action:** Create `ITraceReachabilityProtocol` contract + capabilities impl to move graph traversal out of agent. Track as follow-up task if scope is too large for this plan.
-   - **Verify:** `cargo run --bin lint-arwaky-cli -- check .` — count remaining agent-utility violations
+6. **Phase 6** (P6.1): Agent→Utility imports allowed — architecture configs and docs updated.
+   - **Status:** Resolved. ARCHITECTURE.md §9 + 3 config YAMLs updated. No wrapper needed.
+   - **Verify:** `cargo run --bin lint-arwaky-cli -- check .` — 0 agent-utility import violations
 7. **Phase 7** (P7.1): Severity. Independent, can run anytime.
 8. **Phase 8** (P8.1): Error handling. Independent, can run anytime.
 
@@ -1139,18 +1072,23 @@ cargo run --bin lint-arwaky-cli -- check .
 
 ## Files Summary
 
-### New files (4)
+### New files (2)
 - `crates/shared/src/orphan-detector/utility_orphan_path.rs` — path confinement + `is_path_ignored`
 - `crates/shared/src/orphan-detector/utility_orphan.rs` — add `normalize_module_component`, `normalize_module_path`, `contains_delimited`, `import_tokens`, `has_trait_implementation`
-- `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs` — `ILayerDetectionProtocol` trait (replaces `ILayerDetectionAggregate`)
-- `crates/orphan-detector/src/capabilities_layer_detector.rs` — `CapabilitiesLayerDetector` implementing `ILayerDetectionProtocol`
 
-### Modified files (10)
+### Deleted files (3)
+- `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs` — removed (Agent→Utility direct, no wrapper needed)
+- `crates/shared/src/code-analysis/contract_layer_detection_protocol.rs` — removed (dead code, duplicate)
+- `crates/orphan-detector/src/capabilities_layer_detector.rs` — removed (no longer needed)
+
+### Modified files (12)
 - `crates/shared/src/orphan-detector/contract_orphan_protocol.rs` — update IUtilityOrphanProtocol, ISurfacesOrphanProtocol signatures
 - `crates/shared/src/orphan-detector/contract_orphan_aggregate.rs` — remove layer_detector param from check_orphans
-- `crates/shared/src/orphan-detector/mod.rs` — add utility_orphan_path, contract_layer_detection_protocol modules
-- `crates/orphan-detector/src/agent_orphan_orchestrator.rs` — remove ILayerDetectionAggregate impl, add config, inject ILayerDetectionProtocol via DI
-- `crates/orphan-detector/src/root_orphan_detector_container.rs` — wire config, wire CapabilitiesLayerDetector
+- `crates/shared/src/orphan-detector/mod.rs` — add utility_orphan_path module
+- `crates/shared/src/code-analysis/mod.rs` — remove contract_layer_detection_protocol
+- `crates/orphan-detector/src/agent_orphan_orchestrator.rs` — remove ILayerDetectionAggregate impl + ILayerDetectionProtocol DI, call utility_layer_detector directly
+- `crates/orphan-detector/src/root_orphan_detector_container.rs` — wire config, remove CapabilitiesLayerDetector wiring
+- `crates/orphan-detector/src/lib.rs` — remove capabilities_layer_detector module
 - `crates/orphan-detector/src/capabilities_orphan_graph_resolver.rs` — path confinement, fix entry points, fix workspace import resolution
 - `crates/orphan-detector/src/capabilities_orphan_utility_analyzer.rs` — use inbound_links, token-based matching
 - `crates/orphan-detector/src/capabilities_orphan_contract_analyzer.rs` — extract all traits, fix impl detection, cache search_files, severity

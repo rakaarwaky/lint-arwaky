@@ -1,5 +1,7 @@
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
@@ -129,9 +131,6 @@ impl CodeDuplicationAnalyzer {
         if entries.is_empty() {
             return Vec::new();
         }
-
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
 
         // P2.1/P2.2/P2.3 fix: Hash-based dedup with single-pass normalization.
         // - Store normalized window hash → file indices (P2.3: no line tuples)

@@ -25,6 +25,7 @@ use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
 
 pub struct ArchOrphanAnalyzer {
@@ -196,8 +197,6 @@ impl ArchOrphanAnalyzer {
     }
 
     fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> Vec<String> {
-        use std::collections::VecDeque;
-
         let mut reachable: std::collections::HashSet<String> =
             entry_points.iter().cloned().collect();
         let mut queue: VecDeque<String> = entry_points.iter().cloned().collect();
