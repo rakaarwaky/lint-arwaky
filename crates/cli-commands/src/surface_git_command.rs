@@ -28,7 +28,7 @@ impl GitCommandsSurface {
 pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    base: String,
+    base: GitBranchName,
 ) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
 
@@ -45,7 +45,7 @@ pub async fn handle_git_diff(
         .filter(|fp| shared::common::utility_language_detector::is_lintable(fp))
         .collect();
 
-    println!("Base: {} (changed files)", base);
+    println!("Base: {} (changed files)", base.value());
     println!("Files changed: {}", files.len());
     println!();
 

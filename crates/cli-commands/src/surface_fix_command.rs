@@ -86,7 +86,7 @@ impl FixCommandsSurface {
 }
 
 pub fn handle_fix(
-    path: Option<String>,
+    path: Option<FilePath>,
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator_factory: Arc<
@@ -95,9 +95,8 @@ pub fn handle_fix(
 ) -> ExitCode {
     let root = match path {
         Some(p) => p,
-        None => ".".to_string(),
+        None => FilePath::new(".").unwrap_or_default(),
     };
     let fix_surface = FixCommandsSurface::new(code_analysis_linter, fix_orchestrator_factory);
-    let fp = FilePath::new(root).unwrap_or_default();
-    fix_surface.run_fix(fp, dry_run)
+    fix_surface.run_fix(root, dry_run)
 }
