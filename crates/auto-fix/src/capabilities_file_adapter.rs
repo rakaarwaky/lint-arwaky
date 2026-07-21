@@ -30,15 +30,15 @@ impl IFileAdapterProtocol for FileAdapter {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl FileAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl Default for FileAdapter {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl FileAdapter {
+    pub fn new() -> Self {
+        Self
     }
 }
 

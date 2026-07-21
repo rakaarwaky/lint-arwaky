@@ -238,8 +238,6 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let analyzer =
-            code_analysis::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer::new();
         let scan_root = shared::common::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
@@ -252,7 +250,9 @@ impl ILintExecutorProtocol for LintExecutor {
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
-        let violations = analyzer.check_duplicates(&file_strs, 10);
+        let entries = shared::code_analysis::utility_duplication::collect_file_entries(&file_strs);
+        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(entries, 10);
+        let violations = shared::code_analysis::utility_duplication::build_violations(&blocks, file_strs.len() * 100, 10);
         let count = violations.len();
         let mut output = format!(
             "Duplication detection for {}\nScanned {} files\n",

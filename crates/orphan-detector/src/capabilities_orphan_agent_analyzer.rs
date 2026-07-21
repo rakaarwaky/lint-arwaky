@@ -87,6 +87,12 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AgentOrphanAnalyzer {
     pub fn new() -> Self {
         Self {}
@@ -167,11 +173,5 @@ impl AgentOrphanAnalyzer {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
         RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
             .as_ref()
-    }
-}
-
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
     }
 }

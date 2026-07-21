@@ -77,14 +77,14 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl WorkspaceDetector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl Default for WorkspaceDetector {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl WorkspaceDetector {
+    pub fn new() -> Self {
+        Self
     }
 }

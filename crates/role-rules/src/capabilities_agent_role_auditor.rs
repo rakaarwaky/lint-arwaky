@@ -49,36 +49,6 @@ impl IAgentRoleChecker for AgentRoleChecker {
         max_lines: usize,
         violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_file_size_limit(source, max_lines, violations);
-    }
-    fn check_any_type_annotation(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
-    ) {
-        self.check_any_type_annotation(source, violations);
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for AgentRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AgentRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn check_file_size_limit(
-        &self,
-        source: &SourceContentVO,
-        max_lines: usize,
-        violations: &mut Vec<LintResult>,
-    ) {
         let content = source.content.value();
         let file = source.file_path.value();
         if content.lines().count() > max_lines {
@@ -91,11 +61,10 @@ impl AgentRoleChecker {
             ));
         }
     }
-
-    pub fn check_any_type_annotation(
+    fn check_any_type_annotation(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
+        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
         let content = source.content.value();
         let file = source.file_path.value();
@@ -118,5 +87,19 @@ impl AgentRoleChecker {
                 ));
             }
         }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for AgentRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentRoleChecker {
+    pub fn new() -> Self {
+        Self {}
     }
 }

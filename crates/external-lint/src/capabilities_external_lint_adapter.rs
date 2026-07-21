@@ -196,15 +196,15 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl ExternalLintUtilityAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl Default for ExternalLintUtilityAdapter {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl ExternalLintUtilityAdapter {
+    pub fn new() -> Self {
+        Self
     }
 }
 

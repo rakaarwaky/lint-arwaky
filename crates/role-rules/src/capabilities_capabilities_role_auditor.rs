@@ -31,29 +31,6 @@ impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
         layer: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        self.check_capability_routing(source, layer, violations);
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for CapabilitiesRoleChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CapabilitiesRoleChecker {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn check_capability_routing(
-        &self,
-        source: &SourceContentVO,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
         if layer != "capabilities" && !layer.starts_with("capabilities(") {
             return;
         }
@@ -68,6 +45,20 @@ impl CapabilitiesRoleChecker {
         } else if li.is_js {
             self._check_js_routing(file, content, violations);
         }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for CapabilitiesRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl CapabilitiesRoleChecker {
+    pub fn new() -> Self {
+        Self {}
     }
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {

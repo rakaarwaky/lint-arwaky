@@ -54,12 +54,18 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
+impl Default for ConfigYamlReader {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ConfigYamlReader {
     pub fn new() -> Self {
         Self
     }
 
-    pub fn config_filename(language: &str) -> String {
+    fn config_filename(language: &str) -> String {
         format!("lint_arwaky.config.{}.yaml", language)
     }
 
@@ -98,11 +104,5 @@ impl ConfigYamlReader {
             }
         }
         None
-    }
-}
-
-impl Default for ConfigYamlReader {
-    fn default() -> Self {
-        Self::new()
     }
 }

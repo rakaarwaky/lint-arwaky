@@ -1,34 +1,24 @@
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_layer_detector;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_name_vo::SymbolName;
 
-// (No protocol implementation found in this file)
-
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct DummyImportChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-// (No protocol implementation found in this file)
-
-// (No protocol implementation found in this file)
-
-impl shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol
-    for DummyImportChecker
-{
+impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES204")
     }

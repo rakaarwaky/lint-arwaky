@@ -16,8 +16,6 @@ use tracing::debug;
 
 use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_lock_working_dir;
 
-// (No protocol implementation found in this file)
-
 // PURPOSE: RsAuditAdapter — ILinterAdapterProtocol implementation for cargo-audit security scanning
 //
 // Uses the `rustsec` crate directly (not subprocess) to parse Cargo.lock and
@@ -36,6 +34,8 @@ use std::path::Path;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CargoAuditAdapter {}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl ILinterAdapterProtocol for CargoAuditAdapter {

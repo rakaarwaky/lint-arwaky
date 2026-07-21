@@ -114,7 +114,7 @@ impl IContractRoleChecker for ContractRoleChecker {
                 || content.contains(&js_extends)
                 || content.contains(&js_implements)
             {
-                let msg = aes013_forbidden_inheritance(trait_name);
+                let msg = Self::aes013_forbidden_inheritance(trait_name);
                 violations.push(LintResult::new_arch(
                     file,
                     0,
@@ -135,18 +135,18 @@ impl Default for ContractRoleChecker {
     }
 }
 
-fn aes013_forbidden_inheritance(trait_name: &str) -> String {
-    format!(
-        "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.\n\
-         WHY? Contracts must not inherit from forbidden source layers.\n\
-         FIX: Remove the inheritance or use a valid contract port/protocol instead.",
-        trait_name
-    )
-}
-
 impl ContractRoleChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    fn aes013_forbidden_inheritance(trait_name: &str) -> String {
+        format!(
+            "AES013 FORBIDDEN_INHERITANCE: '{}' implemented from forbidden source.\n\
+             WHY? Contracts must not inherit from forbidden source layers.\n\
+             FIX: Remove the inheritance or use a valid contract port/protocol instead.",
+            trait_name
+        )
     }
 
     /// Detect primitive type usage in contract method signatures (AES402).

@@ -66,15 +66,15 @@ impl IToolExecutorProtocol for ToolExecutorAdapter {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl ToolExecutorAdapter {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl Default for ToolExecutorAdapter {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl ToolExecutorAdapter {
+    pub fn new() -> Self {
+        Self
     }
 }
 

@@ -68,15 +68,29 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
         source: &SourceContentVO,
         violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
-        self.check_fn_count_limit(source, violations);
+        let content = source.content.value();
+        let file = source.file_path.value();
+        let li = detect_language_info_from_source(source);
+        let fn_keyword = if li.is_py {
+            "def "
+        } else if li.is_js {
+            "function "
+        } else {
+            "fn "
+        };
+        if content.matches(fn_keyword).count() > 15 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES406",
+                Severity::HIGH,
+                AesRoleViolation::SurfaceRoleViolation { reason: None },
+            ));
+        }
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-fn make_adapter(name: &str) -> Option<AdapterName> {
-    AdapterName::new(name).ok()
-}
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_FUNCTION_BODY_LINES: i64 = 80;
@@ -107,9 +121,6 @@ static RUST_IMPL_RE: Lazy<Option<Regex>> =
 static RUST_FN_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(").ok());
 
-fn aes406_passive_violation_details(file: &str, details: &str) -> String {
-    format!("AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.", file, details)
-}
 impl Default for SurfaceRoleChecker {
     fn default() -> Self {
         Self::new()
@@ -120,36 +131,36 @@ impl SurfaceRoleChecker {
     pub fn new() -> Self {
         Self {}
     }
-    pub fn check_smart(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_utility(&self) -> Vec<LintResult> {
-        vec![]
-    }
-    pub fn check_passive(&self) -> Vec<LintResult> {
-        vec![]
+
+    /// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
+    fn is_in_surfaces(f: &FilePath) -> bool {
+        let path_str = f.to_string();
+        let basename = match path_str.rsplit('/').next() {
+            Some(s) => s,
+            None => &path_str,
+        };
+        let stem = match basename.rfind('.') {
+            Some(pos) => &basename[..pos],
+            None => basename,
+        };
+        if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
+            return true;
+        }
+        if let Some(parent) = path_str.rsplit('/').nth(1) {
+            if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
+                return true;
+            }
+        }
+        false
     }
 
-    pub fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let content = source.content.value();
-        let file = source.file_path.value();
-        let li = detect_language_info_from_source(source);
-        let fn_keyword = if li.is_py {
-            "def "
-        } else if li.is_js {
-            "function "
-        } else {
-            "fn "
-        };
-        if content.matches(fn_keyword).count() > 15 {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES406",
-                Severity::HIGH,
-                AesRoleViolation::SurfaceRoleViolation { reason: None },
-            ));
-        }
+    /// Check if the file is a barrel/init file.
+    fn is_init(f: &FilePath) -> bool {
+        let path_str = f.to_string();
+        path_str.ends_with("__init__.py")
+            || path_str.ends_with("mod.rs")
+            || path_str.ends_with("index.ts")
+            || path_str.ends_with("index.js")
     }
 
     // ---- moved from capabilities_role_checker.rs ----
@@ -236,7 +247,7 @@ impl SurfaceRoleChecker {
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
                 message: LintMessage::new(AesRoleViolation::NoDomainLogic { reason: None }),
-                source: make_adapter("architecture"),
+                source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
@@ -254,10 +265,10 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
     ) {
         for f in files {
-            if !is_in_surfaces(f) {
+            if !Self::is_in_surfaces(f) {
                 continue;
             }
-            if is_init(f) {
+            if Self::is_init(f) {
                 continue;
             }
 
@@ -630,44 +641,15 @@ impl SurfaceRoleChecker {
             line: LineNumber::new(1),
             column: ColumnNumber::new(1),
             code: ErrorCode::raw("AES406"),
-            message: LintMessage::new(aes406_passive_violation_details(&f.to_string(), &detail)),
+            message: LintMessage::new(format!(
+                "AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.",
+                &f.to_string(),
+                &detail
+            )),
             source: Some(AdapterName::raw("surface_hierarchy")),
             severity: Severity::HIGH,
             enclosing_scope: None,
             related_locations: LocationList::new(),
         });
     }
-}
-
-// --- helpers -----------------------------------------------------------------
-
-/// Check if the file is a surface file by filename prefix `surface_` or `surfaces_` or directory `surfaces/`.
-pub fn is_in_surfaces(f: &FilePath) -> bool {
-    let path_str = f.to_string();
-    let basename = match path_str.rsplit('/').next() {
-        Some(s) => s,
-        None => &path_str,
-    };
-    let stem = match basename.rfind('.') {
-        Some(pos) => &basename[..pos],
-        None => basename,
-    };
-    if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
-        return true;
-    }
-    if let Some(parent) = path_str.rsplit('/').nth(1) {
-        if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
-            return true;
-        }
-    }
-    false
-}
-
-/// Check if the file is a barrel/init file.
-pub fn is_init(f: &FilePath) -> bool {
-    let path_str = f.to_string();
-    path_str.ends_with("__init__.py")
-        || path_str.ends_with("mod.rs")
-        || path_str.ends_with("index.ts")
-        || path_str.ends_with("index.js")
 }

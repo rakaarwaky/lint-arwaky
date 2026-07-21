@@ -1,39 +1,29 @@
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::DependencyEdge;
 use shared::import_rules::{utility_cycle_detector, utility_file_read, utility_import_module_parser};
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_message_vo::LintMessage;
 use std::collections::HashMap;
 
 use async_trait::async_trait;
 
-// (No protocol implementation found in this file)
-
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct DependencyCycleAnalyzer;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-// (No protocol implementation found in this file)
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-// (No protocol implementation found in this file)
-
-// (No protocol implementation found in this file)
 
 #[async_trait]
-impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol
-    for DependencyCycleAnalyzer
-{
+impl ICycleImportProtocol for DependencyCycleAnalyzer {
     fn scan(
         &self,
         config: &ArchitectureConfig,
@@ -70,6 +60,8 @@ impl shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol
         shared::taxonomy_layer_vo::LayerNameVO::new(name.split('_').next().unwrap_or(name))
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for DependencyCycleAnalyzer {
     fn default() -> Self {

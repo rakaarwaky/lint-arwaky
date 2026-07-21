@@ -1,7 +1,7 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
 use async_trait::async_trait;
-use once_cell::sync::Lazy;
 use regex::Regex;
+use std::sync::OnceLock;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -31,9 +31,6 @@ use shared::naming_rules::utility_naming::get_stem;
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
-static NAMING_REGEX: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok());
-
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
@@ -48,14 +45,14 @@ impl INamingCheckerProtocol for NamingConventionChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         for f in &files.values {
-            let f_str = f.to_string();
-            let filename = match f.rsplit('/').next() {
+            let f_str: String = f.to_string();
+            let filename: &str = match f.rsplit('/').next() {
                 Some(name) => name,
                 None => &f_str,
             };
-            let layer = self._detect_layer(&f_str, &layer_keys);
-            let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
-            let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+            let layer: Option<String> = self._detect_layer(&f_str, &layer_keys);
+            let layer_name: Option<LayerNameVO> = layer.as_ref().map(|l: &String| LayerNameVO::new(l.clone()));
+            let def: Option<&shared::taxonomy_definition_vo::LayerDefinition> = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
             self._check_file_naming(
                 &f_str,
                 filename,
@@ -91,6 +88,12 @@ impl Default for NamingConventionChecker {
 impl NamingConventionChecker {
     pub fn new() -> Self {
         Self {}
+    }
+
+    /// Cached naming regex (snake_case with min 3 words).
+    fn naming_regex() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok()).as_ref()
     }
 
     fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {
@@ -193,7 +196,7 @@ impl NamingConventionChecker {
 
         let stem = get_stem(filename).unwrap_or_default();
 
-        if NAMING_REGEX.as_ref().is_none_or(|re| !re.is_match(stem)) {
+        if Self::naming_regex().is_none_or(|re| !re.is_match(stem)) {
             violations.push(Self::_make_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,

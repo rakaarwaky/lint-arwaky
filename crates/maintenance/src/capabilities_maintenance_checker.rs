@@ -31,18 +31,18 @@ pub struct MaintenanceChecker;
 #[async_trait::async_trait]
 impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        MaintenanceChecker::diagnose_toolchain(self).await
+        self.diagnose_toolchain().await
     }
 
     async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        MaintenanceChecker::run_security_scan(self, project_path).await
+        self.run_security_scan(project_path).await
     }
 
     async fn run_dependency_report(
         &self,
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
-        MaintenanceChecker::run_dependency_report(self, project_path).await
+        self.run_dependency_report(project_path).await
     }
 }
 

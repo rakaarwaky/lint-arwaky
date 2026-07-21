@@ -245,9 +245,7 @@ impl SetupManagementProcessor {
     pub fn new(installer: Arc<dyn ISetupInstallerProtocol>) -> Self {
         Self { installer }
     }
-}
 
-impl SetupManagementProcessor {
     /// Walk the directory tree (depth-limited) looking for source file extensions.
     /// Sets the corresponding `found_*` flag to `true` when a match is found.
     /// Skips hidden dirs, `target/`, `node_modules/`, and `vendor/` for speed.
