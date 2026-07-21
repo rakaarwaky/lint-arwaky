@@ -67,6 +67,32 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             }
             continue;
         }
+
+        // Handle **/*.rs patterns (recursive glob)
+        if pat.starts_with("**/") {
+            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
+            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
+                let ext = ext_pattern.trim_start_matches('.');
+                if !ext.is_empty() {
+                    let basename = segments.last().copied().unwrap_or_default();
+                    if basename.ends_with(&format!(".{ext}")) {
+                        return true;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Handle target/* patterns (prefix with wildcard)
+        if let Some(prefix) = pat.strip_suffix("/*") {
+            if !prefix.is_empty() {
+                if segments.first() == Some(&prefix) {
+                    return true;
+                }
+            }
+            continue;
+        }
+
         if let Some(suffix) = pat.strip_prefix("*.") {
             let suffix = suffix.trim_start_matches('.');
             if suffix.is_empty() {

@@ -40,6 +40,22 @@ pub struct RoleOrchestrator {
     ignored_paths: Vec<String>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+#[async_trait]
+impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        let files = self.collect_files(target);
+        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        self.run_all_role_checks(&file_strings, 500, &mut results);
+        results
+    }
+
+    fn name(&self) -> &str {
+        "role-rules"
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl RoleOrchestrator {
     pub fn new(
@@ -218,22 +234,6 @@ impl RoleOrchestrator {
     }
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
-#[async_trait]
-impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
-        let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, 500, &mut results);
-        results
-    }
-
-    fn name(&self) -> &str {
-        "role-rules"
-    }
-}
-
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleAggregateImpl {
     taxonomy: Arc<dyn ITaxonomyRoleChecker>,
@@ -241,25 +241,6 @@ pub struct RoleAggregateImpl {
     capabilities: Arc<dyn ICapabilitiesRoleChecker>,
     surface: Arc<dyn ISurfaceRoleChecker>,
     agent: Arc<dyn IAgentRoleChecker>,
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl RoleAggregateImpl {
-    pub fn new(
-        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
-        contract: Arc<dyn IContractRoleChecker>,
-        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
-        surface: Arc<dyn ISurfaceRoleChecker>,
-        agent: Arc<dyn IAgentRoleChecker>,
-    ) -> Self {
-        Self {
-            taxonomy,
-            contract,
-            capabilities,
-            surface,
-            agent,
-        }
-    }
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -278,5 +259,24 @@ impl IRoleAggregate for RoleAggregateImpl {
     }
     fn agent(&self) -> &dyn IAgentRoleChecker {
         self.agent.as_ref()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl RoleAggregateImpl {
+    pub fn new(
+        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
+        contract: Arc<dyn IContractRoleChecker>,
+        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
+        surface: Arc<dyn ISurfaceRoleChecker>,
+        agent: Arc<dyn IAgentRoleChecker>,
+    ) -> Self {
+        Self {
+            taxonomy,
+            contract,
+            capabilities,
+            surface,
+            agent,
+        }
     }
 }

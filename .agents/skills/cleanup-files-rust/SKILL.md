@@ -1,12 +1,11 @@
 ---
 name: cleanup-files-rust
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across Rust crates to reduce bloat and improve signal-to-noise ratio."
-version: 2.0.0
+version: 3.0.0
 category: validation
 tags:
   [
     rust,
-    aes,
     cleanup,
     bloat,
     stubs,
@@ -16,6 +15,8 @@ tags:
     unused-files,
     mvp,
     boilerplate,
+    cargo-clippy,
+    feature-flags,
   ]
 triggers:
   - "clean bloat rust"
@@ -25,11 +26,34 @@ triggers:
   - "find unused files rust"
   - "find dead code rust"
   - "find orphan files rust"
+  - "remove dead code rust"
+  - "cleanup crate rust"
 dependencies: []
 related:
   - module_logic_validator-rust
   - consolidate-files-rust
+changelog:
+  - version: 3.0.0
+    changes:
+      - "Rewrote detection scripts to handle mod declarations, path-qualified usage, glob imports, cfg attributes"
+      - "Added Rust-specific edge cases: cfg(feature), cfg(test), proc macros, build.rs, integration tests"
+      - "Added git safety/rollback workflow"
+      - "Tightened overengineered pattern criteria with 3-point decision test"
+      - "Added cargo clippy / cargo-udeps as primary detection tools"
+      - "Added dry-run mode"
+      - "Added #[allow(dead_code)] handling"
+      - "Improved thin wrapper and duplicate detection"
+  - version: 2.0.0
+    changes:
+      - "Combined file-level and function-level cleanup into single skill"
+      - "Added Fundamental Question framework"
+      - "Added categorization table and approval workflow"
+  - version: 1.0.0
+    changes:
+      - "Initial file-level cleanup skill"
 ---
+```
+
 # cleanup-rust
 
 ## Purpose
@@ -38,14 +62,21 @@ Find and remove dead code across Rust crates. This skill combines **file-level c
 
 **CRITICAL: Never Remove Real Logic** — Only remove code that serves no purpose in the current FRD scope. If a function is called by another method that's required by FRD, keep it. Always update traits when removing methods. Always run lint after changes.
 
+---
+
 ## Rules
 
 - **Never remove real logic** — only remove code not relevant to FRD scope
 - **Always update trait** — when removing methods from impl, remove from trait too
 - **Always run lint after changes** — verify no compilation errors or regressions
-- **File with 0 inbound imports** = likely unused (verify first)
+- **Always snapshot before cleanup** — git commit or stash before any deletion
+- **File with 0 inbound references** = likely unused (verify with multi-pattern check)
 - **File with only re-exports** = likely bloat (consider consolidation)
-- **File not referenced by any other file** = candidate for deletion
+- **File not referenced by any other file, test, or build script** = candidate for deletion
+- **Respect `#[allow(dead_code)]`** — investigate intent before removing
+- **Respect `#[cfg(...)]` gates** — code behind feature flags or test cfg is NOT dead
+
+---
 
 ## When to Use
 
@@ -54,6 +85,9 @@ Find and remove dead code across Rust crates. This skill combines **file-level c
 - When user asks to clean bloat from a module
 - After refactoring a crate (find orphaned files)
 - When cleaning up accumulated dead code
+- Before release (final bloat pass)
+
+---
 
 ## The Fundamental Question
 
@@ -63,11 +97,17 @@ Before keeping any function or file, ask:
 
 If the answer is:
 
-- "Because it was always there" → **REMOVE**
-- "Because it might be useful someday" → **REMOVE**
-- "Because it handles edge cases we don't have" → **REMOVE**
-- "Because it's required by FRD" → **KEEP**
-- "Because it's called by a method that's required by FRD" → **KEEP**
+| Answer                                                        | Verdict          |
+| ------------------------------------------------------------- | ---------------- |
+| "Because it was always there"                                 | **REMOVE** |
+| "Because it might be useful someday"                          | **REMOVE** |
+| "Because it handles edge cases we don't have"                 | **REMOVE** |
+| "Because it's required by FRD"                                | **KEEP**   |
+| "Because it's called by a method required by FRD"             | **KEEP**   |
+| "Because it's behind a feature flag we still ship"            | **KEEP**   |
+| "Because it's used by tests that validate FRD behavior"       | **KEEP**   |
+| "Because a proc macro / derive generates code referencing it" | **KEEP**   |
+| "Because`build.rs` or integration tests reference it"       | **KEEP**   |
 
 ---
 
@@ -76,39 +116,73 @@ If the answer is:
 ### Thin Wrappers (Remove)
 
 ```rust
-// Simple attribute return
+// ❌ Simple attribute return — direct access is simpler
 fn get_something(&self, obj: &Obj) -> f64 {
     obj.attribute
 }
-// WHY: Direct attribute access is simpler. No logic added.
 
-// Simple enum comparison
+// ❌ Simple enum comparison — comparison is already trivial
 fn should_force_x(&self, hint: &ActionHint) -> bool {
     *hint == ActionHint::X
 }
-// WHY: Comparison is already simple. Wrapper adds no value.
+
+// ❌ Single-field delegation — no logic added
+fn name(&self) -> &str {
+    &self.inner.name
+}
 ```
+
+**Exception — KEEP thin wrappers when:**
+
+- They are part of a public trait implementation (removing breaks the trait contract)
+- They add documentation value (`/// Converts meters to kilometers`)
+- They are the sole implementation of a trait method used polymorphically
 
 ### Stubs (Remove)
 
 ```rust
+// ❌ Empty implementations providing no value
 fn method(&self) -> Option<()> { None }
 fn method(&self) -> String { String::new() }
-// WHY: Empty implementations provide no value.
+fn method(&self) -> Vec<Item> { vec![] }
+fn method(&self) -> Result<(), Error> { Ok(()) }
+fn method(&self) -> bool { false }
+fn method(&self) -> i32 { 0 }
 ```
+
+**Exception — KEEP stubs when:**
+
+- They are required by a trait definition that external crates implement
+- They are placeholder for a confirmed next-sprint FRD item (add `// TODO(FRD-XXX): implement` comment)
 
 ### Duplicate Functions (Remove)
 
-Same function in multiple capability files — keep in the file that owns the logic.
-WHY: Duplicates create maintenance burden. Single source of truth.
+Same function logic in multiple capability files — keep in the file that **owns the domain logic**.
+
+```rust
+// ❌ In capabilities_movement.rs AND capabilities_physics.rs:
+fn clamp_velocity(v: f64, max: f64) -> f64 {
+    v.clamp(-max, max)
+}
+// KEEP in the file that owns velocity logic. Remove from the other.
+```
+
+**Detection:** Match on function body similarity, not just name. Two functions with different names but identical bodies are also duplicates.
 
 ### Overengineered Patterns (Remove)
 
 ```rust
-// Temporal enforcer, circular dependency detection, etc.
+// ❌ Temporal enforcer, circular dependency detection, plugin registries, etc.
 // if NOT in MVP → REMOVE
-// WHY: Complexity without clear MVP requirement is waste.
 ```
+
+**3-Point Decision Test — ALL must be true to remove:**
+
+1. ✅ The pattern is **NOT referenced** in any FRD requirement document
+2. ✅ Removing it does **NOT break** any existing test (`cargo test` passes)
+3. ✅ The pattern adds **>20 lines** of code for **<3 lines** of actual consumed logic
+
+If **any** check fails → **KEEP** and add comment: `// REVIEW: candidate for removal post-MVP`
 
 ---
 
@@ -116,10 +190,9 @@ WHY: Duplicates create maintenance burden. Single source of truth.
 
 ### Unused Files
 
-Files not imported by any other file in the crate:
+Files not imported, declared, or referenced by any other file in the crate:
 
-```rust
-// Example: capabilities_orphan_feature.rs never imported
+```
 crates/my-crate/src/capabilities_orphan_feature.rs  // 0 inbound refs
 ```
 
@@ -128,127 +201,380 @@ crates/my-crate/src/capabilities_orphan_feature.rs  // 0 inbound refs
 Files that only re-export from another module — bloat if the re-export adds no value:
 
 ```rust
-// capabilities_reexport.rs
+// ❌ capabilities_reexport.rs — just a passthrough
 pub use super::capabilities_real_impl::MyStruct;
-// WHY: Just a passthrough. Consolidate into the real impl file.
+pub use super::capabilities_real_impl::MyTrait;
+// WHY: Consolidate into the real impl file or into mod.rs directly.
 ```
+
+**Exception — KEEP re-export files when:**
+
+- They form a deliberate public API surface (`pub use` in `lib.rs` pattern)
+- Multiple downstream crates import from the re-export path (changing would be a breaking change)
 
 ---
 
-## Exceptions (Keep Even If Unused)
+## Exceptions (NEVER Remove Without Explicit Approval)
 
-- `lib.rs` — crate entry point
-- `mod.rs` — module declarations
-- `contract_*.rs` — trait definitions (may be used by external crates)
-- `main.rs` — binary entry point
-- Taxonomy utility files (referenced by any layer)
+| File/Pattern                                           | Reason                                                        |
+| ------------------------------------------------------ | ------------------------------------------------------------- |
+| `lib.rs`                                             | Crate entry point                                             |
+| `mod.rs`                                             | Module declarations                                           |
+| `main.rs`                                            | Binary entry point                                            |
+| `contract_*.rs` / `traits.rs`                      | Trait definitions (may be used by external crates)            |
+| `build.rs`                                           | Build script                                                  |
+| Files behind`#[cfg(feature = "...")]`                | Conditionally compiled — verify feature is truly deprecated  |
+| `#[cfg(test)]` modules / `tests/` directory        | Test code — check`cargo test` not just `cargo check`     |
+| Files referenced by`build.rs`                        | Build-time code generation                                    |
+| Files referenced by integration tests (`tests/*.rs`) | Not visible from`src/` imports                              |
+| Files referenced by proc macros / derive macros        | Invisible to grep — referenced via macro expansion           |
+| Items with`#[allow(dead_code)]`                      | Developer explicitly marked as intentional — investigate WHY |
+| Taxonomy / utility files referenced by any layer       | Cross-cutting concerns                                        |
 
 ---
 
 ## Workflow
 
-### Step 1: Read Requirements
-
-Read the requirements to understand FRD scope.
-
-### Step 2: Scan for Unused Files
-
-Run detection script to find files not imported by any other file:
+### Step 0: Safety Snapshot
 
 ```bash
-# Find files not imported by any other file
-for f in crates/*/src/*.rs; do
+# ALWAYS do this first — non-negotiable
+git add -A && git commit -m "pre-cleanup snapshot: <crate-name>" --allow-empty
+git checkout -b cleanup/<crate-name>-$(date +%Y%m%d)
+```
+
+If anything goes wrong:
+
+```bash
+git checkout main
+git branch -D cleanup/<crate-name>-$(date +%Y%m%d)
+# Or restore specific files:
+git checkout HEAD~1 -- crates/<crate>/src/<file>.rs
+```
+
+### Step 1: Read Requirements
+
+Read the FRD / requirements document to understand MVP scope. List all required capabilities, traits, and behaviors.
+
+### Step 2: Run Primary Detection (Tooling)
+
+Use Rust-native tooling FIRST — it understands cfg, macros, and the module system:
+
+```bash
+# Primary: cargo clippy dead code detection
+cargo clippy -p <crate-name> --all-features -- -W dead_code -W unused_imports -W unused_variables 2>&1 | tee /tmp/clippy_report.txt
+
+# Secondary: cargo-udeps (finds unused dependencies and unreachable modules)
+cargo udeps -p <crate-name> --all-features 2>&1 | tee /tmp/udeps_report.txt
+
+# Tertiary: cargo check with all features (catches cfg-gated code)
+cargo check -p <crate-name> --all-features 2>&1 | tee /tmp/check_report.txt
+
+# Test compilation (catches test-only references)
+cargo test -p <crate-name> --no-run --all-features 2>&1 | tee /tmp/test_report.txt
+```
+
+### Step 3: Run Secondary Detection (File-Level Scan)
+
+Multi-pattern scan for files not referenced anywhere:
+
+```bash
+#!/usr/bin/env bash
+# find_unused_files.sh — comprehensive orphan detection
+CRATE_DIR="crates/<crate-name>/src"
+
+for f in "$CRATE_DIR"/*.rs "$CRATE_DIR"/**/*.rs; do
+  [ -f "$f" ] || continue
   name=$(basename "$f" .rs)
-  refs=$(grep -rn "use.*$name" crates/*/src/*.rs | grep -v "^$f:" | wc -l)
-  if [ "$refs" -eq 0 ]; then
-    echo "UNUSED: $name"
+
+  # Skip protected files
+  [[ "$name" =~ ^(lib|mod|main|build)$ ]] && continue
+  [[ "$name" =~ ^contract_ ]] && continue
+
+  # Check ALL reference patterns:
+  # 1. mod declarations: "mod name;" or "pub mod name;"
+  # 2. use statements: "use ...name..." or "use ...name::..."
+  # 3. path-qualified: "crate::name" or "super::name" or "self::name"
+  # 4. glob imports that might cover it: "use super::*" in parent
+  # 5. #[path] attributes
+  # 6. References in build.rs
+  # 7. References in tests/ directory
+
+  refs=0
+  refs=$((refs + $(grep -rnE "(mod|pub mod)\s+${name}\s*;" "$CRATE_DIR" | grep -v "^$f:" | wc -l)))
+  refs=$((refs + $(grep -rnE "use\s+.*\b${name}\b" "$CRATE_DIR" | grep -v "^$f:" | wc -l)))
+  refs=$((refs + $(grep -rnE "(crate|super|self)::${name}\b" "$CRATE_DIR" | grep -v "^$f:" | wc -l)))
+  refs=$((refs + $(grep -rnE "\b${name}\b" crates/<crate-name>/build.rs 2>/dev/null | wc -l)))
+  refs=$((refs + $(grep -rnE "\b${name}\b" crates/<crate-name>/tests/ 2>/dev/null | wc -l)))
+
+  # Check for glob imports in parent module (potential hidden reference)
+  parent_dir=$(dirname "$f")
+  glob_refs=$(grep -rnE "use\s+(super|self)::\*" "$parent_dir" 2>/dev/null | grep -v "^$f:" | wc -l)
+
+  if [ "$refs" -eq 0 ] && [ "$glob_refs" -eq 0 ]; then
+    echo "UNUSED: $f (0 references, 0 glob imports in parent)"
+  elif [ "$refs" -eq 0 ] && [ "$glob_refs" -gt 0 ]; then
+    echo "MAYBE_UNUSED: $f (0 direct refs, but $glob_refs glob import(s) in parent — verify manually)"
   fi
 done
 ```
 
-### Step 3: List Capability Files and Analyze Each
+### Step 4: Detect Function-Level Bloat
 
-List all capability/trait files. For each file, ask "Why does each function need to exist?"
+```bash
+# Find stubs (methods returning trivial values)
+grep -rnP "fn\s+\w+\s*\([^)]*\)\s*(->\s*\S+)?\s*\{\s*(None|Some\(\(\)\)|String::new\(\)|vec!\[\]|Ok\(\(\)\)|false|0|Default::default\(\))\s*\}" \
+  "$CRATE_DIR" | head -40
 
-### Step 4: Mark for Removal
+# Find thin wrappers (single-expression bodies, multi-line aware)
+# Use ripgrep with multiline:
+rg -U "fn\s+\w+\s*\([^)]*\)[^{]*\{\s*\n\s*(self\.\w+|&self\.\w+|\*\w+\s*==\s*\S+)\s*\n\s*\}" \
+  "$CRATE_DIR" | head -30
 
-If answer is not "required by MVP" → mark for removal. Check both:
+# Find duplicate function names across files
+grep -rn "^\s*pub fn \|^\s*fn " "$CRATE_DIR" | \
+  sed 's/.*fn \([a-z_0-9]*\).*/\1/' | sort | uniq -d | while read dup; do
+    echo "DUPLICATE: $dup"
+    grep -rn "fn ${dup}" "$CRATE_DIR"
+    echo "---"
+  done
 
-- **Function-level**: stubs, thin wrappers, duplicates, overengineered patterns
-- **File-level**: unused files, re-export-only files
+# Find #[allow(dead_code)] items (investigate, don't auto-remove)
+grep -rn "#\[allow(dead_code)\]" "$CRATE_DIR" | head -20
 
-### Step 5: Report
+# Find cfg-gated code (DO NOT remove without verifying feature status)
+grep -rn "#\[cfg(feature" "$CRATE_DIR" | head -20
+grep -rn "#\[cfg(test)\]" "$CRATE_DIR" | head -20
+```
 
-Report per file — show what to keep/remove. Group findings into:
+### Step 5: Analyze and Categorize
 
-| Category                 | What It Is                                  | Action                           |
-| ------------------------ | ------------------------------------------- | -------------------------------- |
-| **Stubs**          | Empty or near-empty methods                 | Remove                           |
-| **Thin Wrappers**  | Direct attribute access, simple comparisons | Remove                           |
-| **Duplicates**     | Same function in multiple files             | Keep in owning file, remove rest |
-| **Overengineered** | Patterns not in MVP scope                   | Remove                           |
-| **Unused Files**   | 0 inbound imports                           | Delete (after verification)      |
-| **Re-export Only** | Files with only re-exports                  | Consolidate into real impl       |
+For each flagged item, apply **The Fundamental Question**. Categorize findings:
 
-### Step 6: Get Approval
+| Category                   | What It Is                                  | Action                           | Confidence       |
+| -------------------------- | ------------------------------------------- | -------------------------------- | ---------------- |
+| **Stubs**            | Empty or trivial-return methods             | Remove                           | High             |
+| **Thin Wrappers**    | Direct attribute access, simple comparisons | Remove (unless trait impl)       | High             |
+| **Duplicates**       | Same logic in multiple files                | Keep in owning file, remove rest | High             |
+| **Overengineered**   | Patterns failing 3-point test               | Remove                           | Medium — verify |
+| **Unused Files**     | 0 inbound refs (all patterns checked)       | Delete                           | High             |
+| **Re-export Only**   | Files with only`pub use` passthrough      | Consolidate                      | Medium           |
+| **Maybe Unused**     | 0 direct refs but glob import in parent     | Manual review                    | Low — verify    |
+| **cfg-gated**        | Behind`#[cfg(feature/test)]`              | KEEP unless feature deprecated   | N/A              |
+| **allow(dead_code)** | Explicitly marked by developer              | Investigate intent               | Low — ask       |
 
-Get approval per file before making changes.
+### Step 6: Report
 
-### Step 7: Execute Cleanup
+Generate a per-file report:
 
-Remove bloat, update traits, delete unused files:
+```markdown
+## Cleanup Report: <crate-name>
+
+### Summary
+- Files scanned: X
+- Functions analyzed: Y
+- Items flagged for removal: Z
+- Estimated lines removed: N
+
+### Per-File Findings
+
+#### `capabilities_movement.rs`
+| Item | Type | Lines | Verdict | Reason |
+|---|---|---|---|---|
+| `get_velocity()` | Thin wrapper | 3 | REMOVE | Direct `self.velocity` access |
+| `clamp_velocity()` | Duplicate | 5 | REMOVE | Owned by `capabilities_physics.rs` |
+| `apply_force()` | Real logic | 22 | KEEP | Required by FRD-012 |
+
+#### `capabilities_orphan_feature.rs`
+| Item | Type | Lines | Verdict | Reason |
+|---|---|---|---|---|
+| Entire file | Unused file | 87 | DELETE | 0 inbound refs, no glob imports, not in tests |
+
+### Items Requiring Manual Review
+- `utils_temporal.rs` — `#[allow(dead_code)]` on 3 items. Developer intent unclear.
+- `capabilities_experimental.rs` — Behind `#[cfg(feature = "experimental")]`. Is feature deprecated?
+```
+
+### Step 7: Get Approval
+
+Present report to user. Get **explicit per-file approval** before making changes.
+
+For "Maybe Unused" and "cfg-gated" items, require **explicit confirmation** — do not batch-remove.
+
+### Step 8: Execute Cleanup
 
 ```bash
 # Remove unused file(s)
 rm crates/<crate>/src/capabilities_orphan_feature.rs
 
-# Update trait definitions (remove removed methods)
-# Update mod.rs (remove removed modules)
+# Update mod.rs — remove module declaration
+sed -i '/mod capabilities_orphan_feature;/d' crates/<crate>/src/mod.rs
+
+# Update trait definitions — remove removed methods
+# (Manual: open trait file, delete method signatures matching removed impls)
+
+# Remove thin wrappers / stubs from impl blocks
+# (Manual: edit file, remove function, update trait if applicable)
+```
+
+### Step 9: Verify
+
+```bash
+# Compilation check (all features to catch cfg-gated breakage)
+cargo check -p <crate-name> --all-features 2>&1 | grep -E "^error"
+
+# Test compilation
+cargo test -p <crate-name> --no-run --all-features 2>&1 | grep -E "^error"
+
+# Full test run (if fast enough)
+cargo test -p <crate-name> --all-features 2>&1 | tail -5
+
+# Clippy clean
+cargo clippy -p <crate-name> --all-features -- -D warnings 2>&1 | grep -E "^error|^warning"
+
+# Check downstream crates that depend on this one
+cargo check --workspace --all-features 2>&1 | grep -E "^error"
+```
+
+### Step 10: Commit
+
+```bash
+git add -A
+git commit -m "cleanup(<crate-name>): remove N dead items (M lines)
+
+Removed:
+- X stubs
+- Y thin wrappers
+- Z duplicate functions
+- W unused files
+
+All cargo check/test/clippy passing with --all-features."
 ```
 
 ---
 
 ## Verification Checklist
 
-- [ ] Requirements read and MVP scope understood
-- [ ] Unused files scanned with detection script
-- [ ] Each function evaluated against MVP scope
-- [ ] Report generated showing keep/remove per file
+- [ ] Git snapshot created before any changes
+- [ ] Working on dedicated cleanup branch
+- [ ] FRD / requirements read and MVP scope understood
+- [ ] `cargo clippy --all-features` run as primary detection
+- [ ] File-level scan uses multi-pattern detection (mod, use, path, glob, build.rs, tests)
+- [ ] Each function evaluated against Fundamental Question
+- [ ] `#[cfg(feature)]` and `#[cfg(test)]` items NOT auto-removed
+- [ ] `#[allow(dead_code)]` items investigated, not auto-removed
+- [ ] Proc macro / derive macro references checked
+- [ ] Integration tests (`tests/`) checked for references
+- [ ] Report generated showing keep/remove per file with reasons
 - [ ] Approval received before making changes
-- [ ] Traits updated when methods removed
-- [ ] mod.rs updated when modules deleted
-- [ ] `cargo check -p <crate-name>` passes without errors
-- [ ] Lint runs clean after changes
+- [ ] Traits updated when methods removed from impl
+- [ ] `mod.rs` updated when modules deleted
+- [ ] `cargo check -p <crate> --all-features` passes
+- [ ] `cargo test -p <crate> --all-features` passes
+- [ ] `cargo clippy -p <crate> --all-features -- -D warnings` passes
+- [ ] `cargo check --workspace --all-features` passes (downstream crates)
+- [ ] Committed with descriptive message
 
-## Quick Commands
+---
+
+## Quick Reference Commands
 
 ```bash
-# Find unused files (0 inbound imports)
-for f in crates/*/src/*.rs; do
-  name=$(basename "$f" .rs)
-  refs=$(grep -rn "use.*$name" crates/*/src/*.rs | grep -v "^$f:" | wc -l)
-  if [ "$refs" -eq 0 ] && [[ ! "$name" =~ ^(lib|mod|main)$ ]]; then
-    echo "UNUSED: $name in $f"
-  fi
-done
+# === PRIMARY DETECTION (use these first) ===
+cargo clippy -p <crate> --all-features -- -W dead_code -W unused_imports 2>&1
+cargo udeps -p <crate> --all-features 2>&1
 
-# Find stubs (methods returning None or empty strings)
-grep -rn "None }\|String::new()\|vec!\[\]" crates/*/src/ | grep -E "fn [a-z_]+\(&self\)" | head -30
+# === FILE-LEVEL ORPHAN SCAN ===
+# (Use the full script from Step 3 above)
 
-# Find thin wrappers (single-expression methods)
-grep -rn "^    fn .*->.*{ [a-z.]* }" crates/*/src/ | head -20
+# === FUNCTION-LEVEL BLOAT ===
+# Stubs:
+rg "fn\s+\w+\([^)]*\)\s*(->\s*\S+)?\s*\{\s*(None|String::new|vec!\[\]|Ok\(\(\)\)|false|0)\s*\}" crates/<crate>/src/
 
-# Find duplicate functions across files
-grep -rn "^    pub fn " crates/*/src/ | cut -d: -f2-3 | sort | uniq -wD | head -20
+# Thin wrappers (multiline):
+rg -U "fn\s+\w+\([^)]*\)[^{]*\{\s*\n\s*(self\.\w+|&self\.\w+)\s*\n\s*\}" crates/<crate>/src/
 
-# Verify compilation after cleanup
-cargo check -p <crate-name> 2>&1 | grep -E "error|cannot find"
+# Duplicates:
+grep -rn "fn " crates/<crate>/src/ | sed 's/.*fn \([a-z_0-9]*\).*/\1/' | sort | uniq -d
+
+# cfg-gated code (DO NOT REMOVE):
+rg "#\[cfg\(" crates/<crate>/src/
+
+# allow(dead_code) (INVESTIGATE):
+rg "#\[allow\(dead_code\)\]" crates/<crate>/src/
+
+# === VERIFICATION ===
+cargo check -p <crate> --all-features 2>&1 | grep "^error"
+cargo test -p <crate> --all-features 2>&1 | tail -3
+cargo clippy -p <crate> --all-features -- -D warnings 2>&1 | grep "^error"
+cargo check --workspace --all-features 2>&1 | grep "^error"
+
+# === ROLLBACK ===
+git checkout HEAD~1 -- crates/<crate>/src/<file>.rs   # restore one file
+git reset --hard HEAD~1                                  # nuclear option
 ```
+
+---
 
 ## Common Mistakes (AVOID)
 
-- ❌ **Removing real MVP logic**: If a function is called by another method required by MVP, keep it.
-- ❌ **Forgetting to update traits**: When removing methods from impl blocks, also remove them from trait definitions.
-- ❌ **Deleting files without checking mod.rs**: After deleting a file, update `mod.rs` to remove the module declaration.
-- ❌ **Removing contract/trait files**: Contract layer files are intentionally unused by direct imports — they're interfaces.
-- ❌ **Skipping lint verification**: Always run `cargo check` and lint after cleanup changes.
+| Mistake                                              | Why It's Dangerous                                        | Prevention                                        |
+| ---------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
+| Removing real MVP logic                              | Breaks required functionality                             | Fundamental Question + FRD cross-reference        |
+| Forgetting to update traits                          | Compilation errors in downstream crates                   | Always edit trait file when editing impl          |
+| Deleting files without updating`mod.rs`            | Compilation error: "file not found for module"            | Checklist item; grep for`mod <name>;`           |
+| Removing`contract_*.rs` / trait files              | Breaks external crate consumers                           | Exception list; check`Cargo.toml` dependents    |
+| Skipping`--all-features` in verification           | Misses breakage in cfg-gated code                         | Always use`--all-features` in check/test/clippy |
+| Removing`#[cfg(test)]` code                        | Breaks`cargo test`                                      | Run`cargo test --no-run` as verification step   |
+| Removing code behind`#[cfg(feature)]`              | Breaks feature-gated builds                               | Check`Cargo.toml` `[features]` section first  |
+| Ignoring glob imports (`use super::*`)             | File appears unused but is imported via glob              | Check parent module for`*` imports              |
+| Ignoring proc macro / derive references              | File is referenced via macro expansion, invisible to grep | Check`#[derive(...)]` and proc macro crates     |
+| Skipping git snapshot                                | Cannot rollback if cleanup breaks something               | Step 0 is non-negotiable                          |
+| Batch-removing "Maybe Unused" items                  | Glob imports or macros may reference them                 | Require manual review + explicit approval         |
+| Removing`#[allow(dead_code)]` items without asking | Developer had a reason to mark it                         | Investigate git blame / ask author                |
+
+---
+
+## Decision Flowchart
+
+```
+Item flagged for removal
+│
+├─ Is it in the Exceptions list?
+│  └─ YES → KEEP (stop)
+│
+├─ Is it behind #[cfg(feature/test)]?
+│  └─ YES → KEEP unless feature is confirmed deprecated (stop)
+│
+├─ Does it have #[allow(dead_code)]?
+│  └─ YES → Investigate intent. Ask author. Do NOT auto-remove. (stop)
+│
+├─ Is it referenced by proc macro / derive / build.rs / integration test?
+│  └─ YES → KEEP (stop)
+│
+├─ Apply Fundamental Question:
+│  ├─ "Required by FRD?" → KEEP
+│  ├─ "Called by FRD-required method?" → KEEP
+│  ├─ "Always there / might be useful / edge case?" → REMOVE
+│  └─ Unclear? → Flag for manual review (do NOT auto-remove)
+│
+├─ If Overengineered pattern:
+│  └─ Pass 3-point test? → REMOVE. Fail any point? → KEEP + comment.
+│
+└─ Execute removal → Update trait → Update mod.rs → Verify → Commit
+```
+
+---
+
+## Dry-Run Mode
+
+When user requests `--dry-run` or says "just show me what you'd remove":
+
+1. Run Steps 1–5 (detection + analysis)
+2. Generate the full report (Step 6)
+3. **Do NOT execute any deletions or edits**
+4. Present report and wait for explicit approval to proceed
+
+This is the **default mode** for first-time runs on a crate.
+
+---

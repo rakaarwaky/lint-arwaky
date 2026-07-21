@@ -148,4 +148,3 @@ impl ExternalLintOrchestrator {
         Self { adapters }
     }
 }
-

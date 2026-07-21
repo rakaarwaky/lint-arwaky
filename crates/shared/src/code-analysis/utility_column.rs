@@ -47,8 +47,8 @@ mod phase3_regression_tests {
         assert_eq!(compute_column(line, "world"), 7);
         // "hello" starts at char position 1
         assert_eq!(compute_column(line, "hello"), 1);
-        // "lo" starts at char position 9
-        assert_eq!(compute_column(line, "lo"), 9);
+        // "lo" starts at char position 4 (1-indexed)
+        assert_eq!(compute_column(line, "lo"), 4);
     }
 
     /// Regression test: byte_offset_to_column converts byte offset to character column.
@@ -86,6 +86,6 @@ mod phase3_regression_tests {
 
         // CJK characters (3 bytes each)
         let line = "こんにちは";
-        assert_eq!(compute_column(line, "にち"), 4);
+        assert_eq!(compute_column(line, "にち"), 3);
     }
 }

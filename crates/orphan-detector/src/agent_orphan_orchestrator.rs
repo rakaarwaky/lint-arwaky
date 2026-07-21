@@ -153,7 +153,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         resolver: Arc<dyn IOrphanGraphResolverProtocol>,
         taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,

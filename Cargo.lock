@@ -3861,7 +3861,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
- "code_analysis-lint-arwaky",
  "once_cell",
  "regex",
  "rmcp",

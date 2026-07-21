@@ -16,13 +16,6 @@ pub struct TuiOrchestrator {
     action_handler: Arc<dyn IActionHandlerProtocol>,
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl TuiOrchestrator {
-    pub fn new(action_handler: Arc<dyn IActionHandlerProtocol>) -> Self {
-        Self { action_handler }
-    }
-}
-
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl ITuiAggregate for TuiOrchestrator {
     /// Handle a TuiEvent by delegating to the action handler's state machine.
@@ -50,5 +43,12 @@ impl ITuiAggregate for TuiOrchestrator {
 
     fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) {
         self.action_handler.poll_scan(state, rx);
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl TuiOrchestrator {
+    pub fn new(action_handler: Arc<dyn IActionHandlerProtocol>) -> Self {
+        Self { action_handler }
     }
 }

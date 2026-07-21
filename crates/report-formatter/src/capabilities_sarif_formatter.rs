@@ -10,20 +10,6 @@ use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
 pub struct SarifFormatter;
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl SarifFormatter {
-    /// Create a new SARIF formatter.
-    pub fn new() -> Self {
-        Self
-    }
-}
-
-impl Default for SarifFormatter {
-    fn default() -> Self {
-        Self
-    }
-}
-
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for SarifFormatter {
@@ -190,4 +176,18 @@ pub fn format_report_default(report: &ScanReport) -> String {
     }
 
     output
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl SarifFormatter {
+    /// Create a new SARIF formatter.
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl Default for SarifFormatter {
+    fn default() -> Self {
+        Self
+    }
 }

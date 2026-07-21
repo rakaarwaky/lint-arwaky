@@ -14,6 +14,23 @@ pub struct TextFormatter {
         Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
+#[async_trait::async_trait]
+impl IReportFormatterProtocol for TextFormatter {
+    fn format(&self, report: &ScanReport, format: Format) -> String {
+        if format == Format::Text {
+            self.format_text(report)
+        } else {
+            // Fallback to default formatting
+            format_report_default(report)
+        }
+    }
+
+    fn supported_format(&self) -> Format {
+        Format::Text
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl TextFormatter {
     /// Create a new text formatter.
@@ -35,23 +52,6 @@ impl TextFormatter {
         let report_path = shared::common::taxonomy_path_vo::FilePath::default();
         self.code_analysis_linter
             .format_report(&results_list, &report_path)
-    }
-}
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-#[async_trait::async_trait]
-impl IReportFormatterProtocol for TextFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
-        if format == Format::Text {
-            self.format_text(report)
-        } else {
-            // Fallback to default formatting
-            format_report_default(report)
-        }
-    }
-
-    fn supported_format(&self) -> Format {
-        Format::Text
     }
 }
 

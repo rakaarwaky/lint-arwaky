@@ -20,6 +20,19 @@ pub struct ReportFormatterOrchestrator {
     junit: Arc<dyn IReportFormatterProtocol>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl IReportFormatterAggregate for ReportFormatterOrchestrator {
+    fn format(&self, report: &ScanReport, format: Format) -> String {
+        let formatter: &dyn IReportFormatterProtocol = match format {
+            Format::Text => self.text.as_ref(),
+            Format::Json => self.json.as_ref(),
+            Format::Sarif => self.sarif.as_ref(),
+            Format::Junit => self.junit.as_ref(),
+        };
+        formatter.format(report, format)
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ReportFormatterOrchestrator {
     pub fn new(
@@ -34,18 +47,5 @@ impl ReportFormatterOrchestrator {
             sarif,
             junit,
         }
-    }
-}
-
-// ─── Block 2: Aggregate Trait Implementation ──────────────
-impl IReportFormatterAggregate for ReportFormatterOrchestrator {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
-        let formatter: &dyn IReportFormatterProtocol = match format {
-            Format::Text => self.text.as_ref(),
-            Format::Json => self.json.as_ref(),
-            Format::Sarif => self.sarif.as_ref(),
-            Format::Junit => self.junit.as_ref(),
-        };
-        formatter.format(report, format)
     }
 }
