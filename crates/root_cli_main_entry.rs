@@ -30,6 +30,49 @@ fn make_check_context(container: &CliContainer) -> surface_check_command::CheckC
 }
 
 fn main() -> ExitCode {
+    let raw_args: Vec<String> = env::args().collect();
+    if raw_args.len() <= 1 {
+        return run_default_check(".");
+    }
+
+    let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
+        Ok(c) => c,
+        Err(e) => e.exit(),
+    };
+
+    // P3.3: handle lightweight commands before constructing full container
+    match &cli.command {
+        Commands::Version => {
+            let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
+            let ver = env!("CARGO_PKG_VERSION");
+            if verbose {
+                println!("Lint Arwaky v{}", ver);
+                let commit = match std::process::Command::new("git")
+                    .args(["rev-parse", "HEAD"])
+                    .output()
+                    .ok()
+                    .filter(|o| o.status.success())
+                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+                {
+                    Some(c) => c,
+                    None => "unknown".to_string(),
+                };
+                println!("  Commit:    {}", commit);
+                println!("  Rustc:     {}", default_rustc_version());
+                println!("  License:   MIT");
+            } else {
+                println!("Lint Arwaky v{ver} (AES Semantic Builder)");
+            }
+            return ExitCode::SUCCESS;
+        }
+        Commands::Adapters => {
+            let external_lint_container =
+                external_lint::root_external_lint_container::ExternalLintContainer::new_default();
+            return surface_plugin_command::handle_adapters(external_lint_container.aggregate());
+        }
+        _ => {}
+    }
+
     let container = CliContainer::new_default();
 
     let ext_lint_clone = container.external_lint.clone();
@@ -69,16 +112,6 @@ fn main() -> ExitCode {
         auto_fix::root_auto_fix_container::AutoFixContainer::new(fix_linter.clone())
             .orchestrator(dry_run)
     });
-
-    let raw_args: Vec<String> = env::args().collect();
-    if raw_args.len() <= 1 {
-        return run_default_check(".");
-    }
-
-    let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
-        Ok(c) => c,
-        Err(e) => e.exit(),
-    };
 
     let filter = cli.filter.clone();
     match cli.command {
@@ -133,32 +166,6 @@ fn main() -> ExitCode {
             rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
                 orchestrator,
             ))
-        }
-        Commands::Version => {
-            let verbose = raw_args.iter().any(|a| a == "--verbose" || a == "-v");
-            let ver = env!("CARGO_PKG_VERSION");
-            if verbose {
-                println!("Lint Arwaky v{}", ver);
-                let commit = match std::process::Command::new("git")
-                    .args(["rev-parse", "HEAD"])
-                    .output()
-                    .ok()
-                    .filter(|o| o.status.success())
-                    .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-                {
-                    Some(c) => c,
-                    None => "unknown".to_string(),
-                };
-                println!("  Commit:    {}", commit);
-                println!("  Rustc:     {}", default_rustc_version());
-                println!("  License:   MIT");
-            } else {
-                println!("Lint Arwaky v{ver} (AES Semantic Builder)");
-            }
-            ExitCode::SUCCESS
-        }
-        Commands::Adapters => {
-            surface_plugin_command::handle_adapters(container.external_lint.clone())
         }
         Commands::Orphan { path } => {
             let surface =

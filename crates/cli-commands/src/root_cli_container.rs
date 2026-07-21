@@ -1,6 +1,7 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
+use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -19,6 +20,7 @@ pub struct CliContainer {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
 }
 
 fn make_layer_map() -> (

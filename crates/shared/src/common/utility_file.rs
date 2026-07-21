@@ -166,7 +166,7 @@ pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemEr
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
-    walk_source_files_inner(&root, files, ignored, &mut visited)
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root)
 }
 
 fn walk_source_files_inner(
@@ -174,6 +174,7 @@ fn walk_source_files_inner(
     files: &mut Vec<FilePath>,
     ignored: &[String],
     visited: &mut HashSet<PathBuf>,
+    root: &Path,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -185,16 +186,15 @@ fn walk_source_files_inner(
                 if sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&path) {
                         // P4.1 fix: prevent symlink escape — skip targets outside root
-                        if !target.starts_with(dir) {
+                        if !target.starts_with(root) {
                             continue;
                         }
-                        // Use canonical path instead of inode (P2.1)
                         if !visited.insert(target.clone()) {
                             continue;
                         }
                         if let Ok(target_meta) = target.metadata() {
                             if target_meta.is_dir() {
-                                walk_source_files_inner(&target, files, ignored, visited);
+                                walk_source_files_inner(&target, files, ignored, visited, root);
                             } else if target_meta.is_file() {
                                 collect_source_file(&target, files);
                             }
@@ -211,12 +211,11 @@ fn walk_source_files_inner(
                 if dir_name == "tests" {
                     continue;
                 }
-                // Use canonical path instead of inode (P2.1)
                 let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
                 if !visited.insert(canonical) {
                     continue;
                 }
-                walk_source_files_inner(&path, files, ignored, visited);
+                walk_source_files_inner(&path, files, ignored, visited, root);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if is_source_file(ext) {
                     collect_source_file(&path, files);
