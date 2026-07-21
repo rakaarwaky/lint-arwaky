@@ -1,64 +1,25 @@
 ---
 name: cleanup-files-python
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across Python packages to reduce bloat and improve signal-to-noise ratio."
-version: 2.0.0
-category: cleanup
-tags:
-  [
-    python,
-    cleanup,
-    bloat,
-    stubs,
-    thin-wrappers,
-    dead-code,
-    orphan,
-    unused-files,
-    unused-imports,
-    pep8,
-    formatting,
-    ruff,
-    vulture,
-    black,
-    refactoring,
-    mvp,
-  ]
-triggers:
-  - "cleanup python"
-  - "clean bloat python"
-  - "fix formatting python"
-  - "remove unused imports python"
-  - "remove stubs python"
-  - "remove thin wrappers python"
-  - "find unused files python"
-  - "find dead code python"
-  - "find orphan files python"
-  - "remove dead code python"
-  - "cleanup module python"
-  - "pep8 python"
-dependencies: []
-related:
-  - add-docs-python
-  - consolidate-files-python
-  - module_logic_validator-python
-changelog:
-  - version: 2.0.0
-    changes:
-      - "Complete rewrite: combined file-level and function-level cleanup"
-      - "Added Fundamental Question framework with Python-specific keep/remove criteria"
-      - "Added multi-pattern orphan detection (imports, __init__.py, entry_points, importlib, conftest)"
-      - "Added Python-specific edge cases: TYPE_CHECKING, noqa, decorator-registered, __all__, dynamic imports"
-      - "Added stub / thin wrapper / duplicate / overengineered detection patterns"
-      - "Added git safety/rollback workflow"
-      - "Added approval workflow and dry-run mode"
-      - "Replaced pycln/pycodestyle with ruff as primary tool"
-      - "Added vulture for dead code detection"
-      - "Added categorization table, decision flowchart, and per-file reporting"
-      - "Added exceptions list for Python-specific protected files"
-  - version: 1.0.0
-    changes:
-      - "Initial cleanup skill: unused imports, Black formatting, PEP 8 check"
+metadata:
+    tags: [python, cleanup, bloat, stubs, thin-wrappers, dead-code, orphan, unused-files, ruff, vulture, black]
+    triggers:
+        - "cleanup python"
+        - "clean bloat python"
+        - "fix formatting python"
+        - "remove unused imports python"
+        - "remove stubs python"
+        - "remove thin wrappers python"
+        - "find unused files python"
+        - "find dead code python"
+        - "remove dead code python"
+        - "cleanup module python"
+        - "pep8 python"
+    dependencies: []
+    related:
+        - add-docs-python
+        - consolidate-files-python
 ---
-```
 
 # cleanup-python
 

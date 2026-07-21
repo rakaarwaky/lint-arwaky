@@ -1,12 +1,23 @@
 ---
 name: authoring-skills
-description: Guides creation of effective SKILL.md files following Claude agent skill best practices. Use when the user asks to create, write, structure, or improve a Skill, SKILL.md file, or agent skill instructions.
+description: Guides creation of effective SKILL.md files following agent skill best practices. Use when the user asks to create, write, structure, improve, or validate a Skill, SKILL.md file, or agent skill instructions.
+metadata:
+    tags: [skill, agent, authoring, skill-writing, skill-creation, skill-validation]
+    triggers:
+        - "create skill"
+        - "write skill"
+        - "improve skill"
+        - "validate skill"
+        - "check skill"
+        - "audit skill"
+    dependencies: []
+    related: []
 ---
 # Authoring Skills
 
 ## Quick start
 
-Create a SKILL.md with this structure:
+Create a single SKILL.md with valid frontmatter, then add concise markdown body.
 
 ```yaml
 ---
@@ -15,33 +26,50 @@ description: What it does and when to use it. Third person. Include trigger term
 ---
 ```
 
-Then add concise markdown body with instructions.
-
 ## Core rules
 
-1. **Be concise** — Claude is already smart. Only add what it doesn't know. Challenge every token.
+1. **Be concise** — The model is already smart. Only add what it doesn't know. Challenge every token.
 2. **Set degrees of freedom** — Match specificity to task fragility:
    - High freedom (text steps): multiple valid approaches, context-dependent
    - Medium freedom (parameterized scripts): preferred pattern exists, some variation OK
    - Low freedom (exact commands): fragile operations, strict sequence required
 3. **Progressive disclosure** — SKILL.md is a table of contents. Link to detail files. Keep references ONE level deep.
 4. **Consistent terminology** — Pick one term per concept. Never mix synonyms.
+5. **Model-agnostic** — Write instructions that work across models. Avoid over-explaining for powerful models or under-specifying for lighter ones.
 
-## Naming
+## Frontmatter
+
+### Allowed fields (exhaustive)
+
+Only these keys pass validation. Any other key causes upload failure.
+
+| Field           | Required | Constraints                                                                                                                                         |
+| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Yes      | Max 64 chars. Lowercase`a-z`, `0-9`, `-` only. No leading/trailing hyphen. No `--`. No XML tags. No reserved words ("anthropic", "claude"). |
+| `description` | Yes      | Max 1,024 chars. Non-empty. No`<` or `>` characters. No XML tags.                                                                               |
+| `metadata`    | yes      | Arbitrary key-value pairs for your own tracking.                                                                                                    |
+
+### Naming
 
 - Gerund form preferred: `processing-pdfs`, `analyzing-data`, `managing-deployments`
-- Lowercase, hyphens, numbers only. Max 64 chars.
-- Avoid: `helper`, `utils`, `tools`, `data`, `files`
+- Valid: `pdf-processing`, `process-pdfs`
+- Invalid: `-leading`, `trailing-`, `double--hyphen`, `Helper`, `utils`, `tools`
+- No reserved words: "anthropic", "claude"
 
-## Description field
+### Description
 
-- Third person: "Extracts text from PDFs" (not "I can help" or "You can use")
-- Include WHAT it does + WHEN to use it + key trigger terms
-- Max 1,024 chars. Be specific. Avoid "Helps with documents" or "Processes data"
+- Third person: "Extracts text from PDFs" (not "I can help" / "You can use")
+- Include WHAT + WHEN + trigger terms
+- No angle brackets (`<`, `>`) anywhere in the string
+- Be specific. Avoid "Helps with documents" or "Processes data"
 
-## Structure patterns
+## Structure
 
-### Simple skill (single file)
+### One SKILL.md per skill
+
+Each skill directory contains exactly ONE `SKILL.md` at the root. Nested `SKILL.md` files are rejected on upload (Skills API / claude.ai). The only exception is loading via filesystem in Claude Code.
+
+### Simple skill
 
 ```
 my-skill/
@@ -70,6 +98,8 @@ my-skill/
     └── domain-c.md
 ```
 
+All reference files link directly from SKILL.md. Never nest references deeper than one level.
+
 ## Workflow pattern
 
 For multi-step tasks, provide a checklist:
@@ -89,41 +119,30 @@ Add feedback loops: run validator → fix errors → repeat. Only proceed when v
 
 - **No time-sensitive info** — Use "Current method" + collapsed "Old patterns" section
 - **Provide defaults, not menus** — "Use pdfplumber" not "You can use pypdf, or pdfplumber, or PyMuPDF..."
-- **Use forward slashes** in all paths: `scripts/helper.py` not `scripts\helper.py`
+- **Forward slashes only** — `scripts/helper.py` not `scripts\helper.py`
 - **Examples over descriptions** — Show input/output pairs for style-dependent output
-- **Conditional branching** — Guide decision points: "Creating? → Workflow A. Editing? → Workflow B"
+- **Conditional branching** — "Creating? → Workflow A. Editing? → Workflow B"
 
 ## Scripts and code
 
-- Handle errors explicitly in scripts (don't defer to Claude)
+- Handle errors explicitly (don't defer to the model)
 - Justify all constants: `TIMEOUT = 30  # HTTP requests complete within 30s`
-- State intent clearly: "Run script.py" (execute) vs "See script.py" (read as reference)
-- List dependencies explicitly: `pip install pypdf` before usage
+- State intent: "Run script.py" (execute) vs "See script.py" (read as reference)
+- List dependencies explicitly before usage
 - Use fully qualified MCP tool names: `ServerName:tool_name`
-
-## Evaluation-driven development
-
-1. Run task WITHOUT the skill → document failures
-2. Build 3+ evaluation scenarios testing those gaps
-3. Write minimal instructions to pass evaluations
-4. Test across Haiku, Sonnet, Opus
-5. Iterate based on real usage observations
 
 ## Pre-publish checklist
 
-- [ ] Description: specific, third person, includes triggers
+- [ ] Frontmatter uses ONLY allowed keys (name, description, metadata)
+- [ ] Name: lowercase, hyphens, no leading/trailing `-`, no `--`, no reserved words
+- [ ] Description: third person, specific, no `<` or `>`, includes triggers
+- [ ] Exactly one SKILL.md at skill root (no nested SKILL.md)
 - [ ] Body under 500 lines; overflow in linked files
 - [ ] References one level deep only
 - [ ] Consistent terminology throughout
 - [ ] Concrete examples (not abstract)
-- [ ] Workflows have clear sequential steps
-- [ ] Feedback loops for quality-critical operations
+- [ ] Workflows have clear sequential steps + feedback loops
 - [ ] Scripts handle errors; no magic numbers
 - [ ] Dependencies listed; paths use forward slashes
 - [ ] No time-sensitive content in main body
-- [ ] Tested with target models and real scenarios
-
-```
-
-This SKILL.md is self-referential — it follows the very practices it teaches: concise, gerund-form name, specific third-person description with triggers, progressive structure, checklists, consistent terminology, and under 500 lines. Drop it into a folder named `authoring-skills/` and it's ready to use.
-```
+- [ ] Tested with all target models and real scenarios

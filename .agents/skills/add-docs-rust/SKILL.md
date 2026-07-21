@@ -1,20 +1,19 @@
 ---
 name: add-docs-rust
 description: "Add proper doc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to Rust crates following project conventions."
-version: 1.2.0
-category: documentation
-tags: [rust, docs, doc-comments, prd, frd, readme]
-triggers:
-  - "add docs rust"
-  - "add crate readme rust"
-  - "add prd rust"
-  - "add frd rust"
-  - "add doc comments rust"
-  - "document public api rust"
-dependencies: []
-related:
-  - lint-arwaky-cli
-  - fix-naming
+metadata:
+    tags: [rust, docs, doc-comments, prd, frd, readme]
+    triggers:
+        - "add docs rust"
+        - "add crate readme rust"
+        - "add prd rust"
+        - "add frd rust"
+        - "add doc comments rust"
+        - "document public api rust"
+    dependencies: []
+    related:
+        - lint-arwaky-rust
+        - cleanup-files-rust
 ---
 # add-docs-rust
 

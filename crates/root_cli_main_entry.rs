@@ -68,9 +68,9 @@ fn main() -> ExitCode {
         } => surface_check_action::handle_check(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             git_diff,
-            container.check_context(),
+            container.pipeline_aggregate(),
             filter,
-            Some(container.git_aggregate.clone()),
+            None,
             shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
             format,
         ),
@@ -80,9 +80,8 @@ fn main() -> ExitCode {
             format,
         } => surface_check_action::handle_scan(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
-            container.check_context(),
+            container.pipeline_aggregate(),
             Some(container.multi_project_orchestrator.clone()),
-            container.orchestrator_factory(),
             filter,
             member,
             format,
@@ -115,7 +114,9 @@ fn main() -> ExitCode {
         }
         Commands::Orphan { path } => {
             let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
-                container.check_context(),
+                container.pipeline_aggregate(),
+                container.report_formatter.clone(),
+                None,
             );
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS

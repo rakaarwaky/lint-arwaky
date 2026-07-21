@@ -92,7 +92,7 @@ mod phase3_regression_tests {
     #[test]
     fn relative_path_fallback_for_nonexistent_paths() {
         // When paths don't exist, the function falls back to string replacement
-        let result = get_relative_path("nonexistent/file.rs", "nonexistent/root");
+        let result = get_relative_path("nonexistent/root/file.rs", "nonexistent/root");
         assert_eq!(result, "file.rs");
     }
 
@@ -100,7 +100,7 @@ mod phase3_regression_tests {
     #[test]
     fn relative_path_trailing_slash_handling() {
         // The root_dir should strip trailing slashes before comparison
-        let result = get_relative_path("nonexistent/file.rs", "nonexistent/root/");
+        let result = get_relative_path("nonexistent/root/file.rs", "nonexistent/root/");
         assert_eq!(result, "file.rs");
     }
 }

@@ -1,6 +1,7 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
+use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -22,6 +23,7 @@ pub struct CliContainer {
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub report_formatter: Arc<dyn IReportFormatterAggregate>,
+    pub analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
 }
 
 impl CliContainer {
@@ -91,6 +93,19 @@ impl CliContainer {
                 junit_formatter,
             ));
 
+        // Wire analysis pipeline orchestrator
+        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
+            Arc::new(agent_analysis_pipeline_orchestrator::AnalysisPipelineOrchestrator::new(
+                code_analysis_linter.clone(),
+                import_orchestrator.clone(),
+                naming_orchestrator.clone(),
+                external_lint.clone(),
+                role_orchestrator.clone(),
+                orphan_orchestrator.clone(),
+                multi_project_orchestrator.clone(),
+                report_formatter_agg.clone(),
+            ));
+
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -101,59 +116,12 @@ impl CliContainer {
             git_aggregate,
             multi_project_orchestrator,
             report_formatter: report_formatter_agg,
+            analysis_pipeline,
         }
     }
 
-    pub fn check_context(&self) -> crate::surface_check_command::CheckContext {
-        crate::surface_check_command::CheckContext {
-            code_analysis_linter: self.code_analysis_linter.clone(),
-            import_orchestrator: self.import_orchestrator.clone(),
-            naming_orchestrator: self.naming_orchestrator.clone(),
-            external_lint: self.external_lint.clone(),
-            role_orchestrator: self.role_orchestrator.clone(),
-            orphan_orchestrator: self.orphan_orchestrator.clone(),
-            report_formatter: self.report_formatter.clone(),
-        }
-    }
-
-    pub fn orchestrator_factory(&self) -> crate::surface_check_command::OrchestratorFactory {
-        let ext_lint_clone = self.external_lint.clone();
-        let report_formatter_clone = self.report_formatter.clone();
-        Arc::new(move |config| {
-            let import_container =
-                import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                    config.clone(),
-                );
-            let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-                std::sync::Arc::new(config.clone()),
-                std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
-                    config.layers.clone(),
-                )),
-            );
-            let role_container =
-                role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                    config.clone(),
-                );
-            let arch_linter =
-                code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
-                    config.clone(),
-                    shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone()),
-                )
-                .code_analysis_linter();
-            let orphan_container =
-                orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config.clone(),
-                );
-            crate::surface_check_command::CheckContext {
-                code_analysis_linter: arch_linter,
-                import_orchestrator: import_container.orchestrator(),
-                naming_orchestrator: naming_container.orchestrator(),
-                external_lint: ext_lint_clone.clone(),
-                role_orchestrator: role_container.orchestrator(),
-                orphan_orchestrator: orphan_container.analyzer(),
-                report_formatter: report_formatter_clone.clone(),
-            }
-        })
+    pub fn pipeline_aggregate(&self) -> Arc<dyn IAnalysisPipelineAggregate> {
+        self.analysis_pipeline.clone()
     }
 
     pub fn fix_orchestrator_factory(

@@ -62,7 +62,6 @@ changelog:
     changes:
       - "Initial cleanup skill: unused imports, Prettier formatting, ESLint check"
 ---
-```
 
 # cleanup-typescript
 

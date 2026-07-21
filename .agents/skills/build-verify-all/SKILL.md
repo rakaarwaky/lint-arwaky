@@ -1,6 +1,15 @@
 ---
 name: build-verify
-description: Build workspace and verify clean compile, then optionally run tests. Use after code edits to catch regressions early.
+description: "Build workspace and verify clean compile, then optionally run tests. Use after code edits to catch regressions early."
+metadata:
+    tags: [rust, build, verify, test, cargo]
+    triggers:
+        - "build workspace"
+        - "verify compile"
+        - "run tests"
+        - "check build"
+    dependencies: []
+    related: []
 ---
 
 # Build & Verify

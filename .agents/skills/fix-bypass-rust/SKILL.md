@@ -1,18 +1,19 @@
 ---
-name: fix-bypass-comments-rust
-version: 1.0.0
-category: refactoring
-tags: [aes, bypass, comments, aes304, rust]
-triggers:
-  - "fix bypass comments rust"
-  - "remove allow rust"
-  - "remove unwrap rust"
-dependencies: []
-related:
-  - module_logic_validator
+name: fix-bypass-rust
+description: "Fix Rust bypass comments (#[allow], unwrap, expect, panic) by addressing root causes instead of suppressing errors."
+metadata:
+    tags: [rust, bypass, comments, aes304, allow, unwrap]
+    triggers:
+        - "fix bypass rust"
+        - "fix bypass comments rust"
+        - "remove allow rust"
+        - "remove unwrap rust"
+    dependencies: []
+    related:
+        - module_logic_validator
 ---
 
-# fix-bypass-comments-rust
+# fix-bypass-rust
 
 ## Rules
 

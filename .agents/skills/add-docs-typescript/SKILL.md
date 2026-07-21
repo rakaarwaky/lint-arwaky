@@ -1,20 +1,19 @@
 ---
 name: add-docs-typescript
 description: "Add proper JSDoc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to TypeScript packages following project conventions."
-version: 1.4.0
-category: documentation
-tags: [typescript, docs, jsdoc, type-hints, prd, frd, readme]
-triggers:
-  - "add docs typescript"
-  - "add jsdoc typescript"
-  - "add type hints typescript"
-  - "add prd typescript"
-  - "add frd typescript"
-  - "add package readme typescript"
-dependencies: []
-related:
-  - cleanup-files-typescript
-  - consolidate-files-typescript
+metadata:
+    tags: [typescript, docs, jsdoc, type-hints, prd, frd, readme]
+    triggers:
+        - "add docs typescript"
+        - "add jsdoc typescript"
+        - "add type hints typescript"
+        - "add prd typescript"
+        - "add frd typescript"
+        - "add package readme typescript"
+    dependencies: []
+    related:
+        - cleanup-files-typescript
+        - consolidate-files-typescript
 ---
 
 # add-docs-typescript

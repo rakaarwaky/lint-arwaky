@@ -1,58 +1,22 @@
 ---
 name: cleanup-files-rust
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across Rust crates to reduce bloat and improve signal-to-noise ratio."
-version: 3.0.0
-category: validation
-tags:
-  [
-    rust,
-    cleanup,
-    bloat,
-    stubs,
-    thin-wrappers,
-    dead-code,
-    orphan,
-    unused-files,
-    mvp,
-    boilerplate,
-    cargo-clippy,
-    feature-flags,
-  ]
-triggers:
-  - "clean bloat rust"
-  - "remove stubs rust"
-  - "remove thin wrappers rust"
-  - "clean capabilities rust"
-  - "find unused files rust"
-  - "find dead code rust"
-  - "find orphan files rust"
-  - "remove dead code rust"
-  - "cleanup crate rust"
-dependencies: []
-related:
-  - module_logic_validator-rust
-  - consolidate-files-rust
-changelog:
-  - version: 3.0.0
-    changes:
-      - "Rewrote detection scripts to handle mod declarations, path-qualified usage, glob imports, cfg attributes"
-      - "Added Rust-specific edge cases: cfg(feature), cfg(test), proc macros, build.rs, integration tests"
-      - "Added git safety/rollback workflow"
-      - "Tightened overengineered pattern criteria with 3-point decision test"
-      - "Added cargo clippy / cargo-udeps as primary detection tools"
-      - "Added dry-run mode"
-      - "Added #[allow(dead_code)] handling"
-      - "Improved thin wrapper and duplicate detection"
-  - version: 2.0.0
-    changes:
-      - "Combined file-level and function-level cleanup into single skill"
-      - "Added Fundamental Question framework"
-      - "Added categorization table and approval workflow"
-  - version: 1.0.0
-    changes:
-      - "Initial file-level cleanup skill"
+metadata:
+    tags: [rust, cleanup, bloat, stubs, thin-wrappers, dead-code, orphan, unused-files, cargo-clippy]
+    triggers:
+        - "cleanup rust"
+        - "clean bloat rust"
+        - "remove stubs rust"
+        - "remove thin wrappers rust"
+        - "find unused files rust"
+        - "find dead code rust"
+        - "remove dead code rust"
+        - "cleanup crate rust"
+    dependencies: []
+    related:
+        - add-docs-rust
+        - consolidate-files-rust
 ---
-```
 
 # cleanup-rust
 
