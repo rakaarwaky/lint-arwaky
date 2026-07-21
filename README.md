@@ -10,8 +10,6 @@
 
 Lint Arwaky audits Rust, Python, and JavaScript/TypeScript source code in a single pass. It enforces 24 Agentic Engineering System (AES) rules across 5 groups (Naming, Import, Quality, Role, Orphan) that check layer boundaries, naming conventions, type safety, dead code, and architectural bypass attempts — all at the code level with zero bypass allowed.
 
-The project is its own first customer: running `lint-arwaky-cli check .` on the repository audits itself under the same AES ruleset.
-
 ---
 
 ## Table of Contents
@@ -30,24 +28,24 @@ The project is its own first customer: running `lint-arwaky-cli check .` on the 
 
 ### What it does
 
-| Feature                | Description                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| Feature                      | Description                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC) |
 | **Architecture Audit** | 24 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code           |
 | **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                          |
-| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged                      |
+| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged               |
 | **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                        |
 | **Self-Auditing**      | The project lints itself under its own rule engine                                                     |
 
 ### Who it's for
 
-| Persona         | Use Case                                       | Start Here                         |
-| --------------- | ---------------------------------------------- | ---------------------------------- |
+| Persona               | Use Case                                       | Start Here                        |
+| --------------------- | ---------------------------------------------- | --------------------------------- |
 | **AI Agent**    | Autonomous linting, self-healing, code review  | [SKILL.md](SKILL.md)               |
 | **Developer**   | Lint codebases, enforce architecture           | [Quick Start](#usage) below        |
-| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                      |
+| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                 |
 | **Contributor** | Extend adapters, add CLI commands              | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`                  |
+| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`             |
 
 ---
 
@@ -129,83 +127,6 @@ See [SKILL.md](SKILL.md) for the complete command catalog.
 
 `lint-arwaky-tui` — Ranger-style 3-panel file browser (`ratatui` + `crossterm`).
 Path project is entered once at startup, then navigate folders and run commands on selected files/folders.
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  Path: /home/project/lint-arwaky                      [Ctrl+Q] Quit │
-├──────────┬──────────────────┬──────────────────────────────────────┤
-│  crates/ │  ► cli-commands/ │  File Preview / Lint Results        │
-│  docs/   │    src/          │                                      │
-│  shared/ │      ▼ surface_  │  AES203: OK                         │
-│  ...     │        check_    │  AES204: OK                         │
-│          │        scan_     │  Violations: 0                      │
-│          │        tui_      │                                      │
-│          │        fix_      │  [c]heck  [s]can  [f]ix  [w]atch    │
-│          │      infrastruc… │  [o]rphan  [d]octor  ?:[h]elp       │
-│          │    Cargo.toml    │                                      │
-│          │  src/            │                                      │
-│          │  tests/          │                                      │
-├──────────┴──────────────────┴──────────────────────────────────────┤
-│  c:check  s:scan  f:fix  t:ci  w:watch  o:orphan  d:doctor  i:init│
-│  I:install  m:mcp  C:config  H:hook  U:unhook  a:adapter  v:version│
-│  Status: Ready  |  Selected: crates/cli-commands/src/  |  0 viol.  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Panels
-
-| Panel  | Content                                    |
-| ------ | ------------------------------------------ |
-| Left   | Directory tree                             |
-| Center | File list + layer AES badges (color-coded) |
-| Right  | File preview / lint results                |
-
-Each file is given a **layer badge** color:
-`[taxonomy]` cyan, `[contract]` blue, `[capabilities]` magenta, `[infra]` yellow, `[agent]` green, `[surface]` red, `[root]` white.
-
-### Shortcuts (always visible at bottom bar)
-
-#### Navigation
-
-| Key           | Action                    |
-| ------------- | ------------------------- |
-| `j`/`k`       | Move up/down              |
-| `h`           | Back (parent dir)         |
-| `l` / `Enter` | Open folder / preview     |
-| `gg` / `G`    | Jump to start/end         |
-| `/`           | Search file               |
-| Tab           | Cycle panel focus         |
-| Mouse click   | Select item / focus panel |
-| Scroll wheel  | Scroll panel              |
-
-#### Actions (on selected file/folder)
-
-| Key  | Action                                   | CLI Equivalent            |
-| ---- | ---------------------------------------- | ------------------------- |
-| `c`  | **check** — full AES compliance          | `check [path]`            |
-| `s`  | **scan** — multi-adapter scan            | `scan [path]`             |
-| `f`  | **fix** — auto-fix (toggle dry-run)      | `fix [path]`              |
-| `t`  | **ci** — CI mode (input threshold)       | `ci [path] --threshold N` |
-| `w`  | **watch** — real-time file watch         | `watch [path]`            |
-| `o`  | **orphan** — dead code check             | `orphan [path]`           |
-| `^S` | **security** — vulnerability scan        | `security [path]`         |
-| `^D` | **duplicates** — duplication detection   | `duplicates [path]`       |
-| `^P` | **dependencies** — library vulnerability | `dependencies [path]`     |
-| `d`  | **doctor** — environment diagnosis       | `doctor`                  |
-| `i`  | **init** — create default config         | `init`                    |
-| `I`  | **install** — install adapter deps       | `install`                 |
-| `m`  | **mcp-config** — print MCP config        | `mcp-config`              |
-| `C`  | **config-show** — show active config     | `config-show`             |
-| `H`  | **install-hook** — git hook install      | `install-hook`            |
-| `U`  | **uninstall-hook** — git hook remove     | `uninstall-hook`          |
-| `a`  | **adapters** — list active adapters      | `adapters`                |
-| `v`  | **version** — show version               | `version`                 |
-| `?`  | Help overlay                             | —                         |
-| `q`  | Quit                                     | —                         |
-
-#### Mouse support
-
-All elements are clickable: file list, action buttons, panel focus. Scroll wheel to scroll.
 
 ### Run
 

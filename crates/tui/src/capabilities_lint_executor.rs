@@ -785,13 +785,15 @@ impl LintExecutor {
                     ws_results.extend(aes_results.values);
 
                     // 2. Naming rules audit (AES101-102)
-                    let naming_results =
-                        rt.block_on(naming_container.orchestrator().run_audit(&ws.path));
+                    let naming_results = rt
+                        .block_on(naming_container.orchestrator().run_audit(&ws.path))
+                        .unwrap_or_default();
                     ws_results.extend(naming_results);
 
                     // 3. Import rules audit (AES201-205, cycles)
-                    let import_results =
-                        rt.block_on(import_container.orchestrator().run_audit(&ws.path));
+                    let import_results = rt
+                        .block_on(import_container.orchestrator().run_audit(&ws.path))
+                        .unwrap_or_default();
                     ws_results.extend(import_results);
 
                     // 4. External linter adapters
@@ -865,7 +867,7 @@ impl LintExecutor {
         if let Some(ref naming) = self.naming_orchestrator {
             let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
                 .unwrap_or_default();
-            let naming_results = rt.block_on(naming.run_audit(&path_obj));
+            let naming_results = rt.block_on(naming.run_audit(&path_obj)).unwrap_or_default();
             all_results.extend(naming_results);
         }
 
@@ -873,7 +875,7 @@ impl LintExecutor {
         if let Some(ref import) = self.import_orchestrator {
             let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
                 .unwrap_or_default();
-            let import_results = rt.block_on(import.run_audit(&path_obj));
+            let import_results = rt.block_on(import.run_audit(&path_obj)).unwrap_or_default();
             all_results.extend(import_results);
         }
 

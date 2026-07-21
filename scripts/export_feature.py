@@ -213,9 +213,7 @@ def collect_crate_files(crate_path: Path) -> set[Path]:
         "build.rs",
         "README.md",
         "FRD.md",
-        "LICENSE",
-        "LICENSE-MIT",
-        "LICENSE-APACHE",
+        "ARCHITECTURE.md",
     }
 
     for f in crate_path.iterdir():
@@ -393,6 +391,12 @@ def main() -> None:
         module_to_files, symbol_to_files = index_shared_module(shared_src_dir)
 
         files_to_export = collect_crate_files(crate_path)
+
+        # Include ARCHITECTURE.md from workspace root if it exists.
+        architecture_md = workspace_root / "ARCHITECTURE.md"
+        if architecture_md.is_file():
+            files_to_export.add(architecture_md)
+
         feature_dashed = selected_crate.replace("_", "-")
         add_shared_feature_dir(files_to_export, shared_src_dir, feature_dashed)
         files_to_export.update(

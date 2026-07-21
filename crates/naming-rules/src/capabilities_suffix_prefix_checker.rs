@@ -6,7 +6,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
 };
@@ -32,18 +32,7 @@ pub struct SuffixPrefixChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
-impl INamingCheckerProtocol for SuffixPrefixChecker {
-    async fn check_file_naming(
-        &self,
-        _config: &ArchitectureConfig,
-        _layer_map: &LayerMapVO,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for suffix/prefix checker
-    }
-
+impl ISuffixPrefixChecker for SuffixPrefixChecker {
     async fn check_domain_suffixes(
         &self,
         _config: &ArchitectureConfig,

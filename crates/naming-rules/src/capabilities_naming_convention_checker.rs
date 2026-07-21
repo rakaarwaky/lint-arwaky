@@ -7,7 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
     SNAKE_CASE_SEPARATOR,
@@ -34,7 +34,7 @@ pub struct NamingConventionChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
-impl INamingCheckerProtocol for NamingConventionChecker {
+impl INamingConventionChecker for NamingConventionChecker {
     async fn check_file_naming(
         &self,
         config: &ArchitectureConfig,
@@ -44,6 +44,7 @@ impl INamingCheckerProtocol for NamingConventionChecker {
         results: &mut LintResultList,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        let min_words = Self::min_words_from_config(config);
         for f in &files.values {
             let f_str: String = f.to_string();
             let filename: &str = match f.rsplit('/').next() {
@@ -61,20 +62,10 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 &layer_name,
                 def,
                 config,
+                min_words,
                 &mut results.values,
             );
         }
-    }
-
-    async fn check_domain_suffixes(
-        &self,
-        _config: &ArchitectureConfig,
-        _layer_map: &LayerMapVO,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for naming convention checker
     }
 }
 
@@ -91,10 +82,27 @@ impl NamingConventionChecker {
         Self {}
     }
 
-    /// Cached naming regex (snake_case with min 3 words).
-    fn naming_regex() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"^[a-z0-9]+(_[a-z0-9]+){2,}$").ok())
+    fn min_words_from_config(config: &ArchitectureConfig) -> usize {
+        let value = config.naming.word_count.value;
+        if value <= 0 {
+            return 3;
+        }
+        usize::try_from(value).unwrap_or(3)
+    }
+
+    /// Build naming regex dynamically based on min_words.
+    fn naming_regex(min_words: usize) -> Option<&'static Regex> {
+        static RE3: OnceLock<Option<Regex>> = OnceLock::new();
+        static RE4: OnceLock<Option<Regex>> = OnceLock::new();
+        let re_lock = match min_words {
+            3 => &RE3,
+            _ => &RE4,
+        };
+        re_lock
+            .get_or_init(|| {
+                let pattern = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$", min_words - 1);
+                Regex::new(&pattern).ok()
+            })
             .as_ref()
     }
 
@@ -125,7 +133,7 @@ impl NamingConventionChecker {
         }
     }
 
-    /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min 3 words).
+    /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
     fn _check_file_naming(
         &self,
         file: &str,
@@ -133,6 +141,7 @@ impl NamingConventionChecker {
         layer_name: &Option<LayerNameVO>,
         definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
         _config: &ArchitectureConfig,
+        min_words: usize,
         violations: &mut Vec<LintResult>,
     ) {
         let layer_prefixes = LAYER_PREFIXES;
@@ -175,13 +184,13 @@ impl NamingConventionChecker {
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
-                    min_words: 3,
+                    min_words,
                     separator: SNAKE_CASE_SEPARATOR.to_string(),
                     reason: Some(LintMessage::new(format!(
                         "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
-                         the 'prefix_concept_suffix' naming pattern. Files must contain at least 3 underscore-separated \
+                         the 'prefix_concept_suffix' naming pattern. Files must contain at least {} underscore-separated \
                          lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
-                        file, stem
+                        file, stem, min_words
                     ))),
                 }
                 .to_string(),
@@ -198,19 +207,19 @@ impl NamingConventionChecker {
 
         let stem = get_stem(filename).unwrap_or_default();
 
-        if Self::naming_regex().is_none_or(|re| !re.is_match(stem)) {
+        if Self::naming_regex(min_words).is_none_or(|re| !re.is_match(stem)) {
             violations.push(Self::_make_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
-                    min_words: 3,
+                    min_words,
                     separator: SNAKE_CASE_SEPARATOR.to_string(),
                     reason: Some(LintMessage::new(format!(
                         "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                         Expected: lowercase alphanumeric words separated by underscores, minimum 3 words. \
+                         Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
                          Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
-                         Issue: '{}' may have uppercase characters, wrong separator, or fewer than 3 words.",
-                        stem, stem
+                         Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words.",
+                        stem, min_words, stem, min_words
                     ))),
                 }
                 .to_string(),

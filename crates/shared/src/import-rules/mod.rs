@@ -6,6 +6,7 @@ pub mod contract_import_mandatory_protocol;
 pub mod contract_import_runner_aggregate;
 pub mod contract_unused_import_protocol;
 pub mod taxonomy_dependency_edge_vo;
+pub mod taxonomy_import_constant;
 pub mod taxonomy_import_rule_vo;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_violation_import_vo;

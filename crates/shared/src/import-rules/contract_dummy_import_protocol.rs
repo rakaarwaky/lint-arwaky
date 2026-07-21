@@ -2,6 +2,7 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
+use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 
 pub trait IDummyImportCheckerProtocol: Send + Sync {
@@ -13,6 +14,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_dummy_functions(
         &self,
@@ -20,6 +22,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_dummy_impls(
         &self,
@@ -27,6 +30,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_taxonomy_intent(
         &self,
@@ -34,6 +38,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_layer_contract_intent(
         &self,
@@ -41,6 +46,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_surface_logic(
         &self,
@@ -48,5 +54,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
 }

@@ -3,10 +3,11 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_file_read, utility_import_resolver};
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
@@ -27,8 +28,8 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 
     async fn check_forbidden_imports(
         &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
         results: &mut LintResultList,
@@ -169,7 +170,7 @@ impl ArchImportForbiddenChecker {
     fn _check_scope_forbidden_imports(
         &self,
         file: &str,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
