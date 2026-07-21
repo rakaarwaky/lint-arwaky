@@ -44,8 +44,8 @@ architecture:
       scope:
         [
           "taxonomy",
-          "contract",
           "utility",
+          "contract",
           "capabilities",
           "agent",
           "surfaces",
@@ -58,8 +58,8 @@ architecture:
       scope:
         [
           "taxonomy",
-          "contract",
           "utility",
+          "contract",
           "capabilities",
           "agent",
           "surfaces",
@@ -191,8 +191,8 @@ architecture:
       scope:
         [
           "taxonomy",
-          "contract",
           "utility",
+          "contract",
           "capabilities",
           "agent",
           "surfaces",
@@ -208,6 +208,7 @@ architecture:
               "agent",
               "surfaces",
               "contract",
+              "utility",
               "capabilities",
               "root",
             ]
@@ -220,6 +221,7 @@ architecture:
               "agent",
               "surfaces",
               "contract",
+              "utility",
               "capabilities",
               "root",
             ]
@@ -266,7 +268,7 @@ architecture:
           mandatory: ["taxonomy"]
           forbidden:
             ["agent", "surfaces", "capabilities", "root"]
-          forbidden_inheritance: ["contract(protocol)", "contract(protocol)"]
+          forbidden_inheritance: ["contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract", "utility"]
@@ -278,8 +280,6 @@ architecture:
               purpose: "implement"
             - layer: "contract(protocol)"
               purpose: "implement"
-            - layer: "contract(protocol|aggregate)"
-              purpose: "call"
             - layer: "utility"
               purpose: "call"
 
@@ -288,7 +288,6 @@ architecture:
             [
               "taxonomy",
               "contract(aggregate)",
-              "contract(protocol)",
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
@@ -300,17 +299,14 @@ architecture:
               purpose: "implement"
             - layer: "contract(protocol)"
               purpose: "call"
-            - layer: "contract(protocol)"
-              purpose: "call"
 
         - scope: "surfaces(command|controller|page)"
-          allowed: ["taxonomy", "contract(aggregate)"]
+          allowed: ["taxonomy", "contract(aggregate)", "utility"]
           mandatory: null
           forbidden:
             [
               "agent",
               "capabilities",
-              "contract(protocol)",
               "contract(protocol)",
               "root",
             ]
@@ -318,6 +314,8 @@ architecture:
             - layer: "taxonomy"
               purpose: "implement"
             - layer: "contract(aggregate)"
+              purpose: "call"
+            - layer: "utility"
               purpose: "call"
 
         - scope: "surfaces(hook|store|action|screen|router)"
@@ -327,7 +325,6 @@ architecture:
             [
               "agent",
               "capabilities",
-              "contract(protocol)",
               "contract(protocol)",
               "surfaces(command|controller|page|entry)",
               "root",
@@ -379,8 +376,8 @@ architecture:
       scope:
         [
           "taxonomy",
-          "contract",
           "utility",
+          "contract",
           "capabilities",
           "agent",
           "surfaces",
@@ -396,6 +393,7 @@ architecture:
               "agent",
               "surfaces",
               "contract",
+              "utility",
               "capabilities",
               "root",
             ]
@@ -411,6 +409,7 @@ architecture:
               "agent",
               "surfaces",
               "contract",
+              "utility",
               "capabilities",
               "root",
             ]
@@ -419,6 +418,22 @@ architecture:
               purpose: "implement"
 
         - scope: "taxonomy(constant)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            [
+              "agent",
+              "surfaces",
+              "contract",
+              "utility",
+              "capabilities",
+              "root",
+            ]
+          allowed_imports:
+            - layer: "taxonomy"
+              purpose: "implement"
+
+        - scope: "utility"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -462,16 +477,16 @@ architecture:
               purpose: "implement"
 
         - scope: "capabilities"
-          allowed: ["taxonomy", "contract"]
+          allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
             ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract"
-              purpose: "call"
-            - layer: "contract(protocol|aggregate)"
+            - layer: "contract(protocol)"
+              purpose: "implement"
+            - layer: "utility"
               purpose: "call"
 
         - scope: "agent(orchestrator)"
@@ -479,7 +494,6 @@ architecture:
             [
               "taxonomy",
               "contract(aggregate)",
-              "contract(protocol)",
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
@@ -489,8 +503,6 @@ architecture:
               purpose: "implement"
             - layer: "contract(aggregate)"
               purpose: "implement"
-            - layer: "contract(protocol)"
-              purpose: "call"
             - layer: "contract(protocol)"
               purpose: "call"
 
@@ -518,13 +530,12 @@ architecture:
               purpose: "implement"
 
         - scope: "surfaces(command|controller|page)"
-          allowed: ["taxonomy", "contract(aggregate)"]
+          allowed: ["taxonomy", "contract(aggregate)", "utility"]
           mandatory: null
           forbidden:
             [
               "agent",
               "capabilities",
-              "contract(protocol)",
               "contract(protocol)",
               "root",
             ]
@@ -532,6 +543,8 @@ architecture:
             - layer: "taxonomy"
               purpose: "implement"
             - layer: "contract(aggregate)"
+              purpose: "call"
+            - layer: "utility"
               purpose: "call"
 
         - scope: "surfaces(hook|store|action|screen|router)"
@@ -541,7 +554,6 @@ architecture:
             [
               "agent",
               "capabilities",
-              "contract(protocol)",
               "contract(protocol)",
               "surfaces(command|controller|page|entry)",
               "root",
@@ -664,8 +676,8 @@ architecture:
       scope:
         [
           "taxonomy",
-          "contract",
           "utility",
+          "contract",
           "capabilities",
           "agent",
           "surfaces",

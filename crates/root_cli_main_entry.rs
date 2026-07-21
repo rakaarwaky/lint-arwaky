@@ -274,14 +274,20 @@ fn main() -> ExitCode {
                 Err(_) => return ExitCode::FAILURE,
             };
             rt.block_on(
-                cli_commands::surface_maintenance_command::handle_dependencies(orchestrator, path),
+                cli_commands::surface_maintenance_command::handle_dependencies(
+                    orchestrator,
+                    path.map(|p| FilePath::new(p).unwrap_or_default()),
+                ),
             )
         }
         Commands::Watch { path } => {
             let fwatch_container = file_watch::FileWatchContainer::new();
             let watch_agg: Arc<dyn shared::file_watch::contract_watch_aggregate::IWatchAggregate> =
                 fwatch_container.orchestrator(container.code_analysis_linter.clone());
-            surface_watch_command::handle_watch(watch_agg, path)
+            surface_watch_command::handle_watch(
+                watch_agg,
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+            )
         }
         Commands::InstallHook => {
             let git_hooks_container =
