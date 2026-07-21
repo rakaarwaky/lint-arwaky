@@ -573,10 +573,7 @@ impl LintExecutor {
         self
     }
 
-    pub fn with_orphan(
-        mut self,
-        orphan_aggregate: Arc<dyn IOrphanAggregate>,
-    ) -> Self {
+    pub fn with_orphan(mut self, orphan_aggregate: Arc<dyn IOrphanAggregate>) -> Self {
         self.orphan_aggregate = Some(orphan_aggregate);
         self
     }
@@ -802,10 +799,8 @@ impl LintExecutor {
                     // 6. Orphan detection (AES501-506)
                     if let Some(ref orphan_agg) = &self.orphan_aggregate {
                         if !all_source_files.is_empty() {
-                            let orphan_results = orphan_agg.check_orphans(
-                                &all_source_files,
-                                &scan_root.to_string_lossy(),
-                            );
+                            let orphan_results = orphan_agg
+                                .check_orphans(&all_source_files, &scan_root.to_string_lossy());
                             ws_results.extend(orphan_results);
                         }
                     }

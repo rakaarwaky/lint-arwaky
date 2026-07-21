@@ -61,15 +61,15 @@ impl IBypassCheckerProtocol for BypassChecker {
         let effective_patterns = if patterns.values.is_empty() {
             Self::default_forbidden_bypass()
         } else {
-            PatternList { values: patterns.values.clone() }
+            PatternList {
+                values: patterns.values.clone(),
+            }
         };
 
         // P2.5 fix: line-by-line scan instead of allocating full lowercase copy
         let has_bypass_token = content.lines().any(|line| {
             let lc = line.to_lowercase();
-            effective_patterns
-                .iter()
-                .any(|p| lc.contains(p.as_str()))
+            effective_patterns.iter().any(|p| lc.contains(p.as_str()))
                 || lc.contains("raise ")
                 || lc.contains("throw new")
         });
@@ -78,8 +78,10 @@ impl IBypassCheckerProtocol for BypassChecker {
         }
 
         // P2.4 fix: precompute lowered patterns once per file scan
-        let lowered_patterns: Vec<String> =
-            effective_patterns.iter().map(|p| p.to_lowercase()).collect();
+        let lowered_patterns: Vec<String> = effective_patterns
+            .iter()
+            .map(|p| p.to_lowercase())
+            .collect();
 
         let language = Language::from_file(file);
         let lines: Vec<&str> = content.lines().collect();
@@ -203,10 +205,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                         "throw new referenceerror",
                         "throw new syntaxerror",
                     ];
-                    if throw_patterns
-                        .iter()
-                        .any(|p| line_lc.contains(p))
-                    {
+                    if throw_patterns.iter().any(|p| line_lc.contains(p)) {
                         violations.push(LintResult::new_arch(
                             file,
                             i + 1,
@@ -273,7 +272,6 @@ impl BypassChecker {
 
     /// P1.7 fix: Default fallback bypass patterns when config provides none.
     fn default_forbidden_bypass() -> PatternList {
-        use shared::common::taxonomy_common_vo::PatternList;
         PatternList {
             values: vec![
                 "unwrap".to_string(),
@@ -309,7 +307,7 @@ impl BypassChecker {
             // Find ".unwrap" occurrences
             if bytes[i..].starts_with(b".unwrap") && (i == 0 || !b_is_ident(bytes[i - 1])) {
                 i += 7; // skip past ".unwrap"
-                // Check if followed by '(', '!', or '_' (method call)
+                        // Check if followed by '(', '!', or '_' (method call)
                 if i < len {
                     match bytes[i] {
                         b'(' | b'!' => {

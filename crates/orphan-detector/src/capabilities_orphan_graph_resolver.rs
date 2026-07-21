@@ -224,11 +224,11 @@ impl OrphanGraphResolver {
                         None => continue,
                     };
                     let root_path = std::path::Path::new(root_dir);
-                    let Some(resolved_path) = shared::orphan_detector::utility_orphan_path::resolve_module_path(
-                        root_path,
-                        &base_dir,
-                        &mod_path,
-                    ) else {
+                    let Some(resolved_path) =
+                        shared::orphan_detector::utility_orphan_path::resolve_module_path(
+                            root_path, &base_dir, &mod_path,
+                        )
+                    else {
                         continue;
                     };
                     let resolved = resolved_path.to_string_lossy().to_string();
@@ -432,14 +432,12 @@ impl OrphanGraphResolver {
                         let module_name = segments[0];
                         // Use crate module index for hyphen-aware resolution
                         if let Some(resolved) = Self::resolve_workspace_module(
-                            &crate_module_index, crate_name, &segments, f,
+                            &crate_module_index,
+                            crate_name,
+                            &segments,
+                            f,
                         ) {
-                            Self::add_edge(
-                                &mut import_graph,
-                                &mut inbound_links,
-                                f,
-                                &resolved,
-                            );
+                            Self::add_edge(&mut import_graph, &mut inbound_links, f, &resolved);
                             continue;
                         }
                         // Fallback: scan directory (original approach)

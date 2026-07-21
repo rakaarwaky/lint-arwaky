@@ -19,7 +19,7 @@ pub struct RoleContainer {
 
 impl RoleContainer {
     pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
+        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
     }
 
     pub fn new_with_config(

@@ -13,7 +13,7 @@ use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::default_aes_config;
+use crate::config_system::utility_config_defaults::default_aes_config;
 
 /// Check if a file extension is a known source file.
 pub fn is_source_file(ext: &str) -> bool {

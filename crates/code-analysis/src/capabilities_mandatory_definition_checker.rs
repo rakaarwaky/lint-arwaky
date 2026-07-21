@@ -43,7 +43,8 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             }
             // Rust: unit struct `struct Foo;` or `pub struct Foo;` (tuple structs excluded)
             let stripped = Self::strip_visibility(t);
-            if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(') {
+            if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(')
+            {
                 // Skip if followed by impl block or attribute (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {

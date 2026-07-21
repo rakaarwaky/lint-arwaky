@@ -101,7 +101,13 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 AesOrphanViolation::TaxonomyOrphan {
                     stem: stem.clone(),
                     category,
-                    reason: Some(format!("Taxonomy '{}' is not imported by any file outside taxonomy.", stem).into()),
+                    reason: Some(
+                        format!(
+                            "Taxonomy '{}' is not imported by any file outside taxonomy.",
+                            stem
+                        )
+                        .into(),
+                    ),
                 }
                 .to_string(),
                 Severity::LOW,

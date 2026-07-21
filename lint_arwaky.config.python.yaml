@@ -283,6 +283,7 @@ architecture:
               "taxonomy",
               "contract(aggregate)",
               "contract(protocol)",
+              "utility",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["surfaces", "capabilities", "root"]

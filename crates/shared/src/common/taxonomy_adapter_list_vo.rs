@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AdapterNameList {
     pub values: Vec<AdapterName>,
 }
@@ -30,11 +30,6 @@ impl AdapterNameList {
     }
 }
 
-impl Default for AdapterNameList {
-    fn default() -> Self {
-        Self { values: Vec::new() }
-    }
-}
 
 impl std::ops::Deref for AdapterNameList {
     type Target = Vec<AdapterName>;

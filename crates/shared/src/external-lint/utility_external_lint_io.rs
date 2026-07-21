@@ -59,10 +59,7 @@ pub fn has_python_files(dir_path: &Path) -> bool {
 
 /// Read file contents, returning empty string on error.
 pub fn read_file_safe(path: &str) -> String {
-    match std::fs::read_to_string(path) {
-        Ok(c) => c,
-        Err(_) => String::new(),
-    }
+    std::fs::read_to_string(path).unwrap_or_default()
 }
 
 /// Check if a configuration file exists at the given path.

@@ -289,7 +289,7 @@ The only Agent role is orchestrator.
 
 ### Dependencies
 
-Agent may depend only on Taxonomy and Contract.
+Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
@@ -304,7 +304,7 @@ Agent may depend only on Taxonomy and Contract.
 ### Special Rules
 
 - Agent must depend on Contract, not concrete implementations.
-- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not use and must be completely ignorant of Capabilities implementations.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 

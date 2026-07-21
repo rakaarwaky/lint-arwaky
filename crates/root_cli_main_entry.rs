@@ -1,4 +1,5 @@
 // PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
+use std::collections::BTreeMap;
 use std::env;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -11,6 +12,7 @@ use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
 use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
@@ -160,9 +162,8 @@ fn main() -> ExitCode {
             surface_plugin_command::handle_adapters(container.external_lint.clone())
         }
         Commands::Orphan { path } => {
-            let surface = surface_check_command::CheckCommandsSurface::new(make_check_context(
-                &container,
-            ));
+            let surface =
+                surface_check_command::CheckCommandsSurface::new(make_check_context(&container));
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }
@@ -302,6 +303,7 @@ fn main() -> ExitCode {
             let config_container =
                 config_system::root_config_system_container::ConfigContainer::new();
             let config_orchestrator = config_container.orchestrator();
+            let config_reader = config_container.reader();
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
@@ -311,14 +313,13 @@ fn main() -> ExitCode {
             };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
+                config_reader,
             ))
         }
     }
 }
 
 fn run_default_check(project_root: &str) -> ExitCode {
-    use shared::cli_commands::taxonomy_severity_vo::Severity;
-    use std::collections::BTreeMap;
     let results = lint_path(project_root);
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));

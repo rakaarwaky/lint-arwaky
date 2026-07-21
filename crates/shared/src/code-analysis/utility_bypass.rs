@@ -20,13 +20,15 @@ pub fn starts_with_allow_attr(line: &str) -> bool {
     let prefixes = PREFIXES.get_or_init(|| {
         let mk = |chars: &[char]| chars.iter().collect::<String>();
         vec![
-            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']),             // #[allow(
-            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']),         // #[expect(
-            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),                    // #[warn(
-            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']),         // #![allow(
-            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']),     // #![expect(
-            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']),              // #![warn(
-            mk(&['#', '[', 'c', 'l', 'i', 'p', 'p', 'y', ':', ':', 'a', 'l', 'l', 'o', 'w', '(']), // #[clippy::allow(
+            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']), // #[allow(
+            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // #[expect(
+            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),      // #[warn(
+            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']), // #![allow(
+            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // #![expect(
+            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']), // #![warn(
+            mk(&[
+                '#', '[', 'c', 'l', 'i', 'p', 'p', 'y', ':', ':', 'a', 'l', 'l', 'o', 'w', '(',
+            ]), // #[clippy::allow(
         ]
     });
     prefixes.iter().any(|prefix| line.starts_with(prefix))
@@ -133,8 +135,8 @@ pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
         return start;
     }
 
-    let mut depth = lines[start].matches('{').count() as i32
-        - lines[start].matches('}').count() as i32;
+    let mut depth =
+        lines[start].matches('{').count() as i32 - lines[start].matches('}').count() as i32;
     let mut idx = start + 1;
 
     if depth <= 0 {
@@ -142,8 +144,7 @@ pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
     }
 
     while idx < lines.len() {
-        depth += lines[idx].matches('{').count() as i32
-            - lines[idx].matches('}').count() as i32;
+        depth += lines[idx].matches('{').count() as i32 - lines[idx].matches('}').count() as i32;
         idx += 1;
 
         if depth <= 0 {

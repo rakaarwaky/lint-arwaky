@@ -1,9 +1,8 @@
+use async_trait::async_trait;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 use shared::config_system::utility_config_io as config_io;
-
-// PURPOSE: WorkspaceDetector — IWorkspaceDetectorProtocol implementation for workspace type detection
-use shared::common::taxonomy_path_vo::FilePath;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -11,11 +10,11 @@ pub struct WorkspaceDetector;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
+#[async_trait]
 impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
-        // 1. Check for explicit language markers in the workspace directory itself
         if config_io::path_exists(path_buf.join("Cargo.toml")) {
             return WorkspaceType::Rust;
         }
@@ -29,8 +28,6 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             return WorkspaceType::Python;
         }
 
-        // 2. Check parent workspace folder context (crates/ → Rust, packages/ → TS, modules/ → Python)
-        // This handles multi-language root dirs (e.g. test-workspaces/ which has all three).
         if let Some(parent) = path_buf.parent() {
             match parent.file_name().and_then(|n| n.to_str()) {
                 Some("modules") => return WorkspaceType::Python,
@@ -40,7 +37,6 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             }
         }
 
-        // 3. Walk up parent chain looking for config files (fallback, max 2 levels)
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 2 {
@@ -73,6 +69,11 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             .iter()
             .any(|dir| config_io::path_exists(root.join(dir)))
     }
+
+    async fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
+        let root_path = std::path::Path::new(&root.value).to_path_buf();
+        Self::scan_workspace_dirs(&root_path).await
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
@@ -86,5 +87,84 @@ impl Default for WorkspaceDetector {
 impl WorkspaceDetector {
     pub fn new() -> Self {
         Self
+    }
+
+    async fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {
+        let mut results = Vec::new();
+        let mut entries = match tokio::fs::read_dir(dir).await {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!(
+                    "Warning: Failed to read directory '{}': {}",
+                    dir.display(),
+                    e
+                );
+                return results;
+            }
+        };
+        while let Some(entry) = match entries.next_entry().await {
+            Ok(Some(e)) => Some(e),
+            Ok(None) => None,
+            Err(e) => {
+                eprintln!(
+                    "Warning: Failed to read directory entry in '{}': {}",
+                    dir.display(),
+                    e
+                );
+                None
+            }
+        } {
+            if let Ok(ft) = entry.file_type().await {
+                if ft.is_dir() {
+                    let sub = entry.path();
+                    if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
+                        results.push(fp);
+                    }
+                }
+            }
+        }
+        results
+    }
+
+    async fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
+        let workspace_dirs = ["crates", "packages", "modules"];
+
+        let is_root_workspace_dir = match root.file_name() {
+            Some(name) => {
+                let name_str = name.to_string_lossy();
+                workspace_dirs.contains(&name_str.as_ref())
+            }
+            None => false,
+        };
+
+        if is_root_workspace_dir {
+            return Self::collect_subdirs(root).await;
+        }
+
+        if let Some(parent) = root.parent() {
+            if let Some(parent_name) = parent.file_name() {
+                let parent_str = parent_name.to_string_lossy();
+                if workspace_dirs.contains(&parent_str.as_ref()) {
+                    if let Ok(meta) = tokio::fs::metadata(root).await {
+                        if meta.is_dir() {
+                            if let Ok(fp) = FilePath::new(root.to_string_lossy().to_string()) {
+                                return vec![fp];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut results = Vec::new();
+        for dir in &workspace_dirs {
+            let dir_path = root.join(dir);
+            if let Ok(meta) = tokio::fs::metadata(&dir_path).await {
+                if meta.is_dir() {
+                    results.extend(Self::collect_subdirs(&dir_path).await);
+                }
+            }
+        }
+        results
     }
 }

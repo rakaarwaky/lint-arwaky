@@ -1,5 +1,6 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
-use shared::config_system::taxonomy_config_vo::{default_aes_config, ArchitectureConfig};
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::utility_config_defaults::default_aes_config;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;

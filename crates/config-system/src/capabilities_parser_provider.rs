@@ -1,11 +1,11 @@
 // PURPOSE: ConfigParserProvider — IConfigParserProtocol implementation for YAML and TOML config parsing
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::config_system::utility_config_io as config_io;
 use shared::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -87,7 +87,6 @@ impl IConfigParserProtocol for ConfigParserProvider {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 
 impl Default for ConfigParserProvider {
     fn default() -> Self {

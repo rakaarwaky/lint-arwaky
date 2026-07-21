@@ -39,8 +39,9 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let path = FilePath::new(fp).unwrap_or_default();
             let content = utility_file_cache::read_cached(&path);
             let mut identifiers: Vec<String> = Vec::new();
-            identifiers.extend(extract_struct_names(&content.value()));
-            identifiers.extend(extract_trait_names(&content.value()));
+            let content_ref = content.value();
+            identifiers.extend(extract_struct_names(&content_ref));
+            identifiers.extend(extract_trait_names(&content_ref));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem
@@ -109,7 +110,8 @@ impl CapabilitiesOrphanAnalyzer {
             for dir_name in &["crates", "packages", "modules"] {
                 let dir = workspace_root.join(dir_name);
                 if dir.is_dir() {
-                    let files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                    let files =
+                        shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
                     for file_path in &files {
                         if let Some(name) = std::path::Path::new(file_path)
                             .file_name()

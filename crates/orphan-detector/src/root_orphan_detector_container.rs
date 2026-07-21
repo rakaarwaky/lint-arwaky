@@ -1,8 +1,6 @@
 use crate::agent_orphan_orchestrator::ArchOrphanAnalyzer;
-use crate::capabilities_layer_detector::CapabilitiesLayerDetector;
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_layer_detection_protocol::ILayerDetectionProtocol;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use std::sync::Arc;
@@ -29,11 +27,8 @@ impl OrphanContainer {
 
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
-        let layer_detector: Arc<dyn ILayerDetectionProtocol> =
-            Arc::new(CapabilitiesLayerDetector);
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             resolver,
-            layer_detector,
             Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),
             Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new()),
             Arc::new(
