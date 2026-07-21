@@ -261,8 +261,8 @@ fn main() -> ExitCode {
                 config_reader,
             ))
         }
-        // P3.3: these are handled by early-exit above — unreachable here
-        Commands::Version | Commands::Adapters => unreachable!(),
+        // P3.3: these are handled by early-exit above
+        _ => ExitCode::SUCCESS,
     }
 }
 

@@ -1,19 +1,12 @@
-// PURPOSE: utility_external_lint_helper — shared utility functions for external linter adapters
-// Pure functions: resolve working directories, canonicalize paths,
-// execute commands with error mapping. Used by JS, Python, and RS adapters.
+// PURPOSE: utility_external_lint_helper — pure utility functions for external linter adapters
+// No contract imports — only taxonomy types allowed in utility layer.
 
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
-use crate::common::contract_executor_protocol::ICommandExecutorProtocol;
-use crate::common::taxonomy_adapter_error::AdapterError;
-use crate::common::taxonomy_adapter_error::ScanError;
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_duration_vo::Timeout;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_response_data_vo::ResponseData;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
+
+use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 
 /// Canonicalize a path string, falling back to the original on error.
 pub fn canonicalize_path(path_str: &str) -> String {
@@ -23,74 +16,9 @@ pub fn canonicalize_path(path_str: &str) -> String {
     }
 }
 
-/// Execute a command, mapping execution failures to `LinterOperationError::Scan`.
-pub async fn exec_cmd_scan(
-    executor: &dyn ICommandExecutorProtocol,
-    args: Vec<String>,
-    working_dir: FilePath,
-    timeout_secs: f64,
-    adapter_name: Option<AdapterName>,
-    path: &FilePath,
-) -> Result<ResponseData, LinterOperationError> {
-    executor
-        .execute_command(
-            PatternList::new(args),
-            working_dir,
-            Some(Timeout::new(timeout_secs)),
-        )
-        .await
-        .map_err(|e| {
-            LinterOperationError::Scan(ScanError {
-                path: path.clone(),
-                message: ErrorMessage::new(e.to_string()),
-                error_code: None,
-                adapter_name,
-                cause: None,
-            })
-        })
-}
-
-/// Execute a command, mapping execution failures to `LinterOperationError::Adapter`.
-pub async fn exec_cmd_adapter(
-    executor: &dyn ICommandExecutorProtocol,
-    args: Vec<String>,
-    working_dir: FilePath,
-    timeout_secs: f64,
-    adapter_name: AdapterName,
-) -> Result<ResponseData, LinterOperationError> {
-    executor
-        .execute_command(
-            PatternList::new(args),
-            working_dir,
-            Some(Timeout::new(timeout_secs)),
-        )
-        .await
-        .map_err(|e| {
-            LinterOperationError::Adapter(AdapterError::new(
-                adapter_name,
-                ErrorMessage::new(e.to_string()),
-            ))
-        })
-}
-
 /// Create a default `"."` working directory, falling back to the given path if it fails.
 pub fn default_working_dir(path: &FilePath) -> FilePath {
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
-}
-
-/// Applies a JS tool's fix command, returning `Ok(ComplianceStatus::new(true))` on success.
-/// Combines resolve_js_working_dir + canonicalize_path + resolve_js_cmd + exec_cmd_adapter.
-pub async fn js_apply_fix(
-    executor: &dyn ICommandExecutorProtocol,
-    path: &FilePath,
-    tool: &str,
-    fix_arg: &str,
-) -> Result<ComplianceStatus, LinterOperationError> {
-    let wd = resolve_js_working_dir(path);
-    let abs_path = canonicalize_path(&path.value);
-    let cmd = resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value);
-    let response = exec_cmd_adapter(executor, cmd, wd, 60.0, AdapterName::raw(tool)).await?;
-    Ok(ComplianceStatus::new(response.returncode == 0))
 }
 
 /// No-op apply_fix for linters that cannot auto-fix (scanners, type-checkers).
@@ -99,21 +27,14 @@ pub async fn noop_apply_fix() -> Result<ComplianceStatus, LinterOperationError> 
 }
 
 /// Return true if the given path contains any Python (`.py`) files.
-///
-/// For existing directories: recursively walks, short-circuiting at the first `.py`
-/// file found. For non-existent paths: checks the filename extension — if it ends
-/// in `.py` the path is treated as having a Python file (letting the tool itself
-/// handle the missing-file error).
 pub fn has_python_files(path: &FilePath) -> bool {
     let p = std::path::Path::new(&path.value);
     if !p.exists() {
-        // Non-existent path — check by extension (e.g. "foo.py" for test mocks)
         return p.extension().map(|e| e == "py").unwrap_or(false);
     }
     if p.is_file() {
         return p.extension().map(|e| e == "py").unwrap_or(false);
     }
-    // Directory walk — short-circuit at first .py file
     has_py_in_dir(p)
 }
 
@@ -135,7 +56,6 @@ fn has_py_in_dir(dir: &std::path::Path) -> bool {
 }
 
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).
-/// Prefers local node_modules/.bin over npx/bunx.
 pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) -> Vec<String> {
     let local_bin = Path::new(working_dir)
         .join("node_modules")
@@ -152,8 +72,7 @@ pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) ->
     cmd
 }
 
-/// Walk up from the given path to find the JS project root
-/// (detected by lint_arwaky.config*.yaml, package.json, or .git directory).
+/// Walk up from the given path to find the JS project root.
 pub fn resolve_js_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
     if let Ok(abs_path) = std::fs::canonicalize(path_str) {
@@ -234,8 +153,6 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
     }
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
-
-use std::sync::OnceLock;
 
 static BUN_AVAILABLE: OnceLock<bool> = OnceLock::new();
 
