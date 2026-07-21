@@ -445,6 +445,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -472,6 +473,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -485,6 +487,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",
@@ -507,6 +510,7 @@ architecture:
         [
           "taxonomy",
           "contract",
+          "utility",
           "capabilities",
           "agent",
           "surfaces",

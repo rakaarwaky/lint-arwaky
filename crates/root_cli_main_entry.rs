@@ -13,6 +13,8 @@ use code_analysis::{lint_path, CodeDuplicationAnalyzer};
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::taxonomy_config_vo::default_aes_config;
 
 pub struct CliMainEntry {}
@@ -149,7 +151,7 @@ fn main() -> ExitCode {
             git_diff,
             format,
         } => surface_check_action::handle_check(
-            path,
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
             git_diff,
             make_check_context(&container, &layer_detector),
             filter,
@@ -162,7 +164,7 @@ fn main() -> ExitCode {
             member,
             format,
         } => surface_check_action::handle_scan(
-            path,
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
             make_check_context(&container, &layer_detector),
             Some(container.multi_project_orchestrator.clone()),
             factory,
@@ -171,13 +173,17 @@ fn main() -> ExitCode {
             format,
         ),
         Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(
-            path,
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
             dry_run,
             container.code_analysis_linter.clone(),
             fix_orchestrator_factory,
         ),
         Commands::Ci { path, threshold } => {
-            surface_check_action::handle_ci(container.code_analysis_linter.clone(), path, threshold)
+            surface_check_action::handle_ci(
+                container.code_analysis_linter.clone(),
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                Threshold::new(threshold),
+            )
         }
         Commands::Doctor => {
             let maintenance_container =
@@ -241,7 +247,7 @@ fn main() -> ExitCode {
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_security(
                 orchestrator,
-                path,
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
             ))
         }
         Commands::Duplicates { path } => {

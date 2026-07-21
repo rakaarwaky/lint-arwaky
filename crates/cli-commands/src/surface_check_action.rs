@@ -13,7 +13,7 @@ use std::process::ExitCode;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_git_vo::GitBranchName;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::contract_multi_project_orchestrator_aggregate::MultiProjectOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
@@ -28,11 +28,11 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 
 /// check = self-lint (AES analysis on current project, same algorithm as scan)
 pub fn handle_check(
-    path: Option<FilePath>,
+    path: Option<String>,
     git_diff: bool,
-    ctx: crate::surface_check_command::CheckContext,
+    ctx: CheckContext,
     filter: Option<String>,
-    git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
+    git_aggregate: Option<Arc<dyn shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate>>,
     config: ArchitectureConfig,
     format: Format,
 ) -> ExitCode {
@@ -70,8 +70,8 @@ pub fn handle_check(
 
 /// scan = AES analysis on external project + external adapters
 pub fn handle_scan(
-    path: Option<FilePath>,
-    ctx: crate::surface_check_command::CheckContext,
+    path: Option<String>,
+    ctx: CheckContext,
     multi_project_orchestrator: Option<Arc<dyn MultiProjectOrchestratorAggregate>>,
     factory: OrchestratorFactory,
     filter: Option<String>,
@@ -93,8 +93,8 @@ pub fn handle_scan(
 
 pub fn handle_ci(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    path: Option<FilePath>,
-    threshold: Threshold,
+    path: Option<String>,
+    threshold: u32,
 ) -> ExitCode {
     crate::surface_common_command::run_ci_analysis(code_analysis_linter, path, threshold)
 }
