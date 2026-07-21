@@ -7,6 +7,7 @@ use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file;
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -17,8 +18,8 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::external_lint::utility_external_lint_helper::{
-    canonicalize_path, exec_cmd_scan, js_apply_fix, resolve_js_cmd,
+use crate::utility_external_lint_helper::{
+    canonicalize_path, resolve_js_cmd,
     resolve_js_working_dir as resolve_working_dir,
 };
 
@@ -43,6 +44,7 @@ use serde_json::Value;
 
 pub struct ESLintAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
+    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -73,15 +75,15 @@ impl ILinterAdapterProtocol for ESLintAdapter {
             &wd.value,
         );
 
-        let response = exec_cmd_scan(
-            self.executor.as_ref(),
-            cmd,
-            wd.clone(),
-            60.0,
-            Some(self.name()),
-            path,
-        )
-        .await?;
+        let response = self.lint_executor
+            .exec_cmd_scan(
+                cmd,
+                wd.clone(),
+                60.0,
+                Some(self.name()),
+                path,
+            )
+            .await?;
 
         let stdout_str = response.stdout.to_string();
         if stdout_str.trim().is_empty() {
@@ -157,18 +159,20 @@ impl ILinterAdapterProtocol for ESLintAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        js_apply_fix(self.executor.as_ref(), path, "eslint", "--fix").await
+        self.lint_executor.js_apply_fix(path, "eslint", "--fix").await
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-// (No protocol implementation found in this file)
-
-// (No protocol implementation found in this file)
-
 impl ESLintAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
-        Self { executor }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            lint_executor,
+        }
     }
 }

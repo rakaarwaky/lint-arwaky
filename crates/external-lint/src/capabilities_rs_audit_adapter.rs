@@ -15,7 +15,7 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
-use shared::external_lint::utility_external_lint_helper::resolve_cargo_lock_working_dir;
+use shared::external_lint::utility_external_lint::resolve_cargo_lock_working_dir;
 
 // PURPOSE: RsAuditAdapter — ILinterAdapterProtocol implementation for cargo-audit security scanning
 //

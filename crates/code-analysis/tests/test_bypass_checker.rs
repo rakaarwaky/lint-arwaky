@@ -449,7 +449,7 @@ function main() {
 }
 
 #[test]
-fn test_ts_ignore_in_comment_not_detected() {
+fn test_ts_ignore_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 // @ts-ignore
@@ -458,13 +458,13 @@ const x = 5;
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.ts", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "@ts-ignore in line comments should be skipped"
+        !violations.is_empty(),
+        "@ts-ignore in line comments should be detected (bypass-comment pattern)"
     );
 }
 
 #[test]
-fn test_ts_expect_error_in_comment_not_detected() {
+fn test_ts_expect_error_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 // @ts-expect-error
@@ -473,13 +473,13 @@ const x = 5;
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.ts", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "@ts-expect-error in line comments should be skipped"
+        !violations.is_empty(),
+        "@ts-expect-error in line comments should be detected (bypass-comment pattern)"
     );
 }
 
 #[test]
-fn test_eslint_disable_in_comment_not_detected() {
+fn test_eslint_disable_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 /* eslint-disable */
@@ -488,8 +488,8 @@ const x = 5;
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.js", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "eslint-disable in block comments should be skipped"
+        !violations.is_empty(),
+        "eslint-disable in block comments should be detected (bypass-comment pattern)"
     );
 }
 
@@ -680,10 +680,10 @@ fn test_empty_patterns_uses_fallback() {
     );
 }
 
-// ─── Comments are correctly skipped ────────────────────────
+// ─── Non-word bypass patterns detected even in comments ────
 
 #[test]
-fn test_fixme_in_comment_not_detected() {
+fn test_fixme_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 // FIXME: this is broken
@@ -692,13 +692,13 @@ fn main() {}
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.rs", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "FIXME in comments should be skipped (not a runtime bypass)"
+        !violations.is_empty(),
+        "FIXME in comments should be detected (bypass-comment pattern)"
     );
 }
 
 #[test]
-fn test_hack_in_comment_not_detected() {
+fn test_hack_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 // HACK: temporary workaround
@@ -707,13 +707,13 @@ fn main() {}
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.rs", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "HACK in comments should be skipped (not a runtime bypass)"
+        !violations.is_empty(),
+        "HACK in comments should be detected (bypass-comment pattern)"
     );
 }
 
 #[test]
-fn test_xxx_in_comment_not_detected() {
+fn test_xxx_in_comment_detected() {
     let checker = create_checker();
     let content = r#"
 // XXX: needs review
@@ -722,8 +722,8 @@ fn main() {}
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.rs", content, &mut violations);
     assert!(
-        violations.is_empty(),
-        "XXX in comments should be skipped (not a runtime bypass)"
+        !violations.is_empty(),
+        "XXX in comments should be detected (bypass-comment pattern)"
     );
 }
 

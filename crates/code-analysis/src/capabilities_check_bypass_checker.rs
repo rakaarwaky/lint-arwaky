@@ -5,12 +5,14 @@
 //   3. For each line, classify forbidden tokens using word-boundary aware substring matching.
 //   4. Patterns are read from ArchitectureConfig.code_analysis.forbidden_bypass.values so
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
+use std::borrow::Cow;
+
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
-    AesCodeAnalysisViolation, Language, ViolationKind,
+    AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
 use shared::code_analysis::utility_bypass::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
@@ -20,41 +22,44 @@ use shared::code_analysis::utility_language_mapper::code_analysis_language_from_
 use shared::common::taxonomy_common_vo::PatternList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct BypassChecker {
     rule: CodeAnalysisRuleVO,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
         let mut in_clippy_section = false;
+
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
 
-            // Skip empty lines and TOML full-line comments
+            // Skip empty lines and TOML full-line comments.
             if t.is_empty() || t.starts_with('#') {
                 continue;
             }
 
-            // Strip trailing TOML comments outside strings before comparing values
+            // Strip trailing TOML comments outside strings before comparing values.
             let t = Self::strip_toml_comment(t).trim();
             if t.is_empty() {
                 continue;
             }
 
-            if t.starts_with("[workspace.lints.clippy]") || t.starts_with("[lints.clippy]") {
+            // Exact section matching avoids accidental matches on longer table names.
+            if t == "[workspace.lints.clippy]" || t == "[lints.clippy]" {
                 in_clippy_section = true;
                 continue;
             }
+
             if in_clippy_section {
                 if t.starts_with('[') {
                     in_clippy_section = false;
                     continue;
                 }
+
                 if let Some(eq_pos) = t.find('=') {
                     let val = t[eq_pos + 1..].trim();
+
                     if Self::cargo_value_is_allow(val) {
                         violations.push(LintResult::new_arch(
                             "Cargo.toml",
@@ -71,7 +76,8 @@ impl IBypassCheckerProtocol for BypassChecker {
 
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let patterns = &self.rule.forbidden_bypass;
-        // P1.7 fix: use fallback default patterns when config is empty
+
+        // P1.7 fix: use fallback default patterns when config is empty.
         let effective_patterns = if patterns.values.is_empty() {
             Self::default_forbidden_bypass()
         } else {
@@ -80,8 +86,8 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
         };
 
-        // P2.4 fix: precompute lowered patterns once per file scan
-        // Use to_ascii_lowercase for stable byte offsets (fix #8)
+        // P2.4 fix: precompute lowered patterns once per file scan.
+        // ASCII lowercase keeps byte offsets stable for is_inside_string_or_char checks.
         let lowered_patterns: Vec<String> = effective_patterns
             .iter()
             .map(|p| p.to_ascii_lowercase())
@@ -89,13 +95,16 @@ impl IBypassCheckerProtocol for BypassChecker {
 
         let language = code_analysis_language_from_file(file);
 
-        // Early bailout scan — checks full lowered line for non-word bypass patterns
-        // so comment-based bypasses like `// eslint-disable` are not missed (fix #3)
+        // Early bailout scan.
+        //
+        // This intentionally checks the full lowered line for non-word bypass patterns
+        // so comment-based bypasses like `// eslint-disable` are not missed.
         let has_bypass_token = content.lines().any(|line| {
             let trimmed = line.trim();
             if trimmed.is_empty() {
                 return false;
             }
+
             let full_lower = trimmed.to_ascii_lowercase();
             if lowered_patterns
                 .iter()
@@ -103,10 +112,12 @@ impl IBypassCheckerProtocol for BypassChecker {
             {
                 return true;
             }
+
             let code_portion = Self::code_portion_for_language(trimmed, language);
             if starts_with_allow_attr(code_portion) {
                 return true;
             }
+
             let code_lower = code_portion.to_ascii_lowercase();
             match language {
                 Language::Python => {
@@ -118,65 +129,46 @@ impl IBypassCheckerProtocol for BypassChecker {
                 _ => false,
             }
         });
+
         if !has_bypass_token {
             return;
         }
 
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
-        // Fix #10: track block comment state across lines
         let mut in_block_comment = false;
 
         while i < lines.len() {
             let t = lines[i].trim();
             let line_number = i + 1;
 
-            // Fix #10: handle block comment state
-            if in_block_comment {
-                if t.contains("*/") {
-                    in_block_comment = false;
-                }
-                i += 1;
-                continue;
-            }
+            // Extract code outside comments.
+            //
+            // For C-like languages this tracks block comments across lines and preserves
+            // code after a closing `*/` on the same line.
+            let code_owned = Self::code_without_comments(t, language, &mut in_block_comment);
+            let code_portion: &str = &code_owned;
+            let code_trim = code_portion.trim();
 
-            // Skip line comments — documentation references to patterns are not runtime violations
-            if t.starts_with("//") {
-                i += 1;
-                continue;
-            }
-
-            // Fix #10: detect start of block comment
-            if t.starts_with("/*") {
-                if !t.contains("*/") || t.find("*/").unwrap_or(0) < t.find("/*").unwrap_or(0) {
-                    in_block_comment = true;
-                }
-                i += 1;
-                continue;
-            }
-
-            // Skip doc comment continuation lines
-            if t.starts_with('*') {
-                i += 1;
-                continue;
-            }
-
-            // Fix #9: skip test modules — support cfg(all(test, ...)) and similar
-            if Self::is_cfg_test_block(t) {
+            // Skip test modules — unwrap/panic is normal in tests.
+            //
+            // Only apply this when the attribute appears in actual code, not inside comments.
+            if !code_trim.is_empty() && Self::is_cfg_test_block(code_trim) {
                 i = skip_cfg_test_block(&lines, i);
+                in_block_comment = false;
                 continue;
             }
-            // Skip static Lazy<Regex> multiline initialization blocks
-            if t.contains("static ") && t.contains("Lazy") {
+
+            // Skip static Lazy<Regex> multiline initialization blocks.
+            if !code_trim.is_empty() && code_trim.contains("static ") && code_trim.contains("Lazy")
+            {
                 i = skip_brace_block(&lines, i);
+                in_block_comment = false;
                 continue;
             }
 
-            let is_comment_line = Self::is_comment_line(t, language);
-            let code_portion = Self::code_portion_for_language(t, language);
-
-            // Allow attribute: rustc annotation attributes → BYPASS_COMMENT (always).
-            if !is_comment_line && starts_with_allow_attr(code_portion) {
+            // Allow attribute: rustc annotation attributes → BYPASS_COMMENT.
+            if starts_with_allow_attr(code_trim) {
                 violations.push(LintResult::new_arch(
                     file,
                     line_number,
@@ -189,29 +181,27 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
 
             let full_lower = t.to_ascii_lowercase();
-            let code_lower = code_portion.to_ascii_lowercase();
+            let code_lower = code_trim.to_ascii_lowercase();
             let mut matched = false;
 
             for lower_p in lowered_patterns.iter() {
                 let token = lower_p.as_str();
 
                 if Self::is_word_pattern_token(token) {
-                    // Word tokens like unwrap/panic must not be reported from comment text
-                    if is_comment_line {
+                    // Word tokens like unwrap/panic/todo must not be reported from comment text.
+                    if code_trim.is_empty() {
                         continue;
                     }
 
-                    // Fix #5: skip if pattern not found
                     let pattern_pos = match code_lower.find(token) {
                         Some(pos) => pos,
                         None => continue,
                     };
 
-                    // Fix #6: pass false for requires_method_call to detect bare unwrap()
                     if matches_word_token(code_lower.as_str(), token, false)
                         && !(token == "unwrap"
                             && Self::has_safe_unwrap_variant(code_lower.as_str()))
-                        && !is_inside_string_or_char(code_portion, pattern_pos)
+                        && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
                         let vo = match Self::classify_token(token) {
                             ViolationKind::UnwrapExpect => {
@@ -228,6 +218,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 AesCodeAnalysisViolation::BypassComment { reason: None }
                             }
                         };
+
                         violations.push(LintResult::new_arch(
                             file,
                             line_number,
@@ -235,16 +226,20 @@ impl IBypassCheckerProtocol for BypassChecker {
                             Severity::CRITICAL,
                             vo.to_string(),
                         ));
+
                         matched = true;
                         break;
                     }
                 } else if !token.is_empty() {
-                    // Non-word patterns: noqa, type: ignore, eslint-disable, etc.
-                    // These must be detected even inside comments
+                    // Non-word patterns are bypass-comment patterns such as noqa,
+                    // type: ignore, eslint-disable, ts-ignore, FIXME, HACK, XXX.
+                    //
+                    // These must be detected even when they appear inside comments.
                     let pattern_pos = match full_lower.find(token) {
                         Some(pos) => pos,
                         None => continue,
                     };
+
                     if !is_inside_string_or_char(t, pattern_pos) {
                         violations.push(LintResult::new_arch(
                             file,
@@ -253,14 +248,17 @@ impl IBypassCheckerProtocol for BypassChecker {
                             Severity::CRITICAL,
                             AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                         ));
+
                         matched = true;
                         break;
                     }
                 }
             }
 
-            // Fix #1: use stable line_number captured before i += 1
-            if !matched && !is_comment_line {
+            // Language-scoped phrase patterns.
+            //
+            // These are code-path violations, so they must not be checked inside comments.
+            if !matched && !code_trim.is_empty() {
                 match language {
                     Language::Python => {
                         if code_lower.contains("raise notimplementederror")
@@ -292,6 +290,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             "throw new referenceerror",
                             "throw new syntaxerror",
                         ];
+
                         if throw_patterns.iter().any(|p| code_lower.contains(p)) {
                             violations.push(LintResult::new_arch(
                                 file,
@@ -302,7 +301,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             ));
                         }
                     }
-                    _ => {}
+                    _ => {} // Rust handled above via config patterns.
                 }
             }
 
@@ -312,7 +311,6 @@ impl IBypassCheckerProtocol for BypassChecker {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl Default for BypassChecker {
     fn default() -> Self {
         Self::new()
@@ -353,11 +351,10 @@ impl BypassChecker {
     }
 
     /// Tokens that require call-site style matching rather than plain contains.
+    ///
+    /// Uses the shared taxonomy constant instead of duplicating the token list.
     fn is_word_pattern_token(token: &str) -> bool {
-        matches!(
-            token,
-            "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable"
-        )
+        WORD_PATTERN_TOKENS.contains(&token)
     }
 
     /// Default fallback bypass patterns when config provides none.
@@ -386,31 +383,37 @@ impl BypassChecker {
         }
     }
 
-    /// Fix #7: Check if the line has ONLY safe `.unwrap_or*()` variants.
+    /// Returns true if the line has ONLY safe `.unwrap_or*()` variants and no unsafe `.unwrap()`.
+    ///
     /// Matches only known safe variants: unwrap_or, unwrap_or_else, unwrap_or_default.
     fn has_safe_unwrap_variant(line: &str) -> bool {
         let bytes = line.as_bytes();
         let len = bytes.len();
         let mut i = 0;
+
         while i < len {
             if bytes[i..].starts_with(b".unwrap") {
                 i += 7; // skip past ".unwrap"
+
                 if i < len {
                     match bytes[i] {
                         b'(' | b'!' => {
+                            // Unsafe .unwrap() or .unwrap! style call.
                             return false;
                         }
                         b'_' => {
                             i += 1;
                             let rest = &bytes[i..];
-                            // Fix #7: match only known safe variants
+
+                            // Known safe variants only.
                             if rest.starts_with(b"or(")
                                 || rest.starts_with(b"or_else(")
                                 || rest.starts_with(b"or_default(")
                             {
                                 continue;
                             }
-                            // Unknown variant — treat as unsafe
+
+                            // Unknown variant — treat as unsafe.
                             return false;
                         }
                         _ => {
@@ -420,24 +423,29 @@ impl BypassChecker {
                     }
                 }
             }
+
             i += 1;
         }
+
         true
     }
 
-    /// Fix #9: Detect cfg(test) blocks including cfg(all(test, ...)) variants.
+    /// Detect cfg(test) blocks including positive `cfg(all(test, ...))` variants.
+    ///
+    /// This intentionally avoids false positives such as `#[cfg(all(not(test), ...))]`.
     fn is_cfg_test_block(line: &str) -> bool {
-        if line.starts_with("#[cfg(test)]") {
-            return true;
+        if !line.starts_with("#[cfg(") {
+            return false;
         }
-        // Support #[cfg(all(test, ...))] and similar patterns
-        if line.starts_with("#[cfg(all(") && line.contains("test") {
-            return true;
-        }
-        false
+
+        let compact: String = line.chars().filter(|c| !c.is_whitespace()).collect();
+
+        compact.starts_with("#[cfg(test)]")
+            || compact.starts_with("#[cfg(all(test)]")
+            || compact.starts_with("#[cfg(all(test,")
     }
 
-    /// Returns the code portion of a line for language-sensitive checks.
+    /// Returns the code portion of a line for language-sensitive early-scan checks.
     fn code_portion_for_language(line: &str, language: Language) -> &str {
         match language {
             Language::Python => Self::strip_python_comment(line),
@@ -445,14 +453,125 @@ impl BypassChecker {
         }
     }
 
-    /// Conservative full-line comment detection.
-    fn is_comment_line(line: &str, language: Language) -> bool {
+    /// Returns code outside comments, tracking C-like block comments across lines.
+    fn code_without_comments<'a>(
+        line: &'a str,
+        language: Language,
+        in_block_comment: &mut bool,
+    ) -> Cow<'a, str> {
         match language {
-            Language::Python => line.starts_with('#'),
-            Language::Rust | Language::JavaScript | Language::TypeScript => {
-                line.starts_with("//") || line.starts_with("/*") || line.starts_with('*')
+            Language::Python => Cow::Borrowed(Self::strip_python_comment(line)),
+            _ => {
+                // Fast path: no comment markers and not currently inside a block comment.
+                if !*in_block_comment
+                    && !line.contains("//")
+                    && !line.contains("/*")
+                    && !line.contains("*/")
+                {
+                    return Cow::Borrowed(line);
+                }
+
+                Cow::Owned(Self::strip_c_like_comments_with_state(
+                    line,
+                    in_block_comment,
+                ))
             }
         }
+    }
+
+    /// Strip C-like `//` and `/* ... */` comments while preserving code after block comments.
+    fn strip_c_like_comments_with_state(line: &str, in_block_comment: &mut bool) -> String {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+
+        let mut result = String::new();
+        let mut segment_start = 0;
+        let mut i = 0;
+
+        let mut in_string = false;
+        let mut string_quote: u8 = b'"';
+        let mut in_char = false;
+
+        while i < len {
+            if *in_block_comment {
+                if i + 1 < len && bytes[i] == b'*' && bytes[i + 1] == b'/' {
+                    *in_block_comment = false;
+                    i += 2;
+                    segment_start = i;
+                } else {
+                    i += 1;
+                }
+                continue;
+            }
+
+            let b = bytes[i];
+
+            if in_string {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == string_quote {
+                    in_string = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if in_char {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == b'\'' {
+                    in_char = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if b == b'"' {
+                in_string = true;
+                string_quote = b'"';
+                i += 1;
+                continue;
+            }
+
+            if b == b'\'' {
+                in_char = true;
+                i += 1;
+                continue;
+            }
+
+            if b == b'/' && i + 1 < len {
+                // Line comment: preserve code before the comment and stop.
+                if bytes[i + 1] == b'/' {
+                    result.push_str(&line[segment_start..i]);
+                    return result;
+                }
+
+                // Block comment start: preserve code before the comment.
+                if bytes[i + 1] == b'*' {
+                    result.push_str(&line[segment_start..i]);
+                    *in_block_comment = true;
+                    i += 2;
+                    segment_start = i;
+                    continue;
+                }
+            }
+
+            i += 1;
+        }
+
+        if !*in_block_comment && segment_start < len {
+            result.push_str(&line[segment_start..len]);
+        }
+
+        result
     }
 
     /// Strip trailing Python `# ...` comments outside simple string literals.
@@ -465,6 +584,7 @@ impl BypassChecker {
 
         while i < len {
             let b = bytes[i];
+
             if in_string {
                 if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
                     in_string = false;
@@ -475,12 +595,14 @@ impl BypassChecker {
             } else if b == b'#' {
                 return &line[..i];
             }
+
             i += 1;
         }
+
         line
     }
 
-    /// Fix #4: Strip trailing TOML `# ...` comments outside simple string literals.
+    /// Strip trailing TOML `# ...` comments outside simple string literals.
     fn strip_toml_comment(line: &str) -> &str {
         let bytes = line.as_bytes();
         let len = bytes.len();
@@ -490,6 +612,7 @@ impl BypassChecker {
 
         while i < len {
             let b = bytes[i];
+
             if in_string {
                 if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
                     in_string = false;
@@ -500,19 +623,31 @@ impl BypassChecker {
             } else if b == b'#' {
                 return &line[..i];
             }
+
             i += 1;
         }
+
         line
     }
 
-    /// Fix #4: Detect Cargo lint values that effectively silence lints.
-    /// Handles: "allow", 'allow', { level = "allow" }, { level = 'allow', priority = -1 }
+    /// Detect Cargo lint values that effectively silence lints.
+    ///
+    /// Handles:
+    /// - `warnings = "allow"`
+    /// - `warnings = 'allow'`
+    /// - `warnings = { level = "allow" }`
+    /// - `warnings = { level = 'allow', priority = -1 }`
+    ///
+    /// This avoids false positives such as `{ level = "warn", note = "allow" }`.
     fn cargo_value_is_allow(value: &str) -> bool {
         let value = value.trim();
+
         if value == "\"allow\"" || value == "'allow'" {
             return true;
         }
+
         let normalized: String = value.chars().filter(|c| !c.is_whitespace()).collect();
-        normalized.contains("\"allow\"") || normalized.contains("'allow'")
+
+        normalized.contains("level=\"allow\"") || normalized.contains("level='allow'")
     }
 }
