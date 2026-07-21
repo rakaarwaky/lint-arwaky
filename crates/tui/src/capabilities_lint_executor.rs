@@ -755,7 +755,12 @@ impl LintExecutor {
                             ws.config.clone(),
                         );
                     let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::default();
+                        naming_rules::root_naming_rules_container::NamingContainer::new(
+                            std::sync::Arc::new(ws.config.clone()),
+                            std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
+                                ws.config.layers.clone(),
+                            )),
+                        );
                     let role_container =
                         role_rules::root_role_rules_container::RoleContainer::new_with_config(
                             ws.config.clone(),

@@ -1,6 +1,6 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::utility_config_defaults::default_aes_config;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
@@ -19,7 +19,16 @@ impl ImportContainer {
     }
 
     pub fn new_default() -> Self {
-        Self::new_with_config(default_aes_config())
+        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
+    }
+
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
     }
 
     pub fn mandatory(&self) -> Arc<dyn IImportMandatoryProtocol> {

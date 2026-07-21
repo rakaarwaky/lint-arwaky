@@ -1,4 +1,5 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::{
     INamingConventionChecker, ISuffixPrefixChecker,
@@ -30,6 +31,16 @@ impl NamingContainer {
         }
     }
 
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = Arc::new(orchestrator.load_config_sync(project_root));
+        let layer_map = Arc::new(LayerMapVO::new(config.layers.clone()));
+        Self::new(config, layer_map)
+    }
+
     pub fn naming_convention_checker(&self) -> &Arc<dyn INamingConventionChecker> {
         &self.naming_convention_checker
     }
@@ -45,14 +56,5 @@ impl NamingContainer {
             self.config.clone(),
             self.layer_map.clone(),
         ))
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl Default for NamingContainer {
-    fn default() -> Self {
-        let config = Arc::new(shared::config_system::utility_config_defaults::default_aes_config());
-        let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-        Self::new(config, layer_map)
     }
 }

@@ -1,5 +1,6 @@
 // PURPOSE: RoleContainer — wiring for role-rules feature (root layer, wiring only)
 use crate::agent_role_orchestrator::RoleOrchestrator;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -35,17 +36,20 @@ impl RoleContainer {
         Self { aggregate, config }
     }
 
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
+    }
+
     pub fn aggregate(&self) -> Arc<dyn IRoleAggregate> {
         self.aggregate.clone()
     }
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         Arc::new(RoleOrchestrator::new(self.aggregate.clone(), &self.config))
-    }
-}
-
-impl Default for RoleContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }

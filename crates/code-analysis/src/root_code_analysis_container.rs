@@ -13,6 +13,7 @@ use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProto
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use std::sync::Arc;
@@ -159,6 +160,16 @@ impl CodeAnalysisContainer {
                 checker_container,
             ))),
         }
+    }
+
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        let layer_map = LayerMapVO::new(config.layers.clone());
+        Self::new_with_config(config, layer_map)
     }
 
     pub fn code_analysis_linter(&self) -> Arc<dyn ICodeAnalysisAggregate> {

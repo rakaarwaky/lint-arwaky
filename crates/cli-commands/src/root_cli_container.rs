@@ -24,38 +24,39 @@ pub struct CliContainer {
     pub report_formatter: Arc<dyn IReportFormatterAggregate>,
 }
 
-fn make_layer_map() -> (
-    shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-    shared::taxonomy_definition_vo::LayerMapVO,
-) {
-    let aes_config = shared::config_system::utility_config_defaults::default_aes_config();
-    let (merged_layers, _) =
-        shared::config_system::utility_config_merger::merge_config(&aes_config);
-    let mut config = aes_config;
-    config.layers = merged_layers;
-    let layer_map = shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone());
-    (config, layer_map)
-}
-
 impl CliContainer {
     pub fn new_default() -> Self {
-        let import_container =
-            import_rules::root_import_rules_container::ImportContainer::new_default();
+        // Create config orchestrator — single source of truth for config
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
+        let multi_project_orchestrator = config_container.orchestrator();
 
-        let (config, layer_map) = make_layer_map();
-
+        // All containers get config from orchestrator
         let code_analysis_linter =
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
-                config, layer_map,
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::from_orchestrator(
+                &multi_project_orchestrator,
+                ".",
             )
             .code_analysis_linter();
+
+        let import_container =
+            import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
+                &multi_project_orchestrator,
+                ".",
+            );
         let import_orchestrator = import_container.orchestrator();
 
-        let role_container = role_rules::root_role_rules_container::RoleContainer::new();
+        let role_container =
+            role_rules::root_role_rules_container::RoleContainer::from_orchestrator(
+                &multi_project_orchestrator,
+                ".",
+            );
         let role_orchestrator = role_container.orchestrator();
 
         let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::default();
+            naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
+                &multi_project_orchestrator,
+                ".",
+            );
         let naming_orchestrator = naming_container.orchestrator();
 
         let external_lint_container =
@@ -63,11 +64,11 @@ impl CliContainer {
         let external_lint = external_lint_container.aggregate();
 
         let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+            orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+                &multi_project_orchestrator,
+                ".",
+            );
         let orphan_orchestrator = orphan_container.analyzer();
-
-        let config_container = config_system::root_config_system_container::ConfigContainer::new();
-        let multi_project_orchestrator = config_container.orchestrator();
 
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
         let git_aggregate = git_container.aggregate();

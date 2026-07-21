@@ -14,43 +14,61 @@ impl TuiContainer {
         crate::root_logging_entry::init()?;
         tracing::info!(target = "tui", "TUI container starting");
 
-        let import_container =
-            import_rules::root_import_rules_container::ImportContainer::new_default();
-        let (config, layer_map) = {
-            let aes_config = shared::config_system::utility_config_defaults::default_aes_config();
-            let (merged, _) =
-                shared::config_system::utility_config_merger::merge_config(&aes_config);
-            let mut c = aes_config;
-            c.layers = merged;
-            let lm = shared::taxonomy_definition_vo::LayerMapVO::new(c.layers.clone());
-            (c, lm)
-        };
+        // Create config orchestrator — single source of truth for config
+        let config_container = config_system::root_config_system_container::ConfigContainer::new();
+        let orchestrator = config_container.orchestrator();
 
+        // All containers get config from orchestrator
         let code_analysis_container =
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
-                config, layer_map,
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::from_orchestrator(
+                &orchestrator,
+                ".",
             );
         let code_analysis_aggregate = code_analysis_container.code_analysis_linter();
+
         let auto_fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(
             code_analysis_aggregate.clone(),
         );
         let fix_orchestrator = auto_fix_container.orchestrator(false);
+
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
+
         let hook_adapter: Arc<
             dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol,
         > = Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
             shared::common::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default(),
         ));
-        let config_container = config_system::root_config_system_container::ConfigContainer::new();
+
         let maintenance_container = MaintenanceContainer::new();
+
         let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+            orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+                &orchestrator,
+                ".",
+            );
+
         let external_lint_container =
             external_lint::root_external_lint_container::ExternalLintContainer::new_default();
+
         let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::default();
-        let role_container = role_rules::root_role_rules_container::RoleContainer::new();
+            naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
+                &orchestrator,
+                ".",
+            );
+
+        let role_container =
+            role_rules::root_role_rules_container::RoleContainer::from_orchestrator(
+                &orchestrator,
+                ".",
+            );
+
+        let import_container =
+            import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
+                &orchestrator,
+                ".",
+            );
+
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate)
                 .with_fix(fix_orchestrator)

@@ -121,4 +121,44 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
         stream::iter(futures).buffered(8).collect().await
     }
+
+    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig {
+        let root = std::path::Path::new(project_root);
+        let ws_type = self
+            .workspace_detector
+            .detect(&FilePath::new(project_root.to_string()).unwrap_or_default());
+        let language = ConfigLanguage::from(ws_type);
+
+        // Search upward for config file (up to 3 levels)
+        let mut current = root.to_path_buf();
+        let mut depth = 0;
+        let mut config = None;
+        while !current.as_os_str().is_empty() && depth < 3 {
+            for filename in language.config_file_names() {
+                let candidate = current.join(filename);
+                if let Ok(content) = std::fs::read_to_string(&candidate) {
+                    config = Some(parse_config_yaml(&content));
+                    break;
+                }
+            }
+            if config.is_some() {
+                break;
+            }
+            if let Some(parent) = current.parent() {
+                current = parent.to_path_buf();
+                depth += 1;
+            } else {
+                break;
+            }
+        }
+
+        let mut config = config.unwrap_or_else(|| default_config_for_language(language.as_str()));
+
+        // Merge layers into config (same as make_layer_map in entry points)
+        let (merged_layers, _) =
+            shared::config_system::utility_config_merger::merge_config(&config);
+        config.layers = merged_layers;
+
+        config
+    }
 }

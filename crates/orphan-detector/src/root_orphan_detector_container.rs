@@ -1,5 +1,6 @@
 use crate::agent_orphan_orchestrator::ArchOrphanAnalyzer;
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
@@ -11,7 +12,7 @@ pub struct OrphanContainer {
 
 impl OrphanContainer {
     pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
+        Self::new_with_config(ArchitectureConfig::default())
     }
 
     pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
@@ -46,13 +47,16 @@ impl OrphanContainer {
         }
     }
 
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
+    }
+
     pub fn analyzer(&self) -> Arc<dyn IOrphanAggregate> {
         self.analyzer.clone()
-    }
-}
-
-impl Default for OrphanContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }

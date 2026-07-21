@@ -83,14 +83,24 @@ fn main() -> ExitCode {
             import_rules::root_import_rules_container::ImportContainer::new_with_config(
                 config.clone(),
             );
-        let naming_container =
-            naming_rules::root_naming_rules_container::NamingContainer::default();
+        let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
+            std::sync::Arc::new(config.clone()),
+            std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
+                config.layers.clone(),
+            )),
+        );
         let role_container =
             role_rules::root_role_rules_container::RoleContainer::new_with_config(config.clone());
-        let arch_linter = code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
+        let arch_linter =
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
+                config.clone(),
+                shared::taxonomy_definition_vo::LayerMapVO::new(config.layers.clone()),
+            )
             .code_analysis_linter();
         let orphan_container =
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new();
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
+                config.clone(),
+            );
 
         surface_check_command::CheckContext {
             code_analysis_linter: arch_linter,
