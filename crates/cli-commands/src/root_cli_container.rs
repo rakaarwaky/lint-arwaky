@@ -2,6 +2,7 @@
 use std::sync::Arc;
 
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -72,20 +73,15 @@ impl CliContainer {
         let git_aggregate = git_container.aggregate();
 
         // Wire up report formatter capabilities → aggregate
-        let text_formatter: Arc<
-            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-        > = Arc::new(crate::capabilities_text_formatter::TextFormatter::new(
-            code_analysis_linter.clone(),
-        ));
-        let json_formatter: Arc<
-            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-        > = Arc::new(crate::capabilities_json_formatter::JsonFormatter::new());
-        let sarif_formatter: Arc<
-            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-        > = Arc::new(crate::capabilities_sarif_formatter::SarifFormatter::new());
-        let junit_formatter: Arc<
-            dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-        > = Arc::new(crate::capabilities_junit_formatter::JunitFormatter::new());
+        let text_formatter: Arc<dyn IReportFormatterProtocol> = Arc::new(
+            crate::capabilities_text_formatter::TextFormatter::new(code_analysis_linter.clone()),
+        );
+        let json_formatter: Arc<dyn IReportFormatterProtocol> =
+            Arc::new(crate::capabilities_json_formatter::JsonFormatter::new());
+        let sarif_formatter: Arc<dyn IReportFormatterProtocol> =
+            Arc::new(crate::capabilities_sarif_formatter::SarifFormatter::new());
+        let junit_formatter: Arc<dyn IReportFormatterProtocol> =
+            Arc::new(crate::capabilities_junit_formatter::JunitFormatter::new());
         let report_formatter: Arc<dyn IReportFormatterAggregate> = Arc::new(
             crate::agent_report_formatter_orchestrator::ReportFormatterOrchestrator::new(
                 text_formatter,

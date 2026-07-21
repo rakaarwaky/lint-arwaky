@@ -16,10 +16,7 @@ impl CommandCatalogVO {
         for (name, description, example) in COMMAND_CATALOG {
             catalog.insert(
                 ActionName::from(*name),
-                CommandMetadataVO::new(
-                    DescriptionVO::new(*description),
-                    Suggestion::new(*example),
-                ),
+                CommandMetadataVO::new(DescriptionVO::new(*description), Suggestion::new(*example)),
             );
         }
         catalog
