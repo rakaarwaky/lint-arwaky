@@ -17,8 +17,9 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
-    default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
+    default_working_dir, has_python_files, noop_apply_fix,
 };
 
 // PURPOSE: PyMypyAdapter — ILinterAdapterProtocol implementation for MyPy type checker integration
@@ -40,6 +41,7 @@ use async_trait::async_trait;
 
 pub struct MyPyAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
+    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
@@ -67,8 +69,10 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         ];
         let working_dir = default_working_dir(path);
 
-        let response =
-            exec_cmd_adapter(self.executor.as_ref(), cmd, working_dir, 120.0, self.name()).await?;
+        let response = self
+            .lint_executor
+            .exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
+            .await?;
 
         let stdout = &response.stdout;
         let re = match mypy_re_with_col() {
@@ -203,8 +207,16 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
 }
 
 impl MyPyAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
-        Self { executor, bin_path }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+        bin_path: Option<FilePath>,
+    ) -> Self {
+        Self {
+            executor,
+            lint_executor,
+            bin_path,
+        }
     }
 
     fn resolve_executable(&self) -> String {

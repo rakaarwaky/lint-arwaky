@@ -6,7 +6,6 @@ pub mod capabilities_stdio_client;
 pub use capabilities_stdio_client::StdioClient;
 pub mod capabilities_external_lint_executor;
 pub use capabilities_external_lint_executor::ExternalLintExecutor;
-pub mod utility_external_lint_helper;
 pub mod capabilities_js_eslint_adapter;
 pub use capabilities_js_eslint_adapter::ESLintAdapter;
 pub mod capabilities_js_prettier_adapter;

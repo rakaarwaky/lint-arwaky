@@ -17,8 +17,9 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
-    canonicalize_path, exec_cmd_scan, noop_apply_fix, resolve_js_cmd,
+    canonicalize_path, noop_apply_fix, resolve_js_cmd,
     resolve_js_working_dir as resolve_working_dir,
 };
 
@@ -43,6 +44,7 @@ use regex::Regex;
 
 pub struct TSCAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
+    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -76,15 +78,10 @@ impl ILinterAdapterProtocol for TSCAdapter {
 
         let cmd = resolve_js_cmd("tsc", args, &wd.value);
 
-        let response = exec_cmd_scan(
-            self.executor.as_ref(),
-            cmd,
-            wd.clone(),
-            60.0,
-            Some(self.name()),
-            path,
-        )
-        .await?;
+        let response = self
+            .lint_executor
+            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
+            .await?;
 
         let output = format!("{}{}", response.stdout, response.stderr);
         let mut results = Vec::new();
@@ -169,7 +166,13 @@ fn tsc_pattern2() -> Option<&'static Regex> {
 }
 
 impl TSCAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
-        Self { executor }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            lint_executor,
+        }
     }
 }

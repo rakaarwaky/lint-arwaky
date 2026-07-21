@@ -18,9 +18,8 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::utility_external_lint_helper::{
-    canonicalize_path, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
+use shared::external_lint::utility_external_lint::{
+    canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
 };
 
 // (No protocol implementation found in this file)
@@ -75,14 +74,9 @@ impl ILinterAdapterProtocol for ESLintAdapter {
             &wd.value,
         );
 
-        let response = self.lint_executor
-            .exec_cmd_scan(
-                cmd,
-                wd.clone(),
-                60.0,
-                Some(self.name()),
-                path,
-            )
+        let response = self
+            .lint_executor
+            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
             .await?;
 
         let stdout_str = response.stdout.to_string();
@@ -159,7 +153,9 @@ impl ILinterAdapterProtocol for ESLintAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.lint_executor.js_apply_fix(path, "eslint", "--fix").await
+        self.lint_executor
+            .js_apply_fix(path, "eslint", "--fix")
+            .await
     }
 }
 

@@ -14,9 +14,9 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
-    canonicalize_path, exec_cmd_scan, js_apply_fix, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
+    canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
 };
 
 // (No protocol implementation found in this file)
@@ -39,6 +39,7 @@ use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 
 pub struct PrettierAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
+    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -65,15 +66,10 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
         let cmd = resolve_js_cmd("prettier", vec!["--check".to_string(), abs_path], &wd.value);
 
-        let response = exec_cmd_scan(
-            self.executor.as_ref(),
-            cmd,
-            wd.clone(),
-            60.0,
-            Some(self.name()),
-            path,
-        )
-        .await?;
+        let response = self
+            .lint_executor
+            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
+            .await?;
 
         let mut results = Vec::new();
         let combined_output = format!("{}{}", response.stdout, response.stderr);
@@ -100,7 +96,9 @@ impl ILinterAdapterProtocol for PrettierAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        js_apply_fix(self.executor.as_ref(), path, "prettier", "--write").await
+        self.lint_executor
+            .js_apply_fix(path, "prettier", "--write")
+            .await
     }
 }
 
@@ -111,7 +109,13 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 // (No protocol implementation found in this file)
 
 impl PrettierAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
-        Self { executor }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    ) -> Self {
+        Self {
+            executor,
+            lint_executor,
+        }
     }
 }

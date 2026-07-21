@@ -15,7 +15,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 
-use crate::utility_external_lint_helper::{
+use shared::external_lint::utility_external_lint::{
     canonicalize_path, resolve_js_cmd, resolve_js_working_dir,
 };
 

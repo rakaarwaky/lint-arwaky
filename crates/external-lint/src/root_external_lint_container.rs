@@ -26,10 +26,9 @@ impl ExternalLintContainer {
             Timeout::new(60.0),
         ));
 
-        let lint_executor: Arc<dyn IExternalLintExecutorProtocol> =
-            Arc::new(crate::capabilities_external_lint_executor::ExternalLintExecutor::new(
-                executor.clone(),
-            ));
+        let lint_executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(
+            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(executor.clone()),
+        );
 
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
