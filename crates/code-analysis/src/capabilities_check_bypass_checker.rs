@@ -95,8 +95,8 @@ impl IBypassCheckerProtocol for BypassChecker {
         while i < lines.len() {
             let t = lines[i].trim();
 
-            // Skip doc comments — documentation references to patterns are not runtime violations
-            if t.starts_with("///") || t.starts_with("//!") {
+            // Skip comments — documentation references to patterns are not runtime violations
+            if t.starts_with("//") || t.starts_with("/*") || t.starts_with('*') {
                 i += 1;
                 continue;
             }
