@@ -1,7 +1,7 @@
 # FRD — cli-commands
 
 ## Feature Goal
-The cli-commands crate provides a unified command-line interface (CLI) that drives the entire lint-arwaky linting pipeline. It implements thin surface handlers that delegate business logic to agent/orchestrator layers (IAnalysisPipelineAggregate, MaintenanceCommandsAggregate, etc.) and capabilities formatters.
+The cli-commands crate provides a unified command-line interface (CLI) that drives the entire lint-arwaky linting pipeline. It implements thin surface handlers that delegate business logic to agent/orchestrator layers (IAnalysisPipelineAggregate, MaintenanceCommandsAggregate, etc.). Report formatting is delegated to the `report-formatter` crate via `IReportFormatterAggregate`.
 
 ## Commands & Scope
 
@@ -49,7 +49,7 @@ The core analysis pipeline is defined by `IAnalysisPipelineAggregate` trait impl
 5. Merge results, apply path filtering, format output
 
 ### Formatters
-Report formatters implement `IReportFormatterAggregate` / `IReportFormatterProtocol`:
+Report formatting is delegated to the `report-formatter` crate via `IReportFormatterAggregate`. The surface layer never formats output directly — it calls `self.report_formatter.format(&report, format)`. Supported formats:
 - **Text** — Human-readable formatted output with severity badges
 - **JSON** — Machine-readable structured output for CI/CD integration
 - **SARIF 2.1.0** — Standard static analysis results format (VS Code, GitHub Code Scanning)
@@ -89,9 +89,14 @@ When loading a configuration file for a given project path, lint-arwaky searches
 
 When multiple config files are found across levels, the deepest match wins (most specific path takes priority). The loaded config is cached by file path to avoid re-parsing.
 
+## Dependencies
+- `report-formatter` — Report formatting capabilities (text, JSON, SARIF, JUnit)
+- `shared` — Taxonomy, contracts, and utility types
+- `code-analysis`, `naming-rules`, `import-rules`, `role-rules`, `orphan-detector`, `external-lint` — Linter subsystems
+
 ## Success Indicators
 - [ ] AES compliance — the crate passes self-lint (`cargo run --bin lint-arwaky-cli -- check`)
 - [ ] Surface thinness — surface handlers contain no business logic, only dispatch
-- [ ] Formatters are capabilities — all formatters implement `IReportFormatterProtocol`, not agent orchestration
+- [ ] Formatters delegated — surface uses `IReportFormatterAggregate`, no inline formatting
 - [ ] Exit code correctness — all commands follow the standardized exit code convention
 - [ ] Secret redaction — config-show never leaks tokens or API keys
