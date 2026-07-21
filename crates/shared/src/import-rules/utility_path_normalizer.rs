@@ -49,15 +49,17 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
         Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
         Err(_) => {
             // Fallback: try string-based prefix removal
-            let root_with_slash = if normalized_root.ends_with('/') {
+            // Ensure root ends with / for proper prefix matching
+            let root_prefix = if normalized_root.ends_with('/') {
                 normalized_root.clone()
             } else {
                 format!("{}/", normalized_root)
             };
-            if let Some(suffix) = normalized_file.strip_prefix(&root_with_slash) {
-                suffix.to_string()
-            } else if let Some(suffix) = normalized_file.strip_prefix(&normalized_root) {
-                suffix.trim_start_matches('/').to_string()
+
+            if normalized_file.starts_with(&root_prefix) {
+                normalized_file[root_prefix.len()..].to_string()
+            } else if normalized_file == normalized_root {
+                String::new()
             } else {
                 normalized_file
             }

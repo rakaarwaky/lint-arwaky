@@ -670,8 +670,8 @@ mod phase3_regression_tests {
 
         // Test with Unicode characters that are multi-byte
         let haystack = "café"; // é is 2 bytes in UTF-8
-        assert!(contains_ident(haystack, "caf"));
-        assert!(contains_ident(haystack, "é"));
+        assert!(contains_ident(haystack, "café")); // whole word match
+        assert!(!contains_ident(haystack, "caf")); // not a whole identifier (followed by é)
     }
 
     /// Regression test: contains_ident handles empty needle.
