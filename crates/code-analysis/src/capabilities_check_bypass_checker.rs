@@ -15,6 +15,7 @@ use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
 use shared::code_analysis::utility_bypass::{
     matches_word_token, skip_brace_block, skip_cfg_test_block, starts_with_allow_attr,
 };
+use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::taxonomy_common_vo::PatternList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -83,7 +84,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             .map(|p| p.to_lowercase())
             .collect();
 
-        let language = Language::from_file(file);
+        let language = code_analysis_language_from_file(file);
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
         while i < lines.len() {

@@ -1,5 +1,4 @@
 // PURPOSE: IExternalLintLanguageDetectorProtocol — protocol for detecting languages in a project directory
-use crate::common::taxonomy_common_vo::bool;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 

@@ -206,7 +206,7 @@ pub fn resolve_cargo_working_dir(path: &FilePath) -> FilePath {
             }
         }
     }
-    FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
+    FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
 
 /// Find parent dir with Cargo.lock (for cargo-audit).
@@ -232,15 +232,21 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
             }
         }
     }
-    FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
+    FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
 
+use std::sync::OnceLock;
+
+static BUN_AVAILABLE: OnceLock<bool> = OnceLock::new();
+
 fn is_bun_available() -> bool {
-    std::process::Command::new("bun")
-        .arg("--version")
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+    *BUN_AVAILABLE.get_or_init(|| {
+        std::process::Command::new("bun")
+            .arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+    })
 }

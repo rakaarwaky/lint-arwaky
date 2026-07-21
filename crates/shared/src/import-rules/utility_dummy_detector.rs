@@ -1,4 +1,4 @@
-// PURPOSE: taxonomy_dummy_helper — pure utility functions for dummy function, block, and trait detection
+// PURPOSE: utility_dummy_helper — pure utility functions for dummy function, block, and trait detection
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::import_rules::taxonomy_language_vo::LanguageVO;
@@ -59,7 +59,6 @@ pub fn symbol_used_real(
         && symbol.len() > 1
         && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))
         || symbol.ends_with("Protocol")
-        || symbol.ends_with("Port")
         || symbol.ends_with("Trait")
         || symbol.ends_with("Aggregate")
         || symbol.ends_with("Ext")
@@ -126,7 +125,7 @@ pub fn symbol_used_real(
             continue;
         }
 
-        if !trimmed.contains(symbol) {
+        if !contains_ident(trimmed, symbol) {
             continue;
         }
 
@@ -145,6 +144,38 @@ pub fn symbol_used_real(
 }
 
 // ─── Private Helpers ───
+
+/// Check if `haystack` contains `needle` as a whole identifier (not a substring).
+fn contains_ident(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return false;
+    }
+
+    let mut start = 0usize;
+
+    while let Some(pos) = haystack[start..].find(needle) {
+        let abs = start + pos;
+        let end = abs + needle.len();
+
+        let before_ok = abs == 0 || {
+            let b = haystack.as_bytes()[abs - 1];
+            !(b.is_ascii_alphanumeric() || b == b'_')
+        };
+
+        let after_ok = end == haystack.len() || {
+            let b = haystack.as_bytes()[end];
+            !(b.is_ascii_alphanumeric() || b == b'_')
+        };
+
+        if before_ok && after_ok {
+            return true;
+        }
+
+        start = abs + needle.len();
+    }
+
+    false
+}
 
 /// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function
 /// definitions and `body_extent(start, lines)` to compute the body end line

@@ -52,35 +52,53 @@ pub fn normalize_module_path(value: &str) -> String {
 }
 
 pub fn contains_delimited(content: &str, token: &str) -> bool {
-    if content.contains(token) {
-        let delimiters = [
-            ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'',
-        ];
-        for i in 0..content.len().saturating_sub(token.len()) {
-            if content[i..].starts_with(token) {
-                let before = if i == 0 {
-                    ' '
-                } else {
-                    content.as_bytes()[i - 1] as char
-                };
-                let after = content
-                    .as_bytes()
-                    .get(i + token.len())
-                    .copied()
-                    .map(|c| c as char)
-                    .unwrap_or(' ');
-                let boundary_before = before.is_whitespace() || delimiters.contains(&before);
-                let boundary_after = after.is_whitespace()
-                    || delimiters.contains(&after)
-                    || after == '\n'
-                    || after == '\r';
-                if boundary_before && boundary_after {
-                    return true;
-                }
-            }
+    if !content.contains(token) {
+        return false;
+    }
+
+    let delimiters: &[char] = &[
+        ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'',
+    ];
+
+    for (idx, _) in content.char_indices() {
+        // Only check at character boundaries (skip multi-byte sequences)
+        if idx > 0 && !is_char_boundary(content, idx) {
+            continue;
+        }
+
+        let remaining = &content[idx..];
+        if !remaining.starts_with(token) {
+            continue;
+        }
+
+        let before = if idx == 0 {
+            ' '
+        } else {
+            // Safe: char_indices guarantees idx is at a valid char boundary
+            content[..idx].chars().next_back().unwrap_or(' ')
+        };
+
+        let after_pos = idx + token.chars().map(|c| c.len_utf8()).sum::<usize>();
+        let after = content[after_pos..].chars().next().unwrap_or(' ');
+
+        let boundary_before = before.is_whitespace() || delimiters.contains(&before);
+        let boundary_after =
+            after.is_whitespace() || delimiters.contains(&after) || after == '\n' || after == '\r';
+
+        if boundary_before && boundary_after {
+            return true;
         }
     }
+
     false
+}
+
+fn is_char_boundary(s: &str, pos: usize) -> bool {
+    if pos >= s.len() {
+        return true;
+    }
+    let bytes = s.as_bytes();
+    (bytes[pos] & 0xC0) != 0x80
 }
 
 pub fn import_tokens(path: &str) -> Vec<String> {

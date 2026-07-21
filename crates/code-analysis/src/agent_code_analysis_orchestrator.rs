@@ -20,8 +20,8 @@
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::cli_commands::utility_score_calculator::compute_score;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;

@@ -13,6 +13,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -31,6 +33,7 @@ impl ExternalLintOrchestrator {
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
+
 #[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {

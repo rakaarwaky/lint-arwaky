@@ -30,18 +30,17 @@ related:
   - module_logic_validator-rust
   - consolidate-files-rust
 ---
-
 # cleanup-rust
 
 ## Purpose
 
 Find and remove dead code across Rust crates. This skill combines **file-level cleanup** (unused files, orphaned modules) and **function-level cleanup** (stubs, thin wrappers, duplicates, overengineered patterns not in MVP scope). The goal is to maximize signal-to-noise ratio by eliminating anything NOT required by the current MVP scope.
 
-**CRITICAL: Never Remove Real Logic** — Only remove code that serves no purpose in the current MVP scope. If a function is called by another method that's required by MVP, keep it. Always update traits when removing methods. Always run lint after changes.
+**CRITICAL: Never Remove Real Logic** — Only remove code that serves no purpose in the current FRD scope. If a function is called by another method that's required by FRD, keep it. Always update traits when removing methods. Always run lint after changes.
 
 ## Rules
 
-- **Never remove real logic** — only remove code not relevant to MVP scope
+- **Never remove real logic** — only remove code not relevant to FRD scope
 - **Always update trait** — when removing methods from impl, remove from trait too
 - **Always run lint after changes** — verify no compilation errors or regressions
 - **File with 0 inbound imports** = likely unused (verify first)
@@ -67,8 +66,8 @@ If the answer is:
 - "Because it was always there" → **REMOVE**
 - "Because it might be useful someday" → **REMOVE**
 - "Because it handles edge cases we don't have" → **REMOVE**
-- "Because it's required by MVP" → **KEEP**
-- "Because it's called by a method that's required by MVP" → **KEEP**
+- "Because it's required by FRD" → **KEEP**
+- "Because it's called by a method that's required by FRD" → **KEEP**
 
 ---
 
@@ -150,7 +149,7 @@ pub use super::capabilities_real_impl::MyStruct;
 
 ### Step 1: Read Requirements
 
-Read the requirements to understand MVP scope.
+Read the requirements to understand FRD scope.
 
 ### Step 2: Scan for Unused Files
 
@@ -182,8 +181,8 @@ If answer is not "required by MVP" → mark for removal. Check both:
 
 Report per file — show what to keep/remove. Group findings into:
 
-| Category           | What It Is                                  | Action                           |
-| ------------------ | ------------------------------------------- | -------------------------------- |
+| Category                 | What It Is                                  | Action                           |
+| ------------------------ | ------------------------------------------- | -------------------------------- |
 | **Stubs**          | Empty or near-empty methods                 | Remove                           |
 | **Thin Wrappers**  | Direct attribute access, simple comparisons | Remove                           |
 | **Duplicates**     | Same function in multiple files             | Keep in owning file, remove rest |

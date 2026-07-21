@@ -45,6 +45,15 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
         for entry_path in &entries {
             let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+                if matches!(
+                    name,
+                    "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                ) {
+                    continue;
+                }
+
                 if check_dir_containers(path, identifiers) {
                     return true;
                 }

@@ -34,94 +34,115 @@ pub fn starts_with_allow_attr(line: &str) -> bool {
     prefixes.iter().any(|prefix| line.starts_with(prefix))
 }
 
+/// Check if a suffix after underscore is a known panicking/unsafe variant.
+fn forbidden_method_suffix(token: &str, suffix: &str) -> bool {
+    matches!((token, suffix), ("unwrap", "unchecked") | ("panic", "any"))
+}
+
 /// Returns true if `line` (already trimmed) contains `token` invoked as a method call or macro.
 /// When `requires_method_call` is true, the token must be preceded by a dot (`.`).
 pub fn matches_word_token(line: &str, token: &str, requires_method_call: bool) -> bool {
     if token.is_empty() {
         return false;
     }
+
+    let trimmed = line.trim_start();
+    if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+        return false;
+    }
+
     let bytes = line.as_bytes();
     let token_bytes = token.as_bytes();
     let tlen = token_bytes.len();
+
     if bytes.len() < tlen {
         return false;
     }
+
     let mut i = 0;
+
     while i + tlen <= bytes.len() {
         if &bytes[i..i + tlen] == token_bytes {
             let before_ok = i == 0 || !is_ident_start(bytes[i - 1]);
-            if !before_ok {
-                i += 1;
-                continue;
-            }
-            if requires_method_call {
-                let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
-                if !preceded_by_dot {
-                    i += 1;
-                    continue;
-                }
-            }
-            let mut j = i + tlen;
-            loop {
-                if j >= bytes.len() {
-                    return false;
-                }
-                let sep = bytes[j];
-                if sep != b'_' {
-                    if (sep == b'(' || sep == b'!') && j == i + tlen {
-                        return true;
+
+            if before_ok {
+                if requires_method_call {
+                    let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
+                    if !preceded_by_dot {
+                        i += 1;
+                        continue;
                     }
-                    return false;
                 }
-                j += 1;
-                if j >= bytes.len() {
-                    return false;
-                }
-                if !is_ident_start(bytes[j]) {
-                    return false;
-                }
-                j += 1;
-                while j < bytes.len() && is_ident_continue(bytes[j]) {
-                    j += 1;
-                }
-                if j >= bytes.len() {
-                    return false;
-                }
-                let after_seg = bytes[j];
-                if after_seg == b'(' || after_seg == b'!' {
+
+                let j = i + tlen;
+
+                if j < bytes.len() && (bytes[j] == b'(' || bytes[j] == b'!') {
                     return true;
                 }
-                if after_seg != b'_' {
-                    return false;
+
+                if j < bytes.len() && bytes[j] == b'_' {
+                    let seg_start = j + 1;
+
+                    if seg_start < bytes.len() && is_ident_start(bytes[seg_start]) {
+                        let mut seg_end = seg_start;
+
+                        while seg_end < bytes.len() && is_ident_continue(bytes[seg_end]) {
+                            seg_end += 1;
+                        }
+
+                        let seg = &line[seg_start..seg_end];
+                        let k = seg_end;
+
+                        if k < bytes.len()
+                            && (bytes[k] == b'(' || bytes[k] == b'!')
+                            && forbidden_method_suffix(token, seg)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
         }
+
         i += 1;
     }
+
     false
 }
 
 /// Word-boundary keyword token matcher.
 pub fn matches_keyword_token(line: &str, token: &str) -> bool {
+    let trimmed = line.trim_start();
+    if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+        return false;
+    }
+
     let bytes = line.as_bytes();
     let token_bytes = token.as_bytes();
     let tlen = token_bytes.len();
+
     if bytes.len() < tlen {
         return false;
     }
+
     let mut i = 0;
+
     while i + tlen <= bytes.len() {
         if &bytes[i..i + tlen] == token_bytes {
             let before_ok =
                 i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_');
+
             let after_ok = i + tlen == bytes.len()
                 || (!bytes[i + tlen].is_ascii_alphanumeric() && bytes[i + tlen] != b'_');
+
             if before_ok && after_ok {
                 return true;
             }
         }
+
         i += 1;
     }
+
     false
 }
 

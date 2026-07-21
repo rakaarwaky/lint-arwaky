@@ -69,25 +69,34 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
 }
 
 /// Recursively scan directory for files, returning vector of file paths.
-/// Skips hidden directories (starting with '.').
+/// Skips hidden directories and common heavy dependency/build directories.
 pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
     let mut files = Vec::new();
+
     if let Ok(entries) = dir_path.read_dir() {
         for dir_entry in entries.flatten() {
             if let Some(name) = dir_entry.file_name().to_str() {
                 if name.starts_with('.') {
                     continue;
                 }
+
                 let path = dir_entry.path();
+
                 if path.is_dir() {
-                    files.extend(scan_directory_recursive(&path));
-                } else {
-                    if let Some(path_str) = path.to_str() {
-                        files.push(path_str.to_string());
+                    if matches!(
+                        name,
+                        "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                    ) {
+                        continue;
                     }
+
+                    files.extend(scan_directory_recursive(&path));
+                } else if let Some(path_str) = path.to_str() {
+                    files.push(path_str.to_string());
                 }
             }
         }
     }
+
     files
 }

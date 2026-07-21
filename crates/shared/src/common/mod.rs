@@ -39,6 +39,7 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
+pub mod utility_command_runner;
 pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;

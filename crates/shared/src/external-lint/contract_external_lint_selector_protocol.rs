@@ -1,5 +1,4 @@
 // PURPOSE: IExternalLintSelectorProtocol — protocol for selecting adapters based on detected languages
-use crate::common::taxonomy_common_vo::bool;
 use async_trait::async_trait;
 
 #[async_trait]

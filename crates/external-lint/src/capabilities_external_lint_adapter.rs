@@ -9,17 +9,22 @@ use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_utility_protocol::IExternalLintUtilityProtocol;
+use shared::external_lint::contract_external_lint_utility_protocol::{
+    IExternalLintCargoProtocol,
+    IExternalLintCommandProtocol,
+    IExternalLintJsProtocol,
+    IExternalLintLanguageProtocol,
+    IExternalLintPathProtocol,
+};
 use shared::external_lint::utility_external_lint_io as ext_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintUtilityAdapter;
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Protocol Trait Implementations ──────────────
 
-#[async_trait::async_trait]
-impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
+impl IExternalLintPathProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
         let p = ext_io::canonicalize_path(path_str);
         FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default()
@@ -28,7 +33,9 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
     fn default_working_dir(&self, path: &FilePath) -> FilePath {
         FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
     }
+}
 
+impl IExternalLintLanguageProtocol for ExternalLintUtilityAdapter {
     fn has_python_files(&self, path: &FilePath) -> bool {
         let p = std::path::Path::new(&path.value);
         if !ext_io::path_exists(p) {
@@ -44,6 +51,16 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         }
     }
 
+    fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
+        ext_io::has_python_files(&dir.value)
+    }
+
+    fn is_in_path(&self, executable: &str) -> bool {
+        ext_io::is_executable_in_path(executable)
+    }
+}
+
+impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
     fn resolve_js_cmd(
         &self,
         executable: &str,
@@ -91,6 +108,34 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default()
     }
 
+    async fn js_apply_fix(
+        &self,
+        executor: &dyn ICommandExecutorProtocol,
+        path: &FilePath,
+        tool: &str,
+        fix_arg: &str,
+    ) -> Result<ComplianceStatus, LinterOperationError> {
+        let wd = self.resolve_js_working_dir(path);
+        let abs_path = self.canonicalize_path(&path.value);
+        let cmd = self.resolve_js_cmd(
+            tool,
+            PatternList::new(vec![abs_path.value, fix_arg.to_string()]),
+            &wd,
+        );
+        let response = self
+            .exec_cmd_adapter(
+                executor,
+                cmd,
+                wd,
+                Timeout::new(60.0),
+                AdapterName::raw(tool),
+            )
+            .await?;
+        Ok(ComplianceStatus::new(response.returncode == 0))
+    }
+}
+
+impl IExternalLintCargoProtocol for ExternalLintUtilityAdapter {
     fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
         let path_str = &path.value;
         if path_str.is_empty() {
@@ -112,7 +157,9 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
         }
         FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
     }
+}
 
+impl IExternalLintCommandProtocol for ExternalLintUtilityAdapter {
     async fn exec_cmd_scan(
         &self,
         executor: &dyn ICommandExecutorProtocol,
@@ -155,42 +202,8 @@ impl IExternalLintUtilityProtocol for ExternalLintUtilityAdapter {
             })
     }
 
-    async fn js_apply_fix(
-        &self,
-        executor: &dyn ICommandExecutorProtocol,
-        path: &FilePath,
-        tool: &str,
-        fix_arg: &str,
-    ) -> Result<ComplianceStatus, LinterOperationError> {
-        let wd = self.resolve_js_working_dir(path);
-        let abs_path = self.canonicalize_path(&path.value);
-        let cmd = self.resolve_js_cmd(
-            tool,
-            PatternList::new(vec![abs_path.value, fix_arg.to_string()]),
-            &wd,
-        );
-        let response = self
-            .exec_cmd_adapter(
-                executor,
-                cmd,
-                wd,
-                Timeout::new(60.0),
-                AdapterName::raw(tool),
-            )
-            .await?;
-        Ok(ComplianceStatus::new(response.returncode == 0))
-    }
-
     async fn noop_apply_fix(&self) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
-    }
-
-    fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
-        ext_io::has_python_files(&dir.value)
-    }
-
-    fn is_in_path(&self, executable: &str) -> bool {
-        ext_io::is_executable_in_path(executable)
     }
 }
 
