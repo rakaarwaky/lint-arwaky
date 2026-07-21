@@ -52,10 +52,9 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 imported = true;
                 break;
             }
-            if tokens
-                .iter()
-                .any(|token| shared::orphan_detector::utility_orphan::contains_delimited(&other_content, token))
-            {
+            if tokens.iter().any(|token| {
+                shared::orphan_detector::utility_orphan::contains_delimited(&other_content, token)
+            }) {
                 imported = true;
                 break;
             }

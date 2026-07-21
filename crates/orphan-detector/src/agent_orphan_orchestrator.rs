@@ -91,9 +91,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .collect();
         let filtered_files: Vec<String> = files
             .iter()
-            .filter(|f| {
-                !shared::orphan_detector::utility_orphan_path::is_path_ignored(f, &ignored)
-            })
+            .filter(|f| !shared::orphan_detector::utility_orphan_path::is_path_ignored(f, &ignored))
             .cloned()
             .collect();
         let files = filtered_files.as_slice();
@@ -118,16 +116,28 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 Err(_) => continue,
             };
 
-            let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
-            let base_layer = match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
-                Some(l) => l,
-                None => continue,
-            };
-            let layer_keys: Vec<String> = self.config.layers.keys().map(|k| k.value.to_string()).collect();
+            let filename =
+                shared::common::utility_layer_detector::extract_filename(file_fp.value());
+            let base_layer =
+                match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
+                    Some(l) => l,
+                    None => continue,
+                };
+            let layer_keys: Vec<String> = self
+                .config
+                .layers
+                .keys()
+                .map(|k| k.value.to_string())
+                .collect();
             let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
-                &base_layer, file_fp.value(), &layer_keys,
+                &base_layer,
+                file_fp.value(),
+                &layer_keys,
             );
-            let definition = match shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers) {
+            let definition = match shared::common::utility_layer_detector::get_layer_def(
+                &layer_str,
+                &self.config.layers,
+            ) {
                 Some(d) => d.clone(),
                 None => continue,
             };
@@ -234,9 +244,12 @@ impl ArchOrphanAnalyzer {
         };
 
         if layer_str.contains(LAYER_TAXONOMY) {
-            return self
-                .taxonomy_analyzer
-                .is_taxonomy_orphan(&fp, &root, None, &context.inbound_links);
+            return self.taxonomy_analyzer.is_taxonomy_orphan(
+                &fp,
+                &root,
+                None,
+                &context.inbound_links,
+            );
         }
 
         if layer_str.contains(LAYER_CONTRACT) {

@@ -53,13 +53,27 @@ pub fn normalize_module_path(value: &str) -> String {
 
 pub fn contains_delimited(content: &str, token: &str) -> bool {
     if content.contains(token) {
-        let delimiters = [' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\''];
+        let delimiters = [
+            ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'',
+        ];
         for i in 0..content.len().saturating_sub(token.len()) {
             if content[i..].starts_with(token) {
-                let before = if i == 0 { ' ' } else { content.as_bytes()[i - 1] as char };
-                let after = content.as_bytes().get(i + token.len()).copied().map(|c| c as char).unwrap_or(' ');
+                let before = if i == 0 {
+                    ' '
+                } else {
+                    content.as_bytes()[i - 1] as char
+                };
+                let after = content
+                    .as_bytes()
+                    .get(i + token.len())
+                    .copied()
+                    .map(|c| c as char)
+                    .unwrap_or(' ');
                 let boundary_before = before.is_whitespace() || delimiters.contains(&before);
-                let boundary_after = after.is_whitespace() || delimiters.contains(&after) || after == '\n' || after == '\r';
+                let boundary_after = after.is_whitespace()
+                    || delimiters.contains(&after)
+                    || after == '\n'
+                    || after == '\r';
                 if boundary_before && boundary_after {
                     return true;
                 }

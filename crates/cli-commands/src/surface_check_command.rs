@@ -12,8 +12,6 @@
 // The OrchestratorFactory type enables the `scan` command to create
 // fresh per-project DI containers for each workspace member, so that
 // each member gets its own language-specific configuration.
-use std::process::ExitCode;
-use std::sync::Arc;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -25,6 +23,8 @@ use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggrega
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use std::process::ExitCode;
+use std::sync::Arc;
 
 /// CheckContext — DI container struct holding all analysis subsystems.
 /// Defined in the surfaces layer because surfaces are the primary consumers.
@@ -164,8 +164,7 @@ impl CheckCommandsSurface {
         all_results.extend(role_results);
 
         // 6. Run orphan detection (AES501-506: dead code via import graph)
-        let orphan_results =
-            self.run_orphan_detection_pass(path, &self.orphan_orchestrator);
+        let orphan_results = self.run_orphan_detection_pass(path, &self.orphan_orchestrator);
         all_results.extend(orphan_results);
 
         let violation_count = self.filter_and_display_results(
@@ -282,7 +281,9 @@ impl CheckCommandsSurface {
         };
 
         // Run orphan detection with workspace root
-        let all_results = self.orphan_orchestrator.check_orphans(&all_files, &scan_root.to_string_lossy());
+        let all_results = self
+            .orphan_orchestrator
+            .check_orphans(&all_files, &scan_root.to_string_lossy());
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();
@@ -416,7 +417,9 @@ impl CheckCommandsSurface {
         let mut global_all_results = Vec::new();
 
         // Hoist orphan detection before per-workspace loop (#107 P1 #7)
-        let _orphan_results_all = self.orphan_orchestrator.check_orphans(&all_source_files, &scan_root.to_string_lossy());
+        let _orphan_results_all = self
+            .orphan_orchestrator
+            .check_orphans(&all_source_files, &scan_root.to_string_lossy());
 
         for ws in &workspaces {
             let ws_name = match std::path::Path::new(&ws.path.value).file_name() {

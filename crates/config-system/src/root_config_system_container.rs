@@ -22,12 +22,10 @@ impl ConfigContainer {
         let yaml_reader = Arc::new(crate::capabilities_yaml_reader::ConfigYamlReader::new());
 
         Self {
-            orchestrator: Arc::new(
-                crate::agent_config_orchestrator::ConfigOrchestrator::new(
-                    workspace_detector,
-                    yaml_reader,
-                ),
-            ),
+            orchestrator: Arc::new(crate::agent_config_orchestrator::ConfigOrchestrator::new(
+                workspace_detector,
+                yaml_reader,
+            )),
             parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),
             validator: Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new()),
         }

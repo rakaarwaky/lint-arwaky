@@ -52,9 +52,16 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                     || cb.ends_with("_entry.py")
                     || cb.ends_with("_entry.ts")
                     || cb.ends_with("_entry.js");
-                let is_main = matches!(cb,
-                    "main.rs" | "lib.rs" | "main.py" | "__main__.py"
-                    | "main.ts" | "main.js" | "index.ts" | "index.js"
+                let is_main = matches!(
+                    cb,
+                    "main.rs"
+                        | "lib.rs"
+                        | "main.py"
+                        | "__main__.py"
+                        | "main.ts"
+                        | "main.js"
+                        | "index.ts"
+                        | "index.js"
                 );
 
                 if !is_surface && !is_container && !is_entry && !is_main {

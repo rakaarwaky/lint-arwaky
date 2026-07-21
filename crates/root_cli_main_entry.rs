@@ -160,9 +160,8 @@ fn main() -> ExitCode {
             surface_plugin_command::handle_adapters(container.external_lint.clone())
         }
         Commands::Orphan { path } => {
-            let surface = surface_check_command::CheckCommandsSurface::new(make_check_context(
-                &container,
-            ));
+            let surface =
+                surface_check_command::CheckCommandsSurface::new(make_check_context(&container));
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }

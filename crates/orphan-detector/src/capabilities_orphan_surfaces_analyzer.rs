@@ -116,9 +116,16 @@ impl SurfacesOrphanAnalyzer {
                             || name.contains("_entry")
                             || name.contains("_router")
                             || name.contains("_container")
-                            || matches!(name,
-                                "main.rs" | "lib.rs" | "main.py" | "__main__.py"
-                                | "main.ts" | "main.js" | "index.ts" | "index.js"
+                            || matches!(
+                                name,
+                                "main.rs"
+                                    | "lib.rs"
+                                    | "main.py"
+                                    | "__main__.py"
+                                    | "main.ts"
+                                    | "main.js"
+                                    | "index.ts"
+                                    | "index.js"
                             );
                         if is_entry_or_router
                             && (name.ends_with(".rs")

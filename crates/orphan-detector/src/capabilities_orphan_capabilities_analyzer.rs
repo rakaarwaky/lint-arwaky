@@ -109,7 +109,8 @@ impl CapabilitiesOrphanAnalyzer {
             for dir_name in &["crates", "packages", "modules"] {
                 let dir = workspace_root.join(dir_name);
                 if dir.is_dir() {
-                    let files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                    let files =
+                        shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
                     for file_path in &files {
                         if let Some(name) = std::path::Path::new(file_path)
                             .file_name()
