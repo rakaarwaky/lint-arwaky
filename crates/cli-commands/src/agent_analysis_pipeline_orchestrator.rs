@@ -279,7 +279,7 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(".")
             .unwrap_or(std::path::PathBuf::from("."));
         let ignored = self
-            .config_orchestrator
+            .config_orchestrator()
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
         let all_source_files: Vec<String> = {
@@ -291,7 +291,7 @@ impl AnalysisPipelineOrchestrator {
 
         // Run orphan detection once across all workspace members
         let orphan_results_all = self
-            .orphan_orchestrator
+            .orphan_orchestrator()
             .check_orphans(&all_source_files, scan_root.to_str().unwrap_or("."));
 
         for ws in &workspaces {
@@ -415,7 +415,7 @@ impl AnalysisPipelineOrchestrator {
             None => std::path::PathBuf::from("."),
         };
         let ignored = self
-            .config_orchestrator
+            .config_orchestrator()
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root, &ignored)
             .iter()
@@ -432,7 +432,7 @@ impl AnalysisPipelineOrchestrator {
 
         // Run orphan detection with workspace root
         let all_results = self
-            .orphan_orchestrator
+            .orphan_orchestrator()
             .check_orphans(&all_files, &scan_root.to_string_lossy());
 
         // Filter results for the specific file — canonicalize for robust comparison
