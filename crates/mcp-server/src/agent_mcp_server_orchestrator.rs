@@ -22,6 +22,7 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -36,6 +37,7 @@ pub struct McpServerOrchestrator {
     pub(crate) deps: McpServerDependencies,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl McpServerOrchestrator {
     pub fn new(deps: McpServerDependencies) -> Self {
         Self { deps }
@@ -44,6 +46,7 @@ impl McpServerOrchestrator {
 
 use shared::common::find_workspace_root;
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait::async_trait]
 impl IMcpServerAggregate for McpServerOrchestrator {
     async fn execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {

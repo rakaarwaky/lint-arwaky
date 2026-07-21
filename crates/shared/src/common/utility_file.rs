@@ -301,6 +301,44 @@ pub fn get_parent(path: &str) -> &str {
         .unwrap_or("")
 }
 
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Read file content, returning empty string on error.
+pub fn read_file_safe(path: &str) -> String {
+    fs::read_to_string(path).unwrap_or_default()
+}
+
+/// Read file content with generic path.
+pub fn read_file_generic<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Check if path exists.
+pub fn path_exists<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().exists()
+}
+
+/// Write content to file.
+pub fn write_file<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(
+    path: P,
+    contents: C,
+) -> std::io::Result<()> {
+    fs::write(path, contents)
+}
+
+/// Check if path is a directory (generic).
+pub fn is_dir<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_dir()
+}
+
+/// Check if path is a file (generic).
+pub fn is_file_generic<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
 /// Walk up from `start` looking for workspace root markers.
 /// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
 pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
@@ -366,8 +404,14 @@ mod phase3_regression_tests {
     #[test]
     fn is_path_ignored_segment_matching() {
         // Segment-based patterns (without wildcards) match any segment
-        assert!(is_path_ignored("node_modules/foo/bar", &["node_modules".to_string()]));
-        assert!(!is_path_ignored("my_node_modules/foo", &["node_modules".to_string()]));
+        assert!(is_path_ignored(
+            "node_modules/foo/bar",
+            &["node_modules".to_string()]
+        ));
+        assert!(!is_path_ignored(
+            "my_node_modules/foo",
+            &["node_modules".to_string()]
+        ));
     }
 
     /// Regression test: is_path_ignored handles empty patterns list.

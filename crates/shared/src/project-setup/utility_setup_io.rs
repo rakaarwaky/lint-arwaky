@@ -1,11 +1,12 @@
 // PURPOSE: Setup I/O utility — stateless filesystem and process helpers for project setup
 
+use crate::common::utility_file;
 use std::fs;
 use std::path::Path;
 
 /// Write file content. Returns Ok(()) or Err(io::Error).
 pub fn write_file_content(path: &str, content: &str) -> Result<(), std::io::Error> {
-    fs::write(path, content)
+    utility_file::write_file(path, content)
 }
 
 /// Create directory recursively. Returns Ok(()) or Err(io::Error).

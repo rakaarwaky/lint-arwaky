@@ -27,10 +27,12 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct MaintenanceCommandsOrchestrator {}
 
 use async_trait::async_trait;
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     /// Count Python files and test files in the project, compute test ratio.
@@ -217,6 +219,45 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
     }
 }
 
+fn walk_dir(dir: &Path, py_files: &mut Vec<PathBuf>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
+                    walk_dir(&path, py_files);
+                }
+            } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("py") {
+                py_files.push(path);
+            }
+        }
+    }
+}
+
+fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBuf>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if cache_names.contains(&name) {
+                    found_dirs.push(path.clone());
+                } else if name != "target" && name != ".git" && name != "node_modules" {
+                    find_cache_dirs(&path, cache_names, found_dirs);
+                }
+            }
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for MaintenanceCommandsOrchestrator {
     fn default() -> Self {
         Self::new()

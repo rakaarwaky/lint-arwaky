@@ -26,6 +26,7 @@ pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ExternalLintOrchestrator {
     pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
         Self { adapters }

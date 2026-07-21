@@ -43,8 +43,11 @@ mod phase3_regression_tests {
     #[test]
     fn compute_column_ascii() {
         let line = "hello world";
-        assert_eq!(compute_column(line, "world"), 7); // 1-indexed
+        // "world" starts at char position 7 (1-indexed)
+        assert_eq!(compute_column(line, "world"), 7);
+        // "hello" starts at char position 1
         assert_eq!(compute_column(line, "hello"), 1);
+        // "lo" starts at char position 9
         assert_eq!(compute_column(line, "lo"), 9);
     }
 

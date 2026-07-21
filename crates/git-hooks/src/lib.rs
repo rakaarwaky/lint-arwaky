@@ -1,9 +1,9 @@
 // PURPOSE: git_hooks — lightweight module export for GitHooksOrchestrator (git-hooks feature)
+pub use shared::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
 pub use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 pub use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 pub use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 pub use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-pub use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 pub use shared::git_hooks::taxonomy_hook_error::GitHookError;
 pub mod agent_git_hooks_orchestrator;
 pub use agent_git_hooks_orchestrator::GitHooksOrchestrator;

@@ -1,5 +1,5 @@
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::common::utility_process as proc_io;
+use shared::common::utility_command_runner as proc_io;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{

@@ -33,12 +33,14 @@ use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
     config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ignored_paths: Vec<String>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl RoleOrchestrator {
     pub fn new(
         aggregate: Arc<dyn IRoleAggregate>,
@@ -216,6 +218,7 @@ impl RoleOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
@@ -231,6 +234,7 @@ impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate fo
     }
 }
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleAggregateImpl {
     taxonomy: Arc<dyn ITaxonomyRoleChecker>,
     contract: Arc<dyn IContractRoleChecker>,
@@ -239,6 +243,7 @@ pub struct RoleAggregateImpl {
     agent: Arc<dyn IAgentRoleChecker>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl RoleAggregateImpl {
     pub fn new(
         taxonomy: Arc<dyn ITaxonomyRoleChecker>,
@@ -257,6 +262,7 @@ impl RoleAggregateImpl {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IRoleAggregate for RoleAggregateImpl {
     fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
         self.taxonomy.as_ref()

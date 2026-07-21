@@ -699,9 +699,19 @@ mod phase3_regression_tests {
         let dummy_impl_traits: Vec<String> = vec![];
 
         // "my_function" should be detected as used (not in dummy range)
-        assert!(symbol_used_real(lines, "my_function", &dummy_ranges, &dummy_impl_traits));
+        assert!(symbol_used_real(
+            lines,
+            "my_function",
+            &dummy_ranges,
+            &dummy_impl_traits
+        ));
 
         // "nonexistent" should NOT be detected
-        assert!(!symbol_used_real(lines, "nonexistent", &dummy_ranges, &dummy_impl_traits));
+        assert!(!symbol_used_real(
+            lines,
+            "nonexistent",
+            &dummy_ranges,
+            &dummy_impl_traits
+        ));
     }
 }

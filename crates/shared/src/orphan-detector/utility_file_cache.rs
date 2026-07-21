@@ -1,6 +1,7 @@
 // PURPOSE: Orphan file cache utility — stateless interface to bounded file cache
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
+use crate::common::utility_file;
 use std::collections::HashMap;
 use std::fs;
 use std::sync::{Mutex, OnceLock};
@@ -44,7 +45,7 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
 }
 
 pub fn path_exists(path: &FilePath) -> bool {
-    std::path::Path::new(path.value()).exists()
+    utility_file::path_exists(path.value())
 }
 
 pub fn is_symlink(path: &FilePath) -> bool {

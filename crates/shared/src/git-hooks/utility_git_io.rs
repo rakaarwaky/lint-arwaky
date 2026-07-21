@@ -2,6 +2,7 @@
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 
+use crate::common::utility_file;
 use std::path::Path;
 use std::process::Command;
 
@@ -39,7 +40,7 @@ pub fn create_dir_all<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
 
 /// Write content to a file.
 pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
-    std::fs::write(path, contents)
+    utility_file::write_file(path, contents)
 }
 
 /// Get metadata for a file/directory.
@@ -62,15 +63,15 @@ pub fn remove_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
 
 /// Check if a path exists.
 pub fn path_exists<P: AsRef<Path>>(path: P) -> bool {
-    Path::new(path.as_ref()).exists()
+    utility_file::path_exists(path)
 }
 
 /// Check if a path is a file.
 pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-    Path::new(path.as_ref()).is_file()
+    utility_file::is_file_generic(path)
 }
 
 /// Check if a path is a directory.
 pub fn is_dir<P: AsRef<Path>>(path: P) -> bool {
-    Path::new(path.as_ref()).is_dir()
+    utility_file::is_dir(path)
 }

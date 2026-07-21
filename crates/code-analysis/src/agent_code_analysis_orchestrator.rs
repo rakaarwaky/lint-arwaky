@@ -36,6 +36,42 @@ pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
+    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root.value()))
+    }
+
+    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_scan(src_dir.value()))
+    }
+
+    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
+        self.run_self_lint(path.value())
+    }
+
+    fn calc_score(&self, results: &[LintResult]) -> Score {
+        Score::new(compute_score(results))
+    }
+
+    fn check_critical(&self, results: &[LintResult]) -> bool {
+        has_critical(results)
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
+        self.format_report(&results.values, project_root.value())
+    }
+
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        self.container
+            .config()
+            .rules
+            .iter()
+            .map(|r| r.code_analysis.clone())
+            .collect()
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
@@ -269,41 +305,5 @@ impl CodeAnalysisOrchestrator {
             ));
         }
         output
-    }
-}
-
-// ─── Block 2: Aggregate Trait Implementation ──────────────
-impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
-    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root.value()))
-    }
-
-    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_scan(src_dir.value()))
-    }
-
-    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.run_self_lint(path.value())
-    }
-
-    fn calc_score(&self, results: &[LintResult]) -> Score {
-        Score::new(compute_score(results))
-    }
-
-    fn check_critical(&self, results: &[LintResult]) -> bool {
-        has_critical(results)
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
-        self.format_report(&results.values, project_root.value())
-    }
-
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        self.container
-            .config()
-            .rules
-            .iter()
-            .map(|r| r.code_analysis.clone())
-            .collect()
     }
 }

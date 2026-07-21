@@ -44,7 +44,6 @@ pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
-pub mod utility_process;
 pub mod utility_value_object_generator;
 pub use utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,

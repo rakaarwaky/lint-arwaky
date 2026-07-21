@@ -1,4 +1,5 @@
 // PURPOSE: utility_orphan_io — stateless I/O utilities for orphan detection graph building
+use crate::common::utility_file;
 use std::path::Path;
 
 /// Outcome of reading a file — either content or diagnostic info.
@@ -9,7 +10,7 @@ pub enum FileReadOutcome {
 
 /// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
-    std::fs::read_to_string(path).unwrap_or_default()
+    utility_file::read_file_safe(path)
 }
 
 /// Read file with diagnostic info — returns content or error details.
@@ -34,7 +35,7 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
                     continue;
                 }
                 let path = dir_entry.path();
-                let is_dir = path.is_dir();
+                let is_dir = utility_file::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -44,12 +45,12 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
 
 /// Check if a path exists and is a file.
 pub fn is_file(path: &Path) -> bool {
-    path.is_file()
+    utility_file::is_file_generic(path)
 }
 
 /// Check if a path exists and is a directory.
 pub fn is_dir(path: &Path) -> bool {
-    path.is_dir()
+    utility_file::is_dir(path)
 }
 
 /// Scan directory entries, returning vector of (file_name, file_path, is_dir) tuples.
@@ -60,7 +61,7 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
         for dir_entry in read_dir.flatten() {
             if let Some(name) = dir_entry.file_name().to_str() {
                 let path = dir_entry.path();
-                let is_dir = path.is_dir();
+                let is_dir = utility_file::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -82,7 +83,7 @@ pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
 
                 let path = dir_entry.path();
 
-                if path.is_dir() {
+                if utility_file::is_dir(&path) {
                     if matches!(
                         name,
                         "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"

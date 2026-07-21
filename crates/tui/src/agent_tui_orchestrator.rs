@@ -16,6 +16,7 @@ pub struct TuiOrchestrator {
     action_handler: Arc<dyn IActionHandlerProtocol>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl TuiOrchestrator {
     pub fn new(action_handler: Arc<dyn IActionHandlerProtocol>) -> Self {
         Self { action_handler }

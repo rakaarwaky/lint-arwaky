@@ -1,14 +1,15 @@
 // PURPOSE: Filesystem checker utility — stateless filesystem operations for project setup and maintenance
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::utility_file;
 use std::fs;
 use std::path::Path;
 
 pub fn read_file(path: &FilePath) -> Result<String, String> {
-    fs::read_to_string(path.value()).map_err(|e| e.to_string())
+    utility_file::read_file(path.value()).map_err(|e| e.to_string())
 }
 
 pub fn write_file(path: &FilePath, content: &str) -> Result<(), String> {
-    fs::write(path.value(), content).map_err(|e| e.to_string())
+    utility_file::write_file(path.value(), content).map_err(|e| e.to_string())
 }
 
 pub fn create_dir_all(path: &FilePath) -> Result<(), String> {
@@ -16,12 +17,11 @@ pub fn create_dir_all(path: &FilePath) -> Result<(), String> {
 }
 
 pub fn path_exists(path: &FilePath) -> bool {
-    Path::new(path.value()).exists()
+    utility_file::path_exists(path.value())
 }
 
 pub fn file_exists(path: &FilePath) -> bool {
-    let p = Path::new(path.value());
-    p.exists() && p.is_file()
+    utility_file::path_exists(path.value()) && utility_file::is_file_generic(path.value())
 }
 
 pub fn walk_py_files(dir: &FilePath) -> Vec<FilePath> {

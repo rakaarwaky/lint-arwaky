@@ -20,6 +20,7 @@ pub struct ReportFormatterOrchestrator {
     junit: Arc<dyn IReportFormatterProtocol>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ReportFormatterOrchestrator {
     pub fn new(
         text: Arc<dyn IReportFormatterProtocol>,

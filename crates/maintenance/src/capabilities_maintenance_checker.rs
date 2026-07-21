@@ -14,7 +14,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 //   3. run_dependency_report: parses Cargo.lock (Rust), pyproject.toml, or
 //      requirements.txt to list direct and transitive dependencies.
 
-use shared::common::utility_process as proc_io;
+use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::utility_dependency_io as dep_io;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{

@@ -24,10 +24,12 @@ use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementOrchestrator {
     protocol: Arc<dyn ISetupManagementProtocol>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl SetupManagementAggregate for SetupManagementOrchestrator {
     fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
@@ -117,6 +119,7 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl SetupManagementOrchestrator {
     pub fn new(protocol: Arc<dyn ISetupManagementProtocol>) -> Self {
         Self { protocol }
