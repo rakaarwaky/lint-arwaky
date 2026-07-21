@@ -36,10 +36,22 @@ impl LintResult {
         sev: Severity,
         msg: impl Into<String>,
     ) -> Self {
+        Self::new_arch_with_column(file, line, 0, code, sev, msg)
+    }
+
+    /// Column-aware constructor for architecture checkers.
+    pub fn new_arch_with_column(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
+            column: ColumnNumber::new(column as i64),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),

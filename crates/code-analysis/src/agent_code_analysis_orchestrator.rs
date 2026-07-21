@@ -19,8 +19,6 @@
 
 use std::path::Path;
 use std::sync::Arc;
-use std::sync::OnceLock;
-
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -31,38 +29,6 @@ use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-
-static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
-
-/// Initialize the global checker container. Must be called before using CodeAnalysisOrchestrator.
-pub fn init_global_checker(container: Arc<CodeAnalysisCheckerContainer>) {
-    GLOBAL_CONTAINER.set(container).ok();
-}
-
-/// Detect source directory — delegates to shared utility for backward compatibility.
-pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
-    shared::code_analysis::utility_target::detect_source_dir(project_root)
-}
-
-/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
-/// Delegates to shared utility.
-pub fn collect_source_files(
-    _root_dir: &Path,
-    dir_path: &DirectoryPath,
-    ignored: &[String],
-) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    let path = std::path::Path::new(&dir_path.value);
-    if path.is_dir() {
-        shared::common::utility_file::walk_source_files(path, &mut files, ignored);
-    }
-    files
-}
-
-/// Resolve target path — delegates to shared utility for backward compatibility.
-pub fn resolve_target(path: Option<String>) -> String {
-    shared::code_analysis::utility_target::resolve_target(path)
-}
 
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
@@ -93,26 +59,10 @@ pub fn has_critical(results: &[LintResult]) -> bool {
     results.iter().any(|r| r.severity == Severity::CRITICAL)
 }
 
-/// P4.2/P4.3: Read a file with size limit and diagnostic errors.
-fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
-    const MAX_BYTES: u64 = 2 * 1024 * 1024;
-    let meta = std::fs::metadata(path).map_err(|e| format!("{}: {}", path, e))?;
-    if meta.len() > MAX_BYTES {
-        return Ok(None);
-    }
-    std::fs::read_to_string(path)
-        .map(Some)
-        .map_err(|e| format!("{}: {}", path, e))
-}
-
 impl CodeAnalysisOrchestrator {
-    /// Create a new orchestrator. Falls back to a default container if init_global_checker not called.
     pub fn new() -> Self {
         Self {
-            container: match GLOBAL_CONTAINER.get().cloned() {
-                Some(c) => c,
-                None => Arc::new(CodeAnalysisCheckerContainer::default()),
-            },
+            container: Arc::new(CodeAnalysisCheckerContainer::default()),
         }
     }
 
@@ -123,7 +73,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = detect_source_dir(root);
+        let src_dir = shared::code_analysis::utility_target::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -145,7 +95,9 @@ impl CodeAnalysisOrchestrator {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let files = collect_source_files(src_dir, &dir_path, &ignored);
+        let files = shared::code_analysis::utility_target::collect_source_files(
+            src_dir, &dir_path, &ignored,
+        );
         if files.is_empty() {
             return Vec::new();
         }
@@ -179,7 +131,9 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match read_lintable_file(&cargo_path.to_string_lossy()) {
+                match shared::code_analysis::utility_file_reader::read_lintable_file(
+                    &cargo_path.to_string_lossy(),
+                ) {
                     Ok(Some(cargo_content)) => {
                         self.container
                             .bypass_checker()
@@ -204,7 +158,7 @@ impl CodeAnalysisOrchestrator {
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-            let c = match read_lintable_file(file) {
+            let c = match shared::code_analysis::utility_file_reader::read_lintable_file(file) {
                 Ok(Some(content)) => content,
                 Ok(None) => {
                     violations.push(LintResult::new_arch(

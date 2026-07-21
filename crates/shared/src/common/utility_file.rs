@@ -168,9 +168,11 @@ pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemEr
 }
 
 /// Walk a directory tree collecting all source files, skipping ignored directories.
+/// Symlink targets outside the root directory are pruned to prevent path traversal.
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::new();
-    walk_source_files_inner(dir, files, ignored, &mut visited)
+    walk_source_files_inner(&root, files, ignored, &mut visited)
 }
 
 fn walk_source_files_inner(
@@ -188,6 +190,10 @@ fn walk_source_files_inner(
             if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
                 if sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&path) {
+                        // P4.1 fix: prevent symlink escape — skip targets outside root
+                        if !target.starts_with(dir) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
                             let inode = get_inode(&target_meta);
                             if !visited.insert(inode) {

@@ -7,9 +7,9 @@ use shared::code_analysis::utility_bypass::skip_cfg_test_block;
 use shared::code_analysis::utility_mandatory::rust_declares_type;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
-// PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
-// Sub-check 1: file must define at least one struct/trait/enum/class (IMandatoryClassProtocol).
-// Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
+// PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
+// Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
+// Sub-check 2: empty unit struct (struct Foo;) and empty class/interface (class Foo: pass, class Foo {}, interface {}) flagged as dead inheritance.
 // ALGORITHM (check_mandatory_class_definition):
 //   1. Skip barrel/constant files (mod.rs, __init__.py, _constant.*)
 //   2. If no LayerDefinition or mandatory_class_definition disabled → skip
@@ -149,6 +149,10 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             if trimmed.starts_with("class ")
                 || trimmed.starts_with("export class ")
                 || trimmed.starts_with("export default class ")
+                || trimmed.starts_with("interface ")
+                || trimmed.starts_with("export interface ")
+                || trimmed.starts_with("type ")
+                || trimmed.starts_with("export type ")
                 || rust_declares_type(trimmed)
             {
                 has_class = true;

@@ -3,11 +3,11 @@
 
 use super::utility_bypass::matches_keyword_token;
 
-/// Check if a line declares a Rust struct/enum/trait using word-boundary matching.
+/// Check if a line declares a Rust struct/enum/trait/type using word-boundary matching.
 /// Handles visibility modifiers (pub, pub(crate)), tuple structs, and avoids
 /// substring false-positives like "obstruction", "structure", "instruction".
 pub fn rust_declares_type(line: &str) -> bool {
-    let keywords = ["struct", "enum", "trait"];
+    let keywords = ["struct", "enum", "trait", "type"];
     for kw in keywords {
         if matches_keyword_token(line, kw) {
             return true;

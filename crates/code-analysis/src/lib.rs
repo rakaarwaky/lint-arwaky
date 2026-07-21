@@ -10,8 +10,7 @@ pub mod capabilities_code_duplication_analyzer;
 pub use capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 pub mod agent_code_analysis_orchestrator;
 pub use agent_code_analysis_orchestrator::{
-    collect_source_files, detect_source_dir, has_critical, init_global_checker, lint_path,
-    resolve_target, CodeAnalysisOrchestrator,
+    has_critical, lint_path, CodeAnalysisOrchestrator,
 };
 // Re-export for CLI surfaces backward compatibility
 pub use shared::cli_commands::taxonomy_score_vo::compute_score;
