@@ -475,7 +475,7 @@ impl CheckCommandsSurface {
                         role_orchestrator.run_audit(&ws.path),
                     )
                 });
-            all_results.extend(naming_results);
+            all_results.extend(naming_results.unwrap_or_default());
             all_results.extend(import_results);
             all_results.extend(external_results.values);
             all_results.extend(role_results);
