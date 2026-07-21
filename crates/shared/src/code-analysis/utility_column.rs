@@ -4,7 +4,9 @@
 /// Compute 1-indexed column position of `pattern` in `line`.
 /// Returns 0 if pattern not found.
 pub fn compute_column(line: &str, pattern: &str) -> usize {
-    line.find(pattern).map(|pos| pos + 1).unwrap_or(0)
+    line.find(pattern)
+        .map(|pos| byte_offset_to_column(line, pos))
+        .unwrap_or(0)
 }
 
 /// Compute 1-indexed column position of a byte offset in a line.

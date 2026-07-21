@@ -5,8 +5,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityOrphanAnalyzer {}
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
 impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     fn is_utility_orphan(
         &self,
@@ -82,6 +84,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
         Self::new()

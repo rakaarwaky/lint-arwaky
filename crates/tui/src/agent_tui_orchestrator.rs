@@ -9,6 +9,7 @@ use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// TuiOrchestrator — the agent-level aggregate for the TUI.
 /// Wraps an IActionHandlerProtocol and forwards all ITuiAggregate calls to it.
 pub struct TuiOrchestrator {
@@ -21,6 +22,7 @@ impl TuiOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl ITuiAggregate for TuiOrchestrator {
     /// Handle a TuiEvent by delegating to the action handler's state machine.
     fn handle_event(&self, state: &mut AppState, event: TuiEvent) {

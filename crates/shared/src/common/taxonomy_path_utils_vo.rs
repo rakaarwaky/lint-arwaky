@@ -1,17 +1,22 @@
 pub struct PathUtils;
+use std::collections::HashSet;
 use std::fs;
 
 impl PathUtils {
     /// Walk a directory recursively, collecting files while skipping ignored patterns.
     /// Supports both flat patterns (e.g., "tests") and path patterns (e.g., "src/tests").
+    /// Prevents symlink cycles using a visited set of canonical paths.
     pub fn walk_recursive(dir: &std::path::Path, ignored: &[&str]) -> Vec<std::path::PathBuf> {
-        Self::walk_recursive_internal(dir, dir, ignored)
+        let root = fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+        let mut visited = HashSet::new();
+        Self::walk_recursive_internal(&root, &root, ignored, &mut visited)
     }
 
     fn walk_recursive_internal(
         root: &std::path::Path,
         dir: &std::path::Path,
         ignored: &[&str],
+        visited: &mut HashSet<std::path::PathBuf>,
     ) -> Vec<std::path::PathBuf> {
         let mut results = Vec::new();
 
@@ -42,7 +47,11 @@ impl PathUtils {
                 }
 
                 if path.is_dir() {
-                    results.extend(Self::walk_recursive_internal(root, &path, ignored));
+                    let canonical = fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+                    if !visited.insert(canonical) {
+                        continue;
+                    }
+                    results.extend(Self::walk_recursive_internal(root, &path, ignored, visited));
                 } else {
                     results.push(path);
                 }

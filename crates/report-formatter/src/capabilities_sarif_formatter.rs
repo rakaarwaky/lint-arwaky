@@ -6,9 +6,11 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
 pub struct SarifFormatter;
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl SarifFormatter {
     /// Create a new SARIF formatter.
     pub fn new() -> Self {
@@ -22,6 +24,7 @@ impl Default for SarifFormatter {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for SarifFormatter {
     fn format(&self, report: &ScanReport, format: Format) -> String {

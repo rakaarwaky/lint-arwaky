@@ -16,6 +16,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct ConfigOrchestrator {
     workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
     config_reader: Arc<dyn IConfigReaderProtocol>,
@@ -23,24 +25,7 @@ pub struct ConfigOrchestrator {
     config_cache: Mutex<HashMap<String, Arc<ArchitectureConfig>>>,
 }
 
-impl ConfigOrchestrator {
-    pub fn new(
-        workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
-        config_reader: Arc<dyn IConfigReaderProtocol>,
-        validator: Arc<dyn IConfigValidatorProtocol>,
-    ) -> Self {
-        Self {
-            workspace_detector,
-            config_reader,
-            validator,
-            config_cache: Mutex::new(HashMap::new()),
-        }
-    }
-
-    pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
-        &self.validator
-    }
-}
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 
 #[async_trait]
 impl IConfigOrchestratorAggregate for ConfigOrchestrator {
@@ -192,5 +177,26 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             }
         }
         ignored
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl ConfigOrchestrator {
+    pub fn new(
+        workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
+        config_reader: Arc<dyn IConfigReaderProtocol>,
+        validator: Arc<dyn IConfigValidatorProtocol>,
+    ) -> Self {
+        Self {
+            workspace_detector,
+            config_reader,
+            validator,
+            config_cache: Mutex::new(HashMap::new()),
+        }
+    }
+
+    pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
+        &self.validator
     }
 }

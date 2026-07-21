@@ -29,6 +29,7 @@ use std::sync::Arc;
 ///   4. External linters (Clippy, Ruff, ESLint, etc.)
 ///   5. Role rules (AES401-406)
 ///   6. Orphan detection (AES501-506)
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct AnalysisPipelineOrchestrator {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -42,6 +43,7 @@ pub struct AnalysisPipelineOrchestrator {
     pub member: Option<String>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
     /// Run the full analysis pipeline on a target path.
     ///
@@ -376,6 +378,7 @@ fn xml_escape(s: &str) -> String {
     escaped
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait::async_trait]
 impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
     async fn run(&self, request: ScanRequest) -> Result<ScanReport, PipelineError> {

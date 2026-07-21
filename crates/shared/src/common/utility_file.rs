@@ -67,17 +67,20 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             }
             continue;
         }
-        if pat.starts_with("*.") || (pat.starts_with('.') && pat.contains('.')) {
-            let suffix = if let Some(s) = pat.strip_prefix('*') {
-                s.trim_start_matches('.')
-            } else {
-                pat.trim_start_matches('.')
-            };
+        if let Some(suffix) = pat.strip_prefix("*.") {
+            let suffix = suffix.trim_start_matches('.');
             if suffix.is_empty() {
                 continue;
             }
             let basename = segments.last().copied().unwrap_or_default();
-            if basename.ends_with(suffix) {
+            if basename.ends_with(&format!(".{suffix}")) {
+                return true;
+            }
+            continue;
+        }
+
+        if pat.starts_with('.') {
+            if segments.iter().any(|seg| *seg == pat) {
                 return true;
             }
             continue;

@@ -309,30 +309,43 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     for (idx, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("from ") && trimmed.contains(" import ") {
-            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
-                for name in import_part.split(',') {
-                    let name: &str = name.split_whitespace().next().unwrap_or_default();
-                    if !name.is_empty() && name != "*" {
-                        symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
-                    }
+        if let Some(import_part) = trimmed
+            .strip_prefix("from ")
+            .and_then(|s| s.split_once(" import ").map(|(_, p)| p))
+        {
+            for name in import_part.split(',') {
+                let name = name.trim();
+                if name.is_empty() || name == "*" {
+                    continue;
+                }
+
+                let used_name = match name.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => name.split_whitespace().next().unwrap_or_default(),
+                };
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
                 }
             }
             continue;
         }
 
-        if trimmed.starts_with("import ") {
-            let module: &str = trimmed
-                .trim_start_matches("import ")
-                .split_whitespace()
-                .next()
-                .unwrap_or_default();
-            if !module.is_empty() {
-                let name: &str = match module.rsplit('.').next() {
-                    Some(n) => n,
-                    None => module,
+        if let Some(rest) = trimmed.strip_prefix("import ") {
+            for module in rest.split(',') {
+                let module = module.trim();
+                if module.is_empty() {
+                    continue;
+                }
+
+                let used_name = match module.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => module.rsplit('.').next().unwrap_or(module).trim(),
                 };
-                symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
+                }
             }
         }
     }
@@ -351,7 +364,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name: &str = part.split_whitespace().next().unwrap_or_default();
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(" as ") {
+                            Some((_, alias)) => alias.trim(),
+                            None => part.split_whitespace().next().unwrap_or_default(),
+                        };
+
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -363,11 +385,17 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = import_part
+                let before_from = import_part
                     .split_once(" from ")
                     .map(|(n, _)| n)
-                    .unwrap_or_default();
-                let name = name.trim();
+                    .unwrap_or_default()
+                    .trim();
+
+                let name = match before_from.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => before_from,
+                };
+
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                 }
@@ -380,10 +408,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = match part.trim().split(':').next() {
-                            Some(n) => n.trim(),
-                            None => "",
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(':') {
+                            Some((_, alias)) => alias.trim(),
+                            None => part,
                         };
+
                         if !name.is_empty() {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }

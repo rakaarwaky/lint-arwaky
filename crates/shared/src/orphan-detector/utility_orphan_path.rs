@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 pub fn normalize_lexical(path: &Path) -> PathBuf {
@@ -15,18 +16,32 @@ pub fn normalize_lexical(path: &Path) -> PathBuf {
 }
 
 pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
-    let root = normalize_lexical(root);
+    let canonical_root = fs::canonicalize(root).ok()?;
+
     let absolute = if candidate.is_absolute() {
         candidate.to_path_buf()
     } else {
-        root.join(candidate)
+        canonical_root.join(candidate)
     };
-    let normalized = normalize_lexical(&absolute);
-    if normalized.starts_with(&root) {
-        Some(normalized)
-    } else {
-        None
+
+    // If the candidate exists, canonicalize it directly.
+    if let Ok(canonical_candidate) = fs::canonicalize(&absolute) {
+        return canonical_candidate
+            .starts_with(&canonical_root)
+            .then_some(canonical_candidate);
     }
+
+    // If the candidate does not exist yet, canonicalize the parent
+    // and reattach the final component.
+    let parent = absolute.parent()?;
+    let file_name = absolute.file_name()?;
+
+    let canonical_parent = fs::canonicalize(parent).ok()?;
+    let canonical_candidate = canonical_parent.join(file_name);
+
+    canonical_candidate
+        .starts_with(&canonical_root)
+        .then_some(canonical_candidate)
 }
 
 pub fn resolve_module_path(root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf> {

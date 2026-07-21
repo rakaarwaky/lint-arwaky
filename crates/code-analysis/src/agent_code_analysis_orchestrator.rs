@@ -30,11 +30,13 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::path::Path;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
         Self::new()
@@ -270,6 +272,7 @@ impl CodeAnalysisOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
         LintResultList::new(self.run_self_lint(project_root.value()))

@@ -8,6 +8,7 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// ReportFormatterOrchestrator — agent layer that coordinates report formatting.
 ///
 /// Implements IReportFormatterAggregate by delegating to the appropriate
@@ -35,6 +36,7 @@ impl ReportFormatterOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IReportFormatterAggregate for ReportFormatterOrchestrator {
     fn format(&self, report: &ScanReport, format: Format) -> String {
         let formatter: &dyn IReportFormatterProtocol = match format {

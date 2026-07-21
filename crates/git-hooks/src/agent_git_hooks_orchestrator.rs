@@ -21,6 +21,7 @@ use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct GitHooksOrchestrator {
     diff_protocol: Arc<dyn IDiffProtocol>,
     hook_protocol: Arc<dyn IHookProtocol>,
@@ -41,6 +42,7 @@ impl GitHooksOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait::async_trait]
 impl GitHooksAggregate for GitHooksOrchestrator {
     fn diff_protocol(&self) -> &dyn IDiffProtocol {

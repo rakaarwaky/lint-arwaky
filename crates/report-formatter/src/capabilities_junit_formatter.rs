@@ -6,9 +6,11 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
 pub struct JunitFormatter;
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl JunitFormatter {
     /// Create a new JUnit formatter.
     pub fn new() -> Self {
@@ -22,6 +24,7 @@ impl Default for JunitFormatter {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for JunitFormatter {
     fn format(&self, report: &ScanReport, format: Format) -> String {

@@ -4,12 +4,12 @@
 ///
 /// For multi-dot filenames like `foo.spec.rs`, this returns `foo.spec`.
 /// For single-dot files like `checker.rs`, this returns `checker`.
+/// For dotfiles like `.gitignore`, the entire filename is returned.
 /// If there is no dot, the entire filename is returned.
 pub fn get_stem(filename: &str) -> Option<&str> {
-    if let Some(pos) = filename.rfind('.') {
-        Some(&filename[..pos])
-    } else {
-        Some(filename)
+    match filename.rfind('.') {
+        Some(pos) if pos > 0 => Some(&filename[..pos]),
+        _ => Some(filename),
     }
 }
 

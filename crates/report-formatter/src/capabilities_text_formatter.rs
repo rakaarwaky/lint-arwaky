@@ -7,12 +7,14 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// TextFormatter — produces human-readable text output from ScanReport.
 pub struct TextFormatter {
     code_analysis_linter:
         Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl TextFormatter {
     /// Create a new text formatter.
     pub fn new(
@@ -36,6 +38,7 @@ impl TextFormatter {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for TextFormatter {
     fn format(&self, report: &ScanReport, format: Format) -> String {

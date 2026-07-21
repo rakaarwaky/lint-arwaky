@@ -136,6 +136,37 @@ pub fn import_tokens(path: &str) -> Vec<String> {
     tokens
 }
 
+/// Strip leading generic parameter lists (e.g., `<T>`, `<T: Clone>`) from a string.
+fn strip_leading_generics(s: &str) -> &str {
+    let mut s = s.trim();
+
+    while let Some(rest) = s.strip_prefix('<') {
+        let mut depth = 1usize;
+        let mut end = None;
+
+        for (idx, ch) in rest.char_indices() {
+            match ch {
+                '<' => depth += 1,
+                '>' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = Some(idx);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        match end {
+            Some(pos) => s = rest[pos + 1..].trim(),
+            None => break,
+        }
+    }
+
+    s
+}
+
 pub fn has_trait_implementation(content: &str, trait_name: &str) -> bool {
     for line in content.lines() {
         let trimmed = line.trim();
@@ -147,19 +178,20 @@ pub fn has_trait_implementation(content: &str, trait_name: &str) -> bool {
             continue;
         }
         if trimmed.starts_with("impl") && trimmed.contains(" for ") {
-            let after_impl = &trimmed[4..].trim();
+            let after_impl = trimmed[4..].trim();
+
             let trait_part = match after_impl.find(" for ") {
                 Some(pos) => after_impl[..pos].trim(),
                 None => continue,
             };
-            let trait_part = trait_part
-                .trim_start_matches('<')
-                .split('>')
-                .next()
-                .unwrap_or(trait_part);
-            if trait_part == trait_name
-                || trait_part.ends_with(trait_name)
-                || trait_name.ends_with(trait_part)
+
+            let trait_part = strip_leading_generics(trait_part);
+            let trait_base = trait_part.split('<').next().unwrap_or(trait_part).trim();
+            let trait_last = trait_base.split("::").last().unwrap_or(trait_base);
+
+            if trait_last == trait_name
+                || trait_last.ends_with(trait_name)
+                || trait_name.ends_with(trait_last)
             {
                 return true;
             }

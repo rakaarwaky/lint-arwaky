@@ -5,9 +5,11 @@ use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterPr
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// JsonFormatter — produces JSON output from ScanReport.
 pub struct JsonFormatter;
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl JsonFormatter {
     /// Create a new JSON formatter.
     pub fn new() -> Self {
@@ -21,6 +23,7 @@ impl Default for JsonFormatter {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for JsonFormatter {
     fn format(&self, report: &ScanReport, format: Format) -> String {

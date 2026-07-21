@@ -30,6 +30,7 @@ impl ExternalLintOrchestrator {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {

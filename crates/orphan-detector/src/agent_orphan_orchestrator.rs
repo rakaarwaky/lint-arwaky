@@ -28,6 +28,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
     taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
@@ -39,6 +40,7 @@ pub struct ArchOrphanAnalyzer {
     config: ArchitectureConfig,
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -64,6 +66,7 @@ impl ArchOrphanAnalyzer {
     }
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
@@ -174,6 +177,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
