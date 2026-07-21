@@ -1,4 +1,4 @@
-// PURPOSE: taxonomy_external_lint_helper — shared utility functions for external linter adapters
+// PURPOSE: utility_external_lint_helper — shared utility functions for external linter adapters
 // Pure functions: resolve working directories, canonicalize paths,
 // execute commands with error mapping. Used by JS, Python, and RS adapters.
 

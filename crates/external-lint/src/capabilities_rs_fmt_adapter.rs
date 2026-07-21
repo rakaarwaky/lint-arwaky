@@ -20,7 +20,7 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 use tracing::debug;
 
-use shared::external_lint::taxonomy_external_lint_helper::resolve_cargo_working_dir;
+use shared::external_lint::utility_external_lint_helper::resolve_cargo_working_dir;
 
 // PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
 //

@@ -17,7 +17,7 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
 
-use shared::external_lint::taxonomy_external_lint_helper::{
+use shared::external_lint::utility_external_lint_helper::{
     default_working_dir, exec_cmd_adapter, has_python_files, noop_apply_fix,
 };
 
