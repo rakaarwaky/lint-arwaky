@@ -29,6 +29,20 @@ pub struct WatchOrchestrator {
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl IWatchAggregate for WatchOrchestrator {
+    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+                std::process::exit(1);
+            }
+        };
+        rt.block_on(self.run_async(config, running))
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl WatchOrchestrator {
     pub fn new(
@@ -81,19 +95,5 @@ impl WatchOrchestrator {
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
         ExitCode::SUCCESS
-    }
-}
-
-// ─── Block 2: Aggregate Trait Implementation ──────────────
-impl IWatchAggregate for WatchOrchestrator {
-    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
-                std::process::exit(1);
-            }
-        };
-        rt.block_on(self.run_async(config, running))
     }
 }

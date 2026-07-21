@@ -26,13 +26,6 @@ pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ExternalLintOrchestrator {
-    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
-        Self { adapters }
-    }
-}
-
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 #[async_trait]
@@ -148,3 +141,11 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         self.adapters.keys().cloned().collect()
     }
 }
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ExternalLintOrchestrator {
+    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
+        Self { adapters }
+    }
+}
+

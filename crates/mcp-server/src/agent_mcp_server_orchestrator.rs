@@ -37,13 +37,6 @@ pub struct McpServerOrchestrator {
     pub(crate) deps: McpServerDependencies,
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl McpServerOrchestrator {
-    pub fn new(deps: McpServerDependencies) -> Self {
-        Self { deps }
-    }
-}
-
 use shared::common::find_workspace_root;
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -350,5 +343,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             _ => serde_json::json!({"content": content}).to_string(),
         }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl McpServerOrchestrator {
+    pub fn new(deps: McpServerDependencies) -> Self {
+        Self { deps }
     }
 }
