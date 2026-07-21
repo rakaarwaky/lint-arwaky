@@ -1,8 +1,5 @@
 # PRD — <project-name>
 
-> Product Requirements Document. Describes WHAT this project does and WHY.
-> Audience: Stakeholders, PM, Design, Engineering leads.
-
 ## Problem Statement
 
 <One paragraph: what problem does this project solve?>

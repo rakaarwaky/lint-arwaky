@@ -1,12 +1,5 @@
 # FRD — <feature-name>
 
-> Functional Requirements Document. Describes HOW this feature works functionally.
-> Audience: Engineers, QA, Tech Lead.
-
-## Reference
-
-- PRD: <link to root PRD.md>
-
 ## System Overview
 
 <Architecture diagram or high-level description>
@@ -58,3 +51,7 @@
 ## Glossary
 
 - **Term**: <definition>
+
+## Reference
+
+- PRD: <link to root PRD.md>

@@ -1,32 +1,99 @@
 # FRD — naming-rules
 
-## Feature Goal
+## System Overview
 
-The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture (Taxonomy → Contract → Utility → Capabilities → Agent → Surface → Root). By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos and lets developers recognize a component's architectural role from its name alone.
+The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture. By validating that files and identifiers conform to structural and semantic naming patterns, it prevents naming chaos.
 
-## Requirements & Scope
+## Functional Requirements
 
-- AES101 Naming Convention Consistency
+### FR-001: Naming Convention Consistency (AES101)
 
-  - Requirement: Every file stem (basename without extension) MUST be `snake_case` (lowercase ASCII letters and underscores only), follow the `prefix_concept_suffix` pattern, and contain at least 3 words (prefix + suffix) to avoid cryptic names (e.g. `db.rs` is flagged; `capabilities_db_connector.rs` is accepted).
-  - Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `root_*_entry.rs` (`root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`), `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
-- AES102 Suffix/Prefix Layer Alignment
+- **Description**: Every file stem must be snake_case with at least 3 words.
+- **Input**: File path
+- **Output**: AES101 diagnostic if invalid
+- **Business Rules**:
+  - Must be snake_case (lowercase ASCII + underscores)
+  - Must follow prefix_concept_suffix pattern
+  - Minimum 3 words (prefix + concept + suffix)
+  - Exceptions: main.rs, lib.rs, mod.rs, __init__.py, index.ts, index.js
+- **Edge Cases**: Abbreviations, acronyms
+- **Error Handling**: Emit AES101 with invalid filename
 
-  - Requirement: A file's architectural layer is identified by its `prefix_`. Its `suffix` MUST align with that layer's suffix policy:
+### FR-002: Suffix/Prefix Layer Alignment (AES102)
 
-  | Layer prefix  | Policy   | Allowed suffixes (non-exhaustive)                                                                           | Forbidden suffixes                                                                |
-  | ------------- | -------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-  | taxonomy_     | strict   | _vo, _entity, _error, _event, _constant, _utility, _helper                                                  | —                                                                                |
-  | contract_     | strict   | _protocol, _aggregate                                                                                       | —                                                                                |
-  | utility_      | flexible | any role suffix describing the technical responsibility (_reader, _writer, _parser, _formatter, …)         | _vo, _entity, _error, _event, _constant, _protocol, _aggregate                    |
-  | capabilities_ | flexible | _checker, _analyzer, _processor, _validator, _resolver, _calculator, _extractor, _reporter, … (role-based) | _vo, _entity, _error, _event, _constant, _utility, _helper, _protocol, _aggregate |
-  | agent_        | strict   | _orchestrator                                                                                               | —                                                                                |
-  | surface_      | strict   | _command, _controller, _page, _view, _component, _router, _layout, _hook, _store, _action, _screen          | —                                                                                |
-  | root_         | strict   | _container, _entry                                                                                          | —                                                                                |
+- **Description**: File suffix must align with its layer prefix.
+- **Input**: File path
+- **Output**: AES102 diagnostic if mismatched
+- **Business Rules**:
+  - taxonomy_: _vo, _entity, _error, _event, _constant
+  - contract_: _protocol, _aggregate
+  - utility_: any role suffix (flexible)
+  - capabilities_: any role suffix (flexible)
+  - agent_: _orchestrator
+  - surface_: _command, _controller, _page, _view, _component, _router, _layout, _hook, _store, _action, _screen
+  - root_: _container, _entry
+- **Edge Cases**: Multiple valid suffixes, custom roles
+- **Error Handling**: Emit AES102 with expected suffixes
 
-## Success Indicators
+## Data Model / Entity Relationship
 
-- [ ] Accuracy — zero false positives: valid snake_case stems and correct layer suffixes are never flagged, invalid ones caught 100% of the time.
-- [ ] Coverage — Rust, Python, JavaScript, and TypeScript files all checked according to configuration.
-- [ ] Layer completeness — every canonical layer prefix (taxonomy_, contract_, utility_, capabilities_, agent_, surface_, root_) is validated, with utility_ covering the former infrastructure_ concerns.
-- [ ] Reporting — violations reported with precise location mappings consumable by the central CLI/MCP runner.
+```
+NamingRuleVO {
+    layer_prefix: String
+    allowed_suffixes: Vec<String>
+    forbidden_suffixes: Vec<String>
+}
+
+LayerSuffixPolicy {
+    taxonomy: Vec<String>
+    contract: Vec<String>
+    utility: Vec<String>
+    capabilities: Vec<String>
+    agent: Vec<String>
+    surface: Vec<String>
+    root: Vec<String>
+}
+```
+
+## API Contract
+
+| Function | Input | Output | Description |
+|----------|-------|--------|-------------|
+| `check_naming_convention()` | File path | Option<Diagnostic> | Check AES101 |
+| `check_layer_alignment()` | File path | Option<Diagnostic> | Check AES102 |
+
+## Integration Points
+
+- **Internal**: config-system (YAML rules), shared (taxonomy VOs)
+- **External**: None
+
+## Non-functional Requirements (Detailed)
+
+- Performance: Check 1000 files in < 1 second
+- Memory: O(1) per file
+- Accuracy: Zero false positives for valid names
+
+## Test Scenarios / QA Checklist
+
+- [ ] Valid snake_case name passes
+- [ ] Non-snake_case name fails with AES101
+- [ ] Name with < 3 words fails with AES101
+- [ ] Correct layer suffix passes
+- [ ] Wrong layer suffix fails with AES102
+- [ ] Exception files (main.rs, lib.rs) pass
+
+## Assumptions & Constraints
+
+- Layer hierarchy is defined in config YAML
+- File naming follows AES conventions
+- Exceptions are configurable
+
+## Glossary
+
+- **AES**: Agentic Engineering System
+- **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
+- **Suffix**: File name ending indicating role (_vo, _protocol, _orchestrator, etc.)
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)

@@ -1,7 +1,8 @@
 # CLI-Commands Fix Plan
 
 > Generated from BA + QA + Backend report validation against actual codebase.
-> 30 validated issues across 8 phases.
+> 28 validated issues across 7 phases.
+> P1.1 (global init) and P1.2 (MCP binary) already fixed in codebase — removed from plan.
 
 ## Decisions
 
@@ -10,7 +11,8 @@
 | Plan structure | Single comprehensive plan, phases ordered by severity |
 | Architecture refactor | Include IAnalysisPipelineAggregate contract + agent |
 | Dead CLI commands | Remove Duplicates enum, skip tui (out of scope) |
-| Global init security | Fix with `include_str!` trusted docs |
+| Global init | Remove `--global` flag — XDG installation is `install.local.sh` responsibility |
+| MCP binary security | Already fixed — `resolve_mcp_binary()` fails closed |
 | Exit code convention | 0=success, 1=violations found, 2=system error, 3=tool missing |
 
 ## Severity Legend
@@ -24,91 +26,7 @@
 
 ## Phase 1: Security Hardening (CRITICAL)
 
-### P1.1 — Fix `init --global` supply-chain risk
-
-**Skill**: `create-surface-rust` — surface must not copy untrusted content from project into global config.
-**File**: `crates/cli-commands/src/surface_setup_command.rs`
-**Severity**: CRITICAL
-**AES Code**: Security
-**Problem**: `handle_init_global()` copies docs from current project root into trusted global config directory. Untrusted project can plant malicious docs.
-
-**Fix**: Use `include_str!` to bundle trusted docs at compile time.
-
-```rust
-struct TrustedDoc {
-    name: &'static str,
-    content: &'static str,
-}
-
-const TRUSTED_DOCS: &[TrustedDoc] = &[
-    TrustedDoc { name: "SKILL.md", content: include_str!("../assets/SKILL.md") },
-    TrustedDoc { name: "ARCHITECTURE.md", content: include_str!("../assets/ARCHITECTURE.md") },
-    TrustedDoc { name: "MIGRATION_RUST.md", content: include_str!("../assets/MIGRATION_RUST.md") },
-    TrustedDoc { name: "MIGRATION_PYTHON.md", content: include_str!("../assets/MIGRATION_PYTHON.md") },
-    TrustedDoc { name: "MIGRATION_TYPESCRIPT.md", content: include_str!("../assets/MIGRATION_TYPESCRIPT.md") },
-    TrustedDoc { name: "RULES_AES.md", content: include_str!("../assets/RULES_AES.md") },
-];
-
-fn write_trusted_docs(config_dir: &std::path::Path) -> bool {
-    let mut all_ok = true;
-    for doc in TRUSTED_DOCS {
-        let target = config_dir.join(doc.name);
-        if target.exists() {
-            println!("  {} — already exists, skipping", doc.name);
-            continue;
-        }
-        match std::fs::write(&target, doc.content) {
-            Ok(_) => println!("  {} — created", doc.name),
-            Err(err) => { println!("  {} — error: {err}", doc.name); all_ok = false; }
-        }
-    }
-    all_ok
-}
-```
-
-**Note**: Requires creating `crates/cli-commands/src/assets/` directory with bundled doc files.
-
----
-
-### P1.2 — Fix MCP binary resolution PATH hijacking
-
-**Skill**: `create-surface-rust` — surface must not fall back to bare PATH lookup for executables.
-**File**: `crates/cli-commands/src/surface_setup_command.rs`
-**Severity**: CRITICAL
-**AES Code**: Security
-**Problem**: `which_mcp_binary()` returns bare `"lint-arwaky-mcp"` string, allowing PATH hijacking.
-
-**Fix**: Fail closed if binary cannot be resolved to absolute canonicalized path.
-
-```rust
-fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
-    // 1. Explicit override
-    if let Ok(explicit) = std::env::var("LINT_ARWAKY_MCP_BIN") {
-        let path = std::path::PathBuf::from(explicit);
-        if !path.is_file() {
-            return Err(format!("LINT_ARWAKY_MCP_BIN points to non-file: {}", path.display()));
-        }
-        return path.canonicalize().map_err(|e| format!("cannot canonicalize: {e}"));
-    }
-
-    // 2. Sibling of current executable
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            let sibling = dir.join("lint-arwaky-mcp");
-            if sibling.is_file() {
-                return sibling.canonicalize().map_err(|e| format!("cannot canonicalize: {e}"));
-            }
-        }
-    }
-
-    // 3. Do NOT fall back to bare PATH
-    Err("lint-arwaky-mcp not found. Set LINT_ARWAKY_MCP_BIN to an absolute path.".into())
-}
-```
-
----
-
-### P1.3 — Remove orphaned `Duplicates` CLI definition
+### P1.1 — Remove orphaned `Duplicates` CLI definition
 
 **Skill**: `create-surface-rust` — removing dead code from surface taxonomy.
 **File**: `crates/shared/src/cli-commands/taxonomy_cli_vo.rs`
@@ -117,6 +35,23 @@ fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
 **Problem**: `Duplicates` subcommand is defined but has no handler. Executing it causes runtime panic.
 
 **Fix**: Remove the `Duplicates` variant from the `Commands` enum.
+
+---
+
+### P1.2 — Remove `--global` flag from `init` command
+
+**Skill**: `create-surface-rust` — removing feature from surface. XDG installation is `install.local.sh` responsibility, not CLI.
+**Files**: `crates/shared/src/cli-commands/taxonomy_cli_vo.rs`, `crates/cli-commands/src/surface_setup_command.rs`
+**Severity**: HIGH
+**AES Code**: Architecture
+**Problem**: `init --global` duplicates what `install.local.sh` already does. CLI should only handle local init. Global installation belongs to the install script.
+
+**Fix**:
+1. Remove `--global` flag from `Init` subcommand in `taxonomy_cli_vo.rs`
+2. Remove `handle_init_global()` function from `surface_setup_command.rs`
+3. Remove `TRUSTED_DOCS` constant and `include_str!` imports (no longer needed)
+4. Simplify `handle_init()` to only handle local init
+5. Update FRD to remove `--global` reference
 
 ---
 
@@ -477,7 +412,7 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 }
 ```
 
-**Module registration**: Add to `crates/cli-commands/src/mod.rs`.
+**Module registration**: Add `pub mod agent_analysis_pipeline_orchestrator;` to `crates/cli-commands/src/mod.rs`.
 
 ---
 
@@ -500,6 +435,8 @@ pub trait IReportFormatterProtocol: Send + Sync {
 - `crates/cli-commands/src/capabilities_json_report_formatter.rs`
 - `crates/cli-commands/src/capabilities_sarif_report_formatter.rs`
 - `crates/cli-commands/src/capabilities_junit_report_formatter.rs`
+
+**Module registration**: Add `pub mod contract_report_formatter_protocol;` to `crates/shared/src/cli-commands/mod.rs`. Add all four `capabilities_*_report_formatter` modules to `crates/cli-commands/src/mod.rs`.
 
 ---
 
@@ -694,11 +631,14 @@ cargo run --bin lint-arwaky-cli -- check .
 - `crates/cli-commands/src/capabilities_sarif_report_formatter.rs` — SARIF formatter (P4.3)
 - `crates/cli-commands/src/capabilities_junit_report_formatter.rs` — JUnit formatter (P4.3)
 
+### New directories (1)
+- `crates/cli-commands/src/assets/` — bundled trusted docs for `init --global` (P1.1)
+
 ### Modified files (12)
 - `crates/shared/src/common/utility_file.rs` — fix walker, add ignore dirs (P2.1, P3.2)
 - `crates/shared/src/cli-commands/taxonomy_cli_vo.rs` — remove Duplicates (P1.3)
 - `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` — unify catalog (P6.1)
-- `crates/shared/src/cli-commands/mod.rs` — register new modules (P4.1, P4.3)
+- `crates/shared/src/cli-commands/mod.rs` — register contract_analysis_pipeline_aggregate, contract_report_formatter_protocol (P4.1, P4.3)
 - `crates/cli-commands/src/surface_check_command.rs` — fix output, path filtering, errors (P2.2-P2.4, P2.8-P2.10, P3.1, P4.4)
 - `crates/cli-commands/src/surface_check_action.rs` — fix git-diff path/filter (P2.5)
 - `crates/cli-commands/src/surface_git_command.rs` — fix git-diff signature (P2.5)
@@ -706,7 +646,7 @@ cargo run --bin lint-arwaky-cli -- check .
 - `crates/cli-commands/src/surface_common_command.rs` — fix CI threshold (P2.7)
 - `crates/cli-commands/src/surface_maintenance_command.rs` — fix exit codes (P2.11, P5.1)
 - `crates/cli-commands/src/surface_setup_command.rs` — fix global init, MCP binary, config-show (P1.1, P1.2, P5.2)
-- `crates/cli-commands/src/mod.rs` — register new agent module (P4.2)
+- `crates/cli-commands/src/mod.rs` — register agent_analysis_pipeline_orchestrator, capabilities_*_report_formatter (P4.2, P4.3)
 
 ---
 

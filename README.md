@@ -1,137 +1,117 @@
 # Lint Arwaky
 
+> Autonomous code quality and architecture enforcement for AI agents and developers — written in Rust.
+
 [![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
-[![crates.io](https://img.shields.io/crates/v/lint_arwaky.svg)](https://crates.io/crates/lint_arwaky)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
 [![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](ARCHITECTURE.md)
 
-**Autonomous code quality and architecture enforcement for AI agents and developers — written in Rust.**
+## Prerequisites
 
-Lint Arwaky audits Rust, Python, and JavaScript/TypeScript source code in a single pass. It enforces 24 Agentic Engineering System (AES) rules across 5 groups (Naming, Import, Quality, Role, Orphan) that check layer boundaries, naming conventions, type safety, dead code, and architectural bypass attempts — all at the code level with zero bypass allowed.
+- Rust 1.70+ (2021 edition)
+- Cargo (bundled with Rust)
+- Git
 
----
-
-## Table of Contents
-
-- [Overview &amp; Value Proposition](#overview--value-proposition)
-- [Install](#install)
-- [Usage](#usage)
-- [Architecture Overview](#architecture-overview)
-- [MCP Server Configuration](#mcp-server-configuration)
-- [Supported AES Rules](#supported-aes-rules)
-- [CLI Commands Reference](#cli-commands-reference)
-
----
-
-## Overview & Value Proposition
-
-### What it does
-
-| Feature                      | Description                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **Multi-Language**     | Rust (Clippy + AST), Python (Ruff, MyPy, Bandit, Radon), JavaScript/TypeScript (ESLint, Prettier, TSC) |
-| **Architecture Audit** | 24 AES rules enforce clean architecture layer boundaries, naming, type safety, and dead code           |
-| **MCP Server**         | 5 tools for autonomous AI-agent integration over JSON-RPC 2.0                                          |
-| **Zero Bypass**        | `noqa`, `type: ignore`, and `#[allow(...)]` suppressions are detected and flagged               |
-| **CI Ready**           | SARIF 2.1.0, JUnit XML, and JSON reports with proper exit codes                                        |
-| **Self-Auditing**      | The project lints itself under its own rule engine                                                     |
-
-### Who it's for
-
-| Persona               | Use Case                                       | Start Here                        |
-| --------------------- | ---------------------------------------------- | --------------------------------- |
-| **AI Agent**    | Autonomous linting, self-healing, code review  | [SKILL.md](SKILL.md)               |
-| **Developer**   | Lint codebases, enforce architecture           | [Quick Start](#usage) below        |
-| **DevOps / CI** | Quality gates, trend reports, dependency scans | `ci`, `check`                 |
-| **Contributor** | Extend adapters, add CLI commands              | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| **Reviewer**    | Architecture audit, code quality analysis      | `check`, `orphan`             |
-
----
-
-## Install
-
-### Pre-built binaries
+## Quick Start
 
 ```bash
-# Linux / macOS
-curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.remote.sh | bash
-```
-
-### From source (requires Rust 1.70+)
-
-```bash
+# Clone
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
+
+# Build
 cargo build --release
-# Binaries: target/release/lint-arwaky-cli, target/release/lint-arwaky-mcp, target/release/lint-arwaky-tui
-lint-arwaky-cli version        # should print "Lint Arwaky v1.10.74 (AES Semantic Builder)"
-lint-arwaky-cli maintenance doctor   # environment diagnostics
+
+# Verify
+./target/release/lint-arwaky-cli version
+# Expected: Lint Arwaky v1.10.74 (AES Semantic Builder)
+
+# Self-lint
+./target/release/lint-arwaky-cli check .
 ```
 
----
+## Architecture
 
-## Usage
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into feature crates (vertical slicing).
 
-### Lint a codebase
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification, layer hierarchy, and naming conventions.
 
-```bash
-# Full self-lint: AES architecture rules over crates/
-lint-arwaky-cli check .
+## Project Structure
 
-# Git diff mode: only audit files changed since a base ref
-lint-arwaky-cli check . --git-diff
-
-# CI-optimized with exit codes (1 if score < threshold)
-lint-arwaky-cli ci . --threshold 80
+```
+lint-arwaky/
+├── crates/
+│   ├── auto-fix/           # Auto-fix processor
+│   ├── cli-commands/       # CLI surface
+│   ├── code-analysis/      # Code quality checks
+│   ├── config-system/      # Config loading
+│   ├── external-lint/      # External linter adapters
+│   ├── file-watch/         # File watching
+│   ├── git-hooks/          # Git hooks
+│   ├── import-rules/       # Import compliance
+│   ├── maintenance/        # Maintenance utilities
+│   ├── mcp-server/         # MCP server
+│   ├── naming-rules/       # Naming conventions
+│   ├── orphan-detector/    # Orphan code detection
+│   ├── project-setup/      # Setup utilities
+│   ├── role-rules/         # Role violations
+│   └── tui/                # TUI file browser
+├── shared/                 # Taxonomy, contracts, utilities
+├── PRD.md                  # Product requirements
+├── ARCHITECTURE.md         # AES specification
+└── README.md               # This file
 ```
 
-### Orphan & fix commands
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `lint-arwaky-cli check [path]` | Full architecture compliance analysis |
+| `lint-arwaky-cli scan [path]` | External project scan |
+| `lint-arwaky-cli fix [path]` | Apply safe fixes (`--dry-run` to preview) |
+| `lint-arwaky-cli ci [path]` | CI mode with exit codes |
+| `lint-arwaky-cli orphan <path>` | Check if file is dead/unreachable code |
+| `lint-arwaky-cli watch [path]` | Watch and lint on changes |
+| `lint-arwaky-cli security [path]` | Scan for security vulnerabilities |
+| `lint-arwaky-cli dependencies [path]` | Scan for library vulnerabilities |
+| `lint-arwaky-cli duplicates [path]` | Detect code duplication |
+| `lint-arwaky-cli doctor` | Environment diagnostics |
+| `lint-arwaky-cli version` | Display version |
+
+## Configuration
+
+Configuration is loaded from YAML files. See [SKILL.md](SKILL.md) for details.
 
 ```bash
-lint-arwaky-cli orphan <path>      # Check if file is dead/unreachable code
-lint-arwaky-cli fix .              # Apply safe automatic fixes (--dry-run to preview)
+# Create default config
+lint-arwaky-cli init
+
+# Show current config
+lint-arwaky-cli config show
 ```
 
-### Watch mode
+## Testing
 
 ```bash
+# Run all tests
+cargo test --workspace
+
+# Self-lint
 cargo run --bin lint-arwaky-cli -- check .
-# Scans crates/ under the same AES rules the project enforces on others.
+
+# Run MCP server
+cargo run --bin lint-arwaky-mcp
 ```
 
-### Lint other repos
-
-```bash
-# Scan external projects with all adapters + AES architecture rules
-lint-arwaky-cli scan /path/to/some-project/
-```
-
----
-
-## Architecture Overview
-
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into **feature crates** (vertical slicing). See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification, layer hierarchy, and naming conventions.
-
-## MCP Server Configuration
+## MCP Server
 
 See [SKILL.md](SKILL.md) for the MCP tool reference and [DEPLOY.md](DEPLOY.md) for client setup.
 
-## CLI Commands Reference
+## Contributing
 
-See [SKILL.md](SKILL.md) for the complete command catalog.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
----
+## License
 
-## TUI (Interactive File Browser)
-
-`lint-arwaky-tui` — Ranger-style 3-panel file browser (`ratatui` + `crossterm`).
-Path project is entered once at startup, then navigate folders and run commands on selected files/folders.
-
-### Run
-
-```bash
-cargo run --bin lint-arwaky-tui
-# or directly:
-./target/release/lint-arwaky-tui
-```
+MIT
