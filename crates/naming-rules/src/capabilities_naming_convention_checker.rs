@@ -7,7 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
     SNAKE_CASE_SEPARATOR,
@@ -34,7 +34,7 @@ pub struct NamingConventionChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
-impl INamingCheckerProtocol for NamingConventionChecker {
+impl INamingConventionChecker for NamingConventionChecker {
     async fn check_file_naming(
         &self,
         config: &ArchitectureConfig,
@@ -64,17 +64,6 @@ impl INamingCheckerProtocol for NamingConventionChecker {
                 &mut results.values,
             );
         }
-    }
-
-    async fn check_domain_suffixes(
-        &self,
-        _config: &ArchitectureConfig,
-        _layer_map: &LayerMapVO,
-        _files: &FilePathList,
-        _root_dir: &FilePath,
-        _results: &mut LintResultList,
-    ) {
-        // No-op for naming convention checker
     }
 }
 

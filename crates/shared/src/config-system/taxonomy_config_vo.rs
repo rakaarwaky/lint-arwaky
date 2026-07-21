@@ -76,7 +76,7 @@ impl Default for ArchitectureConfig {
             enabled: BooleanVO::new(true),
             layers: HashMap::new(),
             rules: Vec::new(),
-            naming: NamingConfig::new(Count::new(2)),
+            naming: NamingConfig::new(Count::new(3)),
             ignored_paths: FilePathList { values: vec![] },
             mandatory_class_definition: BooleanVO::new(false),
         }
