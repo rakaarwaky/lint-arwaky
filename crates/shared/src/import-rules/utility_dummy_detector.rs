@@ -158,13 +158,13 @@ fn contains_ident(haystack: &str, needle: &str) -> bool {
         let end = abs + needle.len();
 
         let before_ok = abs == 0 || {
-            let b = haystack.as_bytes()[abs - 1];
-            !(b.is_ascii_alphanumeric() || b == b'_')
+            let before_char = haystack[..abs].chars().next_back().unwrap_or(' ');
+            !before_char.is_alphanumeric() && before_char != '_'
         };
 
         let after_ok = end == haystack.len() || {
-            let b = haystack.as_bytes()[end];
-            !(b.is_ascii_alphanumeric() || b == b'_')
+            let after_char = haystack[end..].chars().next().unwrap_or(' ');
+            !after_char.is_alphanumeric() && after_char != '_'
         };
 
         if before_ok && after_ok {
@@ -666,7 +666,7 @@ mod phase3_regression_tests {
         // Multi-byte characters should not cause panics or incorrect matches
         let haystack = "hello world — test"; // em dash is 3 bytes in UTF-8
         assert!(contains_ident(haystack, "world"));
-        assert!(!contains_ident(haystack, "—")); // em dash is not ASCII
+        assert!(contains_ident(haystack, "—")); // em dash is surrounded by spaces
 
         // Test with Unicode characters that are multi-byte
         let haystack = "café"; // é is 2 bytes in UTF-8

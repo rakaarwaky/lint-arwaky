@@ -47,7 +47,21 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
 
     match file_path.strip_prefix(root_path) {
         Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
-        Err(_) => normalized_file,
+        Err(_) => {
+            // Fallback: try string-based prefix removal
+            let root_with_slash = if normalized_root.ends_with('/') {
+                normalized_root.clone()
+            } else {
+                format!("{}/", normalized_root)
+            };
+            if let Some(suffix) = normalized_file.strip_prefix(&root_with_slash) {
+                suffix.to_string()
+            } else if let Some(suffix) = normalized_file.strip_prefix(&normalized_root) {
+                suffix.trim_start_matches('/').to_string()
+            } else {
+                normalized_file
+            }
+        }
     }
 }
 
