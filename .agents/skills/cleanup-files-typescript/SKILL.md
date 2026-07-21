@@ -13,7 +13,6 @@ related:
   - add-docs-typescript
   - consolidate-files-typescript
 ---
-
 # cleanup-files-typescript
 
 ## Purpose
