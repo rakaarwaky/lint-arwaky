@@ -12,7 +12,6 @@
 | Architecture refactor | Include IAnalysisPipelineAggregate contract + agent |
 | Dead CLI commands | Remove Duplicates enum, skip tui (out of scope) |
 | Global init | Remove `--global` flag — XDG installation is `install.local.sh` responsibility |
-| MCP binary security | Already fixed — `resolve_mcp_binary()` fails closed |
 | Exit code convention | 0=success, 1=violations found, 2=system error, 3=tool missing |
 
 ## Severity Legend
@@ -416,27 +415,23 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 ---
 
-### P4.3 — Create ReportFormatter protocol + implementations
+### P4.3 — Rename formatter files from agent_ to capabilities_ (AES compliance)
 
-**Skill**: `create-contract-rust` — pure trait for formatting, no I/O.
-**File**: `crates/shared/src/cli-commands/contract_report_formatter_protocol.rs` (NEW)
+**Skill**: `create-capabilities-rust` — formatters are single-responsibility (formatting), not orchestration. Must be capabilities, not agents.
+**Files**: Rename existing files in `crates/cli-commands/src/`
 **Severity**: MEDIUM
-**AES Code**: Architecture (Open/Closed Principle)
+**AES Code**: Architecture (Agent doing capabilities work)
+**Problem**: `agent_text_formatter.rs`, `agent_json_formatter.rs`, `agent_sarif_formatter.rs`, `agent_junit_formatter.rs` are named `agent_` but implement `IReportFormatterProtocol` — single responsibility, not orchestration. Violates AES layer rules.
 
-**Contract**:
-```rust
-pub trait IReportFormatterProtocol: Send + Sync {
-    fn format(&self, results: &[LintResult], context: &ReportContext) -> String;
-}
-```
+**Fix**: Rename files:
+- `agent_text_formatter.rs` → `capabilities_text_formatter.rs`
+- `agent_json_formatter.rs` → `capabilities_json_formatter.rs`
+- `agent_sarif_formatter.rs` → `capabilities_sarif_formatter.rs`
+- `agent_junit_formatter.rs` → `capabilities_junit_formatter.rs`
 
-**Implementations** (capabilities):
-- `crates/cli-commands/src/capabilities_text_report_formatter.rs`
-- `crates/cli-commands/src/capabilities_json_report_formatter.rs`
-- `crates/cli-commands/src/capabilities_sarif_report_formatter.rs`
-- `crates/cli-commands/src/capabilities_junit_report_formatter.rs`
+Update `mod.rs` declarations accordingly. No code changes needed inside files — they already implement the protocol correctly.
 
-**Module registration**: Add `pub mod contract_report_formatter_protocol;` to `crates/shared/src/cli-commands/mod.rs`. Add all four `capabilities_*_report_formatter` modules to `crates/cli-commands/src/mod.rs`.
+**Note**: `contract_report_formatter_protocol.rs` already exists in shared. No new contract file needed.
 
 ---
 
@@ -596,7 +591,7 @@ impl CommandCatalogVO {
 
 ## Execution Order
 
-1. **Phase 1** (P1.1-P1.3): Security — global init, MCP binary, dead CLI.
+1. **Phase 1** (P1.1-P1.2): Security — remove dead CLI, remove --global init.
    - **Verify:** `cargo check -p shared && cargo check -p cli-commands`
 2. **Phase 2** (P2.1-P2.11): Critical bug fixes. Can run in parallel with Phase 1.
    - **Verify:** `cargo check -p shared && cargo check -p cli-commands`
@@ -622,31 +617,32 @@ cargo run --bin lint-arwaky-cli -- check .
 
 ## Files Summary
 
-### New files (7)
+### New files (2)
 - `crates/shared/src/cli-commands/contract_analysis_pipeline_aggregate.rs` — pipeline contract (P4.1)
-- `crates/shared/src/cli-commands/contract_report_formatter_protocol.rs` — formatter contract (P4.3)
 - `crates/cli-commands/src/agent_analysis_pipeline_orchestrator.rs` — pipeline agent (P4.2)
-- `crates/cli-commands/src/capabilities_text_report_formatter.rs` — text formatter (P4.3)
-- `crates/cli-commands/src/capabilities_json_report_formatter.rs` — JSON formatter (P4.3)
-- `crates/cli-commands/src/capabilities_sarif_report_formatter.rs` — SARIF formatter (P4.3)
-- `crates/cli-commands/src/capabilities_junit_report_formatter.rs` — JUnit formatter (P4.3)
 
-### New directories (1)
-- `crates/cli-commands/src/assets/` — bundled trusted docs for `init --global` (P1.1)
+### Renamed files (4)
+- `agent_text_formatter.rs` → `capabilities_text_formatter.rs` (P4.3)
+- `agent_json_formatter.rs` → `capabilities_json_formatter.rs` (P4.3)
+- `agent_sarif_formatter.rs` → `capabilities_sarif_formatter.rs` (P4.3)
+- `agent_junit_formatter.rs` → `capabilities_junit_formatter.rs` (P4.3)
 
 ### Modified files (12)
 - `crates/shared/src/common/utility_file.rs` — fix walker, add ignore dirs (P2.1, P3.2)
-- `crates/shared/src/cli-commands/taxonomy_cli_vo.rs` — remove Duplicates (P1.3)
+- `crates/shared/src/cli-commands/taxonomy_cli_vo.rs` — remove Duplicates, remove --global flag (P1.1, P1.2)
 - `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` — unify catalog (P6.1)
-- `crates/shared/src/cli-commands/mod.rs` — register contract_analysis_pipeline_aggregate, contract_report_formatter_protocol (P4.1, P4.3)
+- `crates/shared/src/cli-commands/mod.rs` — register contract_analysis_pipeline_aggregate (P4.1)
 - `crates/cli-commands/src/surface_check_command.rs` — fix output, path filtering, errors (P2.2-P2.4, P2.8-P2.10, P3.1, P4.4)
 - `crates/cli-commands/src/surface_check_action.rs` — fix git-diff path/filter (P2.5)
 - `crates/cli-commands/src/surface_git_command.rs` — fix git-diff signature (P2.5)
 - `crates/cli-commands/src/surface_plugin_command.rs` — fix adapter listing (P2.6)
 - `crates/cli-commands/src/surface_common_command.rs` — fix CI threshold (P2.7)
 - `crates/cli-commands/src/surface_maintenance_command.rs` — fix exit codes (P2.11, P5.1)
-- `crates/cli-commands/src/surface_setup_command.rs` — fix global init, MCP binary, config-show (P1.1, P1.2, P5.2)
-- `crates/cli-commands/src/mod.rs` — register agent_analysis_pipeline_orchestrator, capabilities_*_report_formatter (P4.2, P4.3)
+- `crates/cli-commands/src/surface_setup_command.rs` — remove --global, remove TRUSTED_DOCS, fix config-show (P1.2, P5.2)
+- `crates/cli-commands/src/mod.rs` — register agent_analysis_pipeline_orchestrator, rename agent_*_formatter to capabilities_*_formatter (P4.2, P4.3)
+
+### Deleted files (1)
+- `crates/cli-commands/src/assets/` — bundled docs no longer needed (P1.2)
 
 ---
 
@@ -654,12 +650,12 @@ cargo run --bin lint-arwaky-cli -- check .
 
 | Phase | Items | Severity | Description |
 |-------|-------|----------|-------------|
-| 1 | P1.1-P1.3 | CRITICAL | Security: global init, MCP binary, dead CLI |
+| 1 | P1.1-P1.2 | CRITICAL/HIGH | Security: remove dead CLI, remove --global init |
 | 2 | P2.1-P2.11 | CRITICAL/HIGH | Bug fixes: walker, output, path filtering, git-diff, adapters, CI, XML, errors |
 | 3 | P3.1-P3.3 | HIGH/MEDIUM | Performance: ignore rules, ignore list, lazy container |
-| 4 | P4.1-P4.4 | HIGH | Architecture: IAnalysisPipelineAggregate, ReportFormatter, thin surface |
+| 4 | P4.1-P4.4 | HIGH/MEDIUM | Architecture: IAnalysisPipelineAggregate, rename formatters to capabilities, thin surface |
 | 5 | P5.1-P5.3 | MEDIUM | Error handling: exit codes, secret redaction, standardization |
 | 6 | P6.1 | MEDIUM | Command catalog consolidation |
 | 7 | P7.1-P7.2 | LOW | FRD documentation updates |
 
-**Total**: 30 items across 7 phases.
+**Total**: 29 items across 7 phases.
