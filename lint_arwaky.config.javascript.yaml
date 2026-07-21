@@ -40,7 +40,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
           "root",
@@ -64,7 +63,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
           "root",
@@ -122,61 +120,6 @@ architecture:
                   "aggregate",
                   "utility",
                 ]
-        infrastructure:
-          suffix:
-            - flexible:
-                [
-                  "adapter",
-                  "provider",
-                  "scanner",
-                  "client",
-                  "schemas",
-                  "lifespan",
-                  "wrapper",
-                  "tracer",
-                  "tracker",
-                  "variants",
-                  "detector",
-                  "patterns",
-                  "util",
-                  "system",
-                  "repository",
-                  "cache",
-                  "loader",
-                  "writer",
-                  "reader",
-                  "driver",
-                  "connector",
-                  "gateway",
-                  "serializer",
-                  "encoder",
-                  "decoder",
-                  "fetcher",
-                  "watcher",
-                  "indexer",
-                  "dispatcher",
-                  "recorder",
-                  "proxy",
-                  "publisher",
-                  "subscriber",
-                  "listener",
-                  "poller",
-                  "streamer",
-                  "utility",
-                  "helper",
-                ]
-            - forbidden:
-                [
-                  "vo",
-                  "entity",
-                  "error",
-                  "event",
-                  "constant",
-                  "constants",
-                  "port",
-                  "protocol",
-                  "aggregate",
-                ]
         agent:
           suffix:
             - strict: ["orchestrator"]
@@ -207,7 +150,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -290,20 +232,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-          allowed_imports:
-            - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
-            - layer: "contract(protocol|aggregate)"
-              purpose: "call"
-
-        - scope: "infrastructure"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
-          forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -370,7 +299,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -394,20 +322,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
-          allowed_imports:
-            - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
-            - layer: "contract(protocol|aggregate)"
-              purpose: "call"
-
-        - scope: "infrastructure"
-          allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
-          forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -423,7 +338,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -435,7 +349,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -448,7 +361,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -460,7 +372,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -488,7 +399,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -516,7 +426,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -530,7 +439,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -553,7 +461,6 @@ architecture:
           "taxonomy",
           "contract",
           "capabilities",
-          "infrastructure",
           "agent",
           "surfaces",
         ]
@@ -588,25 +495,6 @@ architecture:
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
-
-    AES404:
-      enabled: true
-      scope: ["infrastructure"]
       exceptions:
         [
           "index.ts",
@@ -683,12 +571,6 @@ architecture:
     AES503:
       enabled: true
       scope: ["capabilities"]
-      entry_points:
-        ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
-
-    AES504:
-      enabled: true
-      scope: ["infrastructure"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
