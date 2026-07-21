@@ -64,7 +64,7 @@ architecture:
             - strict: ["vo", "entity", "error", "event", "constant", "utility"]
         contract:
           suffix:
-            - strict: ["port", "protocol", "aggregate"]
+            - strict: ["protocol", "aggregate"]
         capabilities:
           suffix:
             - flexible:
@@ -181,7 +181,7 @@ architecture:
               "root",
             ]
 
-        - scope: "contract(port|protocol)"
+        - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
@@ -198,7 +198,7 @@ architecture:
           mandatory: ["taxonomy"]
           forbidden:
             ["agent", "surfaces", "capabilities", "root"]
-          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+          forbidden_inheritance: ["contract(protocol)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
@@ -208,7 +208,7 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract(port)"
+            - layer: "contract(protocol)"
               purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
@@ -218,7 +218,7 @@ architecture:
             [
               "taxonomy",
               "contract(aggregate)",
-              "contract(port)",
+              "contract(protocol)",
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
@@ -231,7 +231,7 @@ architecture:
             [
               "agent",
               "capabilities",
-              "contract(port)",
+              "contract(protocol)",
               "contract(protocol)",
               "root",
             ]
@@ -243,7 +243,7 @@ architecture:
             [
               "agent",
               "capabilities",
-              "contract(port)",
+              "contract(protocol)",
               "contract(protocol)",
               "surfaces(command|controller|page|entry)",
               "root",
@@ -281,7 +281,7 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract(port)"
+            - layer: "contract(protocol)"
               purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
@@ -400,7 +400,7 @@ architecture:
 
     AES402:
       enabled: true
-      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      scope: ["contract(aggregate)", "contract(protocol)"]
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES403:

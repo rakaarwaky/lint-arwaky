@@ -241,7 +241,13 @@ impl CheckCommandsSurface {
         match format {
             Format::Text => {
                 let results_list = LintResultList::new(filtered_results);
-                println!("{}", reporter.format_report(&results_list, path));
+                let report_path = match shared::common::taxonomy_path_vo::FilePath::new(path.to_string()) {
+                    Ok(fp) => fp,
+                    Err(_) => shared::common::taxonomy_path_vo::FilePath {
+                        value: path.to_string(),
+                    },
+                };
+                println!("{}", reporter.format_report(&results_list, &report_path));
             }
             Format::Json => {
                 let json = serde_json::to_string_pretty(&filtered_results)
@@ -456,7 +462,7 @@ impl CheckCommandsSurface {
                     )
                 };
 
-            let aes_results = code_analysis_linter.run_code_analysis(&ws.path.value);
+            let aes_results = code_analysis_linter.run_code_analysis(&ws.path);
             all_results.extend(aes_results.values);
 
             let (naming_results, import_results, external_results, role_results) =
@@ -563,7 +569,7 @@ impl CheckCommandsSurface {
                         let results_list = LintResultList::new(member_results.clone());
                         print!(
                             "{}",
-                            code_analysis_linter.format_report(&results_list, &ws.path.value)
+                            code_analysis_linter.format_report(&results_list, &ws.path)
                         );
                     }
                     Format::Json => {
