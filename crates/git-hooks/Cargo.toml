@@ -18,4 +18,11 @@ shared.workspace = true
 code_analysis.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
 tokio = { workspace = true, features = ["rt", "macros"] }
+
+[[bench]]
+name = "bench_git_hooks_diff"
+path = "tests/bench_git_hooks_diff.rs"
+harness = false

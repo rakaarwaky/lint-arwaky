@@ -34,3 +34,14 @@ maintenance.workspace = true
 git_hooks.workspace = true
 auto_fix.workspace = true
 cli_commands.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tempfile = "3"
+tokio = { workspace = true, features = ["full", "test-util"] }
+serde_json.workspace = true
+
+[[bench]]
+name = "bench_mcp_server"
+path = "tests/bench_mcp_server.rs"
+harness = false

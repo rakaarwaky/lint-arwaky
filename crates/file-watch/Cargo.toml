@@ -19,5 +19,15 @@ notify.workspace = true
 notify-debouncer-mini.workspace = true
 tokio.workspace = true
 
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+tokio.workspace = true
+
+[[bench]]
+name = "bench_file_watch_change_analyzer"
+path = "tests/bench_file_watch_change_analyzer.rs"
+harness = false
+
 [features]
 watch = []

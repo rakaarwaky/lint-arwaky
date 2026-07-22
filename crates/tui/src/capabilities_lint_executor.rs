@@ -4,6 +4,7 @@ use crate::utility_report_formatter::{
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
+use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -42,7 +43,7 @@ pub struct LintExecutor {
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
-    analysis_pipeline: Option<Arc<dyn shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate>>,
+    analysis_pipeline: Option<Arc<dyn IAnalysisPipelineAggregate>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -626,7 +627,7 @@ impl LintExecutor {
 
     pub fn with_analysis_pipeline(
         mut self,
-        analysis_pipeline: Arc<dyn shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate>,
+        analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
     ) -> Self {
         self.analysis_pipeline = Some(analysis_pipeline);
         self

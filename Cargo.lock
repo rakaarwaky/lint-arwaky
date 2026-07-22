@@ -162,9 +162,12 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "auto_fix-lint-arwaky"
 version = "1.10.106"
 dependencies = [
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
@@ -657,6 +660,7 @@ dependencies = [
  "ciborium",
  "clap",
  "criterion-plot",
+ "futures",
  "is-terminal",
  "itertools 0.10.5",
  "num-traits",
@@ -669,6 +673,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "tinytemplate",
+ "tokio",
  "walkdir",
 ]
 
@@ -1030,11 +1035,13 @@ name = "file_watch-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "notify",
  "notify-debouncer-mini",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -1268,9 +1275,11 @@ version = "1.10.106"
 dependencies = [
  "async-trait",
  "code_analysis-lint-arwaky",
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -2792,9 +2801,11 @@ name = "maintenance-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -2828,6 +2839,7 @@ dependencies = [
  "cli_commands-lint-arwaky",
  "code_analysis-lint-arwaky",
  "config_system-lint-arwaky",
+ "criterion",
  "dirs",
  "external_lint-lint-arwaky",
  "git_hooks-lint-arwaky",
@@ -2843,6 +2855,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
 ]
@@ -2917,9 +2930,11 @@ name = "naming_rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 

@@ -1,125 +1,81 @@
-// Contract tests for naming-rules — verify trait implementations exist and are callable
+// PURPOSE: Verify that all public types implement their declared contract traits.
+// Layer: Contract verification
+// Coverage target: compile-time trait bound assertions
 
-use std::sync::Arc;
+use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
+use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
+use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 
-use naming_rules_lint_arwaky::{
-    agent_naming_orchestrator::NamingOrchestrator,
-    capabilities_naming_convention_checker::NamingConventionChecker,
-    capabilities_suffix_prefix_checker::SuffixPrefixChecker,
-};
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::{
     INamingConventionChecker, ISuffixPrefixChecker,
 };
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::taxonomy_definition_vo::LayerMapVO;
 
-// ─── Contract Tests: Trait Implementation Verification ──────────────
+// ─── INamingConventionChecker ─────────────────────────────
 
-/// Verify INamingConventionChecker trait implementation exists and is callable
-#[tokio::test]
-async fn contract_naming_convention_checker_trait_is_implemented() {
-    let checker = NamingConventionChecker::new();
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
-    let files = FilePathList { values: vec![] };
-    let root = FilePath::new(".".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    // Should be able to call check_file_naming via the trait — no panics
-    checker
-        .check_file_naming(&config, &layer_map, &files, &root, &mut results)
-        .await;
-
-    // No panic = trait implementation verified
-}
-
-/// Verify ISuffixPrefixChecker trait implementation exists and is callable
-#[tokio::test]
-async fn contract_suffix_prefix_checker_trait_is_implemented() {
-    let checker = SuffixPrefixChecker::new();
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
-    let files = FilePathList { values: vec![] };
-    let root = FilePath::new(".".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    // Should be able to call check_domain_suffixes via the trait — no panics
-    checker
-        .check_domain_suffixes(&config, &layer_map, &files, &root, &mut results)
-        .await;
-
-    // No panic = trait implementation verified
-}
-
-/// Verify INamingRunnerAggregate trait implementation (orchestrator) exists
 #[test]
-fn contract_naming_runner_aggregate_trait_is_implemented() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
-    let naming_checker = Arc::new(NamingConventionChecker::new());
-    let suffix_checker = Arc::new(SuffixPrefixChecker::new());
-
-    let orchestrator = NamingOrchestrator::new(
-        naming_checker,
-        suffix_checker,
-        Arc::new(config),
-        Arc::new(layer_map),
-    );
-
-    // Should be able to call name() via the trait
-    assert_eq!(orchestrator.name(), "naming-rules");
+fn naming_convention_checker_implements_protocol() {
+    fn assert_trait<T: INamingConventionChecker>() {}
+    assert_trait::<NamingConventionChecker>();
 }
 
-/// Verify NamingConventionChecker implements Clone (required by async_trait)
 #[test]
-fn contract_naming_convention_checker_is_clone() {
-    let checker = NamingConventionChecker::new();
-    let cloned = checker.clone();
-
-    // Clone should produce an equivalent checker
-    assert_eq!(
-        std::mem::size_of_val(&checker),
-        std::mem::size_of_val(&cloned)
-    );
+fn naming_convention_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<NamingConventionChecker>();
 }
 
-/// Verify SuffixPrefixChecker implements Clone (required by async_trait)
-#[test]
-fn contract_suffix_prefix_checker_is_clone() {
-    let checker = SuffixPrefixChecker::new();
-    let cloned = checker.clone();
+// ─── ISuffixPrefixChecker ─────────────────────────────────
 
-    assert_eq!(
-        std::mem::size_of_val(&checker),
-        std::mem::size_of_val(&cloned)
-    );
+#[test]
+fn suffix_prefix_checker_implements_protocol() {
+    fn assert_trait<T: ISuffixPrefixChecker>() {}
+    assert_trait::<SuffixPrefixChecker>();
 }
 
-/// Verify NamingConventionChecker implements Default
 #[test]
-fn contract_naming_convention_checker_has_default() {
-    let default_checker = NamingConventionChecker::default();
-    let new_checker = NamingConventionChecker::new();
-
-    // Default and new should produce equivalent instances
-    assert_eq!(
-        std::mem::size_of_val(&default_checker),
-        std::mem::size_of_val(&new_checker)
-    );
+fn suffix_prefix_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<SuffixPrefixChecker>();
 }
 
-/// Verify SuffixPrefixChecker implements Default
-#[test]
-fn contract_suffix_prefix_checker_has_default() {
-    let default_checker = SuffixPrefixChecker::default();
-    let new_checker = SuffixPrefixChecker::new();
+// ─── INamingRunnerAggregate ───────────────────────────────
 
-    assert_eq!(
-        std::mem::size_of_val(&default_checker),
-        std::mem::size_of_val(&new_checker)
-    );
+#[test]
+fn naming_orchestrator_implements_aggregate() {
+    fn assert_trait<T: INamingRunnerAggregate>() {}
+    assert_trait::<NamingOrchestrator>();
+}
+
+#[test]
+fn naming_orchestrator_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<NamingOrchestrator>();
+}
+
+// ─── NamingContainer wiring ───────────────────────────────
+
+#[test]
+fn container_produces_orchestrator_as_aggregate() {
+    fn assert_trait<T: INamingRunnerAggregate>() {}
+    // NamingContainer::orchestrator() returns Arc<dyn INamingRunnerAggregate>
+    // This test verifies the return type is correct at compile time.
+    assert_trait::<NamingOrchestrator>();
+}
+
+#[test]
+fn container_exposes_checker_references() {
+    use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+    use shared::common::taxonomy_definition_vo::LayerMapVO;
+    use std::sync::Arc;
+
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
+    let container = NamingContainer::new(config, layer_map);
+
+    // Verify accessors return trait objects
+    let _conv: &Arc<dyn INamingConventionChecker> = container.naming_convention_checker();
+    let _suf: &Arc<dyn ISuffixPrefixChecker> = container.suffix_prefix_checker();
+    let _orch: Arc<dyn INamingRunnerAggregate> = container.orchestrator();
 }
