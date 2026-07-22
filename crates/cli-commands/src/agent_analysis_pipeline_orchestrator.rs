@@ -31,6 +31,17 @@ use std::sync::Arc;
 ///   5. Role rules (AES401-406)
 ///   6. Orphan detection (AES501-506)
 // ─── Block 1: Struct Definition ───────────────────────────
+pub struct CheckArgs {
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    pub external_lint: Arc<dyn IExternalLintAggregate>,
+    pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub format: Format,
+}
+
 pub struct AnalysisPipelineOrchestrator {
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -65,25 +76,16 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl AnalysisPipelineOrchestrator {
-    pub fn new(
-        code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-        naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-        import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-        external_lint: Arc<dyn IExternalLintAggregate>,
-        role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-        format: Format,
-    ) -> Self {
+    pub fn new(args: CheckArgs) -> Self {
         Self {
-            code_analysis_linter,
-            naming_orchestrator,
-            import_orchestrator,
-            external_lint,
-            role_orchestrator,
-            orphan_orchestrator,
-            config_orchestrator,
-            format,
+            code_analysis_linter: args.code_analysis_linter,
+            naming_orchestrator: args.naming_orchestrator,
+            import_orchestrator: args.import_orchestrator,
+            external_lint: args.external_lint,
+            role_orchestrator: args.role_orchestrator,
+            orphan_orchestrator: args.orphan_orchestrator,
+            config_orchestrator: args.config_orchestrator,
+            format: args.format,
             filter: None,
         }
     }

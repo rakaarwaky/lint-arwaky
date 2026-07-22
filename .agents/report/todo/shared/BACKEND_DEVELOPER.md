@@ -27,16 +27,16 @@ There is no direct database layer in this crate, so traditional SQL query issues
 
 | Severity | Area            | Issue                                               | Impact                                                  |
 | -------- | --------------- | --------------------------------------------------- | ------------------------------------------------------- |
-| Critical | Security        | Shell injection in`is_binary_available`           | Arbitrary command execution if binary name is untrusted |
-| High     | Error Handling  | `build.rs` uses `expect` and `panic!`         | Build crashes bypass structured error handling          |
+| Critical | Security        | Shell injection in`is_binary_available`             | Arbitrary command execution if binary name is untrusted |
+| High     | Error Handling  | `build.rs` uses `expect` and `panic!`               | Build crashes bypass structured error handling          |
 | High     | Security        | Recursive walkers lack symlink confinement          | Path traversal, infinite loops, escape from workspace   |
 | High     | Architecture    | Business logic inside taxonomy files                | Violates taxonomy purity and SOLID/SRP                  |
 | Medium   | API Design      | Contract traits expose primitives                   | Violates AES402 and weakens domain boundaries           |
-| Medium   | Error Handling  | Many utilities return`bool`/`Option`            | Callers lose failure context                            |
+| Medium   | Error Handling  | Many utilities return`bool`/`Option`                | Callers lose failure context                            |
 | Medium   | Performance     | Duplication scanner stores large normalized strings | High memory usage on large repositories                 |
-| Medium   | Performance     | Unused-import detection repeatedly scans content    | O(files × symbols × lines) behavior                   |
+| Medium   | Performance     | Unused-import detection repeatedly scans content    | O(files × symbols × lines) behavior                     |
 | Low      | Maintainability | Duplicate command execution helpers                 | DRY violation                                           |
-| Low      | Lint Compliance | `build.rs` uses unknown AES prefix                | AES102 violation, but Cargo requires this filename      |
+| Low      | Lint Compliance | `build.rs` uses unknown AES prefix                  | AES102 violation, but Cargo requires this filename      |
 
 ---
 

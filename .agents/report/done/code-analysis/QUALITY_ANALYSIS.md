@@ -10,20 +10,24 @@ Hi Raka, I reviewed the `code-analysis` crate and the imported `shared` definiti
 
    - The bypass-token classification used nested conditional logic where a guarded `match` is cleaner and satisfies Clippy.
    - Fixed by converting the token dispatch into a proper guarded `match`.
+
 2. **Static `Lazy` multiline block skipping did not actually skip lines**
 
    - The checker computed the brace depth of a `static ... Lazy` block, but the outer line iterator still processed the following lines.
    - This could produce false positives inside multiline static initializers.
    - Fixed by advancing the line index past the whole brace-delimited block.
+
 3. **`#[cfg(test)]` handling in dead-inheritance checking skipped the rest of the file**
 
    - `in_test_module` was set to `true` and never reset.
    - Result: every line after the first test attribute was ignored.
    - Fixed by skipping only the actual test module block, not the remainder of the file.
+
 4. **Public unit structs were not detected as dead inheritance**
 
    - The old check required the line to start with `struct `, so `pub struct Foo;` and `pub(crate) struct Foo;` were missed.
    - Fixed by stripping Rust visibility modifiers before checking.
+
 5. **Exported JS/TS empty classes were not detected**
 
    - The old check required lines to start with `class `, missing:
@@ -32,6 +36,7 @@ Hi Raka, I reviewed the `code-analysis` crate and the imported `shared` definiti
      - `declare class Foo {}`
      - `abstract class Foo {}`
    - Fixed with declaration-keyword awareness.
+
 6. **`rust_declares_type` had false positives and false negatives**
 
    - It could treat comments as definitions.
@@ -40,6 +45,7 @@ Hi Raka, I reviewed the `code-analysis` crate and the imported `shared` definiti
      - stripping line comments,
      - matching whole keyword tokens,
      - allowing tuple structs.
+
 7. **AES305 thresholds were hardcoded in the orchestrator**
 
    - `run_all_checks` used fixed values:
@@ -47,14 +53,17 @@ Hi Raka, I reviewed the `code-analysis` crate and the imported `shared` definiti
      - `threshold_pct = 50.0`
    - This ignored configured AES305 values.
    - Fixed by reading thresholds from `ArchitectureConfig`.
+
 8. **`CodeDuplicationAnalyzer::handle_duplicates` ignored runtime configuration**
 
    - It always used `default_aes_config()`.
    - Fixed by allowing the analyzer to carry an `ArchitectureConfig` instance.
+
 9. **Fallback bypass pattern list was missing**
 
    - The checker comment said a fallback default list applies when config patterns are empty, but the implementation did not provide one.
    - Fixed by adding a default forbidden-bypass pattern list when the configured list is empty.
+
 10. **Inner attribute bypasses were missed**
 
 - `#[allow(...)]` and `#[expect(...)]` were detected, but inner attribute forms such as `#![allow(...)]` were not.
@@ -74,15 +83,18 @@ Hi Raka, I reviewed the `code-analysis` crate and the imported `shared` definiti
    - First pass built the global window map.
    - Second pass re-normalized every window again to count shared windows.
    - Fixed by storing normalized window IDs per file during the first pass.
+
 2. **Duplication interner stored unused strings**
 
    - `interned_keys` retained every normalized key string but was never read.
    - Fixed by removing it.
+
 3. **Duplication global map stored more data than needed**
 
    - It stored `(file_index, line_number)` locations.
    - For file-level similarity, only file membership is needed.
    - Fixed by storing only file indices.
+
 4. **Bypass checking lowercased patterns repeatedly**
 
    - Each pattern was lowercased for every line.

@@ -1,9 +1,11 @@
 # FRD — orphan-detector
 
 ## Feature Goal
+
 The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer architecture. By building an import reachability graph starting from valid entry points (containers, binary entries, main files), it flags any architecture component that has been orphaned, preventing codebase bloat and keeping the system maintainable.
 
 ## Requirements & Scope
+
 - AES501 Taxonomy Orphan Checker
   - Requirement: Taxonomy layer files (e.g. taxonomy_) must be reachable from contracts, capabilities, or orchestrators.
 - AES502 Contract Orphan Checker
@@ -19,6 +21,7 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 - Configurable exceptions and ignored path patterns.
 
 ## Success Indicators
+
 - [ ] Dead code identification — 100% detection of unused or unreachable architectural files.
 - [ ] Zero false warnings on valid code — valid components transitively reachable from entry points must never be flagged as orphans.
 - [ ] Configuration flexibility — correctly respects rule-specific exceptions and ignored path patterns.

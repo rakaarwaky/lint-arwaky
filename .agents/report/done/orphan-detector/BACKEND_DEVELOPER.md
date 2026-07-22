@@ -1,4 +1,3 @@
-
 # Backend Review — `orphan-detector` v1.10.106
 
 ## 1. Executive Summary
@@ -8,10 +7,10 @@ The `orphan-detector` crate has a strong architectural intention: isolate orphan
 | Area                         |    Severity | Main Problem                                                                                         |
 | ---------------------------- | ----------: | ---------------------------------------------------------------------------------------------------- |
 | Security / filesystem safety |        High | Paths are read and resolved without strict confinement to the workspace root.                        |
-| Performance / scalability    |        High | Many analyzers perform repeated full-file scans, causing`O(files × files)` I/O.                   |
+| Performance / scalability    |        High | Many analyzers perform repeated full-file scans, causing`O(files × files)` I/O.                      |
 | Correctness / business logic |        High | Import resolution and orphan decisions rely on fragile substring/regex matching.                     |
-| Architecture / SOLID         | Medium-High | `ArchOrphanAnalyzer` mixes orchestration, layer detection, config access, and result formatting.   |
-| Configuration handling       |        High | `ignored_paths`, configured layer definitions, and orphan exceptions are not fully honored.        |
+| Architecture / SOLID         | Medium-High | `ArchOrphanAnalyzer` mixes orchestration, layer detection, config access, and result formatting.     |
+| Configuration handling       |        High | `ignored_paths`, configured layer definitions, and orphan exceptions are not fully honored.          |
 | Error handling               |      Medium | Many I/O and parsing failures are silently swallowed.                                                |
 | Database                     |         N/A | No database queries exist in the uploaded code. Recommendations are included for future persistence. |
 
@@ -1274,9 +1273,9 @@ fn has_implementation(search_files: &[String], trait_name: &str) -> bool {
 
 Long term, replace regex-based trait/impl detection with proper parsers:
 
-| Language              | Recommended Parser                              |
-| --------------------- | ----------------------------------------------- |
-| Rust                  | `syn`                                         |
+| Language              | Recommended Parser                          |
+| --------------------- | ------------------------------------------- |
+| Rust                  | `syn`                                       |
 | Python                | `tree-sitter-python` or `rustpython-parser` |
 | TypeScript/JavaScript | `tree-sitter-typescript` or `swc`           |
 
@@ -1835,8 +1834,8 @@ Impact: High
 
 Replace fragile regex parsing with language-aware parsers:
 
-| Language              | Parser                     |
-| --------------------- | -------------------------- |
+| Language              | Parser                   |
+| --------------------- | ------------------------ |
 | Rust                  | `syn`                    |
 | Python                | `tree-sitter-python`     |
 | TypeScript/JavaScript | `tree-sitter-typescript` |

@@ -50,4 +50,5 @@ pub use utility_signature_parser::{
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+pub mod utility_compliance_score;
 pub mod utility_signature_parser;

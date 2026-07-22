@@ -7,14 +7,14 @@
 
 ## Resolved Ambiguities (from BA report)
 
-| ID | Question | Decision | Rationale |
-|----|----------|----------|-----------|
-| AMB-02 / CON-01 | AES302 default: 10 lines or 0 (disabled)? | **10 lines** | Match FRD intent — files under 10 lines are suspicious |
-| AMB-04 / CON-04 | AES305: token/AST or window percentage? | **Keep window percentage** | Fast, no new deps, catches ~80% of duplication |
-| AMB-06 | AES304 scope: 3 tokens or 6? | **Keep all 6** | todo/unimplemented/unreachable are real bypass risks |
-| AMB-05 | AES303 primary symbol: 4 types or 6? | **Add type/interface** | TypeScript `type` and `interface` are primary definitions |
-| CON-05 | Clippy self-violation: exception or fix? | **Fix the code** | No special treatment — the linter must pass its own rules |
-| R13 | Column numbers: remove claim or implement? | **Implement now** | Byte-offset-to-column conversion is a small change |
+| ID              | Question                                   | Decision                   | Rationale                                                 |
+| --------------- | ------------------------------------------ | -------------------------- | --------------------------------------------------------- |
+| AMB-02 / CON-01 | AES302 default: 10 lines or 0 (disabled)?  | **10 lines**               | Match FRD intent — files under 10 lines are suspicious    |
+| AMB-04 / CON-04 | AES305: token/AST or window percentage?    | **Keep window percentage** | Fast, no new deps, catches ~80% of duplication            |
+| AMB-06          | AES304 scope: 3 tokens or 6?               | **Keep all 6**             | todo/unimplemented/unreachable are real bypass risks      |
+| AMB-05          | AES303 primary symbol: 4 types or 6?       | **Add type/interface**     | TypeScript `type` and `interface` are primary definitions |
+| CON-05          | Clippy self-violation: exception or fix?   | **Fix the code**           | No special treatment — the linter must pass its own rules |
+| R13             | Column numbers: remove claim or implement? | **Implement now**          | Byte-offset-to-column conversion is a small change        |
 
 ---
 
@@ -28,6 +28,7 @@
 **Bug:** `min_lines: Count::default()` resolves to 0, disabling AES302. FRD says 10.
 
 **AFTER:** Change the default:
+
 ```rust
 // BEFORE:
 min_lines: Count::default(),  // 0
@@ -37,6 +38,7 @@ min_lines: Count::new(10),    // Match FRD: "at least 10 lines"
 ```
 
 If `Count::default()` is used elsewhere and can't change, override in `CodeAnalysisRuleVO::default()`:
+
 ```rust
 impl Default for CodeAnalysisRuleVO {
     fn default() -> Self {
@@ -55,6 +57,7 @@ impl Default for CodeAnalysisRuleVO {
 **File:** `crates/shared/src/code-analysis/utility_mandatory.rs`
 
 **BEFORE:**
+
 ```rust
 pub fn rust_declares_type(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -65,6 +68,7 @@ pub fn rust_declares_type(line: &str) -> bool {
 ```
 
 **AFTER:**
+
 ```rust
 pub fn rust_declares_type(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -76,6 +80,7 @@ pub fn rust_declares_type(line: &str) -> bool {
 ```
 
 **Also update** `js_ts_declares_primary_symbol` in `capabilities_mandatory_definition_checker.rs`:
+
 ```rust
 fn js_ts_declares_primary_symbol(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -91,6 +96,7 @@ fn js_ts_declares_primary_symbol(line: &str) -> bool {
 ```
 
 **Also update** `check_mandatory_class_definition` to detect `type` and `interface`:
+
 ```rust
 // BEFORE:
 if trimmed.starts_with("class ")
@@ -116,6 +122,7 @@ if trimmed.starts_with("class ")
 **File:** `crates/shared/src/cli_commands/taxonomy_result_vo.rs` (or wherever `LintResult::new_arch` is defined)
 
 **BEFORE:**
+
 ```rust
 pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: String) -> Self {
     Self {
@@ -128,6 +135,7 @@ pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: String)
 ```
 
 **AFTER:** Add column parameter or compute from content:
+
 ```rust
 pub fn new_arch(file: &str, line: usize, code: &str, sev: Severity, msg: String) -> Self {
     Self {
@@ -152,6 +160,7 @@ pub fn new_arch_with_column(
 ```
 
 **Also create** new utility file `crates/shared/src/code-analysis/utility_column.rs`:
+
 ```rust
 // PURPOSE: Stateless utility functions for column position computation
 // Pure functions only — no struct, no &self, no I/O
@@ -169,11 +178,13 @@ pub fn byte_offset_to_column(line: &str, offset: usize) -> usize {
 ```
 
 **Register** in `crates/shared/src/code-analysis/mod.rs`:
+
 ```rust
 pub mod utility_column;
 ```
 
 **Then update** callers in `capabilities_check_bypass_checker.rs` to pass column:
+
 ```rust
 // BEFORE:
 violations.push(LintResult::new_arch(file, i + 1, "AES304", Severity::CRITICAL, msg));
@@ -195,6 +206,7 @@ violations.push(LintResult::new_arch_with_column(file, i + 1, col, "AES304", Sev
 **Lines:** 36-48
 
 **BEFORE (broken):**
+
 ```rust
 let mut in_test_module = false;
 while i < lines.len() {
@@ -212,6 +224,7 @@ while i < lines.len() {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 while i < lines.len() {
     let t = lines[i].trim();
@@ -234,6 +247,7 @@ while i < lines.len() {
 **Lines:** 109-153
 
 **BEFORE (broken):**
+
 ```rust
 for p in &patterns.values {
     let p_str = p.as_str();
@@ -265,6 +279,7 @@ for p in &patterns.values {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 for p in &patterns.values {
     let p_str = p.as_str();
@@ -301,6 +316,7 @@ for p in &patterns.values {
 ```
 
 **Also add** these helper functions to `BypassChecker` impl block:
+
 ```rust
 fn is_word_pattern_token(token: &str) -> bool {
     matches!(token, "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable")
@@ -350,6 +366,7 @@ fn contains_unsafe_unwrap(line: &str) -> bool {
 **Lines:** 71-93
 
 **BEFORE (broken):**
+
 ```rust
 let language = Language::from_file(file);
 for (i, line) in content.lines().enumerate() {
@@ -369,6 +386,7 @@ for (i, line) in content.lines().enumerate() {
 ```
 
 **AFTER (fixed):** Convert to `while` loop with index advancement:
+
 ```rust
 let language = Language::from_file(file);
 let lines: Vec<&str> = content.lines().collect();
@@ -384,6 +402,7 @@ while i < lines.len() {
 ```
 
 **Also add** `skip_brace_block` to `utility_bypass.rs`:
+
 ```rust
 pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
     if start >= lines.len() { return start; }
@@ -409,6 +428,7 @@ pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
 **Lines:** 5-12
 
 **BEFORE (broken):**
+
 ```rust
 pub fn rust_declares_type(line: &str) -> bool {
     let keywords = ["struct", "enum", "trait"];
@@ -422,6 +442,7 @@ pub fn rust_declares_type(line: &str) -> bool {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 pub fn rust_declares_type(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -447,6 +468,7 @@ fn contains_word_token(haystack: &str, word: &str) -> bool {
 **Lines:** 233-235
 
 **BEFORE (broken):**
+
 ```rust
 // AES305: File-level similarity check (run once across all files, using pre-read entries)
 let min_dup_lines: usize = 5;
@@ -454,6 +476,7 @@ let threshold_pct: f64 = 50.0;
 ```
 
 **AFTER (fixed):**
+
 ```rust
 // AES305: File-level similarity check (run once across all files, using pre-read entries)
 let min_dup_lines: usize = config
@@ -480,6 +503,7 @@ let threshold_pct: f64 = config
 **Lines:** 21, 26-30, 72-76
 
 **BEFORE (broken):**
+
 ```rust
 pub struct CodeDuplicationAnalyzer {}
 
@@ -490,6 +514,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 pub struct CodeDuplicationAnalyzer {
     config: ArchitectureConfig,
@@ -502,6 +527,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 ```
 
 **Also change constructor:**
+
 ```rust
 impl CodeDuplicationAnalyzer {
     pub fn new() -> Self {
@@ -514,6 +540,7 @@ impl CodeDuplicationAnalyzer {
 ```
 
 **Also update** `root_code_analysis_container.rs` line 48:
+
 ```rust
 // BEFORE:
 code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),
@@ -529,6 +556,7 @@ code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::from_config(config.
 **Lines:** 211-214
 
 **BEFORE (broken):**
+
 ```rust
 pub fn new() -> Self {
     Self {
@@ -538,6 +566,7 @@ pub fn new() -> Self {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 pub fn new() -> Self {
     Self {
@@ -558,6 +587,7 @@ fn default_forbidden_bypass() -> PatternList {
 ```
 
 **Also update** `from_rule` to apply fallback when empty:
+
 ```rust
 pub fn from_rule(rule: CodeAnalysisRuleVO) -> Self {
     let mut rule = rule;
@@ -576,6 +606,7 @@ pub fn from_rule(rule: CodeAnalysisRuleVO) -> Self {
 **Lines:** 16-26
 
 **BEFORE (broken):**
+
 ```rust
 pub fn starts_with_allow_attr(line: &str) -> bool {
     static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
@@ -589,6 +620,7 @@ pub fn starts_with_allow_attr(line: &str) -> bool {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 pub fn starts_with_allow_attr(line: &str) -> bool {
     static PREFIXES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
@@ -618,6 +650,7 @@ pub fn starts_with_allow_attr(line: &str) -> bool {
 **Line:** 117
 
 **BEFORE (broken):**
+
 ```rust
 if p_str == "unwrap" && t.contains(".unwrap_or") {
     continue;  // BUG: if line has both .unwrap_or AND .unwrap, both suppressed
@@ -625,6 +658,7 @@ if p_str == "unwrap" && t.contains(".unwrap_or") {
 ```
 
 **AFTER (fixed):** Use the `contains_unsafe_unwrap` function from P1.2:
+
 ```rust
 p if is_word_pattern_token(p)
     && matches_word_token(t, p, matches!(p, "unwrap" | "expect"))
@@ -643,16 +677,19 @@ This is already handled in the P1.2 fix above — the `contains_unsafe_unwrap` f
 **Line:** 50
 
 **BEFORE (broken):**
+
 ```rust
 if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 if Self::is_unit_struct_line(t) {
 ```
 
 **Add helper:**
+
 ```rust
 fn is_unit_struct_line(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -686,16 +723,19 @@ fn strip_rust_visibility(line: &str) -> &str {
 **Line:** 101
 
 **BEFORE (broken):**
+
 ```rust
 if t.starts_with("class ") && t.ends_with("{}") {
 ```
 
 **AFTER (fixed):**
+
 ```rust
 if Self::is_empty_js_declaration(t) {
 ```
 
 **Add helper:**
+
 ```rust
 fn is_empty_js_declaration(line: &str) -> bool {
     let code = line.split_once("//").map(|(code, _)| code).unwrap_or(line);
@@ -726,6 +766,7 @@ fn js_ts_declares_primary_symbol(line: &str) -> bool {
 **Lines:** 180-188
 
 **BEFORE (slow):**
+
 ```rust
 // Second pass re-normalizes every window
 let shared_count = lines
@@ -740,6 +781,7 @@ let shared_count = lines
 ```
 
 **AFTER (fast):** Store per-file window IDs during first pass:
+
 ```rust
 // First pass: store per-file window IDs
 let mut file_windows: Vec<Vec<u32>> = Vec::with_capacity(entries.len());
@@ -769,6 +811,7 @@ let shared_count = file_windows[fi].iter().filter(|id| shared_ids.contains(id)).
 **Line:** 122
 
 **BEFORE:**
+
 ```rust
 let mut interned_keys: Vec<String> = Vec::new();
 ```
@@ -783,11 +826,13 @@ let mut interned_keys: Vec<String> = Vec::new();
 **Line:** 134
 
 **BEFORE:**
+
 ```rust
 let mut global: HashMap<u32, Vec<(usize, usize)>> = HashMap::new();
 ```
 
 **AFTER:**
+
 ```rust
 let mut global: HashMap<u32, Vec<usize>> = HashMap::new();
 ```
@@ -802,11 +847,13 @@ And change push from `.push((fi, li + 1))` to `.push(fi)`.
 **Line:** 144
 
 **BEFORE:**
+
 ```rust
 } else if !p_str.is_empty() && t_lower.contains(&p_str.to_lowercase()) {
 ```
 
 **AFTER:** Precompute once before the line loop:
+
 ```rust
 let lowered_patterns: Vec<String> = patterns.values.iter().map(|p| p.to_lowercase()).collect();
 // Then in the loop:
@@ -821,6 +868,7 @@ let lowered_patterns: Vec<String> = patterns.values.iter().map(|p| p.to_lowercas
 **Lines:** 59-68
 
 **BEFORE:**
+
 ```rust
 let content_lower = content.to_lowercase();
 let has_bypass_token = patterns.values.iter()
@@ -831,6 +879,7 @@ if !has_bypass_token { return; }
 ```
 
 **AFTER:** Remove the whole-file allocation. The per-line `t_lower` check is sufficient:
+
 ```rust
 // Remove the early-exit block entirely — per-line scanning handles this
 ```
@@ -857,6 +906,7 @@ if !has_bypass_token { return; }
 **AES VIOLATION:** Agent layer must have zero I/O (create-agent-rust skill rule).
 
 **Step 1:** Create `crates/shared/src/code-analysis/utility_file_reader.rs`:
+
 ```rust
 // PURPOSE: Stateless utility functions for reading lintable files
 // Domain-agnostic, reusable — valid utility per ARCHITECTURE §7
@@ -880,11 +930,13 @@ pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
 ```
 
 **Step 2:** Register in `crates/shared/src/code-analysis/mod.rs`:
+
 ```rust
 pub mod utility_file_reader;
 ```
 
 **Step 3:** Update `agent_code_analysis_orchestrator.rs` to call utility:
+
 ```rust
 // BEFORE (agent does I/O — VIOLATES AES):
 let c = match std::fs::read_to_string(file) {
@@ -909,6 +961,7 @@ let c = match shared::code_analysis::utility_file_reader::read_lintable_file(fil
 ```
 
 **Also update** Cargo.toml reading:
+
 ```rust
 // BEFORE:
 if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
@@ -927,6 +980,7 @@ if let Ok(Some(cargo_content)) = shared::code_analysis::utility_file_reader::rea
 **Lines:** 35-40, 106-113
 
 **BEFORE:**
+
 ```rust
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
 pub fn init_global_checker(container: Arc<CodeAnalysisCheckerContainer>) {
@@ -944,6 +998,7 @@ impl CodeAnalysisOrchestrator {
 ```
 
 **AFTER:** Deprecate global, prefer injection:
+
 ```rust
 #[deprecated(note = "Inject CodeAnalysisCheckerContainer explicitly")]
 static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
@@ -973,6 +1028,7 @@ Keep `new_with_container` as the preferred constructor.
 **File:** `crates/shared/src/common/utility_file.rs` (in `walk_source_files_inner`)
 
 **AFTER:** Add root confinement check before recursing into symlinked dirs:
+
 ```rust
 if let Ok(target) = std::fs::canonicalize(&path) {
     // Prevent symlink escape
@@ -1002,6 +1058,7 @@ Already covered in P3.2 — `read_lintable_file` returns `Err` which emits `AES0
 ## Phase 5: Documentation (P2)
 
 ### P5.1-P5.5
+
 Update FRD with acceptance criteria, language parity matrix, default patterns, resolve CON-01/CON-04/CON-05 contradictions, add traceability matrix. (Documentation-only, no code changes.)
 
 ---
@@ -1014,6 +1071,7 @@ Update FRD with acceptance criteria, language parity matrix, default patterns, r
 **Lines:** 297-299
 
 **BEFORE:**
+
 ```rust
 fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
     Vec::new()
@@ -1021,6 +1079,7 @@ fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
 ```
 
 **AFTER:**
+
 ```rust
 fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
     self.container.config().rules.iter()

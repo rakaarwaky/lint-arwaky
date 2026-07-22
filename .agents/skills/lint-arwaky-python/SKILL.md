@@ -2,16 +2,17 @@
 name: lint-arwaky-python
 description: "Run lint-arwaky CLI scanner and MCP server for Python projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-    tags: [python, lint, aes, compliance, scanning, mcp]
-    triggers:
-        - "lint arwaky python"
-        - "scan python project"
-        - "verify aes compliance python"
-    dependencies: []
-    related:
-        - cleanup-files-python
-        - create-capabilities-python
+  tags: [python, lint, aes, compliance, scanning, mcp]
+  triggers:
+    - "lint arwaky python"
+    - "scan python project"
+    - "verify aes compliance python"
+  dependencies: []
+  related:
+    - cleanup-files-python
+    - create-capabilities-python
 ---
+
 ---
 
 # lint-arwaky-python

@@ -2,14 +2,14 @@
 name: fix-bypass-python
 description: "Fix Python bypass comments (type: ignore, noqa) by addressing root causes instead of suppressing errors."
 metadata:
-    tags: [python, bypass, comments, type-hints, refactoring, noqa]
-    triggers:
-        - "fix bypass python"
-        - "remove noqa python"
-        - "remove type ignore python"
-    dependencies: []
-    related:
-        - cleanup-files-python
+  tags: [python, bypass, comments, type-hints, refactoring, noqa]
+  triggers:
+    - "fix bypass python"
+    - "remove noqa python"
+    - "remove type ignore python"
+  dependencies: []
+  related:
+    - cleanup-files-python
 ---
 
 # fix-bypass-python

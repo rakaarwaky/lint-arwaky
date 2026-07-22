@@ -2,20 +2,21 @@
 name: consolidate-files-rust
 description: "Merge multiple Rust implementation files with overlapping concerns into a single file with one struct, combining structs, impl blocks, imports, and free functions."
 metadata:
-    tags: [rust, merge, consolidation, deduplication, single-file, single-struct, aes]
-    triggers:
-        - "merge two files into one"
-        - "combine two impl files"
-        - "consolidate files"
-        - "merge capabilities files"
-        - "merge agent files"
-        - "merge overlap rust"
-        - "deduplicate modules rust"
-    dependencies: []
-    related:
-        - add-docs-rust
-        - cleanup-files-rust
-        - create-capabilities-rust
+  tags:
+    [rust, merge, consolidation, deduplication, single-file, single-struct, aes]
+  triggers:
+    - "merge two files into one"
+    - "combine two impl files"
+    - "consolidate files"
+    - "merge capabilities files"
+    - "merge agent files"
+    - "merge overlap rust"
+    - "deduplicate modules rust"
+  dependencies: []
+  related:
+    - add-docs-rust
+    - cleanup-files-rust
+    - create-capabilities-rust
 ---
 
 # consolidate-files-rust

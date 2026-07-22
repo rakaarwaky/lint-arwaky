@@ -143,10 +143,9 @@ impl CodeDuplicationAnalyzer {
         // - Remove unused interned_keys storage (P2.2)
 
         fn hash_key(key: &str) -> u64 {
-            use std::hash::{Hash, Hasher};
             let mut hasher = DefaultHasher::new();
-            key.hash(&mut hasher);
-            hasher.finish()
+            std::hash::Hash::hash(key, &mut hasher);
+            std::hash::Hasher::finish(&hasher)
         }
 
         // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)

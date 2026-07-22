@@ -2,16 +2,16 @@
 
 ## Capabilities Layer (`capabilities_*.ts`)
 
-| Allowed                                      | Forbidden                                             |
-| -------------------------------------------- | ----------------------------------------------------- |
-| Computation, validation, calculation         | Direct import from `agent_*`                          |
-| Data transformation, business rules          | Direct dependency on concrete `capabilities_*` modules |
-| Domain behavior using shared models          | Locally defined domain data structures                |
-| Interface implementation                     |                                                       |
-| External adaptation (I/O, API calls, DB)     |                                                       |
-| Private helpers supporting the impl class    |                                                       |
-| Calling injected protocol traits             |                                                       |
-| Calling Utility standalone functions         |                                                       |
+| Allowed                                   | Forbidden                                              |
+| ----------------------------------------- | ------------------------------------------------------ |
+| Computation, validation, calculation      | Direct import from `agent_*`                           |
+| Data transformation, business rules       | Direct dependency on concrete `capabilities_*` modules |
+| Domain behavior using shared models       | Locally defined domain data structures                 |
+| Interface implementation                  |                                                        |
+| External adaptation (I/O, API calls, DB)  |                                                        |
+| Private helpers supporting the impl class |                                                        |
+| Calling injected protocol traits          |                                                        |
+| Calling Utility standalone functions      |                                                        |
 
 ## Allowed Dependencies (ARCHITECTURE §8)
 

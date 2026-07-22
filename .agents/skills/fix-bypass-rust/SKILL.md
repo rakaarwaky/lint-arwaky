@@ -2,15 +2,15 @@
 name: fix-bypass-rust
 description: "Fix Rust bypass comments (#[allow], unwrap, expect, panic) by addressing root causes instead of suppressing errors."
 metadata:
-    tags: [rust, bypass, comments, aes304, allow, unwrap]
-    triggers:
-        - "fix bypass rust"
-        - "fix bypass comments rust"
-        - "remove allow rust"
-        - "remove unwrap rust"
-    dependencies: []
-    related:
-        - module_logic_validator
+  tags: [rust, bypass, comments, aes304, allow, unwrap]
+  triggers:
+    - "fix bypass rust"
+    - "fix bypass comments rust"
+    - "remove allow rust"
+    - "remove unwrap rust"
+  dependencies: []
+  related:
+    - module_logic_validator
 ---
 
 # fix-bypass-rust

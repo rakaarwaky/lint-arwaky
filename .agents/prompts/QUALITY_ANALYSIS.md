@@ -18,33 +18,41 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Quality Analyst
 
 ## Summary
+
 {{One-paragraph overview of QA health and key findings.}}
 
 ## Findings by Category
 
 ### Functional Bugs
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Performance Bottlenecks
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Edge Case Handling
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Output Correctness
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Violations (if any)
+
 {{List specific AES layer violations, import rule breaks, or convention deviations.}}
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 

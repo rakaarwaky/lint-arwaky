@@ -7,15 +7,15 @@
 
 ## Summary
 
-| Metric | Value |
-|---|---|
-| Total issues | 28 |
-| Critical (security/correctness) | 8 |
-| High (performance/architecture) | 10 |
-| Medium (code quality) | 6 |
-| Low (documentation/severity) | 4 |
-| New files to create | 4 |
-| Files to modify | 10 |
+| Metric                          | Value |
+| ------------------------------- | ----- |
+| Total issues                    | 28    |
+| Critical (security/correctness) | 8     |
+| High (performance/architecture) | 10    |
+| Medium (code quality)           | 6     |
+| Low (documentation/severity)    | 4     |
+| New files to create             | 4     |
+| Files to modify                 | 10    |
 
 ---
 
@@ -78,6 +78,7 @@ pub fn resolve_module_path(root: &Path, base_dir: &Path, module_path: &str) -> O
 **Problem:** Lines 217-221 resolve `#[path = "..."]` without confinement check.
 
 **Before:**
+
 ```rust
 let resolved = if mod_path.starts_with('/') {
     mod_path.clone()
@@ -87,6 +88,7 @@ let resolved = if mod_path.starts_with('/') {
 ```
 
 **After:**
+
 ```rust
 use shared::orphan_detector::utility_orphan_path::resolve_module_path;
 
@@ -109,6 +111,7 @@ let resolved = resolved_path.to_string_lossy().to_string();
 **Problem:** Line 42 uses `Path::new(".")` instead of `root_dir`.
 
 **Before:**
+
 ```rust
 let root = std::path::Path::new(".");
 if let Ok(workspace_root) =
@@ -131,6 +134,7 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
 ```
 
 Then in `surfaces_analyzer.rs`:
+
 ```rust
 let root = std::path::Path::new(root_dir.value());
 if let Ok(workspace_root) =
@@ -138,6 +142,7 @@ if let Ok(workspace_root) =
 ```
 
 Update call site in `orchestrator.rs:301-304`:
+
 ```rust
 if layer_str.contains(LAYER_SURFACES) {
     return self
@@ -159,11 +164,13 @@ if layer_str.contains(LAYER_SURFACES) {
 **Problem:** Line 19: `new_with_ignored(_ignored_paths)` ignores the parameter.
 
 **Before:**
+
 ```rust
 pub fn new_with_ignored(_ignored_paths: Vec<String>) -> Self {
 ```
 
 **After:**
+
 ```rust
 pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
     let mut config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
@@ -186,6 +193,7 @@ pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
 **Problem:** Lines 312-318: `config()` returns static default via `OnceLock`.
 
 **Before:**
+
 ```rust
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
@@ -194,6 +202,7 @@ pub struct ArchOrphanAnalyzer {
 ```
 
 **After:**
+
 ```rust
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
@@ -213,6 +222,7 @@ impl ArchOrphanAnalyzer {
 ```
 
 Update `config()` method:
+
 ```rust
 fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
     &self.config
@@ -242,6 +252,7 @@ pub fn is_path_ignored(file: &str, patterns: &[String]) -> bool {
 ```
 
 **Step B — In `agent_orphan_orchestrator.rs`, call utility in `check_orphans`:**
+
 ```rust
 let ignored: Vec<String> = self.config.ignored_paths.values.iter()
     .map(|p| p.value().to_string())
@@ -277,6 +288,7 @@ let files = filtered_files.as_slice();
 **Skill:** `create-root-rust` — container wires Capabilities to Contracts.
 
 **Before:**
+
 ```rust
 pub struct OrphanContainer {
     analyzer: Arc<dyn IOrphanAggregate>,
@@ -285,6 +297,7 @@ pub struct OrphanContainer {
 ```
 
 **After:**
+
 ```rust
 pub struct OrphanContainer {
     analyzer: Arc<dyn IOrphanAggregate>,
@@ -321,6 +334,7 @@ impl OrphanContainer {
 **File:** `crates/shared/src/orphan-detector/contract_orphan_aggregate.rs`
 
 **Before:**
+
 ```rust
 pub trait IOrphanAggregate: Send + Sync {
     fn check_orphans(
@@ -333,6 +347,7 @@ pub trait IOrphanAggregate: Send + Sync {
 ```
 
 **After:**
+
 ```rust
 pub trait IOrphanAggregate: Send + Sync {
     fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult>;
@@ -416,6 +431,7 @@ fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
 **Skill:** `create-surface-rust` — surface layer callers must update to match new aggregate signature.
 
 **Files to update:**
+
 - `crates/cli-commands/src/surface_check_command.rs` — remove `layer_detector` parameter from `check_orphans` calls
 - `crates/mcp-server/src/agent_mcp_server_orchestrator.rs` — same
 - `crates/tui/src/capabilities_lint_executor.rs` — same
@@ -433,6 +449,7 @@ fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
 **Problem:** Lines 55-73: Default entry-point detection omits `_container.*` when no configured patterns are supplied.
 
 **Before (lines 55-73):**
+
 ```rust
 let matched: Vec<String> = if configured_strs.is_empty() {
     file_strs.iter().filter(|f| {
@@ -452,6 +469,7 @@ let matched: Vec<String> = if configured_strs.is_empty() {
 ```
 
 **After:**
+
 ```rust
 let matched: Vec<String> = if configured_strs.is_empty() {
     file_strs.iter().filter(|f| {
@@ -485,6 +503,7 @@ let matched: Vec<String> = if configured_strs.is_empty() {
 **Problem:** Lines 414-443: Uses `stem == module_name` without normalizing hyphens. `orphan-detector` directory won't match `orphan_detector` module name.
 
 **Before (lines 421-441):**
+
 ```rust
 if let Some(src_dir) = crate_src_dirs.get(crate_name) {
     let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
@@ -514,6 +533,7 @@ if let Some(resolved) = Self::resolve_workspace_module(
 ```
 
 Add helper methods:
+
 ```rust
 fn build_crate_module_index(
     crate_src_dirs: &HashMap<String, std::path::PathBuf>,
@@ -551,6 +571,7 @@ fn resolve_workspace_module(
 **Problem:** Lines 115-118: Uses `content.contains(&format!("use {}", module_name))` which misses `shared::orphan_detector::utility_orphan_io`.
 
 **Before:**
+
 ```rust
 fn check_import_pattern(&self, content: &str, module_name: &str) -> bool {
     if content.contains(&format!("use {}", module_name))
@@ -625,6 +646,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 ```
 
 **Update protocol in `contract_orphan_protocol.rs`:**
+
 ```rust
 pub trait IUtilityOrphanProtocol: Send + Sync {
     fn is_utility_orphan(
@@ -638,6 +660,7 @@ pub trait IUtilityOrphanProtocol: Send + Sync {
 ```
 
 **Update call site in `orchestrator.rs:291-294`:**
+
 ```rust
 if layer_str.contains(LAYER_UTILITY) {
     return self.utility_analyzer.is_utility_orphan(
@@ -655,6 +678,7 @@ if layer_str.contains(LAYER_UTILITY) {
 **Problem:** Lines 241-270: Uses `re.captures()` not `captures_iter()`, so only first trait is extracted.
 
 **Before:**
+
 ```rust
 fn extract_contract_trait_name(content: &str) -> Option<String> {
     // ...
@@ -668,6 +692,7 @@ fn extract_contract_trait_name(content: &str) -> Option<String> {
 ```
 
 **After:**
+
 ```rust
 fn extract_contract_trait_names(content: &str) -> Vec<String> {
     let code_lines: String = content.lines()
@@ -702,6 +727,7 @@ fn extract_contract_trait_names(content: &str) -> Vec<String> {
 ```
 
 Then evaluate ALL traits:
+
 ```rust
 let trait_names = Self::extract_contract_trait_names(&content);
 if trait_names.is_empty() {
@@ -729,6 +755,7 @@ if unimplemented.is_empty() {
 **Problem:** Lines 72-83: Uses `c.contains(&format!("impl {} for", trait_name))` which misses Python `class Foo(Trait):` and TS `implements`.
 
 **Before:**
+
 ```rust
 if c.contains(&format!("impl {} for", trait_name))
     || c.lines().any(|ln| {
@@ -777,6 +804,7 @@ pub fn has_trait_implementation(content: &str, trait_name: &str) -> bool {
 **Problem:** Lines 46-53: Only checks `surface_*` and `*_container.*`, misses `main.rs`, `lib.rs`, `index.ts`, `_entry.*`.
 
 **Before:**
+
 ```rust
 let is_surface = cb.starts_with("surface_");
 let is_container = cb.ends_with("_container.rs")
@@ -788,6 +816,7 @@ if !is_surface && !is_container { continue; }
 ```
 
 **After:**
+
 ```rust
 fn is_caller_file(basename: &str) -> bool {
     basename.starts_with("surface_")
@@ -819,6 +848,7 @@ if !Self::is_caller_file(cb) { continue; }
 **Problem:** Lines 116-120: Fallback importer search misses `main.rs`, `lib.rs`, `index.ts`, `_container.*`.
 
 **Before:**
+
 ```rust
 let is_entry_or_router = name.starts_with("root_")
     || name.starts_with("cli_")
@@ -828,6 +858,7 @@ let is_entry_or_router = name.starts_with("root_")
 ```
 
 **After:**
+
 ```rust
 let is_entry_or_router = name.starts_with("root_")
     || name.starts_with("cli_")
@@ -851,6 +882,7 @@ let is_entry_or_router = name.starts_with("root_")
 **Problem:** Lines 98-107: Always constructs `AesOrphanViolation` even when `is_orphan=false`.
 
 **Before:**
+
 ```rust
 OrphanIndicatorResult::new(
     is_orphan,
@@ -864,6 +896,7 @@ OrphanIndicatorResult::new(
 ```
 
 **After:**
+
 ```rust
 if is_orphan {
     OrphanIndicatorResult::new(
@@ -947,12 +980,14 @@ fn container_files(&self, root_dir: &FilePath) -> Option<Vec<PathBuf>> {
 **Problem:** Lines 24-29: Clones alive set to `Vec<String>` and uses linear `.contains()`.
 
 **Before:**
+
 ```rust
 let alive: Vec<String> = alive_files.paths.iter().map(|fp| fp.value().to_string()).collect();
 let is_reachable = alive.contains(&f.value().to_string());
 ```
 
 **After:**
+
 ```rust
 let is_reachable = alive_files.paths.contains(f);
 ```
@@ -970,6 +1005,7 @@ let is_reachable = alive_files.paths.contains(f);
 **Rationale:** Agent orchestrator needs utility functions for graph traversal (`_trace_reachability`, `_evaluate_layer`) and layer detection. Wrapping these in a Capabilities layer just to satisfy the old Agent→Utility rule added unnecessary complexity (`ILayerDetectionProtocol` contract + `CapabilitiesLayerDetector`). Simpler to allow Agent→Utility directly.
 
 **Files deleted:**
+
 - `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs`
 - `crates/shared/src/code-analysis/contract_layer_detection_protocol.rs`
 - `crates/orphan-detector/src/capabilities_layer_detector.rs`
@@ -999,14 +1035,15 @@ let is_reachable = alive_files.paths.contains(f);
 **After:** Utility orphan severity = `Severity::MEDIUM`
 
 **Severity mapping after fix:**
-| Layer | Code | Severity |
-|---|---|---|
-| Taxonomy | AES501 | LOW |
-| Contract | AES502 | MEDIUM |
-| Capabilities | AES503 | MEDIUM |
-| Utility | AES504 | MEDIUM |
-| Agent | AES505 | HIGH |
-| Surface | AES506 | HIGH |
+
+| Layer        | Code   | Severity |
+| ------------ | ------ | -------- |
+| Taxonomy     | AES501 | LOW      |
+| Contract     | AES502 | MEDIUM   |
+| Capabilities | AES503 | MEDIUM   |
+| Utility      | AES504 | MEDIUM   |
+| Agent        | AES505 | HIGH     |
+| Surface      | AES506 | HIGH     |
 
 ---
 
@@ -1021,6 +1058,7 @@ let is_reachable = alive_files.paths.contains(f);
 **Problem:** `read_file_safe` silently returns empty string on error.
 
 **Add:**
+
 ```rust
 pub enum FileReadOutcome {
     Content(String),
@@ -1061,6 +1099,7 @@ pub fn read_file_with_diagnostic(path: &str) -> FileReadOutcome {
 8. **Phase 8** (P8.1): Error handling. Independent, can run anytime.
 
 **Final verification (all phases complete):**
+
 ```bash
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
@@ -1073,15 +1112,18 @@ cargo run --bin lint-arwaky-cli -- check .
 ## Files Summary
 
 ### New files (2)
+
 - `crates/shared/src/orphan-detector/utility_orphan_path.rs` — path confinement + `is_path_ignored`
 - `crates/shared/src/orphan-detector/utility_orphan.rs` — add `normalize_module_component`, `normalize_module_path`, `contains_delimited`, `import_tokens`, `has_trait_implementation`
 
 ### Deleted files (3)
+
 - `crates/shared/src/orphan-detector/contract_layer_detection_protocol.rs` — removed (Agent→Utility direct, no wrapper needed)
 - `crates/shared/src/code-analysis/contract_layer_detection_protocol.rs` — removed (dead code, duplicate)
 - `crates/orphan-detector/src/capabilities_layer_detector.rs` — removed (no longer needed)
 
 ### Modified files (12)
+
 - `crates/shared/src/orphan-detector/contract_orphan_protocol.rs` — update IUtilityOrphanProtocol, ISurfacesOrphanProtocol signatures
 - `crates/shared/src/orphan-detector/contract_orphan_aggregate.rs` — remove layer_detector param from check_orphans
 - `crates/shared/src/orphan-detector/mod.rs` — add utility_orphan_path module

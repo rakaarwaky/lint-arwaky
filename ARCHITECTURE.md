@@ -253,16 +253,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -334,11 +334,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 

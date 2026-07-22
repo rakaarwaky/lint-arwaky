@@ -99,13 +99,13 @@ Diagnostic {
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| `check_max_line_count()` | File path, content | Option<Diagnostic> | Check AES301 |
-| `check_min_line_count()` | File path, content | Option<Diagnostic> | Check AES302 |
+| Function                        | Input              | Output             | Description  |
+| ------------------------------- | ------------------ | ------------------ | ------------ |
+| `check_max_line_count()`        | File path, content | Option<Diagnostic> | Check AES301 |
+| `check_min_line_count()`        | File path, content | Option<Diagnostic> | Check AES302 |
 | `check_mandatory_definitions()` | File path, content | Option<Diagnostic> | Check AES303 |
-| `check_forbidden_bypass()` | File path, content | Vec<Diagnostic> | Check AES304 |
-| `handle_duplicates()` | All files | Vec<Diagnostic> | Check AES305 |
+| `check_forbidden_bypass()`      | File path, content | Vec<Diagnostic>    | Check AES304 |
+| `handle_duplicates()`           | All files          | Vec<Diagnostic>    | Check AES305 |
 
 ## Integration Points
 

@@ -1,4 +1,3 @@
-
 Yes — I reviewed the `config-system` crate and the imported `shared` definitions as a backend/API + architecture review.
 
 A quick note on scope: this crate does **not** contain database access. The closest equivalent to “database queries” here is **filesystem discovery and file reads**, so I reviewed those as the data-access path.
@@ -15,6 +14,7 @@ The crate has a good intent: clean layering, contracts, DI container, async trai
 
    - `ConfigOrchestrator::collect_subdirs()` and `scan_workspace_dirs()` use `std::fs` inside an async flow.
    - This can stall the Tokio executor and hurts scalability.
+
 2. **Silent error swallowing**
 
    - Invalid YAML becomes default config via `unwrap_or_default()`.
@@ -25,18 +25,21 @@ The crate has a good intent: clean layering, contracts, DI container, async trai
      - malformed file
      - symlink/path escape
      - I/O failure
+
 3. **Security weaknesses in config loading**
 
    - `language` is interpolated directly into file names.
    - Config files may be symlinks, enabling local file disclosure in untrusted workspaces.
    - No maximum file size limit for config reads.
    - Environment-variable-based XDG lookup is accepted without hardening.
+
 4. **Architectural violations vs the stated AES rules**
 
    - The **Agent layer** (`ConfigOrchestrator`) performs direct filesystem discovery (`std::fs::read_dir`) and path scanning.
    - The **Taxonomy layer** (`taxonomy_config_vo.rs`) contains parsing/normalization logic, `include_str!`, `eprintln!`, and infrastructure concerns.
    - The orchestrator bypasses `IConfigParserProtocol` and calls `parse_config_yaml()` directly.
    - The aggregate leaks internal protocols (`workspace_detector()`, `config_reader()`), weakening the facade.
+
 5. **Performance bottleneck in workspace discovery**
 
    - `discover_workspaces()` uses `join_all()` with unbounded concurrency.
@@ -160,7 +163,7 @@ This is both a security and correctness issue.
 
 Introduce a typed language enum:
 
-```rust
+````rust
 use std::str::FromStr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -182,7 +185,7 @@ impl ConfigLanguage {
     pub fn config_file_names(&self) -> &'static [&'static str] {
         match self {
             ConfigLanguage::Rust => &["lint_arwaky.config.rust.yaml"],
-         
+
 Yes — I reviewed the `config-system` crate and the imported `shared` definitions as a backend/API + architecture review.
 
 A quick note on scope: this crate does **not** contain database access. The closest equivalent to “database queries” here is **filesystem discovery and file reads**, so I reviewed those as the data-access path.
@@ -237,7 +240,7 @@ Current contract:
 
 ```rust
 async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource>;
-```
+````
 
 This is too weak.
 
@@ -1096,7 +1099,7 @@ impl FromStr for ConfigLanguage {
 
 ## 3.2 Harden utility I/O
 
-```rust
+````rust
 // shared/src/config-system/utility_config_io.rs
 
 use crate::common::taxonomy_path_vo::FilePath;
@@ -1223,7 +1226,7 @@ Current contract:
 
 ```rust
 async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource>;
-```
+````
 
 This is too weak.
 
@@ -2936,14 +2939,17 @@ The biggest risks are:
    - unsafe config path handling
    - symlink exposure
    - missing size limits
+
 2. **Reliability**
 
    - silent fallbacks
    - weak error propagation
+
 3. **Scalability**
 
    - blocking I/O in async code
    - unbounded concurrency
+
 4. **Maintainability**
 
    - layer leakage

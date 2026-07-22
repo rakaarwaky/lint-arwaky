@@ -6,13 +6,13 @@
 
 ## Decisions
 
-| Decision | Choice |
-|----------|--------|
-| Plan structure | Single comprehensive plan, phases ordered by severity |
-| Architecture refactor | Include IAnalysisPipelineAggregate contract + agent |
-| Dead CLI commands | Remove Duplicates enum, skip tui (out of scope) |
-| Global init | Remove `--global` flag — XDG installation is `install.local.sh` responsibility |
-| Exit code convention | 0=success, 1=violations found, 2=system error, 3=tool missing |
+| Decision              | Choice                                                                         |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Plan structure        | Single comprehensive plan, phases ordered by severity                          |
+| Architecture refactor | Include IAnalysisPipelineAggregate contract + agent                            |
+| Dead CLI commands     | Remove Duplicates enum, skip tui (out of scope)                                |
+| Global init           | Remove `--global` flag — XDG installation is `install.local.sh` responsibility |
+| Exit code convention  | 0=success, 1=violations found, 2=system error, 3=tool missing                  |
 
 ## Severity Legend
 
@@ -46,6 +46,7 @@
 **Problem**: `init --global` duplicates what `install.local.sh` already does. CLI should only handle local init. Global installation belongs to the install script.
 
 **Fix**:
+
 1. Remove `--global` flag from `Init` subcommand in `taxonomy_cli_vo.rs`
 2. Remove `handle_init_global()` function from `surface_setup_command.rs`
 3. Remove `TRUSTED_DOCS` constant and `include_str!` imports (no longer needed)
@@ -67,6 +68,7 @@
 **Fix**: Replace inode-based walker with canonical-path-based walker. Use `HashSet<PathBuf>` for visited set. Fix symlink check to use workspace root, not parent directory.
 
 Key changes:
+
 - Remove `get_inode()` helper and Unix metadata import
 - Change `visited` from `HashSet<u64>` (inodes) to `HashSet<PathBuf>` (canonical paths)
 - Fix symlink check: `target.starts_with(root)` instead of `target.starts_with(dir)`
@@ -367,6 +369,7 @@ match cli.command {
 **AES Code**: Architecture (Surface doing orchestration)
 
 **Contract**:
+
 ```rust
 #[async_trait]
 pub trait IAnalysisPipelineAggregate: Send + Sync {
@@ -375,6 +378,7 @@ pub trait IAnalysisPipelineAggregate: Send + Sync {
 ```
 
 **Supporting types** (same file or separate taxonomy files):
+
 - `ScanRequest` — target, mode, filter, member, format
 - `ScanMode` — Check, Scan, Ci { threshold }
 - `ScanReport` — results, diagnostics, score
@@ -393,6 +397,7 @@ pub trait IAnalysisPipelineAggregate: Send + Sync {
 **AES Code**: Architecture
 
 **Agent**:
+
 ```rust
 pub struct AnalysisPipelineOrchestrator {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
@@ -424,6 +429,7 @@ impl IAnalysisPipelineAggregate for AnalysisPipelineOrchestrator {
 **Problem**: `agent_text_formatter.rs`, `agent_json_formatter.rs`, `agent_sarif_formatter.rs`, `agent_junit_formatter.rs` are named `agent_` but implement `IReportFormatterProtocol` — single responsibility, not orchestration. Violates AES layer rules.
 
 **Fix**: Rename files:
+
 - `agent_text_formatter.rs` → `capabilities_text_formatter.rs`
 - `agent_json_formatter.rs` → `capabilities_json_formatter.rs`
 - `agent_sarif_formatter.rs` → `capabilities_sarif_formatter.rs`
@@ -521,6 +527,7 @@ fn redact_config(raw: &str) -> String {
 **AES Code**: Error handling
 
 **Convention**:
+
 - `0` = success, no violations
 - `1` = violations/findings found
 - `2` = system/operational error
@@ -566,6 +573,7 @@ impl CommandCatalogVO {
 **Severity**: LOW
 
 **Action**: Update FRD with:
+
 - Actual command list (check, scan, fix, ci, orphan, security, dependencies, doctor, init, install, mcp-config, config-show, watch)
 - Remove `tui` and `duplicates` from FRD
 - Add `check` vs `scan` semantic definitions
@@ -581,6 +589,7 @@ impl CommandCatalogVO {
 **Severity**: LOW
 
 **Action**: Document priority chain:
+
 1. Project-root YAML
 2. Parent dir (depth ≤ 3)
 3. XDG user config
@@ -606,6 +615,7 @@ impl CommandCatalogVO {
 7. **Phase 7** (P7.1-P7.2): Documentation. Independent.
 
 **Final verification (all phases complete):**
+
 ```bash
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
@@ -618,16 +628,19 @@ cargo run --bin lint-arwaky-cli -- check .
 ## Files Summary
 
 ### New files (2)
+
 - `crates/shared/src/cli-commands/contract_analysis_pipeline_aggregate.rs` — pipeline contract (P4.1)
 - `crates/cli-commands/src/agent_analysis_pipeline_orchestrator.rs` — pipeline agent (P4.2)
 
 ### Renamed files (4)
+
 - `agent_text_formatter.rs` → `capabilities_text_formatter.rs` (P4.3)
 - `agent_json_formatter.rs` → `capabilities_json_formatter.rs` (P4.3)
 - `agent_sarif_formatter.rs` → `capabilities_sarif_formatter.rs` (P4.3)
 - `agent_junit_formatter.rs` → `capabilities_junit_formatter.rs` (P4.3)
 
 ### Modified files (12)
+
 - `crates/shared/src/common/utility_file.rs` — fix walker, add ignore dirs (P2.1, P3.2)
 - `crates/shared/src/cli-commands/taxonomy_cli_vo.rs` — remove Duplicates, remove --global flag (P1.1, P1.2)
 - `crates/shared/src/cli-commands/taxonomy_catalog_constant.rs` — unify catalog (P6.1)
@@ -639,23 +652,24 @@ cargo run --bin lint-arwaky-cli -- check .
 - `crates/cli-commands/src/surface_common_command.rs` — fix CI threshold (P2.7)
 - `crates/cli-commands/src/surface_maintenance_command.rs` — fix exit codes (P2.11, P5.1)
 - `crates/cli-commands/src/surface_setup_command.rs` — remove --global, remove TRUSTED_DOCS, fix config-show (P1.2, P5.2)
-- `crates/cli-commands/src/mod.rs` — register agent_analysis_pipeline_orchestrator, rename agent_*_formatter to capabilities_*_formatter (P4.2, P4.3)
+- `crates/cli-commands/src/mod.rs` — register agent_analysis_pipeline_orchestrator, rename agent__*formatter to capabilities*__formatter (P4.2, P4.3)
 
 ### Deleted files (1)
+
 - `crates/cli-commands/src/assets/` — bundled docs no longer needed (P1.2)
 
 ---
 
 ## Summary
 
-| Phase | Items | Severity | Description |
-|-------|-------|----------|-------------|
-| 1 | P1.1-P1.2 | CRITICAL/HIGH | Security: remove dead CLI, remove --global init |
-| 2 | P2.1-P2.11 | CRITICAL/HIGH | Bug fixes: walker, output, path filtering, git-diff, adapters, CI, XML, errors |
-| 3 | P3.1-P3.3 | HIGH/MEDIUM | Performance: ignore rules, ignore list, lazy container |
-| 4 | P4.1-P4.4 | HIGH/MEDIUM | Architecture: IAnalysisPipelineAggregate, rename formatters to capabilities, thin surface |
-| 5 | P5.1-P5.3 | MEDIUM | Error handling: exit codes, secret redaction, standardization |
-| 6 | P6.1 | MEDIUM | Command catalog consolidation |
-| 7 | P7.1-P7.2 | LOW | FRD documentation updates |
+| Phase | Items      | Severity      | Description                                                                               |
+| ----- | ---------- | ------------- | ----------------------------------------------------------------------------------------- |
+| 1     | P1.1-P1.2  | CRITICAL/HIGH | Security: remove dead CLI, remove --global init                                           |
+| 2     | P2.1-P2.11 | CRITICAL/HIGH | Bug fixes: walker, output, path filtering, git-diff, adapters, CI, XML, errors            |
+| 3     | P3.1-P3.3  | HIGH/MEDIUM   | Performance: ignore rules, ignore list, lazy container                                    |
+| 4     | P4.1-P4.4  | HIGH/MEDIUM   | Architecture: IAnalysisPipelineAggregate, rename formatters to capabilities, thin surface |
+| 5     | P5.1-P5.3  | MEDIUM        | Error handling: exit codes, secret redaction, standardization                             |
+| 6     | P6.1       | MEDIUM        | Command catalog consolidation                                                             |
+| 7     | P7.1-P7.2  | LOW           | FRD documentation updates                                                                 |
 
 **Total**: 29 items across 7 phases.

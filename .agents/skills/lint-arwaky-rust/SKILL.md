@@ -2,16 +2,16 @@
 name: lint-arwaky-rust
 description: "Run lint-arwaky CLI scanner and MCP server for Rust projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-    tags: [rust, lint, aes, compliance, scanning, mcp, clippy]
-    triggers:
-        - "lint arwaky rust"
-        - "lint code rust"
-        - "check compliance rust"
-        - "scan rust project"
-    dependencies: []
-    related:
-        - module_logic_validator
-        - cleanup-files-rust
+  tags: [rust, lint, aes, compliance, scanning, mcp, clippy]
+  triggers:
+    - "lint arwaky rust"
+    - "lint code rust"
+    - "check compliance rust"
+    - "scan rust project"
+  dependencies: []
+  related:
+    - module_logic_validator
+    - cleanup-files-rust
 ---
 
 # lint-arwaky-cli-rust

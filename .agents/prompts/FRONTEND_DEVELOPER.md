@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Frontend Developer
 
 ## Summary
+
 {{One-paragraph overview of frontend health and key findings.}}
 
 ## Findings by Category
 
 ### Component Architecture
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### State Management
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Performance Optimization
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Accessibility (a11y) Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Accessibility violation, memory leak, broken rendering
 - 🟡 **WARNING** — Performance concern, component anti-pattern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

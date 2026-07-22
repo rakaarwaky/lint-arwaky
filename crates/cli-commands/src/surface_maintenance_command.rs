@@ -10,8 +10,6 @@ use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAg
 use std::process::ExitCode;
 use std::sync::Arc;
 
-pub struct MaintenanceCommandsSurface;
-
 pub async fn handle_doctor(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
 ) -> ExitCode {

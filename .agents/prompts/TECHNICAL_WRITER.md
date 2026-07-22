@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Technical Writer
 
 ## Summary
+
 {{One-paragraph overview of documentation health and key findings.}}
 
 ## Findings by Category
 
 ### Documentation Clarity & Readability
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Accuracy & Consistency
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Completeness & Coverage
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Audience Appropriateness
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Documentation
+
 {{Show corrected documentation blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Inaccurate documentation, misleading instructions
 - 🟡 **WARNING** — Missing section, outdated information
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

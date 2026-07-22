@@ -24,11 +24,11 @@ Example:
 
 ```typescript
 class ContractRoleChecker {
-    private resolveScope(scope: string): [string, string[]] {
-        // Domain-specific parsing logic.
-        // Even without `this`, this can remain a private helper
-        // if only this checker uses it.
-    }
+  private resolveScope(scope: string): [string, string[]] {
+    // Domain-specific parsing logic.
+    // Even without `this`, this can remain a private helper
+    // if only this checker uses it.
+  }
 }
 ```
 
@@ -47,7 +47,7 @@ Example:
 ```typescript
 // shared/<name-feature>/taxonomy_string_utility.ts
 export function matchWholeToken(haystack: string, needle: string): boolean {
-    // generic token matching
+  // generic token matching
 }
 ```
 
@@ -57,8 +57,12 @@ A function with I/O can be a taxonomy utility if it is stateless, domain-agnosti
 
 ```typescript
 // OK in taxonomy utility — stateless, domain-agnostic, reusable
-function walkSourceFiles(dir: string, files: string[], ignored: string[]): void {
-    // I/O is allowed in taxonomy utilities
+function walkSourceFiles(
+  dir: string,
+  files: string[],
+  ignored: string[],
+): void {
+  // I/O is allowed in taxonomy utilities
 }
 ```
 

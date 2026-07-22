@@ -33,11 +33,11 @@ modules/
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
+| Command               | Description     |
+| --------------------- | --------------- |
 | `python -m <package>` | Run the package |
-| `pytest` | Run tests |
-| `ruff check .` | Lint code |
+| `pytest`              | Run tests       |
+| `ruff check .`        | Lint code       |
 
 ## Configuration
 

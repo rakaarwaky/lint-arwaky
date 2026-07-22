@@ -26,8 +26,8 @@
 ## API Contract
 
 | Endpoint | Method | Payload | Response |
-|----------|--------|---------|----------|
-| `/path` | GET | - | `{...}` |
+| -------- | ------ | ------- | -------- |
+| `/path`  | GET    | -       | `{...}`  |
 
 ## Integration Points
 

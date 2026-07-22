@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Infrastructure Engineer
 
 ## Summary
+
 {{One-paragraph overview of infrastructure health and key findings.}}
 
 ## Findings by Category
 
 ### Server & Network Configuration
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Security & Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Cost Optimization
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Reliability & Operational Efficiency
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Configuration
+
 {{Show corrected configuration blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Security vulnerability, single point of failure, cost anomaly
 - 🟡 **WARNING** — Suboptimal configuration, missing best practice
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

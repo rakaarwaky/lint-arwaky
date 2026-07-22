@@ -2,15 +2,15 @@
 name: create-test-typescript
 description: "Create comprehensive test suites for TypeScript modules following Vitest/Jest conventions and project testing standards."
 metadata:
-    tags: [typescript, testing, vitest, jest, mocking, fixtures]
-    triggers:
-        - "create test typescript"
-        - "add tests typescript"
-        - "write unit tests typescript"
-    dependencies: []
-    related:
-        - add-docs-typescript
-        - cleanup-files-typescript
+  tags: [typescript, testing, vitest, jest, mocking, fixtures]
+  triggers:
+    - "create test typescript"
+    - "add tests typescript"
+    - "write unit tests typescript"
+  dependencies: []
+  related:
+    - add-docs-typescript
+    - cleanup-files-typescript
 ---
 
 # create-test-typescript
@@ -63,26 +63,26 @@ grep -rn "^class \|^function \|^export " packages/*/src/ | grep -v "^_"
 Create `*.test.ts` with test structure:
 
 ```typescript
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MyClass } from '../src/capabilities_my_class';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MyClass } from "../src/capabilities_my_class";
 
-describe('MyClass', () => {
-    let mockDep: ReturnType<typeof vi.fn>;
-    let testObj: MyClass;
+describe("MyClass", () => {
+  let mockDep: ReturnType<typeof vi.fn>;
+  let testObj: MyClass;
 
-    beforeEach(() => {
-        mockDep = vi.fn();
-        testObj = new MyClass(mockDep);
-    });
+  beforeEach(() => {
+    mockDep = vi.fn();
+    testObj = new MyClass(mockDep);
+  });
 
-    it('should return expected value', () => {
-        const result = testObj.method();
-        expect(result).toBe(expectedValue);
-    });
+  it("should return expected value", () => {
+    const result = testObj.method();
+    expect(result).toBe(expectedValue);
+  });
 
-    it('should throw on invalid input', () => {
-        expect(() => testObj.method(invalidInput)).toThrow(ValueError);
-    });
+  it("should throw on invalid input", () => {
+    expect(() => testObj.method(invalidInput)).toThrow(ValueError);
+  });
 });
 ```
 
@@ -93,9 +93,9 @@ Create shared fixtures for test data:
 ```typescript
 // fixtures.ts
 export const createMockFile = (path: string, content: string) => ({
-    path,
-    content,
-    size: content.length,
+  path,
+  content,
+  size: content.length,
 });
 ```
 
@@ -104,21 +104,21 @@ export const createMockFile = (path: string, content: string) => ({
 Use `vi.fn()` or `jest.fn()` to isolate tests:
 
 ```typescript
-import { vi, describe, it, expect } from 'vitest';
-import { db } from '../src/infrastructure_db';
+import { vi, describe, it, expect } from "vitest";
+import { db } from "../src/infrastructure_db";
 
-vi.mock('../src/infrastructure_db', () => ({
-    db: {
-        connect: vi.fn(),
-        query: vi.fn(),
-    },
+vi.mock("../src/infrastructure_db", () => ({
+  db: {
+    connect: vi.fn(),
+    query: vi.fn(),
+  },
 }));
 
-describe('Database Operation', () => {
-    it('should connect to database', async () => {
-        vi.mocked(db.connect).mockResolvedValue(true);
-        // ... test logic
-    });
+describe("Database Operation", () => {
+  it("should connect to database", async () => {
+    vi.mocked(db.connect).mockResolvedValue(true);
+    // ... test logic
+  });
 });
 ```
 

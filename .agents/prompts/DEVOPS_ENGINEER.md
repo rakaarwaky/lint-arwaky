@@ -18,30 +18,37 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — DevOps Engineer
 
 ## Summary
+
 {{One-paragraph overview of DevOps infrastructure health and key findings.}}
 
 ## Findings by Category
 
 ### CI/CD Pipeline
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Containerization & Docker
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Infrastructure as Code
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Security & Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Configuration
+
 {{Show corrected configuration blocks for each critical/warning fix.}}
 ```
 

@@ -15,5 +15,3 @@ pub mod taxonomy_scan_report_vo;
 pub mod taxonomy_scan_request_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
-
-pub mod utility_score_calculator;

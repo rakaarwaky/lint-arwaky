@@ -2,18 +2,18 @@
 name: add-docs-typescript
 description: "Add proper JSDoc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to TypeScript packages following project conventions."
 metadata:
-    tags: [typescript, docs, jsdoc, type-hints, prd, frd, readme]
-    triggers:
-        - "add docs typescript"
-        - "add jsdoc typescript"
-        - "add type hints typescript"
-        - "add prd typescript"
-        - "add frd typescript"
-        - "add package readme typescript"
-    dependencies: []
-    related:
-        - cleanup-files-typescript
-        - consolidate-files-typescript
+  tags: [typescript, docs, jsdoc, type-hints, prd, frd, readme]
+  triggers:
+    - "add docs typescript"
+    - "add jsdoc typescript"
+    - "add type hints typescript"
+    - "add prd typescript"
+    - "add frd typescript"
+    - "add package readme typescript"
+  dependencies: []
+  related:
+    - cleanup-files-typescript
+    - consolidate-files-typescript
 ---
 
 # add-docs-typescript
@@ -24,32 +24,32 @@ Add documentation at correct locations following project conventions.
 
 ## Document Location Matrix
 
-| Document | Location | Audience | Focus |
-|----------|----------|----------|-------|
-| PRD.md | Root workspace | Stakeholder, PM, Design, Eng | *What* & *Why* |
-| README.md | Root workspace | Developer (new/existing) | *How to use/run* |
-| FRD.md | Each feature module | Engineer, QA, Tech Lead | *How* (functionally) |
+| Document  | Location            | Audience                     | Focus                |
+| --------- | ------------------- | ---------------------------- | -------------------- |
+| PRD.md    | Root workspace      | Stakeholder, PM, Design, Eng | _What_ & _Why_       |
+| README.md | Root workspace      | Developer (new/existing)     | _How to use/run_     |
+| FRD.md    | Each feature module | Engineer, QA, Tech Lead      | _How_ (functionally) |
 
 ## References
 
 Read these files for detailed rules:
 
-| File | Content |
-|------|---------|
-| `references/prd-rules.md` | PRD rules, audience, anti-patterns |
-| `references/frd-rules.md` | FRD rules, IDs, test scenarios |
-| `references/readme-rules.md` | README rules, Quick Start, structure |
-| `references/jsdoc-rules.md` | JSDoc comment rules and templates |
-| `references/type-annotation-rules.md` | Type annotation rules and patterns |
+| File                                  | Content                              |
+| ------------------------------------- | ------------------------------------ |
+| `references/prd-rules.md`             | PRD rules, audience, anti-patterns   |
+| `references/frd-rules.md`             | FRD rules, IDs, test scenarios       |
+| `references/readme-rules.md`          | README rules, Quick Start, structure |
+| `references/jsdoc-rules.md`           | JSDoc comment rules and templates    |
+| `references/type-annotation-rules.md` | Type annotation rules and patterns   |
 
 ## Templates
 
 Use these templates when creating new files:
 
-| File | Purpose |
-|------|---------|
-| `templates/PRD.md` | New PRD at root workspace |
-| `templates/FRD.md` | New FRD in feature module |
+| File                  | Purpose                      |
+| --------------------- | ---------------------------- |
+| `templates/PRD.md`    | New PRD at root workspace    |
+| `templates/FRD.md`    | New FRD in feature module    |
 | `templates/README.md` | New README at root workspace |
 
 ## Definition of Done

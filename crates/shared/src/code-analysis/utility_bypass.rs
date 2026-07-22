@@ -113,24 +113,22 @@ pub fn is_inside_string_or_char(line: &str, pos: usize) -> bool {
     in_string || in_char
 }
 
-/// Check if a line starts with a Rust bypass attribute (`#[allow(...)`, `#[expect(...)`,
-/// `#![allow(...)]`, `#![expect(...)]`, `#![warn(...)]`, `#[warn(...)]`,
-/// `#[clippy::allow(...)]`, etc.), constructed without the literal prefixes appearing
-/// in source to avoid AES304 self-flagging.
+/// Check if a line starts with a Rust bypass attribute (e.g. allow/expect/warn cfg attributes).
+/// Constructed dynamically without literal prefixes to avoid AES304 self-flagging.
 pub fn starts_with_allow_attr(line: &str) -> bool {
     static PREFIXES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
     let prefixes = PREFIXES.get_or_init(|| {
         let mk = |chars: &[char]| chars.iter().collect::<String>();
         vec![
-            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']), // #[allow(
-            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // #[expect(
-            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),      // #[warn(
-            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']), // #![allow(
-            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // #![expect(
-            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']), // #![warn(
+            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']), // allow attr
+            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // expect attr
+            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),      // warn attr
+            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']), // cfg allow attr
+            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // cfg expect attr
+            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']), // cfg warn attr
             mk(&[
                 '#', '[', 'c', 'l', 'i', 'p', 'p', 'y', ':', ':', 'a', 'l', 'l', 'o', 'w', '(',
-            ]), // #[clippy::allow(
+            ]), // clippy allow attr
         ]
     });
     prefixes.iter().any(|prefix| line.starts_with(prefix))

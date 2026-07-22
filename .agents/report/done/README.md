@@ -16,10 +16,10 @@ Setiap fitur/crate/module/package yang sudah direview mendapat satu subfolder di
 
 ## Konvensi Penamaan
 
-| Komponen | Aturan | Contoh |
-|----------|--------|--------|
-| **Folder** | Nama fitur / crate / module / package | `cli-commands`, `import-rules`, `code-analysis` |
-| **File** | Nama role penuh (dari prompt files) | `BACKEND_DEVELOPER.md`, `BUSINESS_ANALYST.md`, `QUALITY_ANALYSIS.md` |
+| Komponen   | Aturan                                | Contoh                                                               |
+| ---------- | ------------------------------------- | -------------------------------------------------------------------- |
+| **Folder** | Nama fitur / crate / module / package | `cli-commands`, `import-rules`, `code-analysis`                      |
+| **File**   | Nama role penuh (dari prompt files)   | `BACKEND_DEVELOPER.md`, `BUSINESS_ANALYST.md`, `QUALITY_ANALYSIS.md` |
 
 ## Cara Pakai
 
@@ -29,11 +29,11 @@ Setiap fitur/crate/module/package yang sudah direview mendapat satu subfolder di
 
 ## Daftar Fitur yang Sudah Direview
 
-| Folder (Fitur) | Reports |
-|----------------|---------|
-| `cli-commands` | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
-| `code-analysis` | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
-| `config-sytem` | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
-| `import-rules` | BACKEND_DEVELOPER, QUALITY_ANALYSIS |
+| Folder (Fitur)    | Reports                                               |
+| ----------------- | ----------------------------------------------------- |
+| `cli-commands`    | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
+| `code-analysis`   | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
+| `config-sytem`    | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
+| `import-rules`    | BACKEND_DEVELOPER, QUALITY_ANALYSIS                   |
 | `orphan-detector` | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
-| `role-rules` | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |
+| `role-rules`      | BACKEND_DEVELOPER, BUSINESS_ANALYST, QUALITY_ANALYSIS |

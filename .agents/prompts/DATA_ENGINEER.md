@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Data Engineer
 
 ## Summary
+
 {{One-paragraph overview of data pipeline health and key findings.}}
 
 ## Findings by Category
 
 ### Data Flow & Pipeline Design
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Data Quality & Validation
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Performance & Scalability
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Schema & Storage Optimization
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Data loss risk, pipeline failure, security breach
 - 🟡 **WARNING** — Performance concern, schema mismatch
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

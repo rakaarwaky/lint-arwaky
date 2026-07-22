@@ -19,8 +19,8 @@ Type annotations provide type safety and IDE support.
 ```typescript
 // Interface for object shapes
 interface ImportRule {
-    pattern: string;
-    message: string;
+  pattern: string;
+  message: string;
 }
 
 // Type alias for unions
@@ -28,12 +28,12 @@ type ValidationResult = [boolean, string];
 
 // Function with type annotations
 function validate(data: Record<string, unknown>): ValidationResult {
-    // ...
+  // ...
 }
 
 // Generic function
 function first<T>(items: T[]): T | undefined {
-    return items[0];
+  return items[0];
 }
 ```
 

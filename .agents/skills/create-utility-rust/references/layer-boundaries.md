@@ -2,16 +2,16 @@
 
 ## Utility Layer (`utility_*.rs`)
 
-| Allowed                                     | Forbidden                                                    |
-| ------------------------------------------- | ------------------------------------------------------------ |
-| Stateless free functions                    | Struct definitions                                           |
-| Pure computation (input → output)           | `&self` or struct field access                               |
-| I/O operations (if domain-agnostic + reusable) | Business rules or domain knowledge                         |
-| Taxonomy imports (`shared::taxonomy_*`)      | Imports from Capabilities, Agent, Surface modules          |
-| Contract imports (for type resolution only)  | Implementation of protocol or aggregate traits             |
-| Helper functions for parsing/formatting      | Magic constants (extract to `taxonomy_<domain>_constant.rs`) |
-| File walking, pattern matching, validation   | Random number generation                                     |
-| Environment access (if stateless + reusable) | System clock or global state mutation                      |
+| Allowed                                        | Forbidden                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------ |
+| Stateless free functions                       | Struct definitions                                           |
+| Pure computation (input → output)              | `&self` or struct field access                               |
+| I/O operations (if domain-agnostic + reusable) | Business rules or domain knowledge                           |
+| Taxonomy imports (`shared::taxonomy_*`)        | Imports from Capabilities, Agent, Surface modules            |
+| Contract imports (for type resolution only)    | Implementation of protocol or aggregate traits               |
+| Helper functions for parsing/formatting        | Magic constants (extract to `taxonomy_<domain>_constant.rs`) |
+| File walking, pattern matching, validation     | Random number generation                                     |
+| Environment access (if stateless + reusable)   | System clock or global state mutation                        |
 
 ## Allowed Dependencies
 

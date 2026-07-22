@@ -1,4 +1,3 @@
-
 Hi Raka,
 
 Below is a backend-focused review of the uploaded `cli-commands_v1.10.106.md` knowledge base. I treated the uploaded content as the source of truth. Some referenced crates (`import_rules`, `naming_rules`, `external_lint`, etc.) are not fully included, so my review focuses on what is visible in `cli-commands` and `shared`.
@@ -95,24 +94,24 @@ Recommended database practices:
 
 # 2. Prioritized Findings
 
-| Severity | Area                   | Issue                                                                         | Impact                                                            |
-| -------- | ---------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Critical | Security               | `init --global` copies docs from current project into trusted global config | Untrusted project can plant malicious docs into global config     |
-| Critical | Security               | MCP binary resolution falls back to bare`lint-arwaky-mcp` on PATH           | PATH hijacking / binary planting risk                             |
-| High     | Security / Correctness | Path filtering uses string prefix matching                                    | Files outside intended path may be included                       |
-| High     | Performance            | Orphan detection uses raw file collection without ignore rules                | Scans`node_modules`, `target`, generated files; DoS/perf risk |
-| High     | Error Handling         | Audit failures are swallowed with`unwrap_or_default()`                      | Silent incorrect lint reports                                     |
-| High     | Architecture           | Surface layer contains orchestration, formatting, filtering                   | Violates AES layer rules and SRP                                  |
-| High     | Business Logic         | CI mode only runs code-analysis                                               | CI score is incomplete                                            |
-| High     | Business Logic         | Fix command counts only code-analysis violations                              | Misleading fix results                                            |
-| High     | Performance            | File walker visited-set uses inode abstraction that breaks on non-Unix        | Potential traversal bugs on Windows                               |
-| Medium   | Security               | External linters should use timeouts and argument separators                  | Hung processes / argument injection risk                          |
-| Medium   | API Design             | Command catalog is duplicated and inconsistent                                | CLI/MCP command mismatch                                          |
-| Medium   | Error Handling         | Maintenance commands return success on missing tools/errors                   | CI cannot trust exit codes                                        |
-| Medium   | Performance            | Repeated filesystem walks across linters                                      | Slow monorepo scans                                               |
-| Medium   | Maintainability        | Closure-based factories are opaque                                            | Harder to test/debug                                              |
-| Low      | Reporting              | SARIF/JUnit output can be improved                                            | Better CI integration                                             |
-| Low      | API Design             | Global CLI flags are unused or inconsistently applied                         | Confusing UX                                                      |
+| Severity | Area                   | Issue                                                                       | Impact                                                        |
+| -------- | ---------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Critical | Security               | `init --global` copies docs from current project into trusted global config | Untrusted project can plant malicious docs into global config |
+| Critical | Security               | MCP binary resolution falls back to bare`lint-arwaky-mcp` on PATH           | PATH hijacking / binary planting risk                         |
+| High     | Security / Correctness | Path filtering uses string prefix matching                                  | Files outside intended path may be included                   |
+| High     | Performance            | Orphan detection uses raw file collection without ignore rules              | Scans`node_modules`, `target`, generated files; DoS/perf risk |
+| High     | Error Handling         | Audit failures are swallowed with`unwrap_or_default()`                      | Silent incorrect lint reports                                 |
+| High     | Architecture           | Surface layer contains orchestration, formatting, filtering                 | Violates AES layer rules and SRP                              |
+| High     | Business Logic         | CI mode only runs code-analysis                                             | CI score is incomplete                                        |
+| High     | Business Logic         | Fix command counts only code-analysis violations                            | Misleading fix results                                        |
+| High     | Performance            | File walker visited-set uses inode abstraction that breaks on non-Unix      | Potential traversal bugs on Windows                           |
+| Medium   | Security               | External linters should use timeouts and argument separators                | Hung processes / argument injection risk                      |
+| Medium   | API Design             | Command catalog is duplicated and inconsistent                              | CLI/MCP command mismatch                                      |
+| Medium   | Error Handling         | Maintenance commands return success on missing tools/errors                 | CI cannot trust exit codes                                    |
+| Medium   | Performance            | Repeated filesystem walks across linters                                    | Slow monorepo scans                                           |
+| Medium   | Maintainability        | Closure-based factories are opaque                                          | Harder to test/debug                                          |
+| Low      | Reporting              | SARIF/JUnit output can be improved                                          | Better CI integration                                         |
+| Low      | API Design             | Global CLI flags are unused or inconsistently applied                       | Confusing UX                                                  |
 
 ---
 
@@ -1434,24 +1433,24 @@ Recommended database practices:
 
 # 2. Prioritized Findings
 
-| Severity | Area                   | Issue                                                                         | Impact                                                            |
-| -------- | ---------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Critical | Security               | `init --global` copies docs from current project into trusted global config | Untrusted project can plant malicious docs into global config     |
-| Critical | Security               | MCP binary resolution falls back to bare`lint-arwaky-mcp` on PATH           | PATH hijacking / binary planting risk                             |
-| High     | Security / Correctness | Path filtering uses string prefix matching                                    | Files outside intended path may be included                       |
-| High     | Performance            | Orphan detection uses raw file collection without ignore rules                | Scans`node_modules`, `target`, generated files; DoS/perf risk |
-| High     | Error Handling         | Audit failures are swallowed with`unwrap_or_default()`                      | Silent incorrect lint reports                                     |
-| High     | Architecture           | Surface layer contains orchestration, formatting, filtering                   | Violates AES layer rules and SRP                                  |
-| High     | Business Logic         | CI mode only runs code-analysis                                               | CI score is incomplete                                            |
-| High     | Business Logic         | Fix command counts only code-analysis violations                              | Misleading fix results                                            |
-| High     | Performance            | File walker visited-set uses inode abstraction that breaks on non-Unix        | Potential traversal bugs on Windows                               |
-| Medium   | Security               | External linters should use timeouts and argument separators                  | Hung processes / argument injection risk                          |
-| Medium   | API Design             | Command catalog is duplicated and inconsistent                                | CLI/MCP command mismatch                                          |
-| Medium   | Error Handling         | Maintenance commands return success on missing tools/errors                   | CI cannot trust exit codes                                        |
-| Medium   | Performance            | Repeated filesystem walks across linters                                      | Slow monorepo scans                                               |
-| Medium   | Maintainability        | Closure-based factories are opaque                                            | Harder to test/debug                                              |
-| Low      | Reporting              | SARIF/JUnit output can be improved                                            | Better CI integration                                             |
-| Low      | API Design             | Global CLI flags are unused or inconsistently applied                         | Confusing UX                                                      |
+| Severity | Area                   | Issue                                                                       | Impact                                                        |
+| -------- | ---------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Critical | Security               | `init --global` copies docs from current project into trusted global config | Untrusted project can plant malicious docs into global config |
+| Critical | Security               | MCP binary resolution falls back to bare`lint-arwaky-mcp` on PATH           | PATH hijacking / binary planting risk                         |
+| High     | Security / Correctness | Path filtering uses string prefix matching                                  | Files outside intended path may be included                   |
+| High     | Performance            | Orphan detection uses raw file collection without ignore rules              | Scans`node_modules`, `target`, generated files; DoS/perf risk |
+| High     | Error Handling         | Audit failures are swallowed with`unwrap_or_default()`                      | Silent incorrect lint reports                                 |
+| High     | Architecture           | Surface layer contains orchestration, formatting, filtering                 | Violates AES layer rules and SRP                              |
+| High     | Business Logic         | CI mode only runs code-analysis                                             | CI score is incomplete                                        |
+| High     | Business Logic         | Fix command counts only code-analysis violations                            | Misleading fix results                                        |
+| High     | Performance            | File walker visited-set uses inode abstraction that breaks on non-Unix      | Potential traversal bugs on Windows                           |
+| Medium   | Security               | External linters should use timeouts and argument separators                | Hung processes / argument injection risk                      |
+| Medium   | API Design             | Command catalog is duplicated and inconsistent                              | CLI/MCP command mismatch                                      |
+| Medium   | Error Handling         | Maintenance commands return success on missing tools/errors                 | CI cannot trust exit codes                                    |
+| Medium   | Performance            | Repeated filesystem walks across linters                                    | Slow monorepo scans                                           |
+| Medium   | Maintainability        | Closure-based factories are opaque                                          | Harder to test/debug                                          |
+| Low      | Reporting              | SARIF/JUnit output can be improved                                          | Better CI integration                                         |
+| Low      | API Design             | Global CLI flags are unused or inconsistently applied                       | Confusing UX                                                  |
 
 ---
 

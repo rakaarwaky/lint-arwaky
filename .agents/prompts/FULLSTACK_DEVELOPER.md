@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Full Stack Developer
 
 ## Summary
+
 {{One-paragraph overview of full stack health and key findings.}}
 
 ## Findings by Category
 
 ### Architecture & Layer Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Frontend Components
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Backend APIs & Business Logic
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Database & Data Flow
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Architecture breach, security risk, data corruption
 - 🟡 **WARNING** — Performance concern, convention deviation
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

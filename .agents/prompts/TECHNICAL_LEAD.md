@@ -18,37 +18,46 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Technical Lead
 
 ## Summary
+
 {{One-paragraph overview of technical health and key findings.}}
 
 ## Findings by Category
 
 ### Architecture & Design Patterns
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Code Quality & Maintainability
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### SOLID Principles Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Technical Debt
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Violations (if any)
+
 {{List specific AES layer violations, import rule breaks, or convention deviations.}}
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Architecture breach, anti-pattern, data leak
 - 🟡 **WARNING** — Convention deviation, maintainability concern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

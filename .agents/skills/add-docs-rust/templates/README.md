@@ -33,11 +33,11 @@ crates/
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
+| Command       | Description       |
+| ------------- | ----------------- |
 | `cargo build` | Build the project |
-| `cargo test` | Run tests |
-| `cargo run` | Run the binary |
+| `cargo test`  | Run tests         |
+| `cargo run`   | Run the binary    |
 
 ## Configuration
 

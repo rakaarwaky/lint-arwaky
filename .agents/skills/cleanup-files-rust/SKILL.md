@@ -2,20 +2,31 @@
 name: cleanup-files-rust
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across Rust crates to reduce bloat and improve signal-to-noise ratio."
 metadata:
-    tags: [rust, cleanup, bloat, stubs, thin-wrappers, dead-code, orphan, unused-files, cargo-clippy]
-    triggers:
-        - "cleanup rust"
-        - "clean bloat rust"
-        - "remove stubs rust"
-        - "remove thin wrappers rust"
-        - "find unused files rust"
-        - "find dead code rust"
-        - "remove dead code rust"
-        - "cleanup crate rust"
-    dependencies: []
-    related:
-        - add-docs-rust
-        - consolidate-files-rust
+  tags:
+    [
+      rust,
+      cleanup,
+      bloat,
+      stubs,
+      thin-wrappers,
+      dead-code,
+      orphan,
+      unused-files,
+      cargo-clippy,
+    ]
+  triggers:
+    - "cleanup rust"
+    - "clean bloat rust"
+    - "remove stubs rust"
+    - "remove thin wrappers rust"
+    - "find unused files rust"
+    - "find dead code rust"
+    - "remove dead code rust"
+    - "cleanup crate rust"
+  dependencies: []
+  related:
+    - add-docs-rust
+    - consolidate-files-rust
 ---
 
 # cleanup-rust
@@ -61,8 +72,8 @@ Before keeping any function or file, ask:
 
 If the answer is:
 
-| Answer                                                        | Verdict          |
-| ------------------------------------------------------------- | ---------------- |
+| Answer                                                        | Verdict    |
+| ------------------------------------------------------------- | ---------- |
 | "Because it was always there"                                 | **REMOVE** |
 | "Because it might be useful someday"                          | **REMOVE** |
 | "Because it handles edge cases we don't have"                 | **REMOVE** |
@@ -71,7 +82,7 @@ If the answer is:
 | "Because it's behind a feature flag we still ship"            | **KEEP**   |
 | "Because it's used by tests that validate FRD behavior"       | **KEEP**   |
 | "Because a proc macro / derive generates code referencing it" | **KEEP**   |
-| "Because`build.rs` or integration tests reference it"       | **KEEP**   |
+| "Because`build.rs` or integration tests reference it"         | **KEEP**   |
 
 ---
 
@@ -180,20 +191,20 @@ pub use super::capabilities_real_impl::MyTrait;
 
 ## Exceptions (NEVER Remove Without Explicit Approval)
 
-| File/Pattern                                           | Reason                                                        |
-| ------------------------------------------------------ | ------------------------------------------------------------- |
-| `lib.rs`                                             | Crate entry point                                             |
-| `mod.rs`                                             | Module declarations                                           |
-| `main.rs`                                            | Binary entry point                                            |
-| `contract_*.rs` / `traits.rs`                      | Trait definitions (may be used by external crates)            |
-| `build.rs`                                           | Build script                                                  |
+| File/Pattern                                         | Reason                                                       |
+| ---------------------------------------------------- | ------------------------------------------------------------ |
+| `lib.rs`                                             | Crate entry point                                            |
+| `mod.rs`                                             | Module declarations                                          |
+| `main.rs`                                            | Binary entry point                                           |
+| `contract_*.rs` / `traits.rs`                        | Trait definitions (may be used by external crates)           |
+| `build.rs`                                           | Build script                                                 |
 | Files behind`#[cfg(feature = "...")]`                | Conditionally compiled — verify feature is truly deprecated  |
-| `#[cfg(test)]` modules / `tests/` directory        | Test code — check`cargo test` not just `cargo check`     |
-| Files referenced by`build.rs`                        | Build-time code generation                                    |
-| Files referenced by integration tests (`tests/*.rs`) | Not visible from`src/` imports                              |
-| Files referenced by proc macros / derive macros        | Invisible to grep — referenced via macro expansion           |
+| `#[cfg(test)]` modules / `tests/` directory          | Test code — check`cargo test` not just `cargo check`         |
+| Files referenced by`build.rs`                        | Build-time code generation                                   |
+| Files referenced by integration tests (`tests/*.rs`) | Not visible from`src/` imports                               |
+| Files referenced by proc macros / derive macros      | Invisible to grep — referenced via macro expansion           |
 | Items with`#[allow(dead_code)]`                      | Developer explicitly marked as intentional — investigate WHY |
-| Taxonomy / utility files referenced by any layer       | Cross-cutting concerns                                        |
+| Taxonomy / utility files referenced by any layer     | Cross-cutting concerns                                       |
 
 ---
 
@@ -315,16 +326,16 @@ grep -rn "#\[cfg(test)\]" "$CRATE_DIR" | head -20
 
 For each flagged item, apply **The Fundamental Question**. Categorize findings:
 
-| Category                   | What It Is                                  | Action                           | Confidence       |
-| -------------------------- | ------------------------------------------- | -------------------------------- | ---------------- |
-| **Stubs**            | Empty or trivial-return methods             | Remove                           | High             |
-| **Thin Wrappers**    | Direct attribute access, simple comparisons | Remove (unless trait impl)       | High             |
-| **Duplicates**       | Same logic in multiple files                | Keep in owning file, remove rest | High             |
+| Category             | What It Is                                  | Action                           | Confidence      |
+| -------------------- | ------------------------------------------- | -------------------------------- | --------------- |
+| **Stubs**            | Empty or trivial-return methods             | Remove                           | High            |
+| **Thin Wrappers**    | Direct attribute access, simple comparisons | Remove (unless trait impl)       | High            |
+| **Duplicates**       | Same logic in multiple files                | Keep in owning file, remove rest | High            |
 | **Overengineered**   | Patterns failing 3-point test               | Remove                           | Medium — verify |
-| **Unused Files**     | 0 inbound refs (all patterns checked)       | Delete                           | High             |
-| **Re-export Only**   | Files with only`pub use` passthrough      | Consolidate                      | Medium           |
+| **Unused Files**     | 0 inbound refs (all patterns checked)       | Delete                           | High            |
+| **Re-export Only**   | Files with only`pub use` passthrough        | Consolidate                      | Medium          |
 | **Maybe Unused**     | 0 direct refs but glob import in parent     | Manual review                    | Low — verify    |
-| **cfg-gated**        | Behind`#[cfg(feature/test)]`              | KEEP unless feature deprecated   | N/A              |
+| **cfg-gated**        | Behind`#[cfg(feature/test)]`                | KEEP unless feature deprecated   | N/A             |
 | **allow(dead_code)** | Explicitly marked by developer              | Investigate intent               | Low — ask       |
 
 ### Step 6: Report
@@ -335,6 +346,7 @@ Generate a per-file report:
 ## Cleanup Report: <crate-name>
 
 ### Summary
+
 - Files scanned: X
 - Functions analyzed: Y
 - Items flagged for removal: Z
@@ -343,18 +355,21 @@ Generate a per-file report:
 ### Per-File Findings
 
 #### `capabilities_movement.rs`
-| Item | Type | Lines | Verdict | Reason |
-|---|---|---|---|---|
-| `get_velocity()` | Thin wrapper | 3 | REMOVE | Direct `self.velocity` access |
-| `clamp_velocity()` | Duplicate | 5 | REMOVE | Owned by `capabilities_physics.rs` |
-| `apply_force()` | Real logic | 22 | KEEP | Required by FRD-012 |
+
+| Item               | Type         | Lines | Verdict | Reason                             |
+| ------------------ | ------------ | ----- | ------- | ---------------------------------- |
+| `get_velocity()`   | Thin wrapper | 3     | REMOVE  | Direct `self.velocity` access      |
+| `clamp_velocity()` | Duplicate    | 5     | REMOVE  | Owned by `capabilities_physics.rs` |
+| `apply_force()`    | Real logic   | 22    | KEEP    | Required by FRD-012                |
 
 #### `capabilities_orphan_feature.rs`
-| Item | Type | Lines | Verdict | Reason |
-|---|---|---|---|---|
-| Entire file | Unused file | 87 | DELETE | 0 inbound refs, no glob imports, not in tests |
+
+| Item        | Type        | Lines | Verdict | Reason                                        |
+| ----------- | ----------- | ----- | ------- | --------------------------------------------- |
+| Entire file | Unused file | 87    | DELETE  | 0 inbound refs, no glob imports, not in tests |
 
 ### Items Requiring Manual Review
+
 - `utils_temporal.rs` — `#[allow(dead_code)]` on 3 items. Developer intent unclear.
 - `capabilities_experimental.rs` — Behind `#[cfg(feature = "experimental")]`. Is feature deprecated?
 ```
@@ -482,20 +497,20 @@ git reset --hard HEAD~1                                  # nuclear option
 
 ## Common Mistakes (AVOID)
 
-| Mistake                                              | Why It's Dangerous                                        | Prevention                                        |
-| ---------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
-| Removing real MVP logic                              | Breaks required functionality                             | Fundamental Question + FRD cross-reference        |
-| Forgetting to update traits                          | Compilation errors in downstream crates                   | Always edit trait file when editing impl          |
+| Mistake                                            | Why It's Dangerous                                        | Prevention                                      |
+| -------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------- |
+| Removing real MVP logic                            | Breaks required functionality                             | Fundamental Question + FRD cross-reference      |
+| Forgetting to update traits                        | Compilation errors in downstream crates                   | Always edit trait file when editing impl        |
 | Deleting files without updating`mod.rs`            | Compilation error: "file not found for module"            | Checklist item; grep for`mod <name>;`           |
 | Removing`contract_*.rs` / trait files              | Breaks external crate consumers                           | Exception list; check`Cargo.toml` dependents    |
 | Skipping`--all-features` in verification           | Misses breakage in cfg-gated code                         | Always use`--all-features` in check/test/clippy |
-| Removing`#[cfg(test)]` code                        | Breaks`cargo test`                                      | Run`cargo test --no-run` as verification step   |
-| Removing code behind`#[cfg(feature)]`              | Breaks feature-gated builds                               | Check`Cargo.toml` `[features]` section first  |
+| Removing`#[cfg(test)]` code                        | Breaks`cargo test`                                        | Run`cargo test --no-run` as verification step   |
+| Removing code behind`#[cfg(feature)]`              | Breaks feature-gated builds                               | Check`Cargo.toml` `[features]` section first    |
 | Ignoring glob imports (`use super::*`)             | File appears unused but is imported via glob              | Check parent module for`*` imports              |
-| Ignoring proc macro / derive references              | File is referenced via macro expansion, invisible to grep | Check`#[derive(...)]` and proc macro crates     |
-| Skipping git snapshot                                | Cannot rollback if cleanup breaks something               | Step 0 is non-negotiable                          |
-| Batch-removing "Maybe Unused" items                  | Glob imports or macros may reference them                 | Require manual review + explicit approval         |
-| Removing`#[allow(dead_code)]` items without asking | Developer had a reason to mark it                         | Investigate git blame / ask author                |
+| Ignoring proc macro / derive references            | File is referenced via macro expansion, invisible to grep | Check`#[derive(...)]` and proc macro crates     |
+| Skipping git snapshot                              | Cannot rollback if cleanup breaks something               | Step 0 is non-negotiable                        |
+| Batch-removing "Maybe Unused" items                | Glob imports or macros may reference them                 | Require manual review + explicit approval       |
+| Removing`#[allow(dead_code)]` items without asking | Developer had a reason to mark it                         | Investigate git blame / ask author              |
 
 ---
 

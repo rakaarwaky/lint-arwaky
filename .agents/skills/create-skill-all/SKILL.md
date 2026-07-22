@@ -2,17 +2,19 @@
 name: create-skill-all
 description: Guides creation of effective SKILL.md files following agent skill best practices. Use when the user asks to create, write, structure, improve, or validate a Skill, SKILL.md file, or agent skill instructions.
 metadata:
-    tags: [skill, agent, authoring, skill-writing, skill-creation, skill-validation]
-    triggers:
-        - "create skill"
-        - "write skill"
-        - "improve skill"
-        - "validate skill"
-        - "check skill"
-        - "audit skill"
-    dependencies: []
-    related: []
+  tags:
+    [skill, agent, authoring, skill-writing, skill-creation, skill-validation]
+  triggers:
+    - "create skill"
+    - "write skill"
+    - "improve skill"
+    - "validate skill"
+    - "check skill"
+    - "audit skill"
+  dependencies: []
+  related: []
 ---
+
 # Authoring Skills
 
 ## Quick start
@@ -43,11 +45,11 @@ description: What it does and when to use it. Third person. Include trigger term
 
 Only these keys pass validation. Any other key causes upload failure.
 
-| Field           | Required | Constraints                                                                                                                                         |
-| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field         | Required | Constraints                                                                                                                                 |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`        | Yes      | Max 64 chars. Lowercase`a-z`, `0-9`, `-` only. No leading/trailing hyphen. No `--`. No XML tags. No reserved words ("anthropic", "claude"). |
-| `description` | Yes      | Max 1,024 chars. Non-empty. No`<` or `>` characters. No XML tags.                                                                               |
-| `metadata`    | yes      | Arbitrary key-value pairs for your own tracking.                                                                                                    |
+| `description` | Yes      | Max 1,024 chars. Non-empty. No`<` or `>` characters. No XML tags.                                                                           |
+| `metadata`    | yes      | Arbitrary key-value pairs for your own tracking.                                                                                            |
 
 ### Naming
 

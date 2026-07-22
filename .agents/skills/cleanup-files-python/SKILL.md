@@ -2,23 +2,36 @@
 name: cleanup-files-python
 description: "Find and remove dead code, unused files, stubs, thin wrappers, and duplicates across Python packages to reduce bloat and improve signal-to-noise ratio."
 metadata:
-    tags: [python, cleanup, bloat, stubs, thin-wrappers, dead-code, orphan, unused-files, ruff, vulture, black]
-    triggers:
-        - "cleanup python"
-        - "clean bloat python"
-        - "fix formatting python"
-        - "remove unused imports python"
-        - "remove stubs python"
-        - "remove thin wrappers python"
-        - "find unused files python"
-        - "find dead code python"
-        - "remove dead code python"
-        - "cleanup module python"
-        - "pep8 python"
-    dependencies: []
-    related:
-        - add-docs-python
-        - consolidate-files-python
+  tags:
+    [
+      python,
+      cleanup,
+      bloat,
+      stubs,
+      thin-wrappers,
+      dead-code,
+      orphan,
+      unused-files,
+      ruff,
+      vulture,
+      black,
+    ]
+  triggers:
+    - "cleanup python"
+    - "clean bloat python"
+    - "fix formatting python"
+    - "remove unused imports python"
+    - "remove stubs python"
+    - "remove thin wrappers python"
+    - "find unused files python"
+    - "find dead code python"
+    - "remove dead code python"
+    - "cleanup module python"
+    - "pep8 python"
+  dependencies: []
+  related:
+    - add-docs-python
+    - consolidate-files-python
 ---
 
 # cleanup-python
@@ -67,20 +80,20 @@ Before keeping any function, class, or file, ask:
 
 > **"Why does this function/class/file need to exist?"**
 
-| Answer                                                                   | Verdict                                          |
-| ------------------------------------------------------------------------ | ------------------------------------------------ |
-| "Because it was always there"                                            | **REMOVE**                                 |
-| "Because it might be useful someday"                                     | **REMOVE**                                 |
-| "Because it handles edge cases we don't have"                            | **REMOVE**                                 |
-| "Because it's required by FRD"                                           | **KEEP**                                   |
-| "Because it's called by a method required by FRD"                        | **KEEP**                                   |
-| "Because it's registered via decorator (route, fixture, task, signal)"   | **KEEP**                                   |
+| Answer                                                                 | Verdict                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------ |
+| "Because it was always there"                                          | **REMOVE**                                 |
+| "Because it might be useful someday"                                   | **REMOVE**                                 |
+| "Because it handles edge cases we don't have"                          | **REMOVE**                                 |
+| "Because it's required by FRD"                                         | **KEEP**                                   |
+| "Because it's called by a method required by FRD"                      | **KEEP**                                   |
+| "Because it's registered via decorator (route, fixture, task, signal)" | **KEEP**                                   |
 | "Because it's in`__all__` and consumed by downstream packages"         | **KEEP**                                   |
 | "Because it's behind`if TYPE_CHECKING:` for type annotations"          | **KEEP**                                   |
 | "Because it's a`try/except ImportError` fallback for optional dep"     | **KEEP** (unless dep is confirmed removed) |
 | "Because`importlib` loads it dynamically at runtime"                   | **KEEP**                                   |
-| "Because`conftest.py` or `pyproject.toml` entry_points reference it" | **KEEP**                                   |
-| "Because it's a Protocol / ABC that defines a contract"                  | **KEEP**                                   |
+| "Because`conftest.py` or `pyproject.toml` entry_points reference it"   | **KEEP**                                   |
+| "Because it's a Protocol / ABC that defines a contract"                | **KEEP**                                   |
 
 ---
 
@@ -248,23 +261,23 @@ import sys
 
 ## Exceptions (NEVER Remove Without Explicit Approval)
 
-| File / Pattern                                                                       | Reason                                                                     |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `__init__.py`                                                                      | Package marker (may be empty by design)                                    |
-| `__main__.py`                                                                      | Entry point for`python -m package`                                       |
-| `conftest.py`                                                                      | pytest fixture discovery (not imported directly)                           |
-| `setup.py` / `pyproject.toml`                                                    | Build / packaging config                                                   |
-| `py.typed`                                                                         | PEP 561 marker for typed packages                                          |
-| Protocol / ABC classes                                                               | Define contracts for subclasses                                            |
-| `if TYPE_CHECKING:` imports                                                        | Used by type checkers, invisible at runtime                                |
-| `try/except ImportError` blocks                                                    | Optional dependency fallbacks                                              |
-| Decorator-registered functions                                                       | `@app.route`, `@pytest.fixture`, `@celery.task`, `@receiver`, etc. |
-| `importlib`-loaded modules                                                         | Dynamically imported at runtime                                            |
-| `# noqa` / `# type: ignore` items                                                | Developer explicitly suppressed — investigate intent                      |
-| `# pragma: no cover` items                                                         | Intentionally excluded from coverage — investigate why                    |
-| Entry points in`pyproject.toml` `[project.scripts]` / `[project.entry-points]` | Referenced by packaging, not by Python imports                             |
-| Migration files (Django, Alembic)                                                    | Must be preserved for migration history                                    |
-| `__version__`, `__author__` dunder assignments                                   | May be read by packaging tools                                             |
+| File / Pattern                                                                 | Reason                                                             |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `__init__.py`                                                                  | Package marker (may be empty by design)                            |
+| `__main__.py`                                                                  | Entry point for`python -m package`                                 |
+| `conftest.py`                                                                  | pytest fixture discovery (not imported directly)                   |
+| `setup.py` / `pyproject.toml`                                                  | Build / packaging config                                           |
+| `py.typed`                                                                     | PEP 561 marker for typed packages                                  |
+| Protocol / ABC classes                                                         | Define contracts for subclasses                                    |
+| `if TYPE_CHECKING:` imports                                                    | Used by type checkers, invisible at runtime                        |
+| `try/except ImportError` blocks                                                | Optional dependency fallbacks                                      |
+| Decorator-registered functions                                                 | `@app.route`, `@pytest.fixture`, `@celery.task`, `@receiver`, etc. |
+| `importlib`-loaded modules                                                     | Dynamically imported at runtime                                    |
+| `# noqa` / `# type: ignore` items                                              | Developer explicitly suppressed — investigate intent               |
+| `# pragma: no cover` items                                                     | Intentionally excluded from coverage — investigate why             |
+| Entry points in`pyproject.toml` `[project.scripts]` / `[project.entry-points]` | Referenced by packaging, not by Python imports                     |
+| Migration files (Django, Alembic)                                              | Must be preserved for migration history                            |
+| `__version__`, `__author__` dunder assignments                                 | May be read by packaging tools                                     |
 
 ---
 
@@ -413,22 +426,22 @@ grep -rnB1 "^\s*def " "$PKG_DIR" --include="*.py" | \
 
 For each flagged item, apply **The Fundamental Question**. Categorize findings:
 
-| Category                             | What It Is                                                             | Action                             | Confidence       |
-| ------------------------------------ | ---------------------------------------------------------------------- | ---------------------------------- | ---------------- |
-| **Stubs**                      | `pass`, `...`, empty return, `NotImplementedError` (no subclass) | Remove                             | High             |
-| **Thin Wrappers**              | Single`return self.x`, trivial passthrough                           | Remove (unless API/ABC/property)   | High             |
-| **Duplicates**                 | Same logic in multiple files                                           | Keep in owning module, remove rest | High             |
-| **Overengineered**             | Patterns failing 3-point test                                          | Remove                             | Medium — verify |
-| **Unused Imports**             | `import X` never referenced                                          | Remove (ruff --fix)                | High             |
-| **Unused Variables**           | Assigned but never read                                                | Remove or rename to`_`           | High             |
-| **Commented Code**             | `# def old_func():` blocks                                           | Remove                             | High             |
-| **Unused Files**               | 0 inbound refs (all patterns checked)                                  | Delete                             | High             |
-| **Re-export Only**             | `__init__.py` with only passthrough imports                          | Consolidate                        | Medium           |
-| **Maybe Unused**               | 0 direct refs but string/dynamic reference possible                    | Manual review                      | Low — verify    |
-| **`# noqa` items**           | Lint explicitly suppressed                                             | Investigate intent                 | Low — ask       |
-| **Decorator-registered**       | `@app.route`, `@pytest.fixture`, etc.                              | **KEEP**                     | N/A              |
-| **`TYPE_CHECKING` imports**  | Type-checker-only imports                                              | **KEEP**                     | N/A              |
-| **`try/except ImportError`** | Optional dep fallbacks                                                 | **KEEP** unless dep removed  | N/A              |
+| Category                     | What It Is                                                       | Action                             | Confidence      |
+| ---------------------------- | ---------------------------------------------------------------- | ---------------------------------- | --------------- |
+| **Stubs**                    | `pass`, `...`, empty return, `NotImplementedError` (no subclass) | Remove                             | High            |
+| **Thin Wrappers**            | Single`return self.x`, trivial passthrough                       | Remove (unless API/ABC/property)   | High            |
+| **Duplicates**               | Same logic in multiple files                                     | Keep in owning module, remove rest | High            |
+| **Overengineered**           | Patterns failing 3-point test                                    | Remove                             | Medium — verify |
+| **Unused Imports**           | `import X` never referenced                                      | Remove (ruff --fix)                | High            |
+| **Unused Variables**         | Assigned but never read                                          | Remove or rename to`_`             | High            |
+| **Commented Code**           | `# def old_func():` blocks                                       | Remove                             | High            |
+| **Unused Files**             | 0 inbound refs (all patterns checked)                            | Delete                             | High            |
+| **Re-export Only**           | `__init__.py` with only passthrough imports                      | Consolidate                        | Medium          |
+| **Maybe Unused**             | 0 direct refs but string/dynamic reference possible              | Manual review                      | Low — verify    |
+| **`# noqa` items**           | Lint explicitly suppressed                                       | Investigate intent                 | Low — ask       |
+| **Decorator-registered**     | `@app.route`, `@pytest.fixture`, etc.                            | **KEEP**                           | N/A             |
+| **`TYPE_CHECKING` imports**  | Type-checker-only imports                                        | **KEEP**                           | N/A             |
+| **`try/except ImportError`** | Optional dep fallbacks                                           | **KEEP** unless dep removed        | N/A             |
 
 ### Step 6: Report
 
@@ -438,6 +451,7 @@ Generate a per-file report:
 ## Cleanup Report: <package>
 
 ### Summary
+
 - Files scanned: X
 - Functions/classes analyzed: Y
 - Items flagged for removal: Z
@@ -447,30 +461,35 @@ Generate a per-file report:
 ### Per-File Findings
 
 #### `services/processor.py`
-| Item | Type | Lines | Verdict | Reason |
-|---|---|---|---|---|
-| `get_name()` | Thin wrapper | 2 | REMOVE | Direct `self.name` access |
-| `clamp()` | Duplicate | 3 | REMOVE | Owned by `utils/helpers.py` |
-| `process()` | Real logic | 22 | KEEP | Required by FRD-012 |
-| `import pandas` | Unused import | 1 | REMOVE | Never referenced |
-| `# def old_transform():` | Commented code | 8 | REMOVE | Dead comment block |
+
+| Item                     | Type           | Lines | Verdict | Reason                      |
+| ------------------------ | -------------- | ----- | ------- | --------------------------- |
+| `get_name()`             | Thin wrapper   | 2     | REMOVE  | Direct `self.name` access   |
+| `clamp()`                | Duplicate      | 3     | REMOVE  | Owned by `utils/helpers.py` |
+| `process()`              | Real logic     | 22    | KEEP    | Required by FRD-012         |
+| `import pandas`          | Unused import  | 1     | REMOVE  | Never referenced            |
+| `# def old_transform():` | Commented code | 8     | REMOVE  | Dead comment block          |
 
 #### `orphan_feature.py`
-| Item | Type | Lines | Verdict | Reason |
-|---|---|---|---|---|
-| Entire file | Unused file | 87 | DELETE | 0 inbound refs, not in entry_points, not in tests |
+
+| Item        | Type        | Lines | Verdict | Reason                                            |
+| ----------- | ----------- | ----- | ------- | ------------------------------------------------- |
+| Entire file | Unused file | 87    | DELETE  | 0 inbound refs, not in entry_points, not in tests |
 
 #### `services/api_routes.py`
-| Item | Type | Lines | Verdict | Reason |
-|---|---|---|---|---|
-| `@app.route("/health")` | Decorator-registered | 5 | KEEP | Flask route — not dead code |
+
+| Item                    | Type                 | Lines | Verdict | Reason                      |
+| ----------------------- | -------------------- | ----- | ------- | --------------------------- |
+| `@app.route("/health")` | Decorator-registered | 5     | KEEP    | Flask route — not dead code |
 
 ### Items Requiring Manual Review
+
 - `utils/legacy.py` — `# noqa` on 3 items. Developer intent unclear.
 - `plugins/experimental.py` — Loaded via `importlib` in config-driven path. Verify if config still active.
 - `compat/py38_shim.py` — `try/except ImportError` fallback. Is Python 3.8 still supported?
 
 ### Formatting Fixes (auto-applied by ruff/black)
+
 - 14 unused imports removed
 - 6 import order violations fixed
 - 23 lines exceeding 88 chars reformatted
@@ -630,24 +649,24 @@ git reset --hard HEAD~1                      # nuclear option
 
 ## Common Mistakes (AVOID)
 
-| Mistake                                        | Why It's Dangerous                                     | Prevention                                                  |
-| ---------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
-| Removing real MVP logic                        | Breaks required functionality                          | Fundamental Question + FRD cross-reference                  |
-| Removing decorator-registered functions        | Breaks routes, fixtures, tasks, signal handlers        | Grep for decorators before removing any function            |
-| Removing`if TYPE_CHECKING:` imports          | Breaks mypy/pyright type checking                      | Exception list; never auto-remove                           |
-| Removing`try/except ImportError` fallbacks   | Breaks optional dependency support                     | Check`pyproject.toml` `[project.optional-dependencies]` |
-| Forgetting to update`__all__`                | `from pkg import *` breaks; public API inconsistency | Always edit`__all__` when removing exports                |
-| Forgetting to update`__init__.py`            | `ImportError` at runtime                             | Always edit`__init__.py` when deleting modules            |
-| Deleting`conftest.py`                        | Breaks all pytest fixtures in that directory           | Exception list; never auto-remove                           |
-| Deleting migration files                       | Breaks migration history (Django/Alembic)              | Exception list; never auto-remove                           |
-| Removing`# noqa` items without investigating | Developer suppressed a false positive intentionally    | Investigate git blame / ask author                          |
-| Removing`importlib`-loaded modules           | Runtime`ModuleNotFoundError`                         | Check for`import_module()` string references              |
-| Skipping`--all` / full test run              | Misses breakage in conditional code paths              | Run`pytest` full suite, not just changed files            |
-| Batch-removing "Maybe Unused" items            | Dynamic imports or string refs may reference them      | Require manual review + explicit approval                   |
-| Keeping commented-out code "for reference"     | Noise; git history preserves old code                  | Remove; use`git log` to recover if needed                 |
-| Mixing import groups                           | PEP 8 / isort violation                                | ruff`--select I --fix` handles automatically              |
-| Ignoring line length                           | Black reformats unexpectedly in CI                     | Run`black` as part of cleanup, not just check             |
-| Skipping git snapshot                          | Cannot rollback if cleanup breaks something            | Step 0 is non-negotiable                                    |
+| Mistake                                      | Why It's Dangerous                                   | Prevention                                              |
+| -------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| Removing real MVP logic                      | Breaks required functionality                        | Fundamental Question + FRD cross-reference              |
+| Removing decorator-registered functions      | Breaks routes, fixtures, tasks, signal handlers      | Grep for decorators before removing any function        |
+| Removing`if TYPE_CHECKING:` imports          | Breaks mypy/pyright type checking                    | Exception list; never auto-remove                       |
+| Removing`try/except ImportError` fallbacks   | Breaks optional dependency support                   | Check`pyproject.toml` `[project.optional-dependencies]` |
+| Forgetting to update`__all__`                | `from pkg import *` breaks; public API inconsistency | Always edit`__all__` when removing exports              |
+| Forgetting to update`__init__.py`            | `ImportError` at runtime                             | Always edit`__init__.py` when deleting modules          |
+| Deleting`conftest.py`                        | Breaks all pytest fixtures in that directory         | Exception list; never auto-remove                       |
+| Deleting migration files                     | Breaks migration history (Django/Alembic)            | Exception list; never auto-remove                       |
+| Removing`# noqa` items without investigating | Developer suppressed a false positive intentionally  | Investigate git blame / ask author                      |
+| Removing`importlib`-loaded modules           | Runtime`ModuleNotFoundError`                         | Check for`import_module()` string references            |
+| Skipping`--all` / full test run              | Misses breakage in conditional code paths            | Run`pytest` full suite, not just changed files          |
+| Batch-removing "Maybe Unused" items          | Dynamic imports or string refs may reference them    | Require manual review + explicit approval               |
+| Keeping commented-out code "for reference"   | Noise; git history preserves old code                | Remove; use`git log` to recover if needed               |
+| Mixing import groups                         | PEP 8 / isort violation                              | ruff`--select I --fix` handles automatically            |
+| Ignoring line length                         | Black reformats unexpectedly in CI                   | Run`black` as part of cleanup, not just check           |
+| Skipping git snapshot                        | Cannot rollback if cleanup breaks something          | Step 0 is non-negotiable                                |
 
 ---
 
@@ -708,12 +727,12 @@ This is the **default mode** for first-time runs on a package.
 
 ## Tool Reference
 
-| Tool                      | Replaces                                                | Purpose                                                                |
-| ------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Tool                    | Replaces                                                | Purpose                                                                |
+| ----------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `ruff`                  | flake8, isort, pycodestyle, pycln, pyupgrade, autoflake | Lint, import sorting, unused import removal, PEP 8                     |
 | `black`                 | autopep8, yapf                                          | Code formatting (line length, spacing, quotes)                         |
 | `vulture`               | (no equivalent)                                         | Dead code detection (unused functions, classes, variables, attributes) |
-| `mypy` / `pyright`    | (no equivalent)                                         | Type checking; reveals unreachable code, unused`# type: ignore`      |
+| `mypy` / `pyright`      | (no equivalent)                                         | Type checking; reveals unreachable code, unused`# type: ignore`        |
 | `pytest --collect-only` | (no equivalent)                                         | Verifies all test files can be imported (catches broken refs)          |
 | `coverage`              | (no equivalent)                                         | Identifies code never executed (supplement to vulture)                 |
 
@@ -744,8 +763,8 @@ warn_unreachable = true
 
 ## Integration with Related Skills
 
-| Skill                             | Relationship                                                 |
-| --------------------------------- | ------------------------------------------------------------ |
+| Skill                           | Relationship                                                 |
+| ------------------------------- | ------------------------------------------------------------ |
 | `add-docs-python`               | Run AFTER cleanup to document remaining public API           |
 | `consolidate-files-python`      | Run AFTER cleanup to merge remaining small modules if needed |
 | `module_logic_validator-python` | Run AFTER cleanup to validate remaining logic is correct     |

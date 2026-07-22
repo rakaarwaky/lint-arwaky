@@ -18,35 +18,43 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Release Manager
 
 ## Summary
+
 {{One-paragraph overview of release readiness and key findings.}}
 
 ## Findings by Category
 
 ### Release Process & Readiness
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Versioning Consistency
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Rollback Procedures
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Documentation & Communication
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Risk Assessment Table
+
 | Risk | Likelihood | Impact | Mitigation Strategy |
-|------|------------|--------|--------------------|
+| ---- | ---------- | ------ | ------------------- |
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Release blocker, rollback failure, version conflict
 - 🟡 **WARNING** — Documentation gap, process inefficiency
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

@@ -2,15 +2,15 @@
 name: create-test-rust
 description: "Create comprehensive test suites for Rust crates following project testing standards."
 metadata:
-    tags: [rust, testing, contract, unit, integration, aes]
-    triggers:
-        - "create tests rust"
-        - "add tests rust"
-        - "create test suite rust"
-        - "crate tests rust"
-    dependencies: []
-    related:
-        - module_logic_validator
+  tags: [rust, testing, contract, unit, integration, aes]
+  triggers:
+    - "create tests rust"
+    - "add tests rust"
+    - "create test suite rust"
+    - "crate tests rust"
+  dependencies: []
+  related:
+    - module_logic_validator
 ---
 
 # create-crate-test-suite-rust

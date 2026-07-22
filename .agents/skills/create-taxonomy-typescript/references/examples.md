@@ -33,7 +33,7 @@ Taxonomy must not import from layers.
 
 ```typescript
 export function isPortTraitName(name: string): boolean {
-    return name.endsWith('Port');
+  return name.endsWith("Port");
 }
 ```
 

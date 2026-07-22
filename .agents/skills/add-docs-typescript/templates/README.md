@@ -33,11 +33,11 @@ packages/
 
 ## Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development |
+| Command         | Description          |
+| --------------- | -------------------- |
+| `npm run dev`   | Start development    |
 | `npm run build` | Build for production |
-| `npm test` | Run tests |
+| `npm test`      | Run tests            |
 
 ## Configuration
 

@@ -2,10 +2,10 @@
 
 ## Allowed Imports
 
-| Contract File               | May Import From                          |
-| --------------------------- | ---------------------------------------- |
-| `contract_*_protocol.py`  | taxonomy types, other contract types     |
-| `contract_*_aggregate.py` | taxonomy types, other contract types     |
+| Contract File             | May Import From                      |
+| ------------------------- | ------------------------------------ |
+| `contract_*_protocol.py`  | taxonomy types, other contract types |
+| `contract_*_aggregate.py` | taxonomy types, other contract types |
 
 ## Forbidden Imports
 

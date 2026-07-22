@@ -7,7 +7,7 @@ Capabilities error handling must be explicit.
 Forbidden:
 
 ```typescript
-const value = result ?? '';
+const value = result ?? "";
 ```
 
 Forbidden:

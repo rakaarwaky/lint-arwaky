@@ -25,16 +25,16 @@ JSDoc comments provide API documentation visible in IDEs and generated docs.
  * One-liner describing class purpose.
  */
 class MyClass {
-    /**
-     * One-liner describing method purpose.
-     * @param param1 - Description of param1
-     * @param param2 - Description of param2
-     * @returns Description of return value
-     * @throws ErrorType - When error condition occurs
-     */
-    myMethod(param1: string, param2: number): boolean {
-        // ...
-    }
+  /**
+   * One-liner describing method purpose.
+   * @param param1 - Description of param1
+   * @param param2 - Description of param2
+   * @returns Description of return value
+   * @throws ErrorType - When error condition occurs
+   */
+  myMethod(param1: string, param2: number): boolean {
+    // ...
+  }
 }
 ```
 

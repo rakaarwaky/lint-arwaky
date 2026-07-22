@@ -16,7 +16,11 @@ pub struct CliMainEntry {}
 fn main() -> ExitCode {
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
-        return surface_check_action::handle_default_check(".");
+        let container = CliContainer::new_default();
+        return surface_check_action::handle_default_check(
+            ".",
+            container.code_analysis_linter.clone(),
+        );
     }
 
     let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {

@@ -2,19 +2,20 @@
 name: add-docs-rust
 description: "Add proper doc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to Rust crates following project conventions."
 metadata:
-    tags: [rust, docs, doc-comments, prd, frd, readme]
-    triggers:
-        - "add docs rust"
-        - "add crate readme rust"
-        - "add prd rust"
-        - "add frd rust"
-        - "add doc comments rust"
-        - "document public api rust"
-    dependencies: []
-    related:
-        - lint-arwaky-rust
-        - cleanup-files-rust
+  tags: [rust, docs, doc-comments, prd, frd, readme]
+  triggers:
+    - "add docs rust"
+    - "add crate readme rust"
+    - "add prd rust"
+    - "add frd rust"
+    - "add doc comments rust"
+    - "document public api rust"
+  dependencies: []
+  related:
+    - lint-arwaky-rust
+    - cleanup-files-rust
 ---
+
 # add-docs-rust
 
 ## Rules
@@ -61,11 +62,11 @@ If no -> **Add README.md (how to use).**
 
 ## Document Audience Matrix
 
-| Document  | Audience                     | Focus                  | Length    |
-| --------- | ---------------------------- | ---------------------- | --------- |
-| PRD.md    | Stakeholder, PM, Design, Eng | *What* & *Why*     | 1-2 pages |
-| FRD.md    | Engineer, QA, Tech Lead      | *How* (functionally) | 2-5 pages |
-| README.md | Developer (new/existing)     | *How to use/run*     | 1-2 pages |
+| Document  | Audience                     | Focus                | Length    |
+| --------- | ---------------------------- | -------------------- | --------- |
+| PRD.md    | Stakeholder, PM, Design, Eng | _What_ & _Why_       | 1-2 pages |
+| FRD.md    | Engineer, QA, Tech Lead      | _How_ (functionally) | 2-5 pages |
+| README.md | Developer (new/existing)     | _How to use/run_     | 1-2 pages |
 
 ## Detection Patterns
 
@@ -112,34 +113,46 @@ pub struct ImportOrchestrator {
 > Audience: Stakeholders, PM, Design, Engineering leads.
 
 ## Problem Statement
+
 <One paragraph: what problem does this crate solve?>
 
 ## Goals & Success Metrics
+
 - Goal 1: <measurable outcome>
 - Goal 2: <measurable outcome>
 
 ## User Personas
+
 - **Persona 1**: <who they are, what they need>
 - **Persona 2**: <...>
 
 ## Scope
+
 - In scope: <...>
 - Out of scope: <...>
 
 ## Feature Requirements (Prioritized)
+
 ### P0 — Must Have
+
 - [ ] <feature with acceptance criteria>
+
 ### P1 — Should Have
+
 - [ ] <feature with acceptance criteria>
+
 ### P2 — Nice to Have
+
 - [ ] <feature with acceptance criteria>
 
 ## Non-functional Requirements (High-level)
+
 - Performance: <...>
 - Security: <...>
 - Scalability: <...>
 
 ## Open Questions / Risks
+
 - <question or risk>
 ```
 
@@ -152,14 +165,17 @@ pub struct ImportOrchestrator {
 > Audience: Engineers, QA, Tech Lead.
 
 ## Reference
+
 - PRD: <link to PRD.md>
 
 ## System Overview
+
 <Architecture diagram or high-level description>
 
 ## Functional Requirements
 
 ### FR-001: <Feature Name>
+
 - **Description**: <what it does>
 - **Input**: <input data>
 - **Output**: <output data>
@@ -168,53 +184,64 @@ pub struct ImportOrchestrator {
 - **Error Handling**: <error scenarios>
 
 ### FR-002: <Feature Name>
+
 - ...
 
 ## Data Model / Entity Relationship
+
 <Entity diagram or data structure definitions>
 
 ## API Contract
+
 | Endpoint | Method | Payload | Response |
-|----------|--------|---------|----------|
-| `/path` | GET | - | `{...}` |
+| -------- | ------ | ------- | -------- |
+| `/path`  | GET    | -       | `{...}`  |
 
 ## Integration Points
+
 - **3rd Party**: <service name, purpose>
 - **Internal**: <service name, purpose>
 
 ## Non-functional Requirements (Detailed)
+
 - Performance: <response time, throughput>
 - Security: <auth, encryption, compliance>
 - SLA: <availability, uptime>
 
 ## Test Scenarios / QA Checklist
+
 - [ ] <test scenario with expected result>
 
 ## Assumptions & Constraints
+
 - <assumption or constraint>
 
 ## Glossary
+
 - **Term**: <definition>
 ```
 
 ## README.md Template (DEVELOPER ONBOARDING — how to use)
 
-```markdown
+````markdown
 # <crate-name>
 
 > One-liner: what this crate does and who it's for.
 
 ## Prerequisites
+
 - Rust 1.70+
 - <other dependencies>
 
 ## Quick Start
+
 ```bash
 git clone ...
 cd crates/<name>
 cargo build
 cargo run
 ```
+````
 
 ## Architecture
 
@@ -231,8 +258,8 @@ src/
 
 ## Available Commands
 
-| Command         | Description     |
-| --------------- | --------------- |
+| Command       | Description     |
+| ------------- | --------------- |
 | `cargo build` | Build the crate |
 | `cargo test`  | Run tests       |
 | `cargo run`   | Run the binary  |
@@ -314,7 +341,7 @@ For each public struct and method:
 3. Add explanation if >10 lines of logic
 4. Add `# Example` block if applicable
 
-```rust
+````rust
 /// Taxonomy value objects for import rules.
 
 /// Value object representing an import rule with pattern and message.
@@ -346,7 +373,7 @@ pub struct ImportRuleVO {
 pub fn check(&self, path: &str) -> Result<bool, Error> {
     // ...
 }
-```
+````
 
 ### Step 6: Add Type Annotations
 

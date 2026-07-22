@@ -194,14 +194,7 @@ architecture:
     AES201:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions:
         [
           "index.ts",
@@ -222,77 +215,41 @@ architecture:
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "taxonomy(entity,error,event)"
           allowed: ["taxonomy"]
           mandatory: ["taxonomy(vo|constant)"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "taxonomy(constant)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "utility"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "capabilities",
-              "root",
-            ]
+          forbidden: ["agent", "surfaces", "contract", "capabilities", "root"]
 
         - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "capabilities",
-              "contract(aggregate)",
-              "root",
-            ]
+            ["agent", "surfaces", "capabilities", "contract(aggregate)", "root"]
 
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["agent", "surfaces", "capabilities", "root"]
+          forbidden: ["agent", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden:
-            ["surfaces", "agent", "capabilities", "root"]
+          forbidden: ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -303,25 +260,14 @@ architecture:
 
         - scope: "agent(orchestrator)"
           allowed:
-            [
-              "taxonomy",
-              "contract(aggregate)",
-              "contract(protocol)",
-              "utility",
-            ]
+            ["taxonomy", "contract(aggregate)", "contract(protocol)", "utility"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["surfaces", "capabilities", "root"]
 
         - scope: "surfaces(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)", "utility"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "capabilities",
-              "contract(protocol)",
-              "root",
-            ]
+          forbidden: ["agent", "capabilities", "contract(protocol)", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -357,14 +303,7 @@ architecture:
     AES202:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions:
         [
           "index.ts",
@@ -384,8 +323,7 @@ architecture:
         - scope: "capabilities"
           allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden:
-            ["surfaces", "agent", "capabilities", "root"]
+          forbidden: ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -397,51 +335,23 @@ architecture:
     AES203:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
 
     AES204:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: []
 
     AES205:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
 
     AES301:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       max_lines: 1000
       exceptions:
         [
@@ -462,14 +372,7 @@ architecture:
     AES302:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       min_lines: 5
       exceptions:
         [
@@ -490,28 +393,14 @@ architecture:
     AES303:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
 
     AES304:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       forbidden_bypass:
         [
           "// @ts-ignore",
@@ -527,14 +416,7 @@ architecture:
     AES305:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: []
 
     AES401:

@@ -5,9 +5,11 @@ This document contains the source code for `crates/code-analysis/src/capabilitie
 ## File List
 
 **Selected file:**
+
 - [crates/code-analysis/src/capabilities_mandatory_definition_checker.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/code-analysis/src/capabilities_mandatory_definition_checker.rs)
 
 **Dependencies & related docs:**
+
 - [.agents/skills/create-capabilities-rust/SKILL.md](file:///home/raka/mcp-arwaky/lint-arwaky/.agents/skills/create-capabilities-rust/SKILL.md)
 - [.agents/skills/create-capabilities-rust/references/3-block-structure.md](file:///home/raka/mcp-arwaky/lint-arwaky/.agents/skills/create-capabilities-rust/references/3-block-structure.md)
 - [.agents/skills/create-capabilities-rust/references/checklist.md](file:///home/raka/mcp-arwaky/lint-arwaky/.agents/skills/create-capabilities-rust/references/checklist.md)
@@ -309,25 +311,36 @@ impl MandatoryDefinitionChecker {
 
 ## File: .agents/skills/create-capabilities-rust/SKILL.md
 
-```markdown
+````markdown
 ---
 name: create-capabilities-rust
 description: "Create and validate Rust capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-    tags: [rust, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
-    triggers:
-        - "create capability rust"
-        - "add capability rust"
-        - "fix capability structure rust"
-        - "create trait rust"
-        - "capability missing trait rust"
-        - "check capabilities rust"
-        - "audit capabilities rust"
-    dependencies: []
-    related:
-        - create-agent-rust
-        - create-contract-rust
-        - create-taxonomy-rust
+  tags:
+    [
+      rust,
+      aes,
+      capability,
+      protocol,
+      structure,
+      3-block-structure,
+      di,
+      vo,
+      role-naming,
+    ]
+  triggers:
+    - "create capability rust"
+    - "add capability rust"
+    - "fix capability structure rust"
+    - "create trait rust"
+    - "capability missing trait rust"
+    - "check capabilities rust"
+    - "audit capabilities rust"
+  dependencies: []
+  related:
+    - create-agent-rust
+    - create-contract-rust
+    - create-taxonomy-rust
 ---
 
 # create-capabilities-rust
@@ -402,26 +415,26 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 
 Read these files for detailed rules:
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules |
-| `references/error-handling.md` | Error handling rules with examples |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                | Content                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `references/layer-boundaries.md`    | Allowed/Forbidden imports and dependencies             |
+| `references/3-block-structure.md`   | Block 1/2/3 definitions, method placement rules        |
+| `references/helper-vs-utility.md`   | Helper vs utility decision, I/O Blocker, decision tree |
+| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules          |
+| `references/error-handling.md`      | Error handling rules with examples                     |
+| `references/examples.md`            | All BAD/GOOD code examples                             |
+| `references/commands.md`            | Quick heuristic check commands                         |
+| `references/checklist.md`           | Verification checklist                                 |
 
 ## Templates
 
 Use these templates when creating new files:
 
-| File | Purpose |
-|------|---------|
-| `templates/capabilities_name.rs` | New capabilities implementation file |
-| `templates/contract_name_protocol.rs` | New protocol trait definition |
-| `templates/mod.rs` | Module registration |
+| File                                  | Purpose                              |
+| ------------------------------------- | ------------------------------------ |
+| `templates/capabilities_name.rs`      | New capabilities implementation file |
+| `templates/contract_name_protocol.rs` | New protocol trait definition        |
+| `templates/mod.rs`                    | Module registration                  |
 
 ## Workflow
 
@@ -461,17 +474,19 @@ See `references/error-handling.md` and `references/primitive-vo-policy.md`.
 
 ### Step 9: Verify Compilation
 
-``` `bash
-cargo check -p <crate-name>
-``` `
+`` `bash
+cargo check -p <crate-name> `` `
 
 ## Quick Commands
 
 ``` `bash
+
 # Check forbidden imports (no agent, no other capabilities)
+
 rg "^\s*use\s+.*(agent_|capabilities_)" crates/<crate>/src/capabilities_*.rs
 
 # List protocol trait implementations
+
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 ``` `
 
@@ -489,13 +504,13 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 - Silent error swallowing with `unwrap_or_default()`.
 - Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.rs`).
 - Not delegating low-level technical operations to Utility.
-```
+````
 
 ---
 
 ## File: .agents/skills/create-capabilities-rust/references/3-block-structure.md
 
-```markdown
+````markdown
 # The 3-Block Structure
 
 Every implementation file MUST follow this order with mandatory block markers:
@@ -506,41 +521,36 @@ Every implementation file MUST follow this order with mandatory block markers:
 
 Each block MUST be preceded by a block marker comment:
 
-``` `rust
-// ─── Block 1: Struct Definition ───────────────────────────
-``` `
+`` `rust
+// ─── Block 1: Struct Definition ─────────────────────────── `` `
 
-``` `rust
-// ─── Block 2: Protocol Trait Implementation ───────────────
-``` `
+`` `rust
+// ─── Block 2: Protocol Trait Implementation ─────────────── `` `
 
-``` `rust
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-``` `
+`` `rust
+// ─── Block 3: Constructors, Helpers, Private Methods ────── `` `
 
 ## Block 1 — Struct Definition
 
-``` `rust
+`` `rust
 // ─── Block 1: Struct Definition ───────────────────────────
-pub struct Capabilities<NameCapability>;
-``` `
+pub struct Capabilities<NameCapability>; `` `
 
 Or with dependencies:
 
-``` `rust
+`` `rust
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct Capabilities<NameCapability> {
     collaborator: Arc<dyn I<NameCollaborator>Protocol>,
     store: Arc<dyn I<NameStore>Protocol>,
     policy: <NamePolicy>VO,
-}
-``` `
+} `` `
 
 ## Block 2 — Public Contract
 
 Block 2 is RESERVED for the domain protocol trait ONLY.
 
-``` `rust
+`` `rust
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     fn execute(
@@ -550,18 +560,16 @@ impl I<NameCapability>Protocol for Capabilities<NameCapability> {
     ) {
         // domain behavior
     }
-}
-``` `
+} `` `
 
 Do NOT put these in Block 2:
 
-``` `rust
+`` `rust
 impl Default for Capabilities<NameCapability>
 impl Clone for Capabilities<NameCapability>
 impl Debug for Capabilities<NameCapability>
 impl Display for Capabilities<NameCapability>
-impl From<...> for Capabilities<NameCapability>
-``` `
+impl From<...> for Capabilities<NameCapability> `` `
 
 Those belong in Block 3.
 
@@ -579,19 +587,20 @@ Block 3 contains:
 ``` `rust
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for Capabilities<NameCapability> {
-    fn default() -> Self {
-        Self
-    }
+fn default() -> Self {
+Self
+}
 }
 
 impl Capabilities<NameCapability> {
-    pub fn new() -> Self {
-        Self
-    }
+pub fn new() -> Self {
+Self
+}
 
     fn effective_threshold(&self, input: &<DomainVO>) -> <Threshold>VO {
         // private helper
     }
+
 }
 ``` `
 
@@ -603,19 +612,18 @@ Block 3 MUST NOT:
 
 ## Trait Placement Decision Rule
 
-``` `text
+`` `text
 Trait impl found in a capabilities file?
   │
   ├─ Is it the domain protocol? (I<Name>Protocol)
   │   └─ YES → Block 2
   │
   └─ Is it a std/derive/utility trait? (Default, Clone, Debug, Display, From, etc.)
-      └─ YES → Block 3
-``` `
+      └─ YES → Block 3 `` `
 
 ## Method Placement Decision Rule
 
-``` `text
+`` `text
 Method / function found in a capabilities file?
   │
   ├─ Is it defined as the domain protocol trait method?
@@ -628,9 +636,8 @@ Method / function found in a capabilities file?
   │   └─ YES → Block 3
   │
   └─ Is it a private helper?
-      └─ YES → Block 3
-``` `
-```
+      └─ YES → Block 3 `` `
+````
 
 ---
 
@@ -671,46 +678,57 @@ Method / function found in a capabilities file?
 
 ## File: .agents/skills/create-capabilities-rust/references/commands.md
 
-```markdown
+````markdown
 # Quick Commands
 
 These commands are rough heuristic checks. Final validation should use `cargo check`, clippy, or AST-based tooling.
 
 ``` `bash
+
 # Check possible I/O in capabilities (AES404)
+
 rg "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/<crate>/src/capabilities_*.rs
 
 # Check forbidden imports
-rg "^\s*use\s+.*agent_" crates/<crate>/src/capabilities_*.rs
+
+rg "^\s*use\s+._agent\_" crates/<crate>/src/capabilities__.rs
 
 # List structs in capabilities files
+
 rg -n "^\s*pub struct" crates/<crate>/src/capabilities_*.rs
 
 # List protocol trait implementations
+
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 
 # Check capability filename follows role naming capabilities_<domain>_<role>.rs
+
 rg -n --files-with-matches "capabilities_[a-z_]+_[a-z_]+\.rs$" crates/<crate>/src/capabilities_*.rs || echo "FILENAME VIOLATION"
 
 # Check for inter-capability dependency (forbidden)
-rg "^\s*use\s+.*capabilities_" crates/<crate>/src/capabilities_*.rs
+
+rg "^\s*use\s+._capabilities\_" crates/<crate>/src/capabilities__.rs
 
 # Check for orchestration anti-patterns in capabilities (No Orchestration, §8)
-rg "for\s+.*\s+in|while\s+|\.escalate\(|error_escalation" crates/<crate>/src/capabilities_*.rs
+
+rg "for\s+._\s+in|while\s+|\.escalate\(|error_escalation" crates/<crate>/src/capabilities__.rs
 
 # Find unwrap_or_default usage
+
 rg "unwrap_or_default\(\)" crates/<crate>/src/capabilities_*.rs
 
 # Find possible magic numbers
+
 rg "[0-9]+\.[0-9]+" crates/<crate>/src/capabilities_*.rs
 
 # Check object safety issues
+
 cargo check -p <crate-name> 2>&1 | rg "cannot be made into an object"
 ``` `
 
 ## Check Wrong Block Order
 
-``` `bash
+`` `bash
 for file in crates/<crate>/src/capabilities_*.rs; do
   awk '
     FNR == 1 { std = 0; proto = 0 }
@@ -722,15 +740,14 @@ for file in crates/<crate>/src/capabilities_*.rs; do
       }
     }
   ' "$file"
-done
-``` `
-```
+done `` `
+````
 
 ---
 
 ## File: .agents/skills/create-capabilities-rust/references/error-handling.md
 
-```markdown
+````markdown
 # Error Handling Rules
 
 Capabilities error handling must be explicit.
@@ -739,52 +756,47 @@ Capabilities error handling must be explicit.
 
 Forbidden:
 
-``` `rust
-let value = result.unwrap_or_default();
-``` `
+`` `rust
+let value = result.unwrap_or_default(); `` `
 
 Forbidden:
 
-``` `rust
-let value = result.ok().unwrap_or_default();
-``` `
+`` `rust
+let value = result.ok().unwrap_or_default(); `` `
 
 ## Rule 2: Fallible operations should return `Result`
 
 If a method represents an operation that can fail unexpectedly, return `Result<T, E>`.
 
-``` `rust
+`` `rust
 fn parse_input(content: &<RawContent>VO) -> Result<<DomainVO>, <Name>ParseError> {
     // ...
-}
-``` `
+} `` `
 
 ## Rule 3: Check/analysis methods may return `Vec<<ResultVO>>`
 
 ## Rule 3: Analysis methods may return a collection of `<ResultVO>`
 
-``` `rust
+`` `rust
 fn execute(input: &<DomainVO>) -> Vec<<ResultVO>> {
     let mut results = Vec::new();
     // analysis logic
     results
-}
-``` `
+} `` `
 
 ## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
 
 Bad in capabilities:
 
-``` `rust
+`` `rust
 fn read_input(path: &<Path>VO) -> Vec<<ResultVO>> {
     let content = std::fs::read_to_string(path.value()).unwrap_or_default(); // BAD
     Vec::new()
-}
-``` `
+} `` `
 
 Good:
 
-``` `rust
+`` `rust
 // utility_source_reader.rs
 impl I<NameReader>Protocol for FileSystem<NameReader> {
     fn read(&self, path: &<Path>VO) -> Result<<SourceContent>VO, <Name>ReadError> {
@@ -793,25 +805,23 @@ impl I<NameReader>Protocol for FileSystem<NameReader> {
         <SourceContent>VO::new(path.clone(), raw)
             .map_err(<Name>ReadError::Validation)
     }
-}
-``` `
+} `` `
 
 ``` `rust
 // capabilities_<name>.rs
 impl I<NameCapability>Protocol for <NameCapability> {
-    fn execute(&self, source: &<SourceContent>VO) -> Vec<<ResultVO>> {
-        // pure analysis using already-read source
-        Vec::new()
-    }
+fn execute(&self, source: &<SourceContent>VO) -> Vec<<ResultVO>> {
+// pure analysis using already-read source
+Vec::new()
 }
-
-```
+}
+````
 
 ---
 
 ## File: .agents/skills/create-capabilities-rust/references/examples.md
 
-```markdown
+````markdown
 # Examples
 
 ## BAD: Capability Without Trait (AES403)
@@ -820,9 +830,9 @@ impl I<NameCapability>Protocol for <NameCapability> {
 pub struct <NameComposer>;
 
 impl <NameComposer> {
-    pub fn compose_frame(&self) {
-        // public behavior without protocol trait
-    }
+pub fn compose_frame(&self) {
+// public behavior without protocol trait
+}
 }
 ``` `
 
@@ -832,50 +842,46 @@ Fix:
 pub struct <NameComposer>;
 
 impl I<NameComposer>Protocol for <NameComposer> {
-    fn compose_frame(&self) {
-        // contract implementation
-    }
+fn compose_frame(&self) {
+// contract implementation
+}
 }
 ``` `
 
 ## BAD: I/O in Capabilities (AES404)
 
-``` `rust
+`` `rust
 impl <NameCapability> {
     fn process(&self) {
         let content = std::fs::read_to_string("file.txt"); // FORBIDDEN
     }
-}
-``` `
+} `` `
 
 Fix: Move I/O to utility.
 
 ## BAD: Data Class Defined in Layer File
 
-``` `rust
+`` `rust
 pub struct <NameResult> {
     is_valid: bool,
     reason: String,
-}
-``` `
+} `` `
 
 Fix: Move to shared taxonomy, then import.
 
 ## BAD: Concrete Service Field
 
-``` `rust
+`` `rust
 pub struct Capabilities<NameCapability> {
     collaborator: <NameCollaborator>, // BAD
-}
-``` `
+} `` `
 
 Fix:
 
-``` `rust
+`` `rust
 pub struct Capabilities<NameCapability> {
     collaborator: Arc<dyn I<NameCollaborator>Protocol>,
-}
-``` `
+} `` `
 
 ## BAD: Std Trait in Block 2
 
@@ -883,12 +889,12 @@ pub struct Capabilities<NameCapability> {
 pub struct Capabilities<NameCapability>;
 
 impl Default for Capabilities<NameCapability> {
-    fn default() -> Self { Self }
+fn default() -> Self { Self }
 }
 
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
-    fn execute(&self, ...) { // ...
-    }
+fn execute(&self, ...) { // ...
+}
 }
 ``` `
 
@@ -896,7 +902,7 @@ Fix: Move `Default` to Block 3.
 
 ## BAD: Orchestration Inside Capability (No Orchestration, §8)
 
-``` `rust
+`` `rust
 impl <NamePipeline>Protocol for <NamePipeline> {
     fn run(&self) {
         let a = self.step_a();      // calls another capability's behavior
@@ -906,19 +912,17 @@ impl <NamePipeline>Protocol for <NamePipeline> {
             self.escalate();        // error-escalation policy
         }
     }
-}
-``` `
+} `` `
 
 Fix: remove flow control and cross-capability calls. Let the Agent layer compose the pipeline. The capability executes one responsibility and returns a result.
 
 ## BAD: Domain Model Defined in Capability (No Domain Definition, §8)
 
-``` `rust
+`` `rust
 pub struct <NameResult> {   // domain model defined here = forbidden
     is_valid: bool,
     reason: String,
-}
-``` `
+} `` `
 
 Fix: define `<NameResult>` as a Taxonomy VO; the capability only consumes and produces it.
 
@@ -933,13 +937,13 @@ use shared::<name-feature>::taxonomy_<name-collaborator>_protocol::I<NameCollabo
 use shared::<name-feature>::taxonomy_<name-store>_protocol::I<NameStore>Protocol;
 
 pub struct Capabilities<NameCapability> {
-    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
-    store: Arc<dyn I<NameStore>Protocol>,
-    policy: <NamePolicy>VO,
+collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+store: Arc<dyn I<NameStore>Protocol>,
+policy: <NamePolicy>VO,
 }
 
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
-    // public contract methods only
+// public contract methods only
 }
 ``` `
 
@@ -958,40 +962,41 @@ pub struct Capabilities<NameCapability>;
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 impl I<NameCapability>Protocol for Capabilities<NameCapability> {
-    fn execute(
-        &self,
-        input: &<DomainVO>,
-        output: &mut Vec<<ResultVO>>,
-    ) {
-        let key = input.key();
-        if <name>_utility(key) {
-            return;
-        }
-        // Remaining domain logic...
-    }
+fn execute(
+&self,
+input: &<DomainVO>,
+output: &mut Vec<<ResultVO>>,
+) {
+let key = input.key();
+if <name>_utility(key) {
+return;
+}
+// Remaining domain logic...
+}
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for Capabilities<NameCapability> {
-    fn default() -> Self { Self }
+fn default() -> Self { Self }
 }
 
 impl Capabilities<NameCapability> {
-    pub fn new() -> Self { Self }
+pub fn new() -> Self { Self }
 
     fn is_relevant(&self, input: &<DomainVO>) -> bool {
         // Private helper specific to this capability.
         true
     }
+
 }
 ``` `
-```
+````
 
 ---
 
 ## File: .agents/skills/create-capabilities-rust/references/helper-vs-utility.md
 
-```markdown
+````markdown
 # Helper vs Utility Decision
 
 The boundary is not only about `&self`.
@@ -1016,15 +1021,14 @@ Keep the function inside the capabilities file if ANY of these is true:
 
 Example:
 
-``` `rust
+`` `rust
 impl ContractRoleChecker {
     fn resolve_scope(scope: &str) -> (&str, Vec<&str>) {
         // Domain-specific parsing logic.
         // Even without `&self`, this can remain a private helper
         // if only this checker uses it.
     }
-}
-``` `
+} `` `
 
 ## Extract to Utility (`utility_.rs`)
 
@@ -1038,34 +1042,31 @@ Extract the function to shared taxonomy utility ONLY if ALL of these are true:
 
 Example:
 
-``` `rust
+`` `rust
 // shared/<name-feature>/taxonomy_string_utility.rs
 pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
     // generic token matching
-}
-``` `
+} `` `
 
 ## I/O Rule
 
-A function with I/O can be a  utility if it is stateless, domain-agnostic, and reusable.
+A function with I/O can be a utility if it is stateless, domain-agnostic, and reusable.
 
-``` `rust
+`` `rust
 // OK in taxonomy utility — stateless, domain-agnostic, reusable
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     // I/O is allowed in taxonomy utilities
-}
-``` `
+} `` `
 
 Rule:
 
-``` `text
+`` `text
 Stateless + I/O + domain-agnostic + reusable = taxonomy utility
-Stateless + I/O + domain-specific = utility implementation (infrastructure layer removed)
-``` `
+Stateless + I/O + domain-specific = utility implementation (infrastructure layer removed) `` `
 
 ## Decision Tree
 
-``` `text
+`` `text
 Found reusable code in capabilities?
   │
   ├─ Does it know business/domain rules?
@@ -1075,9 +1076,8 @@ Found reusable code in capabilities?
   │   └─ YES → keep as helper/method in Block 3
   │
   └─ Is it stateless, domain-agnostic, and reusable?
-      └─ YES → extract to shared taxonomy utility (I/O allowed)
-``` `
-```
+      └─ YES → extract to shared taxonomy utility (I/O allowed) `` `
+````
 
 ---
 
@@ -1088,16 +1088,16 @@ Found reusable code in capabilities?
 
 ## Capabilities Layer (`capabilities_*.rs`)
 
-| Allowed                                      | Forbidden                                             |
-| -------------------------------------------- | ----------------------------------------------------- |
-| Computation, validation, calculation         | Direct import from `agent_*`                          |
-| Data transformation, business rules          | Direct dependency on concrete `capabilities_*` modules |
-| Domain behavior using shared models          | Locally defined domain data structures                |
-| Protocol trait implementation                |                                                       |
-| External adaptation (I/O, API calls, DB)     |                                                       |
-| Private helpers supporting the impl struct   |                                                       |
-| Calling injected protocol traits             |                                                       |
-| Calling Utility standalone functions         |                                                       |
+| Allowed                                    | Forbidden                                              |
+| ------------------------------------------ | ------------------------------------------------------ |
+| Computation, validation, calculation       | Direct import from `agent_*`                           |
+| Data transformation, business rules        | Direct dependency on concrete `capabilities_*` modules |
+| Domain behavior using shared models        | Locally defined domain data structures                 |
+| Protocol trait implementation              |                                                        |
+| External adaptation (I/O, API calls, DB)   |                                                        |
+| Private helpers supporting the impl struct |                                                        |
+| Calling injected protocol traits           |                                                        |
+| Calling Utility standalone functions       |                                                        |
 
 ## Allowed Dependencies (ARCHITECTURE §8)
 
@@ -1128,7 +1128,7 @@ A capability may depend ONLY on these layers:
 
 ## File: .agents/skills/create-capabilities-rust/references/primitive-vo-policy.md
 
-```markdown
+````markdown
 # Primitive-to-VO Replacement Rules (AES402)
 
 ## General Rule
@@ -1137,36 +1137,34 @@ Domain data MUST use shared VOs, not raw primitives.
 
 Bad:
 
-``` `rust
+`` `rust
 pub struct <ResultVO> {
     pub target: String,
     pub position: u32,
     pub level: String,
-}
-``` `
+} `` `
 
 Good:
 
-``` `rust
+`` `rust
 pub struct <ResultVO> {
     target: <Target>VO,
     position: <LineNumber>VO,
     level: <Severity>VO,
-}
-``` `
+} `` `
 
 ## Primitive Policy
 
-| Primitive            | Rule                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `String`           | Forbidden for domain fields and public contract return values. Use VO.              |
+| Primitive        | Rule                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `String`         | Forbidden for domain fields and public contract return values. Use VO.              |
 | `i32`, `i64`     | Forbidden. Use domain VO.                                                           |
 | `u32`, `u64`     | Forbidden. Use domain VO.                                                           |
 | `usize`, `isize` | Forbidden for domain values. Use domain VO.                                         |
 | `f32`, `f64`     | Forbidden. Use domain VO.                                                           |
-| `char`             | Forbidden for domain values. Use domain VO.                                         |
-| `bool`             | Allowed for semantic toggles when no richer VO is needed.                           |
-| `&str`             | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
+| `char`           | Forbidden for domain values. Use domain VO.                                         |
+| `bool`           | Allowed for semantic toggles when no richer VO is needed.                           |
+| `&str`           | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
 
 Prefer VOs for:
 
@@ -1187,7 +1185,7 @@ VOs MUST validate on construction when the domain has invariants.
 
 Good:
 
-``` `rust
+`` `rust
 impl <LineNumber>VO {
     pub fn new(value: u32) -> Result<Self, ValidationError> {
         if value == 0 {
@@ -1195,35 +1193,32 @@ impl <LineNumber>VO {
         }
         Ok(Self(value))
     }
-}
-``` `
+} `` `
 
 ## Optional and Collection Primitives
 
 Bad:
 
-``` `rust
+`` `rust
 pub struct <RuleSet>VO {
     pub patterns: Vec<String>,
     pub description: Option<String>,
-}
-``` `
+} `` `
 
 Good:
 
-``` `rust
+`` `rust
 pub struct <RuleSet>VO {
     patterns: <PatternList>VO,
     description: Option<<RuleDescription>VO>,
-}
-``` `
-```
+} `` `
+````
 
 ---
 
 ## File: ARCHITECTURE.md
 
-```markdown
+````markdown
 # Agentic Engineering System Architecture
 
 ## 1. Purpose
@@ -1268,11 +1263,10 @@ The recommended folder structure follows this order:
 
 _Example feature crate `crates|packages|modules/<name-features>/`_
 
-``` `text
+`` `text
 surface_<concern>_<role>.rs/py/ts                ← surface layer
 capabilities_<concern>_<role>.rs/py/ts           ← capabilities layer
-agent_<concern>_orchestrator.rs/py/ts            ← agent layer
-``` `
+agent_<concern>_orchestrator.rs/py/ts            ← agent layer `` `
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
@@ -1280,15 +1274,14 @@ Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`
 
 `crates|packages|modules/shared/<common>or<domain-folder>`
 
-``` `text
+`` `text
 contract_<concern>_protocol.rs/py/ts             ← contract layer
 contract_<concern>_aggregate.rs/py/ts            ← contract layer
 taxonomy_<concern>_vo.rs/py/ts                   ← taxonomy layer
 taxonomy_<concern>_event.rs/py/ts                ← taxonomy layer
 taxonomy_<concern>_entity.rs/py/ts               ← taxonomy layer
 taxonomy_<concern>_constant.rs/py/ts             ← taxonomy layer
-utility_<concern>_<role>.rs/py/ts                ← utility layer
-``` `
+utility_<concern>_<role>.rs/py/ts                ← utility layer `` `
 
 `shared` folder groups by domain. Use `shared/common/` for generic files.
 
@@ -1479,16 +1472,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -1560,11 +1553,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -1597,7 +1590,7 @@ Root may depend on all layers.
 - Root must not contain business logic.
 - Root must not contain orchestration policy.
 - Root must not contain technical parsing or user interface behavior.
-```
+````
 
 ---
 
@@ -1688,7 +1681,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 ## File: crates/code-analysis/FRD.md
 
-```markdown
+````markdown
 # FRD — code-analysis
 
 ## System Overview
@@ -1772,31 +1765,31 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 
 ``` `
 CodeAnalysisRuleVO {
-    rule_code: String
-    max_lines: Option<u32>
-    min_lines: Option<u32>
-    threshold_pct: f64
+rule_code: String
+max_lines: Option<u32>
+min_lines: Option<u32>
+threshold_pct: f64
 }
 
 Diagnostic {
-    file_path: String
-    line: u32
-    column: u32
-    rule_code: String
-    message: String
-    severity: Severity
+file_path: String
+line: u32
+column: u32
+rule_code: String
+message: String
+severity: Severity
 }
 ``` `
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| `check_max_line_count()` | File path, content | Option<Diagnostic> | Check AES301 |
-| `check_min_line_count()` | File path, content | Option<Diagnostic> | Check AES302 |
+| Function                        | Input              | Output             | Description  |
+| ------------------------------- | ------------------ | ------------------ | ------------ |
+| `check_max_line_count()`        | File path, content | Option<Diagnostic> | Check AES301 |
+| `check_min_line_count()`        | File path, content | Option<Diagnostic> | Check AES302 |
 | `check_mandatory_definitions()` | File path, content | Option<Diagnostic> | Check AES303 |
-| `check_forbidden_bypass()` | File path, content | Vec<Diagnostic> | Check AES304 |
-| `handle_duplicates()` | All files | Vec<Diagnostic> | Check AES305 |
+| `check_forbidden_bypass()`      | File path, content | Vec<Diagnostic>    | Check AES304 |
+| `handle_duplicates()`           | All files          | Vec<Diagnostic>    | Check AES305 |
 
 ## Integration Points
 
@@ -1834,7 +1827,7 @@ Diagnostic {
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
-```
+````
 
 ---
 
@@ -4386,4 +4379,3 @@ impl MetadataVO {
 ```
 
 ---
-

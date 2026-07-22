@@ -2,21 +2,32 @@
 name: create-agent-typescript
 description: "Create and validate TypeScript agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one class per file, aggregate interface contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-    tags: [typescript, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
-    triggers:
-        - "create agent typescript"
-        - "add agent typescript"
-        - "fix agent structure typescript"
-        - "create aggregate typescript"
-        - "agent missing aggregate typescript"
-        - "validate agent logic typescript"
-        - "check agent typescript"
-        - "audit agent typescript"
-    dependencies: []
-    related:
-        - create-capabilities-typescript
-        - create-taxonomy-typescript
-        - create-contract-typescript
+  tags:
+    [
+      typescript,
+      aes,
+      agent,
+      aggregate,
+      structure,
+      3-block-structure,
+      di,
+      orchestration,
+      vo,
+    ]
+  triggers:
+    - "create agent typescript"
+    - "add agent typescript"
+    - "fix agent structure typescript"
+    - "create aggregate typescript"
+    - "agent missing aggregate typescript"
+    - "validate agent logic typescript"
+    - "check agent typescript"
+    - "audit agent typescript"
+  dependencies: []
+  related:
+    - create-capabilities-typescript
+    - create-taxonomy-typescript
+    - create-contract-typescript
 ---
 
 # create-agent-typescript
@@ -48,23 +59,23 @@ Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be compl
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/computation-detection.md` | Computation detection rules |
-| `references/error-handling.md` | Error handling rules |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                  | Content                                                |
+| ------------------------------------- | ------------------------------------------------------ |
+| `references/layer-boundaries.md`      | Allowed/Forbidden imports and dependencies             |
+| `references/3-block-structure.md`     | Block 1/2/3 definitions, method placement rules        |
+| `references/helper-vs-utility.md`     | Helper vs utility decision, I/O Blocker, decision tree |
+| `references/computation-detection.md` | Computation detection rules                            |
+| `references/error-handling.md`        | Error handling rules                                   |
+| `references/primitive-vo-policy.md`   | Primitive policy table, VO rules                       |
+| `references/examples.md`              | All BAD/GOOD code examples                             |
+| `references/commands.md`              | Quick heuristic check commands                         |
+| `references/checklist.md`             | Verification checklist                                 |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/agent_name.ts` | New agent implementation file |
+| File                                   | Purpose                            |
+| -------------------------------------- | ---------------------------------- |
+| `templates/agent_name.ts`              | New agent implementation file      |
 | `templates/contract_name_aggregate.ts` | New aggregate interface definition |
 
 ## Workflow

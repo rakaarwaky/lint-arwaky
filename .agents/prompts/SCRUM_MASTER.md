@@ -18,32 +18,39 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Scrum Master
 
 ## Summary
+
 {{One-paragraph overview of sprint health and key findings.}}
 
 ## Findings by Category
 
 ### Sprint Planning & Task Breakdown
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Acceptance Criteria
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Dependencies & Bottlenecks
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Estimation & Timeline
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Risk Assessment Table
+
 | Risk | Impact | Mitigation Strategy | Sprint |
-|------|--------|--------------------|--------|
+| ---- | ------ | ------------------- | ------ |
 ```
 
 ### Severity Convention

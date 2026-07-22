@@ -84,13 +84,13 @@ LayerHierarchy {
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| `check_layer_violation()` | File path, imports | Vec<Diagnostic> | Check AES201 |
-| `check_mandatory_imports()` | File path, imports | Vec<Diagnostic> | Check AES202 |
-| `check_unused_imports()` | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
-| `check_dummy_imports()` | File path, imports | Vec<Diagnostic> | Check AES204 |
-| `check_circular_deps()` | All files, imports | Vec<Diagnostic> | Check AES205 |
+| Function                    | Input                      | Output          | Description  |
+| --------------------------- | -------------------------- | --------------- | ------------ |
+| `check_layer_violation()`   | File path, imports         | Vec<Diagnostic> | Check AES201 |
+| `check_mandatory_imports()` | File path, imports         | Vec<Diagnostic> | Check AES202 |
+| `check_unused_imports()`    | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
+| `check_dummy_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES204 |
+| `check_circular_deps()`     | All files, imports         | Vec<Diagnostic> | Check AES205 |
 
 ## Integration Points
 

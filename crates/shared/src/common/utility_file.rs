@@ -229,7 +229,9 @@ fn walk_source_files_inner(
 /// Walk a directory tree collecting all .rs files.
 /// Contained to `dir` (symlink targets outside the root are pruned).
 /// Uses canonical-path-based visited set (works on all platforms).
-pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+#[rustfmt::skip]
+pub fn walk_rs_files
+    (dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
     walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)

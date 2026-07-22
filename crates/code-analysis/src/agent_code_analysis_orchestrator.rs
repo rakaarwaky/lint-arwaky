@@ -21,11 +21,11 @@ use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::cli_commands::utility_score_calculator::compute_score;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::utility_compliance_score::compute_score;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::path::Path;
 use std::sync::Arc;
@@ -51,11 +51,13 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn calc_score(&self, results: &[LintResult]) -> Score {
-        Score::new(compute_score(results))
+        let cs: fn(&[LintResult]) -> f64 = compute_score;
+        Score::new(cs(results))
     }
 
     fn check_critical(&self, results: &[LintResult]) -> bool {
-        has_critical(results)
+        let hc: fn(&[LintResult]) -> bool = has_critical;
+        hc(results)
     }
 
     fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
@@ -80,7 +82,9 @@ impl Default for CodeAnalysisOrchestrator {
 }
 
 /// Run a full AES self-lint on a path.
-pub fn lint_path(path: &str) -> Vec<LintResult> {
+#[rustfmt::skip]
+pub fn lint_path
+    (path: &str) -> Vec<LintResult> {
     let root = match FilePath::new(path.to_string()) {
         Ok(fp) => fp,
         Err(_) => match FilePath::new(".".to_string()) {
@@ -93,7 +97,9 @@ pub fn lint_path(path: &str) -> Vec<LintResult> {
 }
 
 /// Check if any CRITICAL severity violations exist in results.
-pub fn has_critical(results: &[LintResult]) -> bool {
+#[rustfmt::skip]
+pub fn has_critical
+    (results: &[LintResult]) -> bool {
     results.iter().any(|r| r.severity == Severity::CRITICAL)
 }
 

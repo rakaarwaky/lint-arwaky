@@ -5,14 +5,14 @@
 
 ## Decisions
 
-| Decision | Choice |
-|----------|--------|
-| AES404 Utility Purity | Implement checker |
-| AES401-R2 VO Check | Deprecate (VOs/Constants CAN use primitives; entity/error/event MUST use VOs) |
-| AES013 Forbidden Inheritance | Document in FRD |
-| Contract Protocol Primitives | Only `&str` and `bool` acceptable; all other primitives forbidden |
-| Async File I/O | Add `tokio::task::spawn_blocking` |
-| Severity Scheme | CRITICAL=security/correctness, HIGH=false positives/negatives, MEDIUM=improvements, LOW=style |
+| Decision                     | Choice                                                                                        |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| AES404 Utility Purity        | Implement checker                                                                             |
+| AES401-R2 VO Check           | Deprecate (VOs/Constants CAN use primitives; entity/error/event MUST use VOs)                 |
+| AES013 Forbidden Inheritance | Document in FRD                                                                               |
+| Contract Protocol Primitives | Only `&str` and `bool` acceptable; all other primitives forbidden                             |
+| Async File I/O               | Add `tokio::task::spawn_blocking`                                                             |
+| Severity Scheme              | CRITICAL=security/correctness, HIGH=false positives/negatives, MEDIUM=improvements, LOW=style |
 
 ## Severity Legend
 
@@ -34,6 +34,7 @@
 **Problem**: `detect_layer_from_prefix()` returns `"surface"` for `surface_*.rs` files, but `layer_surfaces()` returns `"surfaces"`. The comparison in `capabilities_surface_role_auditor.rs:189` never matches, silently disabling ALL AES406 checks.
 
 **Before**:
+
 ```rust
 const PREFIX_MAP: &[(&str, &str)] = &[
     ("taxonomy_", "taxonomy"),
@@ -47,6 +48,7 @@ const PREFIX_MAP: &[(&str, &str)] = &[
 ```
 
 **After**:
+
 ```rust
 const PREFIX_MAP: &[(&str, &str)] = &[
     ("taxonomy_", "taxonomy"),
@@ -72,6 +74,7 @@ const PREFIX_MAP: &[(&str, &str)] = &[
 **Problem**: ARCHITECTURE.md §10 lists `router` under Smart surfaces, but orchestrator line 143 classifies `_router` as utility. Smart surfaces get different checks than utility surfaces.
 
 **Before** (line 135-143):
+
 ```rust
 let is_smart = filename.contains("_command")
     || filename.contains("_controller")
@@ -85,6 +88,7 @@ let is_utility = filename.contains("_hook")
 ```
 
 **After**:
+
 ```rust
 let is_smart = filename.contains("_command")
     || filename.contains("_controller")
@@ -98,6 +102,7 @@ let is_utility = filename.contains("_hook")
 ```
 
 Also update `check_surface_roles()` smart-surface detection (line 208-211):
+
 ```rust
 // Before:
 let is_smart = basename.ends_with("_command")
@@ -114,6 +119,7 @@ let is_smart = basename.ends_with("_command")
 ```
 
 Also update `_check_passive()` smart-surface exemption (line 291-296):
+
 ```rust
 // Before:
 if basename.ends_with("_command")
@@ -146,6 +152,7 @@ if basename.ends_with("_command")
 **Problem**: `check_passive_surface()` at lines 62-67 is empty. The real passive check exists in `check_surface_hierarchy()` but is not called from the orchestrator. AES406 passive-surface violations are missed.
 
 **Before** (line 62-67):
+
 ```rust
 fn check_passive_surface(
     &self,
@@ -156,6 +163,7 @@ fn check_passive_surface(
 ```
 
 **After**:
+
 ```rust
 fn check_passive_surface(
     &self,
@@ -169,6 +177,7 @@ fn check_passive_surface(
 ```
 
 Add new helper method:
+
 ```rust
 fn _check_passive_source(
     &self,
@@ -225,6 +234,7 @@ fn _check_passive_source(
 **Problem**: Substring matching flags `anyhow::Error` (contains `: any`), comments with `: any`, etc.
 
 **Before** (line 73-79):
+
 ```rust
 if t.contains(": any")
     || t.contains(": Any")
@@ -236,6 +246,7 @@ if t.contains(": any")
 ```
 
 **After**: Add regex and comment-stripping:
+
 ```rust
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -256,6 +267,7 @@ fn code_without_comment(line: &str) -> &str {
 ```
 
 Replace `check_any_type_annotation` body:
+
 ```rust
 fn check_any_type_annotation(
     &self,
@@ -298,6 +310,7 @@ fn check_any_type_annotation(
 **Before** (line 63-124): Single-pass with substring matching, `structs.len() <= 3` suppression.
 
 **After**: Replace `_check_rust_routing()` with struct-aware single-pass:
+
 ```rust
 fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
     let has_proto_import = content.contains("use ")
@@ -418,6 +431,7 @@ fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<Li
 **Before** (line 100-142): Substring matching with `lower.contains(": str")`.
 
 **After**: Add token-aware helpers:
+
 ```rust
 fn starts_with_type_token(s: &str, token: &str) -> bool {
     match s.strip_prefix(token) {
@@ -444,6 +458,7 @@ fn contains_colon_type_token(s: &str, token: &str) -> bool {
 ```
 
 Replace `python_signature_uses_forbidden_primitive`:
+
 ```rust
 pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     let lower = sig.to_lowercase();
@@ -475,6 +490,7 @@ pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str>
 ```
 
 Replace `typescript_signature_uses_forbidden_primitive`:
+
 ```rust
 pub fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     let lower = sig.to_lowercase();
@@ -496,6 +512,7 @@ pub fn typescript_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static 
 ```
 
 Also fix `extract_python_method_signatures` to detect parameter-only annotations (not just `->`):
+
 ```rust
 // Before (line 76):
 if trimmed.starts_with("def ") && trimmed.contains("->") {
@@ -515,6 +532,7 @@ if trimmed.starts_with("def ") && (trimmed.contains(':') || trimmed.contains("->
 **Problem**: Line 26: `line.contains(')').ge(&line.contains('('))` is semantically wrong.
 
 **Before** (line 24-26):
+
 ```rust
 let is_trait_header = (line.starts_with("pub trait ") || line.starts_with("trait "))
     && line.contains('{')
@@ -522,6 +540,7 @@ let is_trait_header = (line.starts_with("pub trait ") || line.starts_with("trait
 ```
 
 **After**: Replace with brace-aware trait detection:
+
 ```rust
 pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
     let mut results = Vec::new();
@@ -584,6 +603,7 @@ pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
 **Before** (line 83-98): Uses `t.split("::").last()`.
 
 **After**: Add import-symbol parser:
+
 ```rust
 fn imported_symbol_names(import_line: &str) -> Vec<String> {
     let t = import_line.trim().trim_end_matches(';').trim();
@@ -631,6 +651,7 @@ fn imported_symbol_names(import_line: &str) -> Vec<String> {
 ```
 
 Replace import extraction in `check_aggregate()` (line 56-99):
+
 ```rust
 for line in content.lines() {
     let t = line.trim();
@@ -664,6 +685,7 @@ forbidden_traits.dedup();
 ```
 
 Replace violation reporting (line 101-120) with line-numbered version:
+
 ```rust
 let mut reported = std::collections::HashSet::new();
 
@@ -703,12 +725,14 @@ for (line_no, line) in content.lines().enumerate() {
 **Problem**: `RUST_FN_RE` matches both `fn private()` and `pub fn public()`. Passive surfaces should only count public methods.
 
 **Before** (line 123-124):
+
 ```rust
 static RUST_FN_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(").ok());
 ```
 
 **After**:
+
 ```rust
 static RUST_PUB_FN_RE: Lazy<Option<Regex>> = Lazy::new(|| {
     Regex::new(r"^\s*pub\s+(?:async\s+)?(?:unsafe\s+)?fn\s+(\w+)\s*\(").ok()
@@ -716,6 +740,7 @@ static RUST_PUB_FN_RE: Lazy<Option<Regex>> = Lazy::new(|| {
 ```
 
 Update `_check_rust_passive()` to use `RUST_PUB_FN_RE` and add brace-aware function end detection:
+
 ```rust
 fn rust_fn_end_line(lines: &[&str], start: usize) -> usize {
     let mut depth: i32 = 0;
@@ -745,12 +770,14 @@ fn rust_fn_end_line(lines: &[&str], start: usize) -> usize {
 **Problem**: `JS_CLASS_RE` only matches `export class Foo`, misses `class Foo` and `export default class Foo`.
 
 **Before** (line 109):
+
 ```rust
 static JS_CLASS_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^export\s+class\s+(\w+)").ok());
 ```
 
 **After**:
+
 ```rust
 static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| {
     Regex::new(r"^(?:export\s+)?(?:default\s+)?class\s+(\w+)").ok()
@@ -768,6 +795,7 @@ static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| {
 **Problem**: `let depth = indent / 4;` assumes 4-space indentation. Wrong for 2-space, tabs, or mixed.
 
 **Before** (line 616-618):
+
 ```rust
 let indent = line.len() - line.trim_start().len();
 let depth = indent / 4;
@@ -775,6 +803,7 @@ if depth > max_depth { max_depth = depth; }
 ```
 
 **After**: Use indentation stack:
+
 ```rust
 fn _check_method_nesting(
     &self,
@@ -841,6 +870,7 @@ fn _check_method_nesting(
 **Problem**: `max_lines: usize` is a raw primitive in a contract protocol. User decision: all primitives except `&str` and `bool` are forbidden.
 
 **Before** (line 9-14):
+
 ```rust
 fn check_file_size_limit(
     &self,
@@ -851,6 +881,7 @@ fn check_file_size_limit(
 ```
 
 **After**: Use `Count` VO:
+
 ```rust
 use crate::common::taxonomy_common_vo::Count;
 
@@ -863,6 +894,7 @@ fn check_file_size_limit(
 ```
 
 Update implementation in `capabilities_agent_role_auditor.rs`:
+
 ```rust
 use shared::common::taxonomy_common_vo::Count;
 
@@ -886,6 +918,7 @@ fn check_file_size_limit(
 ```
 
 Update orchestrator call:
+
 ```rust
 use shared::common::taxonomy_common_vo::Count;
 
@@ -910,6 +943,7 @@ use shared::common::taxonomy_common_vo::Count;
 **Problem**: AES404 requires utility files to be stateless standalone functions. Zero implementation exists.
 
 **New file**:
+
 ```rust
 // PURPOSE: UtilityRoleChecker — AES404: utility files must be stateless standalone functions
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -1032,6 +1066,7 @@ impl UtilityRoleChecker {
 Add `UtilityPurity` variant to `AesRoleViolation` in `taxonomy_violation_role_vo.rs`.
 
 Wire into orchestrator:
+
 ```rust
 "utility" => {
     let checker = UtilityRoleChecker::new();
@@ -1054,6 +1089,7 @@ Wire into orchestrator:
 **Problem**: `run_audit()` is async but uses blocking `std::fs::read_dir` and `std::fs::read_to_string`.
 
 **Before** (line 221-227):
+
 ```rust
 async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
     let mut results = Vec::new();
@@ -1065,6 +1101,7 @@ async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
 ```
 
 **After**:
+
 ```rust
 async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
     let target = target.clone();
@@ -1096,6 +1133,7 @@ Note: Requires `RoleOrchestrator` to implement `Clone` or use `Arc` wrapping for
 **Problem**: Multiple violations emit `line: 0` instead of actual line numbers.
 
 **Files to fix**:
+
 - `capabilities_capabilities_role_auditor.rs:68` — `CapabilityNoProtocol` → line 1
 - `capabilities_agent_role_auditor.rs:56` — `AgentFileSizeLimit` → line 1
 - `capabilities_surface_role_auditor.rs:84` — `SurfaceRoleViolation` → line 1
@@ -1115,6 +1153,7 @@ Replace `line: 0` with `line: 1` in all three locations.
 **Problem**: AES013 (forbidden inheritance) is implemented but undocumented.
 
 **Action**: Add AES013 requirement to FRD:
+
 ```
 ### AES013 — Forbidden Inheritance
 
@@ -1134,6 +1173,7 @@ Any `impl Trait for X` or equivalent that uses a disallowed trait is flagged as 
 **Problem**: `check_vo()` is a no-op. User clarified: VOs/Constants CAN use primitives; entity/error/event MUST use VOs.
 
 **Action**: Update FRD:
+
 ```
 ### AES401-R2 — VO Primitive Usage (DEPRECATED)
 
@@ -1154,6 +1194,7 @@ Remove or mark `check_vo_impl()` as deprecated in code.
 **Problem**: No acceptance criteria, no test scenarios, no measurable thresholds.
 
 **Action**: Add acceptance criteria section:
+
 ```
 ## Acceptance Criteria
 
@@ -1185,6 +1226,7 @@ Remove or mark `check_vo_impl()` as deprecated in code.
 6. **Phase 6** (P6.1-P6.3): LOW documentation. Independent.
 
 **Final verification (all phases complete):**
+
 ```bash
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
@@ -1196,14 +1238,14 @@ cargo run --bin lint-arwaky-cli -- check .
 
 ## Summary
 
-| Phase | Items | Severity | Description |
-|-------|-------|----------|-------------|
-| 1 | P1.1-P1.3 | CRITICAL | Layer mismatch, router classification, passive surface no-op |
-| 2 | P2.1-P2.8 | HIGH | False positives/negatives in AES405, AES403, AES402, AES406 |
-| 3 | P3.1-P3.2 | MEDIUM | Contract protocol primitive cleanup |
-| 4 | P4.1 | MEDIUM | New AES404 utility purity checker |
-| 5 | P5.1-P5.2 | MEDIUM | Performance (async I/O) and precision reporting |
-| 6 | P6.1-P6.3 | LOW | FRD documentation updates |
+| Phase | Items     | Severity | Description                                                  |
+| ----- | --------- | -------- | ------------------------------------------------------------ |
+| 1     | P1.1-P1.3 | CRITICAL | Layer mismatch, router classification, passive surface no-op |
+| 2     | P2.1-P2.8 | HIGH     | False positives/negatives in AES405, AES403, AES402, AES406  |
+| 3     | P3.1-P3.2 | MEDIUM   | Contract protocol primitive cleanup                          |
+| 4     | P4.1      | MEDIUM   | New AES404 utility purity checker                            |
+| 5     | P5.1-P5.2 | MEDIUM   | Performance (async I/O) and precision reporting              |
+| 6     | P6.1-P6.3 | LOW      | FRD documentation updates                                    |
 
 **Total**: 17 items across 6 phases.
 
@@ -1212,9 +1254,11 @@ cargo run --bin lint-arwaky-cli -- check .
 ## Files Summary
 
 ### New files (1)
+
 - `crates/role-rules/src/capabilities_utility_role_auditor.rs` — AES404 utility purity checker
 
 ### Modified files (8)
+
 - `crates/shared/src/common/utility_layer_detector.rs` — fix surface/surfaces prefix map (P1.1)
 - `crates/shared/src/common/utility_signature_parser.rs` — token-aware helpers, fix trait extraction (P2.3, P2.4)
 - `crates/shared/src/role-rules/contract_agent_role_protocol.rs` — replace `usize` with `Count` VO (P3.2)

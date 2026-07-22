@@ -18,37 +18,46 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — API Developer
 
 ## Summary
+
 {{One-paragraph overview of API health and key findings.}}
 
 ## Findings by Category
 
 ### API Contract & Design
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Authentication & Authorization
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Versioning & Compatibility
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Documentation
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Violations (if any)
+
 {{List specific AES layer violations, import rule breaks, or convention deviations.}}
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Fixed Code
+
 {{Show corrected code blocks for each critical/warning fix.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Breach of AES layering, API contract violation, security risk
 - 🟡 **WARNING** — Convention deviation, backward compatibility concern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

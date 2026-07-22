@@ -95,18 +95,19 @@ impl CliContainer {
             ));
 
         // Wire analysis pipeline orchestrator
-        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> = Arc::new(
-            crate::AnalysisPipelineOrchestrator::new(
-                code_analysis_linter.clone(),
-                naming_orchestrator.clone(),
-                import_orchestrator.clone(),
-                external_lint.clone(),
-                role_orchestrator.clone(),
-                orphan_orchestrator.clone(),
-                multi_project_orchestrator.clone(),
-                Format::Text,
-            ),
-        );
+        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
+            Arc::new(crate::AnalysisPipelineOrchestrator::new(
+                crate::agent_analysis_pipeline_orchestrator::CheckArgs {
+                    code_analysis_linter: code_analysis_linter.clone(),
+                    naming_orchestrator: naming_orchestrator.clone(),
+                    import_orchestrator: import_orchestrator.clone(),
+                    external_lint: external_lint.clone(),
+                    role_orchestrator: role_orchestrator.clone(),
+                    orphan_orchestrator: orphan_orchestrator.clone(),
+                    config_orchestrator: multi_project_orchestrator.clone(),
+                    format: Format::Text,
+                },
+            ));
 
         Self {
             code_analysis_linter,

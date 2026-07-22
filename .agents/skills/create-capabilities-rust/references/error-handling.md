@@ -72,3 +72,4 @@ impl I<NameCapability>Protocol for <NameCapability> {
     }
 }
 
+```

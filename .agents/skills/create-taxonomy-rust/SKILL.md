@@ -2,22 +2,35 @@
 name: create-taxonomy-rust
 description: "Create and validate Rust taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
 metadata:
-    tags: [rust, aes, taxonomy, shared, vo, entity, error, event, constant, primitive-to-vo]
-    triggers:
-        - "create taxonomy rust"
-        - "add taxonomy rust"
-        - "move dataclass to taxonomy rust"
-        - "create vo rust"
-        - "create error taxonomy rust"
-        - "create constant taxonomy rust"
-        - "check taxonomy rust"
-        - "audit taxonomy rust"
-    dependencies: []
-    related:
-        - create-capabilities-rust
-        - create-agent-rust
-        - create-contract-rust
+  tags:
+    [
+      rust,
+      aes,
+      taxonomy,
+      shared,
+      vo,
+      entity,
+      error,
+      event,
+      constant,
+      primitive-to-vo,
+    ]
+  triggers:
+    - "create taxonomy rust"
+    - "add taxonomy rust"
+    - "move dataclass to taxonomy rust"
+    - "create vo rust"
+    - "create error taxonomy rust"
+    - "create constant taxonomy rust"
+    - "check taxonomy rust"
+    - "audit taxonomy rust"
+  dependencies: []
+  related:
+    - create-capabilities-rust
+    - create-agent-rust
+    - create-contract-rust
 ---
+
 # create-taxonomy-rust
 
 ## Purpose
@@ -46,8 +59,8 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## References
 
-| File                                 | Content                                                    |
-| ------------------------------------ | ---------------------------------------------------------- |
+| File                               | Content                                                    |
+| ---------------------------------- | ---------------------------------------------------------- |
 | `references/purity-imports.md`     | AES201 import restrictions, allowed/forbidden dependencies |
 | `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns          |
 | `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules              |
@@ -57,8 +70,8 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## Templates
 
-| File                                    | Purpose               |
-| --------------------------------------- | --------------------- |
+| File                                  | Purpose               |
+| ------------------------------------- | --------------------- |
 | `templates/taxonomy_name_vo.rs`       | New value object file |
 | `templates/taxonomy_name_error.rs`    | New error type file   |
 | `templates/taxonomy_name_constant.rs` | New constants file    |

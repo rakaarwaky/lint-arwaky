@@ -1,4 +1,3 @@
-
 As an Expert Backend Developer, I have reviewed the `role-rules` codebase. This is a sophisticated static analysis tool / architectural linter designed to enforce a 7-layer AES (Agentic Engineering System) architecture across Rust, Python, and TypeScript/JavaScript.
 
 Since this is a CLI/Static Analysis tool, **database queries are not applicable**. However, the "backend" here refers to the core engine: **File I/O, AST/Regex Parsing, API Design (Traits/Interfaces), and Rule Evaluation**.
@@ -11,17 +10,17 @@ Below is a comprehensive review identifying architectural flaws, performance bot
 
 #### A. Interface Segregation & Leaky Abstractions
 
-In `capabilities_surface_role_auditor.rs`, the `ISurfaceRoleChecker` trait defines methods like `check_smart_surface`, `check_utility_surface`, and `check_passive_surface`. However, the implementation leaves these as **no-ops** (empty functions). The actual logic is hidden in inherent methods (`check_surface_hierarchy`, `check_surface_roles`) that are *not* part of the trait.
+In `capabilities_surface_role_auditor.rs`, the `ISurfaceRoleChecker` trait defines methods like `check_smart_surface`, `check_utility_surface`, and `check_passive_surface`. However, the implementation leaves these as **no-ops** (empty functions). The actual logic is hidden in inherent methods (`check_surface_hierarchy`, `check_surface_roles`) that are _not_ part of the trait.
 
-* **Impact**: Violates the Dependency Inversion Principle. Callers cannot mock or polymorphically invoke the actual surface checking logic via the `IRoleAggregate`.
-* **Fix**: The trait must reflect the actual entry points, or the inherent methods must be moved into the trait implementation.
+- **Impact**: Violates the Dependency Inversion Principle. Callers cannot mock or polymorphically invoke the actual surface checking logic via the `IRoleAggregate`.
+- **Fix**: The trait must reflect the actual entry points, or the inherent methods must be moved into the trait implementation.
 
 #### B. Open/Closed Principle (OCP) Violation
 
 Auditors like `CapabilitiesRoleChecker` and `TaxonomyRoleChecker` are littered with `if li.is_rs { ... } else if li.is_py { ... }`.
 
-* **Impact**: Adding support for Go, Java, or C# requires modifying existing, tested auditor files. This creates a maintenance bottleneck and violates OCP.
-* **Fix**: Implement the **Strategy Pattern**. Abstract language-specific parsing behind a `LanguageParser` trait.
+- **Impact**: Adding support for Go, Java, or C# requires modifying existing, tested auditor files. This creates a maintenance bottleneck and violates OCP.
+- **Fix**: Implement the **Strategy Pattern**. Abstract language-specific parsing behind a `LanguageParser` trait.
 
 ---
 
@@ -31,13 +30,13 @@ Auditors like `CapabilitiesRoleChecker` and `TaxonomyRoleChecker` are littered w
 
 In `agent_role_orchestrator.rs`, `run_all_role_checks` reads files sequentially using `std::fs::read_to_string`. For a large monorepo (10,000+ files), this will cause massive I/O blocking.
 
-* **Fix**: Use `rayon` for parallel file reading and rule evaluation.
+- **Fix**: Use `rayon` for parallel file reading and rule evaluation.
 
 #### B. Minified File Memory Spikes (ReDoS / OOM)
 
 The linter uses `.lines()` and regex on file contents. If a user runs the linter on a minified JS/TS file (e.g., `bundle.js` with 1 line and 5MB of text), `.lines()` will allocate a massive string slice, and regex engines may hang or cause Out-Of-Memory (OOM) crashes.
 
-* **Fix**: Implement a line-length/size guard before parsing.
+- **Fix**: Implement a line-length/size guard before parsing.
 
 ---
 
@@ -49,14 +48,14 @@ The linter uses `.lines()` and regex on file contents. If a user runs the linter
 let content = std::fs::read_to_string(file).unwrap_or_default();
 ```
 
-* **Impact**: If a file lacks read permissions, is a binary file, or has invalid UTF-8 encoding, it silently becomes an empty string. The linter will report "0 violations" instead of alerting the user that the file was skipped.
-* **Fix**: Return a `Result` or emit a `CRITICAL` lint violation for unreadable files.
+- **Impact**: If a file lacks read permissions, is a binary file, or has invalid UTF-8 encoding, it silently becomes an empty string. The linter will report "0 violations" instead of alerting the user that the file was skipped.
+- **Fix**: Return a `Result` or emit a `CRITICAL` lint violation for unreadable files.
 
 #### B. Config Parsing Swallows Errors
 
 In `taxonomy_config_vo.rs`, `parse_config_yaml` uses `unwrap_or_default()` and falls back to an empty config if the YAML is malformed, only printing a warning to `stderr`.
 
-* **Impact**: A typo in the user's `.yaml` config will silently disable all architectural rules. A CLI tool must fail fast on invalid configuration.
+- **Impact**: A typo in the user's `.yaml` config will silently disable all architectural rules. A CLI tool must fail fast on invalid configuration.
 
 ---
 
@@ -72,8 +71,8 @@ if path.is_dir() {
 }
 ```
 
-* **Impact**: `path.is_dir()` follows symlinks. If a directory contains a symlink pointing to a parent directory (e.g., `ln -s ../ ./loop`), this will cause an infinite recursion, resulting in a Stack Overflow or OOM crash.
-* **Fix**: Use the `walkdir` crate, which safely handles symlinks and depth limits, or track visited inodes.
+- **Impact**: `path.is_dir()` follows symlinks. If a directory contains a symlink pointing to a parent directory (e.g., `ln -s ../ ./loop`), this will cause an infinite recursion, resulting in a Stack Overflow or OOM crash.
+- **Fix**: Use the `walkdir` crate, which safely handles symlinks and depth limits, or track visited inodes.
 
 #### B. Brittle String-Matching (Business Logic Flaw)
 
@@ -83,8 +82,8 @@ In `capabilities_capabilities_role_auditor.rs`, capability routing is checked vi
 let hi = content.contains(&format!("impl I{}", s)) || content.contains(&format!("for {} ", s));
 ```
 
-* **Impact**: This will yield **false positives** if the string appears in a comment (`// impl IMyStruct`), and **false negatives** if the trait has generic parameters (`impl<T> IMyTrait<T> for MyStruct`).
-* **Fix**: For Rust, use the `syn` crate to parse the AST. For multi-language support, use `tree-sitter`. Regex/String matching for AST structures is fundamentally flawed for production-grade linters.
+- **Impact**: This will yield **false positives** if the string appears in a comment (`// impl IMyStruct`), and **false negatives** if the trait has generic parameters (`impl<T> IMyTrait<T> for MyStruct`).
+- **Fix**: For Rust, use the `syn` crate to parse the AST. For multi-language support, use `tree-sitter`. Regex/String matching for AST structures is fundamentally flawed for production-grade linters.
 
 ---
 
@@ -155,7 +154,7 @@ impl RoleOrchestrator {
             };
 
             // Guard against minified files causing OOM/ReDoS
-            if content.len() > 2_000_000 { 
+            if content.len() > 2_000_000 {
                 let mut v = violations.lock().unwrap();
                 v.push(LintResult::new_arch(
                     file, 0, "AES998", shared::cli_commands::taxonomy_severity_vo::Severity::HIGH,
@@ -178,7 +177,7 @@ impl RoleOrchestrator {
             // Dispatch to checkers (Thread-safe as checkers are stateless)
             let mut local_violations = Vec::new();
             self.dispatch_checks(prefix, filename, &source_vo, max_lines, &mut local_violations);
-          
+
             if !local_violations.is_empty() {
                 violations.lock().unwrap().extend(local_violations);
             }
@@ -256,7 +255,7 @@ impl ContractRoleChecker {
     fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let parser = get_parser(&source.language);
         let file = source.file_path.value();
-      
+
         for (line_no, sig) in parser.extract_method_signatures(source.content.value()) {
             let forbidden = parser.uses_forbidden_primitives(&sig);
             if !forbidden.is_empty() {
@@ -280,9 +279,9 @@ Do not swallow configuration errors. If the user provides a broken YAML, the lin
 pub fn parse_config_yaml(yaml_str: &str) -> Result<ArchitectureConfig, String> {
     let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str)
         .map_err(|e| format!("YAML Syntax Error: {}", e))?;
-      
+
     // ... existing transformation logic ...
-  
+
     serde_json::from_value::<ArchitectureConfig>(json)
         .map_err(|e| format!("Config Schema Validation Error: {}", e))
 }

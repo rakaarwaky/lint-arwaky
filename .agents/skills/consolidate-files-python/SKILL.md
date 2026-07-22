@@ -2,16 +2,16 @@
 name: consolidate-files-python
 description: "Consolidate multiple Python files into single cohesive modules following single responsibility principle."
 metadata:
-    tags: [python, consolidation, single-responsibility, refactoring, structure]
-    triggers:
-        - "consolidate python"
-        - "merge files python"
-        - "combine modules python"
-    dependencies: []
-    related:
-        - add-docs-python
-        - cleanup-files-python
-        - create-capabilities-python
+  tags: [python, consolidation, single-responsibility, refactoring, structure]
+  triggers:
+    - "consolidate python"
+    - "merge files python"
+    - "combine modules python"
+  dependencies: []
+  related:
+    - add-docs-python
+    - cleanup-files-python
+    - create-capabilities-python
 ---
 
 # consolidate-files-python

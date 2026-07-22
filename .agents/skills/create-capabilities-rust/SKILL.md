@@ -2,20 +2,31 @@
 name: create-capabilities-rust
 description: "Create and validate Rust capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one impl struct per file, protocol trait contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-    tags: [rust, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
-    triggers:
-        - "create capability rust"
-        - "add capability rust"
-        - "fix capability structure rust"
-        - "create trait rust"
-        - "capability missing trait rust"
-        - "check capabilities rust"
-        - "audit capabilities rust"
-    dependencies: []
-    related:
-        - create-agent-rust
-        - create-contract-rust
-        - create-taxonomy-rust
+  tags:
+    [
+      rust,
+      aes,
+      capability,
+      protocol,
+      structure,
+      3-block-structure,
+      di,
+      vo,
+      role-naming,
+    ]
+  triggers:
+    - "create capability rust"
+    - "add capability rust"
+    - "fix capability structure rust"
+    - "create trait rust"
+    - "capability missing trait rust"
+    - "check capabilities rust"
+    - "audit capabilities rust"
+  dependencies: []
+  related:
+    - create-agent-rust
+    - create-contract-rust
+    - create-taxonomy-rust
 ---
 
 # create-capabilities-rust
@@ -90,26 +101,26 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 
 Read these files for detailed rules:
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules |
-| `references/error-handling.md` | Error handling rules with examples |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                | Content                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `references/layer-boundaries.md`    | Allowed/Forbidden imports and dependencies             |
+| `references/3-block-structure.md`   | Block 1/2/3 definitions, method placement rules        |
+| `references/helper-vs-utility.md`   | Helper vs utility decision, I/O Blocker, decision tree |
+| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules          |
+| `references/error-handling.md`      | Error handling rules with examples                     |
+| `references/examples.md`            | All BAD/GOOD code examples                             |
+| `references/commands.md`            | Quick heuristic check commands                         |
+| `references/checklist.md`           | Verification checklist                                 |
 
 ## Templates
 
 Use these templates when creating new files:
 
-| File | Purpose |
-|------|---------|
-| `templates/capabilities_name.rs` | New capabilities implementation file |
-| `templates/contract_name_protocol.rs` | New protocol trait definition |
-| `templates/mod.rs` | Module registration |
+| File                                  | Purpose                              |
+| ------------------------------------- | ------------------------------------ |
+| `templates/capabilities_name.rs`      | New capabilities implementation file |
+| `templates/contract_name_protocol.rs` | New protocol trait definition        |
+| `templates/mod.rs`                    | Module registration                  |
 
 ## Workflow
 

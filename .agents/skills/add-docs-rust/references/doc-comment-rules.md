@@ -16,7 +16,7 @@
 
 ## Template
 
-```rust
+````rust
 /// One-liner describing struct purpose.
 pub struct MyStruct {
     // ...
@@ -45,7 +45,7 @@ pub struct MyStruct {
 pub fn my_method(param1: &str, param2: i32) -> Result<bool, Error> {
     // ...
 }
-```
+````
 
 ## Anti-Patterns
 

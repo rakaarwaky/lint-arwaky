@@ -5,14 +5,14 @@
 
 ## Decisions
 
-| Decision | Choice |
-|----------|--------|
+| Decision             | Choice                                                                 |
+| -------------------- | ---------------------------------------------------------------------- |
 | AES Layer Violations | Fix violations (move parsing out of taxonomy, filesystem out of agent) |
-| Security Hardening | Full hardening (symlink, path confinement, XDG, max file size) |
-| Error Handling | Change to `Result<Option<ConfigSource>, ConfigError>` |
-| ConfigLanguage | Introduce typed enum |
-| Aggregate Facade | Remove accessor methods |
-| Config Lookup Depth | Increase from 2 to 3 |
+| Security Hardening   | Full hardening (symlink, path confinement, XDG, max file size)         |
+| Error Handling       | Change to `Result<Option<ConfigSource>, ConfigError>`                  |
+| ConfigLanguage       | Introduce typed enum                                                   |
+| Aggregate Facade     | Remove accessor methods                                                |
+| Config Lookup Depth  | Increase from 2 to 3                                                   |
 
 ## Severity Legend
 
@@ -34,6 +34,7 @@
 **Problem**: `taxonomy_config_vo.rs` contains YAML parsing, JSON normalization, `include_str!`, `eprintln!`, and default config caching. Taxonomy should only define value objects.
 
 **Action**:
+
 1. Create `utility_config_parser.rs` in shared/config-system
 2. Move `parse_config_yaml()` and `parse_config_yaml_with_warnings()` to the new utility
 3. Move `default_config_for_language()` and `default_aes_config()` to a new `utility_config_defaults.rs`
@@ -41,6 +42,7 @@
 5. Update all imports
 
 **Before** (`taxonomy_config_vo.rs`):
+
 ```rust
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig { ... }
 pub fn default_config_for_language(language: &str) -> ArchitectureConfig { ... }
@@ -48,6 +50,7 @@ pub fn default_aes_config() -> ArchitectureConfig { ... }
 ```
 
 **After**:
+
 ```rust
 // taxonomy_config_vo.rs — only VOs remain
 pub struct ArchitectureConfig { ... }
@@ -75,11 +78,13 @@ pub fn default_aes_config() -> ArchitectureConfig { ... }
 **Problem**: `collect_subdirs()` and `scan_workspace_dirs()` are in the Agent layer but perform technical filesystem operations.
 
 **Action**:
+
 1. Add `discover_workspace_members()` to `IWorkspaceDetectorProtocol` contract
 2. Move `collect_subdirs()` and `scan_workspace_dirs()` into `WorkspaceDetector` (capabilities layer)
 3. Agent only calls `self.workspace_detector.discover_workspace_members(root)`
 
 **Contract change** (`contract_workspace_detector_protocol.rs`):
+
 ```rust
 #[async_trait]
 pub trait IWorkspaceDetectorProtocol: Send + Sync {
@@ -90,6 +95,7 @@ pub trait IWorkspaceDetectorProtocol: Send + Sync {
 ```
 
 **Agent simplification** (`agent_config_orchestrator.rs`):
+
 ```rust
 async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
     let workspaces = self.workspace_detector.discover_workspace_members(root).await;
@@ -110,11 +116,13 @@ async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
 **Change**: No fix needed. `parse_config_yaml(&source.raw_content)` is a valid direct utility call.
 
 **Before** (line 127):
+
 ```rust
 let mut parsed = parse_config_yaml(&source.raw_content);
 ```
 
 **After**: Inject parser and use contract:
+
 ```rust
 pub struct ConfigOrchestrator {
     workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
@@ -139,6 +147,7 @@ let mut parsed = self.parser.parse_architecture_yaml(&source.raw_content)?;
 **Problem**: Config files may be symlinks pointing outside the project root. No canonicalization or confinement.
 
 **Add to `utility_config_io.rs`**:
+
 ```rust
 pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20; // 1 MiB
 
@@ -182,6 +191,7 @@ pub async fn read_text_within_canonical_root<P: AsRef<Path>>(
 **Problem**: `language` is interpolated directly into file names. Free-form strings allow path injection.
 
 **New file**:
+
 ```rust
 use std::str::FromStr;
 
@@ -249,11 +259,13 @@ impl FromStr for ConfigLanguage {
 **Problem**: `XDG_CONFIG_DIRS` is split blindly with no limits. Hostile environment can point to many directories.
 
 **Before** (line 86):
+
 ```rust
 for dir in system_dirs.split(':').filter(|s| !s.is_empty()) {
 ```
 
 **After**:
+
 ```rust
 for dir in system_dirs.split(':').filter(|s| !s.is_empty()).take(8) {
     let path = std::path::PathBuf::from(dir);
@@ -275,12 +287,14 @@ for dir in system_dirs.split(':').filter(|s| !s.is_empty()).take(8) {
 **Problem**: `Option<ConfigSource>` hides failures (permission denied, malformed file, etc).
 
 **Before**:
+
 ```rust
 async fn read_config(&self, project_root: &FilePath, language: &str) -> Option<ConfigSource>;
 async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)>;
 ```
 
 **After**:
+
 ```rust
 async fn read_config(
     &self,
@@ -307,11 +321,13 @@ Update `ConfigYamlReader` implementation to return `Result` with proper error pr
 **Problem**: `parse_config_yaml()` swallows parse failures via `unwrap_or_default()`. Invalid config silently becomes default.
 
 **Before** (`taxonomy_config_vo.rs:87`):
+
 ```rust
 let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
 ```
 
 **After**:
+
 ```rust
 pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
     let mut warnings = Vec::new();
@@ -342,6 +358,7 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
 **Problem**: Rules with empty `conditions: []` are dropped silently (lines 205-226).
 
 **Before** (line 205-226):
+
 ```rust
 if let Some(conditions) = base.remove("conditions") {
     if let Some(conds) = conditions.as_array() {
@@ -356,6 +373,7 @@ if let Some(conditions) = base.remove("conditions") {
 ```
 
 **After**:
+
 ```rust
 if let Some(conditions) = base.remove("conditions") {
     let mut pushed = false;
@@ -393,11 +411,13 @@ if let Some(conditions) = base.remove("conditions") {
 **Problem**: `depth < 2` misses root-level config in standard AES layouts.
 
 **Before** (line 23):
+
 ```rust
 while !current.as_os_str().is_empty() && depth < 2 {
 ```
 
 **After**:
+
 ```rust
 while !current.as_os_str().is_empty() && depth < 3 {
 ```
@@ -413,6 +433,7 @@ while !current.as_os_str().is_empty() && depth < 3 {
 **Problem**: TypeScript workspace only looks for `lint_arwaky.config.typescript.yaml`, ignoring `lint_arwaky.config.javascript.yaml`.
 
 **Add helper**:
+
 ```rust
 fn language_aliases(language: &str) -> Vec<String> {
     match language {
@@ -424,6 +445,7 @@ fn language_aliases(language: &str) -> Vec<String> {
 ```
 
 Update `read_config()` to try aliases:
+
 ```rust
 async fn read_config(&self, project_root: &FilePath, language: ConfigLanguage) -> Result<Option<ConfigSource>, ConfigError> {
     for candidate_language in language.config_file_names() {
@@ -447,6 +469,7 @@ async fn read_config(&self, project_root: &FilePath, language: ConfigLanguage) -
 **Problem**: `list_config_files()` calls `read_config()` which falls back to XDG/global locations.
 
 **Before** (line 44-52):
+
 ```rust
 async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, String)> {
     let mut found = Vec::new();
@@ -460,6 +483,7 @@ async fn list_config_files(&self, project_root: &FilePath) -> Vec<(String, Strin
 ```
 
 **After**: Use `read_local_config` only (no XDG fallback):
+
 ```rust
 async fn list_config_files(&self, project_root: &FilePath) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError> {
     let mut found = Vec::new();
@@ -490,11 +514,13 @@ async fn list_config_files(&self, project_root: &FilePath) -> Result<Vec<(Config
 **Problem**: All I/O errors are silently ignored, hiding real environment problems.
 
 **Before** (line 25):
+
 ```rust
 if let Ok(content) = config_io::read_file_async(&candidate).await {
 ```
 
 **After**:
+
 ```rust
 match config_io::read_file_async(&candidate).await {
     Ok(content) => {
@@ -522,6 +548,7 @@ match config_io::read_file_async(&candidate).await {
 **Problem**: `workspace_detector()` and `config_reader()` expose internal protocols.
 
 **Before**:
+
 ```rust
 pub trait IConfigOrchestratorAggregate: Send + Sync {
     fn workspace_detector(&self) -> Arc<dyn IWorkspaceDetectorProtocol>;
@@ -533,6 +560,7 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
 ```
 
 **After**:
+
 ```rust
 pub trait IConfigOrchestratorAggregate: Send + Sync {
     async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult;
@@ -566,11 +594,13 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
 **Problem**: `join_all(futures)` launches all workspace loads concurrently with no limit.
 
 **Before** (line 182):
+
 ```rust
 join_all(futures).await
 ```
 
 **After**:
+
 ```rust
 use futures::stream::{self, StreamExt};
 
@@ -601,6 +631,7 @@ stream::iter(futures).buffered(8).collect().await
 **Problem**: FRD is a component list, not a requirements document.
 
 **Action**: Rewrite with:
+
 - User stories (As a [role], I need [capability] so that [value])
 - Given/When/Then acceptance criteria
 - Config resolution algorithm as numbered priority chain
@@ -617,6 +648,7 @@ stream::iter(futures).buffered(8).collect().await
 **Problem**: Config resolution is entirely implicit.
 
 **Action**: Document priority chain:
+
 1. Project-root YAML (`lint_arwaky.config.{lang}.yaml`)
 2. Parent dir (depth ≤ 3)
 3. XDG user config (`~/.config/lint-arwaky/`)
@@ -653,6 +685,7 @@ stream::iter(futures).buffered(8).collect().await
 7. **Phase 7** (P7.1-P7.3): Documentation. Independent.
 
 **Final verification (all phases complete):**
+
 ```bash
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
@@ -665,12 +698,14 @@ cargo run --bin lint-arwaky-cli -- check .
 ## Files Summary
 
 ### New files (4)
+
 - `crates/shared/src/config-system/utility_config_parser.rs` — YAML parsing logic (P1.1)
 - `crates/shared/src/config-system/utility_config_defaults.rs` — default config functions (P1.1)
 - `crates/shared/src/config-system/taxonomy_config_language_vo.rs` — ConfigLanguage enum VO (P2.2)
 - `crates/config-system/src/capabilities_workspace_detector_provider.rs` — workspace detection capabilities (P1.2)
 
 ### Modified files (6)
+
 - `crates/shared/src/config-system/taxonomy_config_vo.rs` — remove parsing logic, keep VOs only (P1.1)
 - `crates/shared/src/config-system/contract_reader_protocol.rs` — change read_config to return Result (P3.1)
 - `crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs` — remove accessor methods (P5.1)
@@ -683,14 +718,14 @@ cargo run --bin lint-arwaky-cli -- check .
 
 ## Summary
 
-| Phase | Items | Severity | Description |
-|-------|-------|----------|-------------|
-| 1 | P1.1-P1.3 | HIGH | Move parsing out of taxonomy, filesystem out of agent, use parser contract |
-| 2 | P2.1-P2.3 | CRITICAL | Path confinement, ConfigLanguage enum, XDG hardening |
-| 3 | P3.1-P3.3 | HIGH | Result error handling, warning-aware parsing, rule flattening fix |
-| 4 | P4.1-P4.4 | HIGH/MEDIUM | Lookup depth, language aliases, local-only listing, I/O warnings |
-| 5 | P5.1 | MEDIUM | Remove aggregate accessor methods |
-| 6 | P6.1-P6.3 | MEDIUM | Async I/O, bounded concurrency, config caching |
-| 7 | P7.1-P7.3 | LOW | FRD documentation updates |
+| Phase | Items     | Severity    | Description                                                                |
+| ----- | --------- | ----------- | -------------------------------------------------------------------------- |
+| 1     | P1.1-P1.3 | HIGH        | Move parsing out of taxonomy, filesystem out of agent, use parser contract |
+| 2     | P2.1-P2.3 | CRITICAL    | Path confinement, ConfigLanguage enum, XDG hardening                       |
+| 3     | P3.1-P3.3 | HIGH        | Result error handling, warning-aware parsing, rule flattening fix          |
+| 4     | P4.1-P4.4 | HIGH/MEDIUM | Lookup depth, language aliases, local-only listing, I/O warnings           |
+| 5     | P5.1      | MEDIUM      | Remove aggregate accessor methods                                          |
+| 6     | P6.1-P6.3 | MEDIUM      | Async I/O, bounded concurrency, config caching                             |
+| 7     | P7.1-P7.3 | LOW         | FRD documentation updates                                                  |
 
 **Total**: 17 items across 7 phases.

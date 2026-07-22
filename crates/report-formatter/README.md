@@ -26,6 +26,7 @@ let output = formatter.format(&report, Format::Sarif);
 ## Architecture
 
 This crate follows AES rules:
+
 - **Capabilities** (`capabilities_*.rs`) — Implement `IReportFormatterProtocol`
 - **Agent** (`agent_report_formatter_orchestrator.rs`) — Implements `IReportFormatterAggregate`
 - **No Surface** — Surface layer lives in `cli-commands`

@@ -18,34 +18,42 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — UI/UX Designer
 
 ## Summary
+
 {{One-paragraph overview of UX health and key findings.}}
 
 ## Findings by Category
 
 ### Visual Hierarchy & Layout
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### User Flow & Navigation
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Accessibility (a11y) Compliance
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Design Consistency
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## UX Recommendations
+
 {{Show specific design improvements with explanations.}}
 ```
 
 ### Severity Convention
+
 - 🔴 **CRITICAL** — Accessibility violation, broken user flow
 - 🟡 **WARNING** — Design inconsistency, usability concern
 - 🟢 **INFO** — Suggestion, nice-to-have improvement

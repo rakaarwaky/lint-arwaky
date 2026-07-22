@@ -205,77 +205,41 @@ architecture:
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "taxonomy(entity,error,event)"
           allowed: ["taxonomy"]
           mandatory: ["taxonomy(vo|constant)"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "taxonomy(constant)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
 
         - scope: "utility"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "capabilities",
-              "root",
-            ]
+          forbidden: ["agent", "surfaces", "contract", "capabilities", "root"]
 
         - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "capabilities",
-              "contract(aggregate)",
-              "root",
-            ]
+            ["agent", "surfaces", "capabilities", "contract(aggregate)", "root"]
 
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["agent", "surfaces", "capabilities", "root"]
+          forbidden: ["agent", "surfaces", "capabilities", "root"]
           forbidden_inheritance: ["contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden:
-            ["surfaces", "agent", "capabilities", "root"]
+          forbidden: ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -286,12 +250,7 @@ architecture:
 
         - scope: "agent(orchestrator)"
           allowed:
-            [
-              "taxonomy",
-              "contract(aggregate)",
-              "contract(protocol)",
-              "utility",
-            ]
+            ["taxonomy", "contract(aggregate)", "contract(protocol)", "utility"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["surfaces", "capabilities", "root"]
           allowed_imports:
@@ -307,13 +266,7 @@ architecture:
         - scope: "surfaces(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)", "utility"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "capabilities",
-              "contract(protocol)",
-              "root",
-            ]
+          forbidden: ["agent", "capabilities", "contract(protocol)", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -353,14 +306,7 @@ architecture:
               purpose: "implement"
 
         - scope: "root"
-          allowed:
-            [
-              "taxonomy",
-              "contract",
-              "capabilities",
-              "agent",
-              "surfaces",
-            ]
+          allowed: ["taxonomy", "contract", "capabilities", "agent", "surfaces"]
           mandatory: []
           forbidden: []
           allowed_imports:
@@ -393,14 +339,7 @@ architecture:
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -409,14 +348,7 @@ architecture:
           allowed: ["taxonomy"]
           mandatory: ["taxonomy(vo|constant)"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -425,14 +357,7 @@ architecture:
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "utility",
-              "capabilities",
-              "root",
-            ]
+            ["agent", "surfaces", "contract", "utility", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -440,14 +365,7 @@ architecture:
         - scope: "utility"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "surfaces",
-              "contract",
-              "capabilities",
-              "root",
-            ]
+          forbidden: ["agent", "surfaces", "contract", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -456,13 +374,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            [
-              "agent",
-              "surfaces",
-              "capabilities",
-              "contract(aggregate)",
-              "root",
-            ]
+            ["agent", "surfaces", "capabilities", "contract(aggregate)", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -472,8 +384,7 @@ architecture:
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden:
-            ["agent", "surfaces", "capabilities", "root"]
+          forbidden: ["agent", "surfaces", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -483,8 +394,7 @@ architecture:
         - scope: "capabilities"
           allowed: ["taxonomy", "contract", "utility"]
           mandatory: ["taxonomy", "contract(protocol)"]
-          forbidden:
-            ["surfaces", "agent", "capabilities", "root"]
+          forbidden: ["surfaces", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -495,12 +405,7 @@ architecture:
 
         - scope: "agent(orchestrator)"
           allowed:
-            [
-              "taxonomy",
-              "contract(aggregate)",
-              "contract(protocol)",
-              "utility",
-            ]
+            ["taxonomy", "contract(aggregate)", "contract(protocol)", "utility"]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: ["surfaces", "capabilities", "root"]
           allowed_imports:
@@ -514,14 +419,7 @@ architecture:
               purpose: "call"
 
         - scope: "root"
-          allowed:
-            [
-              "taxonomy",
-              "contract",
-              "capabilities",
-              "agent",
-              "surfaces",
-            ]
+          allowed: ["taxonomy", "contract", "capabilities", "agent", "surfaces"]
           mandatory: []
           forbidden: []
           allowed_imports:
@@ -539,13 +437,7 @@ architecture:
         - scope: "surfaces(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)", "utility"]
           mandatory: null
-          forbidden:
-            [
-              "agent",
-              "capabilities",
-              "contract(protocol)",
-              "root",
-            ]
+          forbidden: ["agent", "capabilities", "contract(protocol)", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -587,14 +479,7 @@ architecture:
     AES203:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions:
         [
           "main.rs",
@@ -608,74 +493,34 @@ architecture:
     AES204:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES205:
       enabled: true
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
 
     # ─── AES300: Code Quality ───
     AES301:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       max_lines: 1000
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES302:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       min_lines: 5
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES303:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES304:
@@ -711,14 +556,7 @@ architecture:
     AES305:
       enabled: true
       scope:
-        [
-          "taxonomy",
-          "contract",
-          "utility",
-          "capabilities",
-          "agent",
-          "surfaces",
-        ]
+        ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     # ─── AES400: Role ───

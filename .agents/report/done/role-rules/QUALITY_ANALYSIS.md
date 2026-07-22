@@ -1,4 +1,3 @@
-
 Yes — I reviewed `role-rules v1.10.106` as a QA + developer pass.
 
 ## Summary

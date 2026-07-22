@@ -21,28 +21,28 @@
 
 ## Violation Summary
 
-| Category | Count | Priority |
-|----------|-------|----------|
-| AES201 FORBIDDEN_IMPORT | 17 | HIGH |
-| AES302 FILE_TOO_SHORT | 22 | MEDIUM |
-| AES305 DEAD_INHERITANCE | 22 | MEDIUM |
-| AES204 IMPORT_INTENT | 10 | MEDIUM |
-| AES304 BYPASS_COMMENT | 7 | HIGH |
-| AES402 CONTRACT_PRIMITIVE | 3 | HIGH |
-| AES202 MANDATORY_IMPORT | 3 | HIGH |
-| AES304 UNIMPLEMENTED | 3 | HIGH |
-| AES305 CODE_DUPLICATION | 2 | MEDIUM |
-| AES203 UNUSED_IMPORT | 2 | LOW |
-| AES102 SUFFIX_MISMATCH | 1 | HIGH |
-| AES304 UNWRAP_EXPECT | 1 | HIGH |
-| AES304 TODO | 1 | HIGH |
-| AES304 PANIC | 1 | HIGH |
-| AES405 AGENT_ROLE | 1 | MEDIUM |
-| AES403 CAPABILITY_ROLE | 1 | MEDIUM |
-| dead_code | 1 | LOW |
-| clippy::clone_on_copy | 1 | LOW |
-| clippy::too_many_arguments | 1 | LOW |
-| formatting | 1 | LOW |
+| Category                   | Count | Priority |
+| -------------------------- | ----- | -------- |
+| AES201 FORBIDDEN_IMPORT    | 17    | HIGH     |
+| AES302 FILE_TOO_SHORT      | 22    | MEDIUM   |
+| AES305 DEAD_INHERITANCE    | 22    | MEDIUM   |
+| AES204 IMPORT_INTENT       | 10    | MEDIUM   |
+| AES304 BYPASS_COMMENT      | 7     | HIGH     |
+| AES402 CONTRACT_PRIMITIVE  | 3     | HIGH     |
+| AES202 MANDATORY_IMPORT    | 3     | HIGH     |
+| AES304 UNIMPLEMENTED       | 3     | HIGH     |
+| AES305 CODE_DUPLICATION    | 2     | MEDIUM   |
+| AES203 UNUSED_IMPORT       | 2     | LOW      |
+| AES102 SUFFIX_MISMATCH     | 1     | HIGH     |
+| AES304 UNWRAP_EXPECT       | 1     | HIGH     |
+| AES304 TODO                | 1     | HIGH     |
+| AES304 PANIC               | 1     | HIGH     |
+| AES405 AGENT_ROLE          | 1     | MEDIUM   |
+| AES403 CAPABILITY_ROLE     | 1     | MEDIUM   |
+| dead_code                  | 1     | LOW      |
+| clippy::clone_on_copy      | 1     | LOW      |
+| clippy::too_many_arguments | 1     | LOW      |
+| formatting                 | 1     | LOW      |
 
 ---
 
@@ -51,9 +51,11 @@
 **Covers:** Compilation fixes, dead_code, clone_on_copy
 
 **Files:**
+
 - Modify: `crates/cli-commands/src/agent_analysis_pipeline_orchestrator.rs`
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Compiling codebase with no errors
 
@@ -110,10 +112,12 @@ git commit -m "fix: remove dead_code and clone_on_copy warnings in pipeline orch
 **Covers:** AES201 FORBIDDEN_IMPORT
 
 **Files:**
+
 - Modify: `crates/shared/src/cli-commands/taxonomy_lint_dependencies_vo.rs` (14 violations)
 - Modify: `crates/tui/src/capabilities_lint_executor.rs` (3 violations)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Taxonomy layer files with no forbidden imports
 
@@ -124,6 +128,7 @@ This file is in the taxonomy layer but imports from contract layer. Taxonomy mus
 Read the file to understand what it imports from contract layer, then refactor to remove those imports. The taxonomy layer should only contain VOs, entities, errors, events, and constants.
 
 Options:
+
 1. Move the contract-dependent types to a different layer
 2. Use trait objects or generics to avoid direct contract imports
 3. Create intermediate types in taxonomy that don't depend on contracts
@@ -133,6 +138,7 @@ Options:
 This file is in capabilities layer but imports from other capabilities. Capabilities must not depend on other capabilities.
 
 Read the file to understand what it imports, then refactor to:
+
 1. Extract shared logic to utility layer
 2. Use contract traits instead of concrete capability implementations
 3. Pass dependencies via constructor injection
@@ -161,6 +167,7 @@ git commit -m "fix: remove forbidden imports from taxonomy and capabilities laye
 **Covers:** AES304 BYPASS_COMMENT
 
 **Files:**
+
 - Modify: `crates/cli-commands/src/surface_check_command.rs` (1 violation)
 - Modify: `crates/code-analysis/src/capabilities_check_bypass_checker.rs` (5 violations)
 - Modify: `crates/naming-rules/src/capabilities_naming_convention_checker.rs` (1 violation)
@@ -168,17 +175,20 @@ git commit -m "fix: remove forbidden imports from taxonomy and capabilities laye
 - Modify: `crates/shared/src/code-analysis/utility_bypass.rs` (1 violation)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Code with no bypass comments
 
 - [ ] **Step 1: Find and remove all bypass comments**
 
 Search for bypass patterns:
+
 ```bash
 grep -rn "#\[allow\|unwrap()\|expect(" crates/ --include="*.rs" | grep -v "test"
 ```
 
 For each bypass comment found:
+
 1. Understand why it was added
 2. Fix the root cause properly
 3. Remove the bypass comment
@@ -207,11 +217,13 @@ git commit -m "fix: remove bypass comments and fix root causes"
 **Covers:** AES304 UNWRAP_EXPECT, AES304 TODO, AES304 UNIMPLEMENTED, AES304 PANIC
 
 **Files:**
+
 - Modify: `crates/config-system/src/agent_config_orchestrator.rs` (1 UNWRAP_EXPECT)
 - Modify: `crates/shared/src/import-rules/utility_dummy_detector.rs` (1 TODO, 2 UNIMPLEMENTED, 1 PANIC)
 - Modify: `crates/root_cli_main_entry.rs` (1 UNIMPLEMENTED)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Code with proper error handling
 
@@ -270,11 +282,13 @@ git commit -m "fix: replace unwrap/expect/todo/unimplemented/panic with proper e
 **Covers:** AES402 CONTRACT_PRIMITIVE
 
 **Files:**
+
 - Modify: `crates/shared/src/cli-commands/contract_report_formatter_protocol.rs`
 - Modify: `crates/shared/src/code-analysis/contract_code_metric_analyzer_protocol.rs`
 - Modify: `crates/shared/src/external-lint/contract_external_lint_selector_protocol.rs`
 
 **Interfaces:**
+
 - Consumes: Taxonomy VOs
 - Produces: Contract traits using VOs instead of primitives
 
@@ -285,11 +299,13 @@ Understand what primitive types are being used and what VOs should replace them.
 - [ ] **Step 2: Create or use existing VOs**
 
 For each primitive type in contract signatures:
+
 1. Check if a VO already exists in taxonomy
 2. If not, create one
 3. Update the contract to use the VO
 
 Example:
+
 ```rust
 // Instead of:
 fn format(&self, results: Vec<LintResult>, path: &str) -> String;
@@ -326,9 +342,11 @@ git commit -m "fix: replace primitive types with VOs in contract signatures"
 **Covers:** AES202 MANDATORY_IMPORT
 
 **Files:**
+
 - Modify: `crates/shared/src/external-lint/contract_external_lint_selector_protocol.rs`
 
 **Interfaces:**
+
 - Consumes: Taxonomy layer
 - Produces: Contract with required taxonomy import
 
@@ -365,15 +383,18 @@ git commit -m "fix: add mandatory taxonomy import to contract"
 **Covers:** AES102 SUFFIX_MISMATCH
 
 **Files:**
+
 - Rename: `crates/shared/src/external-lint/taxonomy_external_lint_helper.rs`
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: File with correct suffix
 
 - [ ] **Step 1: Analyze the file**
 
 Read the file to determine its actual purpose:
+
 - If it contains domain types (structs, enums) → rename to `taxonomy_*.vo.rs`, `taxonomy_*.entity.rs`, etc.
 - If it contains business logic → move to `capabilities_*.rs`
 - If it contains stateless technical mechanics → move to `utility_*.rs`
@@ -381,6 +402,7 @@ Read the file to determine its actual purpose:
 - [ ] **Step 2: Rename or move the file**
 
 Based on analysis, either:
+
 1. Rename with correct suffix
 2. Move to correct layer
 
@@ -412,6 +434,7 @@ git commit -m "fix: rename file with correct suffix for taxonomy layer"
 **Covers:** AES203 UNUSED_IMPORT, AES204 IMPORT_INTENT
 
 **Files:**
+
 - Modify: `crates/code-analysis/src/capabilities_code_duplication_analyzer.rs` (2 violations)
 - Modify: `crates/code-analysis/src/agent_code_analysis_orchestrator.rs` (4 violations)
 - Modify: `crates/import-rules/src/capabilities_dummy_import_checker.rs` (4 violations)
@@ -421,6 +444,7 @@ git commit -m "fix: rename file with correct suffix for taxonomy layer"
 - Modify: `crates/cli-commands/src/surface_check_action.rs` (1 violation)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Code with proper imports
 
@@ -431,6 +455,7 @@ For each AES203 violation, remove the unused import statement.
 - [ ] **Step 2: Fix import intent violations**
 
 For each AES204 violation, the import is only used in dummy functions. Either:
+
 1. Use the import in real logic
 2. Remove the import if not needed
 3. Move the logic to the correct layer
@@ -459,15 +484,18 @@ git commit -m "fix: remove unused imports and fix import intent violations"
 **Covers:** AES305 DEAD_INHERITANCE
 
 **Files:**
+
 - Multiple files across crates (see violation list)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Code with no empty implementation blocks
 
 - [ ] **Step 1: Identify all empty implementation blocks**
 
 Search for empty impl blocks:
+
 ```bash
 grep -rn "impl.*{" crates/ --include="*.rs" -A 1 | grep -B 1 "^}$"
 ```
@@ -475,6 +503,7 @@ grep -rn "impl.*{" crates/ --include="*.rs" -A 1 | grep -B 1 "^}$"
 - [ ] **Step 2: Fix each empty implementation**
 
 For each empty impl block:
+
 1. If it's a trait implementation, add the required methods
 2. If it's an inherent impl with no methods, remove it
 3. If it's a stub, implement the logic
@@ -503,15 +532,18 @@ git commit -m "fix: implement empty trait implementations and remove dead code"
 **Covers:** AES302 FILE_TOO_SHORT
 
 **Files:**
+
 - Multiple files in `crates/shared/src/` (see violation list)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Files with minimum 10 lines
 
 - [ ] **Step 1: Analyze each short file**
 
 For each file with fewer than 10 lines:
+
 1. Determine if it should be expanded with more functionality
 2. Determine if it should be merged into a related module
 3. Determine if the minimum line requirement should be adjusted in config
@@ -519,6 +551,7 @@ For each file with fewer than 10 lines:
 - [ ] **Step 2: Fix or merge files**
 
 Options:
+
 1. Add more functionality to the file
 2. Merge with a related file
 3. Add documentation/comments if the file is intentionally small
@@ -548,16 +581,19 @@ git commit -m "fix: expand or merge short files to meet minimum line requirement
 **Covers:** AES305 CODE_DUPLICATION
 
 **Files:**
+
 - Modify: `crates/report-formatter/src/capabilities_sarif_formatter.rs`
 - Modify: `crates/report-formatter/src/capabilities_junit_formatter.rs`
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Code with no duplication
 
 - [ ] **Step 1: Identify duplicated code**
 
 The violations indicate these files duplicate code from:
+
 - `crates/cli-commands/src/agent_analysis_pipeline_orchestrator.rs`
 - `crates/report-formatter/src/capabilities_json_formatter.rs`
 - `crates/report-formatter/src/capabilities_text_formatter.rs`
@@ -594,16 +630,19 @@ git commit -m "fix: extract duplicated code into shared module"
 **Covers:** AES405 AGENT_ROLE, AES403 CAPABILITY_ROLE
 
 **Files:**
+
 - Modify: `crates/cli-commands/src/agent_analysis_pipeline_orchestrator.rs` (AES405)
 - Modify: `crates/orphan-detector/src/capabilities_orphan_contract_analyzer.rs` (AES403)
 
 **Interfaces:**
+
 - Consumes: None
 - Produces: Compliant agent and capability files
 
 - [ ] **Step 1: Fix AES405 - Agent file exceeds 500 lines**
 
 The agent file is too large. Split it into smaller focused modules:
+
 1. Extract pipeline logic into separate modules
 2. Keep the orchestrator focused on coordination
 3. Move helper functions to utility layer
@@ -642,9 +681,11 @@ git commit -m "fix: split large agent file and add trait implementation"
 **Covers:** formatting, final verification
 
 **Files:**
+
 - All modified files
 
 **Interfaces:**
+
 - Consumes: All previous tasks
 - Produces: Clean codebase with 0 violations
 

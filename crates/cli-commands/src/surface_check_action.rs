@@ -94,8 +94,12 @@ pub fn handle_ci(
 }
 
 /// Default check = self-lint when no args provided (runs `lint_path(".")`)
-pub fn handle_default_check(project_root: &str) -> ExitCode {
-    let results = code_analysis::lint_path(project_root);
+pub fn handle_default_check(
+    project_root: &str,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+) -> ExitCode {
+    let path = FilePath::new(project_root.to_string()).unwrap_or_default();
+    let results = code_analysis_linter.run_code_analysis_path(&path);
     let mut lines: Vec<String> = Vec::new();
     lines.push("=".repeat(60));
     lines.push("  AES Architecture Compliance Report (Self-Lint)".to_string());

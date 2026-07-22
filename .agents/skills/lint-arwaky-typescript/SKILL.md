@@ -2,16 +2,17 @@
 name: lint-arwaky-typescript
 description: "Run lint-arwaky CLI scanner and MCP server for TypeScript projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-    tags: [typescript, lint, aes, compliance, scanning, mcp]
-    triggers:
-        - "lint arwaky typescript"
-        - "scan typescript project"
-        - "verify aes compliance typescript"
-    dependencies: []
-    related:
-        - cleanup-files-typescript
-        - create-capabilities-typescript
+  tags: [typescript, lint, aes, compliance, scanning, mcp]
+  triggers:
+    - "lint arwaky typescript"
+    - "scan typescript project"
+    - "verify aes compliance typescript"
+  dependencies: []
+  related:
+    - cleanup-files-typescript
+    - create-capabilities-typescript
 ---
+
 ---
 
 # lint-arwaky-typescript
@@ -134,10 +135,10 @@ cargo run --bin lint-arwaky-mcp
 
 ## Common Issues (FIX)
 
-| Issue                          | Fix Strategy                        |
-| ------------------------------ | ----------------------------------- |
-| Cross-layer imports            | Use contract layer interfaces via DI |
+| Issue                          | Fix Strategy                            |
+| ------------------------------ | --------------------------------------- |
+| Cross-layer imports            | Use contract layer interfaces via DI    |
 | Missing interface inheritance  | Create protocol interface and implement |
-| Mixed layer responsibilities   | Move code to appropriate layer      |
-| Magic constants                | Extract to taxonomy constants       |
-| Surface importing capabilities | Use aggregate interfaces instead    |
+| Mixed layer responsibilities   | Move code to appropriate layer          |
+| Magic constants                | Extract to taxonomy constants           |
+| Surface importing capabilities | Use aggregate interfaces instead        |

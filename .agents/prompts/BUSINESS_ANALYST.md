@@ -18,35 +18,43 @@ When your review is complete, save the report to:
 # Review Report: {{nama-fitur}} — Business Analyst
 
 ## Summary
+
 {{One-paragraph overview of requirements health and key findings.}}
 
 ## Findings by Category
 
 ### Requirements Clarity & Completeness
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Testability & Acceptance Criteria
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Scope & Dependencies
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ### Traceability (FRD ↔ Code)
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
+
+| #   | Severity | Issue | Location | Recommendation |
+| --- | -------- | ----- | -------- | -------------- |
 
 ## Violations (if any)
+
 {{List specific AES layer violations, import rule breaks, or convention deviations.}}
 
 ## Action Items
+
 - [ ] {{Priority}} {{Action item description}}
 
 ## Gap Analysis Table
+
 | Current State | Issue | Recommendation | Priority |
-|---------------|-------|----------------|----------|
+| ------------- | ----- | -------------- | -------- |
 ```
 
 ### Severity Convention

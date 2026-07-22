@@ -2,20 +2,31 @@
 name: create-capabilities-typescript
 description: "Create and validate TypeScript capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-    tags: [typescript, aes, capability, protocol, structure, 3-block-structure, di, vo, role-naming]
-    triggers:
-        - "create capability typescript"
-        - "add capability typescript"
-        - "fix capability structure typescript"
-        - "create protocol typescript"
-        - "capability missing protocol typescript"
-        - "check capabilities typescript"
-        - "audit capabilities typescript"
-    dependencies: []
-    related:
-        - create-agent-typescript
-        - create-contract-typescript
-        - create-taxonomy-typescript
+  tags:
+    [
+      typescript,
+      aes,
+      capability,
+      protocol,
+      structure,
+      3-block-structure,
+      di,
+      vo,
+      role-naming,
+    ]
+  triggers:
+    - "create capability typescript"
+    - "add capability typescript"
+    - "fix capability structure typescript"
+    - "create protocol typescript"
+    - "capability missing protocol typescript"
+    - "check capabilities typescript"
+    - "audit capabilities typescript"
+  dependencies: []
+  related:
+    - create-agent-typescript
+    - create-contract-typescript
+    - create-taxonomy-typescript
 ---
 
 # create-capabilities-typescript
@@ -90,25 +101,25 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 
 Read these files for detailed rules:
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, method placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules |
-| `references/error-handling.md` | Error handling rules with examples |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                | Content                                                |
+| ----------------------------------- | ------------------------------------------------------ |
+| `references/layer-boundaries.md`    | Allowed/Forbidden imports and dependencies             |
+| `references/3-block-structure.md`   | Block 1/2/3 definitions, method placement rules        |
+| `references/helper-vs-utility.md`   | Helper vs utility decision, I/O Blocker, decision tree |
+| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules          |
+| `references/error-handling.md`      | Error handling rules with examples                     |
+| `references/examples.md`            | All BAD/GOOD code examples                             |
+| `references/commands.md`            | Quick heuristic check commands                         |
+| `references/checklist.md`           | Verification checklist                                 |
 
 ## Templates
 
 Use these templates when creating new files:
 
-| File | Purpose |
-|------|---------|
-| `templates/capabilities_name.ts` | New capabilities implementation file |
-| `templates/contract_name_protocol.ts` | New protocol interface definition |
+| File                                  | Purpose                              |
+| ------------------------------------- | ------------------------------------ |
+| `templates/capabilities_name.ts`      | New capabilities implementation file |
+| `templates/contract_name_protocol.ts` | New protocol interface definition    |
 
 ## Workflow
 

@@ -2,18 +2,18 @@
 name: add-docs-python
 description: "Add proper docstrings, type hints, and crate-level PRD.md/FRD.md/README.md to Python packages following PEP 257 and project conventions."
 metadata:
-    tags: [python, docs, docstring, type-hints, prd, frd, readme, pep257]
-    triggers:
-        - "add docs python"
-        - "add docstring python"
-        - "add type hints python"
-        - "add prd python"
-        - "add frd python"
-        - "add package readme python"
-    dependencies: []
-    related:
-        - cleanup-files-python
-        - consolidate-files-python
+  tags: [python, docs, docstring, type-hints, prd, frd, readme, pep257]
+  triggers:
+    - "add docs python"
+    - "add docstring python"
+    - "add type hints python"
+    - "add prd python"
+    - "add frd python"
+    - "add package readme python"
+  dependencies: []
+  related:
+    - cleanup-files-python
+    - consolidate-files-python
 ---
 
 # add-docs-python
@@ -24,32 +24,32 @@ Add documentation at correct locations following project conventions.
 
 ## Document Location Matrix
 
-| Document | Location | Audience | Focus |
-|----------|----------|----------|-------|
-| PRD.md | Root workspace | Stakeholder, PM, Design, Eng | *What* & *Why* |
-| README.md | Root workspace | Developer (new/existing) | *How to use/run* |
-| FRD.md | Each feature module | Engineer, QA, Tech Lead | *How* (functionally) |
+| Document  | Location            | Audience                     | Focus                |
+| --------- | ------------------- | ---------------------------- | -------------------- |
+| PRD.md    | Root workspace      | Stakeholder, PM, Design, Eng | _What_ & _Why_       |
+| README.md | Root workspace      | Developer (new/existing)     | _How to use/run_     |
+| FRD.md    | Each feature module | Engineer, QA, Tech Lead      | _How_ (functionally) |
 
 ## References
 
 Read these files for detailed rules:
 
-| File | Content |
-|------|---------|
-| `references/prd-rules.md` | PRD rules, audience, anti-patterns |
-| `references/frd-rules.md` | FRD rules, IDs, test scenarios |
-| `references/readme-rules.md` | README rules, Quick Start, structure |
+| File                            | Content                               |
+| ------------------------------- | ------------------------------------- |
+| `references/prd-rules.md`       | PRD rules, audience, anti-patterns    |
+| `references/frd-rules.md`       | FRD rules, IDs, test scenarios        |
+| `references/readme-rules.md`    | README rules, Quick Start, structure  |
 | `references/docstring-rules.md` | PEP 257 docstring rules and templates |
-| `references/type-hint-rules.md` | Type hint rules and patterns |
+| `references/type-hint-rules.md` | Type hint rules and patterns          |
 
 ## Templates
 
 Use these templates when creating new files:
 
-| File | Purpose |
-|------|---------|
-| `templates/PRD.md` | New PRD at root workspace |
-| `templates/FRD.md` | New FRD in feature module |
+| File                  | Purpose                      |
+| --------------------- | ---------------------------- |
+| `templates/PRD.md`    | New PRD at root workspace    |
+| `templates/FRD.md`    | New FRD in feature module    |
 | `templates/README.md` | New README at root workspace |
 
 ## Definition of Done

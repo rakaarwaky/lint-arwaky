@@ -8,29 +8,29 @@ The `BypassChecker` capability (AES304) had four bugs: (1) `has_safe_unwrap_vari
 
 ### Architecture & Layer Compliance
 
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
-| 1 | 🟢 INFO | `b_is_ident` was a private helper only used by `has_safe_unwrap_variant`; after the fix it became dead code | `capabilities_check_bypass_checker.rs:350` | Removed (done) |
+| #   | Severity | Issue                                                                                                       | Location                                   | Recommendation |
+| --- | -------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------ | -------------- |
+| 1   | 🟢 INFO  | `b_is_ident` was a private helper only used by `has_safe_unwrap_variant`; after the fix it became dead code | `capabilities_check_bypass_checker.rs:350` | Removed (done) |
 
 ### Security
 
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
-| — | — | No security issues found | — | — |
+| #   | Severity | Issue                    | Location | Recommendation |
+| --- | -------- | ------------------------ | -------- | -------------- |
+| —   | —        | No security issues found | —        | —              |
 
 ### Performance
 
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
-| 1 | 🔴 CRITICAL | Quick-scan optimization skipped `#[allow]` attributes, `assert false`, and language-specific patterns — the main loop was never reached for these violations | `capabilities_check_bypass_checker.rs:71-84` | Extended quick-scan to check `starts_with_allow_attr()` and language-specific phrases (done) |
-| 2 | 🔴 CRITICAL | Trailing comments (e.g. `code // #[allow(`) were not stripped — patterns in trailing comments flagged as violations | `capabilities_check_bypass_checker.rs:108-112` | Added `strip_trailing_comment()` to strip comments before matching (done) |
-| 3 | 🔴 CRITICAL | String literals (e.g. `.starts_with("todo!(")`) were not recognized — patterns inside strings flagged as violations | `capabilities_check_bypass_checker.rs:176-179` | Added `is_inside_string_or_char()` to skip patterns inside strings (done) |
+| #   | Severity    | Issue                                                                                                                                                        | Location                                       | Recommendation                                                                               |
+| --- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1   | 🔴 CRITICAL | Quick-scan optimization skipped `#[allow]` attributes, `assert false`, and language-specific patterns — the main loop was never reached for these violations | `capabilities_check_bypass_checker.rs:71-84`   | Extended quick-scan to check `starts_with_allow_attr()` and language-specific phrases (done) |
+| 2   | 🔴 CRITICAL | Trailing comments (e.g. `code // #[allow(`) were not stripped — patterns in trailing comments flagged as violations                                          | `capabilities_check_bypass_checker.rs:108-112` | Added `strip_trailing_comment()` to strip comments before matching (done)                    |
+| 3   | 🔴 CRITICAL | String literals (e.g. `.starts_with("todo!(")`) were not recognized — patterns inside strings flagged as violations                                          | `capabilities_check_bypass_checker.rs:176-179` | Added `is_inside_string_or_char()` to skip patterns inside strings (done)                    |
 
 ### Error Handling
 
-| # | Severity | Issue | Location | Recommendation |
-|---|----------|-------|----------|----------------|
-| — | — | No error handling issues found | — | — |
+| #   | Severity | Issue                          | Location | Recommendation |
+| --- | -------- | ------------------------------ | -------- | -------------- |
+| —   | —        | No error handling issues found | —        | —              |
 
 ## Violations (if any)
 
@@ -52,11 +52,13 @@ No AES layer violations introduced. Pre-existing AES402 violations in `shared/` 
 ### Fix 1: `has_safe_unwrap_variant` — removed incorrect identifier boundary check
 
 **Before:**
+
 ```rust
 if bytes[i..].starts_with(b".unwrap") && (i == 0 || !b_is_ident(bytes[i - 1])) {
 ```
 
 **After:**
+
 ```rust
 if bytes[i..].starts_with(b".unwrap") {
 ```
@@ -66,6 +68,7 @@ if bytes[i..].starts_with(b".unwrap") {
 ### Fix 2: Quick-scan optimization — added missing pattern checks
 
 **Before:**
+
 ```rust
 let has_bypass_token = content.lines().any(|line| {
     let trimmed = line.trim();
@@ -80,6 +83,7 @@ let has_bypass_token = content.lines().any(|line| {
 ```
 
 **After:**
+
 ```rust
 let language = code_analysis_language_from_file(file);
 let has_bypass_token = content.lines().any(|line| {

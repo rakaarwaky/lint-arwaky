@@ -31,18 +31,18 @@ The implementation is well-structured with clean protocol separation and proper 
 
 ## 2. Findings
 
-| Severity | Area            | Issue                                                                          | Impact                                                              |
-| -------- | --------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| High     | Correctness     | `DummyImportChecker` creates `LayerMapVO::default()` in every protocol method  | Ignores actual layer config; dummy checks run against wrong layers  |
-| High     | Reliability     | `run_audit` returns `Vec<LintResult>` instead of `Result`                | Scan failures (permission denied, missing path) are silently lost   |
-| High     | Maintainability | `_check_aggregate_intent` is defined but never called                     | Dead code increases maintenance burden and confuses readers         |
-| Medium   | Performance     | Blocking `std::fs::read_dir` and `std::fs::read_to_string` in async context | Can block the Tokio runtime during large scans                      |
-| Medium   | Security        | `walk_dir` has no symlink, max-depth, or workspace confinement              | Potential DoS or workspace escape via symlink chains                |
-| Medium   | Maintainability | `str_or` utility function lives in agent layer                              | Violates layer boundaries; should be in utility layer               |
-| Medium   | Correctness     | `walk_dir` only checks `is_ignored` on directories, not files               | Ignored file patterns are not respected                             |
-| Medium   | Reliability     | `ImportOrchestrator::with_config` creates new empty checkers, ignoring config | Config-driven checker selection is not supported                    |
-| Low      | Correctness     | `walk_dir` does not skip `.git`, `node_modules`, `target`, `dist`           | Unnecessary files are scanned, wasting time and producing noise     |
-| Low      | Performance     | `collect_files` materializes all file paths into memory                     | Poor scalability for very large repositories                       |
+| Severity | Area            | Issue                                                                                      | Impact                                                                |
+| -------- | --------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| High     | Correctness     | `DummyImportChecker` creates `LayerMapVO::default()` in every protocol method              | Ignores actual layer config; dummy checks run against wrong layers    |
+| High     | Reliability     | `run_audit` returns `Vec<LintResult>` instead of `Result`                                  | Scan failures (permission denied, missing path) are silently lost     |
+| High     | Maintainability | `_check_aggregate_intent` is defined but never called                                      | Dead code increases maintenance burden and confuses readers           |
+| Medium   | Performance     | Blocking `std::fs::read_dir` and `std::fs::read_to_string` in async context                | Can block the Tokio runtime during large scans                        |
+| Medium   | Security        | `walk_dir` has no symlink, max-depth, or workspace confinement                             | Potential DoS or workspace escape via symlink chains                  |
+| Medium   | Maintainability | `str_or` utility function lives in agent layer                                             | Violates layer boundaries; should be in utility layer                 |
+| Medium   | Correctness     | `walk_dir` only checks `is_ignored` on directories, not files                              | Ignored file patterns are not respected                               |
+| Medium   | Reliability     | `ImportOrchestrator::with_config` creates new empty checkers, ignoring config              | Config-driven checker selection is not supported                      |
+| Low      | Correctness     | `walk_dir` does not skip `.git`, `node_modules`, `target`, `dist`                          | Unnecessary files are scanned, wasting time and producing noise       |
+| Low      | Performance     | `collect_files` materializes all file paths into memory                                    | Poor scalability for very large repositories                          |
 | Low      | Maintainability | `tokio::join!` parallelism is inconsistent (mandatory+forbidden parallel, rest sequential) | Unclear parallelism strategy; unused+cycle could also run in parallel |
 
 ---

@@ -1,4 +1,3 @@
-
 # Comprehensive Bug & Performance Audit Report
 
 After a thorough line-by-line review of the `import-rules` and `shared` crates, I identified **13 functional bugs** and **5 performance bottlenecks**. Below is the complete analysis with explanations and fixed code.
@@ -672,7 +671,7 @@ for file in files {
     // ...
     // FIX: Remove this redundant re-computation:
     // let module_layer_names: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
-  
+
     // Use the already-computed layer_keys instead:
     if let Some(target_layer) =
         utility_layer_detector::detect_module_layer(module_path, &layer_keys)
@@ -730,23 +729,23 @@ if trimmed.starts_with("use ")
 
 ## Summary Table
 
-| #  | Type | Severity    | File                                      | Issue                                             |
-| -- | ---- | ----------- | ----------------------------------------- | ------------------------------------------------- |
-| 1  | Bug  | 🔴 Critical | `agent_import_orchestrator.rs`          | AES204 dummy checks never executed                |
-| 2  | Bug  | 🔴 Critical | `agent_import_orchestrator.rs`          | `new()` ignores config, always uses defaults    |
-| 3  | Bug  | 🟠 High     | `agent_import_orchestrator.rs`          | `root_dir` computed from first path segment     |
-| 4  | Bug  | 🟠 High     | `utility_import_symbol_extractor.rs`    | Off-by-one in`is_name_used_at`                  |
-| 5  | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | `is_ignored` substring false positives          |
-| 6  | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Files not filtered; root mislabeled as subdir     |
-| 7  | Bug  | 🟡 Medium   | `capabilities_dummy_import_checker.rs`  | Empty`LayerMapVO` makes layer detection useless |
-| 8  | Bug  | 🟡 Medium   | `utility_import_symbol_extractor.rs`    | Regex failure silently flags all imports unused   |
-| 9  | Bug  | 🟡 Medium   | `utility_import_resolver.rs`            | `find_import_line_number` returns 1 for Rust/JS |
-| 10 | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Path separator mismatch on Windows                |
-| 11 | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Blocking I/O in async context                     |
-| 12 | Bug  | 🟢 Low      | `capabilities_cycle_import_analyzer.rs` | File read before layer relevance check            |
-| 13 | Bug  | 🟢 Low      | `utility_dummy_detector.rs`             | `is_short_marker` allocates 4 Strings per call  |
-| P1 | Perf | 🟠 High     | `utility_dummy_detector.rs`             | 50+ sequential `                                  |
-| P2 | Perf | 🟠 High     | `utility_import_symbol_extractor.rs`    | Full file rebuild per import                      |
-| P3 | Perf | 🟡 Medium   | `utility_import_symbol_extractor.rs`    | Regex recompilation per file                      |
-| P4 | Perf | 🟢 Low      | `capabilities_cycle_import_analyzer.rs` | Redundant`layer_keys` recomputation             |
-| P5 | Perf | 🟢 Low      | `utility_import_resolver.rs`            | Excessive String allocation in multi-line join    |
+| #   | Type | Severity    | File                                    | Issue                                           |
+| --- | ---- | ----------- | --------------------------------------- | ----------------------------------------------- |
+| 1   | Bug  | 🔴 Critical | `agent_import_orchestrator.rs`          | AES204 dummy checks never executed              |
+| 2   | Bug  | 🔴 Critical | `agent_import_orchestrator.rs`          | `new()` ignores config, always uses defaults    |
+| 3   | Bug  | 🟠 High     | `agent_import_orchestrator.rs`          | `root_dir` computed from first path segment     |
+| 4   | Bug  | 🟠 High     | `utility_import_symbol_extractor.rs`    | Off-by-one in`is_name_used_at`                  |
+| 5   | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | `is_ignored` substring false positives          |
+| 6   | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Files not filtered; root mislabeled as subdir   |
+| 7   | Bug  | 🟡 Medium   | `capabilities_dummy_import_checker.rs`  | Empty`LayerMapVO` makes layer detection useless |
+| 8   | Bug  | 🟡 Medium   | `utility_import_symbol_extractor.rs`    | Regex failure silently flags all imports unused |
+| 9   | Bug  | 🟡 Medium   | `utility_import_resolver.rs`            | `find_import_line_number` returns 1 for Rust/JS |
+| 10  | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Path separator mismatch on Windows              |
+| 11  | Bug  | 🟡 Medium   | `agent_import_orchestrator.rs`          | Blocking I/O in async context                   |
+| 12  | Bug  | 🟢 Low      | `capabilities_cycle_import_analyzer.rs` | File read before layer relevance check          |
+| 13  | Bug  | 🟢 Low      | `utility_dummy_detector.rs`             | `is_short_marker` allocates 4 Strings per call  |
+| P1  | Perf | 🟠 High     | `utility_dummy_detector.rs`             | 50+ sequential `                                |
+| P2  | Perf | 🟠 High     | `utility_import_symbol_extractor.rs`    | Full file rebuild per import                    |
+| P3  | Perf | 🟡 Medium   | `utility_import_symbol_extractor.rs`    | Regex recompilation per file                    |
+| P4  | Perf | 🟢 Low      | `capabilities_cycle_import_analyzer.rs` | Redundant`layer_keys` recomputation             |
+| P5  | Perf | 🟢 Low      | `utility_import_resolver.rs`            | Excessive String allocation in multi-line join  |

@@ -14,13 +14,13 @@ I/O is allowed in utility functions (e.g., `walk_source_files`, `default_ignored
 
 ```typescript
 export function matchWholeToken(haystack: string, needle: string): boolean {
-    if (!needle) return false;
-    const pattern = new RegExp(`(?<!\\w)${escapeRegex(needle)}(?!\\w)`);
-    return pattern.test(haystack);
+  if (!needle) return false;
+  const pattern = new RegExp(`(?<!\\w)${escapeRegex(needle)}(?!\\w)`);
+  return pattern.test(haystack);
 }
 
 function escapeRegex(str: string): string {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 ```
 
@@ -28,11 +28,14 @@ function escapeRegex(str: string): string {
 
 ```typescript
 export function getTargetLayerFromSuffix(suffix: string): string {
-    switch (suffix) {
-        case 'port': return 'infrastructure';
-        case 'protocol': return 'capabilities';
-        default: return 'unknown';
-    }
+  switch (suffix) {
+    case "port":
+      return "infrastructure";
+    case "protocol":
+      return "capabilities";
+    default:
+      return "unknown";
+  }
 }
 ```
 
@@ -42,7 +45,7 @@ This belongs in capabilities as a private helper.
 
 ```typescript
 export function formatImportViolation(rule: ImportRuleVO): string {
-    return `Import rule violation: ${rule.pattern.value}`;
+  return `Import rule violation: ${rule.pattern.value}`;
 }
 ```
 

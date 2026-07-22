@@ -65,19 +65,19 @@ lint-arwaky/
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `lint-arwaky-cli check [path]` | Full architecture compliance analysis |
-| `lint-arwaky-cli scan [path]` | External project scan |
-| `lint-arwaky-cli fix [path]` | Apply safe fixes (`--dry-run` to preview) |
-| `lint-arwaky-cli ci [path]` | CI mode with exit codes |
-| `lint-arwaky-cli orphan <path>` | Check if file is dead/unreachable code |
-| `lint-arwaky-cli watch [path]` | Watch and lint on changes |
-| `lint-arwaky-cli security [path]` | Scan for security vulnerabilities |
-| `lint-arwaky-cli dependencies [path]` | Scan for library vulnerabilities |
-| `lint-arwaky-cli duplicates [path]` | Detect code duplication |
-| `lint-arwaky-cli doctor` | Environment diagnostics |
-| `lint-arwaky-cli version` | Display version |
+| Command                               | Description                               |
+| ------------------------------------- | ----------------------------------------- |
+| `lint-arwaky-cli check [path]`        | Full architecture compliance analysis     |
+| `lint-arwaky-cli scan [path]`         | External project scan                     |
+| `lint-arwaky-cli fix [path]`          | Apply safe fixes (`--dry-run` to preview) |
+| `lint-arwaky-cli ci [path]`           | CI mode with exit codes                   |
+| `lint-arwaky-cli orphan <path>`       | Check if file is dead/unreachable code    |
+| `lint-arwaky-cli watch [path]`        | Watch and lint on changes                 |
+| `lint-arwaky-cli security [path]`     | Scan for security vulnerabilities         |
+| `lint-arwaky-cli dependencies [path]` | Scan for library vulnerabilities          |
+| `lint-arwaky-cli duplicates [path]`   | Detect code duplication                   |
+| `lint-arwaky-cli doctor`              | Environment diagnostics                   |
+| `lint-arwaky-cli version`             | Display version                           |
 
 ## Configuration
 

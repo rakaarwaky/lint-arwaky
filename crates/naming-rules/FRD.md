@@ -15,7 +15,7 @@ The naming-rules crate enforces strict naming conventions across the codebase to
   - Must be snake_case (lowercase ASCII + underscores)
   - Must follow prefix_concept_suffix pattern
   - Minimum 3 words (prefix + concept + suffix)
-  - Exceptions: main.rs, lib.rs, mod.rs, __init__.py, index.ts, index.js
+  - Exceptions: main.rs, lib.rs, mod.rs, **init**.py, index.ts, index.js
 - **Edge Cases**: Abbreviations, acronyms
 - **Error Handling**: Emit AES101 with invalid filename
 
@@ -57,10 +57,10 @@ LayerSuffixPolicy {
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
+| Function                    | Input     | Output             | Description  |
+| --------------------------- | --------- | ------------------ | ------------ |
 | `check_naming_convention()` | File path | Option<Diagnostic> | Check AES101 |
-| `check_layer_alignment()` | File path | Option<Diagnostic> | Check AES102 |
+| `check_layer_alignment()`   | File path | Option<Diagnostic> | Check AES102 |
 
 ## Integration Points
 

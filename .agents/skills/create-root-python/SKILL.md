@@ -2,21 +2,21 @@
 name: create-root-python
 description: "Create and validate Python root layer files: composition root that wires Capabilities to Contract protocols/aggregates and bootstraps the application. Container connects implementations, Entry starts the system."
 metadata:
-    tags: [python, aes, root, container, entry, composition, di, wiring]
-    triggers:
-        - "create root python"
-        - "add root python"
-        - "create container python"
-        - "create entry python"
-        - "wire dependencies python"
-        - "check root python"
-        - "audit root python"
-    dependencies: []
-    related:
-        - create-capabilities-python
-        - create-agent-python
-        - create-contract-python
-        - create-taxonomy-python
+  tags: [python, aes, root, container, entry, composition, di, wiring]
+  triggers:
+    - "create root python"
+    - "add root python"
+    - "create container python"
+    - "create entry python"
+    - "wire dependencies python"
+    - "check root python"
+    - "audit root python"
+  dependencies: []
+  related:
+    - create-capabilities-python
+    - create-agent-python
+    - create-contract-python
+    - create-taxonomy-python
 ---
 
 # create-root-python
@@ -49,10 +49,10 @@ Two root roles exist:
 
 Ask: **"What does this file do?"**
 
-| Role | Suffix | Responsibility |
-|------|--------|----------------|
-| Container | `_container` | Wire one feature's Capabilities to Contracts |
-| Entry | `_entry` | Bootstrap application, compose feature containers |
+| Role      | Suffix       | Responsibility                                    |
+| --------- | ------------ | ------------------------------------------------- |
+| Container | `_container` | Wire one feature's Capabilities to Contracts      |
+| Entry     | `_entry`     | Bootstrap application, compose feature containers |
 
 ### Step 2: Create Root File
 

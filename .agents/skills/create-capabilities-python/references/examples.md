@@ -2,7 +2,7 @@
 
 ## BAD: Capability Without Protocol (AES403)
 
-```python
+````python
 class <NameComposer>:
 
     def compose_frame(self) -> None:
@@ -16,7 +16,7 @@ class <NameComposer>(I<NameComposer>Protocol):
     def compose_frame(self) -> None:
         # contract implementation
         ...
-```
+````
 
 ## BAD: I/O in Capabilities (AES404)
 

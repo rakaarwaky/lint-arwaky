@@ -46,6 +46,7 @@ project-root/
 ```
 
 **Key rules:**
+
 - All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `modules/shared/src/<feature>/`. Orchestration, capabilities, and surfaces live in the feature module.
 - Entry points (`root_*_entry.py`) live at workspace root or `src/`.
 - Shared types go in `modules/shared/`.
@@ -413,15 +414,15 @@ black --check . && flake8 .
 
 ## File Naming Reference
 
-| Layer        | Pattern                              | Example                         |
-| ------------ | ------------------------------------ | ------------------------------- |
-| taxonomy     | `taxonomy_<concept>_<suffix>.py`     | `taxonomy_user_vo.py`           |
-| contract     | `contract_<concept>_<suffix>.py`     | `contract_user_protocol.py`     |
-| utility      | `utility_<concept>_<suffix>.py`      | `utility_user_hasher.py`        |
-| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.py`  |
-| agent        | `agent_<concept>_orchestrator.py`    | `agent_user_orchestrator.py`    |
-| surface      | `surface_<concept>_<suffix>.py`      | `surface_user_command.py`       |
-| root         | `root_<concept>_<suffix>.py`         | `root_user_container.py`        |
+| Layer        | Pattern                              | Example                        |
+| ------------ | ------------------------------------ | ------------------------------ |
+| taxonomy     | `taxonomy_<concept>_<suffix>.py`     | `taxonomy_user_vo.py`          |
+| contract     | `contract_<concept>_<suffix>.py`     | `contract_user_protocol.py`    |
+| utility      | `utility_<concept>_<suffix>.py`      | `utility_user_hasher.py`       |
+| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.py` |
+| agent        | `agent_<concept>_orchestrator.py`    | `agent_user_orchestrator.py`   |
+| surface      | `surface_<concept>_<suffix>.py`      | `surface_user_command.py`      |
+| root         | `root_<concept>_<suffix>.py`         | `root_user_container.py`       |
 
 ---
 
@@ -443,16 +444,16 @@ root_         → ALL layers
 
 ## Troubleshooting
 
-| Violation  | Fix                                                     |
-| ---------- | ------------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                        |
-| AES102     | Change suffix to match layer's allowed list             |
-| AES201     | Remove forbidden import, use contract interface         |
-| AES202     | Add missing import per layer requirements               |
-| AES303     | Add struct/enum/trait definition                        |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`                 |
-| AES401     | Move primitives to VO, constants to `_constant`         |
-| AES402     | Replace primitive types with VO types in contract       |
-| AES403     | Implement protocol trait in capability                  |
-| AES404     | Move stateless helper functions to Utility              |
-| AES501-506 | Wire in container or remove dead code                   |
+| Violation  | Fix                                               |
+| ---------- | ------------------------------------------------- |
+| AES101     | Rename to `layer_concept_suffix`                  |
+| AES102     | Change suffix to match layer's allowed list       |
+| AES201     | Remove forbidden import, use contract interface   |
+| AES202     | Add missing import per layer requirements         |
+| AES303     | Add struct/enum/trait definition                  |
+| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
+| AES401     | Move primitives to VO, constants to `_constant`   |
+| AES402     | Replace primitive types with VO types in contract |
+| AES403     | Implement protocol trait in capability            |
+| AES404     | Move stateless helper functions to Utility        |
+| AES501-506 | Wire in container or remove dead code             |

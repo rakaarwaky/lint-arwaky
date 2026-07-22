@@ -16,10 +16,10 @@ Setiap fitur/crate/module/package yang akan direview mendapat satu subfolder di 
 
 ## Konvensi Penamaan
 
-| Komponen | Aturan | Contoh |
-|----------|--------|--------|
-| **Folder** | Nama fitur / crate / module / package | `cli-commands`, `import-rules`, `code-analysis` |
-| **File** | Nama role penuh (dari prompt files) | `BACKEND_DEVELOPER.md`, `BUSINESS_ANALYST.md`, `QUALITY_ANALYSIS.md` |
+| Komponen   | Aturan                                | Contoh                                                               |
+| ---------- | ------------------------------------- | -------------------------------------------------------------------- |
+| **Folder** | Nama fitur / crate / module / package | `cli-commands`, `import-rules`, `code-analysis`                      |
+| **File**   | Nama role penuh (dari prompt files)   | `BACKEND_DEVELOPER.md`, `BUSINESS_ANALYST.md`, `QUALITY_ANALYSIS.md` |
 
 ## Cara Pakai
 

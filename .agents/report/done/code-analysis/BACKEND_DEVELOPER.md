@@ -1,4 +1,3 @@
-
 Hi Raka — below is a backend-focused review of the `code-analysis` crate and its related `shared` contracts/utilities from the uploaded knowledge base.
 
 I focused on:
@@ -28,19 +27,19 @@ The crate implements AES301–AES305 code-quality checks:
 
 The overall domain separation is good: `taxonomy`, `contract`, `capabilities`, `agent`, and `root` layers are mostly visible. However, there are several important issues:
 
-| Priority | Issue                                                                                                                                                                     |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Priority | Issue                                                                                                                                                                 |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Critical | `clippy::collapsible_match` violation in `capabilities_check_bypass_checker.rs`                                                                                       |
 | Critical | Bypass checker has correctness bugs: multiline`static Lazy` skip does not actually skip, incomplete attribute bypass detection, false-negative risk with `.unwrap_or` |
-| High     | Duplication analyzer can consume unbounded memory and CPU on large codebases                                                                                              |
-| High     | Orchestrator hardcodes AES305 thresholds instead of honoring configuration                                                                                                |
-| High     | Agent layer performs filesystem I/O and utility work, violating AES layer boundaries                                                                                      |
-| High     | Global container state makes the system harder to test and violates dependency inversion                                                                                  |
-| Medium   | Path traversal / symlink escape risk in file collection and target resolution                                                                                             |
-| Medium   | Error handling silently swallows unreadable files, invalid paths, and config parse failures                                                                               |
-| Medium   | Mandatory definition / dead inheritance checks have false positives/negatives                                                                                             |
-| Low      | Public API mixes orchestration, scoring, and reporting responsibilities                                                                                                   |
-| Low      | Some duplicated utility functions exist in agent and shared utility modules                                                                                               |
+| High     | Duplication analyzer can consume unbounded memory and CPU on large codebases                                                                                          |
+| High     | Orchestrator hardcodes AES305 thresholds instead of honoring configuration                                                                                            |
+| High     | Agent layer performs filesystem I/O and utility work, violating AES layer boundaries                                                                                  |
+| High     | Global container state makes the system harder to test and violates dependency inversion                                                                              |
+| Medium   | Path traversal / symlink escape risk in file collection and target resolution                                                                                         |
+| Medium   | Error handling silently swallows unreadable files, invalid paths, and config parse failures                                                                           |
+| Medium   | Mandatory definition / dead inheritance checks have false positives/negatives                                                                                         |
+| Low      | Public API mixes orchestration, scoring, and reporting responsibilities                                                                                               |
+| Low      | Some duplicated utility functions exist in agent and shared utility modules                                                                                           |
 
 ---
 
