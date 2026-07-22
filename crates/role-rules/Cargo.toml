@@ -17,3 +17,13 @@ async-trait.workspace = true
 once_cell.workspace = true
 regex.workspace = true
 shared.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+tokio.workspace = true
+
+[[bench]]
+name = "bench_role_rules_throughput"
+path = "benches/bench_role_rules_throughput.rs"
+harness = false

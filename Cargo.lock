@@ -3308,10 +3308,12 @@ name = "project-setup-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "dirs",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -3566,9 +3568,12 @@ version = "1.10.106"
 dependencies = [
  "async-trait",
  "code-analysis-lint-arwaky",
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
@@ -3665,11 +3670,14 @@ name = "role-rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
