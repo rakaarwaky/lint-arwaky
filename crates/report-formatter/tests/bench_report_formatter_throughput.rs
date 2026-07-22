@@ -15,7 +15,7 @@ use std::time::Instant;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
@@ -30,7 +30,7 @@ fn bench_formatter_instantiation() {
     let start = Instant::now();
     for _ in 0..1000 {
         let _text = TextFormatter::new(Arc::new(
-            code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
         ));
         let _json = JsonFormatter::new();
         let _sarif = SarifFormatter::new();
@@ -49,7 +49,7 @@ fn bench_formatter_instantiation() {
 #[test]
 fn bench_text_formatting() {
     let text = TextFormatter::new(Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     ));
     let report = ScanReport::new(vec![], vec![]);
 
@@ -69,7 +69,7 @@ fn bench_text_formatting() {
 
 #[test]
 fn bench_json_serialization() {
-    let json = JsonFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
     let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
@@ -88,7 +88,7 @@ fn bench_json_serialization() {
 
 #[test]
 fn bench_sarif_generation() {
-    let sarif = SarifFormatter::new();
+    let sarif = Arc::new(SarifFormatter::new());
     let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
@@ -107,7 +107,7 @@ fn bench_sarif_generation() {
 
 #[test]
 fn bench_junit_generation() {
-    let junit = JunitFormatter::new();
+    let junit = Arc::new(JunitFormatter::new());
     let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();

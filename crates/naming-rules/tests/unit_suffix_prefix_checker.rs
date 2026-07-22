@@ -34,7 +34,7 @@ async fn check_domain_suffixes_allowed_suffix_no_violations() {
                     "checker".to_string(),
                     "analyzer".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -75,7 +75,7 @@ async fn check_domain_suffixes_taxonomy_allowed_pass() {
                     "entity".to_string(),
                     "vo".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -120,7 +120,7 @@ async fn check_domain_suffixes_forbidden_suffix_produces_violation() {
                 forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "adapter".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -166,7 +166,7 @@ async fn check_domain_suffixes_strict_mode_wrong_suffix_produces_violation() {
                     "checker".to_string(),
                     "analyzer".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -213,7 +213,7 @@ async fn check_domain_suffixes_no_suffix_strict_produces_violation() {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -302,7 +302,7 @@ async fn check_domain_suffixes_exception_bypasses_check() {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()
@@ -386,7 +386,7 @@ async fn check_domain_suffixes_result_has_correct_adapter() {
                 forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "adapter".to_string(),
                 ]),
-                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(
+                suffix_policy: shared::common::taxonomy_common_vo::SuffixPolicyVO::new(
                     SUFFIX_POLICY_STRICT.to_string(),
                 ),
                 ..shared::config_system::taxonomy_config_vo::NamingRuleVO::default()

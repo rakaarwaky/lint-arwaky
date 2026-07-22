@@ -49,51 +49,6 @@ impl ICodeAnalysisAggregate for MockCodeAnalysis {
     }
 }
 
-struct MockImportRunner;
-#[async_trait::async_trait]
-impl IImportRunnerAggregate for MockImportRunner {
-    async fn run_audit(
-        &self,
-        _target: &FilePath,
-    ) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
-        Ok(vec![])
-    }
-    fn name(&self) -> &str {
-        "mock-import"
-    }
-}
-
-struct MockNamingRunner;
-#[async_trait::async_trait]
-impl INamingRunnerAggregate for MockNamingRunner {
-    async fn run_audit(
-        &self,
-        _target: &FilePath,
-    ) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
-        Ok(vec![])
-    }
-    fn name(&self) -> &str {
-        "mock-naming"
-    }
-}
-
-struct MockOrphanDetector;
-impl IOrphanAggregate for MockOrphanDetector {
-    fn build_orphan_graph_context(
-        &self,
-        _files: &[String],
-        _root_dir: &str,
-    ) -> shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext {
-        shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext::default()
-    }
-    fn identify_orphan_entry_points(&self, _files: &[String]) -> std::collections::HashSet<String> {
-        std::collections::HashSet::new()
-    }
-    fn check_orphans(&self, _files: &[String], _root_dir: &str) -> Vec<LintResult> {
-        vec![]
-    }
-}
-
 struct MockExternalLint;
 #[async_trait::async_trait]
 impl IExternalLintAggregate for MockExternalLint {
@@ -102,50 +57,6 @@ impl IExternalLintAggregate for MockExternalLint {
     }
     fn adapter_names(&self) -> Vec<String> {
         vec!["ruff".to_string(), "mypy".to_string()]
-    }
-}
-
-struct MockRoleRunner;
-#[async_trait::async_trait]
-impl IRoleRunnerAggregate for MockRoleRunner {
-    async fn run_audit(&self, _target: &FilePath) -> Vec<LintResult> {
-        vec![]
-    }
-    fn name(&self) -> &str {
-        "mock-role"
-    }
-}
-
-struct MockConfigOrchestrator;
-#[async_trait::async_trait]
-impl IConfigOrchestratorAggregate for MockConfigOrchestrator {
-    async fn load_project_config(
-        &self,
-        _project_root: &FilePath,
-    ) -> shared::config_system::taxonomy_source_vo::ConfigResult {
-        shared::config_system::taxonomy_source_vo::ConfigResult::default()
-    }
-    async fn load_config_for_language(
-        &self,
-        _project_root: &FilePath,
-        _language: shared::config_system::taxonomy_config_language_vo::ConfigLanguage,
-    ) -> shared::config_system::taxonomy_source_vo::ConfigResult {
-        shared::config_system::taxonomy_source_vo::ConfigResult::default()
-    }
-    async fn discover_workspaces(
-        &self,
-        _root: &FilePath,
-    ) -> Vec<shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo> {
-        vec![]
-    }
-    fn load_config_sync(
-        &self,
-        _project_root: &str,
-    ) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
-        shared::config_system::taxonomy_config_vo::ArchitectureConfig::default()
-    }
-    fn ignored_paths(&self, _project_root: &str) -> Vec<String> {
-        vec!["target".to_string(), "node_modules".to_string()]
     }
 }
 

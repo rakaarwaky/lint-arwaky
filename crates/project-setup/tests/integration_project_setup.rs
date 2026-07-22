@@ -52,10 +52,10 @@ fn full_pipeline_wiring_works() {
     let _status = agg.check_http(&url);
 
     let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::Http;
     let _env = agg.generate_env(
         &transport,
-        &shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string()),
+        &shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string()).unwrap(),
     );
 
     let _config = agg.mcp_config_claude(&transport);

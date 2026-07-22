@@ -13,11 +13,11 @@ use std::sync::Arc;
 
 fn build_full_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
     ReportFormatterOrchestrator::new(text, json, sarif, junit)
 }
 
@@ -58,11 +58,11 @@ fn full_format_pipeline_works() {
 #[test]
 fn all_formatters_accessible() {
     let text = Arc::new(TextFormatter::new(Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
 
     // Verify all implement IReportFormatterProtocol
     let _: &dyn IReportFormatterProtocol = &*text;

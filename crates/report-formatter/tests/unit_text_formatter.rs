@@ -9,7 +9,7 @@ use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 
 fn formatter() -> TextFormatter {
     let code_analysis = Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     );
     TextFormatter::new(code_analysis)
 }
@@ -63,7 +63,7 @@ fn text_formatter_fallback_for_non_text_format() {
 #[test]
 fn text_formatter_default_creates_valid_instance() {
     let code_analysis = Arc::new(
-        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     );
     let _ = TextFormatter::default(code_analysis);
 }

@@ -95,10 +95,10 @@ fn acceptance_project_setup_creates_config_dir() {
     let container = container();
     let agg = container.aggregate();
 
-    let config_dir = agg.create_global_config_dir();
+    let config_dir = agg.create_global_config_dir().unwrap();
 
     assert!(
-        config_dir.value.contains("lint-arwaky"),
+        config_dir.to_string_lossy().contains("lint-arwaky"),
         "Config dir should contain 'lint-arwaky' in path"
     );
 }

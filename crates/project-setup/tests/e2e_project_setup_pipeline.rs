@@ -1,19 +1,18 @@
-// PURPOSE: E2E tests — verify full project-setup pipeline from container to components.
+// PURPOSE: E2E tests — verify full project-setup pipeline from orchestrator to processor/installer.
 // Layer: E2E (full integration of all layers).
 
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 
 fn create_container() -> SetupContainer {
     SetupContainer::new()
 }
 
-// ─── E2E: Full MCP config generation pipeline ──
+// ─── E2E: MCP config generation pipeline ──
 
 #[tokio::test]
-async fn e2e_mcp_config_generation_pipeline() {
+async fn e2e_mcp_config_generation() {
     let container = create_container();
     let agg = container.aggregate();
 
@@ -22,7 +21,7 @@ async fn e2e_mcp_config_generation_pipeline() {
     let _status = agg.check_http(&url);
 
     // 2. Generate MCP config for different editors (capabilities layer)
-    let transport = TransportProtocol::new("http".to_string());
+    let transport = TransportProtocol::Http;
     let claude_config = agg.mcp_config_claude(&transport);
     let hermes_config = agg.mcp_config_hermes(&transport);
     let vscode_config = agg.mcp_config_vscode(&transport);
@@ -45,8 +44,8 @@ async fn e2e_env_file_generation() {
     let _languages = agg.detect_languages();
 
     // 2. Generate environment content (capabilities layer)
-    let transport = TransportProtocol::new("http".to_string());
-    let home = DirectoryPath::new("/tmp".to_string());
+    let transport = TransportProtocol::Http;
+    let home = DirectoryPath::new("/tmp".to_string()).unwrap();
     let env_content = agg.generate_env(&transport, &home);
 
     assert!(!env_content.value.is_empty());
@@ -60,13 +59,13 @@ async fn e2e_config_directory_creation() {
     let agg = container.aggregate();
 
     // 1. Create global config directory
-    let config_dir = agg.create_global_config_dir();
+    let config_dir = agg.create_global_config_dir().unwrap();
 
     // 2. Verify path is valid
-    assert!(!config_dir.value.is_empty());
+    assert!(!config_dir.to_string_lossy().is_empty());
 
     // 3. Check if file exists at the config location
-    let _exists = agg.file_exists(&config_dir.value);
+    let _exists = agg.file_exists(&config_dir.to_string_lossy());
 }
 
 // ─── E2E: Full pipeline with all transport types ──
@@ -76,16 +75,14 @@ async fn e2e_all_transport_types() {
     let container = create_container();
     let agg = container.aggregate();
 
-    for transport_type in ["http", "sse"] {
-        let transport = TransportProtocol::new(transport_type.to_string());
-
+    for transport in [TransportProtocol::Http, TransportProtocol::Sse] {
         // Generate all MCP configs
         let _claude = agg.mcp_config_claude(&transport);
         let _hermes = agg.mcp_config_hermes(&transport);
         let _vscode = agg.mcp_config_vscode(&transport);
 
         // Generate env file
-        let home = DirectoryPath::new("/tmp".to_string());
+        let home = DirectoryPath::new("/tmp".to_string()).unwrap();
         let _env = agg.generate_env(&transport, &home);
     }
 }
