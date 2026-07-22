@@ -1,6 +1,5 @@
 // Acceptance tests mapping 1:1 to FRD requirements for the `check` command.
 
-use std::fs;
 use std::process::Command;
 
 fn cli_bin() -> Command {

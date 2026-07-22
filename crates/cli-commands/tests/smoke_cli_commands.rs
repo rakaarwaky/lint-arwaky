@@ -5,7 +5,6 @@ use std::process::Command;
 fn cli_bin() -> Command {
     let bin = std::env::current_exe().unwrap();
     let mut dir = bin.parent().unwrap();
-    // Walk up to find the binary
     for _ in 0..5 {
         let candidate = dir.join("lint-arwaky-cli");
         if candidate.exists() {
@@ -13,7 +12,6 @@ fn cli_bin() -> Command {
         }
         dir = dir.parent().unwrap_or(dir);
     }
-    // Fallback: use the target/debug path
     let mut p = std::env::current_exe().unwrap();
     p.pop();
     p.pop();
@@ -24,7 +22,7 @@ fn cli_bin() -> Command {
 
 #[test]
 fn cli_binary_responds_to_version() {
-    let output = Command::new(cli_bin())
+    let output = cli_bin()
         .arg("version")
         .output()
         .expect("failed to execute CLI binary");
@@ -43,7 +41,7 @@ fn cli_binary_responds_to_version() {
 
 #[test]
 fn cli_binary_responds_to_help() {
-    let output = Command::new(cli_bin())
+    let output = cli_bin()
         .arg("--help")
         .output()
         .expect("failed to execute CLI binary");
@@ -54,7 +52,7 @@ fn cli_binary_responds_to_help() {
 
 #[test]
 fn cli_binary_adapters_command() {
-    let output = Command::new(cli_bin())
+    let output = cli_bin()
         .arg("adapters")
         .output()
         .expect("failed to execute CLI binary");
@@ -65,7 +63,7 @@ fn cli_binary_adapters_command() {
 
 #[test]
 fn cli_binary_doctor_command() {
-    let output = Command::new(cli_bin())
+    let output = cli_bin()
         .arg("doctor")
         .output()
         .expect("failed to execute CLI binary");

@@ -2,10 +2,6 @@
 
 use std::process::Command;
 
-fn cli_binary_path() -> std::path::PathBuf {
-    if let Some(path) = std::env::var_os("CARGO_BIN_EXE_lint-arwaky-cli") {
-        return std::path::PathBuf::from(path);
-    }
     let mut p = std::env::current_exe().unwrap();
     p.pop();
     let mut q = p.clone();

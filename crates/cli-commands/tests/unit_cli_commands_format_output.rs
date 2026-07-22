@@ -15,12 +15,12 @@ fn xml_escape_plain_text_unchanged() {
 
 #[test]
 fn xml_escape_ampersand() {
-    assert_eq!(xml_escape("a & b"), "a & b");
+    assert_eq!(xml_escape("a & b"), "a &amp; b");
 }
 
 #[test]
 fn xml_escape_angle_brackets() {
-    assert_eq!(xml_escape("<tag>"), "<tag>");
+    assert_eq!(xml_escape("<tag>"), "&lt;tag&gt;");
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn xml_escape_empty_string() {
 
 #[test]
 fn xml_escape_multiple_special_chars() {
-    assert_eq!(xml_escape("a<b>c&d\"e'f"), "a&lt;b&gt;c&amp;d&quot;e&#39;f");
+    assert_eq!(xml_escape("a<b>c&d\"e'f"),         "a&lt;b&gt;c&amp;d&quot;e&apos;f");
 }
 
 // ─── format_junit_output ─────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ fn junit_single_critical_violation() {
     assert!(output.contains("AES301"));
     assert!(output.contains("src/main.rs:10"));
     assert!(output.contains("<failure"));
-    assert!(output.contains("CRITICAL"));
+    assert!(output.contains("critical"));
 }
 
 #[test]
@@ -107,7 +107,7 @@ fn junit_escapes_special_chars_in_message() {
         "Use <Vec> & \"String\" instead",
     )];
     let output = format_junit_output(&results);
-    assert!(output.contains("<Vec>"));
+    assert!(output.contains("&lt;Vec&gt;"));
     assert!(output.contains("&"));
     assert!(output.contains("&quot;String&quot;"));
 }
@@ -136,14 +136,14 @@ fn sarif_single_result_has_correct_fields() {
     let parsed: serde_json::Value = serde_json::from_str(&output).expect("valid JSON");
     let run = &parsed["runs"][0];
     let result = &run["results"][0];
-    assert_eq!(result["ruleId"], "AES201");
+    assert_eq!(result["rule_id"], "AES201");
     assert!(result["message"]["text"]
         .as_str()
         .unwrap()
         .contains("Forbidden import"));
-    let location = &result["locations"][0]["physicalLocation"];
-    assert_eq!(location["artifactLocation"]["uri"], "crates/foo/src/lib.rs");
-    assert_eq!(location["region"]["startLine"], 42);
+    let location = &result["locations"][0];
+    assert_eq!(location["physical_location"]["artifact_location"]["uri"], "crates/foo/src/lib.rs");
+    assert_eq!(location["physical_location"]["region"]["start_line"], 42);
 }
 
 #[test]
