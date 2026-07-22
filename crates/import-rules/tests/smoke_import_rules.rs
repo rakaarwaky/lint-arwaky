@@ -4,7 +4,6 @@
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 
 #[tokio::test]
 async fn import_rules_boots_and_runs_audit() {

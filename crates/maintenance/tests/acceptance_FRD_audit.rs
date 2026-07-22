@@ -3,7 +3,6 @@
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 
 /// FRD-audit: Security scan on a Rust project uses cargo-audit and returns structured findings.
 #[tokio::test]

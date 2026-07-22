@@ -3,7 +3,7 @@
 
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_common_vo::{BooleanVO, Count};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;

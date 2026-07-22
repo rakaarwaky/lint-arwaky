@@ -9,7 +9,7 @@ fn mcp_container_has_all_required_fields() {
     // Compile-time check: if any field is missing or renamed, this won't compile.
     // We can't call new_default() in unit tests (requires real filesystem),
     // but we verify the struct shape.
-    fn assert_fields(_c: &McpContainer) {
+    fn _assert_fields(_c: &McpContainer) {
         let _ = &_c.code_analysis_linter;
         let _ = &_c.import_orchestrator;
         let _ = &_c.naming_orchestrator;
@@ -32,7 +32,7 @@ fn mcp_container_fields_are_arc_dyn_traits() {
     use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     use std::sync::Arc;
 
-    fn assert_arc_types(_c: &McpContainer) {
+    fn _assert_arc_types(_c: &McpContainer) {
         let _: &Arc<dyn ICodeAnalysisAggregate> = &_c.code_analysis_linter;
         let _: &Arc<dyn IImportRunnerAggregate> = &_c.import_orchestrator;
         let _: &Arc<dyn INamingRunnerAggregate> = &_c.naming_orchestrator;

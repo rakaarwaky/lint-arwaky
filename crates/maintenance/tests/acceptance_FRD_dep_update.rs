@@ -3,7 +3,6 @@
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 
 /// FRD-dep-update: The system can analyze project dependencies and produce a structured report.
 /// This validates the "dependency_report" capability that underpins the update workflow.

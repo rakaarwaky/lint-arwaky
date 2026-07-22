@@ -3,7 +3,6 @@
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 
 #[tokio::test]
 async fn full_maintenance_lifecycle_on_python_project() {
