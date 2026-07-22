@@ -54,7 +54,9 @@ pub fn has_config_file(dir_path: &Path) -> bool {
 /// Check if Cargo.toml exists at the given path (or parent/grandparent).
 pub fn has_cargo_toml(path_str: &str) -> Option<String> {
     let current = Path::new(path_str);
-    if utility_file_handler::is_dir(current) && utility_file_handler::is_file_generic(current.join("Cargo.toml")) {
+    if utility_file_handler::is_dir(current)
+        && utility_file_handler::is_file_generic(current.join("Cargo.toml"))
+    {
         return Some(path_str.to_string());
     }
     if let Some(parent) = current.parent() {
@@ -73,7 +75,9 @@ pub fn has_cargo_toml(path_str: &str) -> Option<String> {
 /// Check if Cargo.lock exists at the given path (or parent/grandparent).
 pub fn has_cargo_lock(path_str: &str) -> Option<String> {
     let current = Path::new(path_str);
-    if utility_file_handler::is_dir(current) && utility_file_handler::is_file_generic(current.join("Cargo.lock")) {
+    if utility_file_handler::is_dir(current)
+        && utility_file_handler::is_file_generic(current.join("Cargo.lock"))
+    {
         return Some(path_str.to_string());
     }
     if let Some(parent) = current.parent() {

@@ -318,7 +318,9 @@ impl LintFixProcessor {
             return 0;
         }
         let new_content = content.replace(old_name, new_name);
-        if new_content != content && utility_file_handler::write_file(file_path, &new_content).is_ok() {
+        if new_content != content
+            && utility_file_handler::write_file(file_path, &new_content).is_ok()
+        {
             return 1;
         }
         0
