@@ -39,7 +39,11 @@ fn full_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            allowed: PatternList::new(vec![
+                "taxonomy".to_string(),
+                "contract".to_string(),
+                "utility".to_string(),
+            ]),
             forbidden: PatternList::new(vec!["agent".to_string(), "surfaces".to_string()]),
             mandatory: PatternList::new(vec!["contract".to_string()]),
             word_count: Count::new(2),

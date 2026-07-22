@@ -14,22 +14,14 @@ fn sut() -> CapabilitiesExternalLintSelector {
 #[test]
 fn select_all_languages_returns_nine_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        true,
-        true,
-        true,
-    );
+    let result = selector.select_adapters(true, true, true);
     assert_eq!(result.len(), 9);
 }
 
 #[test]
 fn select_rust_only_returns_three_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        true,
-        false,
-        false,
-    );
+    let result = selector.select_adapters(true, false, false);
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     assert!(names.contains(&"clippy"));
@@ -40,11 +32,7 @@ fn select_rust_only_returns_three_adapters() {
 #[test]
 fn select_python_only_returns_three_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        false,
-        true,
-        false,
-    );
+    let result = selector.select_adapters(false, true, false);
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     assert!(names.contains(&"ruff"));
@@ -55,11 +43,7 @@ fn select_python_only_returns_three_adapters() {
 #[test]
 fn select_js_only_returns_three_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        false,
-        false,
-        true,
-    );
+    let result = selector.select_adapters(false, false, true);
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     assert!(names.contains(&"eslint"));
@@ -72,33 +56,21 @@ fn select_js_only_returns_three_adapters() {
 #[test]
 fn select_no_languages_returns_empty_list() {
     let selector = sut();
-    let result = selector.select_adapters(
-        false,
-        false,
-        false,
-    );
+    let result = selector.select_adapters(false, false, false);
     assert!(result.is_empty());
 }
 
 #[test]
 fn select_rust_and_python_returns_six_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        true,
-        true,
-        false,
-    );
+    let result = selector.select_adapters(true, true, false);
     assert_eq!(result.len(), 6);
 }
 
 #[test]
 fn select_python_and_js_returns_six_adapters() {
     let selector = sut();
-    let result = selector.select_adapters(
-        false,
-        true,
-        true,
-    );
+    let result = selector.select_adapters(false, true, true);
     assert_eq!(result.len(), 6);
 }
 
@@ -117,11 +89,7 @@ fn custom_adapter_lists_are_respected() {
         ],
     );
 
-    let result = selector.select_adapters(
-        true,
-        false,
-        true,
-    );
+    let result = selector.select_adapters(true, false, true);
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     assert!(names.contains(&"custom-rs"));
@@ -132,11 +100,7 @@ fn custom_adapter_lists_are_respected() {
 #[test]
 fn empty_custom_lists_return_nothing() {
     let selector = CapabilitiesExternalLintSelector::new(vec![], vec![], vec![]);
-    let result = selector.select_adapters(
-        true,
-        true,
-        true,
-    );
+    let result = selector.select_adapters(true, true, true);
     assert!(result.is_empty());
 }
 
@@ -145,11 +109,7 @@ fn empty_custom_lists_return_nothing() {
 #[test]
 fn adapter_order_is_rust_then_python_then_js() {
     let selector = sut();
-    let result = selector.select_adapters(
-        true,
-        true,
-        true,
-    );
+    let result = selector.select_adapters(true, true, true);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     // Rust adapters first
     assert_eq!(names[0], "clippy");

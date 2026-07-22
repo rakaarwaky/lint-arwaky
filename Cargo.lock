@@ -448,6 +448,7 @@ dependencies = [
  "code_analysis-lint-arwaky",
  "config_system-lint-arwaky",
  "console",
+ "criterion",
  "ctrlc",
  "dialoguer",
  "dirs",
@@ -467,6 +468,7 @@ dependencies = [
  "serde_json",
  "serde_yaml_ng",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -566,12 +568,14 @@ name = "config_system-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "dirs",
  "futures",
  "serde",
  "serde_json",
  "serde_yaml_ng",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
 ]

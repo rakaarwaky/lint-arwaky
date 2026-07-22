@@ -26,9 +26,7 @@ fn bench_select_adapters(c: &mut Criterion) {
             BenchmarkId::new("select_adapters", name),
             &(rs, py, js),
             |b, &(rs, py, js)| {
-                b.iter(|| {
-                    selector.select_adapters(rs, py, js)
-                });
+                b.iter(|| selector.select_adapters(rs, py, js));
             },
         );
     }

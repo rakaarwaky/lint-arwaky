@@ -33,7 +33,11 @@ fn e2e_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            allowed: PatternList::new(vec![
+                "taxonomy".to_string(),
+                "contract".to_string(),
+                "utility".to_string(),
+            ]),
             forbidden: PatternList::new(vec!["agent".to_string(), "surfaces".to_string()]),
             mandatory: PatternList::new(vec!["contract".to_string()]),
             ..Default::default()
@@ -43,7 +47,11 @@ fn e2e_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("agent"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            allowed: PatternList::new(vec![
+                "taxonomy".to_string(),
+                "contract".to_string(),
+                "utility".to_string(),
+            ]),
             forbidden: PatternList::new(vec!["surfaces".to_string(), "capabilities".to_string()]),
             ..Default::default()
         },
@@ -80,7 +88,7 @@ pub enum Severity { Low, Medium, High, Critical }
 "#,
     );
 
-    // ─── Capabilities layer (clean — has contract import) ───
+    // ─── Capabilities layer (clean — has contract import with real logic) ───
     write_file(
         src,
         "capabilities_severity_checker.rs",
@@ -93,8 +101,17 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 pub struct SeverityChecker;
 
 impl IUnusedImportProtocol for SeverityChecker {
-    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> { vec![] }
-    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {}
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+        let content = std::fs::read_to_string(path.value()).unwrap_or_default();
+        if content.is_empty() { return vec![]; }
+        vec![LintMessage::new("scanned")]
+    }
+    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+        if content.contains("unused") {
+            v.push(LintResult::new_arch(file, 1, "AES203",
+                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM, "unused import"));
+        }
+    }
 }
 "#,
     );
@@ -163,10 +180,7 @@ pub struct Good;
     let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
 
-    let aes201_count = results
-        .iter()
-        .filter(|v| v.code.code() == "AES201")
-        .count();
+    let aes201_count = results.iter().filter(|v| v.code.code() == "AES201").count();
     assert!(
         aes201_count > 0,
         "E2E: taxonomy importing capabilities must produce AES201"
