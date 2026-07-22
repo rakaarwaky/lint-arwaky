@@ -50,11 +50,7 @@ async fn container_orchestrator_run_audit_on_temp_dir() {
 
     let dir = tempfile::tempdir().unwrap();
     // Create a valid taxonomy file
-    std::fs::write(
-        dir.path().join("taxonomy_user_vo.rs"),
-        "pub struct User;\n",
-    )
-    .unwrap();
+    std::fs::write(dir.path().join("taxonomy_user_vo.rs"), "pub struct User;\n").unwrap();
 
     let c = RoleContainer::new_with_config(
         shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),

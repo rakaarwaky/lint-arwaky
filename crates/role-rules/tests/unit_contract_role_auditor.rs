@@ -28,7 +28,8 @@ fn protocol_with_trait_not_flagged() {
 
 #[test]
 fn protocol_with_trait_and_methods_not_flagged() {
-    let content = "pub trait IService {\n    fn run(&self) -> Result<(), Error>;\n    fn stop(&self);\n}";
+    let content =
+        "pub trait IService {\n    fn run(&self) -> Result<(), Error>;\n    fn stop(&self);\n}";
     let source = make_source("contract_service_protocol.rs", content);
     let violations = checker().check_protocol(&source);
     assert!(violations.is_empty());

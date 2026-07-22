@@ -13,32 +13,38 @@ use std::sync::Arc;
 struct StubAggregate;
 
 impl IRoleAggregate for StubAggregate {
-    fn taxonomy(&self) -> &dyn shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker {
+    fn taxonomy(
+        &self,
+    ) -> &dyn shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker {
         panic!("not implemented")
     }
     fn contract(&self) -> &dyn shared::role_rules::contract_role_protocol::IContractRoleChecker {
         panic!("not implemented")
     }
-    fn capabilities(&self) -> &dyn shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker {
+    fn capabilities(
+        &self,
+    ) -> &dyn shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker
+    {
         panic!("not implemented")
     }
-    fn surface(&self) -> &dyn shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker {
+    fn surface(
+        &self,
+    ) -> &dyn shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker {
         panic!("not implemented")
     }
     fn agent(&self) -> &dyn shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker {
         panic!("not implemented")
     }
-    fn utility(&self) -> &dyn shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker {
+    fn utility(
+        &self,
+    ) -> &dyn shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker {
         panic!("not implemented")
     }
 }
 
 fn build_orchestrator() -> RoleOrchestrator {
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    RoleOrchestrator::new(
-        Arc::new(StubAggregate),
-        &config,
-    )
+    RoleOrchestrator::new(Arc::new(StubAggregate), &config)
 }
 
 // ─── name ────────────────────────────────────────────

@@ -22,7 +22,10 @@ fn make_source(file: &str, content: &str) -> SourceContentVO {
 
 #[test]
 fn file_under_max_lines_no_violation() {
-    let content: String = (0..100).map(|i| format!("line {}", i)).collect::<Vec<_>>().join("\n");
+    let content: String = (0..100)
+        .map(|i| format!("line {}", i))
+        .collect::<Vec<_>>()
+        .join("\n");
     let source = make_source("agent_foo_orchestrator.rs", &content);
     let mut violations = Vec::new();
     checker().check_file_size_limit(&source, 500, &mut violations);
@@ -31,7 +34,10 @@ fn file_under_max_lines_no_violation() {
 
 #[test]
 fn file_at_max_lines_no_violation() {
-    let content: String = (0..499).map(|i| format!("line {}", i)).collect::<Vec<_>>().join("\n");
+    let content: String = (0..499)
+        .map(|i| format!("line {}", i))
+        .collect::<Vec<_>>()
+        .join("\n");
     let source = make_source("agent_foo_orchestrator.rs", &content);
     let mut violations = Vec::new();
     checker().check_file_size_limit(&source, 500, &mut violations);
@@ -42,7 +48,10 @@ fn file_at_max_lines_no_violation() {
 
 #[test]
 fn file_over_max_lines_emits_aes405() {
-    let content: String = (0..501).map(|i| format!("line {}", i)).collect::<Vec<_>>().join("\n");
+    let content: String = (0..501)
+        .map(|i| format!("line {}", i))
+        .collect::<Vec<_>>()
+        .join("\n");
     let source = make_source("agent_foo_orchestrator.rs", &content);
     let mut violations = Vec::new();
     checker().check_file_size_limit(&source, 500, &mut violations);
@@ -52,7 +61,10 @@ fn file_over_max_lines_emits_aes405() {
 
 #[test]
 fn file_over_max_lines_violation_has_correct_message() {
-    let content: String = (0..600).map(|i| format!("line {}", i)).collect::<Vec<_>>().join("\n");
+    let content: String = (0..600)
+        .map(|i| format!("line {}", i))
+        .collect::<Vec<_>>()
+        .join("\n");
     let source = make_source("agent_foo_orchestrator.rs", &content);
     let mut violations = Vec::new();
     checker().check_file_size_limit(&source, 500, &mut violations);
