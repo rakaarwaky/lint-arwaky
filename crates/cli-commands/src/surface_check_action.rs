@@ -24,7 +24,7 @@ use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    shared::common::find_workspace_root(path)
+    shared::common::utility_file::find_workspace_root(path)
 }
 
 pub struct CheckOptions {

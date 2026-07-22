@@ -4,7 +4,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_language_vo::LanguageVO;
+use shared::common::taxonomy_common_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
 use shared::taxonomy_definition_vo::LayerMapVO;

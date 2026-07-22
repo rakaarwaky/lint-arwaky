@@ -2,7 +2,6 @@
 pub mod contract_analysis_pipeline_aggregate;
 pub mod contract_report_formatter_aggregate;
 pub mod contract_report_formatter_protocol;
-
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;

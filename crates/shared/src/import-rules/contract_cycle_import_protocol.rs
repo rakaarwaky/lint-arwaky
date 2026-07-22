@@ -4,13 +4,16 @@ use crate::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::common::taxonomy_path_vo::FilePath;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq, Hash)]
 pub struct DependencyEdge {
-    pub caller: crate::taxonomy_name_vo::SymbolName,
-    pub callee: crate::taxonomy_name_vo::SymbolName,
+    pub source: String,
+    pub target: String,
 }
 
 impl DependencyEdge {
-    pub fn new(caller: crate::taxonomy_name_vo::SymbolName, callee: crate::taxonomy_name_vo::SymbolName) -> Self {
-        Self { caller, callee }
+    pub fn new(source: impl Into<String>, target: impl Into<String>) -> Self {
+        Self {
+            source: source.into(),
+            target: target.into(),
+        }
     }
 }
 use crate::taxonomy_definition_vo::LayerMapVO;

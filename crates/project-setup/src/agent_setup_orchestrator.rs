@@ -106,11 +106,11 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         &self,
         filename: &str,
         content: &str,
-    ) -> shared::project_setup::WriteConfigResult {
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::WriteConfigResult {
         self.protocol.write_config_file(filename, content)
     }
 
-    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
+    fn create_global_config_dir(&self) -> shared::project_setup::taxonomy_setup_contract_vo::CreateConfigDirResult {
         self.protocol.create_global_config_dir()
     }
 

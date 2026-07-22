@@ -10,7 +10,7 @@ use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::DependencyEdge;
+use shared::import_rules::contract_cycle_import_protocol::DependencyEdge;
 use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;

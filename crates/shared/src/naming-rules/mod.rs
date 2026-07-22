@@ -5,4 +5,3 @@ pub mod taxonomy_naming_violation_vo;
 pub mod utility_naming;
 pub mod utility_naming_checker;
 pub mod utility_naming_filesystem;
-pub use taxonomy_naming_violation_vo::NamingViolation;

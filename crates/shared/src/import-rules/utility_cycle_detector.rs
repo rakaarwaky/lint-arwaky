@@ -1,5 +1,5 @@
 use crate::common::taxonomy_name_vo::SymbolName;
-use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use crate::import_rules::contract_cycle_import_protocol::DependencyEdge;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Clone, Copy, PartialEq)]

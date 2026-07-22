@@ -200,7 +200,7 @@ impl AnalysisPipelineOrchestrator {
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         // Build context with ALL workspace files for cross-crate import resolution
-        let all_workspace_files = shared::common::collect_all_source_files(
+        let all_workspace_files = shared::common::utility_file::collect_all_source_files(
             &std::path::PathBuf::from(orphan_scan_root),
             &ignored,
         );
@@ -430,7 +430,7 @@ impl AnalysisPipelineOrchestrator {
         let ignored = self
             .config_orchestrator
             .ignored_paths(scan_root.to_str().unwrap_or("."));
-        let all_files: Vec<String> = shared::common::collect_all_source_files(&scan_root, &ignored)
+        let all_files: Vec<String> = shared::common::utility_file::collect_all_source_files(&scan_root, &ignored)
             .iter()
             .map(|f| f.value.clone())
             .collect();

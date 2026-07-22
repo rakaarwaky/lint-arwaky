@@ -1,10 +1,30 @@
 // PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
 use serde::{Deserialize, Serialize};
-
-use crate::common::taxonomy_job_id_vo::JobId;
 use crate::common::taxonomy_layer_vo::LineContentVO;
 use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
+use crate::common::taxonomy_job_id_vo::JobId;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum LanguageVO {
+    Rust,
+    Python,
+    JavaScript,
+    Unknown,
+}
+
+impl LanguageVO {
+    pub fn from_path(path: &str) -> Self {
+        let ext = path.rsplit('.').next().unwrap_or("");
+        match ext {
+            "rs" => LanguageVO::Rust,
+            "py" => LanguageVO::Python,
+            "js" | "ts" | "jsx" | "tsx" => LanguageVO::JavaScript,
+            _ => LanguageVO::Unknown,
+        }
+    }
+}
+
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
