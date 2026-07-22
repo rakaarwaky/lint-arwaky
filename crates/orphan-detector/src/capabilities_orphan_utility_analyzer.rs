@@ -3,8 +3,12 @@ use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file;
+use shared::common::utility_layer_detector;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+
+// Layers that are valid consumers of utility files
+const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityOrphanAnalyzer {}
@@ -20,13 +24,6 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     ) -> OrphanIndicatorResult {
         let fp = f.value();
 
-        // Fast path: use already-built import graph
-        if let Some(importers) = inbound_links.mapping.get(fp) {
-            if importers.iter().any(|importer| importer != fp) {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-            }
-        }
-
         let module_name = match std::path::Path::new(fp)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -37,9 +34,62 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         };
 
-        // Fallback: token-based matching
+        // Phase 1: Check import graph for consumer-layer importers
+        if let Some(importers) = inbound_links.mapping.get(fp) {
+            let external_importers: Vec<&String> = importers
+                .iter()
+                .filter(|importer| *importer != fp)
+                .collect();
+
+            if !external_importers.is_empty() {
+                // Check if any importer is from a consumer layer (capability, agent, surface, root)
+                let has_consumer = external_importers.iter().any(|importer| {
+                    let filename = utility_layer_detector::extract_filename(importer);
+                    utility_layer_detector::detect_layer_from_prefix(filename)
+                        .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                        .unwrap_or(false)
+                });
+
+                if has_consumer {
+                    // Utility is used by a consumer layer — not dead
+                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                }
+
+                // Utility is only imported by other utilities — dead code
+                let importer_names: Vec<String> = external_importers
+                    .iter()
+                    .filter_map(|i| {
+                        std::path::Path::new(i)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .map(|s| s.to_string())
+                    })
+                    .collect();
+
+                return OrphanIndicatorResult::new(
+                    true,
+                    AesOrphanViolation::UtilityDeadCode {
+                        stem: module_name.clone(),
+                        imported_by: importer_names,
+                        reason: Some(
+                            format!(
+                                "Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.",
+                                module_name
+                            )
+                            .into(),
+                        ),
+                    }
+                    .to_string(),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        // Phase 2: Fallback — token-based matching across all files
         let tokens = shared::orphan_detector::utility_orphan::import_tokens(fp);
-        let mut imported = false;
+        let mut consumer_importers: Vec<String> = Vec::new();
+        let mut utility_importers: Vec<String> = Vec::new();
+
         for other_file in all_files {
             if other_file == fp {
                 continue;
@@ -50,26 +100,51 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            if self.check_import_pattern(&other_content, &module_name) {
-                imported = true;
-                break;
-            }
-            if tokens.iter().any(|token| {
-                shared::orphan_detector::utility_orphan::contains_delimited(&other_content, token)
-            }) {
-                imported = true;
-                break;
+            let is_consumer = {
+                let filename = utility_layer_detector::extract_filename(other_file);
+                utility_layer_detector::detect_layer_from_prefix(filename)
+                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                    .unwrap_or(false)
+            };
+
+            let imported = self.check_import_pattern(&other_content, &module_name)
+                || tokens.iter().any(|token| {
+                    shared::orphan_detector::utility_orphan::contains_delimited(
+                        &other_content,
+                        token,
+                    )
+                });
+
+            if imported {
+                let stem = std::path::Path::new(other_file)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                if is_consumer {
+                    consumer_importers.push(stem);
+                } else {
+                    utility_importers.push(stem);
+                }
             }
         }
 
-        if !imported {
+        // If imported by consumer layers — not dead
+        if !consumer_importers.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // If only imported by other utilities — dead code
+        if !utility_importers.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::UtilityOrphan {
+                AesOrphanViolation::UtilityDeadCode {
                     stem: module_name.clone(),
+                    imported_by: utility_importers,
                     reason: Some(
                         format!(
-                            "Utility file '{}' is not imported by any other file.",
+                            "Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.",
                             module_name
                         )
                         .into(),
@@ -80,7 +155,22 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             );
         }
 
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        // Not imported by anyone — orphan
+        OrphanIndicatorResult::new(
+            true,
+            AesOrphanViolation::UtilityOrphan {
+                stem: module_name.clone(),
+                reason: Some(
+                    format!(
+                        "Utility file '{}' is not imported by any other file.",
+                        module_name
+                    )
+                    .into(),
+                ),
+            }
+            .to_string(),
+            Severity::MEDIUM,
+        )
     }
 }
 
