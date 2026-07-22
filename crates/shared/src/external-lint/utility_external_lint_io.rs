@@ -1,4 +1,5 @@
 // PURPOSE: utility_external_lint_io — stateless I/O utilities for external lint adapters
+use crate::common::utility_file_handler;
 use std::path::{Path, PathBuf};
 
 /// Canonicalize a path, returning the original path on error.
@@ -45,7 +46,9 @@ pub fn has_python_files(dir_path: &Path) -> bool {
 /// Check if a configuration file exists at the given path.
 pub fn has_config_file(dir_path: &Path) -> bool {
     crate::common::utility_file_handler::is_file_generic(dir_path.join("lint_arwaky.config.yaml"))
-        || crate::common::utility_file_handler::is_file_generic(dir_path.join("lint_arwaky.config.python.yaml"))
+        || crate::common::utility_file_handler::is_file_generic(
+            dir_path.join("lint_arwaky.config.python.yaml"),
+        )
         || crate::common::utility_file_handler::is_file_generic(dir_path.join("package.json"))
         || crate::common::utility_file_handler::is_dir(dir_path.join(".git"))
 }
@@ -63,7 +66,8 @@ pub fn has_cargo_toml(path_str: &str) -> Option<String> {
             return Some(parent.to_string_lossy().replace('\\', "/"));
         }
         if let Some(grandparent) = parent.parent() {
-            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.toml")) {
+            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.toml"))
+            {
                 return Some(grandparent.to_string_lossy().replace('\\', "/"));
             }
         }
@@ -84,7 +88,8 @@ pub fn has_cargo_lock(path_str: &str) -> Option<String> {
             return Some(parent.to_string_lossy().replace('\\', "/"));
         }
         if let Some(grandparent) = parent.parent() {
-            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.lock")) {
+            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.lock"))
+            {
                 return Some(grandparent.to_string_lossy().replace('\\', "/"));
             }
         }

@@ -200,7 +200,8 @@ impl LintFixProcessor {
         if !shared::common::utility_file_handler::path_exists(file_path) {
             return false;
         }
-        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok() {
+        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok()
+        {
             Some(c) => c,
             None => return false,
         };
@@ -264,7 +265,8 @@ impl LintFixProcessor {
         if !shared::common::utility_file_handler::path_exists(file_path) {
             return false;
         }
-        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok() {
+        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok()
+        {
             Some(c) => c,
             None => return false,
         };
@@ -309,7 +311,8 @@ impl LintFixProcessor {
         if !shared::common::utility_file_handler::path_exists(file_path) {
             return 0;
         }
-        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok() {
+        let content = match shared::common::utility_file_handler::read_file_generic(file_path).ok()
+        {
             Some(c) => c,
             None => return 0,
         };
