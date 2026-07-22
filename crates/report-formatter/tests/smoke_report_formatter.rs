@@ -6,16 +6,18 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
+use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use std::sync::Arc;
 
 #[test]
 fn smoke_report_formatter_crate_boots_and_responds() {
     // 1. All formatters instantiate without panic
-    let text = TextFormatter::new(Arc::new(
+    let text = Arc::new(TextFormatter::new(Arc::new(
         shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    ));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    )));
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
 
     // 2. Orchestrator instantiates
     let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);

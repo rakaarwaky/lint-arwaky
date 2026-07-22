@@ -21,7 +21,7 @@ fn processor() -> SetupManagementProcessor {
 #[test]
 fn processor_generates_env_content() {
     let proc = processor();
-    let home = DirectoryPath::new("/tmp".to_string());
+    let home = DirectoryPath::new("/tmp".to_string()).unwrap();
 
     let env_content = proc.generate_env(&home);
     assert!(!env_content.value.is_empty());

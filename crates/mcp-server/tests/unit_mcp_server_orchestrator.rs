@@ -153,13 +153,8 @@ impl IConfigOrchestratorAggregate for MockConfigOrchestrator {
 
 fn build_test_orchestrator() -> McpServerOrchestrator {
     McpServerOrchestrator::new(McpServerDependencies {
-        code_analysis_linter: Arc::new(MockCodeAnalysis),
-        import_orchestrator: Arc::new(MockImportRunner),
-        naming_orchestrator: Arc::new(MockNamingRunner),
-        orphan_orchestrator: Arc::new(MockOrphanDetector),
-        external_lint: Arc::new(MockExternalLint),
-        role_orchestrator: Arc::new(MockRoleRunner),
-        config_orchestrator: Arc::new(MockConfigOrchestrator),
+        analysis_pipeline: container.analysis_pipeline.clone(),
+        external_lint: container.external_lint.clone(),
     })
 }
 

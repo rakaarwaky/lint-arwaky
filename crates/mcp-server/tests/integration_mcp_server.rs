@@ -38,13 +38,8 @@ fn container_new_default_produces_all_dependencies() {
 fn orchestrator_constructed_from_container_deps() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        code_analysis_linter: container.code_analysis_linter,
-        import_orchestrator: container.import_orchestrator,
-        naming_orchestrator: container.naming_orchestrator,
-        orphan_orchestrator: container.orphan_orchestrator,
-        external_lint: container.external_lint,
-        role_orchestrator: container.role_orchestrator,
-        config_orchestrator: container.config_orchestrator,
+        analysis_pipeline: container.analysis_pipeline.clone(),
+        external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
     let _surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
@@ -56,13 +51,8 @@ fn orchestrator_constructed_from_container_deps() {
 async fn surface_execute_command_flows_through_orchestrator() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        code_analysis_linter: container.code_analysis_linter,
-        import_orchestrator: container.import_orchestrator,
-        naming_orchestrator: container.naming_orchestrator,
-        orphan_orchestrator: container.orphan_orchestrator,
-        external_lint: container.external_lint,
-        role_orchestrator: container.role_orchestrator,
-        config_orchestrator: container.config_orchestrator,
+        analysis_pipeline: container.analysis_pipeline.clone(),
+        external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
     let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
@@ -80,13 +70,8 @@ async fn surface_execute_command_flows_through_orchestrator() {
 async fn surface_list_commands_returns_catalog() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        code_analysis_linter: container.code_analysis_linter,
-        import_orchestrator: container.import_orchestrator,
-        naming_orchestrator: container.naming_orchestrator,
-        orphan_orchestrator: container.orphan_orchestrator,
-        external_lint: container.external_lint,
-        role_orchestrator: container.role_orchestrator,
-        config_orchestrator: container.config_orchestrator,
+        analysis_pipeline: container.analysis_pipeline.clone(),
+        external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
     let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
@@ -103,13 +88,8 @@ async fn surface_list_commands_returns_catalog() {
 fn surface_get_info_reports_tools_capability() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        code_analysis_linter: container.code_analysis_linter,
-        import_orchestrator: container.import_orchestrator,
-        naming_orchestrator: container.naming_orchestrator,
-        orphan_orchestrator: container.orphan_orchestrator,
-        external_lint: container.external_lint,
-        role_orchestrator: container.role_orchestrator,
-        config_orchestrator: container.config_orchestrator,
+        analysis_pipeline: container.analysis_pipeline.clone(),
+        external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
     let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
