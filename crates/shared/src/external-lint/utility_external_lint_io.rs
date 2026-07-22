@@ -1,5 +1,5 @@
 // PURPOSE: utility_external_lint_io — stateless I/O utilities for external lint adapters
-use crate::common::utility_file;
+use crate::common::utility_file_handler;
 use std::path::{Path, PathBuf};
 
 /// Canonicalize a path, returning the original path on error.

@@ -9,7 +9,7 @@ use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
-use shared::orphan_detector::utility_workspace::collect_source_files;
+use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::OnceLock;

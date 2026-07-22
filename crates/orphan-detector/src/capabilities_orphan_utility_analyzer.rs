@@ -86,7 +86,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         }
 
         // Phase 2: Fallback — token-based matching across all files
-        let tokens = shared::orphan_detector::utility_orphan::import_tokens(fp);
+        let tokens = shared::orphan_detector::utility_orphan_detector::import_tokens(fp);
         let mut consumer_importers: Vec<String> = Vec::new();
         let mut utility_importers: Vec<String> = Vec::new();
 
@@ -109,7 +109,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
             let imported = self.check_import_pattern(&other_content, &module_name)
                 || tokens.iter().any(|token| {
-                    shared::orphan_detector::utility_orphan::contains_delimited(
+                    shared::orphan_detector::utility_orphan_detector::contains_delimited(
                         &other_content,
                         token,
                     )

@@ -1,5 +1,5 @@
 // PURPOSE: Config I/O utility — async file read and path confinement helpers
-use crate::common::utility_file;
+use crate::common::utility_file_handler;
 use std::path::Path;
 
 pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20; // 1 MiB

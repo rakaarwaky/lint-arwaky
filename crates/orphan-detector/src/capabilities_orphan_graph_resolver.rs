@@ -522,7 +522,7 @@ impl OrphanGraphResolver {
                                     .and_then(|s| s.to_str())
                                     .unwrap_or_default();
                                 let normalized_stem =
-                                    shared::orphan_detector::utility_orphan::normalize_module_component(stem);
+                                    shared::orphan_detector::utility_orphan_detector::normalize_module_component(stem);
                                 if (stem == module_name || normalized_stem == module_name)
                                     && path_str != *f
                                 {
@@ -645,13 +645,16 @@ impl OrphanGraphResolver {
                     .strip_prefix(&canonical_src)
                     .unwrap_or(&canonical_path);
                 let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
-                let normalized_rel = shared::orphan_detector::utility_orphan::normalize_module_path(
-                    &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
-                );
+                let normalized_rel =
+                    shared::orphan_detector::utility_orphan_detector::normalize_module_path(
+                        &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
+                    );
                 module_map.insert(normalized_rel, canon_str.clone());
                 module_map.insert(stem.clone(), canon_str.clone());
                 module_map.insert(
-                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem),
+                    shared::orphan_detector::utility_orphan_detector::normalize_module_component(
+                        &stem,
+                    ),
                     canon_str.clone(),
                 );
                 if stem == "mod" || stem == "__init__" || stem == "index" {
@@ -659,7 +662,7 @@ impl OrphanGraphResolver {
                         let parent = parent_dir.to_string_lossy().to_string();
                         module_map.insert(parent.clone(), canon_str.clone());
                         module_map.insert(
-                            shared::orphan_detector::utility_orphan::normalize_module_component(
+                            shared::orphan_detector::utility_orphan_detector::normalize_module_component(
                                 &parent,
                             ),
                             canon_str.clone(),
@@ -668,7 +671,9 @@ impl OrphanGraphResolver {
                 }
             }
             let normalized_name =
-                shared::orphan_detector::utility_orphan::normalize_module_component(crate_name);
+                shared::orphan_detector::utility_orphan_detector::normalize_module_component(
+                    crate_name,
+                );
             index.insert(crate_name.clone(), module_map.clone());
             index.insert(normalized_name, module_map);
         }
@@ -683,7 +688,8 @@ impl OrphanGraphResolver {
     ) -> Option<String> {
         let map = index.get(crate_name)?;
         let seg_str = segments.join("/");
-        let normalized = shared::orphan_detector::utility_orphan::normalize_module_path(&seg_str);
+        let normalized =
+            shared::orphan_detector::utility_orphan_detector::normalize_module_path(&seg_str);
         if let Some(path) = map.get(&normalized) {
             if path != current_file {
                 return Some(path.clone());
@@ -692,7 +698,7 @@ impl OrphanGraphResolver {
         for i in (1..segments.len()).rev() {
             let candidate = segments[..i].join("/");
             let normalized =
-                shared::orphan_detector::utility_orphan::normalize_module_path(&candidate);
+                shared::orphan_detector::utility_orphan_detector::normalize_module_path(&candidate);
             if let Some(path) = map.get(&normalized) {
                 if path != current_file {
                     return Some(path.clone());

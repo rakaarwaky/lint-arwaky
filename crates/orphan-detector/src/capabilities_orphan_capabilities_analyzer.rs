@@ -6,9 +6,11 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_file_cache;
-use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
+use shared::orphan_detector::utility_orphan_detector::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_workspace::{check_wired_in_container, find_workspace_root};
+use shared::orphan_detector::utility_workspace_scanner::{
+    check_wired_in_container, find_workspace_root,
+};
 use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────

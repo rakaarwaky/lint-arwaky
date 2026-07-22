@@ -1,9 +1,7 @@
 // PURPOSE: IMcpServerAggregate — aggregate trait for MCP server operations
 use rmcp::handler::server::wrapper::Parameters;
 
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use super::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[async_trait::async_trait]
 pub trait IMcpServerAggregate: Send + Sync {
