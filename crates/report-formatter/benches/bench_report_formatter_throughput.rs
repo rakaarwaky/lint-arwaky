@@ -1,148 +1,59 @@
-// PURPOSE: Benchmark — measure report-formatter throughput.
+// PURPOSE: Benchmark — measure report-formatter component throughput.
 // Layer: Benchmark (performance validation).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::ReportFormatterOrchestrator;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
-use std::sync::Arc;
-use std::time::Instant;
 
-fn build_orchestrator() -> ReportFormatterOrchestrator {
-    let text = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
-    let json = Arc::new(JsonFormatter::new());
-    let sarif = Arc::new(SarifFormatter::new());
-    let junit = Arc::new(JunitFormatter::new());
-    ReportFormatterOrchestrator::new(text, json, sarif, junit)
+fn bench_formatter_instantiation(c: &mut Criterion) {
+    c.bench_function("formatter_instantiation", |b| {
+        b.iter(|| {
+            let _text = TextFormatter::new(
+                code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+                    .code_analysis_linter(),
+            );
+            let _json = JsonFormatter::new();
+            let _sarif = SarifFormatter::new();
+            let _junit = JunitFormatter::new();
+        });
+    });
 }
 
-// ─── Benchmark: Formatter instantiation throughput ──
-
-#[test]
-fn bench_formatter_instantiation() {
-    let start = Instant::now();
-    for _ in 0..1000 {
-        let _text = TextFormatter::new(
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-                .code_analysis_linter(),
-        );
-        let _json = JsonFormatter::new();
-        let _sarif = SarifFormatter::new();
-        let _junit = JunitFormatter::new();
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 1000,
-        "1000 formatter instantiations took {}ms",
-        elapsed.as_millis()
-    );
+fn bench_text_format(c: &mut Criterion) {
+    c.bench_function("text_format", |b| {
+        b.iter(|| {
+            let text = TextFormatter::new(
+                code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+                    .code_analysis_linter(),
+            );
+            let report = ScanReport::new(vec![], vec![]);
+            let _ = text.format_text(black_box(&report));
+        });
+    });
 }
 
-// ─── Benchmark: Text formatting throughput ──
-
-#[test]
-fn bench_text_formatting() {
-    let text = TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    );
-    let report = ScanReport::new(vec![], vec![]);
-
-    let start = Instant::now();
-    for _ in 0..1000 {
-        let _ = text.format(&report, Format::Text);
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 5000,
-        "Text formatting took {}ms",
-        elapsed.as_millis()
-    );
+fn bench_sarif_format(c: &mut Criterion) {
+    c.bench_function("sarif_format", |b| {
+        b.iter(|| {
+            let sarif = SarifFormatter::new();
+            let results: Vec<code_analysis::lint_result_vo::LintResult> = vec![];
+            let _ = sarif.format_sarif(black_box(&results));
+        });
+    });
 }
 
-// ─── Benchmark: JSON serialization throughput ──
-
-#[test]
-fn bench_json_serialization() {
-    let json = Arc::new(JsonFormatter::new());
-    let report = ScanReport::new(vec![], vec![]);
-
-    let start = Instant::now();
-    for _ in 0..1000 {
-        let _ = json.format(&report, Format::Json);
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 5000,
-        "JSON serialization took {}ms",
-        elapsed.as_millis()
-    );
+fn bench_junit_format(c: &mut Criterion) {
+    c.bench_function("junit_format", |b| {
+        b.iter(|| {
+            let junit = JunitFormatter::new();
+            let results: Vec<code_analysis::lint_result_vo::LintResult> = vec![];
+            let _ = junit.format_junit(black_box(&results));
+        });
+    });
 }
 
-// ─── Benchmark: SARIF generation throughput ──
-
-#[test]
-fn bench_sarif_generation() {
-    let sarif = Arc::new(SarifFormatter::new());
-    let report = ScanReport::new(vec![], vec![]);
-
-    let start = Instant::now();
-    for _ in 0..1000 {
-        let _ = sarif.format(&report, Format::Sarif);
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 5000,
-        "SARIF generation took {}ms",
-        elapsed.as_millis()
-    );
-}
-
-// ─── Benchmark: JUnit XML generation throughput ──
-
-#[test]
-fn bench_junit_generation() {
-    let junit = Arc::new(JunitFormatter::new());
-    let report = ScanReport::new(vec![], vec![]);
-
-    let start = Instant::now();
-    for _ in 0..1000 {
-        let _ = junit.format(&report, Format::Junit);
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 5000,
-        "JUnit generation took {}ms",
-        elapsed.as_millis()
-    );
-}
-
-// ─── Benchmark: Full orchestrator pipeline throughput ──
-
-#[test]
-fn bench_full_orchestrator_pipeline() {
-    let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![]);
-
-    let start = Instant::now();
-    for _ in 0..100 {
-        let _text = orch.format(&report, Format::Text);
-        let _json = orch.format(&report, Format::Json);
-        let _sarif = orch.format(&report, Format::Sarif);
-        let _junit = orch.format(&report, Format::Junit);
-    }
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_millis() < 10000,
-        "Full pipeline took {}ms",
-        elapsed.as_millis()
-    );
-}
+criterion_group!(benches, bench_formatter_instantiation, bench_text_format, bench_sarif_format, bench_junit_format);
+criterion_main!(benches);

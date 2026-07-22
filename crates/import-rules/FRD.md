@@ -40,16 +40,29 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 - **Edge Cases**: Re-exports, pub use statements
 - **Error Handling**: Emit AES203 diagnostic with unused symbol name
 
-### FR-004: Dummy or Forbidden Imports (AES204)
+### FR-004a: Dummy Import Detection (AES204)
 
-- **Description**: Detects imports that point to mock, dummy, or forbidden packages/modules.
+- **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings.
+- **Input**: Rust, Python, JS/TS source files
+- **Output**: List of dummy import diagnostics
+- **Business Rules**:
+  - Imported symbols placed inside `_use_*` dummy functions are flagged
+  - Dummy functions (`fn _use_*`, `def _use_*`, `function _use*`) are flagged
+  - Trait implementations with empty bodies are flagged
+  - Taxonomy VOs used only in dummy functions (not in real logic) are flagged
+- **Edge Cases**: Re-exports, pub use statements
+- **Error Handling**: Emit AES204 diagnostic with dummy symbol name and line number
+
+### FR-004b: Forbidden Import Detection (AES201)
+
+- **Description**: Detects imports that violate layer boundary rules defined in YAML configuration.
 - **Input**: Rust, Python, JS/TS source files
 - **Output**: List of forbidden import diagnostics
 - **Business Rules**:
-  - Import path must not match forbidden patterns
-  - Test-only imports in production code are flagged
+  - Import path must not match forbidden patterns from config
+  - Layer-specific forbidden rules are enforced per scope pattern
 - **Edge Cases**: Conditional imports, feature flags
-- **Error Handling**: Emit AES204 diagnostic with forbidden import path
+- **Error Handling**: Emit AES201 diagnostic with forbidden import path
 
 ### FR-005: Circular Dependency Detection (AES205)
 
@@ -84,37 +97,67 @@ LayerHierarchy {
 
 ## API Contract
 
-| Function                    | Input                      | Output          | Description  |
-| --------------------------- | -------------------------- | --------------- | ------------ |
-| `check_layer_violation()`   | File path, imports         | Vec<Diagnostic> | Check AES201 |
-| `check_mandatory_imports()` | File path, imports         | Vec<Diagnostic> | Check AES202 |
-| `check_unused_imports()`    | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
-| `check_dummy_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES204 |
-| `check_circular_deps()`     | All files, imports         | Vec<Diagnostic> | Check AES205 |
+| Function                      | Input                      | Output          | Description  |
+| ----------------------------- | -------------------------- | --------------- | ------------ |
+| `check_forbidden_imports()`   | File path, imports         | Vec<Diagnostic> | Check AES201 |
+| `run_mandatory_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES202 |
+| `check_unused_imports()`      | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
+| `check_dummy_imports()`       | File path, imports         | Vec<Diagnostic> | Check AES204 |
+| `check_cycles()`              | All files, imports         | Vec<Diagnostic> | Check AES205 |
 
 ## Integration Points
 
-- **Internal**: config-system (YAML rules), code-analysis (file reading)
+- **Internal**: config-system (YAML rules), shared/common (utility functions for file reading, layer detection, import parsing)
 - **External**: None
 
 ## Non-functional Requirements (Detailed)
 
-- Performance: Check 1000 files in < 2 seconds
+- Performance: Check 1000 files in < 2 seconds (validated via criterion benchmark in `benches/bench_import_rules_throughput.rs`)
 - Memory: O(n) where n = number of imports
 - Accuracy: Zero false positives for valid imports
 
 ## Test Scenarios / QA Checklist
 
-- [ ] Valid unidirectional import passes
-- [ ] Cross-layer import fails with AES201
-- [ ] Unused import detected with AES203
-- [ ] Circular dependency detected with AES205
-- [ ] Dummy import detected with AES204
+### AES201 — Forbidden Import
+
+| Test Case | Input | Expected Output |
+|-----------|-------|-----------------|
+| taxonomy imports contract | `taxonomy_vo.rs` with `use contract_protocol::*` | AES201 CRITICAL violation |
+| capabilities imports agent | `capabilities_checker.rs` with `use agent_orchestrator::*` | AES201 CRITICAL violation |
+| valid unidirectional import | `capabilities_checker.rs` with `use taxonomy_vo::*` | No violation |
+
+### AES202 — Mandatory Import
+
+| Test Case | Input | Expected Output |
+|-----------|-------|-----------------|
+| missing contract import | `capabilities_checker.rs` without protocol import | AES202 HIGH violation |
+| present contract import | `capabilities_checker.rs` with protocol import | No violation |
+
+### AES203 — Unused Import
+
+| Test Case | Input | Expected Output |
+|-----------|-------|-----------------|
+| unused symbol | File with `use foo::Bar;` but `Bar` never used | AES203 MEDIUM violation |
+| used symbol | File with `use foo::Bar;` and `Bar` referenced | No violation |
+
+### AES204 — Dummy Import
+
+| Test Case | Input | Expected Output |
+|-----------|-------|-----------------|
+| dummy function | File with `fn _use_imports() {}` | AES204 HIGH violation |
+| empty trait impl | File with `impl Trait for Struct {}` | AES204 HIGH violation |
+
+### AES205 — Circular Dependency
+
+| Test Case | Input | Expected Output |
+|-----------|-------|-----------------|
+| direct cycle | A imports B, B imports A | AES205 CRITICAL violation |
+| no cycle | A imports B, B imports C | No violation |
 
 ## Assumptions & Constraints
 
 - Layer hierarchy is defined in config YAML
-- Import statements are parsed via regex (not AST)
+- Import statements are parsed via utility functions in shared/common (regex-based extraction, not full AST parsing)
 - Workspace structure follows AES conventions
 
 ## Glossary
@@ -122,6 +165,8 @@ LayerHierarchy {
 - **AES**: Agentic Engineering System
 - **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
 - **Diagnostic**: Violation report with file path, line, column, rule code
+- **Dummy Import**: Import that exists only to suppress unused-import warnings, placed inside `_use_*` functions
+- **Forbidden Import**: Import that violates layer boundary rules defined in YAML configuration
 
 ## Reference
 
