@@ -227,7 +227,15 @@ impl ArchOrphanAnalyzer {
         all_files: &[String],
         root_dir: &str,
     ) -> OrphanIndicatorResult {
-        if f.ends_with("__init__.py") {
+        // Barrel file exceptions — package markers and re-export files, not logic
+        if f.ends_with("__init__.py")
+            || f.ends_with("/mod.rs")
+            || f.ends_with("\\mod.rs")
+            || f.ends_with("/index.ts")
+            || f.ends_with("\\index.ts")
+            || f.ends_with("/index.js")
+            || f.ends_with("\\index.js")
+        {
             return shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
                 false,
                 String::new(),

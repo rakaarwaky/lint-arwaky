@@ -289,10 +289,7 @@ fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
 
 /// Find the start of the line containing position `pos`.
 fn find_line_start(haystack: &str, pos: usize) -> usize {
-    haystack[..pos]
-        .rfind('\n')
-        .map(|n| n + 1)
-        .unwrap_or(0)
+    haystack[..pos].rfind('\n').map(|n| n + 1).unwrap_or(0)
 }
 
 /// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function

@@ -36,8 +36,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         results: &mut LintResultList,
     ) {
         // Pre-compute layer_keys once per audit run (was previously per-file)
-        let layer_keys: Vec<String> =
-            layer_map.values.keys().map(|k| k.to_string()).collect();
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
         for f in &files.values {
             let f_str = f.to_string();
@@ -201,7 +200,10 @@ impl ArchImportForbiddenChecker {
             }
             // Use shared scope-matching utility to check if file belongs to scope
             let Some((rule_layer_str, _rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(basename.as_str(), &Identity::new(&rule.scope.value))
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename.as_str(),
+                    &Identity::new(&rule.scope.value),
+                )
             else {
                 continue;
             };

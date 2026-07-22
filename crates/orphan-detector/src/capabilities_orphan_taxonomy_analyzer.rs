@@ -31,63 +31,41 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
 
         let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 
-        let is_orphan = if is_utility_or_helper {
-            // utility/helper: must be imported by file outside taxonomy
-            let importers = match inbound_links.mapping.get(f.value()) {
-                Some(v) => v,
-                None => {
-                    // Fallback: graph resolver may not catch crate:: imports within same crate
-                    if Self::has_crate_self_import(f.value()) {
-                        return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        // Taxonomy orphan = no contract file imports it.
+        // Contract acts as type enforcement — if contract uses taxonomy,
+        // that guarantees implementation layers use it too.
+        let importers = match inbound_links.mapping.get(f.value()) {
+            Some(v) => v,
+            None => {
+                // Fallback: graph resolver may not catch crate:: imports within same crate
+                if Self::has_crate_self_import(f.value()) {
+                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                }
+                return OrphanIndicatorResult::new(
+                    true,
+                    AesOrphanViolation::TaxonomyOrphan {
+                        stem: stem.clone(),
+                        category,
+                        reason: Some(
+                            format!("Taxonomy '{}' is not imported by any contract file.", stem)
+                                .into(),
+                        ),
                     }
-                    return OrphanIndicatorResult::new(
-                        true,
-                        AesOrphanViolation::TaxonomyOrphan {
-                            stem: stem.clone(),
-                            category: "utility",
-                            reason: Some(format!("Taxonomy '{}' (utility/helper) is not imported by any file outside taxonomy.", stem).into()),
-                        }.to_string(),
-                        Severity::LOW,
-                    );
-                }
-            };
-            let has_outside_taxonomy = importers.iter().any(|importer| {
-                importer
-                    .split('/')
-                    .next_back()
-                    .is_some_and(|b| !b.starts_with("taxonomy_"))
-            });
-            !has_outside_taxonomy
-        } else {
-            // vo, entity, error, event, constant: must be imported via contract layer
-            let importers = match inbound_links.mapping.get(f.value()) {
-                Some(v) => v,
-                None => {
-                    return OrphanIndicatorResult::new(
-                        true,
-                        AesOrphanViolation::TaxonomyOrphan {
-                            stem: stem.clone(),
-                            category: "taxonomy",
-                            reason: Some(
-                                format!("Taxonomy '{}' is not imported by any contract.", stem)
-                                    .into(),
-                            ),
-                        }
-                        .to_string(),
-                        Severity::LOW,
-                    )
-                }
-            };
-            let has_any_importer = importers.iter().any(|importer| {
-                // Must be imported by a file outside the taxonomy layer
-                // (contract_, capabilities_, capabilities_, surface_, agent_, root_)
-                importer
-                    .split('/')
-                    .next_back()
-                    .is_some_and(|b| !b.starts_with("taxonomy_"))
-            });
-            !has_any_importer
+                    .to_string(),
+                    Severity::LOW,
+                );
+            }
         };
+
+        // Check if any importer is a contract file
+        let has_contract_importer = importers.iter().any(|importer| {
+            importer
+                .split('/')
+                .next_back()
+                .is_some_and(|b| b.starts_with("contract_"))
+        });
+
+        let is_orphan = !has_contract_importer;
 
         let category = if is_utility_or_helper {
             "utility"

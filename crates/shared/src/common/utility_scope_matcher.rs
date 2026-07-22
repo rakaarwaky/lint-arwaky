@@ -2,8 +2,8 @@
 // Extracted from forbidden/mandatory checkers to eliminate duplicated
 // stem/suffix extraction and scope-membership logic.
 
-use crate::import_rules::utility_import_resolver;
 use super::taxonomy_layer_vo::Identity;
+use crate::import_rules::utility_import_resolver;
 
 /// Check if a file belongs to a given scope rule based on its filename.
 ///
@@ -64,10 +64,7 @@ pub fn file_belongs_to_scope(
 /// assert_eq!(extract_file_stem("lib.rs"), "lib");
 /// ```
 pub fn extract_file_stem(basename: &str) -> &str {
-    basename
-        .rsplit('.')
-        .next_back()
-        .map_or(basename, |s| s)
+    basename.rsplit('.').next_back().map_or(basename, |s| s)
 }
 
 /// Extract the layer prefix from a file stem (first part before `_`).

@@ -38,8 +38,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         results: &mut LintResultList,
     ) {
         // Pre-compute layer_keys once per audit run (was previously per-file)
-        let layer_keys: Vec<String> =
-            layer_map.values.keys().map(|k| k.to_string()).collect();
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
         for f in &files.values {
             let f_str = f.to_string();
@@ -178,7 +177,10 @@ impl ArchImportMandatoryChecker {
             let scope_identity = Identity::new(&rule.scope.value);
             // Use shared utility to check if file belongs to scope
             let Some((rule_layer_str, _rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(basename.as_str(), &scope_identity)
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename.as_str(),
+                    &scope_identity,
+                )
             else {
                 continue;
             };
