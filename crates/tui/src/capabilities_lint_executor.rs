@@ -1,4 +1,6 @@
-use crate::utility_report_formatter::{format_config_result, format_dependency_report, format_doctor_report, format_results};
+use crate::utility_report_formatter::{
+    format_config_result, format_dependency_report, format_doctor_report, format_results,
+};
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

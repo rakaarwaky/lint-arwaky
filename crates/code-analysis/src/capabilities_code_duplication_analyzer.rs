@@ -29,7 +29,10 @@ pub struct CodeDuplicationAnalyzer {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(&self, path: Option<shared::common::taxonomy_path_vo::DirectoryPath>) -> Vec<AesCodeAnalysisViolation> {
+    fn handle_duplicates(
+        &self,
+        path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
+    ) -> Vec<AesCodeAnalysisViolation> {
         let root = match &path {
             Some(p) => p.value.clone(),
             None => ".".to_string(),

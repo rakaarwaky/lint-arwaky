@@ -23,10 +23,7 @@ pub fn format_junit_output(results: &[LintResult]) -> String {
         .filter(|r| {
             matches!(
                 r.severity,
-                Severity::CRITICAL
-                    | Severity::HIGH
-                    | Severity::MEDIUM
-                    | Severity::LOW
+                Severity::CRITICAL | Severity::HIGH | Severity::MEDIUM | Severity::LOW
             )
         })
         .collect();
@@ -81,4 +78,3 @@ pub fn xml_escape(s: &str) -> String {
     }
     escaped
 }
-

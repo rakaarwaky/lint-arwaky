@@ -80,10 +80,7 @@ pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecution
 }
 
 /// Format dependency report into a LintExecutionResult.
-pub fn format_dependency_report(
-    path: &str,
-    report: &DependencyReport,
-) -> LintExecutionResult {
+pub fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
     let count = report.dependencies.len();
     let mut output = format!(
         "Dependency scan for {}\nLanguage: {}\nTotal dependencies: {}\n",
