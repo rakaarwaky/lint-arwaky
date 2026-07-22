@@ -8,13 +8,9 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 
-use std::marker::PhantomData;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
-pub struct SarifFormatter {
-    _p: PhantomData<()>,
-}
+pub struct SarifFormatter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
@@ -152,12 +148,12 @@ impl SarifFormatter {
 impl SarifFormatter {
     /// Create a new SARIF formatter.
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl Default for SarifFormatter {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

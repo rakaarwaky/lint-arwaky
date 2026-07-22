@@ -75,17 +75,16 @@ impl AnalysisPipelineOrchestrator {
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         format: Format,
     ) -> Self {
-        Self {
-            code_analysis_linter,
-            naming_orchestrator,
-            import_orchestrator,
-            external_lint,
-            role_orchestrator,
-            orphan_orchestrator,
-            config_orchestrator,
-            format,
-            filter: None,
-        }
+        PipelineBuilder::new()
+            .with_code_analysis(code_analysis_linter)
+            .with_naming(naming_orchestrator)
+            .with_imports(import_orchestrator)
+            .with_external_lint(external_lint)
+            .with_role(role_orchestrator)
+            .with_orphan(orphan_orchestrator)
+            .with_config(config_orchestrator)
+            .with_format(format)
+            .build()
     }
 
     /// Run the full analysis pipeline on a target path.
@@ -441,5 +440,112 @@ impl AnalysisPipelineOrchestrator {
             .collect();
 
         Ok(file_results)
+    }
+}
+
+/// Builder for constructing AnalysisPipelineOrchestrator with all dependencies.
+// ─── Block 1: Builder Struct Definition ────────────────────
+pub struct PipelineBuilder {
+    code_analysis_linter: Option<Arc<dyn ICodeAnalysisAggregate>>,
+    naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
+    import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
+    external_lint: Option<Arc<dyn IExternalLintAggregate>>,
+    role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
+    orphan_orchestrator: Option<Arc<dyn IOrphanAggregate>>,
+    config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
+    format: Option<Format>,
+    filter: Option<String>,
+}
+
+impl Default for PipelineBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PipelineBuilder {
+    pub fn new() -> Self {
+        Self {
+            code_analysis_linter: None,
+            naming_orchestrator: None,
+            import_orchestrator: None,
+            external_lint: None,
+            role_orchestrator: None,
+            orphan_orchestrator: None,
+            config_orchestrator: None,
+            format: None,
+            filter: None,
+        }
+    }
+
+    pub fn with_code_analysis(mut self, l: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+        self.code_analysis_linter = Some(l);
+        self
+    }
+
+    pub fn with_naming(mut self, n: Arc<dyn INamingRunnerAggregate>) -> Self {
+        self.naming_orchestrator = Some(n);
+        self
+    }
+
+    pub fn with_imports(mut self, i: Arc<dyn IImportRunnerAggregate>) -> Self {
+        self.import_orchestrator = Some(i);
+        self
+    }
+
+    pub fn with_external_lint(mut self, e: Arc<dyn IExternalLintAggregate>) -> Self {
+        self.external_lint = Some(e);
+        self
+    }
+
+    pub fn with_role(mut self, r: Arc<dyn IRoleRunnerAggregate>) -> Self {
+        self.role_orchestrator = Some(r);
+        self
+    }
+
+    pub fn with_orphan(mut self, o: Arc<dyn IOrphanAggregate>) -> Self {
+        self.orphan_orchestrator = Some(o);
+        self
+    }
+
+    pub fn with_config(mut self, c: Arc<dyn IConfigOrchestratorAggregate>) -> Self {
+        self.config_orchestrator = Some(c);
+        self
+    }
+
+    pub fn with_format(mut self, f: Format) -> Self {
+        self.format = Some(f);
+        self
+    }
+
+    pub fn with_filter(mut self, f: Option<String>) -> Self {
+        self.filter = f;
+        self
+    }
+
+    pub fn build(self) -> AnalysisPipelineOrchestrator {
+        AnalysisPipelineOrchestrator {
+            code_analysis_linter: self
+                .code_analysis_linter
+                .expect("code_analysis_linter is required"),
+            naming_orchestrator: self
+                .naming_orchestrator
+                .expect("naming_orchestrator is required"),
+            import_orchestrator: self
+                .import_orchestrator
+                .expect("import_orchestrator is required"),
+            external_lint: self.external_lint.expect("external_lint is required"),
+            role_orchestrator: self
+                .role_orchestrator
+                .expect("role_orchestrator is required"),
+            orphan_orchestrator: self
+                .orphan_orchestrator
+                .expect("orphan_orchestrator is required"),
+            config_orchestrator: self
+                .config_orchestrator
+                .expect("config_orchestrator is required"),
+            format: self.format.expect("format is required"),
+            filter: self.filter,
+        }
     }
 }

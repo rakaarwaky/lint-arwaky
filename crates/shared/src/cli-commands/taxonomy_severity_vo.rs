@@ -4,4 +4,7 @@
 // `cli_commands::taxonomy_severity_vo::Severity` import path. The real
 // definition lives in `common::taxonomy_severity_vo` and is re-exported
 // here to avoid breaking any code that still imports from the legacy path.
+//
+// New code should import directly from `common::taxonomy_severity_vo`.
+/// Re-exported for backward compatibility with legacy import paths.
 pub use crate::common::taxonomy_severity_vo::Severity;

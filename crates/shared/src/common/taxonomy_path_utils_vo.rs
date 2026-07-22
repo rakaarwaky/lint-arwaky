@@ -1,11 +1,8 @@
 use std::collections::HashSet;
 use std::fs;
-use std::marker::PhantomData;
 
 /// PathUtils — utility functions for walking directories and matching patterns.
-pub struct PathUtils {
-    _p: PhantomData<()>,
-}
+pub struct PathUtils;
 
 impl PathUtils {
     /// Walk a directory recursively, collecting files while skipping ignored patterns.

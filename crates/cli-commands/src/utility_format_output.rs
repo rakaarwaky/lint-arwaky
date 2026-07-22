@@ -12,7 +12,7 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 /// to avoid code duplication (AES305).
 pub fn format_sarif_output(results: &[LintResult]) -> String {
     let formatter = SarifFormatter::new();
-    formatter.format_sarif(results)
+    formatter.format_sarif(results).to_string()
 }
 
 /// Format lint results as JUnit XML.

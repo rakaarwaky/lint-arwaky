@@ -7,13 +7,9 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 
-use std::marker::PhantomData;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JsonFormatter — produces JSON output from ScanReport.
-pub struct JsonFormatter {
-    _p: PhantomData<()>,
-}
+pub struct JsonFormatter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
@@ -37,12 +33,12 @@ impl IReportFormatterProtocol for JsonFormatter {
 impl JsonFormatter {
     /// Create a new JSON formatter.
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl Default for JsonFormatter {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

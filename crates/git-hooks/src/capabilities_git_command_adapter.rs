@@ -1,6 +1,4 @@
 
-use std::marker::PhantomData;
-
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_command_protocol::{GitCommandOutput, IGitCommandProtocol};
 use shared::git_hooks::utility_git_io as git_io;
@@ -9,9 +7,7 @@ use shared::git_hooks::utility_git_io as git_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct GitCommandAdapter {
-    _p: PhantomData<()>,
-}
+pub struct GitCommandAdapter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -76,7 +72,7 @@ impl IGitCommandProtocol for GitCommandAdapter {
 
 impl GitCommandAdapter {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
@@ -8,9 +7,7 @@ use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ChangeAnalyzer {
-    _p: PhantomData<()>,
-}
+pub struct ChangeAnalyzer;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -49,6 +46,6 @@ impl Default for ChangeAnalyzer {
 
 impl ChangeAnalyzer {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

@@ -3,7 +3,6 @@ use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisV
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
@@ -144,6 +143,7 @@ impl CodeDuplicationAnalyzer {
         // - Remove unused interned_keys storage (P2.2)
 
         fn hash_key(key: &str) -> u64 {
+            use std::hash::{Hash, Hasher};
             let mut hasher = DefaultHasher::new();
             key.hash(&mut hasher);
             hasher.finish()

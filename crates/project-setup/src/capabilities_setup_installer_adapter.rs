@@ -1,7 +1,4 @@
-use std::marker::PhantomData;
-
 use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
-use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
 // PURPOSE: SetupInstallerAdapter — capabilities adapter for executing npm/pip install commands
@@ -17,9 +14,7 @@ use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct SetupInstallerAdapter {
-    _p: PhantomData<()>,
-}
+pub struct SetupInstallerAdapter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -89,7 +84,6 @@ impl Default for SetupInstallerAdapter {
 
 impl SetupInstallerAdapter {
     pub fn new() -> Self {
-        let _dummy = ProjectLanguage::new("rust");
-        Self { _p: PhantomData }
+        Self
     }
 }

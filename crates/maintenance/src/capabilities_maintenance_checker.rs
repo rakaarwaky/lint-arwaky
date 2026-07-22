@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use shared::common::taxonomy_path_vo::FilePath;
 
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
@@ -26,9 +24,7 @@ use shared::project_setup::taxonomy_doctor_vo::{
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct MaintenanceChecker {
-    _p: PhantomData<()>,
-}
+pub struct MaintenanceChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -374,6 +370,6 @@ impl Default for MaintenanceChecker {
 
 impl MaintenanceChecker {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

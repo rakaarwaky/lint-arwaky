@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::marker::PhantomData;
 
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_git_vo::GitBranchName;
@@ -14,9 +13,7 @@ use shared::git_hooks::utility_git_io as git_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DiffChecker {
-    _p: PhantomData<()>,
-}
+pub struct DiffChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -67,7 +64,7 @@ impl Default for DiffChecker {
 
 impl DiffChecker {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     fn get_default_branch(&self, project_path: &FilePath) -> String {

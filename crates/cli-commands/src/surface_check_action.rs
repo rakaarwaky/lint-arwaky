@@ -27,51 +27,62 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
     shared::common::find_workspace_root(path)
 }
 
+pub struct CheckOptions {
+    pub path: Option<FilePath>,
+    pub git_diff: bool,
+    pub pipeline: Arc<dyn IAnalysisPipelineAggregate>,
+    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
+    pub filter: Option<String>,
+    pub git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
+    pub config: ArchitectureConfig,
+    pub format: Format,
+}
+
 /// check = self-lint (AES analysis on current project, same algorithm as scan)
-pub fn handle_check(
-    path: Option<FilePath>,
-    _git_diff: bool,
-    pipeline: Arc<dyn IAnalysisPipelineAggregate>,
-    report_formatter: Arc<dyn IReportFormatterAggregate>,
-    filter: Option<String>,
-    _git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
-    _config: ArchitectureConfig,
-    format: Format,
-) -> ExitCode {
-    let root = match &path {
+pub fn handle_check(opts: CheckOptions) -> ExitCode {
+    let root = match &opts.path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    // Validate path exists before scanning
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let surface = CheckCommandsSurface::new(pipeline, report_formatter, None);
-    surface.scan(&root, filter.as_deref(), format)
+    let surface = CheckCommandsSurface::new(opts.pipeline, opts.report_formatter, None);
+    surface.scan(&root, opts.filter.as_deref(), opts.format)
+}
+
+pub struct ScanOptions {
+    pub path: Option<FilePath>,
+    pub pipeline: Arc<dyn IAnalysisPipelineAggregate>,
+    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
+    pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
+    pub filter: Option<String>,
+    pub member: Option<String>,
+    pub format: Format,
 }
 
 /// scan = AES analysis on external project + external adapters
-pub fn handle_scan(
-    path: Option<FilePath>,
-    pipeline: Arc<dyn IAnalysisPipelineAggregate>,
-    report_formatter: Arc<dyn IReportFormatterAggregate>,
-    multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    filter: Option<String>,
-    member: Option<String>,
-    format: Format,
-) -> ExitCode {
-    let root = match &path {
+pub fn handle_scan(opts: ScanOptions) -> ExitCode {
+    let root = match &opts.path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    // Validate path exists before scanning
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let surface = CheckCommandsSurface::new(pipeline, report_formatter, multi_project_orchestrator);
-    surface.scan_with_discovery(&root, filter.as_deref(), member.as_deref(), format)
+    let surface = CheckCommandsSurface::new(
+        opts.pipeline,
+        opts.report_formatter,
+        opts.multi_project_orchestrator,
+    );
+    surface.scan_with_discovery(
+        &root,
+        opts.filter.as_deref(),
+        opts.member.as_deref(),
+        opts.format,
+    )
 }
 
 pub fn handle_ci(

@@ -1,4 +1,6 @@
 // PURPOSE: ReportFormatterOrchestrator — implements IReportFormatterAggregate
+// AES402: All primitive types replaced with taxonomy VOs.
+//   * `String` return → `DisplayContent` (semantic formatted output)
 //
 // Agent layer that delegates formatting to the appropriate capabilities
 // formatter (text, json, sarif, junit) based on the requested format.
@@ -6,6 +8,7 @@ use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterA
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -22,7 +25,7 @@ pub struct ReportFormatterOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IReportFormatterAggregate for ReportFormatterOrchestrator {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
+    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
         let formatter: &dyn IReportFormatterProtocol = match format {
             Format::Text => self.text.as_ref(),
             Format::Json => self.json.as_ref(),

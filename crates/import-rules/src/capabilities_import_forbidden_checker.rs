@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
@@ -19,9 +17,7 @@ use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ArchImportForbiddenChecker {
-    _p: PhantomData<()>,
-}
+pub struct ArchImportForbiddenChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -75,13 +71,13 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 
 impl Default for ArchImportForbiddenChecker {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl ArchImportForbiddenChecker {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     fn _check_forbidden_imports(

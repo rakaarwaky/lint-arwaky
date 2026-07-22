@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -14,9 +12,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct UnusedImportRuleChecker {
-    _p: PhantomData<()>,
-}
+pub struct UnusedImportRuleChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -108,12 +104,12 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
 
 impl Default for UnusedImportRuleChecker {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl UnusedImportRuleChecker {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

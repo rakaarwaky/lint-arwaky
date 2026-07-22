@@ -4,8 +4,6 @@
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::hash::Hash;
-use std::hash::Hasher;
 use std::path::PathBuf;
 
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
@@ -40,6 +38,7 @@ pub fn normalize_window(window: &[&str]) -> String {
 }
 
 fn hash_window(window: &[&str]) -> BlockKey {
+    use std::hash::{Hash, Hasher};
     let normalized = window
         .iter()
         .map(|line| normalize_line(line))

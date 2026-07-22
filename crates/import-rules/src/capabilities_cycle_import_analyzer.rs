@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -22,9 +21,7 @@ use shared::taxonomy_name_vo::SymbolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DependencyCycleAnalyzer {
-    _p: PhantomData<()>,
-}
+pub struct DependencyCycleAnalyzer;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -68,13 +65,13 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 
 impl Default for DependencyCycleAnalyzer {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     fn _scan(

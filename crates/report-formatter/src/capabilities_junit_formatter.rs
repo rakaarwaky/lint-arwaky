@@ -8,13 +8,9 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 
-use std::marker::PhantomData;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
-pub struct JunitFormatter {
-    _p: PhantomData<()>,
-}
+pub struct JunitFormatter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
@@ -104,12 +100,12 @@ fn xml_escape(s: &str) -> String {
 impl JunitFormatter {
     /// Create a new JUnit formatter.
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }
 
 impl Default for JunitFormatter {
     fn default() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 }

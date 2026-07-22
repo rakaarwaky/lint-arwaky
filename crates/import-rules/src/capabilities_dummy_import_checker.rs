@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -19,9 +17,7 @@ use shared::taxonomy_name_vo::SymbolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DummyImportChecker {
-    _p: PhantomData<()>,
-}
+pub struct DummyImportChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -105,7 +101,7 @@ impl Default for DummyImportChecker {
 
 impl DummyImportChecker {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     fn _detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
