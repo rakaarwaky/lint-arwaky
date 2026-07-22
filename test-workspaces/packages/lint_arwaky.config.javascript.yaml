@@ -43,7 +43,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -67,7 +67,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions: ["index.js", "index.ts", "main.js", "main.ts"]
@@ -190,7 +190,7 @@ architecture:
         agent:
           suffix:
             - strict: ["orchestrator"]
-        surfaces:
+        surface:
           suffix:
             - strict:
                 [
@@ -218,7 +218,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions:
         [
@@ -243,7 +243,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -256,7 +256,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -269,7 +269,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -282,7 +282,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "capabilities",
               "contract(aggregate)",
               "root",
@@ -292,14 +292,14 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+            ["agent", "infrastructure", "surface", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+            ["infrastructure", "surface", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -312,7 +312,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
           forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -330,9 +330,9 @@ architecture:
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surface", "infrastructure", "capabilities", "root"]
 
-        - scope: "surfaces(command|controller|page|)"
+        - scope: "surface(command|controller|page|)"
           allowed: ["taxonomy", "contract"]
           mandatory: null
           forbidden:
@@ -345,7 +345,7 @@ architecture:
               "root",
             ]
 
-        - scope: "surfaces(hook|store|action|screen|router)"
+        - scope: "surface(hook|store|action|screen|router)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -355,11 +355,11 @@ architecture:
               "capabilities",
               "contract(port)",
               "contract(protocol)",
-              "surfaces(command|controller|page|entry)",
+              "surface(command|controller|page|entry)",
               "root",
             ]
 
-        - scope: "surfaces(component|view|layout)"
+        - scope: "surface(component|view|layout)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -368,7 +368,7 @@ architecture:
               "contract",
               "infrastructure",
               "capabilities",
-              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "surface(command|controller|page|entry|hook|store|action|screen|router)",
               "root",
             ]
 
@@ -381,7 +381,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions:
         [
@@ -403,7 +403,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+            ["infrastructure", "surface", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -416,7 +416,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
           forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -434,7 +434,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
 
     AES401:
@@ -525,9 +525,9 @@ architecture:
       enabled: true
       scope:
         [
-          "surfaces(command|controller|page|entry)",
-          "surfaces(hook|store|action|screen|router)",
-          "surfaces(component|view|layout)",
+          "surface(command|controller|page|entry)",
+          "surface(hook|store|action|screen|router)",
+          "surface(component|view|layout)",
         ]
       max_functions: 15
       exceptions:
@@ -555,7 +555,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       max_lines: 1000
       exceptions:
@@ -583,7 +583,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       min_lines: 5
       exceptions:
@@ -611,7 +611,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       forbidden_bypass:
         [
@@ -634,7 +634,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions: []
 
@@ -647,7 +647,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
 
     AES204:
@@ -659,7 +659,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions: []
 
@@ -672,7 +672,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]
@@ -709,6 +709,6 @@ architecture:
 
     AES506:
       enabled: true
-      scope: ["surfaces"]
+      scope: ["surface"]
       entry_points:
         ["index.ts", "index.js", "index.tsx", "index.jsx", "main.ts", "main.js"]

@@ -1,12 +1,8 @@
 // AES506: Surface Orphan violation - this smart surface is not imported by entry/router
-pub struct OrphanSurfaceComponent;
+pub struct __AES506_UNIQUE_MARKER__;
 
-impl OrphanSurfaceComponent {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn render(&self) -> String {
-        "rendered".to_string()
+impl __AES506_UNIQUE_MARKER__ {
+    pub fn __aes506_unique_method__(&self) -> String {
+        "orphaned".to_string()
     }
 }
