@@ -11,7 +11,7 @@ use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::common::utility_file;
+use shared::common::utility_file_handler as utility_file;
 use shared::common::utility_file_handler;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -55,7 +55,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
 
-        let root_dir = utility_file_handler::find_workspace_root(target.value())
+        let root_dir = utility_file::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
@@ -183,7 +183,7 @@ impl ImportOrchestrator {
 
     fn is_ignored(&self, p: &Path) -> bool {
         let s = p.to_string_lossy();
-        if utility_file_handler::is_path_ignored(&s, &self.ignored_paths) {
+        if utility_file::is_path_ignored(&s, &self.ignored_paths) {
             return true;
         }
         let dir_name = p

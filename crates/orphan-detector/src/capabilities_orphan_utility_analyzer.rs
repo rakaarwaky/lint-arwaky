@@ -2,7 +2,8 @@ use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_file;
+use shared::common::utility_file_handler as utility_file;
+use shared::common::utility_file_handler;
 use shared::common::utility_layer_detector;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
@@ -95,7 +96,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            let other_content = utility_file_handler::read_file_safe(other_file);
+            let other_content = utility_file::read_file_safe(other_file);
             if other_content.is_empty() {
                 continue;
             }

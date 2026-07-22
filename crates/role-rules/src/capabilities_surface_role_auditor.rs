@@ -4,7 +4,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_file;
+use shared::common::utility_file_handler as utility_file;
 use shared::common::utility_file_handler;
 use shared::common::utility_language_detector::{
     detect_language_info, detect_language_info_from_source,
@@ -224,7 +224,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match utility_file_handler::read_file(&f.value) {
+        let content = match utility_file::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -297,7 +297,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match utility_file_handler::read_file(&f.to_string()) {
+        let content = match utility_file::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };
