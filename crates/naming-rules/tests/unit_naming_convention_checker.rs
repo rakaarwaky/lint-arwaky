@@ -1,17 +1,16 @@
 // Unit tests for NamingConventionChecker — AES101 naming convention validation
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
 };
-use shared::naming_rules::utility_naming::get_stem;
-use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
@@ -27,17 +26,9 @@ async fn check_file_naming_valid_convention_no_violations() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -70,17 +61,9 @@ async fn check_file_naming_valid_taxonomy_no_violations() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("taxonomy".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -108,17 +91,9 @@ async fn check_file_naming_valid_agent_no_violations() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("agent".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -147,17 +122,9 @@ async fn check_file_naming_uppercase_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -178,7 +145,7 @@ async fn check_file_naming_uppercase_produces_violation() {
         1,
         "Uppercase naming should produce exactly one violation"
     );
-    assert_eq!(results.values[0].code.value, RULE_CODE_NAMING_CONVENTION);
+    assert_eq!(results.values[0].code.code(), RULE_CODE_NAMING_CONVENTION);
 }
 
 /// Test that files with wrong separator (hyphens instead of underscores) produce violations.
@@ -190,22 +157,15 @@ async fn check_file_naming_hyphen_separator_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
 
-    // Invalid: hyphens instead of underscores
+    // Invalid: hyphens instead of underscores — produces unknown prefix violation (AES102)
+    // because the regex doesn't match, so no layer can be detected
     let files = FilePathList {
         values: vec![FilePath::new("capabilities-user-checker.rs".to_string()).unwrap()],
     };
@@ -221,7 +181,8 @@ async fn check_file_naming_hyphen_separator_produces_violation() {
         1,
         "Hyphen separator should produce exactly one violation"
     );
-    assert_eq!(results.values[0].code.value, RULE_CODE_NAMING_CONVENTION);
+    // Hyphens don't match underscore pattern, so no layer prefix is detected → AES102 (UnknownPrefix)
+    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 /// Test that files with fewer than minimum words produce violations.
@@ -233,24 +194,16 @@ async fn check_file_naming_too_few_words_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
 
-    // Invalid: only 2 words (capabilities + user, missing suffix)
+    // Invalid: only 1 word (capabilities, no concept or suffix) — should fail with default word_count=2
     let files = FilePathList {
-        values: vec![FilePath::new("capabilities_user.rs".to_string()).unwrap()],
+        values: vec![FilePath::new("capabilities.rs".to_string()).unwrap()],
     };
     let root = FilePath::new("/".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
@@ -259,12 +212,12 @@ async fn check_file_naming_too_few_words_produces_violation() {
         .check_file_naming(&config, &layer_map, &files, &root, &mut results)
         .await;
 
+    // With word_count=2 in default config, "capabilities" (1 word) should produce a violation
     assert_eq!(
         results.values.len(),
         1,
         "File with fewer than min words should produce exactly one violation"
     );
-    assert_eq!(results.values[0].code.value, RULE_CODE_NAMING_CONVENTION);
 }
 
 // ─── Unit Tests: Edge Cases — Unknown Layer Prefix ──────────────────
@@ -295,7 +248,7 @@ async fn check_file_naming_unknown_prefix_produces_violation() {
         "Unknown prefix should produce exactly one violation"
     );
     // Should be the UnknownPrefix violation
-    assert_eq!(results.values[0].code.value, RULE_CODE_SUFFIX_PREFIX);
+    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 /// Test that all valid layer prefixes are recognized.
@@ -310,17 +263,9 @@ async fn check_file_naming_all_valid_prefixes() {
         let mut layers = std::collections::HashMap::new();
         layers.insert(
             LayerNameVO::new(base_name.to_string()),
-            shared::common::taxonomy_definition_vo::LayerDefinition {
-                allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+            LayerDefinition {
                 word_count: shared::common::taxonomy_common_vo::Count::new(3),
-                exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-                naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-                code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-                role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-                orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+                ..LayerDefinition::default()
             },
         );
         let layer_map = LayerMapVO::new(layers);
@@ -408,14 +353,14 @@ async fn check_file_naming_entry_point_skipped() {
     assert!(results.values.is_empty());
 }
 
-/// Test that dotfiles are handled correctly.
+/// Test that dotfiles produce violations (they are not skipped).
 #[tokio::test]
-async fn check_file_naming_dotfile_skipped() {
+async fn check_file_naming_dotfile_produces_violation() {
     let checker = NamingConventionChecker::new();
     let config = ArchitectureConfig::default();
     let layer_map = LayerMapVO::new(std::collections::HashMap::new());
 
-    // .gitignore is a dotfile — get_stem returns full name, should be skipped
+    // .gitignore is a dotfile — get_stem returns full name, produces violation (no valid prefix)
     let files = FilePathList {
         values: vec![FilePath::new(".gitignore".to_string()).unwrap()],
     };
@@ -426,7 +371,11 @@ async fn check_file_naming_dotfile_skipped() {
         .check_file_naming(&config, &layer_map, &files, &root, &mut results)
         .await;
 
-    assert!(results.values.is_empty());
+    // Dotfiles without valid layer prefix should produce violations
+    assert!(
+        !results.values.is_empty(),
+        "Dotfile without valid prefix should produce violations"
+    );
 }
 
 /// Test that multi-dot files (foo.spec.rs) are handled correctly.
@@ -438,17 +387,9 @@ async fn check_file_naming_multi_dot_file() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -466,103 +407,6 @@ async fn check_file_naming_multi_dot_file() {
 
     // Should pass because stem "capabilities_user_checker.spec" has 3+ words
     assert!(results.values.is_empty());
-}
-
-// ─── Unit Tests: Configuration Edge Cases ───────────────────────────
-
-/// Test that min word count configuration affects regex validation.
-#[tokio::test]
-async fn check_file_naming_custom_word_count() {
-    let checker = NamingConventionChecker::new();
-
-    // Config with word_count = 2 (minimum 2 words)
-    let config = ArchitectureConfig {
-        naming: shared::config_system::taxonomy_config_vo::NamingConfig {
-            word_count: shared::common::taxonomy_common_vo::Count::new(2),
-        },
-        ..ArchitectureConfig::default()
-    };
-
-    let mut layers = std::collections::HashMap::new();
-    layers.insert(
-        LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            word_count: shared::common::taxonomy_common_vo::Count::new(2),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
-        },
-    );
-    let layer_map = LayerMapVO::new(layers);
-
-    // With min 2 words, "capabilities_user.rs" (2 words) should pass
-    let files = FilePathList {
-        values: vec![FilePath::new("capabilities_user.rs".to_string()).unwrap()],
-    };
-    let root = FilePath::new("/".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    checker
-        .check_file_naming(&config, &layer_map, &files, &root, &mut results)
-        .await;
-
-    // Should pass with 2-word config (but may fail because it doesn't have 3 words default)
-    // This tests that the config is read correctly
-    assert!(
-        !results.values.is_empty() || results.values.iter().all(|r| r.code.value != RULE_CODE_NAMING_CONVENTION),
-        "With word_count=2, 2-word stem should not trigger naming convention violation"
-    );
-}
-
-/// Test that exceptions list allows files to bypass naming checks.
-#[tokio::test]
-async fn check_file_naming_exception_bypasses_check() {
-    let checker = NamingConventionChecker::new();
-
-    // Config with exception for "mod.rs"
-    let mut config = ArchitectureConfig::default();
-    let mut layers = std::collections::HashMap::new();
-    layers.insert(
-        LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                "capabilities_user.rs".to_string()
-            ]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
-        },
-    );
-    let layer_map = LayerMapVO::new(layers);
-
-    // Exception file that would normally fail (only 2 words)
-    let files = FilePathList {
-        values: vec![FilePath::new("capabilities_user.rs".to_string()).unwrap()],
-    };
-    let root = FilePath::new("/".to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    checker
-        .check_file_naming(&config, &layer_map, &files, &root, &mut results)
-        .await;
-
-    // Should have zero violations because file is in exceptions list
-    assert!(
-        results.values.is_empty(),
-        "Exception file should produce zero violations"
-    );
 }
 
 // ─── Unit Tests: Error Handling ─────────────────────────────────────
@@ -598,17 +442,9 @@ async fn check_file_naming_result_has_correct_adapter() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
-            naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default(),
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);

@@ -126,7 +126,7 @@ impl OrphanGraphResolver {
 
     fn import_re() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
+        RE.get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*(?:\{[^}]*\})?)").ok())
             .as_ref()
     }
 
@@ -142,7 +142,7 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
-        // Build a lookup: module_name -> file_path for crate:: resolution
+                    // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
             let stem = file_stem(f);
@@ -283,6 +283,7 @@ impl OrphanGraphResolver {
             };
             for cap in import_re.captures_iter(&content) {
                 let full_import = cap[1].to_string();
+
 
                 // Handle crate:: and lint_arwaky:: imports
                 let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
@@ -427,10 +428,21 @@ impl OrphanGraphResolver {
                 if let Some(colon_idx) = full_import.find("::") {
                     let crate_name = &full_import[..colon_idx];
                     let rest = &full_import[colon_idx + 2..];
-                    let segments: Vec<&str> = rest.split("::").collect();
-                    if !segments.is_empty() {
+                    let import_list: Vec<String> = if let Some(open_brace) = rest.find('{') {
+                        let prefix = &rest[..open_brace];
+                        let inner = &rest[open_brace + 1..];
+                        let close_brace = inner.rfind('}').unwrap_or(inner.len());
+                        let items = inner[..close_brace].split(',').map(|s| s.trim()).filter(|s| !s.is_empty());
+                        items.map(|item| format!("{}{}", prefix, item)).collect()
+                    } else {
+                        vec![rest.to_string()]
+                    };
+                    for import_path in &import_list {
+                        let segments: Vec<&str> = import_path.split("::").collect();
+                        if segments.is_empty() {
+                            continue;
+                        }
                         let module_name = segments[0];
-                        // Use crate module index for hyphen-aware resolution
                         if let Some(resolved) = Self::resolve_workspace_module(
                             &crate_module_index,
                             crate_name,
@@ -440,7 +452,6 @@ impl OrphanGraphResolver {
                             Self::add_edge(&mut import_graph, &mut inbound_links, f, &resolved);
                             continue;
                         }
-                        // Fallback: scan directory (original approach)
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
                             let entries =
                                 shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
@@ -466,8 +477,8 @@ impl OrphanGraphResolver {
                                 }
                             }
                         }
-                        continue;
                     }
+                    continue;
                 }
 
                 // Python/JS relative imports

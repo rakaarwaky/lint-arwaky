@@ -1,17 +1,17 @@
 // Unit tests for SuffixPrefixChecker — AES102 suffix/prefix layer alignment
 
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
 };
 use shared::naming_rules::utility_naming::{get_stem, get_suffix};
-use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 
@@ -27,26 +27,17 @@ async fn check_domain_suffixes_allowed_suffix_no_violations() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec!["checker".to_string()]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                     "analyzer".to_string(),
                 ]),
-                forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -75,26 +66,17 @@ async fn check_domain_suffixes_taxonomy_allowed_pass() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("taxonomy".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "entity".to_string(),
                     "vo".to_string(),
                 ]),
-                forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -125,15 +107,8 @@ async fn check_domain_suffixes_forbidden_suffix_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                "adapter".to_string()
-            ]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
@@ -141,13 +116,10 @@ async fn check_domain_suffixes_forbidden_suffix_produces_violation() {
                 forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "adapter".to_string()
                 ]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -168,7 +140,7 @@ async fn check_domain_suffixes_forbidden_suffix_produces_violation() {
         1,
         "Forbidden suffix should produce exactly one violation"
     );
-    assert_eq!(results.values[0].code.value, RULE_CODE_SUFFIX_PREFIX);
+    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 /// Test that files with disallowed suffix in strict mode produce violations.
@@ -181,31 +153,22 @@ async fn check_domain_suffixes_strict_mode_wrong_suffix_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                     "analyzer".to_string(),
                 ]),
-                forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
 
-    // Invalid: capabilities_user_checker has "checker" (allowed), but we test with wrong suffix
+    // Invalid: capabilities_user_writer has "writer" suffix (not allowed)
     let files = FilePathList {
         values: vec![FilePath::new("capabilities_user_writer.rs".to_string()).unwrap()],
     };
@@ -221,7 +184,7 @@ async fn check_domain_suffixes_strict_mode_wrong_suffix_produces_violation() {
         1,
         "Wrong suffix in strict mode should produce exactly one violation"
     );
-    assert_eq!(results.values[0].code.value, RULE_CODE_SUFFIX_PREFIX);
+    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 // ─── Unit Tests: Edge Cases — No Suffix ─────────────────────────────
@@ -236,25 +199,16 @@ async fn check_domain_suffixes_no_suffix_strict_produces_violation() {
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                 ]),
-                forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -323,32 +277,25 @@ async fn check_domain_suffixes_entry_point_skipped() {
 #[tokio::test]
 async fn check_domain_suffixes_exception_bypasses_check() {
     let checker = SuffixPrefixChecker::new();
+    let config = ArchitectureConfig::default();
 
     // Config with exception for "capabilities_user.rs"
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
             exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![
                 "capabilities_user.rs".to_string()
             ]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
                 ]),
-                forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);
@@ -412,20 +359,14 @@ async fn check_domain_suffixes_no_layer_definition() {
 #[tokio::test]
 async fn check_domain_suffixes_result_has_correct_adapter() {
     let checker = SuffixPrefixChecker::new();
+    let config = ArchitectureConfig::default();
 
     // Config with forbidden "adapter" suffix
     let mut layers = std::collections::HashMap::new();
     layers.insert(
         LayerNameVO::new("capabilities".to_string()),
-        shared::common::taxonomy_definition_vo::LayerDefinition {
-            allowed: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            forbidden: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                "adapter".to_string()
-            ]),
-            mandatory: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
+        LayerDefinition {
             word_count: shared::common::taxonomy_common_vo::Count::new(3),
-            exceptions: shared::common::taxonomy_common_vo::PatternList::new(vec![]),
-            recursive: shared::common::taxonomy_common_vo::BooleanVO::new(false),
             naming: shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO {
                 allowed_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "checker".to_string(),
@@ -433,13 +374,10 @@ async fn check_domain_suffixes_result_has_correct_adapter() {
                 forbidden_suffix: shared::common::taxonomy_common_vo::PatternList::new(vec![
                     "adapter".to_string()
                 ]),
-                suffix_policy: shared::common::taxonomy_common_vo::PatternList::new(vec![
-                    SUFFIX_POLICY_STRICT.to_string()
-                ]),
+                suffix_policy: shared::common::taxonomy_suffix_vo::SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string()),
+                ..shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO::default()
             },
-            code_analysis: shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
-            role: shared::role_rules::taxonomy_role_rule_vo::RoleRuleVO::default(),
-            orphan: shared::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO::default(),
+            ..LayerDefinition::default()
         },
     );
     let layer_map = LayerMapVO::new(layers);

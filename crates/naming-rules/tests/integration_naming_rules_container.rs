@@ -19,8 +19,8 @@ use shared::taxonomy_definition_vo::LayerMapVO;
 /// Test that NamingContainer properly wires naming convention checker.
 #[test]
 fn test_container_wires_naming_convention_checker() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
 
     // Should be able to access naming convention checker via protocol
@@ -34,8 +34,8 @@ fn test_container_wires_naming_convention_checker() {
 /// Test that NamingContainer properly wires suffix/prefix checker.
 #[test]
 fn test_container_wires_suffix_prefix_checker() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
 
     // Should be able to access suffix/prefix checker via protocol
@@ -48,8 +48,8 @@ fn test_container_wires_suffix_prefix_checker() {
 /// Test that NamingContainer can create orchestrator from container.
 #[test]
 fn test_container_creates_orchestrator() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
 
     // Should create orchestrator without panicking
@@ -62,8 +62,8 @@ fn test_container_creates_orchestrator() {
 /// Test that orchestrator can run audit on empty path.
 #[tokio::test]
 async fn test_orchestrator_run_audit_empty_path() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
     let orchestrator = container.orchestrator();
 
@@ -76,8 +76,8 @@ async fn test_orchestrator_run_audit_empty_path() {
 /// Test that orchestrator can run audit on existing directory.
 #[tokio::test]
 async fn test_orchestrator_run_audit_existing_dir() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
     let orchestrator = container.orchestrator();
 
@@ -94,8 +94,8 @@ async fn test_orchestrator_run_audit_existing_dir() {
 /// Test that NamingContainer can be created with default config.
 #[test]
 fn test_default_container_creation() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
 
     // Should create container without panicking
     let _container = NamingContainer::new(config, layer_map);
@@ -104,8 +104,8 @@ fn test_default_container_creation() {
 /// Test that naming convention checker and suffix prefix checker work together.
 #[tokio::test]
 async fn test_convention_and_suffix_checkers_work_together() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
 
     let convention_checker = Arc::new(NamingConventionChecker::new());
     let suffix_checker = Arc::new(SuffixPrefixChecker::new());
@@ -114,8 +114,8 @@ async fn test_convention_and_suffix_checkers_work_together() {
     let orchestrator = NamingOrchestrator::new(
         convention_checker,
         suffix_checker,
-        Arc::new(config),
-        Arc::new(layer_map),
+        config,
+        layer_map,
     );
 
     // Should be able to run audit
@@ -127,8 +127,8 @@ async fn test_convention_and_suffix_checkers_work_together() {
 /// Test that both checkers are properly cloned in container.
 #[test]
 fn test_container_checkers_are_cloned() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
 
     let convention_checker = container.naming_convention_checker().clone();
@@ -142,8 +142,8 @@ fn test_container_checkers_are_cloned() {
 /// Test that orchestrator name() method returns correct value.
 #[test]
 fn test_orchestrator_name_returns_correct_value() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
     let orchestrator = container.orchestrator();
 
@@ -153,8 +153,8 @@ fn test_orchestrator_name_returns_correct_value() {
 /// Test that orchestrator can handle path with no source files.
 #[tokio::test]
 async fn test_orchestrator_handles_no_source_files() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
     let orchestrator = container.orchestrator();
 
@@ -175,8 +175,8 @@ async fn test_orchestrator_handles_no_source_files() {
 /// Test that container exposes protocol implementations via accessor methods.
 #[test]
 fn test_container_exposes_protocols() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
 
     // Should be able to access both protocol implementations
@@ -188,8 +188,8 @@ fn test_container_exposes_protocols() {
 /// Test that orchestrator filters source files by extension.
 #[tokio::test]
 async fn test_orchestrator_filters_source_files() {
-    let config = ArchitectureConfig::default();
-    let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+    let config = Arc::new(ArchitectureConfig::default());
+    let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let container = NamingContainer::new(config, layer_map);
     let orchestrator = container.orchestrator();
 

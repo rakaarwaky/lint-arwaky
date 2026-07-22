@@ -191,6 +191,10 @@ impl UtilityOrphanAnalyzer {
             || content.contains(&format!("use {}::", module_name))
             || content.contains(&format!("use crate::{}", module_name))
             || content.contains(&format!("use shared::{}", module_name))
+            || content.contains(&format!("::{{{}}}", module_name))
+            || content.contains(&format!("::{{{},", module_name))
+            || content.contains(&format!(", {}::", module_name))
+            || content.contains(&format!(", {}}}", module_name))
         {
             return true;
         }
