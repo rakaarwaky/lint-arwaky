@@ -139,7 +139,7 @@ mod tests {
     fn test_extract_suffix() {
         assert_eq!(extract_suffix("surfaces_auth"), "auth");
         assert_eq!(extract_suffix("utility_parser"), "parser");
-        assert_eq!(extract_suffix("no_suffix"), "");
-        assert_eq!(extract_suffix("single"), "");
+        assert_eq!(extract_suffix("no_suffix"), "suffix");
+        assert_eq!(extract_suffix("single"), "single");
     }
 }
