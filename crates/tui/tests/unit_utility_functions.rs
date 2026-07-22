@@ -25,9 +25,7 @@ fn utility_list_directory_skips_hidden_files() {
 
     // None of the entries should start with "."
     for entry in &entries {
-        if let Some(name) = &entry.name {
-            assert!(!name.starts_with('.'), "Hidden files should be skipped");
-        }
+        assert!(!entry.name.starts_with('.'), "Hidden files should be skipped");
     }
 }
 
@@ -96,7 +94,7 @@ fn utility_path_components_splits_path() {
 
 #[test]
 fn utility_format_results_handles_empty_list() {
-    let results = shared::tui::taxonomy_lint_result_vo::LintResultList::new(vec![]);
+    let results = vec![];
     let formatted = utility_report_formatter::format_results(&results);
     assert!(formatted.value.is_empty() || true); // Graceful fallback
 }

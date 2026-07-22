@@ -21,7 +21,7 @@ async fn e2e_mcp_config_generation() {
     let _status = agg.check_http(&url);
 
     // 2. Generate MCP config for different editors (capabilities layer)
-    let transport = TransportProtocol::Http;
+    let transport = TransportProtocol::HTTP;
     let claude_config = agg.mcp_config_claude(&transport);
     let hermes_config = agg.mcp_config_hermes(&transport);
     let vscode_config = agg.mcp_config_vscode(&transport);
@@ -44,7 +44,7 @@ async fn e2e_env_file_generation() {
     let _languages = agg.detect_languages();
 
     // 2. Generate environment content (capabilities layer)
-    let transport = TransportProtocol::Http;
+    let transport = TransportProtocol::HTTP;
     let home = DirectoryPath::new("/tmp".to_string()).unwrap();
     let env_content = agg.generate_env(&transport, &home);
 
@@ -75,7 +75,7 @@ async fn e2e_all_transport_types() {
     let container = create_container();
     let agg = container.aggregate();
 
-    for transport in [TransportProtocol::Http, TransportProtocol::Sse] {
+    for transport in [TransportProtocol::HTTP, TransportProtocol::SSE] {
         // Generate all MCP configs
         let _claude = agg.mcp_config_claude(&transport);
         let _hermes = agg.mcp_config_hermes(&transport);

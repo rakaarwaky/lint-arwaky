@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(Arc::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
     )));
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());

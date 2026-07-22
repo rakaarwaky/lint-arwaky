@@ -14,9 +14,9 @@ use shared::common::taxonomy_severity_vo::Severity;
 use std::sync::Arc;
 
 fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
-    let text = Arc::new(TextFormatter::new(Arc::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )));
+    let text = Arc::new(TextFormatter::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+    ));
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());

@@ -2,16 +2,18 @@
 // Layer: Acceptance (FRD requirement validation).
 
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_orchestrator() -> TuiOrchestrator {
-    let executor = LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+    let executor = Arc::new(LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
     ));
-    let handler = ActionHandler::new(Arc::new(executor));
+    let handler = Arc::new(ActionHandler::new(executor));
     TuiOrchestrator::new(handler)
 }
 
@@ -21,14 +23,9 @@ fn build_orchestrator() -> TuiOrchestrator {
 fn acceptance_tui_handles_quit_key() {
     // FRD requirement: TUI must handle quit key (q/Q)
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
-    let quit_event = shared::tui::taxonomy_tui_event::TuiEvent::Key(
-        shared::tui::taxonomy_tui_event::KeyEvent::normal(
-            "q",
-            shared::crossterm::terminal::ModifiersInformation::NONE,
-        ),
-    );
+    let quit_event = TuiEvent::Quit;
 
     // Should not panic
     orchestrator.handle_event(&mut state, quit_event);
@@ -40,22 +37,12 @@ fn acceptance_tui_handles_quit_key() {
 fn acceptance_tui_handles_navigation_keys() {
     // FRD requirement: TUI must handle navigation (j/k/arrow keys)
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
-    let up_event = shared::tui::taxonomy_tui_event::TuiEvent::Key(
-        shared::tui::taxonomy_tui_event::KeyEvent::normal(
-            "k",
-            shared::crossterm::terminal::ModifiersInformation::NONE,
-        ),
-    );
+    let up_event = TuiEvent::MoveUp;
     orchestrator.handle_event(&mut state, up_event);
 
-    let down_event = shared::tui::taxonomy_tui_event::TuiEvent::Key(
-        shared::tui::taxonomy_tui_event::KeyEvent::normal(
-            "j",
-            shared::crossterm::terminal::ModifiersInformation::NONE,
-        ),
-    );
+    let down_event = TuiEvent::MoveDown;
     orchestrator.handle_event(&mut state, down_event);
 }
 
@@ -65,16 +52,10 @@ fn acceptance_tui_handles_navigation_keys() {
 fn acceptance_tui_handles_mouse_events() {
     // FRD requirement: TUI must handle mouse clicks and dragging
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Mouse click event
-    let click_event = shared::tui::taxonomy_tui_event::TuiEvent::Mouse(
-        shared::crossterm::event::MouseEvent::Press(
-            shared::crossterm::event::MouseButton::Left,
-            10,
-            10,
-        ),
-    );
+    let click_event = TuiEvent::MouseClick(10, 10);
 
     // Should not panic on mouse event
     orchestrator.handle_event(&mut state, click_event);
@@ -86,7 +67,7 @@ fn acceptance_tui_handles_mouse_events() {
 fn acceptance_tui_loads_directory() {
     // FRD requirement: TUI must load and display directory contents
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle directory loading without panic
     orchestrator.load_directory(&mut state, "/tmp");
@@ -98,7 +79,7 @@ fn acceptance_tui_loads_directory() {
 fn acceptance_tui_loads_preview() {
     // FRD requirement: TUI must load and display file preview
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle preview loading without panic
     orchestrator.load_preview(&mut state);
@@ -110,7 +91,7 @@ fn acceptance_tui_loads_preview() {
 fn acceptance_tui_polls_watch() {
     // FRD requirement: TUI must poll file watch for changes
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle watch polling without panic
     orchestrator.poll_watch(&mut state);

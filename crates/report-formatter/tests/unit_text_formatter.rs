@@ -4,13 +4,13 @@
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_lint_result_vo::{LintResult, Severity};
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_severity_vo::Severity;
+use std::sync::Arc;
 
 fn formatter() -> TextFormatter {
-    let code_analysis = Arc::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    );
+    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
     TextFormatter::new(code_analysis)
 }
 
@@ -30,15 +30,13 @@ fn text_formatter_formats_empty_report() {
 #[test]
 fn text_formatter_formats_report_with_results() {
     let formatter = formatter();
-    let results = vec![LintResult::new(
-        shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap(),
+    let results = vec![LintResult::new_arch_with_column(
+        "test.rs",
         10,
         5,
-        shared::cli_commands::taxonomy_result_vo::LintResultCode::new("TEST001"),
-        shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
-            "Test violation message".to_string(),
-        ),
-        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
+        "TEST001",
+        Severity::MEDIUM,
+        "Test violation message",
     )];
     let report = ScanReport::new(results, vec![]);
 
@@ -62,8 +60,6 @@ fn text_formatter_fallback_for_non_text_format() {
 
 #[test]
 fn text_formatter_default_creates_valid_instance() {
-    let code_analysis = Arc::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    );
-    let _ = TextFormatter::default(code_analysis);
+    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let _ = TextFormatter::new(code_analysis);
 }

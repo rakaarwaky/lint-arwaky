@@ -12,19 +12,17 @@ use shared::tui::taxonomy_tui_event::TuiEvent;
 #[test]
 fn smoke_tui_crate_boots_and_responds() {
     // 1. All components instantiate without panic
-    let executor = LintExecutor::new(Arc::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+    let executor = Arc::new(LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
     ));
-    let handler = Arc::new(ActionHandler::new(Arc::new(executor)));
+    let handler = Arc::new(ActionHandler::new(executor));
 
     // 2. Orchestrator instantiates
     let orchestrator = TuiOrchestrator::new(handler);
 
     // 3. Methods respond without panic
     let mut state = AppState::new(".".to_string());
-    let event = TuiEvent::Key(crossterm::event::KeyEvent::from(
-        crossterm::event::KeyCode::Char('q'),
-    ));
+    let event = TuiEvent::Quit;
 
     orchestrator.handle_event(&mut state, event);
 }
