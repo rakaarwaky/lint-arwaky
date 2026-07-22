@@ -12,13 +12,21 @@ use std::sync::Arc;
 #[test]
 fn smoke_report_formatter_crate_boots_and_responds() {
     // 1. All formatters instantiate without panic
-    let text = Arc::new(TextFormatter::new(
+    let text: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(TextFormatter::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
     ));
-    let json = Arc::new(JsonFormatter::new());
-    let sarif = Arc::new(SarifFormatter::new());
-    let junit = Arc::new(JunitFormatter::new());
+    let json: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(JsonFormatter::new());
+    let sarif: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(SarifFormatter::new());
+    let junit: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(JunitFormatter::new());
 
     // 2. Orchestrator instantiates
     let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);

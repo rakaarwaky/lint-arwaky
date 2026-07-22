@@ -12,13 +12,21 @@ use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use std::sync::Arc;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
-    let text = Arc::new(TextFormatter::new(
+    let text: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(TextFormatter::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
     ));
-    let json = Arc::new(JsonFormatter::new());
-    let sarif = Arc::new(SarifFormatter::new());
-    let junit = Arc::new(JunitFormatter::new());
+    let json: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(JsonFormatter::new());
+    let sarif: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(SarifFormatter::new());
+    let junit: Arc<
+        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
+    > = Arc::new(JunitFormatter::new());
     ReportFormatterOrchestrator::new(text, json, sarif, junit)
 }
 
