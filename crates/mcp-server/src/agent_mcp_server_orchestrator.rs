@@ -168,7 +168,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
     }
 
     async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
-        let catalog = shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
+        let catalog = shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
             .filter(|(name, _desc, _ex)| match args.domain.as_deref() {
