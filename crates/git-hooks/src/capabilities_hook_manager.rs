@@ -47,7 +47,7 @@ impl IHookProtocol for HookManager {
     }
 
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
-        if !utility_file_handler::path_exists(&request.config_path) {
+        if !shared::common::utility_file_handler::path_exists(&request.config_path) {
             return DescriptionVO::new(format!("Config file not found: {}", request.config_path));
         }
         let verb = if request.remove { "Removed" } else { "Added" };
@@ -55,13 +55,13 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let both_exist =
-            utility_file_handler::path_exists(path1) && utility_file_handler::path_exists(path2);
-        let both_files =
-            utility_file_handler::is_file(path1) && utility_file_handler::is_file(path2);
+        let both_exist = shared::common::utility_file_handler::path_exists(path1)
+            && shared::common::utility_file_handler::path_exists(path2);
+        let both_files = shared::common::utility_file_handler::is_file(path1)
+            && shared::common::utility_file_handler::is_file(path2);
         let status = match (both_exist, both_files) {
             (false, _) => {
-                if !utility_file_handler::path_exists(path1) {
+                if !shared::common::utility_file_handler::path_exists(path1) {
                     GitDiffStatus::MissingFirst
                 } else {
                     GitDiffStatus::MissingSecond
