@@ -1,7 +1,6 @@
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_file_handler;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_import_resolver, utility_import_symbol_extractor};
@@ -18,7 +17,7 @@ pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let Some(content) = utility_file_handler::read_file_generic(path.value()).ok() else {
+        let Some(content) = shared::common::utility_file_handler::read_file_generic(path.value()).ok() else {
             return vec![];
         };
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(&content);

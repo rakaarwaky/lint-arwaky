@@ -71,10 +71,10 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             let b = importer.rsplit('/').next().unwrap_or(importer);
             b == "mod.rs" || b.starts_with("taxonomy_")
         });
-        if importers.is_empty() || has_only_mod_or_taxonomy {
-            if Self::has_crate_self_import(f.value()) {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-            }
+        if (importers.is_empty() || has_only_mod_or_taxonomy)
+            && Self::has_crate_self_import(f.value())
+        {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
         // Check if any importer is from another layer or non-taxonomy file
