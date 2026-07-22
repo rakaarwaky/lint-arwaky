@@ -15,9 +15,9 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(Arc::new(
         shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
     ReportFormatterOrchestrator::new(text, json, sarif, junit)
 }
 
