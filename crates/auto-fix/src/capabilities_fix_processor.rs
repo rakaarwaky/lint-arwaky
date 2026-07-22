@@ -6,6 +6,7 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file;
+use shared::common::utility_file_handler;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::Count;
 use shared::taxonomy_common_vo::LineNumber;

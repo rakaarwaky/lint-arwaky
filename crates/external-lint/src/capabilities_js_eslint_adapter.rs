@@ -6,6 +6,7 @@ use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_file;
+use shared::common::utility_file_handler;
 use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
