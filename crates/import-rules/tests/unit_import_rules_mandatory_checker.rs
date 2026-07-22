@@ -173,7 +173,7 @@ async fn mandatory_violation_severity_is_high() {
     for v in &results.values {
         assert_eq!(
             v.severity,
-            shared::cli_commands::taxonomy_severity_vo::Severity::HIGH
+            shared::common::taxonomy_severity_vo::Severity::HIGH
         );
     }
 }

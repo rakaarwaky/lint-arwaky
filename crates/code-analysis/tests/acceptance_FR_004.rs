@@ -2,7 +2,7 @@
 // Detects and flags any attempt to suppress warnings/errors.
 
 use code_analysis_lint_arwaky::BypassChecker;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 
 fn checker() -> BypassChecker {

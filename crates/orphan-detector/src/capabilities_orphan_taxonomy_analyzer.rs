@@ -38,8 +38,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         };
 
         // Taxonomy orphan = no file from other layers imports it.
-        // Other layers: contract, capabilities, agent, utility, surface
-        let importers = match inbound_links.mapping.get(f.value()) {
+        // Other layers: contract, capabilities, agent, utility, surface, root, main, entry, container
+        let importers = match inbound_links.get_importers(f.value()) {
             Some(v) => v,
             None => {
                 // Fallback: graph resolver may not catch crate:: imports within same crate
@@ -65,16 +65,13 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        // Check if any importer is from another layer (contract, capabilities, agent, utility, surface, root)
+        // Check if any importer is from another layer or non-taxonomy file
         let has_other_layer_importer = importers.iter().any(|importer| {
-            importer.split('/').next_back().is_some_and(|b| {
-                b.starts_with("contract_")
-                    || b.starts_with("capabilities_")
-                    || b.starts_with("agent_")
-                    || b.starts_with("utility_")
-                    || b.starts_with("surface_")
-                    || b.starts_with("root_")
-            })
+            let b = importer.rsplit('/').next().unwrap_or(importer);
+            if b == "mod.rs" || b == "__init__.py" || b == "index.ts" || b == "index.js" {
+                return false;
+            }
+            !b.starts_with("taxonomy_")
         });
 
         let is_orphan = !has_other_layer_importer;

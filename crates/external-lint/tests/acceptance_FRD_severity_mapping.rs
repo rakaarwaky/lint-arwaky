@@ -1,7 +1,7 @@
 // PURPOSE: Acceptance test — FRD: "Error level translation — tool severities
 // are correctly mapped to Lint Arwaky Severity."
 
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 
 /// FRD-EXT-007: Severity enum has all four required levels.
 #[test]

@@ -2,7 +2,7 @@
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;

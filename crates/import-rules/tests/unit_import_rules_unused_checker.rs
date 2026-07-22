@@ -175,7 +175,7 @@ fn main() {}
     if let Some(v) = violations.first() {
         assert_eq!(
             v.severity,
-            shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM
+            shared::common::taxonomy_severity_vo::Severity::MEDIUM
         );
     }
 }

@@ -190,7 +190,7 @@ async fn forbidden_violation_severity_is_critical() {
     for v in &results.values {
         assert_eq!(
             v.severity,
-            shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
+            shared::common::taxonomy_severity_vo::Severity::CRITICAL
         );
     }
 }

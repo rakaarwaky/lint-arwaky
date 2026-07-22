@@ -3,7 +3,7 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
 

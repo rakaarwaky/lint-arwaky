@@ -4,7 +4,7 @@
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;

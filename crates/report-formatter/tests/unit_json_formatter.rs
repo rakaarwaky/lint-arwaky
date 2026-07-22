@@ -37,7 +37,7 @@ fn json_formatter_formats_report_with_results() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "Test message".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Medium),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
     let report = ScanReport::new(results, vec![], None);
 

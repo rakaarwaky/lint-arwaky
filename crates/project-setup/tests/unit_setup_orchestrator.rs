@@ -4,7 +4,7 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
+use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use std::sync::Arc;
@@ -40,9 +40,8 @@ fn orchestrator_check_http_returns_success() {
 #[test]
 fn orchestrator_generates_env_content() {
     let orch = build_orchestrator();
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-    let home = shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string());
+    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::HTTP;
+    let home = shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string()).unwrap();
     let env_content = orch.generate_env(&transport, &home);
     assert!(!env_content.value.is_empty());
 }

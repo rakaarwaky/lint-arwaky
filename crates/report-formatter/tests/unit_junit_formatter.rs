@@ -36,7 +36,7 @@ fn junit_formatter_formats_report_with_results() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "Test violation".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Medium),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
     let report = ScanReport::new(results, vec![], None);
 
@@ -56,7 +56,7 @@ fn junit_formatter_includes_failure_for_violations() {
         5,
         shared::cli_commands::taxonomy_result_vo::LintResultCode::new("TEST001"),
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new("Violation".to_string()),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::High),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::High),
     )];
     let report = ScanReport::new(results, vec![], None);
 
@@ -89,7 +89,7 @@ fn junit_formatter_escapes_xml_special_chars() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "<script>alert('xss')</script>".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Info),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Info),
     )];
     let report = ScanReport::new(results, vec![], None);
 

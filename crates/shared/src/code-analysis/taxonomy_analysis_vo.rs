@@ -48,6 +48,31 @@ impl InboundLinkMap {
     pub fn new(value: std::collections::HashMap<String, Vec<String>>) -> Self {
         Self { mapping: value }
     }
+
+    /// Retrieve importers for a file path, falling back to canonical or suffix matching if needed.
+    pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
+        if let Some(v) = self.mapping.get(path) {
+            return Some(v);
+        }
+        if let Ok(canon) = std::fs::canonicalize(path) {
+            if let Some(canon_str) = canon.to_str() {
+                if let Some(v) = self.mapping.get(canon_str) {
+                    return Some(v);
+                }
+            }
+        }
+        let clean = path.strip_prefix("./").unwrap_or(path);
+        if let Some(v) = self.mapping.get(clean) {
+            return Some(v);
+        }
+        for (k, v) in &self.mapping {
+            let k_clean = k.strip_prefix("./").unwrap_or(k);
+            if k_clean.ends_with(clean) || clean.ends_with(k_clean) {
+                return Some(v);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

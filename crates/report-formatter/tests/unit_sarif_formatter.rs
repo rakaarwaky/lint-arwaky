@@ -36,7 +36,7 @@ fn sarif_formatter_formats_report_with_results() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "Test violation".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Medium),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
     let report = ScanReport::new(results, vec![], None);
 
@@ -58,7 +58,7 @@ fn sarif_formatter_maps_high_to_error() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "High severity".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::High),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::High),
     )];
     let report = ScanReport::new(results, vec![], None);
 
@@ -77,7 +77,7 @@ fn sarif_formatter_maps_medium_to_warning() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "Medium severity".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Medium),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
     let report = ScanReport::new(results, vec![], None);
 
@@ -96,7 +96,7 @@ fn sarif_formatter_maps_low_to_note() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
             "Low severity".to_string(),
         ),
-        Severity::new(shared::cli_commands::taxonomy_severity_vo::SeverityLevel::Info),
+        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Info),
     )];
     let report = ScanReport::new(results, vec![], None);
 

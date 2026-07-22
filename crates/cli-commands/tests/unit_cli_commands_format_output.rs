@@ -4,7 +4,7 @@ use cli_commands_lint_arwaky::utility_format_output::{
     format_junit_output, format_sarif_output, xml_escape,
 };
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 
 // ─── xml_escape ──────────────────────────────────────────────────────────────
 

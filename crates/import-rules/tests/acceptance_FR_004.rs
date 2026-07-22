@@ -102,7 +102,7 @@ impl IUnusedImportProtocol for RealChecker {
     fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
         if content.contains("unused") {
             v.push(LintResult::new_arch(file, 1, "AES203",
-                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM, "unused"));
+                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused"));
         }
     }
 }

@@ -7,7 +7,7 @@ use code_analysis_lint_arwaky::{
     capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
     root_code_analysis_container::CodeAnalysisCheckerContainer,
 };
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;

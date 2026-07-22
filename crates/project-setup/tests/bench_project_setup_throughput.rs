@@ -6,6 +6,7 @@ use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstal
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -36,7 +37,7 @@ fn bench_container_instantiation() {
 #[test]
 fn bench_mcp_config_generation() {
     let orchestrator = build_orchestrator();
-    let transport = TransportProtocol::new("http".to_string());
+    let transport = TransportProtocol::HTTP;
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -95,8 +96,8 @@ fn bench_http_check() {
 #[test]
 fn bench_full_pipeline() {
     let orchestrator = build_orchestrator();
-    let transport = TransportProtocol::new("http".to_string());
-    let home = shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string());
+    let transport = TransportProtocol::HTTP;
+    let home = shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string()).unwrap();
 
     let start = Instant::now();
     for _ in 0..100 {

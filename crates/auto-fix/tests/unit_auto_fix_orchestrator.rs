@@ -8,7 +8,7 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{Count, LineNumber, Score};
