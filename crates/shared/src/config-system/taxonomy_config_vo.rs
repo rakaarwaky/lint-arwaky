@@ -17,6 +17,7 @@ pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
+    pub enabled: BooleanVO,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default)]

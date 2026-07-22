@@ -124,7 +124,9 @@ fn merge_rule_into_definition(ldef: &mut LayerDefinition, rule: &ArchitectureRul
             }
         }
     }
-    if rule.orphan.check_orphan.value {
+    // Enable orphan checking if explicitly set OR if the rule is enabled
+    // (AES5xx rules use `enabled: true` to activate orphan detection)
+    if rule.orphan.check_orphan.value || rule.enabled.value {
         ldef.orphan.check_orphan = BooleanVO::new(true);
     }
     if !rule.orphan.orphan_entry_points.values.is_empty() {
