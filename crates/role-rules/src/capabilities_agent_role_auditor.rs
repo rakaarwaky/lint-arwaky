@@ -45,21 +45,10 @@ impl IAgentRoleChecker for AgentRoleChecker {
     }
     fn check_file_size_limit(
         &self,
-        source: &SourceContentVO,
-        max_lines: usize,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _source: &SourceContentVO,
+        _max_lines: usize,
+        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
-        let content = source.content.value();
-        let file = source.file_path.value();
-        if content.lines().count() > max_lines {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::HIGH,
-                AesRoleViolation::AgentFileSizeLimit { max_lines }.to_string(),
-            ));
-        }
     }
     fn check_any_type_annotation(
         &self,

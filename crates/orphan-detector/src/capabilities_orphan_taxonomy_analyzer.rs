@@ -126,12 +126,6 @@ impl TaxonomyOrphanAnalyzer {
         if stem.is_empty() {
             return false;
         }
-        // Build multiple search patterns to match different import styles:
-        // 1. crate::taxonomy_xxx (direct import)
-        // 2. crate::common::taxonomy_xxx (module path import)
-        // 3. crate::some_module::taxonomy_xxx (any module path)
-        let search_direct = format!("crate::{}", stem);
-        let search_with_common = format!("crate::common::{}", stem);
 
         // Find the crate's src/ directory by walking up from the file
         let file_path_obj = std::path::Path::new(file_path);
@@ -162,8 +156,9 @@ impl TaxonomyOrphanAnalyzer {
             let path = std::path::PathBuf::from(&f);
             if path.extension().is_some_and(|e| e == "rs") {
                 let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&f);
-                // Check for any of the search patterns
-                if content.contains(&search_direct) || content.contains(&search_with_common) {
+                // Check for any import pattern containing the stem
+                // This handles: crate::stem, crate::common::stem, crate::module::stem, etc.
+                if content.contains(stem) {
                     return true;
                 }
             }

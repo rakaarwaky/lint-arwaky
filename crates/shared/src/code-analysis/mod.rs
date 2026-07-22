@@ -12,7 +12,7 @@ pub mod taxonomy_operation_error;
 pub mod taxonomy_violation_code_analysis_vo;
 pub mod utility_bypass;
 pub mod utility_column;
-pub mod utility_duplication;
+pub mod utility_code_duplication_detector;
 pub mod utility_file_reader;
 pub mod utility_language_mapper;
 pub mod utility_mandatory;
