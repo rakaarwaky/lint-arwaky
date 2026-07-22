@@ -28,13 +28,8 @@ async fn main() -> anyhow::Result<()> {
     // Create the orchestrator that dispatches incoming commands to the
     // correct linter pipeline, and wrap it in the MCP server handler.
     let agent = McpServerOrchestrator::new(McpServerDependencies {
-        code_analysis_linter: container.code_analysis_linter,
-        import_orchestrator: container.import_orchestrator,
-        naming_orchestrator: container.naming_orchestrator,
-        orphan_orchestrator: container.orphan_orchestrator,
+        analysis_pipeline: container.analysis_pipeline,
         external_lint: container.external_lint,
-        role_orchestrator: container.role_orchestrator,
-        config_orchestrator: container.config_orchestrator,
     });
 
     // Start serving the MCP protocol over standard I/O.

@@ -3,6 +3,7 @@ use crate::utility_report_formatter::{
 };
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -41,6 +42,7 @@ pub struct LintExecutor {
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
+    analysis_pipeline: Option<Arc<dyn shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -548,6 +550,7 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
+            analysis_pipeline: None,
         }
     }
 
@@ -618,6 +621,14 @@ impl LintExecutor {
         multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     ) -> Self {
         self.config_orchestrator = Some(multi_project_orchestrator);
+        self
+    }
+
+    pub fn with_analysis_pipeline(
+        mut self,
+        analysis_pipeline: Arc<dyn shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate>,
+    ) -> Self {
+        self.analysis_pipeline = Some(analysis_pipeline);
         self
     }
 
@@ -729,126 +740,47 @@ impl LintExecutor {
 
 impl LintExecutor {
     fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
-        // If we have config_orchestrator, we check for workspace members.
-        if let Some(ref multi_project) = self.config_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let rt = match tokio::runtime::Runtime::new() {
-                Ok(rt) => rt,
-                Err(e) => {
-                    return LintExecutionResult::failure(format!(
-                        "Failed to create runtime: {}",
-                        e
-                    ));
-                }
-            };
-            let workspaces = rt.block_on(multi_project.discover_workspaces(&path_obj));
-            if !workspaces.is_empty() {
-                let mut all_results = Vec::new();
-
-                // Collect ALL source files from workspace root for cross-workspace orphan detection
-                let scan_root = shared::common::find_workspace_root(path)
-                    .unwrap_or_else(|| std::path::PathBuf::from(path));
-                let ignored = self
-                    .config_orchestrator
-                    .as_ref()
-                    .map(|o| o.ignored_paths(scan_root.to_str().unwrap_or(".")))
-                    .unwrap_or_default();
-                let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root, &ignored)
-                        .iter()
-                        .map(|f| f.value.clone())
-                        .collect();
-
-                for ws in &workspaces {
-                    // Dynamically build the orchestrators/linters using ws.config!
-                    let import_container =
-                        import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::new(
-                            std::sync::Arc::new(ws.config.clone()),
-                            std::sync::Arc::new(shared::taxonomy_definition_vo::LayerMapVO::new(
-                                ws.config.layers.clone(),
-                            )),
-                        );
-                    let role_container =
-                        role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let code_analysis_linter =
-                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-                            .code_analysis_linter();
-
-                    let mut ws_results = Vec::new();
-
-                    // 1. AES code analysis
-                    let aes_fp =
-                        shared::common::taxonomy_path_vo::FilePath::new(ws.path.value.clone())
-                            .unwrap_or_default();
-                    let aes_results = code_analysis_linter.run_code_analysis(&aes_fp);
-                    ws_results.extend(aes_results.values);
-
-                    // 2. Naming rules audit (AES101-102)
-                    let naming_results = rt
-                        .block_on(naming_container.orchestrator().run_audit(&ws.path))
-                        .unwrap_or_default();
-                    ws_results.extend(naming_results);
-
-                    // 3. Import rules audit (AES201-205, cycles)
-                    let import_results = rt
-                        .block_on(import_container.orchestrator().run_audit(&ws.path))
-                        .unwrap_or_default();
-                    ws_results.extend(import_results);
-
-                    // 4. External linter adapters
-                    if let Some(ref external_lint) = self.external_lint {
-                        let ext_results = rt.block_on(external_lint.scan_all(&ws.path));
-                        ws_results.extend(ext_results.values);
+        // Delegate to AnalysisPipelineOrchestrator — centralizes all 6-linter pipeline logic.
+        match &self.analysis_pipeline {
+            Some(pipeline) => {
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(rt) => rt,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime: {}",
+                            e
+                        ));
                     }
+                };
 
-                    // 5. Role rules audit (AES401-406)
-                    let role_results =
-                        rt.block_on(role_container.orchestrator().run_audit(&ws.path));
-                    ws_results.extend(role_results);
+                // Use run_with_discovery for multi-workspace support.
+                // Falls back to single-scan mode if no workspaces found.
+                let request = ScanRequest::new(
+                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(path.to_string()),
+                    shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Scan,
+                );
 
-                    // 6. Orphan detection (AES501-506)
-                    if let Some(ref orphan_agg) = &self.orphan_aggregate {
-                        if !all_source_files.is_empty() {
-                            let orphan_results = orphan_agg
-                                .check_orphans(&all_source_files, &scan_root.to_string_lossy());
-                            ws_results.extend(orphan_results);
-                        }
+                match rt.block_on(pipeline.run(request)) {
+                    Ok(report) => {
+                        let count = report.results.len();
+                        let results = LintResultList::new(report.results);
+                        let output = self.format_results(&results);
+                        LintExecutionResult::success(output, count)
                     }
-
-                    // Filter results to only those in this workspace member's path
-                    let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-                    let cwd_for_ws = match std::env::current_dir() {
-                        Ok(d) => d,
-                        Err(_) => std::path::PathBuf::new(),
-                    };
-                    let filtered_results: Vec<_> = ws_results
-                        .into_iter()
-                        .filter(|r| {
-                            let abs_path = cwd_for_ws.join(&r.file.value);
-                            ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(true)
-                        })
-                        .collect();
-
-                    all_results.extend(filtered_results);
+                    Err(e) => {
+                        LintExecutionResult::failure(format!("Pipeline error: {}", e))
+                    }
                 }
-
-                let count = all_results.len();
-                let results = LintResultList::new(all_results);
-                let output = self.format_results(&results);
-                return LintExecutionResult::success(output, count);
+            }
+            None => {
+                // Fallback: legacy inline pipeline (should never happen in production).
+                self.run_legacy_scan(path)
             }
         }
+    }
 
+    /// Legacy inline pipeline — kept as fallback only. All callers should use analysis_pipeline.
+    fn run_legacy_scan(&self, path: &str) -> LintExecutionResult {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis

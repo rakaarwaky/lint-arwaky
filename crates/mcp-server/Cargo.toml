@@ -33,3 +33,4 @@ dirs.workspace = true
 maintenance.workspace = true
 git_hooks.workspace = true
 auto_fix.workspace = true
+cli_commands.workspace = true

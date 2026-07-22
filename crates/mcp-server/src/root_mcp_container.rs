@@ -1,6 +1,9 @@
 // PURPOSE: McpContainer — DI wiring for MCP server aggregates
 use std::sync::Arc;
 
+use cli_commands::agent_analysis_pipeline_orchestrator::{AnalysisPipelineOrchestrator, CheckArgs};
+use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
+use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -17,6 +20,7 @@ pub struct McpContainer {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
 }
 
 impl McpContainer {
@@ -65,6 +69,19 @@ impl McpContainer {
             );
         let role_orchestrator = role_container.orchestrator();
 
+        // Wire analysis pipeline orchestrator — same deps as CLI, just reused for MCP
+        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
+            Arc::new(AnalysisPipelineOrchestrator::new(CheckArgs {
+                code_analysis_linter: code_analysis_linter.clone(),
+                naming_orchestrator: naming_orchestrator.clone(),
+                import_orchestrator: import_orchestrator.clone(),
+                external_lint: external_lint.clone(),
+                role_orchestrator: role_orchestrator.clone(),
+                orphan_orchestrator: orphan_orchestrator.clone(),
+                config_orchestrator: orchestrator.clone(),
+                format: Format::Text,
+            }));
+
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -73,6 +90,7 @@ impl McpContainer {
             external_lint,
             role_orchestrator,
             config_orchestrator: orchestrator,
+            analysis_pipeline,
         }
     }
 }
