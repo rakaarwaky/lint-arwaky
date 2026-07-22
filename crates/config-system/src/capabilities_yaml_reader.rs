@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
@@ -13,9 +11,7 @@ use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ConfigYamlReader {
-    _p: PhantomData<()>,
-}
+pub struct ConfigYamlReader;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 

@@ -5,6 +5,7 @@ use super::utility_report_format::format_report_default;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 
 use std::marker::PhantomData;
 
@@ -17,11 +18,13 @@ pub struct JsonFormatter {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for JsonFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
+    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
         if format == Format::Json {
-            serde_json::to_string_pretty(&report.results).unwrap_or_else(|_| "[]".to_string())
+            DisplayContent::new(
+                serde_json::to_string_pretty(&report.results).unwrap_or_else(|_| "[]".to_string()),
+            )
         } else {
-            format_report_default(report)
+            DisplayContent::new(format_report_default(report))
         }
     }
 
