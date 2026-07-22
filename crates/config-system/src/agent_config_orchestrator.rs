@@ -5,6 +5,7 @@ use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrches
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
@@ -176,6 +177,21 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             }
         }
         ignored
+    }
+
+    async fn list_config_files(
+        &self,
+        project_root: &FilePath,
+    ) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError> {
+        self.config_reader.list_config_files(project_root).await
+    }
+
+    async fn read_config(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> Result<Option<ConfigSource>, ConfigError> {
+        self.config_reader.read_config(project_root, language).await
     }
 }
 

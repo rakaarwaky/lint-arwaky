@@ -56,5 +56,10 @@ fn bench_all_checkers(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_checker_instantiation, bench_container_orchestration, bench_all_checkers);
+criterion_group!(
+    benches,
+    bench_checker_instantiation,
+    bench_container_orchestration,
+    bench_all_checkers
+);
 criterion_main!(benches);

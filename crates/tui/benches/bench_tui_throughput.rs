@@ -65,5 +65,11 @@ fn bench_preview_loading(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_component_instantiation, bench_event_handling, bench_directory_loading, bench_preview_loading);
+criterion_group!(
+    benches,
+    bench_component_instantiation,
+    bench_event_handling,
+    bench_directory_loading,
+    bench_preview_loading
+);
 criterion_main!(benches);

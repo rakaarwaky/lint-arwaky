@@ -65,6 +65,11 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
+        // If importers list is empty, also check for crate:: self-imports
+        if importers.is_empty() && Self::has_crate_self_import(f.value()) {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
         // Check if any importer is from another layer or non-taxonomy file
         let has_other_layer_importer = importers.iter().any(|importer| {
             let b = importer.rsplit('/').next().unwrap_or(importer);
@@ -111,7 +116,7 @@ impl TaxonomyOrphanAnalyzer {
         Self {}
     }
 
-    /// Fallback: check if any sibling .rs file in the same directory imports this module via `crate::` path.
+    /// Fallback: check if any .rs file in the same crate imports this module via `crate::` path.
     /// The graph resolver doesn't always track crate:: imports within the same crate.
     fn has_crate_self_import(file_path: &str) -> bool {
         let stem = std::path::Path::new(file_path)
@@ -121,20 +126,45 @@ impl TaxonomyOrphanAnalyzer {
         if stem.is_empty() {
             return false;
         }
-        let search = format!("crate::{}", stem);
-        if let Some(parent) = std::path::Path::new(file_path).parent() {
-            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(parent);
-            for (_name, path_str, _is_dir) in entries {
-                if path_str == file_path {
-                    continue;
+        // Build multiple search patterns to match different import styles:
+        // 1. crate::taxonomy_xxx (direct import)
+        // 2. crate::common::taxonomy_xxx (module path import)
+        // 3. crate::some_module::taxonomy_xxx (any module path)
+        let search_direct = format!("crate::{}", stem);
+        let search_with_common = format!("crate::common::{}", stem);
+
+        // Find the crate's src/ directory by walking up from the file
+        let file_path_obj = std::path::Path::new(file_path);
+        let src_dir = if let Some(parent) = file_path_obj.parent() {
+            // Walk up to find src/ directory
+            let mut current = parent.to_path_buf();
+            loop {
+                if current.ends_with("src") {
+                    break;
                 }
-                let path = std::path::PathBuf::from(&path_str);
-                if path.extension().is_some_and(|e| e == "rs") {
-                    let content =
-                        shared::orphan_detector::utility_orphan_io::read_file_safe(&path_str);
-                    if content.contains(&search) {
-                        return true;
-                    }
+                if !current.pop() {
+                    // Reached root without finding src/
+                    return false;
+                }
+            }
+            current
+        } else {
+            return false;
+        };
+
+        // Scan all .rs files in the crate's src/ directory
+        let all_files =
+            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&src_dir);
+        for f in all_files {
+            if f == file_path {
+                continue;
+            }
+            let path = std::path::PathBuf::from(&f);
+            if path.extension().is_some_and(|e| e == "rs") {
+                let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&f);
+                // Check for any of the search patterns
+                if content.contains(&search_direct) || content.contains(&search_with_common) {
+                    return true;
                 }
             }
         }

@@ -5,18 +5,7 @@ use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::taxonomy_layer_vo::Identity;
-
-pub trait IOrphanFilenameExtractorProtocol: Send + Sync {
-    fn file_basename(&self, fp: &FilePath) -> Identity;
-    fn file_stem(&self, fp: &FilePath) -> Identity;
-    fn file_suffix(&self, fp: &FilePath) -> Identity;
-    fn extract_struct_names(&self, content: &ContentString) -> Vec<SymbolName>;
-    fn extract_trait_names(&self, content: &ContentString) -> Vec<SymbolName>;
-}
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     fn is_taxonomy_orphan(

@@ -35,6 +35,7 @@ ignored_paths:
   - "/build.rs"
   - "**/build.rs"
   - "/.agents"
+  - "/benches"
 
 architecture:
   enabled: true

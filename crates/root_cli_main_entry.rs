@@ -252,7 +252,6 @@ fn main() -> ExitCode {
             let config_container =
                 config_system::root_config_system_container::ConfigContainer::new();
             let config_orchestrator = config_container.orchestrator();
-            let config_reader = config_container.reader();
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
@@ -262,7 +261,6 @@ fn main() -> ExitCode {
             };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
-                config_reader,
             ))
         }
         // P3.3: these are handled by early-exit above

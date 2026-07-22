@@ -6,6 +6,7 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 
 fn bench_formatter_instantiation(c: &mut Criterion) {
@@ -39,7 +40,7 @@ fn bench_sarif_format(c: &mut Criterion) {
     c.bench_function("sarif_format", |b| {
         b.iter(|| {
             let sarif = SarifFormatter::new();
-            let results: Vec<code_analysis::lint_result_vo::LintResult> = vec![];
+            let results: Vec<LintResult> = vec![];
             let _ = sarif.format_sarif(black_box(&results));
         });
     });
@@ -49,11 +50,17 @@ fn bench_junit_format(c: &mut Criterion) {
     c.bench_function("junit_format", |b| {
         b.iter(|| {
             let junit = JunitFormatter::new();
-            let results: Vec<code_analysis::lint_result_vo::LintResult> = vec![];
+            let results: Vec<LintResult> = vec![];
             let _ = junit.format_junit(black_box(&results));
         });
     });
 }
 
-criterion_group!(benches, bench_formatter_instantiation, bench_text_format, bench_sarif_format, bench_junit_format);
+criterion_group!(
+    benches,
+    bench_formatter_instantiation,
+    bench_text_format,
+    bench_sarif_format,
+    bench_junit_format
+);
 criterion_main!(benches);

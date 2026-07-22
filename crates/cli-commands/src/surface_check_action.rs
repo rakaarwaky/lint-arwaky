@@ -10,7 +10,6 @@ use std::collections::BTreeMap;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use crate::surface_check_command::CheckCommandsSurface;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
@@ -24,7 +23,7 @@ use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    shared::common::utility_file::find_workspace_root(path)
+    crate::utility_path_resolver::find_workspace_root(path)
 }
 
 pub struct CheckOptions {
@@ -48,7 +47,11 @@ pub fn handle_check(opts: CheckOptions) -> ExitCode {
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let surface = CheckCommandsSurface::new(opts.pipeline, opts.report_formatter, None);
+    let surface = crate::surface_check_command::CheckCommandsSurface::new(
+        opts.pipeline,
+        opts.report_formatter,
+        None,
+    );
     surface.scan(&root, opts.filter.as_deref(), opts.format)
 }
 
@@ -72,7 +75,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let surface = CheckCommandsSurface::new(
+    let surface = crate::surface_check_command::CheckCommandsSurface::new(
         opts.pipeline,
         opts.report_formatter,
         opts.multi_project_orchestrator,

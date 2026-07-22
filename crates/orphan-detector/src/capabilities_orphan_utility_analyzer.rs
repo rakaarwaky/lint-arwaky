@@ -257,6 +257,6 @@ impl UtilityOrphanAnalyzer {
 
         // Split by :: and check if any segment matches the module name
         let segments: Vec<&str> = path.split("::").collect();
-        segments.iter().any(|s| *s == module_name)
+        segments.contains(&module_name)
     }
 }

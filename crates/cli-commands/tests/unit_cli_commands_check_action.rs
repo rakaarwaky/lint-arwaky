@@ -1,6 +1,6 @@
 //! Unit tests for surface_check_action — find_workspace_root, handle_check, handle_default_check.
 
-use cli_commands_lint_arwaky::surface_check_action::find_workspace_root;
+use cli_commands_lint_arwaky::utility_path_resolver::find_workspace_root;
 
 // ─── find_workspace_root ─────────────────────────────────────────────────────
 
