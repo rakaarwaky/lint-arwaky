@@ -13,7 +13,7 @@ fn make_utility_analyzer() -> UtilityOrphanAnalyzer {
 #[test]
 fn test_utility_imported_by_cross_crate_use_statement_should_not_flag_aes504() {
     // RED: This test should FAIL because current implementation
-    // doesn't detect `use shared::code_analysis::utility_target::detect_source_dir`
+    // doesn't detect `use shared::code_analysis::utility_target_resolver::detect_source_dir`
     let utility_path = "shared/src/code-analysis/utility_target.rs";
     let consumer_path = "code-analysis/src/agent_code_analysis_orchestrator.rs";
 
@@ -44,8 +44,8 @@ fn test_utility_imported_by_cross_crate_use_statement_should_not_flag_aes504() {
 fn test_utility_imported_by_nested_use_path_should_not_flag_aes504() {
     // Test that `use shared::code_analysis::utility_target` is detected
     let content = r#"
-use shared::code_analysis::utility_target::detect_source_dir;
-use shared::code_analysis::utility_target::collect_source_files;
+use shared::code_analysis::utility_target_resolver::detect_source_dir;
+use shared::code_analysis::utility_target_resolver::collect_source_files;
 
 pub fn some_function() {
     let dir = detect_source_dir(std::path::Path::new("."));

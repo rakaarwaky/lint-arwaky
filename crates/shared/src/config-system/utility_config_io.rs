@@ -23,7 +23,7 @@ pub async fn read_text_within_canonical_root<P: AsRef<Path>>(
         ));
     }
     let meta = tokio::fs::metadata(&canonical_path).await?;
-    if !utility_file::is_file_generic(&canonical_path) {
+    if !utility_file_handler::is_file_generic(&canonical_path) {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             "config path is not a regular file",
