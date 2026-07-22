@@ -12,7 +12,6 @@ metadata:
   related:
     - module_logic_validator
 ---
-
 # create-crate-test-suite-rust
 
 ## Rules
@@ -24,11 +23,11 @@ metadata:
 
 ## Coverage Targets
 
-| Layer          | Minimum |
-| -------------- | ------- |
-| Capabilities   | 90%     |
-| Infrastructure | 70%     |
-| Agent          | 80%     |
+| Layer        | Minimum |
+| ------------ | ------- |
+| Capabilities | 90%     |
+| Utility      | 70%     |
+| Agent        | 80%     |
 
 ## Purpose
 
@@ -42,7 +41,7 @@ Generate contract tests, unit tests, and integration tests for crate capabilitie
 
 ## The Fundamental Question
 
-> **"Does this capability have tests?"**
+> **"Does this dunction  have tests?"**
 
 If no -> **Create test suite**
 

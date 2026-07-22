@@ -6,8 +6,8 @@
 
 There are 3 test workspace
 
-| Category         | Path                        | Purpose                               |
-| ---------------- | --------------------------- | ------------------------------------- |
+| Category         | Path                          | Purpose                               |
+| ---------------- | ----------------------------- | ------------------------------------- |
 | Rust (crates)    | `test-workspaces/crates/`   | AES Rust + general quality checks     |
 | Python (modules) | `test-workspaces/modules/`  | AES Python + Ruff/MyPy/Bandit scans   |
 | JS/TS (packages) | `test-workspaces/packages/` | AES JS/TS + ESLint/Prettier/TSC scans |
@@ -46,6 +46,7 @@ Before releasing the binary to a production environment or deploying it to a cli
 The base codebase must be clean of any internal architecture rule violations.
 
 - [ ] Run self-lint audit:
+
   ```bash
   cargo run --bin lint-arwaky-cli -- check .
   ```
@@ -53,12 +54,13 @@ The base codebase must be clean of any internal architecture rule violations.
 - [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](file:///home/raka/mcp-arwaky/lint-arwaky/lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
 
   #### B. Cross-Language Functional Verification (Scan Test Projects)
-
 - [ ] Build a clean release and copy the binary:
+
   ```bash
   bash scripts/install.local.sh
   ```
 - [ ] Run scan on the test-workspaces folder:
+
   ```bash
   cd test-workspaces
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
@@ -74,13 +76,11 @@ The base codebase must be clean of any internal architecture rule violations.
   ```bash
   cargo test --workspace
   ```
-
 - [ ] Run binary health diagnostics:
 
   ```bash
-  lint-arwaky-cli maintenance doctor
+  lint-arwaky-cli doctor
   ```
-
 - [ ] Run JSON-RPC MCP protocol smoke-test:
 
   ```bash

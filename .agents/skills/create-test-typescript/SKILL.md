@@ -12,7 +12,6 @@ metadata:
     - add-docs-typescript
     - cleanup-files-typescript
 ---
-
 # create-test-typescript
 
 ## Purpose
