@@ -186,12 +186,30 @@ impl UtilityOrphanAnalyzer {
         Self {}
     }
 
-    fn check_import_pattern(&self, content: &str, module_name: &str) -> bool {
-        if content.contains(&format!("use {}", module_name))
-            || content.contains(&format!("use {}::", module_name))
-            || content.contains(&format!("use crate::{}", module_name))
-            || content.contains(&format!("use shared::{}", module_name))
-            || content.contains(&format!("::{{{}}}", module_name))
+    pub fn check_import_pattern(&self, content: &str, module_name: &str) -> bool {
+        // Check for Rust use statements with the module name anywhere in the path
+        // This handles:
+        // - `use utility_target`
+        // - `use utility_target::`
+        // - `use crate::utility_target`
+        // - `use shared::utility_target`
+        // - `use shared::code_analysis::utility_target` (nested paths)
+        // - `use crate::code_analysis::utility_target` (nested paths)
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("use ")
+                || trimmed.starts_with("pub use ")
+                || trimmed.starts_with("pub(crate) use ")
+            {
+                // Check if module_name appears as a path segment
+                if self.path_contains_module(trimmed, module_name) {
+                    return true;
+                }
+            }
+        }
+
+        // Check for grouped imports: use { module_name, ... }
+        if content.contains(&format!("::{{{}}}", module_name))
             || content.contains(&format!("::{{{},", module_name))
             || content.contains(&format!(", {}::", module_name))
             || content.contains(&format!(", {}}}", module_name))
@@ -199,12 +217,14 @@ impl UtilityOrphanAnalyzer {
             return true;
         }
 
+        // Check for Python imports
         if content.contains(&format!("import {}", module_name))
             || content.contains(&format!("from {} import", module_name))
         {
             return true;
         }
 
+        // Check for JavaScript/TypeScript imports
         if content.contains(&format!("from '{}'", module_name))
             || content.contains(&format!("from \"{}\"", module_name))
             || content.contains(&format!("require('{}')", module_name))
@@ -214,5 +234,29 @@ impl UtilityOrphanAnalyzer {
         }
 
         false
+    }
+
+    /// Check if a use statement path contains the module name as a segment.
+    fn path_contains_module(&self, use_statement: &str, module_name: &str) -> bool {
+        // Extract the path part after "use " or "pub use " etc.
+        let path = if let Some(pos) = use_statement.find("use ") {
+            &use_statement[pos + 4..]
+        } else {
+            return false;
+        };
+
+        // Remove trailing semicolon and braces
+        let path = path.trim_end_matches(';').trim();
+
+        // Handle grouped imports: use path::{A, B, C}
+        let path = if let Some(pos) = path.find("::{") {
+            &path[..pos]
+        } else {
+            path
+        };
+
+        // Split by :: and check if any segment matches the module name
+        let segments: Vec<&str> = path.split("::").collect();
+        segments.iter().any(|s| *s == module_name)
     }
 }

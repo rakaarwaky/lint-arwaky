@@ -48,3 +48,27 @@ pub fn file_level_result(
         related_locations: LocationList::new(),
     }
 }
+
+/// Construct a file-level LintResult from a string filename.
+///
+/// This is the shared replacement for duplicated `_make_result` helpers in
+/// `NamingConventionChecker` and `SuffixPrefixChecker`.
+pub fn string_filename_result(
+    file: &str,
+    code: &str,
+    message: impl Into<String>,
+    severity: Severity,
+) -> LintResult {
+    let file_path = FilePath::new(file).unwrap_or_default();
+    LintResult {
+        file: file_path,
+        line: LineNumber::new(1), // File-level check — not line-specific
+        column: ColumnNumber::new(0),
+        code: ErrorCode::raw(code),
+        message: LintMessage::new(message),
+        source: Some(AdapterName::raw(ADAPTER_NAME)),
+        severity,
+        enclosing_scope: None,
+        related_locations: LocationList::new(),
+    }
+}

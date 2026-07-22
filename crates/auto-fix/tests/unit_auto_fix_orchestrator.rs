@@ -17,6 +17,12 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
+fn fixable_codes_static() -> &'static [ErrorCode] {
+    use std::sync::OnceLock;
+    static CODES: OnceLock<Vec<ErrorCode>> = OnceLock::new();
+    CODES.get_or_init(|| vec![ErrorCode::raw("AES203"), ErrorCode::raw("AES304")])
+}
+
 // ─── Mock IFixProtocol ────────────────────────────────────
 
 struct MockFixProtocol;
@@ -61,7 +67,7 @@ impl IFixProtocol for MockFixProtocol {
     }
 
     fn fixable_codes(&self) -> &[ErrorCode] {
-        &[ErrorCode::raw("AES203"), ErrorCode::raw("AES304")]
+        fixable_codes_static()
     }
 }
 

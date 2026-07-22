@@ -1,19 +1,18 @@
 // PURPOSE: Unit tests for UtilityRoleChecker — AES404 macro detection
 // TDD: Test that macros are NOT flagged as struct/enum definitions
 
-use role_rules::UtilityRoleChecker;
+use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::{ContentString, SourceContentVO};
 use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
-use shared::taxonomy_source_vo::SourceContentVO;
 
 fn make_source(content: &str) -> SourceContentVO {
-    SourceContentVO {
-        file_path: shared::common::taxonomy_path_vo::FilePath::new(
-            "utility_value_object_generator.rs".to_string(),
-        )
-        .unwrap_or_default(),
-        content: shared::common::taxonomy_source_vo::ContentString::new(content.to_string()),
-    }
+    SourceContentVO::new(
+        FilePath::new("utility_value_object_generator.rs".to_string()).unwrap_or_default(),
+        ContentString::new(content.to_string()),
+        "rust",
+    )
 }
 
 #[test]
