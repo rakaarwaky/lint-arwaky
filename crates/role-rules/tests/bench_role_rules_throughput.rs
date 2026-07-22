@@ -8,10 +8,9 @@ use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecke
 use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use std::time::Instant;
 
-fn make_source(file: &str, content: &str) -> shared::taxonomy_source_vo::SourceContentVO {
+fn _make_source(file: &str, content: &str) -> shared::taxonomy_source_vo::SourceContentVO {
     let fp = shared::common::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap();
     let cs = shared::taxonomy_source_vo::ContentString::new(content.to_string());
     shared::taxonomy_source_vo::SourceContentVO::new(fp, cs, "rust")

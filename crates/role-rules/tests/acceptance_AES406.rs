@@ -3,10 +3,6 @@
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 
-fn checker() -> SurfaceRoleChecker {
-    SurfaceRoleChecker::new()
-}
-
 // ─── Acceptance: Default trait ──
 
 #[test]

@@ -3,10 +3,6 @@
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 
-fn checker() -> CapabilitiesRoleChecker {
-    CapabilitiesRoleChecker::new()
-}
-
 // ─── Acceptance: Default trait ──
 
 #[test]

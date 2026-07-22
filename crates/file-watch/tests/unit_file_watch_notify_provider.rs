@@ -1,8 +1,6 @@
 // PURPOSE: Unit tests for NotifyWatchProvider — start/stop lifecycle, subscribe, availability.
 // Layer: Capabilities (target ≥ 70% coverage)
 
-use std::sync::Arc;
-
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;

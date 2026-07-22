@@ -2,7 +2,6 @@
 // Layer: Capabilities (ContractRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 

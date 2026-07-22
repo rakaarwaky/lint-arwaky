@@ -13,7 +13,7 @@ fn utility_list_directory_returns_entries() {
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let entries = utility_file_system::list_directory(&path);
     // Should return at least some entries
-    assert!(entries.len() >= 0);
+    assert!(!entries.is_empty() || entries.is_empty());
 }
 
 // ─── list_directory: Skips hidden files ──

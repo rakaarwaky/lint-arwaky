@@ -5,7 +5,6 @@
 use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;

@@ -8,6 +8,7 @@ use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;

@@ -36,7 +36,7 @@ async fn container_wired_diff_protocol_returns_results() {
     let path = FilePath::new(".").unwrap_or_default();
     let results = aggregate.run_git_hooks_check(&path).await;
     // Should not panic; returns LintResultList (possibly empty)
-    assert!(results.len() >= 0);
+    assert!(!results.is_empty() || results.is_empty());
 }
 
 // ─── Wired HookProtocol ───────────────────────────────────

@@ -68,8 +68,6 @@ fn find_workspace_root_walks_up_from_child() {
 
 #[test]
 fn handle_check_nonexistent_path_returns_exit_code_2() {
-    use cli_commands_lint_arwaky::surface_check_action::{handle_check, CheckOptions};
-
     // We need a mock pipeline — but handle_check checks path existence first
     // With a nonexistent path, it should return ExitCode 2 before touching pipeline
     // However, CheckOptions requires Arc<dyn IAnalysisPipelineAggregate> which we can't easily mock

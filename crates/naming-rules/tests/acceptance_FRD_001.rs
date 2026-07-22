@@ -6,7 +6,6 @@ use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
 

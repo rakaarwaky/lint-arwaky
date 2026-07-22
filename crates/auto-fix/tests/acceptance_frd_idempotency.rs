@@ -2,6 +2,7 @@
 // Requirement: Running auto-fix repeatedly on the same file produces no further changes.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
+use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

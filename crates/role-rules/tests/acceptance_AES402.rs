@@ -3,10 +3,6 @@
 
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
 
-fn checker() -> ContractRoleChecker {
-    ContractRoleChecker::new()
-}
-
 // ─── Acceptance: Default trait ──
 
 #[test]

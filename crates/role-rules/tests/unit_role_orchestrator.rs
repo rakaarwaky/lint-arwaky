@@ -2,7 +2,6 @@
 // Layer: Agent (RoleOrchestrator)
 
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use std::sync::Arc;
 

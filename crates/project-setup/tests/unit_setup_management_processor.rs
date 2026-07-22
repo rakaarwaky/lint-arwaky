@@ -3,12 +3,8 @@
 
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::{
-    McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO,
-};
 use std::sync::Arc;
 
 fn processor() -> SetupManagementProcessor {

@@ -12,7 +12,6 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use std::collections::HashMap;
-use std::sync::Arc;
 
 fn default_config() -> ArchitectureConfig {
     ArchitectureConfig::default()

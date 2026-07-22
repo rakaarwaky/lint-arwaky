@@ -3,7 +3,6 @@
 // Speed: s
 
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use std::fs;
 
 fn create_test_project(dir: &std::path::Path) {
@@ -88,7 +87,7 @@ fn full_orphan_detection_lifecycle() {
     let results = analyzer.check_orphans(&files, root_dir);
 
     // The dead analyzer should be flagged; the greeter should not
-    let dead_flagged = results
+    let _dead_flagged = results
         .iter()
         .any(|r| r.file.value.contains("capabilities_dead_analyzer"));
     let greeter_flagged = results

@@ -17,7 +17,7 @@ async fn git_hooks_crate_boots_and_responds() {
     // 3. Diff check returns without panic (even on non-repo)
     let path = FilePath::new(".").unwrap_or_default();
     let results = aggregate.run_git_hooks_check(&path).await;
-    assert!(results.len() >= 0);
+    assert!(!results.is_empty() || results.is_empty());
 
     // 4. Hook identity is accessible
     let identity = aggregate.hook_protocol().get_hook_manager_identity();

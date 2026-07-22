@@ -5,7 +5,6 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 

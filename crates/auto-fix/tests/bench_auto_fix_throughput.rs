@@ -60,8 +60,8 @@ fn bench_fix_unused_import(c: &mut Criterion) {
         }
         tmp.flush().unwrap();
 
-        let file_path = tmp.path().to_str().unwrap().to_string();
-        let sut = LintFixProcessor::new(Arc::new(BenchLinter { results: vec![] }));
+        let _file_path = tmp.path().to_str().unwrap().to_string();
+        let _sut = LintFixProcessor::new(Arc::new(BenchLinter { results: vec![] }));
 
         group.bench_with_input(
             BenchmarkId::new("remove_line_1", line_count),

@@ -4,7 +4,7 @@
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;

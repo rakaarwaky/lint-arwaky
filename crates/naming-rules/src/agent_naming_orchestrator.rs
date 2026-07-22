@@ -102,6 +102,7 @@ impl NamingOrchestrator {
         }
     }
 
+    #[allow(dead_code)]
     fn filter_source_files(
         files: &shared::common::taxonomy_paths_vo::FilePathList,
     ) -> shared::common::taxonomy_paths_vo::FilePathList {

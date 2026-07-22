@@ -10,7 +10,6 @@ use code_analysis_lint_arwaky::{
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 // ─── Contract Tests: Trait Implementation Verification ──────

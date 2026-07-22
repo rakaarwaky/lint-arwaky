@@ -9,11 +9,12 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
     ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
 };
+use std::sync::Arc;
 
 // ─── Mock Implementations ────────────────────────────────────────────
 

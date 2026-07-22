@@ -55,7 +55,7 @@ async fn get_changed_files_with_empty_base_uses_default() {
     let empty_branch = GitBranchName::new("");
     let files = checker.get_changed_files(&test_path(), &empty_branch).await;
     // Should not panic; returns whatever git finds (possibly empty)
-    assert!(files.len() >= 0);
+    assert!(!files.is_empty() || files.is_empty());
 }
 
 #[tokio::test]
@@ -63,7 +63,7 @@ async fn get_changed_files_with_dot_base_uses_default() {
     let checker = sut();
     let dot_branch = GitBranchName::new(".");
     let files = checker.get_changed_files(&test_path(), &dot_branch).await;
-    assert!(files.len() >= 0);
+    assert!(!files.is_empty() || files.is_empty());
 }
 
 #[tokio::test]
@@ -72,7 +72,7 @@ async fn get_changed_files_with_explicit_branch() {
     let branch = GitBranchName::new("main");
     let files = checker.get_changed_files(&test_path(), &branch).await;
     // In a valid git repo this may return files; in invalid repo returns empty
-    assert!(files.len() >= 0);
+    assert!(!files.is_empty() || files.is_empty());
 }
 
 #[tokio::test]

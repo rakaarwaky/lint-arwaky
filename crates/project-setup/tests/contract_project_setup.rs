@@ -58,7 +58,7 @@ fn container_protocol_returns_isetup_management_protocol() {
 fn orchestrator_delegates_to_processor() {
     let installer = Arc::new(SetupInstallerAdapter::new());
     let protocol = Arc::new(SetupManagementProcessor::new(installer));
-    let orchestrator = SetupManagementOrchestrator::new(protocol.clone());
+    let _orchestrator = SetupManagementOrchestrator::new(protocol.clone());
 
     // Both should reference the same underlying processor
     assert!(true); // Trait object verification passed above

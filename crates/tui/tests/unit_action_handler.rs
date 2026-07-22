@@ -1,7 +1,6 @@
 // PURPOSE: Unit tests for ActionHandler — central event dispatch logic.
 // Layer: Capabilities (ActionHandler)
 
-use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;

@@ -2,7 +2,6 @@
 // Layer: Capabilities (SurfaceRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
 

@@ -3,7 +3,6 @@
 // Speed: ms–s
 
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 
 // ─── Container wiring ─────────────────────────────────────
 

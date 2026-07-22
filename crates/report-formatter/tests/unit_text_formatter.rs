@@ -7,7 +7,6 @@ use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_severity_vo::Severity;
-use std::sync::Arc;
 
 fn formatter() -> TextFormatter {
     let code_analysis =
