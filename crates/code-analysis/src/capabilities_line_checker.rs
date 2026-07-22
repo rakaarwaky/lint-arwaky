@@ -1,5 +1,5 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::taxonomy_definition_vo::LayerDefinition;

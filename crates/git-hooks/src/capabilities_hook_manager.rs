@@ -7,7 +7,7 @@ use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)

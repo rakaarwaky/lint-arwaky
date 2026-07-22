@@ -6,7 +6,7 @@
 //   - run_ci_analysis: CI pipeline that runs code analysis, computes score, compares
 //     against threshold, and returns pass/fail exit code. Detects CRITICAL violations
 //     as auto-fail regardless of score.
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;

@@ -1,5 +1,5 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;

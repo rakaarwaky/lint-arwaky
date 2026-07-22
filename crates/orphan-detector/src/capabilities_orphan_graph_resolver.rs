@@ -138,6 +138,23 @@ impl OrphanGraphResolver {
             .as_ref()
     }
 
+    /// Regex for `pub use crate::module;` module re-exports (not type re-exports like `::Type`)
+    fn pub_use_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| {
+            // Match `pub use crate::module;` but NOT `pub use crate::module::Type;`
+            Regex::new(r"pub\s+use\s+(?:crate|super|self)::([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok()
+        })
+        .as_ref()
+    }
+
+    /// Regex for `pub use module::name;` relative re-exports (no prefix)
+    fn pub_use_relative_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"pub\s+use\s+([a-zA-Z_][a-zA-Z0-9_:]*)\s*;").ok())
+            .as_ref()
+    }
+
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -515,6 +532,58 @@ impl OrphanGraphResolver {
                             .entry(f.clone())
                             .or_default()
                             .push(base.trim().to_string());
+                    }
+                }
+            }
+
+            // Pass 5: pub use re-exports (e.g. `pub use crate::common::taxonomy_action_vo;`)
+            if let Some(re) = Self::pub_use_re() {
+                for cap in re.captures_iter(&content) {
+                    let path = &cap[1]; // e.g. common::taxonomy_action_vo
+                    let segments: Vec<&str> = path.split("::").collect();
+
+                    // Try to resolve the re-exported module to a file
+                    // First try the last segment (file stem)
+                    if let Some(seg) = segments.last() {
+                        if let Some(file_path) = module_to_file.get(*seg) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
+                    }
+                    // Also try composite path with / separator
+                    if segments.len() >= 2 {
+                        let composite = segments.join("/");
+                        if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
+                    }
+                    // Debug: check if path was resolved
+                    if segments
+                        .last()
+                        .map(|s| module_to_file.get(*s).is_none())
+                        .unwrap_or(true)
+                    {
+                        eprintln!("[DEBUG REEXPORT] '{}' path='{}' NOT resolved", f, path);
+                    }
+                }
+            }
+
+            // Pass 5b: pub use relative re-exports (e.g. `pub use taxonomy_language_vo::LanguageVO;`)
+            if let Some(re) = Self::pub_use_relative_re() {
+                for cap in re.captures_iter(&content) {
+                    let path = &cap[1]; // e.g. taxonomy_language_vo::LanguageVO
+                    let segments: Vec<&str> = path.split("::").collect();
+
+                    // Try to resolve the re-exported module to a file
+                    if let Some(seg) = segments.first() {
+                        if let Some(file_path) = module_to_file.get(*seg) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
                     }
                 }
             }

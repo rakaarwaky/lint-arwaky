@@ -23,7 +23,7 @@ pub trait GitHooksAggregate: Send + Sync {
         &self,
         executable_path: &FilePath,
     ) -> Result<
-        crate::mcp_server::taxonomy_job_vo::SuccessStatus,
+        crate::common::taxonomy_job_vo::SuccessStatus,
         crate::git_hooks::taxonomy_hook_error::GitHookError,
     > {
         self.hook_protocol()
@@ -35,7 +35,7 @@ pub trait GitHooksAggregate: Send + Sync {
     async fn uninstall_hook(
         &self,
     ) -> Result<
-        crate::mcp_server::taxonomy_job_vo::SuccessStatus,
+        crate::common::taxonomy_job_vo::SuccessStatus,
         crate::git_hooks::taxonomy_hook_error::GitHookError,
     > {
         self.hook_protocol().uninstall_pre_commit().await

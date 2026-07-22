@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::cli_commands::taxonomy_position_vo::Position;
-use crate::cli_commands::taxonomy_severity_vo::Severity;
+use crate::common::taxonomy_severity_vo::Severity;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::ColumnNumber;
 use crate::common::taxonomy_common_vo::LineNumber;

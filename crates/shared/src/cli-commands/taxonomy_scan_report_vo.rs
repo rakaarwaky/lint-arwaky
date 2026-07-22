@@ -71,7 +71,7 @@ impl ScanReport {
     pub fn violation_count(&self) -> usize {
         self.results
             .iter()
-            .filter(|r| r.severity != crate::cli_commands::taxonomy_severity_vo::Severity::INFO)
+            .filter(|r| r.severity != crate::common::taxonomy_severity_vo::Severity::INFO)
             .count()
     }
 

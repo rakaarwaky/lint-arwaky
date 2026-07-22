@@ -1,6 +1,6 @@
 // PURPOSE: Shared helpers for naming checkers — layer detection, exception matching, result construction.
 use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::cli_commands::taxonomy_severity_vo::Severity;
+use crate::common::taxonomy_severity_vo::Severity;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use crate::common::taxonomy_error_vo::ErrorCode;

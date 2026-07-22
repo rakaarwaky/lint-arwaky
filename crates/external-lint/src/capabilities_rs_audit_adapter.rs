@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;

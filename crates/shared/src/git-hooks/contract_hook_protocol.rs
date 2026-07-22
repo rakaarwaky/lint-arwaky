@@ -9,7 +9,7 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
-use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
+use crate::common::taxonomy_job_vo::SuccessStatus;
 use async_trait::async_trait;
 
 #[async_trait]

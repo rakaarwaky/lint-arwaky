@@ -1,5 +1,5 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;

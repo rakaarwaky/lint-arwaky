@@ -20,6 +20,7 @@ fn build_surface() -> LintArwakyMcpServer {
         external_lint: container.external_lint,
         role_orchestrator: container.role_orchestrator,
         config_orchestrator: container.config_orchestrator,
+        analysis_pipeline: container.analysis_pipeline,
     };
     LintArwakyMcpServer::new(Arc::new(McpServerOrchestrator::new(deps)))
 }

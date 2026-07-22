@@ -93,14 +93,14 @@ impl SarifFormatter {
 
         // Map Severity → SARIF level
         fn severity_to_sarif_level(
-            sev: &shared::cli_commands::taxonomy_severity_vo::Severity,
+            sev: &shared::common::taxonomy_severity_vo::Severity,
         ) -> &'static str {
             match sev {
-                shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
-                | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH => "error",
-                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM => "warning",
-                shared::cli_commands::taxonomy_severity_vo::Severity::LOW
-                | shared::cli_commands::taxonomy_severity_vo::Severity::INFO => "note",
+                shared::common::taxonomy_severity_vo::Severity::CRITICAL
+                | shared::common::taxonomy_severity_vo::Severity::HIGH => "error",
+                shared::common::taxonomy_severity_vo::Severity::MEDIUM => "warning",
+                shared::common::taxonomy_severity_vo::Severity::LOW
+                | shared::common::taxonomy_severity_vo::Severity::INFO => "note",
             }
         }
 

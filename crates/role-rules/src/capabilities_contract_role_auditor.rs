@@ -1,5 +1,5 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::utility_signature_parser::{

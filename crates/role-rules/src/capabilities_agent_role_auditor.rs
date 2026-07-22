@@ -1,4 +1,4 @@
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;

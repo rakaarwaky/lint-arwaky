@@ -4,7 +4,7 @@
 
 use report_formatter::SarifFormatter;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 
 /// Format lint results as a SARIF 2.1.0 JSON string.
 ///

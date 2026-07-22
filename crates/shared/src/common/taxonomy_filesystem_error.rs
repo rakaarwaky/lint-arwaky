@@ -3,7 +3,7 @@ use crate::common::taxonomy_common_error::Cause;
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::mcp_server::taxonomy_action_vo::ActionName;
+use crate::common::taxonomy_action_vo::ActionName;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]

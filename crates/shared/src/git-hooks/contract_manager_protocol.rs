@@ -2,7 +2,7 @@
 
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
-use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
+use crate::common::taxonomy_job_vo::SuccessStatus;
 
 pub trait IHookManagerProtocol: Send + Sync {
     fn install_pre_commit(&self, executable_path: &FilePath)

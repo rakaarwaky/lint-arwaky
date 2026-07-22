@@ -37,10 +37,10 @@ impl JunitFormatter {
             .filter(|r| {
                 matches!(
                     r.severity,
-                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::LOW
+                    shared::common::taxonomy_severity_vo::Severity::CRITICAL
+                        | shared::common::taxonomy_severity_vo::Severity::HIGH
+                        | shared::common::taxonomy_severity_vo::Severity::MEDIUM
+                        | shared::common::taxonomy_severity_vo::Severity::LOW
                 )
             })
             .count();
@@ -59,7 +59,7 @@ impl JunitFormatter {
             let name = xml_escape(&format!("{}:{}", r.file.value, r.line.value()));
             let message = xml_escape(&r.message.value);
             let sev = r.severity.to_string();
-            let is_info = r.severity == shared::cli_commands::taxonomy_severity_vo::Severity::INFO;
+            let is_info = r.severity == shared::common::taxonomy_severity_vo::Severity::INFO;
 
             xml.push_str(&format!(
                 "    <testcase classname=\"{classname}\" name=\"{name}\">\n"
