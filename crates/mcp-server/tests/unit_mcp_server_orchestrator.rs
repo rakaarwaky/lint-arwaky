@@ -60,13 +60,49 @@ impl IExternalLintAggregate for MockExternalLint {
     }
 }
 
+struct MockPipeline;
+#[async_trait::async_trait]
+impl shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate
+    for MockPipeline
+{
+    async fn run(
+        &self,
+        _request: shared::cli_commands::taxonomy_scan_request_vo::ScanRequest,
+    ) -> Result<
+        shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
+        shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
+    > {
+        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
+            vec![],
+            vec![],
+        ))
+    }
+    async fn run_with_discovery(
+        &self,
+    ) -> Result<
+        shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
+        shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
+    > {
+        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
+            vec![],
+            vec![],
+        ))
+    }
+    fn check_orphan_single_file(
+        &self,
+        _file_path: &str,
+        _workspace_root: &str,
+    ) -> Result<Vec<LintResult>, shared::cli_commands::taxonomy_scan_report_vo::PipelineError> {
+        Ok(vec![])
+    }
+}
+
 // ─── Helper ──────────────────────────────────────────────────────────
 
 fn build_test_orchestrator() -> McpServerOrchestrator {
-    let container = mcp_server_lint_arwaky::root_mcp_container::McpContainer::new_default();
     McpServerOrchestrator::new(McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline,
-        external_lint: container.external_lint,
+        analysis_pipeline: Arc::new(MockPipeline),
+        external_lint: Arc::new(MockExternalLint),
     })
 }
 
@@ -142,7 +178,7 @@ async fn execute_command_scan_returns_success_with_report() {
     assert_eq!(parsed["status"], "success");
     assert_eq!(parsed["action"], "scan");
     assert_eq!(parsed["total_violations"], 0);
-    assert!(parsed["report"].is_string());
+    assert!(parsed["results"].is_array());
 }
 
 // ─── execute_command: scan defaults path to "." ──────────────────────
