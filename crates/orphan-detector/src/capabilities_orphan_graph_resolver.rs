@@ -501,8 +501,10 @@ impl OrphanGraphResolver {
         let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
         for (crate_name, src_dir) in crate_src_dirs {
             let mut module_map: HashMap<String, String> = HashMap::new();
-            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
-            for (_name, path_str, _is_dir) in entries {
+            let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
+            let all_files =
+                shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&canonical_src);
+            for path_str in all_files {
                 if !path_str.ends_with(".rs")
                     && !path_str.ends_with(".py")
                     && !path_str.ends_with(".ts")
@@ -510,8 +512,11 @@ impl OrphanGraphResolver {
                 {
                     continue;
                 }
-                let path = std::path::PathBuf::from(&path_str);
-                let stem = path
+                let canonical_path = match std::fs::canonicalize(&path_str) {
+                    Ok(p) => p,
+                    Err(_) => std::path::PathBuf::from(&path_str),
+                };
+                let stem = canonical_path
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or_default()
@@ -519,21 +524,32 @@ impl OrphanGraphResolver {
                 if stem.is_empty() {
                     continue;
                 }
-                module_map.insert(stem.clone(), path_str.clone());
+                let canon_str = canonical_path.to_string_lossy().to_string();
+                let rel_path = canonical_path
+                    .strip_prefix(&canonical_src)
+                    .unwrap_or(&canonical_path);
+                let rel_str = rel_path
+                    .with_extension("")
+                    .to_string_lossy()
+                    .to_string();
+                let normalized_rel = shared::orphan_detector::utility_orphan::normalize_module_path(
+                    &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
+                );
+                module_map.insert(normalized_rel, canon_str.clone());
+                module_map.insert(stem.clone(), canon_str.clone());
                 module_map.insert(
                     shared::orphan_detector::utility_orphan::normalize_module_component(&stem),
-                    path_str.clone(),
+                    canon_str.clone(),
                 );
-                // For mod.rs / __init__.py / index.ts: map by parent dir name
                 if stem == "mod" || stem == "__init__" || stem == "index" {
-                    if let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
+                    if let Some(parent_dir) = canonical_path.parent().and_then(|p| p.file_name()) {
                         let parent = parent_dir.to_string_lossy().to_string();
-                        module_map.insert(parent.clone(), path_str.clone());
+                        module_map.insert(parent.clone(), canon_str.clone());
                         module_map.insert(
                             shared::orphan_detector::utility_orphan::normalize_module_component(
                                 &parent,
                             ),
-                            path_str.clone(),
+                            canon_str.clone(),
                         );
                     }
                 }

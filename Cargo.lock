@@ -2808,6 +2808,7 @@ dependencies = [
  "once_cell",
  "regex",
  "shared-lint-arwaky",
+ "tokio",
 ]
 
 [[package]]
