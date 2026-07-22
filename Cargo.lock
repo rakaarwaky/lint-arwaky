@@ -459,7 +459,7 @@ dependencies = [
  "file_watch-lint-arwaky",
  "futures",
  "git_hooks-lint-arwaky",
- "import_rules_lint_arwaky",
+ "import_rules-lint-arwaky",
  "maintenance-lint-arwaky",
  "naming_rules-lint-arwaky",
  "orphan_detector-lint-arwaky",
@@ -2417,7 +2417,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "import_rules_lint_arwaky"
+name = "import_rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
@@ -2722,7 +2722,7 @@ dependencies = [
  "file_watch-lint-arwaky",
  "futures",
  "git_hooks-lint-arwaky",
- "import_rules_lint_arwaky",
+ "import_rules-lint-arwaky",
  "maintenance-lint-arwaky",
  "mcp_server-lint-arwaky",
  "naming_rules-lint-arwaky",
@@ -2843,7 +2843,7 @@ dependencies = [
  "dirs",
  "external_lint-lint-arwaky",
  "git_hooks-lint-arwaky",
- "import_rules_lint_arwaky",
+ "import_rules-lint-arwaky",
  "maintenance-lint-arwaky",
  "naming_rules-lint-arwaky",
  "once_cell",
@@ -4671,7 +4671,7 @@ dependencies = [
  "external_lint-lint-arwaky",
  "file_watch-lint-arwaky",
  "git_hooks-lint-arwaky",
- "import_rules_lint_arwaky",
+ "import_rules-lint-arwaky",
  "maintenance-lint-arwaky",
  "naming_rules-lint-arwaky",
  "orphan_detector-lint-arwaky",

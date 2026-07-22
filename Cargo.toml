@@ -9,7 +9,7 @@ members = ["crates/*"]
 # Workspace member crates (version required for crates.io publish)
 shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.10.106" }
 naming_rules = { package = "naming_rules-lint-arwaky", path = "crates/naming-rules", version = "1.10.106" }
-import_rules = { package = "import_rules_lint_arwaky", path = "crates/import-rules", version = "1.10.106" }
+import_rules = { package = "import_rules-lint-arwaky", path = "crates/import-rules", version = "1.10.106" }
 code_analysis = { package = "code_analysis-lint-arwaky", path = "crates/code-analysis", version = "1.10.106" }
 auto_fix = { package = "auto_fix-lint-arwaky", path = "crates/auto-fix", version = "1.10.106" }
 cli_commands = { package = "cli_commands-lint-arwaky", path = "crates/cli-commands", version = "1.10.106" }

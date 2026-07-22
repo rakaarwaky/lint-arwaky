@@ -1,5 +1,5 @@
 [package]
-name = "import_rules_lint_arwaky"
+name = "import_rules-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Import-compliance checks covering AES201–AES205: dummy/unused/forbidden/mandatory imports, layer detection, and cross-layer cycle detection."
