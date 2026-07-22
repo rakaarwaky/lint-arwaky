@@ -2,7 +2,6 @@ use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::common::utility_command_runner as proc_io;
 use shared::common::utility_file_handler;
-use shared::common::utility_file_handler;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
     McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
@@ -220,7 +219,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        utility_file_handler::write_file(filename, content).map_err(|e| SetupError::io(e.to_string()))?;
+        utility_file_handler::write_file(filename, content)
+            .map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
             filename,

@@ -66,7 +66,7 @@ pub fn some_function() {
 fn test_utility_imported_by_crate_path_should_not_flag_aes504() {
     // Test that `use crate::code_analysis::utility_target` is detected
     let content = r#"
-use crate::code_analysis::utility_target::detect_source_dir;
+use crate::code_analysis::utility_target_resolver::detect_source_dir;
 
 pub fn some_function() {
     let dir = detect_source_dir(std::path::Path::new("."));

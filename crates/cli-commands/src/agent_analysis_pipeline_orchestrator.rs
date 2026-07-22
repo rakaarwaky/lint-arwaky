@@ -194,10 +194,11 @@ impl AnalysisPipelineOrchestrator {
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
-        let source_files = match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
-            Ok(list) => list.values,
-            Err(_) => Vec::new(),
-        };
+        let source_files =
+            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         // Build context with ALL workspace files for cross-crate import resolution
         let all_workspace_files = shared::common::utility_file_handler::collect_all_source_files(

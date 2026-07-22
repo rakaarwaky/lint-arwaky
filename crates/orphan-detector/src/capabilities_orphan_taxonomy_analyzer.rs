@@ -65,9 +65,16 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        // If importers list is empty, also check for crate:: self-imports
-        if importers.is_empty() && Self::has_crate_self_import(f.value()) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        // If importers list is empty or only has mod.rs, also check for crate:: self-imports
+        // The graph resolver may not track all crate:: imports within the same crate
+        let has_only_mod_or_taxonomy = importers.iter().all(|importer| {
+            let b = importer.rsplit('/').next().unwrap_or(importer);
+            b == "mod.rs" || b.starts_with("taxonomy_")
+        });
+        if importers.is_empty() || has_only_mod_or_taxonomy {
+            if Self::has_crate_self_import(f.value()) {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+            }
         }
 
         // Check if any importer is from another layer or non-taxonomy file

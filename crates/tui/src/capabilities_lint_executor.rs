@@ -128,7 +128,8 @@ impl ILintExecutorProtocol for LintExecutor {
                     .map(|o| o.ignored_paths(&scan_root))
                     .unwrap_or_default();
                 let source_files =
-                    match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                    match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored)
+                    {
                         Ok(list) => list.values,
                         Err(e) => {
                             return LintExecutionResult::failure(format!(
@@ -259,10 +260,11 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&scan_root))
             .unwrap_or_default();
-        let source_files = match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
-            Ok(list) => list.values,
-            Err(_) => Vec::new(),
-        };
+        let source_files =
+            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         let entries =

@@ -1,7 +1,6 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_file_handler;
-use shared::common::utility_file_handler;
 
 // PURPOSE: FileAdapter — capabilities layer for file I/O operations
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
