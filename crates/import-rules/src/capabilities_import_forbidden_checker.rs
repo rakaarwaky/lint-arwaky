@@ -200,8 +200,8 @@ impl ArchImportForbiddenChecker {
                 continue;
             }
             // Use shared scope-matching utility to check if file belongs to scope
-            let Some((rule_layer_str, rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(basename, &Identity::new(&rule.scope.value))
+            let Some((rule_layer_str, _rule_suffixes)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(basename.as_str(), &Identity::new(&rule.scope.value))
             else {
                 continue;
             };
@@ -252,7 +252,7 @@ impl ArchImportForbiddenChecker {
                                 "AES201",
                                 Severity::CRITICAL,
                                 AesImportViolation::ForbiddenImport {
-                                    source_layer: LayerNameVO::new(rule_layer_str),
+                                    source_layer: LayerNameVO::new(rule_layer_str.clone()),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
                                     reason: None,

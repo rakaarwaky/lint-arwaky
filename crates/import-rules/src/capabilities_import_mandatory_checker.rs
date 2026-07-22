@@ -164,7 +164,6 @@ impl ArchImportMandatoryChecker {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = shared::common::utility_scope_matcher::extract_file_stem(basename);
 
         let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
@@ -178,8 +177,8 @@ impl ArchImportMandatoryChecker {
             }
             let scope_identity = Identity::new(&rule.scope.value);
             // Use shared utility to check if file belongs to scope
-            let Some((rule_layer_str, rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(basename, &scope_identity)
+            let Some((rule_layer_str, _rule_suffixes)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(basename.as_str(), &scope_identity)
             else {
                 continue;
             };
@@ -205,7 +204,7 @@ impl ArchImportMandatoryChecker {
                         "AES202",
                         Severity::HIGH,
                         AesImportViolation::MissingImport {
-                            source_layer: LayerNameVO::new(rule_layer_str),
+                            source_layer: LayerNameVO::new(rule_layer_str.clone()),
                             required: SymbolName::new(required.clone()),
                             reason: None,
                         }

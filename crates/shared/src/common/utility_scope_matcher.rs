@@ -2,8 +2,8 @@
 // Extracted from forbidden/mandatory checkers to eliminate duplicated
 // stem/suffix extraction and scope-membership logic.
 
-use shared::common::utility_import_resolver;
-use shared::taxonomy_layer_vo::Identity;
+use crate::import_rules::utility_import_resolver;
+use super::taxonomy_layer_vo::Identity;
 
 /// Check if a file belongs to a given scope rule based on its filename.
 ///
@@ -18,8 +18,8 @@ use shared::taxonomy_layer_vo::Identity;
 ///
 /// # Examples
 /// ```rust
-/// use shared::common::utility_scope_matcher::file_belongs_to_scope;
-/// use shared::taxonomy_layer_vo::Identity;
+/// use crate::common::utility_scope_matcher::file_belongs_to_scope;
+/// use crate::taxonomy_layer_vo::Identity;
 ///
 /// // "surfaces_auth.rs" belongs to layer "surfaces" (no suffix constraint)
 /// let result = file_belongs_to_scope("surfaces_auth.rs", &Identity::new("surfaces"));
@@ -57,7 +57,7 @@ pub fn file_belongs_to_scope(
 ///
 /// # Examples
 /// ```rust
-/// use shared::common::utility_scope_matcher::extract_file_stem;
+/// use crate::common::utility_scope_matcher::extract_file_stem;
 ///
 /// assert_eq!(extract_file_stem("surfaces_auth.rs"), "surfaces_auth");
 /// assert_eq!(extract_file_stem("mod.rs"), "mod");
@@ -74,7 +74,7 @@ pub fn extract_file_stem(basename: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use shared::common::utility_scope_matcher::extract_layer_prefix;
+/// use crate::common::utility_scope_matcher::extract_layer_prefix;
 ///
 /// assert_eq!(extract_layer_prefix("surfaces_auth"), "surfaces");
 /// assert_eq!(extract_layer_prefix("utility_parser"), "utility");
@@ -88,7 +88,7 @@ pub fn extract_layer_prefix(stem: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use shared::common::utility_scope_matcher::extract_suffix;
+/// use crate::common::utility_scope_matcher::extract_suffix;
 ///
 /// assert_eq!(extract_suffix("surfaces_auth"), "auth");
 /// assert_eq!(extract_suffix("utility_parser"), "parser");
