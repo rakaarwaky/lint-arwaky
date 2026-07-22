@@ -95,8 +95,8 @@ impl CliContainer {
             ));
 
         // Wire analysis pipeline orchestrator
-        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(crate::AnalysisPipelineOrchestrator::new(
+        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> = Arc::new(
+            crate::AnalysisPipelineOrchestrator::new(
                 code_analysis_linter.clone(),
                 naming_orchestrator.clone(),
                 import_orchestrator.clone(),
@@ -105,7 +105,9 @@ impl CliContainer {
                 orphan_orchestrator.clone(),
                 multi_project_orchestrator.clone(),
                 Format::Text,
-            ));
+            )
+            .expect("AnalysisPipelineOrchestrator::new failed — missing required dependency"),
+        );
 
         Self {
             code_analysis_linter,

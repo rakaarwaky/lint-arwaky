@@ -74,7 +74,7 @@ impl AnalysisPipelineOrchestrator {
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         format: Format,
-    ) -> Self {
+    ) -> Result<Self, String> {
         PipelineBuilder::new()
             .with_code_analysis(code_analysis_linter)
             .with_naming(naming_orchestrator)
@@ -523,29 +523,29 @@ impl PipelineBuilder {
         self
     }
 
-    pub fn build(self) -> AnalysisPipelineOrchestrator {
-        AnalysisPipelineOrchestrator {
+    pub fn build(self) -> Result<AnalysisPipelineOrchestrator, String> {
+        Ok(AnalysisPipelineOrchestrator {
             code_analysis_linter: self
                 .code_analysis_linter
-                .expect("code_analysis_linter is required"),
+                .ok_or("code_analysis_linter is required")?,
             naming_orchestrator: self
                 .naming_orchestrator
-                .expect("naming_orchestrator is required"),
+                .ok_or("naming_orchestrator is required")?,
             import_orchestrator: self
                 .import_orchestrator
-                .expect("import_orchestrator is required"),
-            external_lint: self.external_lint.expect("external_lint is required"),
+                .ok_or("import_orchestrator is required")?,
+            external_lint: self.external_lint.ok_or("external_lint is required")?,
             role_orchestrator: self
                 .role_orchestrator
-                .expect("role_orchestrator is required"),
+                .ok_or("role_orchestrator is required")?,
             orphan_orchestrator: self
                 .orphan_orchestrator
-                .expect("orphan_orchestrator is required"),
+                .ok_or("orphan_orchestrator is required")?,
             config_orchestrator: self
                 .config_orchestrator
-                .expect("config_orchestrator is required"),
-            format: self.format.expect("format is required"),
+                .ok_or("config_orchestrator is required")?,
+            format: self.format.ok_or("format is required")?,
             filter: self.filter,
-        }
+        })
     }
 }

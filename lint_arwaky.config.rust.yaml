@@ -706,14 +706,7 @@ architecture:
           "ts-expect-error",
           "pylint: disable",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "capabilities_check_bypass_checker.rs",
-          "utility_bypass.rs",
-        ]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES305:
       enabled: true
