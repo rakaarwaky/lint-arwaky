@@ -265,9 +265,15 @@ impl ILintExecutorProtocol for LintExecutor {
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(&file_strs);
-        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(entries, 10);
-        let violations = shared::code_analysis::utility_duplication::build_violations(
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
+                &file_strs,
+            );
+        let blocks =
+            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+                entries, 10,
+            );
+        let violations = shared::code_analysis::utility_code_duplication_detector::build_violations(
             &blocks,
             file_strs.len() * 100,
             10,

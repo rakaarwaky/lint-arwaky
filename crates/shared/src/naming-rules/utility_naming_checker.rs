@@ -11,6 +11,24 @@ use crate::common::utility_layer_detector;
 use crate::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
 use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 
+/// Extract the file stem using the last dot (rfind), consistent across all checkers.
+///
+/// For multi-dot filenames like `foo.spec.rs`, this returns `foo.spec`.
+/// For single-dot files like `checker.rs`, this returns `checker`.
+/// For dotfiles like `.gitignore`, the entire filename is returned.
+/// If there is no dot, the entire filename is returned.
+pub fn get_stem(filename: &str) -> Option<&str> {
+    match filename.rfind('.') {
+        Some(pos) if pos > 0 => Some(&filename[..pos]),
+        _ => Some(filename),
+    }
+}
+
+/// Extract the suffix (word after the last underscore) from a stem.
+pub fn get_suffix(stem: &str) -> Option<&str> {
+    stem.rfind('_').map(|pos| &stem[pos + 1..])
+}
+
 pub fn layer_keys(layer_map: &LayerMapVO) -> Vec<String> {
     layer_map.values.keys().map(|k| k.to_string()).collect()
 }

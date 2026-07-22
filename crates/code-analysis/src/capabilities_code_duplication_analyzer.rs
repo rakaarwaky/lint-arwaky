@@ -109,13 +109,15 @@ impl CodeDuplicationAnalyzer {
         files: &[String],
         min_dup_lines: usize,
     ) -> Vec<AesCodeAnalysisViolation> {
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(files);
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
-        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(
-            entries,
-            min_dup_lines,
-        );
-        shared::code_analysis::utility_duplication::build_violations(
+        let blocks =
+            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+                entries,
+                min_dup_lines,
+            );
+        shared::code_analysis::utility_code_duplication_detector::build_violations(
             &blocks,
             total_loc,
             min_dup_lines,
@@ -161,7 +163,8 @@ impl CodeDuplicationAnalyzer {
             let mut file_hashes: HashSet<u64> = HashSet::new();
             for w in lines.windows(min_dup_lines) {
                 // P2.1: normalize once — cache hash for second pass
-                let key = shared::code_analysis::utility_duplication::normalize_window(w);
+                let key =
+                    shared::code_analysis::utility_code_duplication_detector::normalize_window(w);
                 let id = hash_key(&key);
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);
@@ -260,7 +263,8 @@ impl CodeDuplicationAnalyzer {
         min_dup_lines: usize,
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(files);
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
         self.check_file_similarity_entries(
             &entries
                 .iter()
