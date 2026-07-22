@@ -101,23 +101,4 @@ impl NamingOrchestrator {
             ignored_patterns,
         }
     }
-
-    #[allow(dead_code)]
-    fn filter_source_files(
-        files: &shared::common::taxonomy_paths_vo::FilePathList,
-    ) -> shared::common::taxonomy_paths_vo::FilePathList {
-        let filtered: Vec<FilePath> = files
-            .values
-            .iter()
-            .filter(|f| {
-                let path = Path::new(&f.value);
-                path.extension()
-                    .and_then(|e| e.to_str())
-                    .map(|ext| SOURCE_EXTENSIONS.contains(&ext))
-                    .unwrap_or(false)
-            })
-            .cloned()
-            .collect();
-        shared::common::taxonomy_paths_vo::FilePathList::new(filtered)
-    }
 }

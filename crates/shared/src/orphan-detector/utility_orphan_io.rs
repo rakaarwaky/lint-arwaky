@@ -2,26 +2,14 @@
 use crate::common::utility_file;
 use std::path::Path;
 
-/// Outcome of reading a file — either content or diagnostic info.
-pub enum FileReadOutcome {
-    Content(String),
-    Unreadable { path: String, reason: String },
-}
-
 /// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
     utility_file::read_file_safe(path)
 }
 
 /// Read file with diagnostic info — returns content or error details.
-pub fn read_file_with_diagnostic(path: &str) -> FileReadOutcome {
-    match std::fs::read_to_string(path) {
-        Ok(content) => FileReadOutcome::Content(content),
-        Err(err) => FileReadOutcome::Unreadable {
-            path: path.to_string(),
-            reason: err.to_string(),
-        },
-    }
+pub fn read_file_with_diagnostic(path: &str) -> Result<String, String> {
+    std::fs::read_to_string(path).map_err(|err| format!("{}: {}", path, err))
 }
 
 /// List directory entries, skipping hidden files (starting with '.').
