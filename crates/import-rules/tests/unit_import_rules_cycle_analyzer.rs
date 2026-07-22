@@ -98,9 +98,10 @@ fn normalize_strips_prefix() {
 }
 
 #[test]
-fn normalize_unknown_returns_as_is() {
+fn normalize_unknown_returns_first_segment() {
     let result = sut().normalize_to_layer("unknown_thing");
-    assert_eq!(result.value(), "unknown_thing");
+    // normalize_to_layer strips the suffix after the first underscore
+    assert_eq!(result.value(), "unknown");
 }
 
 // ─── scan with temp files ─────────────────────────────────

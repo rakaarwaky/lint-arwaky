@@ -105,19 +105,30 @@ async fn clean_project_produces_zero_violations() {
         "pub struct Foo {\n    pub value: String,\n}\n",
     );
 
-    // Capabilities file — imports contract
+    // Capabilities file — imports contract with real logic
     write_temp_rs(
         dir.path(),
         "capabilities_foo_checker.rs",
         r#"
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 
 pub struct FooChecker;
 
 impl IUnusedImportProtocol for FooChecker {
-    fn find_unused_imports(&self, _p: &FilePath) -> Vec<shared::common::taxonomy_message_vo::LintMessage> { vec![] }
-    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>) {}
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+        let content = std::fs::read_to_string(path.value()).unwrap_or_default();
+        if content.is_empty() { return vec![]; }
+        vec![LintMessage::new("scanned")]
+    }
+    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+        if content.contains("unused") {
+            v.push(LintResult::new_arch(file, 1, "AES203",
+                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM, "unused import"));
+        }
+    }
 }
 "#,
     );
