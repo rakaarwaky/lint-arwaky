@@ -263,6 +263,7 @@ impl DummyImportChecker {
                     match lang {
                         LanguageVO::Rust => {
                             t.contains("use shared::taxonomy_")
+                                || t.contains("use shared::common::taxonomy_")
                                 || t.contains("use crate::common::taxonomy_")
                                 || t.contains("use crate::taxonomy_")
                         }
@@ -292,6 +293,7 @@ impl DummyImportChecker {
                 match lang {
                     LanguageVO::Rust => {
                         t.contains("use shared::taxonomy_")
+                            || t.contains("use shared::common::taxonomy_")
                             || t.contains("use crate::common::taxonomy_")
                             || t.contains("use crate::taxonomy_")
                     }

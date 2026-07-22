@@ -129,6 +129,11 @@ pub fn symbol_used_real(
             continue;
         }
 
+        // If the symbol only appears inside string literals, it's not real usage
+        if is_symbol_only_in_strings(trimmed, symbol) {
+            continue;
+        }
+
         if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
             if let Some(trait_name) = impl_trait_name(trimmed) {
                 if dummy_impl_traits.contains(&trait_name) {
@@ -175,6 +180,119 @@ pub fn contains_ident(haystack: &str, needle: &str) -> bool {
     }
 
     false
+}
+
+/// Check if all occurrences of `needle` in `haystack` appear strictly inside
+/// double-quoted string literals. Returns true when the symbol is never used
+/// as a code identifier (only inside strings, comments, or doc lines).
+pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() || !haystack.contains(needle) {
+        return false;
+    }
+
+    let mut start = 0usize;
+    let mut found_anywhere = false;
+
+    while let Some(pos) = haystack[start..].find(needle) {
+        let abs = start + pos;
+
+        // Determine which string literal (if any) this occurrence falls inside.
+        // We scan backwards from `abs` to find the opening quote that is not
+        // escaped and not inside a comment.
+        let opening_quote = match find_enclosing_string_start(haystack, abs) {
+            Some(q) => q,
+            None => return false, // not inside a string — real usage
+        };
+
+        // Verify the quote is an actual string delimiter (not escaped)
+        let before_quote = &haystack[..opening_quote];
+        let backslash_count = before_quote
+            .chars()
+            .rev()
+            .take_while(|c| *c == '\\')
+            .count();
+        if backslash_count % 2 != 0 {
+            // Quote is escaped — treat as real usage
+            return false;
+        }
+
+        // Check if this is a comment line (starts with //, #, or /*)
+        let line_start = find_line_start(haystack, abs);
+        let line_prefix = &haystack[line_start..abs];
+        if line_prefix.trim().starts_with("//")
+            || line_prefix.trim().starts_with("///")
+            || line_prefix.trim().starts_with("#")
+            || line_prefix.trim().ends_with("/*")
+        {
+            // Inside a comment — skip, not real usage
+            start = abs + needle.len();
+            found_anywhere = true;
+            continue;
+        }
+
+        // It's inside a string literal — skip, not real usage
+        start = abs + needle.len();
+        found_anywhere = true;
+    }
+
+    // If we never found the symbol outside strings/comments, return true
+    found_anywhere
+}
+
+/// Find the position of the opening double-quote that encloses the character
+/// at `pos`. Returns None if `pos` is not inside a string literal.
+fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut in_string = false;
+    let mut string_start = 0usize;
+    let mut i = 0usize;
+
+    while i <= pos {
+        if i >= haystack.len() {
+            break;
+        }
+        let ch = haystack[i..].chars().next()?;
+        let ch_len = ch.len_utf8();
+
+        if in_string {
+            if ch == '"' && i > string_start {
+                // Check not escaped
+                let before = &haystack[..i];
+                let bs = before.chars().rev().take_while(|c| *c == '\\').count();
+                if bs % 2 == 0 {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 {
+                        in_string = false;
+                    }
+                }
+            }
+        } else if ch == '"' {
+            // Check not escaped
+            let before = &haystack[..i];
+            let bs = before.chars().rev().take_while(|c| *c == '\\').count();
+            if bs % 2 == 0 {
+                in_string = true;
+                string_start = i;
+                depth += 1;
+            }
+        }
+
+        if in_string && i == pos {
+            return Some(string_start);
+        }
+
+        i += ch_len;
+    }
+
+    None
+}
+
+/// Find the start of the line containing position `pos`.
+fn find_line_start(haystack: &str, pos: usize) -> usize {
+    haystack[..pos]
+        .rfind('\n')
+        .map(|n| n + 1)
+        .unwrap_or(0)
 }
 
 /// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function

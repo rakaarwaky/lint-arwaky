@@ -35,6 +35,10 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
+        // Pre-compute layer_keys once per audit run (was previously per-file)
+        let layer_keys: Vec<String> =
+            layer_map.values.keys().map(|k| k.to_string()).collect();
+
         for f in &files.values {
             let f_str = f.to_string();
             let basename = f.basename();
@@ -49,7 +53,6 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                 continue;
             }
 
-            let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
             let filename = utility_layer_detector::extract_filename(&f_str);
             if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
                 let specialized = utility_layer_detector::resolve_specialized_layer(
@@ -182,11 +185,6 @@ impl ArchImportForbiddenChecker {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = basename
-            .rsplit('.')
-            .next_back()
-            .map_or(basename.as_str(), |s| s);
-        let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
         let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
@@ -201,16 +199,12 @@ impl ArchImportForbiddenChecker {
             if rule.exceptions.values.contains(&basename.to_string()) {
                 continue;
             }
-            let scope_identity = Identity::new(&rule.scope.value);
-            let (rule_layer, rule_suffixes) =
-                utility_import_resolver::resolve_scope(&scope_identity);
-            let rule_layer_str = rule_layer.value();
-            if !stem.starts_with(&format!("{}_", rule_layer_str)) {
+            // Use shared scope-matching utility to check if file belongs to scope
+            let Some((rule_layer_str, rule_suffixes)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(basename, &Identity::new(&rule.scope.value))
+            else {
                 continue;
-            }
-            if !rule_suffixes.is_empty() && !rule_suffixes.iter().any(|s| s.value() == suffix) {
-                continue;
-            }
+            };
 
             for (line_num, line) in &import_lines {
                 if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
@@ -258,7 +252,7 @@ impl ArchImportForbiddenChecker {
                                 "AES201",
                                 Severity::CRITICAL,
                                 AesImportViolation::ForbiddenImport {
-                                    source_layer: rule_layer.clone(),
+                                    source_layer: Identity::new(rule_layer_str).into(),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
                                     reason: None,

@@ -434,8 +434,8 @@ if $PUBLISH; then
     # Crates in dependency order (leaf → root)
     PUBLISH_CRATES=(
       "shared-lint-arwaky"
-      "import_rules-lint-arwaky"
-      "naming_rules-lint-arwaky"
+      "import_rules_lint_arwaky"
+      "naming_rules_lint_arwaky"
       "code_analysis-lint-arwaky"
       "config_system-lint-arwaky"
       "external_lint-lint-arwaky"
