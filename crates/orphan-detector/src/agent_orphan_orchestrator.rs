@@ -1,10 +1,10 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;

@@ -1,7 +1,7 @@
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_file;
 use shared::common::utility_layer_detector;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;

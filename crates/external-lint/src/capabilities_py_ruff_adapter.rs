@@ -3,11 +3,11 @@ use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;

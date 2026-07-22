@@ -11,6 +11,7 @@
 //
 // The orchestrator itself contains no git logic — it's pure composition.
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -18,7 +19,6 @@ use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::common::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

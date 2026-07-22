@@ -10,9 +10,9 @@
 //   - diagnose_toolchain: check Rust/Python/Node.js toolchain versions
 //
 // This is the least "lint-like" crate — it handles ops, not code quality.
+use shared::common::taxonomy_action_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_action_vo::JobId;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{

@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_file;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;

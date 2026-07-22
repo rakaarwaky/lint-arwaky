@@ -1,6 +1,6 @@
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_file;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;

@@ -8,7 +8,6 @@
 use std::borrow::Cow;
 
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
@@ -20,6 +19,7 @@ use shared::code_analysis::utility_bypass::{
 };
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_severity_vo::Severity;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct BypassChecker {

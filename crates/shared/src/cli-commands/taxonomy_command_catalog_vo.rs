@@ -1,8 +1,8 @@
 // PURPOSE: CommandCatalogVO — single source of truth for CLI command catalog
 // Consolidates: taxonomy_catalog_constant, taxonomy_metadata_vo, taxonomy_command_catalog_vo
+use crate::common::taxonomy_action_vo::ActionName;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 use crate::common::taxonomy_suggestion_vo::Suggestion;
-use crate::common::taxonomy_action_vo::ActionName;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

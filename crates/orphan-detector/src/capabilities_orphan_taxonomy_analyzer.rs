@@ -1,8 +1,8 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::file_stem;
@@ -65,7 +65,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        // Check if any importer is from another layer (contract, capabilities, agent, utility, surface)
+        // Check if any importer is from another layer (contract, capabilities, agent, utility, surface, root)
         let has_other_layer_importer = importers.iter().any(|importer| {
             importer.split('/').next_back().is_some_and(|b| {
                 b.starts_with("contract_")
@@ -73,6 +73,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     || b.starts_with("agent_")
                     || b.starts_with("utility_")
                     || b.starts_with("surface_")
+                    || b.starts_with("root_")
             })
         });
 
