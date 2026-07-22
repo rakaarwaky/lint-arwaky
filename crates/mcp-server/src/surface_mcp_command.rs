@@ -63,12 +63,12 @@ impl LintArwakyMcpServer {
     #[tool(
         description = "Read SKILL.md documentation by section. Searches several candidate locations."
     )]
-    async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
+    pub async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
         self.agent.read_skill(args).await
     }
 
     #[tool(description = "Check system health: adapters and system state.")]
-    async fn health_check(&self) -> String {
+    pub async fn health_check(&self) -> String {
         let mut adapters = Vec::new();
         for (name, lang) in &[
             ("ruff", "python"),
