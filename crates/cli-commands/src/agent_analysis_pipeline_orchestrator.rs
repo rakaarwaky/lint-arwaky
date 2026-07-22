@@ -199,8 +199,12 @@ impl AnalysisPipelineOrchestrator {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        // Build context once, use for all calls
+        let context = self
+            .orphan_orchestrator
+            .build_orphan_graph_context(&file_strs, orphan_scan_root);
         self.orphan_orchestrator
-            .check_orphans(&file_strs, orphan_scan_root)
+            .check_orphans_with_context(&file_strs, orphan_scan_root, &context)
     }
 
     /// Filter results to the target path and return formatted output string.
@@ -283,10 +287,17 @@ impl AnalysisPipelineOrchestrator {
             }
         };
 
-        // Run orphan detection once across all workspace members
-        let orphan_results_all = self
+        // Build graph context ONCE with all workspace files (avoids rebuilding per call)
+        let orphan_context = self
             .orphan_orchestrator
-            .check_orphans(&all_source_files, scan_root.to_str().unwrap_or("."));
+            .build_orphan_graph_context(&all_source_files, scan_root.to_str().unwrap_or("."));
+
+        // Run orphan detection once across all workspace members using pre-built context
+        let orphan_results_all = self.orphan_orchestrator.check_orphans_with_context(
+            &all_source_files,
+            scan_root.to_str().unwrap_or("."),
+            &orphan_context,
+        );
 
         for ws in &workspaces {
             let mut all_results = Vec::new();
@@ -424,10 +435,15 @@ impl AnalysisPipelineOrchestrator {
             cwd.join(file_path).to_string_lossy().to_string()
         };
 
-        // Run orphan detection with workspace root
-        let all_results = self
+        // Run orphan detection with workspace root using pre-built context
+        let context = self
             .orphan_orchestrator
-            .check_orphans(&all_files, &scan_root.to_string_lossy());
+            .build_orphan_graph_context(&all_files, &scan_root.to_string_lossy());
+        let all_results = self.orphan_orchestrator.check_orphans_with_context(
+            &all_files,
+            &scan_root.to_string_lossy(),
+            &context,
+        );
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();

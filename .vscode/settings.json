@@ -1,0 +1,12 @@
+{
+  "rust-analyzer.check.extraArgs": ["--lib"],
+  "rust-analyzer.check.command": "check",
+  "rust-analyzer.diagnostics.enabled": true,
+  "rust-analyzer.diagnostics.exclude": [
+    "**/*_test.rs",
+    "**/tests/**/*.rs"
+  ],
+  "files.exclude": {
+    "**/tests": true
+  }
+}
