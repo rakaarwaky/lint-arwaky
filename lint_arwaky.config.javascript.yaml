@@ -27,7 +27,6 @@ ignored_paths:
   - "/.tsbuildinfo"
   - "/.next"
   - "/coverage"
-  - "/test-workspaces"
   - "/tests"
 
 architecture:

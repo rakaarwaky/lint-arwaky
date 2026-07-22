@@ -24,7 +24,6 @@ ignored_paths:
   - "/.opencode"
   - "/.mimocode"
   - "/.jj"
-  - "/test-workspaces"
   - "/scripts"
   - ".min.js"
   - ".min.css"

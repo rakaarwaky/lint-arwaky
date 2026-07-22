@@ -158,7 +158,6 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     fn ignored_paths(&self, project_root: &str) -> Vec<String> {
         let mut ignored: Vec<String> = vec![
             "target".to_string(),
-            "test-workspaces".to_string(),
             ".mimocode".to_string(),
             ".agents".to_string(),
             "node_modules".to_string(),
