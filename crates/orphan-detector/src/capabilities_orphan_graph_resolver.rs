@@ -583,14 +583,6 @@ impl OrphanGraphResolver {
                             }
                         }
                     }
-                    // Debug: check if path was resolved
-                    if segments
-                        .last()
-                        .map(|s| module_to_file.get(*s).is_none())
-                        .unwrap_or(true)
-                    {
-                        eprintln!("[DEBUG REEXPORT] '{}' path='{}' NOT resolved", f, path);
-                    }
                 }
             }
 

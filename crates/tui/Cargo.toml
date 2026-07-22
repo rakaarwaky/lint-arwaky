@@ -32,3 +32,10 @@ cli_commands.workspace = true
 
 [dev-dependencies]
 async-trait.workspace = true
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+
+[[bench]]
+name = "bench_tui_throughput"
+path = "benches/bench_tui_throughput.rs"
+harness = false

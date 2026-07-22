@@ -135,3 +135,138 @@ async fn fr001_diagnostic_includes_file_path() {
         panic!("FR-001: expected AES201 violation");
     }
 }
+
+// ─── Multi-language: Python ────────────────────────────────
+
+/// FR-001: Python taxonomy file importing from capabilities emits AES201
+#[tokio::test]
+async fn fr001_python_taxonomy_importing_capabilities_emits_aes201() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "taxonomy_vo.py",
+        "from capabilities_checker import Checker\n\nclass V:\n    pass\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES201"),
+        "FR-001: Python taxonomy importing capabilities must emit AES201"
+    );
+}
+
+// ─── Multi-language: JavaScript/TypeScript ─────────────────
+
+/// FR-001: TypeScript taxonomy file importing from agent emits AES201
+#[tokio::test]
+async fn fr001_typescript_taxonomy_importing_agent_emits_aes201() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "taxonomy_vo.ts",
+        "import { Orchestrator } from '../agent/orchestrator';\nexport interface V {}\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES201"),
+        "FR-001: TypeScript taxonomy importing agent must emit AES201"
+    );
+}
+
+// ─── Negative: Conditional imports ─────────────────────────
+
+/// FR-001: #[cfg(test)] import block should NOT emit AES201
+#[tokio::test]
+async fn fr001_cfg_test_import_not_flagged() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "taxonomy_cfg_vo.rs",
+        "#[cfg(test)]\nuse crate::capabilities_test_helper::Helper;\npub struct V;\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    // The #[cfg(test)] block should be skipped, so no AES201 from that import
+    let cfg_violations: Vec<_> = results
+        .iter()
+        .filter(|v| v.code.code() == "AES201" && v.file.value().contains("taxonomy_cfg_vo.rs"))
+        .collect();
+    assert!(
+        cfg_violations.is_empty(),
+        "FR-001: #[cfg(test)] import should not emit AES201"
+    );
+}
+
+/// FR-001: #[cfg(feature = "x")] import block should NOT emit AES201
+#[tokio::test]
+async fn fr001_cfg_feature_import_not_flagged() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "taxonomy_feature_vo.rs",
+        "#[cfg(feature = \"testing\")]\nuse crate::capabilities_test_helper::Helper;\npub struct V;\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let cfg_violations: Vec<_> = results
+        .iter()
+        .filter(|v| v.code.code() == "AES201" && v.file.value().contains("taxonomy_feature_vo.rs"))
+        .collect();
+    assert!(
+        cfg_violations.is_empty(),
+        "FR-001: #[cfg(feature)] import should not emit AES201"
+    );
+}
+
+// ─── Negative: Exception handling ──────────────────────────
+
+/// FR-001: File in exceptions list should skip AES201 check
+#[tokio::test]
+async fn fr001_excepted_file_skips_check() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "taxonomy_excepted_vo.rs",
+        "use crate::capabilities_checker::Checker;\npub struct V;\n",
+    );
+
+    let mut config = fr001_config();
+    config.rules.push(
+        shared::config_system::taxonomy_config_vo::ArchitectureRule {
+            name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("AES201".to_string()),
+            exceptions: PatternList::new(vec!["taxonomy_excepted_vo.rs".to_string()]),
+            ..Default::default()
+        },
+    );
+
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let excepted_violations: Vec<_> = results
+        .iter()
+        .filter(|v| v.code.code() == "AES201" && v.file.value().contains("taxonomy_excepted_vo.rs"))
+        .collect();
+    assert!(
+        excepted_violations.is_empty(),
+        "FR-001: excepted file should not produce AES201 violations"
+    );
+}

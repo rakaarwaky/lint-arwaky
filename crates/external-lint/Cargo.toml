@@ -28,3 +28,8 @@ toml.workspace = true
 criterion = { version = "0.5", features = ["html_reports"] }
 tempfile = "3"
 tokio.workspace = true
+
+[[bench]]
+name = "bench_external_lint_selector"
+path = "benches/bench_external_lint_selector.rs"
+harness = false

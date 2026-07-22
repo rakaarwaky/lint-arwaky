@@ -58,7 +58,7 @@ fn bench_unused_import_check(c: &mut Criterion) {
     let mut group = c.benchmark_group("unused_import_check");
 
     for file_count in [10, 100, 1000] {
-        let contents: Vec<String> = (0..file_count).map(|i| generate_clean_content(i)).collect();
+        let contents: Vec<String> = (0..file_count).map(generate_clean_content).collect();
 
         group.bench_with_input(
             BenchmarkId::new("clean_files", file_count),
@@ -161,3 +161,36 @@ criterion_group!(
     bench_full_orchestrator,
 );
 criterion_main!(benches);
+
+// ─── Performance Assertion Test ────────────────────────────
+// This is a regular #[test] (not a criterion benchmark) that validates
+// the FRD non-functional requirement: 1000 files in < 2 seconds.
+
+#[test]
+fn perf_1000_files_under_2_seconds() {
+    let dir = tempfile::tempdir().unwrap();
+    for i in 0..1000 {
+        let path = dir.path().join(format!("taxonomy_perf_{}_vo.rs", i));
+        std::fs::write(&path, generate_clean_content(i)).unwrap();
+    }
+
+    let config = ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let start = std::time::Instant::now();
+    let results = rt.block_on(async { orch.run_audit(&target).await.unwrap() });
+    let elapsed = start.elapsed();
+
+    assert!(
+        elapsed.as_secs_f64() < 2.0,
+        "FRD NFR: 1000 files must be checked in < 2 seconds, took {:.2}s",
+        elapsed.as_secs_f64()
+    );
+
+    // Verify the audit actually ran (results may be empty if no violations, that's fine)
+    // The key assertion is the timing, not the violation count.
+    let _ = results;
+}

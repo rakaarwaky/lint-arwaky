@@ -18,8 +18,8 @@ use std::sync::Arc;
 
 // ─── Mock Implementations ────────────────────────────────────────────
 
-struct MockCodeAnalysis;
-impl ICodeAnalysisAggregate for MockCodeAnalysis {
+struct _MockCodeAnalysis;
+impl ICodeAnalysisAggregate for _MockCodeAnalysis {
     fn run_code_analysis(&self, _project_root: &FilePath) -> LintResultList {
         LintResultList::new(vec![])
     }

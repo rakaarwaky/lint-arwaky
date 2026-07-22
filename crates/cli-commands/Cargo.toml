@@ -49,5 +49,5 @@ tokio.workspace = true
 
 [[bench]]
 name = "bench_cli_commands_formatting"
-path = "tests/bench_cli_commands_formatting.rs"
+path = "benches/bench_cli_commands_formatting.rs"
 harness = false

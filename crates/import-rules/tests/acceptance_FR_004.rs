@@ -122,3 +122,49 @@ impl IUnusedImportProtocol for RealChecker {
         "FR-004: real implementation must not emit AES204"
     );
 }
+
+// ─── Multi-language: Python ────────────────────────────────
+
+/// FR-004: Python dummy function detected with AES204
+#[tokio::test]
+async fn fr004_python_dummy_function_emits_aes204() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "capabilities_dummy.py",
+        "from shared.taxonomy_path_vo import FilePath\n\ndef _use_mandatory_imports():\n    _ = FilePath('x')\n\ndef real_logic():\n    print('working')\n",
+    );
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES204"),
+        "FR-004: Python dummy function must emit AES204"
+    );
+}
+
+// ─── Multi-language: JavaScript/TypeScript ─────────────────
+
+/// FR-004: TypeScript dummy function detected with AES204
+#[tokio::test]
+async fn fr004_typescript_dummy_function_emits_aes204() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "capabilities_dummy.ts",
+        "function _useMandatoryImports(): void {\n    const x = 'dummy';\n}\n\nexport function realLogic(): void {\n    console.log('working');\n}\n",
+    );
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES204"),
+        "FR-004: TypeScript dummy function must emit AES204"
+    );
+}

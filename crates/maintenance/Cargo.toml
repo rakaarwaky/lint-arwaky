@@ -23,5 +23,5 @@ tokio.workspace = true
 
 [[bench]]
 name = "bench_maintenance_throughput"
-path = "tests/bench_maintenance_throughput.rs"
+path = "benches/bench_maintenance_throughput.rs"
 harness = false

@@ -29,5 +29,5 @@ tokio.workspace = true
 
 [[bench]]
 name = "bench_config_system"
-path = "tests/bench_config_system.rs"
+path = "benches/bench_config_system.rs"
 harness = false

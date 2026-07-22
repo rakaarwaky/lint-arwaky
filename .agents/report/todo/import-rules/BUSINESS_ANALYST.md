@@ -2,7 +2,7 @@
 
 ## Summary
 
-The import-rules crate (import-rules-lint-arwaky) is **well-structured and largely complete**, with all 5 functional requirements (FR-001 through FR-005) mapped to their corresponding capability implementations and acceptance tests. The AES architecture follows the 7-layer pattern cleanly: root container wires 5 capabilities + 1 agent orchestrator, all using contract protocols. The main concerns are **overly ambitious non-functional claims** ("zero false positives", "1000 files in <2 seconds") that lack empirical validation, and a **regex-based parser limitation** acknowledged in the FRD but not mitigated with fallback strategies. Test coverage is adequate for happy paths but lacks negative test scenarios (e.g., multi-language edge cases, conditional imports, wildcard imports).
+The import-rules crate (import-rules-lint-arwaky) is **well-structured and largely complete**, with all 5 functional requirements (FR-001 through FR-005) mapped to their corresponding capability implementations and acceptance tests. The AES architecture follows the 7-layer pattern cleanly: root container wires 5 capabilities + 1 agent orchestrator, all using contract protocols. The NFR section contains **current targets** (not aspirational goals): zero false positives and 1000-file performance benchmarks must be achieved immediately. The regex-based parsing limitation requires immediate remediation — no future AST parser plan, the regex implementation must handle ALL import patterns right now. Test coverage needs expansion to multi-language (Rust, Python, JS, TS) and negative scenarios.
 
 ## Findings by Category
 
@@ -10,9 +10,9 @@ The import-rules crate (import-rules-lint-arwaky) is **well-structured and large
 
 | #   | Severity    | Issue                                                                                              | Location         | Recommendation                                                       |
 | --- | ----------- | -------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------------------------------- |
-| 1   | 🟡 WARNING  | FRD claims "Import statements are parsed via regex (not AST)" — regex cannot handle all import patterns (e.g., conditional `#[cfg]` imports, macro-generated imports, multi-line imports) | FRD.md FR-001–FR-005 | Document known limitations and add AST-based parser as future enhancement; or add a "known limitation" section |
-| 2   | 🟡 WARNING  | Non-functional requirement "Accuracy: Zero false positives for valid imports" is unmeasurable and unrealistic given regex parsing | FRD.md Non-functional Requirements | Revise to "Zero known false positives for supported import patterns" or define measurable threshold (e.g., 99.5%) |
-| 3   | 🟡 WARNING  | Performance claim "Check 1000 files in < 2 seconds" has no benchmark evidence in the test suite | FRD.md Non-functional Requirements | Add benchmark test covering 1000-file scenario; or remove claim until validated |
+| 1   | 🔴 CRITICAL  | FRD acknowledges "Import statements are parsed via regex (not AST)" — regex MUST handle ALL import patterns NOW: conditional `#[cfg]` imports, macro-generated imports, multi-line imports, trailing commas, wildcard re-exports | FRD.md FR-001–FR-005 | Immediately expand utility_import_resolver and utility_import_symbol_extractor to cover every supported import pattern — no future AST parser plan, this is a current requirement |
+| 2   | 🔴 CRITICAL  | Non-functional requirement "Accuracy: Zero false positives for valid imports" must be achieved NOW — regex parsing cannot guarantee this without comprehensive pattern coverage | FRD.md Non-functional Requirements | Immediately expand utility_import_resolver and utility_import_symbol_extractor to handle ALL import patterns (multi-line, conditional cfg, wildcard, re-exports, trailing commas) |
+| 3   | 🔴 CRITICAL  | Performance claim "Check 1000 files in < 2 seconds" must be achieved NOW — no benchmark evidence exists in the test suite | FRD.md Non-functional Requirements | Add benchmark test covering 1000-file scenario AND optimize regex patterns to meet target immediately |
 | 4   | 🟢 INFO     | FR-004 (Dummy Import) scope is broader than other FRs — it checks dummy imports, dummy functions, dummy impls, taxonomy intent, AND surface logic. This may exceed the "import rules" crate scope | FRD.md FR-004 | Consider splitting into two crates: import-rules (AES201–203, 205) and quality-rules (AES204 dummy/quality checks) |
 | 5   | 🟢 INFO     | Edge case "Conditional imports, feature flags" in FR-004 is mentioned but not addressed in implementation or tests | FRD.md FR-004 | Add test for `#[cfg(test)]` and `#[cfg(feature = "...")]` imports |
 
@@ -70,11 +70,12 @@ The import-rules crate (import-rules-lint-arwaky) is **well-structured and large
 
 ## Action Items
 
-- [ ] **HIGH** Revise non-functional requirements to replace "zero false positives" and "1000 files in <2 seconds" with measurable, evidence-based claims
-- [ ] **HIGH** Add multi-language test fixtures (Python, JS/TS) for FR-001 through FR-004 acceptance tests
-- [ ] **MEDIUM** Document known regex parsing limitations in FRD.md and consider adding AST-based parser as a future enhancement
+- [ ] **🔴 CRITICAL** Expand `utility_import_resolver` and `utility_import_symbol_extractor` to handle ALL import patterns NOW: multi-line imports, conditional `#[cfg]`, wildcard imports, trailing commas, re-exports — regex MUST achieve zero false positives immediately
+- [ ] **🔴 CRITICAL** Add benchmark test covering 1000-file scenario AND optimize regex patterns to meet the <2 second target immediately
+- [ ] **HIGH** Add multi-language test fixtures (Python, JS/TS) for FR-001 through FR-004 acceptance tests (~20 new test cases across 4 languages)
 - [ ] **MEDIUM** Add integration test for FR-005 that creates real files across layers and verifies cycle detection at the orchestrator level
-- [ ] **LOW** Consider splitting FR-004 (Dummy Import) into a separate crate if scope continues to expand beyond import-specific checks
+- [ ] **MEDIUM** Add negative test scenarios: exception handling (FR-001, FR-002), conditional imports (`#[cfg(test)]`, `#[cfg(feature)]`), wildcard imports
+- [ ] **LOW** Keep FR-004 (Dummy Import) in import-rules — all AES204 checks stay together since they're related to import quality
 - [ ] **LOW** Add benchmark baseline and performance regression threshold
 
 ## Gap Analysis Table
@@ -82,11 +83,11 @@ The import-rules crate (import-rules-lint-arwaky) is **well-structured and large
 | Current State                                                    | Issue                                      | Recommendation                                           | Priority |
 | ---------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------------- | -------- |
 | 5 acceptance tests covering happy paths only                     | No negative test scenarios (exceptions, edge cases) | Add exception handling tests for FR-001, FR-002          | HIGH     |
-| Regex-based import parsing                                       | Cannot handle complex/multi-line imports   | Document limitation; plan AST parser enhancement         | MEDIUM   |
-| Non-functional claims unverified                                 | "Zero false positives" and performance targets unvalidated | Run benchmarks, publish results, revise FRD              | HIGH     |
-| Single-language test fixtures (Rust only)                        | Python/JS/TS import patterns not tested    | Add multi-language test files for each FR                | MEDIUM   |
-| DummyImportChecker scope expanding beyond imports                | Checks dummy functions, impls, surface logic | Evaluate if scope fits "import-rules" or needs separate crate | LOW      |
-| No YAML schema documentation                                     | Consumers cannot see expected config format | Add FRD appendix with example YAML config                | LOW      |
+| Regex-based import parsing                                       | Cannot handle complex/multi-line imports   | Immediately expand regex to handle ALL patterns — zero false positives NOW | CRITICAL |
+| Non-functional targets unverified                                | "Zero false positives" and performance targets unvalidated | Run benchmarks immediately, validate against FRD goals     | CRITICAL |
+| Single-language test fixtures (Rust only)                        | Python/JS/TS import patterns not tested    | Add multi-language test files for each FR (4 languages)    | HIGH     |
+| DummyImportChecker scope expanding beyond imports                | Checks dummy functions, impls, surface logic | Keep in import-rules — all AES204 checks stay together     | LOW      |
+| No YAML schema documentation                                     | Consumers cannot see expected config format | Add FRD appendix with example YAML config                  | LOW      |
 
 ## Traceability Matrix (FRD ↔ Tests ↔ Code)
 
@@ -108,9 +109,11 @@ The import-rules crate (import-rules-lint-arwaky) is **well-structured and large
 - All 5 FRs have corresponding implementations and acceptance tests
 - Good protocol-based abstraction — capabilities are swappable
 - Comprehensive dummy import detection (imports, functions, impls, taxonomy intent, surface logic)
+- FR-004 scope confirmed to stay in import-rules (all AES204 checks together)
 
 **Areas for Improvement:**
-- Multi-language test coverage (currently Rust-only)
-- Non-functional requirements need empirical validation
-- Regex parsing limitation should be documented with mitigation plan
-- Acceptance tests lack negative scenarios and edge cases
+- 🔴 **CRITICAL**: Regex parsing must handle ALL import patterns NOW — zero false positives is a current target, not aspirational
+- 🔴 **CRITICAL**: Performance benchmark (1000 files in <2 seconds) must be validated immediately
+- HIGH: Multi-language test coverage needed (Rust, Python, JS, TS — all 4 languages)
+- MEDIUM: Negative test scenarios missing (exception handling, conditional imports, wildcard imports)
+- LOW: YAML schema documentation for consumers

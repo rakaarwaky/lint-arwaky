@@ -1,15 +1,36 @@
 ---
 name: create-test-rust
-description: "Generates contract, unit, integration, E2E, acceptance, smoke, and benchmark test suites for Rust crates and applications. All tests live flat in tests/ using filename prefixes as virtual subfolders. Use when adding a new capability crate, increasing coverage, preparing a release, or validating performance. Triggers: create tests rust, add tests rust, create test suite rust, crate tests rust, e2e tests rust, benchmark rust."
+description: "Generates contract, unit, integration, E2E, acceptance, and smoke test suites in tests/ (flat prefix naming), plus benchmark suites in benches/ (separate directory). Use when adding a new capability crate, increasing coverage, preparing a release, or validating performance. Triggers: create tests rust, add tests rust, create test suite rust, crate tests rust, e2e tests rust, benchmark rust."
 metadata:
   tags: [rust, testing, contract, unit, integration, e2e, acceptance, smoke, benchmark]
   related: [create-test-python, create-test-typescript]
 ---
 # Create Rust Test Suite
 
+## Directory Layout
+
+Tests and benchmarks are **separated into distinct directories**:
+
+```
+crates/<name>/
+├── src/
+│   └── lib.rs                      # NO inline tests. Clean.
+├── tests/                          # Contract, unit, integration, smoke, e2e, acceptance
+│   ├── contract_<crate>.rs
+│   ├── unit_<crate>_<module>.rs
+│   ├── integration_<crate>.rs
+│   ├── smoke_<app>.rs
+│   ├── e2e_<flow>.rs
+│   └── acceptance_<FR_id>.rs
+├── benches/                        # Benchmark tests only
+│   └── bench_<subject>.rs
+└── Cargo.toml                      # [[bench]] path → benches/bench_*.rs
+```
+
 ## Rules
 
-- ALL tests live in `tests/`
+- **Tests** (`tests/`): All contract, unit, integration, smoke, e2e, and acceptance tests live flat in `tests/` using filename prefixes as virtual subfolders
+- **Benchmarks** (`benches/`): All benchmark tests live in a separate `benches/` directory
 - No real subdirectories inside `tests/` — prefix IS the folder
 - Prefix pattern: `<type>_<subject>.rs`
 - Contract tests verify trait implementation
@@ -32,21 +53,21 @@ metadata:
 ## Naming Convention
 
 ```
-
-tests/
+tests/                          # Regular tests (fast, PR-gated)
 ├── contract_<crate>.rs
 ├── unit_<crate>_<module>.rs
 ├── integration_<crate>.rs
 ├── smoke_<app>.rs
 ├── e2e_<flow>.rs
-├── acceptance_<FR_id>.rs
+└── acceptance_<FR_id>.rs
+
+benches/                        # Benchmark tests (slow, release-gated)
 └── bench_<subject>.rs
 ```
 
 Example:
 
 ```
-
 tests/
 ├── contract_aes.rs
 ├── unit_aes_encrypt.rs
@@ -55,31 +76,34 @@ tests/
 ├── smoke_server.rs
 ├── e2e_encrypt_decrypt_flow.rs
 ├── acceptance_FRD_042.rs
-├── acceptance_FRD_043.rs
+└── acceptance_FRD_043.rs
+
+benches/
 └── bench_aes_throughput.rs
+```
 
 ## Cargo.toml for Benchmarks
 
-Since benches live in `tests/`, declare the path explicitly:
+Benchmarks live in `benches/`, declare the path explicitly:
 
 ```toml
 [[bench]]
 name = "bench_aes_throughput"
-path = "tests/bench_aes_throughput.rs"
+path = "benches/bench_aes_throughput.rs"
 harness = false
 ```
 
 ## Test Types
 
-| Prefix           | Scope                    | Speed  | Runs when                |
-| ---------------- | ------------------------ | ------ | ------------------------ |
-| `contract_`    | Trait impl exists        | ms     | Every PR                 |
-| `unit_`        | One public function      | ms     | Every PR                 |
-| `integration_` | Crate / DI wiring        | ms–s  | Every PR                 |
-| `smoke_`       | App boots + responds     | < 5s   | Every PR                 |
-| `e2e_`         | Full request lifecycle   | s      | Every PR (critical path) |
-| `acceptance_`  | Business requirement met | s      | Every PR / release gate  |
-| `bench_`       | Performance regression   | s–min | Release gate / nightly   |
+| Prefix           | Directory  | Scope                    | Speed  | Runs when                |
+| ---------------- | ---------- | ------------------------ | ------ | ------------------------ |
+| `contract_`    | tests/     | Trait impl exists        | ms     | Every PR                 |
+| `unit_`        | tests/     | One public function      | ms     | Every PR                 |
+| `integration_` | tests/     | Crate / DI wiring        | ms–s   | Every PR                 |
+| `smoke_`       | tests/     | App boots + responds     | < 5s   | Every PR                 |
+| `e2e_`         | tests/     | Full request lifecycle   | s      | Every PR (critical path) |
+| `acceptance_`  | tests/     | Business requirement met | s      | Every PR / release gate  |
+| `bench_`       | benches/   | Performance regression   | s–min | Release gate / nightly   |
 
 ## Workflow
 
@@ -87,13 +111,13 @@ harness = false
 Task Progress:
 - [ ] Step 1: Analyze crate / app structure
 - [ ] Step 2: Identify untested public API
-- [ ] Step 3: Write contract_<crate>.rs
-- [ ] Step 4: Write unit_<crate>_<module>.rs
-- [ ] Step 5: Write integration_<crate>.rs
-- [ ] Step 6: Write smoke_<app>.rs
-- [ ] Step 7: Write e2e_<flow>.rs
-- [ ] Step 8: Write acceptance_<FR_id>.rs
-- [ ] Step 9: Write bench_<subject>.rs + register in Cargo.toml
+- [ ] Step 3: Write tests/contract_<crate>.rs
+- [ ] Step 4: Write tests/unit_<crate>_<module>.rs
+- [ ] Step 5: Write tests/integration_<crate>.rs
+- [ ] Step 6: Write tests/smoke_<app>.rs
+- [ ] Step 7: Write tests/e2e_<flow>.rs
+- [ ] Step 8: Write tests/acceptance_<FR_id>.rs
+- [ ] Step 9: Write benches/bench_<subject>.rs + register in Cargo.toml
 - [ ] Step 10: Run suite, fix failures, repeat until green
 - [ ] Step 11: Verify coverage + perf baseline
 ```
@@ -284,7 +308,7 @@ async fn req_043_wrong_key_rejected() {
 ### Step 9: Benchmark Tests
 
 ```rust
-// tests/bench_aes_throughput.rs
+// benches/bench_aes_throughput.rs
 use criterion::{criterion_group, criterion_main, Criterion, BenchmarkId};
 use aes_crate::AesCapability;
 
@@ -312,7 +336,7 @@ Register in `Cargo.toml` with explicit path:
 ```toml
 [[bench]]
 name = "bench_aes_throughput"
-path = "tests/bench_aes_throughput.rs"
+path = "benches/bench_aes_throughput.rs"
 harness = false
 ```
 
@@ -336,13 +360,13 @@ Perf regressed > 10% → investigate before merging.
 ## Quick Reference
 
 ```bash
-cargo test -p <name>                                    # all tests
+cargo test -p <name>                                    # all tests (tests/ only)
 cargo test -p <name> --test contract_aes                # one file
 cargo test -p <name> --test unit_aes_encrypt            # one unit file
 cargo test -p <name> --test smoke_server                # smoke only
 cargo test -p <name> --test e2e_encrypt_decrypt_flow    # one e2e
 cargo test -p <name> --test acceptance_req_042          # one acceptance
-cargo bench -p <name>                                   # benchmarks
+cargo bench -p <name>                                   # benchmarks (benches/ only)
 cargo tarpaulin -p <name>                               # coverage
 cargo test -p <name> -- --nocapture                     # with stdout
 ```
@@ -353,7 +377,7 @@ cargo test -p <name> -- --nocapture                     # with stdout
 crates/<name>/
 ├── src/
 │   └── lib.rs                      # NO inline tests. Clean.
-├── tests/
+├── tests/                          # Regular tests (PR-gated, fast)
 │   ├── contract_aes.rs
 │   ├── unit_aes_encrypt.rs
 │   ├── unit_aes_decrypt.rs
@@ -361,10 +385,8 @@ crates/<name>/
 │   ├── smoke_server.rs
 │   ├── e2e_encrypt_decrypt_flow.rs
 │   ├── acceptance_req_042.rs
-│   ├── acceptance_req_043.rs
+│   └── acceptance_req_043.rs
+├── benches/                        # Benchmark tests (release-gated, slow)
 │   └── bench_aes_throughput.rs
-└── Cargo.toml                      # [[bench]] path → tests/bench_*.rs
-```
-
-```
+└── Cargo.toml                      # [[bench]] path → benches/bench_*.rs
 ```

@@ -22,5 +22,5 @@ tokio.workspace = true
 
 [[bench]]
 name = "bench_auto_fix_throughput"
-path = "tests/bench_auto_fix_throughput.rs"
+path = "benches/bench_auto_fix_throughput.rs"
 harness = false

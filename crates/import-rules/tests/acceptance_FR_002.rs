@@ -108,3 +108,87 @@ async fn fr002_diagnostic_includes_expected_import() {
         panic!("FR-002: expected AES202 violation");
     }
 }
+
+// ─── Multi-language: Python ────────────────────────────────
+
+/// FR-002: Python capability file missing contract import emits AES202
+#[tokio::test]
+async fn fr002_python_capability_without_contract_emits_aes202() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "capabilities_no_contract.py",
+        "import os\n\nclass NoContract:\n    pass\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr002_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES202"),
+        "FR-002: Python capability without contract import must emit AES202"
+    );
+}
+
+// ─── Multi-language: JavaScript/TypeScript ─────────────────
+
+/// FR-002: TypeScript capability file missing contract import emits AES202
+#[tokio::test]
+async fn fr002_typescript_capability_without_contract_emits_aes202() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "capabilities_handler.ts",
+        "import { readFileSync } from 'fs';\nexport class Handler {}\n",
+    );
+
+    let container = ImportContainer::new_with_config(fr002_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.code() == "AES202"),
+        "FR-002: TypeScript capability without contract import must emit AES202"
+    );
+}
+
+// ─── Negative: Exception handling ──────────────────────────
+
+/// FR-002: File in exceptions list should skip AES202 check
+#[tokio::test]
+async fn fr002_excepted_file_skips_check() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(
+        dir.path(),
+        "capabilities_excepted.rs",
+        "pub struct Excepted;\n",
+    );
+
+    let mut config = fr002_config();
+    config.rules.push(
+        shared::config_system::taxonomy_config_vo::ArchitectureRule {
+            name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("AES202".to_string()),
+            exceptions: PatternList::new(vec!["capabilities_excepted.rs".to_string()]),
+            ..Default::default()
+        },
+    );
+
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let excepted_violations: Vec<_> = results
+        .iter()
+        .filter(|v| {
+            v.code.code() == "AES202" && v.file.value().contains("capabilities_excepted.rs")
+        })
+        .collect();
+    assert!(
+        excepted_violations.is_empty(),
+        "FR-002: excepted file should not produce AES202 violations"
+    );
+}

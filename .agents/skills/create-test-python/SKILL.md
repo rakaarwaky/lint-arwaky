@@ -1,15 +1,37 @@
 ---
 name: create-test-python
-description: "Generates contract, unit, integration, E2E, acceptance, smoke, and benchmark test suites for Python packages and applications. All tests live flat in tests/ using filename prefixes as virtual subfolders. Use when adding a new capability package, increasing coverage, preparing a release, or validating performance. Triggers: create tests python, add tests python, create test suite python, package tests python, e2e tests python, benchmark python."
+description: "Generates contract, unit, integration, E2E, acceptance, and smoke test suites in tests/ (flat prefix naming), plus benchmark suites in benches/ (separate directory). Use when adding a new capability package, increasing coverage, preparing a release, or validating performance. Triggers: create tests python, add tests python, create test suite python, package tests python, e2e tests python, benchmark python."
 metadata:
   tags: [python, testing, pytest, contract, unit, integration, e2e, acceptance, smoke, benchmark]
   related: [create-test-rust, create-test-typescript]
 ---
 # Create Python Test Suite
 
+## Directory Layout
+
+Tests and benchmarks are **separated into distinct directories**:
+
+```
+packages/<name>/
+├── src/
+│   └── capabilities_my_class.py    # NO inline tests. Clean.
+├── tests/                          # Contract, unit, integration, smoke, e2e, acceptance (flat prefix naming)
+│   ├── contract_<package>.py
+│   ├── unit_<package>_<module>.py
+│   ├── integration_<package>.py
+│   ├── smoke_<app>.py
+│   ├── e2e_<flow>.py
+│   └── acceptance_<FRD_ID>.py
+├── benches/                        # Benchmark tests only
+│   └── bench_<subject>.py
+├── conftest.py                     # Shared fixtures (tests/ root)
+└── pyproject.toml                  # pytest config + coverage targets
+```
+
 ## Rules
 
-- ALL tests live in `tests/`
+- **Tests** (`tests/`): All contract, unit, integration, smoke, e2e, and acceptance tests live flat in `tests/` using filename prefixes as virtual subfolders
+- **Benchmarks** (`benches/`): All benchmark tests live in a separate `benches/` directory
 - No real subdirectories inside `tests/` — prefix IS the folder
 - Prefix pattern: `<type>_<subject>.py`
 - Contract tests verify class/interface implementation
@@ -32,13 +54,15 @@ metadata:
 ## Naming Convention
 
 ```
-tests/
+tests/                          # Regular tests (fast, PR-gated)
 ├── contract_<package>.py
 ├── unit_<package>_<module>.py
 ├── integration_<package>.py
 ├── smoke_<app>.py
 ├── e2e_<flow>.py
-├── acceptance_<FRD_ID>.py
+└── acceptance_<FRD_ID>.py
+
+benches/                        # Benchmark tests (slow, release-gated)
 └── bench_<subject>.py
 ```
 
@@ -53,40 +77,42 @@ tests/
 ├── smoke_server.py
 ├── e2e_encrypt_decrypt_flow.py
 ├── acceptance_FRD_042.py
-├── acceptance_FRD_043.py
+└── acceptance_FRD_043.py
+
+benches/
 └── bench_aes_throughput.py
 ```
 
 ## pyproject.toml for Benchmarks
 
-Since benches live in `tests/`, register them explicitly:
+Benchmarks live in `benches/`, configure pytest to exclude them from regular runs:
 
 ```toml
 [tool.pytest.ini_options]
 addopts = "--benchmark-disable"
-
-[[tool.pytest.ini_options]]
-# Benchmark runs separately
 markers = ["benchmark"]
+
+[tool.coverage.run]
+source = ["packages"]
 ```
 
-Run benchmarks:
+Run benchmarks separately:
 
 ```bash
-pytest tests/bench_aes_throughput.py --benchmark-only
+pytest benches/bench_aes_throughput.py --benchmark-only
 ```
 
 ## Test Types
 
-| Prefix           | Scope                    | Speed  | Runs when                |
-| ---------------- | ------------------------ | ------ | ------------------------ |
-| `contract_`    | Class/interface impl     | ms     | Every PR                 |
-| `unit_`        | One public function      | ms     | Every PR                 |
-| `integration_` | Package / DI wiring      | ms–s   | Every PR                 |
-| `smoke_`       | App boots + responds     | < 5s   | Every PR                 |
-| `e2e_`         | Full request lifecycle   | s      | Every PR (critical path) |
-| `acceptance_`  | Business requirement met | s      | Every PR / release gate  |
-| `bench_`       | Performance regression   | s–min | Release gate / nightly   |
+| Prefix           | Directory  | Scope                    | Speed  | Runs when                |
+| ---------------- | ---------- | ------------------------ | ------ | ------------------------ |
+| `contract_`    | tests/     | Class/interface impl     | ms     | Every PR                 |
+| `unit_`        | tests/     | One public function      | ms     | Every PR                 |
+| `integration_` | tests/     | Package / DI wiring      | ms–s   | Every PR                 |
+| `smoke_`       | tests/     | App boots + responds     | < 5s   | Every PR                 |
+| `e2e_`         | tests/     | Full request lifecycle   | s      | Every PR (critical path) |
+| `acceptance_`  | tests/     | Business requirement met | s      | Every PR / release gate  |
+| `bench_`       | benches/   | Performance regression   | s–min | Release gate / nightly   |
 
 ## Workflow
 
@@ -94,13 +120,13 @@ pytest tests/bench_aes_throughput.py --benchmark-only
 Task Progress:
 - [ ] Step 1: Analyze package / app structure
 - [ ] Step 2: Identify untested public API
-- [ ] Step 3: Write contract_<package>.py
-- [ ] Step 4: Write unit_<package>_<module>.py
-- [ ] Step 5: Write integration_<package>.py
-- [ ] Step 6: Write smoke_<app>.py
-- [ ] Step 7: Write e2e_<flow>.py
-- [ ] Step 8: Write acceptance_<FRD_ID>.py
-- [ ] Step 9: Write bench_<subject>.py + register in pyproject.toml
+- [ ] Step 3: Write tests/contract_<package>.py
+- [ ] Step 4: Write tests/unit_<package>_<module>.py
+- [ ] Step 5: Write tests/integration_<package>.py
+- [ ] Step 6: Write tests/smoke_<app>.py
+- [ ] Step 7: Write tests/e2e_<flow>.py
+- [ ] Step 8: Write tests/acceptance_<FRD_ID>.py
+- [ ] Step 9: Write benches/bench_<subject>.py + register in pyproject.toml
 - [ ] Step 10: Run suite, fix failures, repeat until green
 - [ ] Step 11: Verify coverage + perf baseline
 ```
@@ -343,7 +369,7 @@ def test_frq_043_wrong_key_rejected():
 ### Step 9: Benchmark Tests
 
 ```python
-# tests/bench_aes_throughput.py
+# benches/bench_aes_throughput.py
 import pytest
 from packages.src.capabilities_aes import AesCapability
 
@@ -376,13 +402,13 @@ def bench_encrypt_large(aes_capability, benchmark):
 Run benchmarks:
 
 ```bash
-pytest tests/bench_aes_throughput.py --benchmark-only --benchmark-columns=mean,stdmin,stdmax
+pytest benches/bench_aes_throughput.py --benchmark-only --benchmark-columns=mean,stdmin,stdmax
 ```
 
 ### Step 10: Run and Fix
 
 ```bash
-# Run all tests
+# Run all tests (excludes benches/)
 pytest packages/<name>/tests/ -v
 
 # Run with coverage
@@ -394,11 +420,11 @@ pytest packages/<name>/tests/ --cov=packages/<name> --cov-report=html
 ### Step 11: Verify Coverage + Perf
 
 ```bash
-# Check coverage
+# Check coverage (tests/ only)
 pytest packages/<name>/tests/ --cov=packages/<name> --cov-report=term-missing --cov-fail-under=<target>
 
-# Run benchmarks
-pytest tests/bench_<subject>.py --benchmark-only --benchmark-compare=<last-release-tag>
+# Run benchmarks (benches/)
+pytest benches/bench_<subject>.py --benchmark-only --benchmark-compare=<last-release-tag>
 ```
 
 Coverage below threshold → return to Step 2.
@@ -407,7 +433,7 @@ Perf regressed > 10% → investigate before merging.
 ## Quick Reference
 
 ```bash
-# Run all tests
+# Run all tests (tests/ only, excludes benches/)
 pytest packages/<name>/tests/ -v
 
 # Run one contract test file
@@ -422,8 +448,8 @@ pytest tests/smoke_server.py -m smoke -v
 # Run E2E tests only
 pytest tests/e2e_encrypt_decrypt_flow.py -m e2e -v
 
-# Run benchmarks
-pytest tests/bench_aes_throughput.py --benchmark-only
+# Run benchmarks (benches/ only)
+pytest benches/bench_aes_throughput.py --benchmark-only
 
 # Check coverage
 pytest packages/<name>/tests/ --cov=packages/<name> --cov-report=term-missing
@@ -438,7 +464,7 @@ pytest packages/<name>/tests/ -v --capture=no
 packages/<name>/
 ├── src/
 │   └── capabilities_my_class.py    # NO inline tests. Clean.
-├── tests/
+├── tests/                          # Regular tests (PR-gated, fast)
 │   ├── contract_aes.py
 │   ├── unit_aes_encrypt.py
 │   ├── unit_aes_decrypt.py
@@ -446,9 +472,10 @@ packages/<name>/
 │   ├── smoke_server.py
 │   ├── e2e_encrypt_decrypt_flow.py
 │   ├── acceptance_FRD_042.py
-│   ├── acceptance_FRD_043.py
+│   └── acceptance_FRD_043.py
+├── benches/                        # Benchmark tests (release-gated, slow)
 │   └── bench_aes_throughput.py
-├── conftest.py                     # Shared fixtures
+├── conftest.py                     # Shared fixtures (tests/ root)
 └── pyproject.toml                  # pytest config + coverage targets
 ```
 

@@ -43,5 +43,5 @@ serde_json.workspace = true
 
 [[bench]]
 name = "bench_mcp_server"
-path = "tests/bench_mcp_server.rs"
+path = "benches/bench_mcp_server.rs"
 harness = false

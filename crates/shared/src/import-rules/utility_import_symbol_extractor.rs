@@ -96,21 +96,36 @@ fn is_rust_trait_import(name: &str) -> bool {
 
 pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
-    let mut in_cfg_test = false;
+    let mut in_cfg_block = false;
+    let mut cfg_brace_depth = 0;
     for line in content.lines() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("#[cfg(test)]") {
-            in_cfg_test = true;
+        // Skip any #[cfg(...)] attribute and its associated block
+        // This covers #[cfg(test)], #[cfg(feature = "...")], #[cfg(not(...))], etc.
+        if trimmed.starts_with("#[cfg(") {
+            in_cfg_block = true;
+            cfg_brace_depth = 0;
             continue;
         }
-        if in_cfg_test {
-            if trimmed == "}" || trimmed.starts_with("}") {
-                in_cfg_test = false;
+        if in_cfg_block {
+            for ch in trimmed.chars() {
+                match ch {
+                    '{' => cfg_brace_depth += 1,
+                    '}' => {
+                        cfg_brace_depth -= 1;
+                        if cfg_brace_depth <= 0 {
+                            in_cfg_block = false;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
             }
             continue;
         }
 
+        // Python: `from X import Y, Z` or `from X import Y as Z`
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some((from_part, import_part)) = trimmed.split_once(" import ") {
                 let module = from_part[5..].trim();
@@ -129,6 +144,26 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
                             Identity::new(name),
                             Identity::new(format!("{}.{}", module, name)),
                         );
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Python: `import X` or `import X as Y` (without `from`)
+        if let Some(import_part) = trimmed.strip_prefix("import ") {
+            // Skip if this is actually a `from ... import ...` (already handled above)
+            if !trimmed.starts_with("from ") {
+                for name in import_part.split(',') {
+                    let name = name.trim().trim_end_matches(';');
+                    if name.is_empty() || name == "*" {
+                        continue;
+                    }
+                    if let Some((sym, alias)) = name.split_once(" as ") {
+                        aliases.insert(Identity::new(alias.trim()), Identity::new(sym.trim()));
+                    } else {
+                        let alias = name.rsplit('.').next().unwrap_or(name);
+                        aliases.insert(Identity::new(alias), Identity::new(name));
                     }
                 }
             }
@@ -170,17 +205,38 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
             continue;
         }
 
-        if let Some(import_part) = trimmed.strip_prefix("import ") {
-            for name in import_part.split(',') {
-                let name = name.trim();
-                if name.is_empty() {
-                    continue;
-                }
-                if let Some((sym, alias)) = name.split_once(" as ") {
-                    aliases.insert(Identity::new(alias.trim()), Identity::new(sym.trim()));
-                } else {
-                    let alias = name.rsplit('.').next().unwrap_or(name);
-                    aliases.insert(Identity::new(alias), Identity::new(name));
+        // JavaScript: `const X = require('Y')` or `const { A, B } = require('Y')`
+        if let Some(rest) = trimmed.strip_prefix("const ") {
+            if let Some(eq_pos) = rest.find('=') {
+                let left = rest[..eq_pos].trim();
+                let right = rest[eq_pos + 1..].trim();
+                if let Some(req_start) = right.find("require(") {
+                    let after_require = &right[req_start + 8..];
+                    if let Some(paren_end) = after_require.find(')') {
+                        let _module = after_require[..paren_end]
+                            .trim_matches(|c| c == '\'' || c == '"' || c == '`');
+                        // Handle destructured require: `const { A, B } = require('Y')`
+                        if left.starts_with('{') && left.ends_with('}') {
+                            let inner = &left[1..left.len() - 1];
+                            for name in inner.split(',') {
+                                let name = name.trim();
+                                if name.is_empty() || name == "*" {
+                                    continue;
+                                }
+                                if let Some((sym, alias)) = name.split_once(" as ") {
+                                    aliases.insert(
+                                        Identity::new(alias.trim()),
+                                        Identity::new(sym.trim()),
+                                    );
+                                } else {
+                                    aliases.insert(Identity::new(name), Identity::new(name));
+                                }
+                            }
+                        } else {
+                            // Simple require: `const X = require('Y')`
+                            aliases.insert(Identity::new(left), Identity::new(left));
+                        }
+                    }
                 }
             }
         }
@@ -264,16 +320,29 @@ pub fn extract_used_symbols(
 
 pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
     let mut imports = Vec::new();
-    let mut in_cfg_test = false;
+    let mut in_cfg_block = false;
+    let mut cfg_brace_depth = 0;
     for (i, line) in content.lines().enumerate() {
         let t = line.trim();
-        if t.starts_with("#[cfg(test)]") {
-            in_cfg_test = true;
+        // Skip any #[cfg(...)] attribute and its associated block
+        if t.starts_with("#[cfg(") {
+            in_cfg_block = true;
+            cfg_brace_depth = 0;
             continue;
         }
-        if in_cfg_test {
-            if t == "}" || t.starts_with("}") {
-                in_cfg_test = false;
+        if in_cfg_block {
+            for ch in t.chars() {
+                match ch {
+                    '{' => cfg_brace_depth += 1,
+                    '}' => {
+                        cfg_brace_depth -= 1;
+                        if cfg_brace_depth <= 0 {
+                            in_cfg_block = false;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
             }
             continue;
         }

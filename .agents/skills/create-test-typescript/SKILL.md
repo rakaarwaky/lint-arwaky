@@ -1,15 +1,37 @@
 ---
 name: create-test-typescript
-description: "Generates contract, unit, integration, E2E, acceptance, smoke, and benchmark test suites for TypeScript packages and applications. All tests live flat in tests/ using filename prefixes as virtual subfolders. Use when adding a new capability package, increasing coverage, preparing a release, or validating performance. Triggers: create tests typescript, add tests typescript, create test suite typescript, package tests typescript, e2e tests typescript, benchmark typescript."
+description: "Generates contract, unit, integration, E2E, acceptance, and smoke test suites in tests/ (flat prefix naming), plus benchmark suites in benches/ (separate directory). Use when adding a new capability package, increasing coverage, preparing a release, or validating performance. Triggers: create tests typescript, add tests typescript, create test suite typescript, package tests typescript, e2e tests typescript, benchmark typescript."
 metadata:
   tags: [typescript, testing, vitest, jest, contract, unit, integration, e2e, acceptance, smoke, benchmark]
   related: [create-test-rust, create-test-python]
 ---
 # Create TypeScript Test Suite
 
+## Directory Layout
+
+Tests and benchmarks are **separated into distinct directories**:
+
+```
+packages/<name>/
+├── src/
+│   └── capabilities_my_class.ts    # NO inline tests. Clean.
+├── tests/                          # Contract, unit, integration, smoke, e2e, acceptance (flat prefix naming)
+│   ├── contract_<package>.ts
+│   ├── unit_<package>_<module>.ts
+│   ├── integration_<package>.ts
+│   ├── smoke_<app>.ts
+│   ├── e2e_<flow>.ts
+│   └── acceptance_<FRD_ID>.ts
+├── benches/                        # Benchmark tests only
+│   └── bench_<subject>.ts
+├── vitest.config.ts                # Test config + coverage targets
+└── package.json                    # devDependencies: vitest, ts-jest
+```
+
 ## Rules
 
-- ALL tests live in `tests/`
+- **Tests** (`tests/`): All contract, unit, integration, smoke, e2e, and acceptance tests live flat in `tests/` using filename prefixes as virtual subfolders
+- **Benchmarks** (`benches/`): All benchmark tests live in a separate `benches/` directory
 - No real subdirectories inside `tests/` — prefix IS the folder
 - Prefix pattern: `<type>_<subject>.ts`
 - Contract tests verify class/interface implementation
@@ -32,13 +54,15 @@ metadata:
 ## Naming Convention
 
 ```
-tests/
+tests/                          # Regular tests (fast, PR-gated)
 ├── contract_<package>.ts
 ├── unit_<package>_<module>.ts
 ├── integration_<package>.ts
 ├── smoke_<app>.ts
 ├── e2e_<flow>.ts
-├── acceptance_<FRD_ID>.ts
+└── acceptance_<FRD_ID>.ts
+
+benches/                        # Benchmark tests (slow, release-gated)
 └── bench_<subject>.ts
 ```
 
@@ -53,13 +77,15 @@ tests/
 ├── smoke_server.ts
 ├── e2e_encrypt_decrypt_flow.ts
 ├── acceptance_FRD_042.ts
-├── acceptance_FRD_043.ts
+└── acceptance_FRD_043.ts
+
+benches/
 └── bench_aes_throughput.ts
 ```
 
 ## vitest.config.ts for Benchmarks
 
-Since benches live in `tests/`, configure benchmark mode:
+Benchmarks live in `benches/`, configure vitest to exclude them from regular runs:
 
 ```typescript
 // vitest.config.ts
@@ -70,28 +96,28 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["tests/**/*.ts"],
-    exclude: ["tests/bench_*.ts"], // benchmarks run separately
+    exclude: ["benches/**/*.ts"], // benchmarks run separately
   },
 });
 ```
 
-Run benchmarks:
+Run benchmarks separately:
 
 ```bash
-vitest bench tests/bench_aes_throughput.ts
+npx vitest bench benches/bench_aes_throughput.ts
 ```
 
 ## Test Types
 
-| Prefix           | Scope                    | Speed  | Runs when                |
-| ---------------- | ------------------------ | ------ | ------------------------ |
-| `contract_`    | Class/interface impl     | ms     | Every PR                 |
-| `unit_`        | One public function      | ms     | Every PR                 |
-| `integration_` | Package / DI wiring      | ms–s   | Every PR                 |
-| `smoke_`       | App boots + responds     | < 5s   | Every PR                 |
-| `e2e_`         | Full request lifecycle   | s      | Every PR (critical path) |
-| `acceptance_`  | Business requirement met | s      | Every PR / release gate  |
-| `bench_`       | Performance regression   | s–min | Release gate / nightly   |
+| Prefix           | Directory  | Scope                    | Speed  | Runs when                |
+| ---------------- | ---------- | ------------------------ | ------ | ------------------------ |
+| `contract_`    | tests/     | Class/interface impl     | ms     | Every PR                 |
+| `unit_`        | tests/     | One public function      | ms     | Every PR                 |
+| `integration_` | tests/     | Package / DI wiring      | ms–s   | Every PR                 |
+| `smoke_`       | tests/     | App boots + responds     | < 5s   | Every PR                 |
+| `e2e_`         | tests/     | Full request lifecycle   | s      | Every PR (critical path) |
+| `acceptance_`  | tests/     | Business requirement met | s      | Every PR / release gate  |
+| `bench_`       | benches/   | Performance regression   | s–min | Release gate / nightly   |
 
 ## Workflow
 
@@ -99,13 +125,13 @@ vitest bench tests/bench_aes_throughput.ts
 Task Progress:
 - [ ] Step 1: Analyze package / app structure
 - [ ] Step 2: Identify untested public API
-- [ ] Step 3: Write contract_<package>.ts
-- [ ] Step 4: Write unit_<package>_<module>.ts
-- [ ] Step 5: Write integration_<package>.ts
-- [ ] Step 6: Write smoke_<app>.ts
-- [ ] Step 7: Write e2e_<flow>.ts
-- [ ] Step 8: Write acceptance_<FRD_ID>.ts
-- [ ] Step 9: Write bench_<subject>.ts + register in vitest.config.ts
+- [ ] Step 3: Write tests/contract_<package>.ts
+- [ ] Step 4: Write tests/unit_<package>_<module>.ts
+- [ ] Step 5: Write tests/integration_<package>.ts
+- [ ] Step 6: Write tests/smoke_<app>.ts
+- [ ] Step 7: Write tests/e2e_<flow>.ts
+- [ ] Step 8: Write tests/acceptance_<FRD_ID>.ts
+- [ ] Step 9: Write benches/bench_<subject>.ts + register in vitest.config.ts
 - [ ] Step 10: Run suite, fix failures, repeat until green
 - [ ] Step 11: Verify coverage + perf baseline
 ```
@@ -342,7 +368,7 @@ describe("FRD-043", () => {
 ### Step 9: Benchmark Tests
 
 ```typescript
-// tests/bench_aes_throughput.ts
+// benches/bench_aes_throughput.ts
 import { bench, describe, fit } from "vitest/plugin/testing";
 import { AesCapability } from "../src/capabilities_aes";
 
@@ -372,13 +398,13 @@ describe("AES Benchmarks", () => {
 Run benchmarks:
 
 ```bash
-npx vitest bench tests/bench_aes_throughput.ts
+npx vitest bench benches/bench_aes_throughput.ts
 ```
 
 ### Step 10: Run and Fix
 
 ```bash
-# Run all tests
+# Run all tests (tests/ only, excludes benches/)
 npx vitest run
 
 # Run with coverage
@@ -390,11 +416,11 @@ npx vitest run --coverage
 ### Step 11: Verify Coverage + Perf
 
 ```bash
-# Check coverage
+# Check coverage (tests/ only)
 npx vitest run --coverage --coverage.thresholds.{100,0,0,0}
 
-# Run benchmarks
-npx vitest bench tests/bench_<subject>.ts
+# Run benchmarks (benches/)
+npx vitest bench benches/bench_<subject>.ts
 ```
 
 Coverage below threshold → return to Step 2.
@@ -403,7 +429,7 @@ Perf regressed > 10% → investigate before merging.
 ## Quick Reference
 
 ```bash
-# Run all tests
+# Run all tests (tests/ only, excludes benches/)
 npx vitest run
 
 # Run one contract test file
@@ -418,8 +444,8 @@ npx vitest run --grep "Smoke"
 # Run E2E tests only (filter by name)
 npx vitest run --grep "E2E"
 
-# Run benchmarks
-npx vitest bench tests/bench_aes_throughput.ts
+# Run benchmarks (benches/ only)
+npx vitest bench benches/bench_aes_throughput.ts
 
 # Check coverage
 npx vitest run --coverage
@@ -434,7 +460,7 @@ npx vitest
 packages/<name>/
 ├── src/
 │   └── capabilities_my_class.ts    # NO inline tests. Clean.
-├── tests/
+├── tests/                          # Regular tests (PR-gated, fast)
 │   ├── contract_aes.ts
 │   ├── unit_aes_encrypt.ts
 │   ├── unit_aes_decrypt.ts
@@ -442,7 +468,8 @@ packages/<name>/
 │   ├── smoke_server.ts
 │   ├── e2e_encrypt_decrypt_flow.ts
 │   ├── acceptance_FRD_042.ts
-│   ├── acceptance_FRD_043.ts
+│   └── acceptance_FRD_043.ts
+├── benches/                        # Benchmark tests (release-gated, slow)
 │   └── bench_aes_throughput.ts
 ├── vitest.config.ts                # Test config + coverage targets
 └── package.json                    # devDependencies: vitest, ts-jest
@@ -468,7 +495,7 @@ export default defineConfig({
     globals: true,           // use global scope (describe, it, expect)
     environment: "node",     // or "jsdom" for browser tests
     include: ["tests/**/*.ts"],
-    exclude: ["tests/bench_*.ts"], // benchmarks run separately
+    exclude: ["benches/**/*.ts"], // benchmarks run separately
     coverage: {
       provider: "v8",        // or "istanbul"
       reporter: ["text", "html"],

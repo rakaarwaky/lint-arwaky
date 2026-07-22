@@ -26,5 +26,5 @@ tempfile = "3"
 
 [[bench]]
 name = "bench_code_analysis_throughput"
-path = "tests/bench_code_analysis_throughput.rs"
+path = "benches/bench_code_analysis_throughput.rs"
 harness = false
