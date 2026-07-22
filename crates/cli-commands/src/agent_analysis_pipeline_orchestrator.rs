@@ -74,17 +74,18 @@ impl AnalysisPipelineOrchestrator {
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         format: Format,
-    ) -> Result<Self, String> {
-        PipelineBuilder::new()
-            .with_code_analysis(code_analysis_linter)
-            .with_naming(naming_orchestrator)
-            .with_imports(import_orchestrator)
-            .with_external_lint(external_lint)
-            .with_role(role_orchestrator)
-            .with_orphan(orphan_orchestrator)
-            .with_config(config_orchestrator)
-            .with_format(format)
-            .build()
+    ) -> Self {
+        Self {
+            code_analysis_linter,
+            naming_orchestrator,
+            import_orchestrator,
+            external_lint,
+            role_orchestrator,
+            orphan_orchestrator,
+            config_orchestrator,
+            format,
+            filter: None,
+        }
     }
 
     /// Run the full analysis pipeline on a target path.
