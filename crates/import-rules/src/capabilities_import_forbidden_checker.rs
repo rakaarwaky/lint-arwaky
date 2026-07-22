@@ -252,7 +252,7 @@ impl ArchImportForbiddenChecker {
                                 "AES201",
                                 Severity::CRITICAL,
                                 AesImportViolation::ForbiddenImport {
-                                    source_layer: Identity::new(rule_layer_str).into(),
+                                    source_layer: LayerNameVO::new(rule_layer_str),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
                                     reason: None,
