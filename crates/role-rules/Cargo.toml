@@ -1,5 +1,5 @@
 [package]
-name = "role_rules-lint-arwaky"
+name = "role-rules-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Architectural role-layer violation checks covering AES401–AES406 (taxonomy, contract, capability, infrastructure, surface, root wiring)."

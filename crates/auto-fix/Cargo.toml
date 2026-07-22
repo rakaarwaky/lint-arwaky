@@ -1,5 +1,5 @@
 [package]
-name = "auto_fix-lint-arwaky"
+name = "auto-fix-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Auto-fix processor that applies mechanical corrections for AES rule violations surfaced by the linter family."

@@ -1,5 +1,5 @@
 [package]
-name = "naming_rules-lint-arwaky"
+name = "naming-rules-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Naming-convention enforcer for AES101 (lowercase + underscore snake_case stems) and AES102 (suffix taxonomy `_checker`/`_analyzer`/...)."

@@ -1,5 +1,5 @@
 [package]
-name = "code_analysis-lint-arwaky"
+name = "code-analysis-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Code-quality analyzers (file-size limits, code duplication detection, bypass checks, mandatory definition enforcement) covering AES301–AES305."

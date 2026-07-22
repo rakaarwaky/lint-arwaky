@@ -1,5 +1,5 @@
 [package]
-name = "git_hooks-lint-arwaky"
+name = "git-hooks-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Git hook installation and diff-based pre-commit lint enforcement, integrated with the agent orchestrator."

@@ -1,5 +1,5 @@
 [package]
-name = "project_setup-lint-arwaky"
+name = "project-setup-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Project scaffolding and doctor checks: initialises a project with AES-compliant directory layout, MCP config, and CI templates."
