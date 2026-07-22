@@ -23,4 +23,4 @@ pub mod agent_orphan_505;
 pub mod contract_orphan_502;
 pub mod capabilities_orphan_503;
 pub mod infrastructure_orphan_504;
-pub mod surface_orphan_506;
+// pub mod surface_orphan_506; -- intentionally orphaned for AES506

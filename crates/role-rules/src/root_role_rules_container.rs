@@ -10,6 +10,7 @@ use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
 
 use crate::agent_role_orchestrator::RoleAggregateImpl;
 
@@ -28,6 +29,7 @@ impl RoleContainer {
             Arc::new(CapabilitiesRoleChecker::new()),
             Arc::new(SurfaceRoleChecker::new()),
             Arc::new(AgentRoleChecker::new()),
+            Arc::new(UtilityRoleChecker::new()),
         ));
         Self { aggregate, config }
     }

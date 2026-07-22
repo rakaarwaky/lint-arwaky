@@ -1,8 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::code_analysis::utility_column::{
-    byte_offset_to_column, compute_column,
-};
+use shared::code_analysis::utility_column::{byte_offset_to_column, compute_column};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

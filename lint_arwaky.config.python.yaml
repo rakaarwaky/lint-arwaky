@@ -28,6 +28,7 @@ ignored_paths:
   - "/.mypy_cache"
   - "/.ruff_cache"
   - "/tests"
+  - "/test-workspaces"
 
 architecture:
   enabled: true

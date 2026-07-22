@@ -29,6 +29,7 @@ ignored_paths:
   - ".min.css"
   - "/.dsc_cache"
   - "/tests"
+  - "/test-workspaces"
   - "/mimocode"
   - "build.rs"
   - "/build.rs"

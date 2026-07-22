@@ -2,3 +2,5 @@
 pub fn helper_function() -> String {
     "helper".to_string()
 }
+
+pub struct AES404Violation;

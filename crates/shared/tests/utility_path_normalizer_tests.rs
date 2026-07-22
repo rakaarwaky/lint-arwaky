@@ -1,8 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::import_rules::utility_path_normalizer::{
-    extract_layer_from_prefix, get_relative_path,
-};
+use shared::import_rules::utility_path_normalizer::{extract_layer_from_prefix, get_relative_path};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 
@@ -40,12 +38,18 @@ fn relative_path_trailing_slash_handling() {
 /// Regression test: extract_layer_from_prefix extracts layer from filename prefix.
 #[test]
 fn extract_layer_from_prefix_agent() {
-    assert_eq!(extract_layer_from_prefix("agent_my_file.rs"), Some("agent".to_string()));
+    assert_eq!(
+        extract_layer_from_prefix("agent_my_file.rs"),
+        Some("agent".to_string())
+    );
 }
 
 #[test]
 fn extract_layer_from_prefix_surface() {
-    assert_eq!(extract_layer_from_prefix("surface_check.rs"), Some("surfaces".to_string()));
+    assert_eq!(
+        extract_layer_from_prefix("surface_check.rs"),
+        Some("surfaces".to_string())
+    );
 }
 
 #[test]

@@ -2,12 +2,12 @@ extern crate shared_lint_arwaky as shared;
 
 use std::collections::HashMap;
 
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
-use shared::config_system::utility_config_merger::merge_config;
 use shared::common::taxonomy_common_vo::{BooleanVO, Count};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, NamingConfig};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
+use shared::config_system::utility_config_merger::merge_config;
 
 fn make_config(
     layers: HashMap<LayerNameVO, LayerDefinition>,

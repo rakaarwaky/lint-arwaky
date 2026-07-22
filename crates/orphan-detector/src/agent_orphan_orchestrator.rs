@@ -115,9 +115,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     Some(l) => l,
                     None => continue,
                 };
-            if filename.starts_with("surface_") {
-                eprintln!("DEBUG surface file: {} base_layer={:?}", f, base_layer);
-            }
             let layer_keys: Vec<String> = self
                 .config
                 .layers
@@ -129,47 +126,25 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 file_fp.value(),
                 &layer_keys,
             );
-            if filename.starts_with("surface_") {
-                eprintln!("DEBUG surface layer_str={}", layer_str);
-                eprintln!("DEBUG layer_keys available: {:?}", layer_keys);
-            }
             let definition = match shared::common::utility_layer_detector::get_layer_def(
                 &layer_str,
                 &self.config.layers,
             ) {
                 Some(d) => d.clone(),
-                None => {
-                    if filename.starts_with("surface_") {
-                        eprintln!("DEBUG surface NO DEFINITION for layer={}", layer_str);
-                    }
-                    continue;
-                },
+                None => continue,
             };
 
-            if filename.starts_with("surface_") {
-                eprintln!("DEBUG surface definition found, check_orphan={:?}, exceptions={:?}", definition.orphan.check_orphan, definition.exceptions.values);
-            }
             let basename = file_fp.basename();
             if definition.exceptions.values.contains(&basename) {
-                if filename.starts_with("surface_") {
-                    eprintln!("DEBUG surface SKIPPED by exception: {}", basename);
-                }
                 continue;
             }
             if !definition.orphan.check_orphan.value {
-                if filename.starts_with("surface_") {
-                    eprintln!("DEBUG surface SKIPPED check_orphan=false");
-                }
                 continue;
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
             let res =
                 self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
-
-            if filename.starts_with("surface_") {
-                eprintln!("DEBUG surface evaluate result: is_orphan={}", res.is_orphan);
-            }
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",

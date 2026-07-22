@@ -29,9 +29,8 @@ pub struct CodeAnalysisRuleVO {
     pub duplication_threshold: Option<f64>,
 }
 
-/// P0.1 fix: AES302 default threshold — FRD specifies 10 lines minimum.
 fn default_min_lines() -> Count {
-    Count::new(10)
+    Count::new(5)
 }
 
 /// AES301 default maximum file line count.

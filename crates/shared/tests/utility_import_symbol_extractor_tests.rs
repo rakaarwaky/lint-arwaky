@@ -3,9 +3,7 @@ extern crate shared_lint_arwaky as shared;
 use std::collections::HashMap;
 
 use shared::common::taxonomy_layer_vo::Identity;
-use shared::import_rules::utility_import_symbol_extractor::{
-    extract_used_symbols, is_name_used,
-};
+use shared::import_rules::utility_import_symbol_extractor::{extract_used_symbols, is_name_used};
 
 #[test]
 fn derive_macro_serialize_always_used() {

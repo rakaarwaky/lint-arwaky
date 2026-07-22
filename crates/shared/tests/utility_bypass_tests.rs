@@ -1,8 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::code_analysis::utility_bypass::{
-    matches_keyword_token, matches_word_token,
-};
+use shared::code_analysis::utility_bypass::{matches_keyword_token, matches_word_token};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

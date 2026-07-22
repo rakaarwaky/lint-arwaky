@@ -32,6 +32,7 @@ use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleCh
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleOrchestrator {
@@ -180,8 +181,8 @@ impl RoleOrchestrator {
                     checker.check_capability_routing(&source_vo, "capabilities", violations);
                 }
                 "utility" => {
-                    // Utility layer: stateless standalone functions, no role checks needed
-                    // Utility files are validated by naming convention only
+                    let checker = self.aggregate.utility();
+                    checker.check_utility_convention(&source_vo, violations);
                 }
                 "taxonomy" => {
                     let checker = self.aggregate.taxonomy();
@@ -241,6 +242,7 @@ pub struct RoleAggregateImpl {
     capabilities: Arc<dyn ICapabilitiesRoleChecker>,
     surface: Arc<dyn ISurfaceRoleChecker>,
     agent: Arc<dyn IAgentRoleChecker>,
+    utility: Arc<dyn IUtilityRoleChecker>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -260,6 +262,9 @@ impl IRoleAggregate for RoleAggregateImpl {
     fn agent(&self) -> &dyn IAgentRoleChecker {
         self.agent.as_ref()
     }
+    fn utility(&self) -> &dyn IUtilityRoleChecker {
+        self.utility.as_ref()
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
@@ -270,6 +275,7 @@ impl RoleAggregateImpl {
         capabilities: Arc<dyn ICapabilitiesRoleChecker>,
         surface: Arc<dyn ISurfaceRoleChecker>,
         agent: Arc<dyn IAgentRoleChecker>,
+        utility: Arc<dyn IUtilityRoleChecker>,
     ) -> Self {
         Self {
             taxonomy,
@@ -277,6 +283,7 @@ impl RoleAggregateImpl {
             capabilities,
             surface,
             agent,
+            utility,
         }
     }
 }

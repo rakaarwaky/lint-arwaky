@@ -54,15 +54,15 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                     // Extract pub struct names
                     if trimmed.starts_with("pub struct ") {
                         if let Some(name) = trimmed.strip_prefix("pub struct ") {
-                            if let Some(name) = name.split('{').next() {
-                                identifiers.push(name.trim().to_string());
-                            }
+                            let name = name.split('{').next().unwrap_or(name);
+                            let name = name.split(';').next().unwrap_or(name);
+                            identifiers.push(name.trim().to_string());
                         }
                     }
                 }
 
                 for id in &identifiers {
-                    if Self::is_identifier_imported(&workspace_root, id) {
+                    if Self::is_identifier_imported(&workspace_root, id, fp_val) {
                         return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                     }
                 }
@@ -97,14 +97,21 @@ impl SurfacesOrphanAnalyzer {
         Self {}
     }
 
-    /// Check if identifier is imported by any entry or router file.
-    fn is_identifier_imported(workspace_root: &std::path::Path, id: &str) -> bool {
+    /// Check if identifier is imported by any entry or router file (excluding the source file itself).
+    fn is_identifier_imported(
+        workspace_root: &std::path::Path,
+        id: &str,
+        source_file: &str,
+    ) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
             if shared::orphan_detector::utility_orphan_io::is_dir(&dir) {
                 let files =
                     shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
                 for file_path in &files {
+                    if file_path == source_file {
+                        continue;
+                    }
                     if let Some(name) = std::path::Path::new(file_path)
                         .file_name()
                         .and_then(|n| n.to_str())

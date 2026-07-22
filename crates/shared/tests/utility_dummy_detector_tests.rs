@@ -2,7 +2,7 @@ extern crate shared_lint_arwaky as shared;
 
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::import_rules::utility_dummy_detector::{
-    contains_ident, is_short_marker, python_imported_symbols, symbol_used_real, js_imported_symbols,
+    contains_ident, is_short_marker, js_imported_symbols, python_imported_symbols, symbol_used_real,
 };
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────

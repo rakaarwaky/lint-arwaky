@@ -4,16 +4,17 @@
 use std::sync::Arc;
 
 use code_analysis_lint_arwaky::{
-    capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker, root_code_analysis_container::CodeAnalysisCheckerContainer,
+    capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
+    root_code_analysis_container::CodeAnalysisCheckerContainer,
 };
+use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
 
 // ─── Contract Tests: Trait Implementation Verification ──────
 
@@ -83,7 +84,8 @@ fn test_orchestrator_is_created_from_container() {
 /// Test that CodeAnalysisContainer can be created with default config
 #[test]
 fn test_default_container_creation() {
-    let container = code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default();
+    let container =
+        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default();
 
     // Should return a valid linter
     let _linter = container.code_analysis_linter();
@@ -106,7 +108,12 @@ fn test_bypass_checker_detects_unwrap() {
 fn test_line_checker_validates_structure() {
     let checker = ArchLineChecker {};
     let mut violations = Vec::new();
-    checker.check_line_counts("test.rs", None, "fn main() {\n    let x = 5;\n}", &mut violations);
+    checker.check_line_counts(
+        "test.rs",
+        None,
+        "fn main() {\n    let x = 5;\n}",
+        &mut violations,
+    );
 
     // Should not panic on valid Rust code
 }
@@ -120,7 +127,10 @@ fn test_bypass_checker_handles_empty_content() {
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.rs", "", &mut violations);
 
-    assert!(violations.is_empty(), "Empty content should have no violations");
+    assert!(
+        violations.is_empty(),
+        "Empty content should have no violations"
+    );
 }
 
 /// Test that bypass checker handles whitespace-only content
@@ -130,7 +140,10 @@ fn test_bypass_checker_handles_whitespace_content() {
     let mut violations = Vec::new();
     checker.check_bypass_comments("test.rs", "   \n  \n   ", &mut violations);
 
-    assert!(violations.is_empty(), "Whitespace-only content should have no violations");
+    assert!(
+        violations.is_empty(),
+        "Whitespace-only content should have no violations"
+    );
 }
 
 /// Test that line checker handles empty file
