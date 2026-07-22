@@ -59,8 +59,8 @@ fn frd_unused_import_fix_idempotent() {
 
     // Second fix on same line — line 1 is now `use std::fs;` which is still an import
     // but the original violation is gone. Attempting to remove line 1 again:
-    let r2 = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    let content2 = std::fs::read_to_string(&file_path).unwrap();
+    let _r2 = sut.fix_unused_import(&file_path, LineNumber::new(1));
+    let _content2 = std::fs::read_to_string(&file_path).unwrap();
 
     // If it removed another line, that's a different operation. The key idempotency
     // guarantee is: fixing the SAME violation twice doesn't double-remove.

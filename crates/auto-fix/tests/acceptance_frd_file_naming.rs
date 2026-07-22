@@ -95,13 +95,13 @@ fn frd_naming_fix_is_idempotent() {
     let sut = LintFixProcessor::new(Arc::new(linter));
     let path = FilePath::new(file_path.clone()).unwrap();
 
-    let result1 = sut.execute(&path);
+    let _result1 = sut.execute(&path);
     let content_after_first = std::fs::read_to_string(&file_path).unwrap();
 
     // Second run — should produce no further changes
     let linter2 = MockLinter { results: vec![] };
     let sut2 = LintFixProcessor::new(Arc::new(linter2));
-    let result2 = sut2.execute(&path);
+    let _result2 = sut2.execute(&path);
     let content_after_second = std::fs::read_to_string(&file_path).unwrap();
 
     assert_eq!(
