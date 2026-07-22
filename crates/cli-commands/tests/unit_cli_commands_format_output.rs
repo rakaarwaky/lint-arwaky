@@ -38,7 +38,10 @@ fn xml_escape_empty_string() {
 
 #[test]
 fn xml_escape_multiple_special_chars() {
-    assert_eq!(xml_escape("a<b>c&d\"e'f"),         "a&lt;b&gt;c&amp;d&quot;e&apos;f");
+    assert_eq!(
+        xml_escape("a<b>c&d\"e'f"),
+        "a&lt;b&gt;c&amp;d&quot;e&apos;f"
+    );
 }
 
 // ─── format_junit_output ─────────────────────────────────────────────────────
@@ -142,7 +145,10 @@ fn sarif_single_result_has_correct_fields() {
         .unwrap()
         .contains("Forbidden import"));
     let location = &result["locations"][0];
-    assert_eq!(location["physical_location"]["artifact_location"]["uri"], "crates/foo/src/lib.rs");
+    assert_eq!(
+        location["physical_location"]["artifact_location"]["uri"],
+        "crates/foo/src/lib.rs"
+    );
     assert_eq!(location["physical_location"]["region"]["start_line"], 42);
 }
 

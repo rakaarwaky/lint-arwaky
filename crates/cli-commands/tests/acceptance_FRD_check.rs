@@ -1,12 +1,11 @@
-use std::fs;
 // Acceptance tests mapping 1:1 to FRD requirements for the `check` command.
 
+use std::fs;
 use std::process::Command;
 
 fn cli_bin() -> Command {
     let bin = std::env::current_exe().unwrap();
     let mut dir = bin.parent().unwrap();
-    // Walk up to find the binary
     for _ in 0..5 {
         let candidate = dir.join("lint-arwaky-cli");
         if candidate.exists() {
@@ -14,7 +13,6 @@ fn cli_bin() -> Command {
         }
         dir = dir.parent().unwrap_or(dir);
     }
-    // Fallback: use the target/debug path
     let mut p = std::env::current_exe().unwrap();
     p.pop();
     p.pop();

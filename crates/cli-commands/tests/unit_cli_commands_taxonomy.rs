@@ -1,4 +1,4 @@
-// Unit tests for taxonomy value objects consumed by cli-commands.
+//! Unit tests for taxonomy value objects consumed by cli-commands.
 
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_request_vo::{ScanMode, ScanRequest, ScanTarget};
@@ -6,6 +6,8 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_threshold_vo::Threshold;
 use std::str::FromStr;
+
+// ─── Format VO ───────────────────────────────────────────────────────────────
 
 #[test]
 fn format_from_str_valid() {
@@ -41,6 +43,8 @@ fn format_default_is_text() {
     assert_eq!(Format::default(), Format::Text);
 }
 
+// ─── Severity VO ─────────────────────────────────────────────────────────────
+
 #[test]
 fn severity_score_impact_ordering() {
     assert!(Severity::CRITICAL.score_impact() > Severity::HIGH.score_impact());
@@ -59,6 +63,8 @@ fn severity_display() {
     assert_eq!(Severity::INFO.to_string(), "info");
 }
 
+// ─── Threshold VO ────────────────────────────────────────────────────────────
+
 #[test]
 fn threshold_default_is_100() {
     assert_eq!(Threshold::default().value(), 100);
@@ -69,6 +75,8 @@ fn threshold_from_u32() {
     let t: Threshold = 80u32.into();
     assert_eq!(t.value(), 80);
 }
+
+// ─── FilePath VO ─────────────────────────────────────────────────────────────
 
 #[test]
 fn filepath_new_normalizes_separators() {
@@ -102,6 +110,8 @@ fn filepath_is_barrel_file() {
     assert!(!FilePath::new("src/main.rs").unwrap().is_barrel_file());
 }
 
+// ─── ScanRequest VO ──────────────────────────────────────────────────────────
+
 #[test]
 fn scan_request_default_target_is_dot() {
     let target = ScanTarget::default();
@@ -116,6 +126,8 @@ fn scan_request_new_with_defaults() {
     assert!(req.member.is_none());
     assert_eq!(req.format, Format::Text);
 }
+
+// ─── DirectoryPath VO ────────────────────────────────────────────────────────
 
 #[test]
 fn directory_path_new_normalizes() {

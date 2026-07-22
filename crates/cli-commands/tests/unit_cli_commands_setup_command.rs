@@ -1,9 +1,11 @@
-// Unit tests for surface_setup_command — mcp-config binary resolution.
+//! Unit tests for surface_setup_command — mcp-config binary resolution.
 
 use cli_commands_lint_arwaky::surface_setup_command::handle_mcp_config;
 
 #[test]
 fn mcp_config_claude_produces_valid_json() {
+    // handle_mcp_config prints to stdout and returns ExitCode::SUCCESS
+    // We verify it doesn't panic for known clients
     let exit = handle_mcp_config("claude");
     assert_eq!(exit, std::process::ExitCode::SUCCESS);
 }

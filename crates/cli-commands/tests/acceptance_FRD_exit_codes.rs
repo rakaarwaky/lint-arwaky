@@ -1,24 +1,11 @@
-use std::fs;
 // Acceptance tests for standardized exit codes across all commands.
 
+use std::fs;
 use std::process::Command;
-
-    let mut p = std::env::current_exe().unwrap();
-    p.pop();
-    let mut q = p.clone();
-    q.pop();
-    q.push("lint-arwaky-cli");
-    if q.exists() {
-        return q;
-    }
-    p.push("lint-arwaky-cli");
-    p
-}
 
 fn cli_bin() -> Command {
     let bin = std::env::current_exe().unwrap();
     let mut dir = bin.parent().unwrap();
-    // Walk up to find the binary
     for _ in 0..5 {
         let candidate = dir.join("lint-arwaky-cli");
         if candidate.exists() {
@@ -26,7 +13,6 @@ fn cli_bin() -> Command {
         }
         dir = dir.parent().unwrap_or(dir);
     }
-    // Fallback: use the target/debug path
     let mut p = std::env::current_exe().unwrap();
     p.pop();
     p.pop();
