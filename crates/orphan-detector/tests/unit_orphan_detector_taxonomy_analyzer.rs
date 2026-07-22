@@ -68,16 +68,37 @@ fn taxonomy_vo_imported_only_by_taxonomy_is_orphan() {
     assert!(result.is_orphan);
 }
 
-// ─── Not orphan: imported by capabilities ─────────────────
+// ─── Orphan: imported by capabilities but not by contract ──
+// Per FRD: taxonomy orphan = no contract imports it.
+// Contract acts as type enforcement — if contract uses taxonomy,
+// that guarantees implementation layers use it too.
 
 #[test]
-fn taxonomy_vo_imported_by_capabilities_is_not_orphan() {
+fn taxonomy_vo_imported_by_capabilities_only_is_orphan() {
     let a = analyzer();
     let f = FilePath::new("crates/shared/src/common/taxonomy_severity_vo.rs".to_string()).unwrap();
     let root = FilePath::new("crates/shared".to_string()).unwrap();
     let inbound = make_inbound_links(vec![(
         "crates/shared/src/common/taxonomy_severity_vo.rs",
         vec!["crates/orphan-detector/src/capabilities_orphan_agent_analyzer.rs"],
+    )]);
+    let result = a.is_taxonomy_orphan(&f, &root, None, &inbound);
+    assert!(result.is_orphan);
+}
+
+// ─── Not orphan: imported by both contract and capabilities ─
+
+#[test]
+fn taxonomy_vo_imported_by_contract_and_capabilities_is_not_orphan() {
+    let a = analyzer();
+    let f = FilePath::new("crates/shared/src/common/taxonomy_severity_vo.rs".to_string()).unwrap();
+    let root = FilePath::new("crates/shared".to_string()).unwrap();
+    let inbound = make_inbound_links(vec![(
+        "crates/shared/src/common/taxonomy_severity_vo.rs",
+        vec![
+            "crates/shared/src/orphan-detector/contract_orphan_protocol.rs",
+            "crates/orphan-detector/src/capabilities_orphan_agent_analyzer.rs",
+        ],
     )]);
     let result = a.is_taxonomy_orphan(&f, &root, None, &inbound);
     assert!(!result.is_orphan);

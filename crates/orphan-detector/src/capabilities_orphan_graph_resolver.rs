@@ -144,6 +144,56 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
+        // Detect workspace root by walking up from root_dir until we find a directory with Cargo.toml
+        let workspace_root = Self::find_workspace_root(root_dir);
+
+        // Build set of known workspace crate dirs for external dep detection
+        let mut workspace_modules: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+        // Perf 10: Pre-compute crate_name -> src_dir map
+        let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
+        let root_path = std::path::Path::new(&workspace_root);
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = root_path.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, path_str, is_dir_entry) in entries {
+                    if !is_dir_entry {
+                        continue;
+                    }
+                    workspace_modules.insert(name.clone());
+                    workspace_modules.insert(name.replace('-', "_"));
+                    let src_dir = std::path::PathBuf::from(&path_str).join("src");
+                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                        crate_src_dirs.insert(name.clone(), src_dir.clone());
+                        crate_src_dirs.insert(name.replace('-', "_"), src_dir);
+                    }
+                }
+            }
+        }
+
+        // Build crate module index for hyphen-aware resolution
+        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
+
+        // Expand files to include all workspace source files for cross-crate import resolution
+        // This ensures that when scanning a subfolder, imports from other crates are visible
+        let mut all_workspace_files: Vec<String> = files.to_vec();
+        for (_crate_name, src_dir) in &crate_src_dirs {
+            let workspace_files =
+                shared::orphan_detector::utility_orphan_io::scan_directory_recursive(src_dir);
+            for f in workspace_files {
+                if !all_workspace_files.contains(&f) {
+                    all_workspace_files.push(f);
+                }
+            }
+        }
+        eprintln!(
+            "[DEBUG GRAPH] original files: {}, expanded files: {}",
+            files.len(),
+            all_workspace_files.len()
+        );
+        let files = &all_workspace_files;
+
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
@@ -176,34 +226,6 @@ impl OrphanGraphResolver {
                 }
             }
         }
-
-        // Build set of known workspace crate dirs for external dep detection
-        let mut workspace_modules: std::collections::HashSet<String> =
-            std::collections::HashSet::new();
-        // Perf 10: Pre-compute crate_name -> src_dir map
-        let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
-        let root_path = std::path::Path::new(root_dir);
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = root_path.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
-                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
-                for (name, path_str, is_dir_entry) in entries {
-                    if !is_dir_entry {
-                        continue;
-                    }
-                    workspace_modules.insert(name.clone());
-                    workspace_modules.insert(name.replace('-', "_"));
-                    let src_dir = std::path::PathBuf::from(&path_str).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        crate_src_dirs.insert(name.clone(), src_dir.clone());
-                        crate_src_dirs.insert(name.replace('-', "_"), src_dir);
-                    }
-                }
-            }
-        }
-
-        // Build crate module index for hyphen-aware resolution
-        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
 
         // Perf 8: Single-pass file reading
         for f in files {
@@ -616,5 +638,27 @@ impl OrphanGraphResolver {
             .entry(target.to_string())
             .or_default()
             .push(source.to_string());
+    }
+
+    /// Find workspace root by walking up from start_dir until we find a directory with Cargo.toml
+    fn find_workspace_root(start_dir: &str) -> String {
+        let mut current = std::path::PathBuf::from(start_dir);
+        loop {
+            // Check if current directory has Cargo.toml (workspace root indicator)
+            if current.join("Cargo.toml").exists() {
+                // Verify it's a workspace root by checking for crates/packages/modules dirs
+                if current.join("crates").exists()
+                    || current.join("packages").exists()
+                    || current.join("modules").exists()
+                {
+                    return current.to_string_lossy().to_string();
+                }
+            }
+            // Move up one directory
+            if !current.pop() {
+                // Reached filesystem root without finding workspace root
+                return start_dir.to_string();
+            }
+        }
     }
 }

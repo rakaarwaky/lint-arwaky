@@ -88,6 +88,33 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .collect();
         let files = filtered_files.as_slice();
 
+        // Expand files to include all workspace source files for cross-crate import resolution
+        let mut all_workspace_files: Vec<String> = files.to_vec();
+        let root_path = std::path::Path::new(root_dir);
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = root_path.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, _path_str, is_dir_entry) in entries {
+                    if !is_dir_entry {
+                        continue;
+                    }
+                    let src_dir = root_path.join(ws_dir).join(&name).join("src");
+                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                        let workspace_files =
+                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
+                                &src_dir,
+                            );
+                        for f in workspace_files {
+                            if !all_workspace_files.contains(&f) {
+                                all_workspace_files.push(f);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let mut results: Vec<LintResult> = Vec::new();
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
         let context: GraphAnalysisContext = self
@@ -143,8 +170,14 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
 
             let layer_vo = LayerNameVO::new(&layer_str);
-            let res =
-                self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
+            let res = self._evaluate_layer(
+                f,
+                &context,
+                &alive_files_set,
+                &layer_vo,
+                &all_workspace_files,
+                root_dir,
+            );
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",

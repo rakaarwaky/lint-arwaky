@@ -31,6 +31,12 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
 
         let is_utility_or_helper = matches!(suffix, "utility" | "helper");
 
+        let category = if is_utility_or_helper {
+            "utility"
+        } else {
+            "taxonomy"
+        };
+
         // Taxonomy orphan = no contract file imports it.
         // Contract acts as type enforcement — if contract uses taxonomy,
         // that guarantees implementation layers use it too.
@@ -67,12 +73,6 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
 
         let is_orphan = !has_contract_importer;
 
-        let category = if is_utility_or_helper {
-            "utility"
-        } else {
-            "taxonomy"
-        };
-
         if is_orphan {
             OrphanIndicatorResult::new(
                 true,
@@ -80,11 +80,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     stem: stem.clone(),
                     category,
                     reason: Some(
-                        format!(
-                            "Taxonomy '{}' is not imported by any file outside taxonomy.",
-                            stem
-                        )
-                        .into(),
+                        format!("Taxonomy '{}' is not imported by any contract file.", stem).into(),
                     ),
                 }
                 .to_string(),
