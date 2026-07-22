@@ -3,7 +3,6 @@
 
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
-use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 fn sut() -> CapabilitiesExternalLintSelector {
@@ -16,9 +15,9 @@ fn sut() -> CapabilitiesExternalLintSelector {
 fn select_all_languages_returns_nine_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(true),
-        BooleanVO::new(true),
+        true,
+        true,
+        true,
     );
     assert_eq!(result.len(), 9);
 }
@@ -27,9 +26,9 @@ fn select_all_languages_returns_nine_adapters() {
 fn select_rust_only_returns_three_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(false),
-        BooleanVO::new(false),
+        true,
+        false,
+        false,
     );
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
@@ -42,9 +41,9 @@ fn select_rust_only_returns_three_adapters() {
 fn select_python_only_returns_three_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(false),
-        BooleanVO::new(true),
-        BooleanVO::new(false),
+        false,
+        true,
+        false,
     );
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
@@ -57,9 +56,9 @@ fn select_python_only_returns_three_adapters() {
 fn select_js_only_returns_three_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(false),
-        BooleanVO::new(false),
-        BooleanVO::new(true),
+        false,
+        false,
+        true,
     );
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
@@ -74,9 +73,9 @@ fn select_js_only_returns_three_adapters() {
 fn select_no_languages_returns_empty_list() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(false),
-        BooleanVO::new(false),
-        BooleanVO::new(false),
+        false,
+        false,
+        false,
     );
     assert!(result.is_empty());
 }
@@ -85,9 +84,9 @@ fn select_no_languages_returns_empty_list() {
 fn select_rust_and_python_returns_six_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(true),
-        BooleanVO::new(false),
+        true,
+        true,
+        false,
     );
     assert_eq!(result.len(), 6);
 }
@@ -96,9 +95,9 @@ fn select_rust_and_python_returns_six_adapters() {
 fn select_python_and_js_returns_six_adapters() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(false),
-        BooleanVO::new(true),
-        BooleanVO::new(true),
+        false,
+        true,
+        true,
     );
     assert_eq!(result.len(), 6);
 }
@@ -119,9 +118,9 @@ fn custom_adapter_lists_are_respected() {
     );
 
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(false),
-        BooleanVO::new(true),
+        true,
+        false,
+        true,
     );
     assert_eq!(result.len(), 3);
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
@@ -134,9 +133,9 @@ fn custom_adapter_lists_are_respected() {
 fn empty_custom_lists_return_nothing() {
     let selector = CapabilitiesExternalLintSelector::new(vec![], vec![], vec![]);
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(true),
-        BooleanVO::new(true),
+        true,
+        true,
+        true,
     );
     assert!(result.is_empty());
 }
@@ -147,9 +146,9 @@ fn empty_custom_lists_return_nothing() {
 fn adapter_order_is_rust_then_python_then_js() {
     let selector = sut();
     let result = selector.select_adapters(
-        BooleanVO::new(true),
-        BooleanVO::new(true),
-        BooleanVO::new(true),
+        true,
+        true,
+        true,
     );
     let names: Vec<&str> = result.iter().map(|n| n.value()).collect();
     // Rust adapters first

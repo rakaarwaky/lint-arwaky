@@ -117,7 +117,7 @@ pub struct MyChecker {
         !results.is_empty(),
         "Capabilities without contract import should produce AES202"
     );
-    assert!(results.values.iter().all(|v| v.code.value() == "AES202"));
+    assert!(results.values.iter().all(|v| v.code.code() == "AES202"));
 }
 
 // ─── Exception File ───────────────────────────────────────

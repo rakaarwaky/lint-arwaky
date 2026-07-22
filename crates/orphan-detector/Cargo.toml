@@ -19,4 +19,11 @@ shared.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
+tempfile = "3"
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "bench_orphan_detector_graph"
+path = "tests/bench_orphan_detector_graph.rs"
+harness = false
 

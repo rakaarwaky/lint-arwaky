@@ -3,7 +3,6 @@
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 fn bench_select_adapters(c: &mut Criterion) {
@@ -28,11 +27,7 @@ fn bench_select_adapters(c: &mut Criterion) {
             &(rs, py, js),
             |b, &(rs, py, js)| {
                 b.iter(|| {
-                    selector.select_adapters(
-                        BooleanVO::new(rs),
-                        BooleanVO::new(py),
-                        BooleanVO::new(js),
-                    )
+                    selector.select_adapters(rs, py, js)
                 });
             },
         );

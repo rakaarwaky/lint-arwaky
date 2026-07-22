@@ -44,7 +44,7 @@ fn real_logic() {
         !violations.is_empty(),
         "Dummy function _use_mandatory_imports should be detected"
     );
-    assert!(violations.iter().all(|v| v.code.value() == "AES204"));
+    assert!(violations.iter().all(|v| v.code.code() == "AES204"));
 }
 
 #[test]
@@ -282,7 +282,7 @@ fn _use_mandatory_imports() {
     sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
 
     for v in &violations {
-        assert_eq!(v.code.value(), "AES204");
+        assert_eq!(v.code.code(), "AES204");
     }
 }
 

@@ -19,12 +19,12 @@ fn e2e_config() -> ArchitectureConfig {
         LayerNameVO::new("taxonomy"),
         LayerDefinition {
             forbidden: PatternList::new(vec![
-                "contract".into(),
-                "utility".into(),
-                "capabilities".into(),
-                "agent".into(),
-                "surfaces".into(),
-                "root".into(),
+                "contract".to_string(),
+                "utility".to_string(),
+                "capabilities".to_string(),
+                "agent".to_string(),
+                "surfaces".to_string(),
+                "root".to_string(),
             ]),
             ..Default::default()
         },
@@ -33,9 +33,9 @@ fn e2e_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
-            forbidden: PatternList::new(vec!["agent".into(), "surfaces".into()]),
-            mandatory: PatternList::new(vec!["contract".into()]),
+            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            forbidden: PatternList::new(vec!["agent".to_string(), "surfaces".to_string()]),
+            mandatory: PatternList::new(vec!["contract".to_string()]),
             ..Default::default()
         },
     );
@@ -43,8 +43,8 @@ fn e2e_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("agent"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
-            forbidden: PatternList::new(vec!["surfaces".into(), "capabilities".into()]),
+            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            forbidden: PatternList::new(vec!["surfaces".to_string(), "capabilities".to_string()]),
             ..Default::default()
         },
     );
@@ -126,7 +126,7 @@ pub struct SeverityOrchestrator {
         results.len(),
         results
             .iter()
-            .map(|r| format!("{}: {}", r.code.value(), r.message.value()))
+            .map(|r| format!("{}: {}", r.code.code(), r.message.value()))
             .collect::<Vec<_>>()
     );
 }
@@ -165,7 +165,7 @@ pub struct Good;
 
     let aes201_count = results
         .iter()
-        .filter(|v| v.code.value() == "AES201")
+        .filter(|v| v.code.code() == "AES201")
         .count();
     assert!(
         aes201_count > 0,
@@ -199,7 +199,7 @@ pub struct Messy;
     let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
 
-    let codes: Vec<&str> = results.iter().map(|v| v.code.value()).collect();
+    let codes: Vec<&str> = results.iter().map(|v| v.code.code()).collect();
     assert!(
         codes.contains(&"AES204"),
         "E2E: dummy function must be detected. Codes found: {:?}",

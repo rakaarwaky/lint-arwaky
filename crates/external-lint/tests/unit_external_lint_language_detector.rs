@@ -31,9 +31,9 @@ async fn detects_rust_files() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(result.has_rs.value());
-    assert!(!result.has_py.value());
-    assert!(!result.has_js.value());
+    assert!(result.has_rs);
+    assert!(!result.has_py);
+    assert!(!result.has_js);
 }
 
 #[tokio::test]
@@ -42,9 +42,9 @@ async fn detects_python_files() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value());
-    assert!(result.has_py.value());
-    assert!(!result.has_js.value());
+    assert!(!result.has_rs);
+    assert!(result.has_py);
+    assert!(!result.has_js);
 }
 
 #[tokio::test]
@@ -53,9 +53,9 @@ async fn detects_js_ts_files() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value());
-    assert!(!result.has_py.value());
-    assert!(result.has_js.value());
+    assert!(!result.has_rs);
+    assert!(!result.has_py);
+    assert!(result.has_js);
 }
 
 #[tokio::test]
@@ -64,9 +64,9 @@ async fn detects_all_three_languages() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(result.has_rs.value());
-    assert!(result.has_py.value());
-    assert!(result.has_js.value());
+    assert!(result.has_rs);
+    assert!(result.has_py);
+    assert!(result.has_js);
 }
 
 // ─── Edge Cases ───────────────────────────────────────────
@@ -77,9 +77,9 @@ async fn empty_directory_detects_nothing() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value());
-    assert!(!result.has_py.value());
-    assert!(!result.has_js.value());
+    assert!(!result.has_rs);
+    assert!(!result.has_py);
+    assert!(!result.has_js);
 }
 
 #[tokio::test]
@@ -89,9 +89,9 @@ async fn single_file_path_detects_language() {
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value());
-    assert!(result.has_py.value());
-    assert!(!result.has_js.value());
+    assert!(!result.has_rs);
+    assert!(result.has_py);
+    assert!(!result.has_js);
 }
 
 #[tokio::test]
@@ -100,8 +100,8 @@ async fn skips_node_modules_directory() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(result.has_rs.value());
-    assert!(!result.has_js.value()); // node_modules skipped
+    assert!(result.has_rs);
+    assert!(!result.has_js); // node_modules skipped
 }
 
 #[tokio::test]
@@ -110,8 +110,8 @@ async fn skips_target_directory() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value()); // target/ skipped
-    assert!(result.has_py.value());
+    assert!(!result.has_rs); // target/ skipped
+    assert!(result.has_py);
 }
 
 #[tokio::test]
@@ -120,8 +120,8 @@ async fn skips_git_directory() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value()); // .git/ skipped
-    assert!(result.has_js.value());
+    assert!(!result.has_rs); // .git/ skipped
+    assert!(result.has_js);
 }
 
 #[tokio::test]
@@ -130,9 +130,9 @@ async fn non_source_files_are_ignored() {
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
     let result = sut().detect_languages(&path).await;
-    assert!(!result.has_rs.value());
-    assert!(!result.has_py.value());
-    assert!(!result.has_js.value());
+    assert!(!result.has_rs);
+    assert!(!result.has_py);
+    assert!(!result.has_js);
 }
 
 // ─── Default Constructor ──────────────────────────────────

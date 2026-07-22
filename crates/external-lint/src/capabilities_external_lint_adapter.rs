@@ -1,10 +1,12 @@
+use std::path::PathBuf;
+
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::{bool, PatternList};
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -15,11 +17,7 @@ use shared::external_lint::contract_external_lint_utility_protocol::{
 };
 use shared::external_lint::utility_external_lint_io as ext_io;
 
-// ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct ExternalLintUtilityAdapter;
-
-// ─── Block 2: Protocol Trait Implementations ──────────────
 
 impl IExternalLintPathProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
@@ -35,21 +33,21 @@ impl IExternalLintPathProtocol for ExternalLintUtilityAdapter {
 impl IExternalLintLanguageProtocol for ExternalLintUtilityAdapter {
     fn has_python_files(&self, path: &FilePath) -> bool {
         let p = std::path::Path::new(&path.value);
-        if !ext_io::path_exists(p) {
-            return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
+        if !p.exists() {
+            return p.extension().map(|e| e == "py").unwrap_or(false);
         }
-        if ext_io::is_file(p) {
-            return bool::new(p.extension().map(|e| e == "py").unwrap_or(false));
+        if p.is_file() {
+            return p.extension().map(|e| e == "py").unwrap_or(false);
         }
         if let Ok(dir) = DirectoryPath::new(path.value.clone()) {
             self.has_py_in_dir(&dir)
         } else {
-            bool::new(false)
+            false
         }
     }
 
     fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
-        ext_io::has_python_files(&dir.value)
+        ext_io::has_python_files(std::path::Path::new(&dir.value))
     }
 
     fn is_in_path(&self, executable: &str) -> bool {
@@ -57,6 +55,7 @@ impl IExternalLintLanguageProtocol for ExternalLintUtilityAdapter {
     }
 }
 
+#[async_trait::async_trait]
 impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
     fn resolve_js_cmd(
         &self,
@@ -71,7 +70,7 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
             cmd.extend(args.values);
             return PatternList::new(cmd);
         }
-        if self.is_in_path(executable).value {
+        if self.is_in_path(executable) {
             let mut cmd = vec![executable.to_string()];
             cmd.extend(args.values);
             return PatternList::new(cmd);
@@ -84,7 +83,7 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
         let path_str = &path.value;
         let abs_path = ext_io::canonicalize_path(path_str);
-        let mut current = if ext_io::is_file(&abs_path) {
+        let mut current = if abs_path.is_file() {
             abs_path
                 .parent()
                 .map(|p| p.to_path_buf())
@@ -155,6 +154,7 @@ impl IExternalLintCargoProtocol for ExternalLintUtilityAdapter {
     }
 }
 
+#[async_trait::async_trait]
 impl IExternalLintCommandProtocol for ExternalLintUtilityAdapter {
     async fn exec_cmd_scan(
         &self,
@@ -202,8 +202,6 @@ impl IExternalLintCommandProtocol for ExternalLintUtilityAdapter {
         Ok(ComplianceStatus::new(false))
     }
 }
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl Default for ExternalLintUtilityAdapter {
     fn default() -> Self {

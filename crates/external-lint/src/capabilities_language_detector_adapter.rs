@@ -1,23 +1,14 @@
 use std::path::Path;
 
 use async_trait::async_trait;
-use shared::common::taxonomy_common_vo::bool;
+use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_language_detector_protocol::{
     DetectedLanguages, IExternalLintLanguageDetectorProtocol,
 };
 use shared::external_lint::utility_external_lint_io as ext_io;
 
-// PURPOSE: ExternalLintLanguageDetectorAdapter — IExternalLintLanguageDetectorProtocol implementation
-//
-// Scans a directory tree to detect which programming languages are present.
-// Skips node_modules, target, .git, .jj directories.
-
-// ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct ExternalLintLanguageDetectorAdapter;
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
 impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapter {
@@ -27,21 +18,19 @@ impl IExternalLintLanguageDetectorProtocol for ExternalLintLanguageDetectorAdapt
         let mut has_js = false;
 
         let root_path = Path::new(&path.value);
-        if ext_io::is_file(root_path) {
+        if root_path.is_file() {
             Self::detect_from_file(root_path, &mut has_rs, &mut has_py, &mut has_js);
         } else {
             Self::detect_in_dir(root_path, &mut has_rs, &mut has_py, &mut has_js);
         }
 
         DetectedLanguages {
-            has_rs: bool::new(has_rs),
-            has_py: bool::new(has_py),
-            has_js: bool::new(has_js),
+            has_rs,
+            has_py,
+            has_js,
         }
     }
 }
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-Live"];
 

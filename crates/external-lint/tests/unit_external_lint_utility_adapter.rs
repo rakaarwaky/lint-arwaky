@@ -47,7 +47,7 @@ fn has_python_files_detects_py_extension() {
 
     let adapter = sut();
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    assert!(adapter.has_python_files(&path).value());
+    assert!(adapter.has_python_files(&path));
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn has_python_files_false_for_rs_only() {
 
     let adapter = sut();
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    assert!(!adapter.has_python_files(&path).value());
+    assert!(!adapter.has_python_files(&path));
 }
 
 #[test]
@@ -68,20 +68,20 @@ fn has_python_files_single_py_file() {
 
     let adapter = sut();
     let path = FilePath::new(file.to_string_lossy().to_string()).unwrap();
-    assert!(adapter.has_python_files(&path).value());
+    assert!(adapter.has_python_files(&path));
 }
 
 #[test]
 fn is_in_path_finds_echo() {
     let adapter = sut();
     // 'echo' should be in PATH on any Unix system
-    assert!(adapter.is_in_path("echo").value());
+    assert!(adapter.is_in_path("echo"));
 }
 
 #[test]
 fn is_in_path_false_for_nonexistent() {
     let adapter = sut();
-    assert!(!adapter.is_in_path("nonexistent_tool_xyz_99999").value());
+    assert!(!adapter.is_in_path("nonexistent_tool_xyz_99999"));
 }
 
 // ─── IExternalLintJsProtocol ──────────────────────────────

@@ -21,12 +21,12 @@ fn full_config() -> ArchitectureConfig {
         LayerDefinition {
             allowed: PatternList::new(Vec::<String>::new()),
             forbidden: PatternList::new(vec![
-                "contract".into(),
-                "utility".into(),
-                "capabilities".into(),
-                "agent".into(),
-                "surfaces".into(),
-                "root".into(),
+                "contract".to_string(),
+                "utility".to_string(),
+                "capabilities".to_string(),
+                "agent".to_string(),
+                "surfaces".to_string(),
+                "root".to_string(),
             ]),
             mandatory: PatternList::new(Vec::<String>::new()),
             word_count: Count::new(2),
@@ -39,9 +39,9 @@ fn full_config() -> ArchitectureConfig {
     layers.insert(
         LayerNameVO::new("capabilities"),
         LayerDefinition {
-            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
-            forbidden: PatternList::new(vec!["agent".into(), "surfaces".into()]),
-            mandatory: PatternList::new(vec!["contract".into()]),
+            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            forbidden: PatternList::new(vec!["agent".to_string(), "surfaces".to_string()]),
+            mandatory: PatternList::new(vec!["contract".to_string()]),
             word_count: Count::new(2),
             exceptions: PatternList::new(Vec::<String>::new()),
             recursive: BooleanVO::new(false),
@@ -154,7 +154,7 @@ async fn forbidden_import_detected_through_full_pipeline() {
     let results = orch.run_audit(&target).await.unwrap();
 
     assert!(
-        results.iter().any(|v| v.code.value() == "AES201"),
+        results.iter().any(|v| v.code.code() == "AES201"),
         "Forbidden import should produce AES201 through full pipeline"
     );
 }
@@ -178,7 +178,7 @@ async fn unused_import_detected_through_full_pipeline() {
     let results = orch.run_audit(&target).await.unwrap();
 
     assert!(
-        results.iter().any(|v| v.code.value() == "AES203"),
+        results.iter().any(|v| v.code.code() == "AES203"),
         "Unused import should produce AES203 through full pipeline"
     );
 }
@@ -210,7 +210,7 @@ pub struct DummyCap;
     let results = orch.run_audit(&target).await.unwrap();
 
     assert!(
-        results.iter().any(|v| v.code.value() == "AES204"),
+        results.iter().any(|v| v.code.code() == "AES204"),
         "Dummy function should produce AES204 through full pipeline"
     );
 }
@@ -243,7 +243,7 @@ pub struct Multi;
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
 
-    let codes: Vec<&str> = results.iter().map(|v| v.code.value()).collect();
+    let codes: Vec<&str> = results.iter().map(|v| v.code.code()).collect();
     assert!(
         codes.contains(&"AES203") || codes.contains(&"AES204"),
         "Multiple violation types should be aggregated"

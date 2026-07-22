@@ -105,7 +105,7 @@ pub struct Foo;
         !results.is_empty(),
         "Taxonomy importing capabilities should produce AES201 violation"
     );
-    assert!(results.values.iter().all(|v| v.code.value() == "AES201"));
+    assert!(results.values.iter().all(|v| v.code.code() == "AES201"));
 }
 
 #[tokio::test]
