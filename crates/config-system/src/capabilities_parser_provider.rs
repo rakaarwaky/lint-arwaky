@@ -1,6 +1,6 @@
 // PURPOSE: ConfigParserProvider — IConfigParserProtocol implementation for YAML and TOML config parsing
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::utility_file_handler as utility_file;
+use shared::common::utility_file_handler;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
@@ -17,7 +17,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match utility_file::read_file_generic(p) {
+        let content = match utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
@@ -40,7 +40,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match utility_file::read_file_generic(p) {
+        let content = match utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
