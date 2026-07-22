@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterStatus;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
@@ -6,7 +8,9 @@ use shared::taxonomy_adapter_name_vo::AdapterName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ConfigRulesValidator;
+pub struct ConfigRulesValidator {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -52,6 +56,6 @@ impl Default for ConfigRulesValidator {
 
 impl ConfigRulesValidator {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }

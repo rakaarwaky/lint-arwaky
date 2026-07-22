@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
@@ -11,7 +13,9 @@ use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ConfigYamlReader;
+pub struct ConfigYamlReader {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -119,7 +123,7 @@ impl Default for ConfigYamlReader {
 
 impl ConfigYamlReader {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     /// Read config from XDG-compliant directories in priority order.
