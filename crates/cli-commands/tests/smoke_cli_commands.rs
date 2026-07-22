@@ -33,7 +33,7 @@ fn cli_binary_responds_to_version() {
     );
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        stdout.contains("1.10.106") || stdout.contains("lint-arwaky"),
+        stdout.contains("Lint Arwaky") || stdout.contains("lint-arwaky"),
         "unexpected version output: {}",
         stdout
     );
