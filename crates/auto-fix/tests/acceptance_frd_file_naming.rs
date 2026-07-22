@@ -8,11 +8,11 @@
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -99,9 +99,7 @@ fn frd_naming_fix_is_idempotent() {
     let content_after_first = std::fs::read_to_string(&file_path).unwrap();
 
     // Second run — should produce no further changes
-    let linter2 = MockLinter {
-        results: vec![],
-    };
+    let linter2 = MockLinter { results: vec![] };
     let sut2 = LintFixProcessor::new(Arc::new(linter2));
     let result2 = sut2.execute(&path);
     let content_after_second = std::fs::read_to_string(&file_path).unwrap();

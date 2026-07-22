@@ -5,11 +5,11 @@ use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
 };
 use rmcp::handler::server::wrapper::Parameters;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
@@ -72,10 +72,7 @@ impl shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipeli
         shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
         shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
     > {
-        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
-            vec![],
-            vec![],
-        ))
+        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]))
     }
     async fn run_with_discovery(
         &self,
@@ -83,10 +80,7 @@ impl shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipeli
         shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
         shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
     > {
-        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(
-            vec![],
-            vec![],
-        ))
+        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]))
     }
     fn check_orphan_single_file(
         &self,

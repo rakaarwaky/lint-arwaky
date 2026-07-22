@@ -11,7 +11,8 @@ use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_orchestrator() -> TuiOrchestrator {
     let executor = Arc::new(LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     let handler = Arc::new(ActionHandler::new(executor));
     TuiOrchestrator::new(handler)

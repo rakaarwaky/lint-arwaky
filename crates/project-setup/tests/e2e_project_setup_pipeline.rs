@@ -75,7 +75,7 @@ async fn e2e_all_transport_types() {
     let container = create_container();
     let agg = container.aggregate();
 
-    for transport in [TransportProtocol::HTTP, TransportProtocol::UnixSocket] {
+    for transport in [TransportProtocol::HTTP, TransportProtocol::STDAggregate] {
         // Generate all MCP configs
         let _claude = agg.mcp_config_claude(&transport);
         let _hermes = agg.mcp_config_hermes(&transport);

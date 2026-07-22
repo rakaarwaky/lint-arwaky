@@ -2,8 +2,8 @@
 // Requirement: Direct and indirect cycles across layers are detected.
 
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_cycle_import_protocol::DependencyEdge;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 
 fn sut() -> DependencyCycleAnalyzer {
     DependencyCycleAnalyzer::new()

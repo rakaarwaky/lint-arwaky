@@ -2,10 +2,10 @@
 
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
 use shared::naming_rules::taxonomy_naming_constant::{

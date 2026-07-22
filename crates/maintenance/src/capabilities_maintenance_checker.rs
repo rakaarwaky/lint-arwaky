@@ -338,7 +338,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     for line in content.lines() {
                         let t = line.trim();
                         if !t.is_empty() && !t.starts_with('#') {
-                            let parts: Vec<&str> = t.splitn(2, |c| c == '=' || c == '>' || c == '<' || c == '~').collect();
+                            let parts: Vec<&str> = t
+                                .splitn(2, |c| c == '=' || c == '>' || c == '<' || c == '~')
+                                .collect();
                             let name = parts[0].trim().to_string();
                             let version = if parts.len() > 1 {
                                 parts[1].trim_start_matches('=').trim().to_string()

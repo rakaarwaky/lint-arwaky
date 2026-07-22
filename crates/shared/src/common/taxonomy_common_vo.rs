@@ -1,9 +1,9 @@
 // PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
-use serde::{Deserialize, Serialize};
+use crate::common::taxonomy_job_id_vo::JobId;
 use crate::common::taxonomy_layer_vo::LineContentVO;
 use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
-use crate::common::taxonomy_job_id_vo::JobId;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LanguageVO {
@@ -24,7 +24,6 @@ impl LanguageVO {
         }
     }
 }
-
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]

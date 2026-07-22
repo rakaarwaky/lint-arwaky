@@ -3,9 +3,9 @@
 // Utility layer: stateless, no contract, no I/O abstraction.
 // Agent or Capabilities call these directly when low-level technical operations are needed.
 
-use crate::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
+use crate::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use std::path::Path;
 
 /// Filter a file list to only include files with recognized source extensions.

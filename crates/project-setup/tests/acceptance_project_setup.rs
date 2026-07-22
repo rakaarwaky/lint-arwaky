@@ -3,8 +3,6 @@
 
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 
 fn container() -> SetupContainer {
     SetupContainer::new()

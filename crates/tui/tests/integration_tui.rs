@@ -13,7 +13,8 @@ use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_full_wiring() -> (TuiOrchestrator, Arc<ActionHandler>, Arc<LintExecutor>) {
     let executor = Arc::new(LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     let handler = Arc::new(ActionHandler::new(executor.clone()));
     let orchestrator = TuiOrchestrator::new(handler.clone());
@@ -55,7 +56,8 @@ fn full_pipeline_wiring_works() {
 #[test]
 fn handler_and_orchestrator_share_arc() {
     let executor = Arc::new(LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     let handler = Arc::new(ActionHandler::new(executor));
     let _orchestrator = TuiOrchestrator::new(handler);
@@ -67,7 +69,9 @@ fn handler_and_orchestrator_share_arc() {
 
 #[test]
 fn tui_components_default_creates_valid_instances() {
-    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let code_analysis =
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter();
 
     let executor = Arc::new(LintExecutor::new(code_analysis));
     let _handler = ActionHandler::new(executor);

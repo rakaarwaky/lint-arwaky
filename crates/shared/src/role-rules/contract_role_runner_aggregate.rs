@@ -3,9 +3,9 @@ use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
+use crate::config_system::taxonomy_config_vo::RoleRuleVO;
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_AGENT;
 use crate::role_rules::taxonomy_layer_names_vo::LayerNames;
-use crate::config_system::taxonomy_config_vo::RoleRuleVO;
 use crate::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 
 pub fn anchor_taxonomy() {

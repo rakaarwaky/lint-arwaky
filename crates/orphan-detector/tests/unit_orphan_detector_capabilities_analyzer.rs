@@ -3,9 +3,9 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use std::collections::HashSet;
 

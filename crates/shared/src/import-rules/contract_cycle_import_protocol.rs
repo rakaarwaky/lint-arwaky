@@ -1,7 +1,7 @@
 // PURPOSE: ICycleImportProtocol — unified contract for cycle import detection (AES205)
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq, Hash)]
 pub struct DependencyEdge {
     pub source: String,

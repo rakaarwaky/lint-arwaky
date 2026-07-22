@@ -33,7 +33,7 @@ fn layer_map_with_taxonomy_forbidden() -> LayerMapVO {
     layers.insert(
         LayerNameVO::new("taxonomy"),
         LayerDefinition {
-            allowed: PatternList::new(Vec::<String>::new()),
+            allowed: PatternList::default(),
             forbidden: PatternList::new(vec![
                 "contract".to_string(),
                 "utility".to_string(),
@@ -42,9 +42,9 @@ fn layer_map_with_taxonomy_forbidden() -> LayerMapVO {
                 "surfaces".to_string(),
                 "root".to_string(),
             ]),
-            mandatory: PatternList::new(Vec::<String>::new()),
+            mandatory: PatternList::default(),
             word_count: Count::new(2),
-            exceptions: PatternList::new(Vec::<String>::new()),
+            exceptions: PatternList::default(),
             recursive: BooleanVO::new(false),
             ..Default::default()
         },

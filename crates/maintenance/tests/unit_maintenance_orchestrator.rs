@@ -2,8 +2,8 @@
 // Layer: Agent (target ≥ 60% coverage).
 
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_job_id_vo::JobId;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 
 fn sut() -> MaintenanceCommandsOrchestrator {

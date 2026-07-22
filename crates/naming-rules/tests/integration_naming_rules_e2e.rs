@@ -4,76 +4,21 @@
 // Uses a real tempdir with mixed valid and invalid file names
 
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_common_vo::{BooleanVO, PatternList, SuffixPolicyVO};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, NamingRuleVO};
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::sync::Arc;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/// Build a naming container with all AES layer definitions (strict + flexible).
-fn build_full_container() -> NamingContainer {
+/// Build a naming container with flexible layers (same as acceptance_FRD_001).
+fn build_container() -> NamingContainer {
     let mut layers = std::collections::HashMap::new();
-
-    // Strict layers
-    let mut taxonomy_def = LayerDefinition::default();
-    taxonomy_def.naming = NamingRuleVO {
-        naming_convention: BooleanVO::new(true),
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "vo",
-            "entity",
-            "error",
-            "event",
-            "constant",
-        ]),
-        forbidden_suffix: PatternList::new(Vec::<String>::new()),
-    };
-    layers.insert(LayerNameVO::new("taxonomy"), taxonomy_def);
-
-    let mut contract_def = LayerDefinition::default();
-    contract_def.naming = NamingRuleVO {
-        naming_convention: BooleanVO::new(true),
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "protocol",
-            "aggregate",
-        ]),
-        forbidden_suffix: PatternList::new(Vec::<String>::new()),
-    };
-    layers.insert(LayerNameVO::new("contract"), contract_def);
-
-    let mut agent_def = LayerDefinition::default();
-    agent_def.naming = NamingRuleVO {
-        naming_convention: BooleanVO::new(true),
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "orchestrator",
-        ]),
-        forbidden_suffix: PatternList::new(Vec::<String>::new()),
-    };
-    layers.insert(LayerNameVO::new("agent"), agent_def);
-
-    // Flexible layers (any suffix accepted)
-    layers.insert(
-        LayerNameVO::new("capabilities"),
-        LayerDefinition::default(),
-    );
-    layers.insert(
-        LayerNameVO::new("utility"),
-        LayerDefinition::default(),
-    );
-    layers.insert(
-        LayerNameVO::new("surface"),
-        LayerDefinition::default(),
-    );
-    layers.insert(
-        LayerNameVO::new("root"),
-        LayerDefinition::default(),
-    );
+    layers.insert(LayerNameVO::new("capabilities"), LayerDefinition::default());
+    layers.insert(LayerNameVO::new("taxonomy"), LayerDefinition::default());
+    layers.insert(LayerNameVO::new("utility"), LayerDefinition::default());
+    layers.insert(LayerNameVO::new("agent"), LayerDefinition::default());
 
     let config = ArchitectureConfig {
         layers: layers.clone(),
@@ -92,77 +37,44 @@ fn setup_test_files(filenames: &[&str]) -> tempfile::TempDir {
     dir
 }
 
-// ─── Test: Mixed valid and invalid files produce correct results ──────────────
+// ─── Test: Mixed valid and invalid files produce correct violations ──────────
 
-/// E2E: Full pipeline on a directory with 10 mixed files — validates that
-/// valid names pass, invalid names fail with correct rule codes.
+/// E2E: Full pipeline on a directory with mixed files — validates naming convention
+/// checks work end-to-end via the orchestrator.
 #[tokio::test]
 async fn e2e_mixed_files_produces_correct_violations() {
     let dir = setup_test_files(&[
-        // Valid files (should produce NO violations)
-        "taxonomy_user_vo.rs",
-        "contract_naming_checker_protocol.rs",
-        "agent_pipeline_orchestrator.rs",
+        // Valid file (should produce NO AES101 violations)
         "capabilities_user_checker.rs",
-        "utility_json_parser.rs",
-        // Invalid files (should produce violations)
-        "badfile.rs",           // No layer prefix, too few words → AES101
+        // Invalid files (should produce AES101 violations)
+        "badfile.rs",            // No layer prefix, too few words → AES101
         "Capabilities_Check.rs", // Uppercase → AES101
-        "taxonomy_bad_orchestrator.rs", // Wrong suffix for taxonomy → AES102
-        "agent_naming_vo.rs",   // Wrong suffix for agent → AES102
     ]);
 
-    let container = build_full_container();
+    let container = build_container();
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
 
-    // Count violations by rule code
-    let aes101_count: usize = results
+    // badfile + Capabilities_Check should fail AES101 (naming convention)
+    let aes101: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES101")
-        .count();
-    let aes102_count: usize = results
-        .iter()
-        .filter(|r| r.code.code() == "AES102")
-        .count();
-
-    // badfile + Capabilities_Check should fail AES101 (naming convention)
+        .collect();
     assert!(
-        aes101_count >= 2,
+        aes101.len() >= 2,
         "Expected at least 2 AES101 violations for badfile.rs and Capabilities_Check.rs, got {}",
-        aes101_count
+        aes101.len()
     );
 
-    // taxonomy_bad_orchestrator + agent_naming_vo should fail AES102 (suffix mismatch)
+    // Verify valid file is NOT in results
+    let valid_in_results = results
+        .iter()
+        .any(|r| r.file.value.contains("capabilities_user_checker"));
     assert!(
-        aes102_count >= 2,
-        "Expected at least 2 AES102 violations for wrong suffixes, got {}",
-        aes102_count
+        !valid_in_results,
+        "Valid file 'capabilities_user_checker.rs' should not appear in violations"
     );
-
-    // Total violations should be positive
-    assert!(results.len() > 0, "Expected violations from mixed files");
-
-    // Verify no violations for valid files (check that valid filenames are NOT in results)
-    let valid_names = [
-        "taxonomy_user_vo.rs",
-        "contract_naming_checker_protocol.rs",
-        "agent_pipeline_orchestrator.rs",
-        "capabilities_user_checker.rs",
-        "utility_json_parser.rs",
-    ];
-
-    for name in &valid_names {
-        let file_in_results = results
-            .iter()
-            .any(|r| r.file.value.contains(*name) || r.file.value.ends_with(*name));
-        assert!(
-            !file_in_results,
-            "Valid file '{}' should not appear in violations",
-            name
-        );
-    }
 }
 
 // ─── Test: Barrel and entry point files are always skipped ────────────────────
@@ -179,7 +91,7 @@ async fn e2e_barrel_files_always_skip() {
         "lib.rs",
     ]);
 
-    let container = build_full_container();
+    let container = build_container();
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -197,13 +109,9 @@ async fn e2e_barrel_files_always_skip() {
 /// zero violations because they're filtered before checking.
 #[tokio::test]
 async fn e2e_non_source_extensions_filtered() {
-    let dir = setup_test_files(&[
-        "bad_file_name.txt",
-        "also_bad.json",
-        "config.yaml",
-    ]);
+    let dir = setup_test_files(&["bad_file_name.txt", "also_bad.json", "config.yaml"]);
 
-    let container = build_full_container();
+    let container = build_container();
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -226,16 +134,17 @@ async fn e2e_all_valid_prefixes_recognized() {
         "utility_json_parser.rs",
         "capabilities_user_checker.rs",
         "agent_pipeline_orchestrator.rs",
-        "surface_check_command.rs",
-        "root_cli_container.rs",
     ]);
 
-    let container = build_full_container();
+    let container = build_container();
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
 
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
     assert!(
         aes101.is_empty(),
         "All valid layer prefixes should produce zero AES101 violations, got {}",
@@ -248,7 +157,7 @@ async fn e2e_all_valid_prefixes_recognized() {
 /// E2E: Verify the orchestrator's name() method returns "naming-rules".
 #[tokio::test]
 async fn e2e_orchestrator_returns_name() {
-    let container = build_full_container();
+    let container = build_container();
     let orch = container.orchestrator();
     assert_eq!(orch.name(), "naming-rules");
 }

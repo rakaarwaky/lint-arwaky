@@ -9,9 +9,9 @@ use shared::naming_rules::contract_naming_checker_protocol::{
     INamingConventionChecker, ISuffixPrefixChecker,
 };
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use shared::taxonomy_common_vo::PatternList;
 use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::naming_rules::taxonomy_naming_constant::SOURCE_EXTENSIONS;
 use std::path::Path;
 use std::sync::Arc;
 

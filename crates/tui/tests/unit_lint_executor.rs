@@ -7,7 +7,8 @@ use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn executor() -> LintExecutor {
     LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     )
 }
 
@@ -98,6 +99,8 @@ fn lint_executor_version_returns_result() {
 
 #[test]
 fn lint_executor_default_creates_valid_instance() {
-    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let code_analysis =
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter();
     let _ = LintExecutor::new(code_analysis);
 }

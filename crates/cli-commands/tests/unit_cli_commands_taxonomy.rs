@@ -2,8 +2,8 @@
 
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_request_vo::{ScanMode, ScanRequest, ScanTarget};
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use std::str::FromStr;
 

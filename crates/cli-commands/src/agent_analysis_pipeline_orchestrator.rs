@@ -430,10 +430,11 @@ impl AnalysisPipelineOrchestrator {
         let ignored = self
             .config_orchestrator
             .ignored_paths(scan_root.to_str().unwrap_or("."));
-        let all_files: Vec<String> = shared::common::utility_file::collect_all_source_files(&scan_root, &ignored)
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        let all_files: Vec<String> =
+            shared::common::utility_file::collect_all_source_files(&scan_root, &ignored)
+                .iter()
+                .map(|f| f.value.clone())
+                .collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {

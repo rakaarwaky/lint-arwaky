@@ -3,9 +3,9 @@
 
 use code_analysis_lint_arwaky::{has_critical, CodeAnalysisOrchestrator};
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 
 fn orchestrator() -> CodeAnalysisOrchestrator {
     CodeAnalysisOrchestrator::new()

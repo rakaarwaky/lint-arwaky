@@ -51,8 +51,7 @@ fn full_pipeline_wiring_works() {
     );
     let _status = agg.check_http(&url);
 
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::HTTP;
+    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::HTTP;
     let _env = agg.generate_env(
         &transport,
         &shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string()).unwrap(),

@@ -56,12 +56,16 @@ pub struct ArchOrphanAnalyzer {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(files.to_vec());
+        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+            files.to_vec(),
+        );
         self.resolver.build_graph_context(&[file_vo], root_dir)
     }
 
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(files.to_vec());
+        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+            files.to_vec(),
+        );
         self.resolver
             .identify_entry_points(&[file_vo], &[])
             .values
@@ -117,13 +121,18 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
         let mut results: Vec<LintResult> = Vec::new();
         // Use expanded files for graph context to capture cross-crate imports
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(all_workspace_files.clone());
+        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+            all_workspace_files.clone(),
+        );
         let context: GraphAnalysisContext = self
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
 
         let configured = self.get_orphan_entry_points();
-        let configured_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(configured);
+        let configured_vo =
+            shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
+                configured,
+            );
         let entry_points = self
             .resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
@@ -251,8 +260,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // Use pre-built context (avoids rebuilding inbound_links per call)
 
         let configured = self.get_orphan_entry_points();
-        let configured_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(configured);
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(all_workspace_files.clone());
+        let configured_vo =
+            shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
+                configured,
+            );
+        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+            all_workspace_files.clone(),
+        );
         let entry_points = self
             .resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);

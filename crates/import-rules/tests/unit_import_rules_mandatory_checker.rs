@@ -38,10 +38,10 @@ fn layer_map_with_mandatory_contract() -> LayerMapVO {
                 "contract".to_string(),
                 "utility".to_string(),
             ]),
-            forbidden: PatternList::new(Vec::<String>::new()),
+            forbidden: PatternList::default(),
             mandatory: PatternList::new(vec!["contract".to_string()]),
             word_count: Count::new(2),
-            exceptions: PatternList::new(Vec::<String>::new()),
+            exceptions: PatternList::default(),
             recursive: BooleanVO::new(false),
             ..Default::default()
         },

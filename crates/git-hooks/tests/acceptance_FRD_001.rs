@@ -72,7 +72,9 @@ fn frd_001_hook_has_valid_shebang() {
 #[test]
 fn frd_001_non_git_dir_returns_false() {
     let tmp_dir = tempfile::tempdir().unwrap();
-    let adapter = GitHookAdapter::new(FilePath::new(tmp_dir.path().to_str().unwrap().to_string()).unwrap_or_default());
+    let adapter = GitHookAdapter::new(
+        FilePath::new(tmp_dir.path().to_str().unwrap().to_string()).unwrap_or_default(),
+    );
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let result = adapter.install_pre_commit(&exe);
     assert!(result.is_ok());

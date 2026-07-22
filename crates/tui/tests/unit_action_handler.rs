@@ -10,7 +10,8 @@ use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_handler() -> ActionHandler {
     let lint_executor = Arc::new(LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     ActionHandler::new(lint_executor)
 }
@@ -69,7 +70,8 @@ fn action_handler_loads_preview() {
 #[test]
 fn action_handler_default_creates_valid_instance() {
     let lint_executor = Arc::new(LintExecutor::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     let _ = ActionHandler::new(lint_executor);
 }

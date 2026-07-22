@@ -15,7 +15,8 @@ use std::time::Instant;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     ));
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
@@ -30,7 +31,8 @@ fn bench_formatter_instantiation() {
     let start = Instant::now();
     for _ in 0..1000 {
         let _text = TextFormatter::new(
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+                .code_analysis_linter(),
         );
         let _json = JsonFormatter::new();
         let _sarif = SarifFormatter::new();
@@ -49,7 +51,8 @@ fn bench_formatter_instantiation() {
 #[test]
 fn bench_text_formatting() {
     let text = TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter(),
     );
     let report = ScanReport::new(vec![], vec![]);
 

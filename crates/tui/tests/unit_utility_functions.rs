@@ -25,7 +25,10 @@ fn utility_list_directory_skips_hidden_files() {
 
     // None of the entries should start with "."
     for entry in &entries {
-        assert!(!entry.name.starts_with('.'), "Hidden files should be skipped");
+        assert!(
+            !entry.name.starts_with('.'),
+            "Hidden files should be skipped"
+        );
     }
 }
 

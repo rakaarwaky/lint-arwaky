@@ -95,7 +95,7 @@ async fn empty_command_returns_error() {
     let client = sut();
     let result = client
         .execute_command(
-            PatternList::new(Vec::<String>::new()),
+            PatternList::default(),
             FilePath::new("/tmp".to_string()).unwrap(),
             Some(Timeout::new(5.0)),
         )

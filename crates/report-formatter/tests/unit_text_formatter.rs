@@ -10,7 +10,9 @@ use shared::common::taxonomy_severity_vo::Severity;
 use std::sync::Arc;
 
 fn formatter() -> TextFormatter {
-    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let code_analysis =
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter();
     TextFormatter::new(code_analysis)
 }
 
@@ -60,6 +62,8 @@ fn text_formatter_fallback_for_non_text_format() {
 
 #[test]
 fn text_formatter_default_creates_valid_instance() {
-    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let code_analysis =
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
+            .code_analysis_linter();
     let _ = TextFormatter::new(code_analysis);
 }
