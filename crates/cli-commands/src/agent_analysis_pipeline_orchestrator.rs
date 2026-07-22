@@ -199,10 +199,18 @@ impl AnalysisPipelineOrchestrator {
             Err(_) => Vec::new(),
         };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        // Build context once, use for all calls
+        // Build context with ALL workspace files for cross-crate import resolution
+        let all_workspace_files = shared::common::collect_all_source_files(
+            &std::path::PathBuf::from(orphan_scan_root),
+            &ignored,
+        );
+        let all_file_strs: Vec<String> = all_workspace_files
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
         let context = self
             .orphan_orchestrator
-            .build_orphan_graph_context(&file_strs, orphan_scan_root);
+            .build_orphan_graph_context(&all_file_strs, orphan_scan_root);
         self.orphan_orchestrator
             .check_orphans_with_context(&file_strs, orphan_scan_root, &context)
     }

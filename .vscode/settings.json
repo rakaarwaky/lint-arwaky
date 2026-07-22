@@ -1,12 +1,18 @@
 {
-  "rust-analyzer.check.extraArgs": ["--lib"],
+  "rust-analyzer.check.extraArgs": ["--lib", "--bins"],
   "rust-analyzer.check.command": "check",
   "rust-analyzer.diagnostics.enabled": true,
-  "rust-analyzer.diagnostics.exclude": [
-    "**/*_test.rs",
-    "**/tests/**/*.rs"
+  "rust-analyzer.exclude": [
+    "**/tests",
+    "**/test-workspaces",
+    "**/tests/**"
   ],
   "files.exclude": {
-    "**/tests": true
+    "**/tests": true,
+    "**/test-workspaces": true
+  },
+  "files.watcherExclude": {
+    "**/tests/**": true,
+    "**/test-workspaces/**": true
   }
 }
