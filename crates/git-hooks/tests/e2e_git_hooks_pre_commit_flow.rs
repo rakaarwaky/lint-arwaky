@@ -8,12 +8,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use std::sync::Arc;
 
-fn create_temp_git_repo() -> (std::path::PathBuf, String) {
-    let tmp_dir = std::env::temp_dir().join(format!("git_hooks_e2e_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&tmp_dir);
-    std::fs::create_dir_all(&tmp_dir).unwrap();
-    std::fs::create_dir_all(tmp_dir.join(".git")).unwrap();
-    let path_str = tmp_dir.to_str().unwrap().to_string();
+fn create_temp_git_repo() -> (tempfile::TempDir, String) {
+    let tmp_dir = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(tmp_dir.path().join(".git")).unwrap();
+    let path_str = tmp_dir.path().to_str().unwrap().to_string();
     (tmp_dir, path_str)
 }
 
@@ -37,7 +35,7 @@ async fn full_pre_commit_hook_lifecycle() {
     assert!(install_result.unwrap().value());
 
     // Step 3: Verify hook file exists and has correct content
-    let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
+    let hook_path = tmp_dir.path().join(".git").join("hooks").join("pre-commit");
     assert!(hook_path.exists(), "pre-commit hook file must exist");
 
     let content = std::fs::read_to_string(&hook_path).unwrap();
@@ -68,9 +66,6 @@ async fn full_pre_commit_hook_lifecycle() {
         !hook_path.exists(),
         "Hook file must be removed after uninstall"
     );
-
-    // Cleanup
-    let _ = std::fs::remove_dir_all(&tmp_dir);
 }
 
 #[tokio::test]
@@ -90,7 +85,7 @@ async fn pre_commit_hook_blocks_on_violation_simulation() {
     let exe_path = FilePath::new("lint-arwaky").unwrap_or_default();
     let _ = aggregate.install_hook(&exe_path).await;
 
-    let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
+    let hook_path = tmp_dir.path().join(".git").join("hooks").join("pre-commit");
     let content = std::fs::read_to_string(&hook_path).unwrap();
 
     // Verify blocking logic: if lint fails ($? -ne 0), exit 1
@@ -98,6 +93,4 @@ async fn pre_commit_hook_blocks_on_violation_simulation() {
     assert!(content.contains("exit 1"));
     // Verify success path: exit 0
     assert!(content.contains("exit 0"));
-
-    let _ = std::fs::remove_dir_all(&tmp_dir);
 }

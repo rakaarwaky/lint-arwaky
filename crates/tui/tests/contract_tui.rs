@@ -9,13 +9,15 @@ use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
+fn linter() -> Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate> {
+    code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter()
+}
+
 // ─── Verify ActionHandler implements IActionHandlerProtocol ──
 
 #[test]
 fn action_handler_implements_protocol() {
-    let lint_executor = Arc::new(LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )));
+    let lint_executor = Arc::new(LintExecutor::new(linter()));
     let handler = ActionHandler::new(lint_executor);
     let _: &dyn IActionHandlerProtocol = &handler;
 }
@@ -24,9 +26,7 @@ fn action_handler_implements_protocol() {
 
 #[test]
 fn lint_executor_implements_protocol() {
-    let executor = LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    ));
+    let executor = LintExecutor::new(linter());
     let _: &dyn ILintExecutorProtocol = &executor;
 }
 
@@ -34,9 +34,7 @@ fn lint_executor_implements_protocol() {
 
 #[test]
 fn tui_orchestrator_implements_aggregate() {
-    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )))));
+    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(linter()))));
     let orchestrator = TuiOrchestrator::new(handler);
     let _: &dyn ITuiAggregate = &orchestrator;
 }
@@ -45,9 +43,7 @@ fn tui_orchestrator_implements_aggregate() {
 
 #[test]
 fn action_handler_all_methods_accessible() {
-    let lint_executor = Arc::new(LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )));
+    let lint_executor = Arc::new(LintExecutor::new(linter()));
     let handler = ActionHandler::new(lint_executor);
 
     // Verify all trait methods are accessible
@@ -56,9 +52,7 @@ fn action_handler_all_methods_accessible() {
 
 #[test]
 fn lint_executor_all_methods_accessible() {
-    let executor = LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    ));
+    let executor = LintExecutor::new(linter());
 
     // Verify all trait methods are accessible
     let _: &dyn ILintExecutorProtocol = &executor;
@@ -66,9 +60,7 @@ fn lint_executor_all_methods_accessible() {
 
 #[test]
 fn tui_orchestrator_all_methods_accessible() {
-    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )))));
+    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(linter()))));
     let orchestrator = TuiOrchestrator::new(handler);
 
     // Verify all trait methods are accessible

@@ -6,9 +6,9 @@ use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn executor() -> LintExecutor {
-    LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    ))
+    LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+    )
 }
 
 // ─── check: Basic lint check ──
@@ -17,7 +17,7 @@ fn executor() -> LintExecutor {
 fn lint_executor_check_returns_result() {
     let executor = executor();
     let flags = ActionFlags::default();
-    let result = executor.check("/tmp", &flags);
+    let _result = executor.check("/tmp", &flags);
     // Should return a valid result (may have violations)
     assert!(true);
 }
@@ -27,7 +27,7 @@ fn lint_executor_check_returns_result() {
 #[test]
 fn lint_executor_scan_returns_result() {
     let executor = executor();
-    let result = executor.scan("/tmp");
+    let _result = executor.scan("/tmp");
     // Should return a valid result
     assert!(true);
 }
@@ -38,7 +38,7 @@ fn lint_executor_scan_returns_result() {
 fn lint_executor_fix_returns_result() {
     let executor = executor();
     let flags = ActionFlags::default();
-    let result = executor.fix("/tmp", &flags);
+    let _result = executor.fix("/tmp", &flags);
     // Should return a valid result
     assert!(true);
 }
@@ -49,7 +49,7 @@ fn lint_executor_fix_returns_result() {
 fn lint_executor_ci_returns_result() {
     let executor = executor();
     let flags = ActionFlags::default();
-    let result = executor.ci("/tmp", &flags);
+    let _result = executor.ci("/tmp", &flags);
     // Should return a valid result
     assert!(true);
 }
@@ -59,7 +59,7 @@ fn lint_executor_ci_returns_result() {
 #[test]
 fn lint_executor_orphan_returns_result() {
     let executor = executor();
-    let result = executor.orphan("/tmp");
+    let _result = executor.orphan("/tmp");
     // Should return a valid result
     assert!(true);
 }
@@ -69,8 +69,7 @@ fn lint_executor_orphan_returns_result() {
 #[test]
 fn lint_executor_security_returns_result() {
     let executor = executor();
-    let flags = ActionFlags::default();
-    let result = executor.security("/tmp", &flags);
+    let _result = executor.security("/tmp");
     // Should return a valid result
     assert!(true);
 }
@@ -80,7 +79,7 @@ fn lint_executor_security_returns_result() {
 #[test]
 fn lint_executor_doctor_returns_result() {
     let executor = executor();
-    let result = executor.doctor();
+    let _result = executor.doctor();
     // Should return a valid result
     assert!(true);
 }
@@ -90,16 +89,15 @@ fn lint_executor_doctor_returns_result() {
 #[test]
 fn lint_executor_version_returns_result() {
     let executor = executor();
-    let result = executor.version();
+    let _result = executor.version();
     // Should return version info
     assert!(true);
 }
 
-// ─── Default trait ──
+// ─── Default constructor ──
 
 #[test]
 fn lint_executor_default_creates_valid_instance() {
-    let _ = LintExecutor::default(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    ));
+    let code_analysis = code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter();
+    let _ = LintExecutor::new(code_analysis);
 }

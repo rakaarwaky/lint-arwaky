@@ -94,8 +94,9 @@ fn orchestrator_can_be_arced_as_dyn_aggregate() {
 #[test]
 fn run_with_running_false_exits_immediately() {
     let orch = make_orchestrator();
+    let tmp_dir = tempfile::tempdir().unwrap();
     let config = shared::file_watch::taxonomy_watch_config_vo::WatchConfig::from_path(
-        std::env::temp_dir().to_string_lossy().to_string(),
+        tmp_dir.path().to_string_lossy().to_string(),
     );
     let running = Arc::new(AtomicBool::new(false));
     let code = orch.run(config, running);

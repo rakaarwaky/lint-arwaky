@@ -2,16 +2,19 @@
 // Layer: Benchmark (performance validation).
 
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
+use std::sync::Arc;
 use std::time::Instant;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_orchestrator() -> TuiOrchestrator {
-    let executor = LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+    let executor = Arc::new(LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
     ));
-    let handler = ActionHandler::new(Arc::new(executor));
+    let handler = Arc::new(ActionHandler::new(executor));
     TuiOrchestrator::new(handler)
 }
 
@@ -21,11 +24,11 @@ fn build_orchestrator() -> TuiOrchestrator {
 fn bench_component_instantiation() {
     let start = Instant::now();
     for _ in 0..1000 {
-        let _executor = LintExecutor::new(Arc::new(
-            shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+        let executor = Arc::new(LintExecutor::new(
+            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
         ));
-        let _handler = ActionHandler::new(Arc::new(_executor));
-        let _orchestrator = TuiOrchestrator::new(_handler);
+        let handler = Arc::new(ActionHandler::new(executor));
+        let _orchestrator = TuiOrchestrator::new(handler);
     }
     let elapsed = start.elapsed();
     assert!(
@@ -40,14 +43,9 @@ fn bench_component_instantiation() {
 #[test]
 fn bench_event_handling() {
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
-    let event = shared::tui::taxonomy_tui_event::TuiEvent::Key(
-        shared::tui::taxonomy_tui_event::KeyEvent::normal(
-            "q",
-            shared::crossterm::terminal::ModifiersInformation::NONE,
-        ),
-    );
+    let event = TuiEvent::Quit;
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -66,7 +64,7 @@ fn bench_event_handling() {
 #[test]
 fn bench_directory_loading() {
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     let start = Instant::now();
     for _ in 0..100 {
@@ -85,7 +83,7 @@ fn bench_directory_loading() {
 #[test]
 fn bench_preview_loading() {
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     let start = Instant::now();
     for _ in 0..100 {
@@ -104,19 +102,11 @@ fn bench_preview_loading() {
 #[test]
 fn bench_full_pipeline() {
     let orchestrator = build_orchestrator();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     let start = Instant::now();
     for _ in 0..50 {
-        orchestrator.handle_event(
-            &mut state,
-            shared::tui::taxonomy_tui_event::TuiEvent::Key(
-                shared::tui::taxonomy_tui_event::KeyEvent::normal(
-                    "j",
-                    shared::crossterm::terminal::ModifiersInformation::NONE,
-                ),
-            ),
-        );
+        orchestrator.handle_event(&mut state, TuiEvent::MoveDown);
         orchestrator.load_directory(&mut state, "/tmp");
         orchestrator.load_preview(&mut state);
     }

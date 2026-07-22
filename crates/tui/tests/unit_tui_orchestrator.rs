@@ -10,9 +10,9 @@ use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_orchestrator() -> TuiOrchestrator {
-    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
-    )))));
+    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
+    ))));
     TuiOrchestrator::new(handler)
 }
 
@@ -29,11 +29,8 @@ fn tui_orchestrator_implements_aggregate() {
 #[test]
 fn orchestrator_handles_event() {
     let orch = build_orchestrator();
-    let mut state = AppState::default();
-    let event = TuiEvent::Key(shared::tui::taxonomy_tui_event::KeyEvent::normal(
-        "q",
-        shared::crossterm::terminal::ModifiersInformation::NONE,
-    ));
+    let mut state = AppState::new(".".to_string());
+    let event = TuiEvent::Quit;
 
     // Should not panic on valid event
     orch.handle_event(&mut state, event);
@@ -44,7 +41,7 @@ fn orchestrator_handles_event() {
 #[test]
 fn orchestrator_loads_directory() {
     let orch = build_orchestrator();
-    let mut state = AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle directory loading without panic
     orch.load_directory(&mut state, "/tmp");
@@ -55,7 +52,7 @@ fn orchestrator_loads_directory() {
 #[test]
 fn orchestrator_loads_preview() {
     let orch = build_orchestrator();
-    let mut state = AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle preview loading without panic
     orch.load_preview(&mut state);
@@ -66,7 +63,7 @@ fn orchestrator_loads_preview() {
 #[test]
 fn orchestrator_polls_watch() {
     let orch = build_orchestrator();
-    let mut state = AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Should handle watch polling without panic
     orch.poll_watch(&mut state);

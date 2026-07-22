@@ -61,7 +61,8 @@ fn smoke_crate_boots_and_core_types_work() {
     assert!(!ChangeAnalyzer::is_lintable("photo.jpg"));
 
     // 5. Orchestrator with running=false exits immediately.
-    let config = WatchConfig::from_path(std::env::temp_dir().to_string_lossy().to_string());
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let config = WatchConfig::from_path(tmp_dir.path().to_string_lossy().to_string());
     let running = Arc::new(AtomicBool::new(false));
     let code = orch.run(config, running);
     assert_eq!(code, std::process::ExitCode::SUCCESS);

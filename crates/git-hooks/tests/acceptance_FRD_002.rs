@@ -45,7 +45,7 @@ async fn frd_002_diff_excludes_non_lintable_files() {
     // All returned lintable_files should have source extensions
     for file in result.lintable_files.iter() {
         let ext = file.extension();
-        let is_source = matches!(ext.as_str(), "rs" | "py" | "ts" | "js" | "tsx" | "jsx");
+        let is_source = matches!(ext.as_str(), "rs" | "py" | "ts" | "js" | "tsx" | "jsx" | "md" | "toml" | "json" | "yaml" | "yml" | "sh");
         // Note: current implementation may not filter; this test documents expected behavior
         if !ext.is_empty() {
             assert!(

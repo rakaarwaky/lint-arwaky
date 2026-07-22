@@ -6,11 +6,10 @@ use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 
-fn create_temp_repo() -> (std::path::PathBuf, String) {
-    let tmp_dir = std::env::temp_dir().join(format!("frd001_{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&tmp_dir);
-    std::fs::create_dir_all(tmp_dir.join(".git")).unwrap();
-    let path_str = tmp_dir.to_str().unwrap().to_string();
+fn create_temp_repo() -> (tempfile::TempDir, String) {
+    let tmp_dir = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(tmp_dir.path().join(".git")).unwrap();
+    let path_str = tmp_dir.path().to_str().unwrap().to_string();
     (tmp_dir, path_str)
 }
 
@@ -26,13 +25,11 @@ fn frd_001_hook_installed_in_correct_location() {
     assert!(result.is_ok());
     assert!(result.unwrap().value());
 
-    let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
+    let hook_path = tmp_dir.path().join(".git").join("hooks").join("pre-commit");
     assert!(
         hook_path.exists(),
         "Hook must exist at .git/hooks/pre-commit"
     );
-
-    let _ = std::fs::remove_dir_all(&tmp_dir);
 }
 
 /// FRD-001: Hook script is executable (Unix permissions set)
@@ -47,13 +44,11 @@ fn frd_001_hook_has_executable_permission() {
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
-    let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
+    let hook_path = tmp_dir.path().join(".git").join("hooks").join("pre-commit");
     let metadata = std::fs::metadata(&hook_path).unwrap();
     let mode = metadata.permissions().mode();
     // Check executable bit (owner)
     assert!(mode & 0o100 != 0, "Hook must be executable");
-
-    let _ = std::fs::remove_dir_all(&tmp_dir);
 }
 
 /// FRD-001: Hook script contains valid bash shebang
@@ -65,20 +60,19 @@ fn frd_001_hook_has_valid_shebang() {
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
-    let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
+    let hook_path = tmp_dir.path().join(".git").join("hooks").join("pre-commit");
     let content = std::fs::read_to_string(&hook_path).unwrap();
     assert!(
         content.starts_with("#!/bin/bash"),
         "Hook must start with bash shebang"
     );
-
-    let _ = std::fs::remove_dir_all(&tmp_dir);
 }
 
 /// FRD-001: Installation in non-git directory returns false (no-op)
 #[test]
 fn frd_001_non_git_dir_returns_false() {
-    let adapter = GitHookAdapter::new(FilePath::new("/tmp/not_a_repo_frd001").unwrap_or_default());
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let adapter = GitHookAdapter::new(FilePath::new(tmp_dir.path().to_str().unwrap().to_string()).unwrap_or_default());
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let result = adapter.install_pre_commit(&exe);
     assert!(result.is_ok());

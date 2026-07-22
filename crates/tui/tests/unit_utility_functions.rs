@@ -94,7 +94,7 @@ fn utility_path_components_splits_path() {
 
 #[test]
 fn utility_format_results_handles_empty_list() {
-    let results = vec![];
+    let results = shared::cli_commands::taxonomy_result_vo::LintResultList::new(vec![]);
     let formatted = utility_report_formatter::format_results(&results);
     assert!(formatted.value.is_empty() || true); // Graceful fallback
 }

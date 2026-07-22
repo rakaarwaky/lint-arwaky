@@ -18,7 +18,7 @@ fn acceptance_project_setup_generates_claude_config() {
     let container = container();
     let agg = container.aggregate();
 
-    let transport = TransportProtocol::new("http".to_string());
+    let transport = TransportProtocol::HTTP;
     let config = agg.mcp_config_claude(&transport);
 
     assert!(
@@ -33,7 +33,7 @@ fn acceptance_project_setup_generates_hermes_config() {
     let container = container();
     let agg = container.aggregate();
 
-    let transport = TransportProtocol::new("http".to_string());
+    let transport = TransportProtocol::HTTP;
     let config = agg.mcp_config_hermes(&transport);
 
     assert!(
@@ -48,7 +48,7 @@ fn acceptance_project_setup_generates_vscode_config() {
     let container = container();
     let agg = container.aggregate();
 
-    let transport = TransportProtocol::new("http".to_string());
+    let transport = TransportProtocol::HTTP;
     let config = agg.mcp_config_vscode(&transport);
 
     assert!(

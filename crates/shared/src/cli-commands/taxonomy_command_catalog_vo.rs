@@ -51,6 +51,21 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli mcp",
     ),
     ("tui", "Launch terminal UI", "lint-arwaky-cli tui"),
+    (
+        "install-hook",
+        "Install git pre-commit hook",
+        "lint-arwaky-cli install-hook",
+    ),
+    (
+        "uninstall-hook",
+        "Uninstall git pre-commit hook",
+        "lint-arwaky-cli uninstall-hook",
+    ),
+    (
+        "setup",
+        "Generate MCP configuration for IDEs",
+        "lint-arwaky-cli setup",
+    ),
 ];
 
 // ─── CommandMetadataVO (from taxonomy_metadata_vo) ───

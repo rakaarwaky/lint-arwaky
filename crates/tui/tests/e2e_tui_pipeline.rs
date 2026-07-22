@@ -2,16 +2,18 @@
 // Layer: E2E (full integration of all layers).
 
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_full_pipeline() -> TuiOrchestrator {
-    let executor = LintExecutor::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+    let executor = Arc::new(LintExecutor::new(
+        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default().code_analysis_linter(),
     ));
-    let handler = ActionHandler::new(Arc::new(executor));
+    let handler = Arc::new(ActionHandler::new(executor));
     TuiOrchestrator::new(handler)
 }
 
@@ -20,15 +22,10 @@ fn build_full_pipeline() -> TuiOrchestrator {
 #[test]
 fn e2e_event_handling_pipeline() {
     let orchestrator = build_full_pipeline();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Simulate a full event sequence
-    let quit_event = shared::tui::taxonomy_tui_event::TuiEvent::Key(
-        shared::tui::taxonomy_tui_event::KeyEvent::normal(
-            "q",
-            shared::crossterm::terminal::ModifiersInformation::NONE,
-        ),
-    );
+    let quit_event = TuiEvent::Quit;
 
     // Should not panic on any event
     orchestrator.handle_event(&mut state, quit_event);
@@ -39,7 +36,7 @@ fn e2e_event_handling_pipeline() {
 #[test]
 fn e2e_directory_loading_pipeline() {
     let orchestrator = build_full_pipeline();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Load directory and verify it doesn't panic
     orchestrator.load_directory(&mut state, "/tmp");
@@ -50,7 +47,7 @@ fn e2e_directory_loading_pipeline() {
 #[test]
 fn e2e_preview_loading_pipeline() {
     let orchestrator = build_full_pipeline();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Load preview and verify it doesn't panic
     orchestrator.load_preview(&mut state);
@@ -61,7 +58,7 @@ fn e2e_preview_loading_pipeline() {
 #[test]
 fn e2e_watch_polling_pipeline() {
     let orchestrator = build_full_pipeline();
-    let mut state = shared::tui::taxonomy_state_vo::AppState::default();
+    let mut state = AppState::new(".".to_string());
 
     // Poll watch and verify it doesn't panic
     orchestrator.poll_watch(&mut state);

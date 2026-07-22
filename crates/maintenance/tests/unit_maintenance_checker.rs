@@ -138,10 +138,10 @@ async fn dependency_report_no_files_returns_error() {
 #[tokio::test]
 async fn dependency_report_with_requirements_txt() {
     let checker = sut();
-    let dir = "/tmp/test_dep_report_reqs_xyz";
-    let _ = std::fs::create_dir_all(dir);
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let dir = tmp_dir.path().to_str().unwrap();
     std::fs::write(
-        format!("{}/requirements.txt", dir),
+        tmp_dir.path().join("requirements.txt"),
         "flask==2.3.0\nrequests>=2.28\n# comment\nnumpy\n",
     )
     .unwrap();
@@ -156,9 +156,6 @@ async fn dependency_report_with_requirements_txt() {
 
     let flask = report.dependencies.iter().find(|d| d.name == "flask");
     assert!(flask.is_some());
-
-    // Cleanup
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[tokio::test]

@@ -141,7 +141,8 @@ fn e2e_orchestrator_full_lifecycle_immediate_stop() {
     let linter: Arc<dyn ICodeAnalysisAggregate> = Arc::new(RecordingLinter);
     let orch = WatchOrchestrator::new(provider, linter);
 
-    let config = WatchConfig::from_path(std::env::temp_dir().to_string_lossy().to_string());
+    let tmp_dir = tempfile::tempdir().unwrap();
+    let config = WatchConfig::from_path(tmp_dir.path().to_string_lossy().to_string());
 
     // Set running = false so the loop exits after initial lint.
     let running = Arc::new(AtomicBool::new(false));

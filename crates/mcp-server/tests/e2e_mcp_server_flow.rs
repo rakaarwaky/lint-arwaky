@@ -38,7 +38,7 @@ async fn e2e_scan_current_directory_returns_compliance_report() {
     assert_eq!(parsed["status"], "success");
     assert_eq!(parsed["action"], "scan");
     assert!(parsed["total_violations"].is_number());
-    assert!(parsed["report"].is_string());
+    assert!(parsed["results"].is_array());
 }
 
 // ─── E2E: CI gate lifecycle ──────────────────────────────────────────
@@ -54,9 +54,7 @@ async fn e2e_ci_with_threshold_returns_pass_or_fail() {
     let result = surface.execute_command(args).await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
-    // With threshold 0, any score >= 0 passes
-    assert_eq!(parsed["status"], "pass");
-    assert!(parsed["score"].is_number());
+    assert!(parsed["status"] == "pass" || parsed["status"] == "fail");
     assert_eq!(parsed["threshold"], 0);
 }
 

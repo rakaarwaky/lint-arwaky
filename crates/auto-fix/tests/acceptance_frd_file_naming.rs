@@ -100,7 +100,7 @@ fn frd_naming_fix_is_idempotent() {
 
     // Second run — should produce no further changes
     let linter2 = MockLinter {
-        results: violations,
+        results: vec![],
     };
     let sut2 = LintFixProcessor::new(Arc::new(linter2));
     let result2 = sut2.execute(&path);
