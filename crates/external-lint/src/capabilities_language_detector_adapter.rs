@@ -1,5 +1,4 @@
 
-use std::marker::PhantomData;
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -17,9 +16,7 @@ use shared::external_lint::utility_external_lint_io as ext_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ExternalLintLanguageDetectorAdapter {
-    _p: PhantomData<()>,
-}
+pub struct ExternalLintLanguageDetectorAdapter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -51,7 +48,7 @@ const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-
 
 impl ExternalLintLanguageDetectorAdapter {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     fn detect_in_dir(dir: &Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {

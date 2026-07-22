@@ -133,7 +133,6 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
-    #[allow(clippy::too_many_arguments)]
     fn _check_file_naming(
         &self,
         file: &str,

@@ -119,7 +119,7 @@ impl Default for ConfigYamlReader {
 
 impl ConfigYamlReader {
     pub fn new() -> Self {
-        Self { _p: PhantomData }
+        Self
     }
 
     /// Read config from XDG-compliant directories in priority order.

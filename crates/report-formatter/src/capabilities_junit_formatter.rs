@@ -6,6 +6,7 @@ use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterPr
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 
 use std::marker::PhantomData;
 
@@ -18,11 +19,11 @@ pub struct JunitFormatter {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for JunitFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
+    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
         if format == Format::Junit {
             self.format_junit(&report.results)
         } else {
-            format_report_default(report)
+            DisplayContent::new(format_report_default(report))
         }
     }
 
@@ -32,8 +33,8 @@ impl IReportFormatterProtocol for JunitFormatter {
 }
 
 impl JunitFormatter {
-    /// Format results as JUnit XML.
-    pub fn format_junit(&self, results: &[LintResult]) -> String {
+    /// Format results as JUnit XML wrapped in DisplayContent.
+    pub fn format_junit(&self, results: &[LintResult]) -> DisplayContent {
         let total = results.len();
         let failure_count = results
             .iter()
@@ -79,7 +80,7 @@ impl JunitFormatter {
 
         xml.push_str("  </testsuite>\n");
         xml.push_str("</testsuites>\n");
-        xml
+        DisplayContent::new(xml)
     }
 }
 

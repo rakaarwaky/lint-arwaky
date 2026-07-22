@@ -6,6 +6,7 @@ use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterPr
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 
 use std::marker::PhantomData;
 
@@ -18,11 +19,11 @@ pub struct SarifFormatter {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 #[async_trait::async_trait]
 impl IReportFormatterProtocol for SarifFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> String {
+    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
         if format == Format::Sarif {
             self.format_sarif(&report.results)
         } else {
-            format_report_default(report)
+            DisplayContent::new(format_report_default(report))
         }
     }
 
@@ -32,8 +33,8 @@ impl IReportFormatterProtocol for SarifFormatter {
 }
 
 impl SarifFormatter {
-    /// Format results as a SARIF 2.1.0 JSON string.
-    pub fn format_sarif(&self, results: &[LintResult]) -> String {
+    /// Format results as a SARIF 2.1.0 JSON string wrapped in DisplayContent.
+    pub fn format_sarif(&self, results: &[LintResult]) -> DisplayContent {
         #[derive(serde::Serialize)]
         struct SarifLog {
             #[serde(rename = "$schema")]
@@ -143,7 +144,7 @@ impl SarifFormatter {
             }],
         };
 
-        serde_json::to_string_pretty(&log).unwrap_or_else(|_| "{}".to_string())
+        DisplayContent::new(serde_json::to_string_pretty(&log).unwrap_or_else(|_| "{}".to_string()))
     }
 }
 
