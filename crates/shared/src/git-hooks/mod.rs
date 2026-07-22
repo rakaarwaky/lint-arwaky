@@ -1,4 +1,5 @@
 pub mod contract_diff_protocol;
+pub mod contract_git_command_protocol;
 pub mod contract_git_hooks_aggregate;
 pub mod contract_hook_protocol;
 pub mod contract_manager_protocol;

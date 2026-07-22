@@ -16,7 +16,7 @@ fn formatter() -> JunitFormatter {
 #[test]
 fn junit_formatter_formats_empty_report() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Junit);
     assert!(result.value.contains("<testsuites"));
@@ -38,7 +38,7 @@ fn junit_formatter_formats_report_with_results() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Junit);
     assert!(result.value.contains("<testcase"));
@@ -58,7 +58,7 @@ fn junit_formatter_includes_failure_for_violations() {
         shared::cli_commands::taxonomy_result_vo::LintResultMessage::new("Violation".to_string()),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::High),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Junit);
     assert!(result.value.contains("<failure"));
@@ -69,7 +69,7 @@ fn junit_formatter_includes_failure_for_violations() {
 #[test]
 fn junit_formatter_fallback_for_non_junit_format() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Text);
     assert!(!result.value.is_empty());
@@ -91,7 +91,7 @@ fn junit_formatter_escapes_xml_special_chars() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Info),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Junit);
     assert!(result.value.contains("&lt;script&gt;"));

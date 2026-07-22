@@ -22,7 +22,7 @@ fn smoke_report_formatter_crate_boots_and_responds() {
 
     // 3. Format method responds
     let report =
-        shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![], None);
+        shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]);
     let result = orch.format(
         &report,
         shared::cli_commands::taxonomy_format_vo::Format::Text,

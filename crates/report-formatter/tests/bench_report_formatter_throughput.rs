@@ -6,17 +6,20 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
+use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use std::sync::Arc;
 use std::time::Instant;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text = Arc::new(TextFormatter::new(Arc::new(
         shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
     ReportFormatterOrchestrator::new(text, json, sarif, junit)
 }
 
@@ -48,7 +51,7 @@ fn bench_text_formatting() {
     let text = TextFormatter::new(Arc::new(
         shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     ));
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -67,7 +70,7 @@ fn bench_text_formatting() {
 #[test]
 fn bench_json_serialization() {
     let json = JsonFormatter::new();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -86,7 +89,7 @@ fn bench_json_serialization() {
 #[test]
 fn bench_sarif_generation() {
     let sarif = SarifFormatter::new();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -105,7 +108,7 @@ fn bench_sarif_generation() {
 #[test]
 fn bench_junit_generation() {
     let junit = JunitFormatter::new();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
     for _ in 0..1000 {
@@ -124,7 +127,7 @@ fn bench_junit_generation() {
 #[test]
 fn bench_full_orchestrator_pipeline() {
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let start = Instant::now();
     for _ in 0..100 {

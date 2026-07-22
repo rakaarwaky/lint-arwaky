@@ -19,7 +19,7 @@ fn formatter() -> TextFormatter {
 #[test]
 fn text_formatter_formats_empty_report() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Text);
     assert!(!result.value.is_empty());
@@ -40,7 +40,7 @@ fn text_formatter_formats_report_with_results() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Text);
     assert!(result.value.contains("TEST001"));
@@ -52,7 +52,7 @@ fn text_formatter_formats_report_with_results() {
 #[test]
 fn text_formatter_fallback_for_non_text_format() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Json);
     assert!(!result.value.is_empty());

@@ -47,6 +47,6 @@ async fn install_npm_packages_calls_npm() {
 
 #[test]
 fn setup_error_creates_valid_instance() {
-    let error = SetupError::new("test error".to_string());
-    assert_eq!(error.message.value, "test error");
+    let error = SetupError::other("test error".to_string());
+    assert_eq!(error.to_string(), "test error");
 }

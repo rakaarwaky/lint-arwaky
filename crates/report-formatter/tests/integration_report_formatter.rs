@@ -39,7 +39,7 @@ fn orchestrator_implements_aggregate_trait() {
 #[test]
 fn full_format_pipeline_works() {
     let orch = build_full_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     // All formats should produce non-empty output
     let text_result = orch.format(&report, Format::Text);

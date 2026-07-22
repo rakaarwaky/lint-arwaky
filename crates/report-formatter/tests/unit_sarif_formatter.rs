@@ -16,7 +16,7 @@ fn formatter() -> SarifFormatter {
 #[test]
 fn sarif_formatter_formats_empty_report() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
     assert!(result.value.contains("\"@schema\""));
@@ -38,7 +38,7 @@ fn sarif_formatter_formats_report_with_results() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
     assert!(result.value.contains("test.rs"));
@@ -60,7 +60,7 @@ fn sarif_formatter_maps_high_to_error() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::High),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
     assert!(result.value.contains("\"level\" : \"error\""));
@@ -79,7 +79,7 @@ fn sarif_formatter_maps_medium_to_warning() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
     assert!(result.value.contains("\"level\" : \"warning\""));
@@ -98,7 +98,7 @@ fn sarif_formatter_maps_low_to_note() {
         ),
         Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Info),
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
     assert!(result.value.contains("\"level\" : \"note\""));
@@ -109,7 +109,7 @@ fn sarif_formatter_maps_low_to_note() {
 #[test]
 fn sarif_formatter_fallback_for_non_sarif_format() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Text);
     assert!(!result.value.is_empty());

@@ -10,7 +10,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suffix_vo::SuffixPolicyVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO;
+use shared::config_system::taxonomy_config_vo::NamingRuleVO;
 use std::collections::HashMap;
 use std::sync::Arc;
 

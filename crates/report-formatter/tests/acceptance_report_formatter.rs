@@ -27,7 +27,7 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
 fn acceptance_report_formatter_text_is_readable() {
     // FRD requirement: Text format should produce human-readable output
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Text);
     assert!(!result.value.is_empty());
@@ -41,7 +41,7 @@ fn acceptance_report_formatter_text_is_readable() {
 fn acceptance_report_formatter_json_is_valid() {
     // FRD requirement: JSON format should produce valid JSON
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Json);
     assert!(result.value.contains("["));
@@ -54,7 +54,7 @@ fn acceptance_report_formatter_json_is_valid() {
 fn acceptance_report_formatter_sarif_schema() {
     // FRD requirement: SARIF format should produce valid SARIF 2.1.0 JSON
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Sarif);
     assert!(result.value.contains("\"@schema\""));
@@ -66,7 +66,7 @@ fn acceptance_report_formatter_sarif_schema() {
 fn acceptance_report_formatter_junit_xml() {
     // FRD requirement: JUnit format should produce valid XML
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Junit);
     assert!(result.value.contains("<testsuites"));
@@ -79,7 +79,7 @@ fn acceptance_report_formatter_junit_xml() {
 fn acceptance_report_formatter_routing_correct() {
     // FRD requirement: Orchestrator must route to the correct formatter based on format enum
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     // Each format should produce distinct output
     let text = orch.format(&report, Format::Text).value;
@@ -99,7 +99,7 @@ fn acceptance_report_formatter_routing_correct() {
 #[test]
 fn acceptance_report_formatter_default_format() {
     // FRD requirement: Default format should produce a text summary
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
     let result =
         report_formatter_lint_arwaky::utility_report_format::format_report_default(&report);
     assert!(!result.is_empty());

@@ -21,11 +21,9 @@ fn processor() -> SetupManagementProcessor {
 #[test]
 fn processor_generates_env_content() {
     let proc = processor();
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
     let home = DirectoryPath::new("/tmp".to_string());
 
-    let env_content = proc.generate_env(&transport, &home);
+    let env_content = proc.generate_env(&home);
     assert!(!env_content.value.is_empty());
 }
 
@@ -34,30 +32,21 @@ fn processor_generates_env_content() {
 #[test]
 fn processor_generates_mcp_config_claude() {
     let proc = processor();
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-
-    let config = proc.mcp_config_claude(&transport);
+    let config = proc.mcp_config_claude();
     assert!(!config.value.is_empty());
 }
 
 #[test]
 fn processor_generates_mcp_config_hermes() {
     let proc = processor();
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-
-    let config = proc.mcp_config_hermes(&transport);
+    let config = proc.mcp_config_hermes();
     assert!(!config.value.is_empty());
 }
 
 #[test]
 fn processor_generates_mcp_config_vscode() {
     let proc = processor();
-    let transport =
-        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-
-    let config = proc.mcp_config_vscode(&transport);
+    let config = proc.mcp_config_vscode();
     assert!(!config.value.is_empty());
 }
 
@@ -66,7 +55,6 @@ fn processor_generates_mcp_config_vscode() {
 #[test]
 fn processor_file_exists_returns_true_for_existing() {
     let proc = processor();
-    // /tmp should exist on most systems
     assert!(proc.file_exists("/tmp"));
 }
 
@@ -82,8 +70,7 @@ fn processor_file_exists_returns_false_for_nonexistent() {
 fn processor_creates_global_config_dir() {
     let proc = processor();
     let config_dir = proc.create_global_config_dir();
-    // Should return a valid path (typically ~/.config/lint-arwaky)
-    assert!(!config_dir.value.is_empty());
+    assert!(config_dir.is_ok());
 }
 
 // ─── Default trait ──
@@ -91,5 +78,5 @@ fn processor_creates_global_config_dir() {
 #[test]
 fn setup_management_processor_default_creates_valid_instance() {
     let installer = Arc::new(SetupInstallerAdapter::new());
-    let _ = SetupManagementProcessor::default(installer);
+    let _ = SetupManagementProcessor::new(installer);
 }

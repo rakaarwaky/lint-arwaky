@@ -4,8 +4,9 @@
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_lint_result_vo::{LintResult, Severity};
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultCode, LintResultMessage};
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_severity_vo::Severity;
 
 fn formatter() -> JsonFormatter {
     JsonFormatter::new()
@@ -16,7 +17,7 @@ fn formatter() -> JsonFormatter {
 #[test]
 fn json_formatter_formats_empty_report() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Json);
     assert!(!result.value.is_empty());
@@ -33,13 +34,11 @@ fn json_formatter_formats_report_with_results() {
         shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap(),
         1,
         0,
-        shared::cli_commands::taxonomy_result_vo::LintResultCode::new("TEST001"),
-        shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
-            "Test message".to_string(),
-        ),
-        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
+        LintResultCode { value: "TEST001".to_string() },
+        LintResultMessage { value: "Test message".to_string() },
+        Severity::MEDIUM,
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Json);
     assert!(result.value.contains("Test message"));
@@ -51,16 +50,9 @@ fn json_formatter_formats_report_with_results() {
 #[test]
 fn json_formatter_fallback_for_non_json_format() {
     let formatter = formatter();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     // When format is Text, JsonFormatter should fall back to default formatting
     let result = formatter.format(&report, Format::Text);
     assert!(!result.value.is_empty());
-}
-
-// ─── Default trait ──
-
-#[test]
-fn json_formatter_default_creates_valid_instance() {
-    let _ = JsonFormatter::default();
 }

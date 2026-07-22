@@ -8,17 +8,18 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_lint_result_vo::{LintResult, Severity};
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultCode, LintResultMessage};
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::common::taxonomy_severity_vo::Severity;
 use std::sync::Arc;
 
 fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
     let text = Arc::new(TextFormatter::new(Arc::new(
         shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
-    let json = JsonFormatter::new();
-    let sarif = SarifFormatter::new();
-    let junit = JunitFormatter::new();
+    let json = Arc::new(JsonFormatter::new());
+    let sarif = Arc::new(SarifFormatter::new());
+    let junit = Arc::new(JunitFormatter::new());
 
     let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);
 
@@ -26,13 +27,11 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
         shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap(),
         10,
         5,
-        shared::cli_commands::taxonomy_result_vo::LintResultCode::new("TEST001"),
-        shared::cli_commands::taxonomy_result_vo::LintResultMessage::new(
-            "E2E test violation".to_string(),
-        ),
-        Severity::new(shared::common::taxonomy_severity_vo::SeverityLevel::Medium),
+        LintResultCode { value: "TEST001".to_string() },
+        LintResultMessage { value: "E2E test violation".to_string() },
+        Severity::MEDIUM,
     )];
-    let report = ScanReport::new(results, vec![], None);
+    let report = ScanReport::new(results, vec![]);
 
     (orch, report)
 }
@@ -62,7 +61,7 @@ fn e2e_format_with_diagnostics() {
     let (orch, report) = build_full_pipeline();
 
     // Add diagnostics to the report
-    let mut report = report;
+    let report = report;
     // Format all types and verify they handle diagnostics correctly
     let _text = orch.format(&report, Format::Text);
     let _json = orch.format(&report, Format::Json);
@@ -72,10 +71,10 @@ fn e2e_format_with_diagnostics() {
 
 #[test]
 fn e2e_empty_report_pipeline() {
-    let (orch, report) = build_full_pipeline();
+    let (orch, _report) = build_full_pipeline();
 
     // Create empty report
-    let empty_report = ScanReport::new(vec![], vec![], None);
+    let empty_report = ScanReport::new(vec![], vec![]);
 
     // All formats should handle empty reports gracefully
     let _text = orch.format(&empty_report, Format::Text);

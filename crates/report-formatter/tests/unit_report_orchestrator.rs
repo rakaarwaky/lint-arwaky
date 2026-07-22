@@ -35,7 +35,7 @@ fn orchestrator_implements_aggregate() {
 #[test]
 fn orchestrator_routes_to_text_formatter() {
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Text);
     assert!(!result.value.is_empty());
@@ -46,7 +46,7 @@ fn orchestrator_routes_to_text_formatter() {
 #[test]
 fn orchestrator_routes_to_json_formatter() {
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Json);
     assert!(result.value.contains("["));
@@ -57,7 +57,7 @@ fn orchestrator_routes_to_json_formatter() {
 #[test]
 fn orchestrator_routes_to_sarif_formatter() {
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Sarif);
     assert!(result.value.contains("\"@schema\""));
@@ -68,7 +68,7 @@ fn orchestrator_routes_to_sarif_formatter() {
 #[test]
 fn orchestrator_routes_to_junit_formatter() {
     let orch = build_orchestrator();
-    let report = ScanReport::new(vec![], vec![], None);
+    let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Junit);
     assert!(result.value.contains("<testsuites"));
