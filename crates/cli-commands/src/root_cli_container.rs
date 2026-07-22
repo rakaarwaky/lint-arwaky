@@ -105,8 +105,7 @@ impl CliContainer {
                 orphan_orchestrator.clone(),
                 multi_project_orchestrator.clone(),
                 Format::Text,
-            )
-            .expect("AnalysisPipelineOrchestrator::new failed — missing required dependency"),
+            ),
         );
 
         Self {

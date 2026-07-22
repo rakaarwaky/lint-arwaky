@@ -49,7 +49,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
                     let next_t = lines[next_idx].trim();
-                    if next_t.is_empty() || next_t.starts_with('#') {
+                    if next_t.is_empty() || next_t.starts_with('#') || next_t.starts_with("//") {
                         next_idx += 1;
                     } else {
                         break;
