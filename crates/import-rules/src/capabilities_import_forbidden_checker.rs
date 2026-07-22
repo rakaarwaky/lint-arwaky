@@ -108,7 +108,7 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match utility_file::read_file_generic(file).ok() {
+        let content = match utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -185,7 +185,7 @@ impl ArchImportForbiddenChecker {
             return;
         }
 
-        let content = match utility_file::read_file_generic(file).ok() {
+        let content = match utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };

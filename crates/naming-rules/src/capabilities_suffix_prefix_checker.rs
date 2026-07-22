@@ -11,8 +11,8 @@ use shared::naming_rules::taxonomy_naming_constant::{
     RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
 };
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
-use shared::naming_rules::utility_naming::{get_stem, get_suffix};
 use shared::naming_rules::utility_naming_checker::string_filename_result;
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;

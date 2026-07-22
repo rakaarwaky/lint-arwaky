@@ -116,7 +116,7 @@ impl ILintExecutorProtocol for LintExecutor {
         match &self.orphan_aggregate {
             Some(orphan_agg) => {
                 // Resolve workspace root like CLI does
-                let scan_root = shared::common::utility_file::find_workspace_root(path)
+                let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| path.to_string());
                 let dir_path =
@@ -128,7 +128,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     .map(|o| o.ignored_paths(&scan_root))
                     .unwrap_or_default();
                 let source_files =
-                    match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+                    match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
                         Ok(list) => list.values,
                         Err(e) => {
                             return LintExecutionResult::failure(format!(
@@ -248,7 +248,7 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let scan_root = shared::common::utility_file::find_workspace_root(path)
+        let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
@@ -259,7 +259,7 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&scan_root))
             .unwrap_or_default();
-        let source_files = match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+        let source_files = match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
             Ok(list) => list.values,
             Err(_) => Vec::new(),
         };
@@ -845,7 +845,7 @@ impl LintExecutor {
                 .map(|o| o.ignored_paths(path))
                 .unwrap_or_default();
             let source_files =
-                match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+                match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
                     Ok(list) => list.values,
                     Err(_) => Vec::new(),
                 };

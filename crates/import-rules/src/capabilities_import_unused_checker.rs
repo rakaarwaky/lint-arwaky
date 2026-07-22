@@ -18,7 +18,7 @@ pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let Some(content) = utility_file::read_file_generic(path.value()).ok() else {
+        let Some(content) = utility_file_handler::read_file_generic(path.value()).ok() else {
             return vec![];
         };
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(&content);

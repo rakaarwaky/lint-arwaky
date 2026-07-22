@@ -223,7 +223,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match utility_file::read_file(&f.value) {
+        let content = match utility_file_handler::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -296,7 +296,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match utility_file::read_file(&f.to_string()) {
+        let content = match utility_file_handler::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };

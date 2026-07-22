@@ -11,7 +11,7 @@ use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker
 use shared::naming_rules::taxonomy_naming_constant::{
     ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
 };
-use shared::naming_rules::utility_naming::{get_stem, get_suffix};
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 

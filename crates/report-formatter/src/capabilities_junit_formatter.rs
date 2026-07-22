@@ -1,7 +1,7 @@
 // PURPOSE: JunitFormatter — implements IReportFormatterProtocol for JUnit XML output
 //
 // Formats ScanReport into JUnit XML format.
-use super::utility_report_format::format_report_default;
+use crate::utility_report_format::format_report_default;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;

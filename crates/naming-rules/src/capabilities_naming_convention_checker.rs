@@ -12,7 +12,7 @@ use shared::naming_rules::taxonomy_naming_constant::{
     LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
 };
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
-use shared::naming_rules::utility_naming::get_stem;
+use shared::naming_rules::utility_naming_checker::get_stem;
 use shared::naming_rules::utility_naming_checker::string_filename_result;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;

@@ -17,7 +17,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match utility_file::read_file_generic(p) {
+        let content = match utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
@@ -40,7 +40,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match utility_file::read_file_generic(p) {
+        let content = match utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {

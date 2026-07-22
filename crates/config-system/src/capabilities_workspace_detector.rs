@@ -15,15 +15,15 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
-        if utility_file::path_exists(path_buf.join("Cargo.toml")) {
+        if utility_file_handler::path_exists(path_buf.join("Cargo.toml")) {
             return WorkspaceType::Rust;
         }
-        if utility_file::path_exists(path_buf.join("package.json")) {
+        if utility_file_handler::path_exists(path_buf.join("package.json")) {
             return WorkspaceType::TypeScript;
         }
-        if utility_file::path_exists(path_buf.join("pyproject.toml"))
-            || utility_file::path_exists(path_buf.join("setup.py"))
-            || utility_file::path_exists(path_buf.join("requirements.txt"))
+        if utility_file_handler::path_exists(path_buf.join("pyproject.toml"))
+            || utility_file_handler::path_exists(path_buf.join("setup.py"))
+            || utility_file_handler::path_exists(path_buf.join("requirements.txt"))
         {
             return WorkspaceType::Python;
         }
@@ -40,15 +40,15 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 2 {
-            if utility_file::path_exists(current.join("Cargo.toml")) {
+            if utility_file_handler::path_exists(current.join("Cargo.toml")) {
                 return WorkspaceType::Rust;
             }
-            if utility_file::path_exists(current.join("package.json")) {
+            if utility_file_handler::path_exists(current.join("package.json")) {
                 return WorkspaceType::TypeScript;
             }
-            if utility_file::path_exists(current.join("pyproject.toml"))
-                || utility_file::path_exists(current.join("setup.py"))
-                || utility_file::path_exists(current.join("requirements.txt"))
+            if utility_file_handler::path_exists(current.join("pyproject.toml"))
+                || utility_file_handler::path_exists(current.join("setup.py"))
+                || utility_file_handler::path_exists(current.join("requirements.txt"))
             {
                 return WorkspaceType::Python;
             }
@@ -67,7 +67,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let root = std::path::PathBuf::from(&path.value);
         ["crates", "packages", "modules"]
             .iter()
-            .any(|dir| utility_file::path_exists(root.join(dir)))
+            .any(|dir| utility_file_handler::path_exists(root.join(dir)))
     }
 
     async fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {

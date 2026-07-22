@@ -210,7 +210,7 @@ impl DependencyCycleAnalyzer {
                     continue;
                 }
             }
-            let content = match utility_file::read_file_generic(file).ok() {
+            let content = match utility_file_handler::read_file_generic(file).ok() {
                 Some(c) => c,
                 None => continue,
             };

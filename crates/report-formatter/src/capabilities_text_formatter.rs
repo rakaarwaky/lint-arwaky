@@ -2,7 +2,7 @@
 //
 // Formats ScanReport into human-readable text output, matching the existing
 // code_analysis_linter.format_report() output style.
-use super::utility_report_format::format_report_default;
+use crate::utility_report_format::format_report_default;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;

@@ -1,7 +1,7 @@
 // PURPOSE: Stateless utility functions for mandatory definition checking (AES303)
 // Extracted from capabilities_mandatory_definition_checker.rs — pure functions, no &self, no I/O
 
-use super::utility_bypass_detector::matches_keyword_token;
+use shared::code_analysis::utility_bypass_detector::matches_keyword_token;
 
 /// Check if a line declares a Rust struct/enum/trait/type using word-boundary matching.
 /// Handles visibility modifiers (pub, pub(crate)), tuple structs, and avoids

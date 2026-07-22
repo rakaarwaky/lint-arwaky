@@ -99,8 +99,8 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         let mut ignored_advisories = std::collections::HashSet::new();
         let deny_toml_path = Path::new(working_dir_str).join("deny.toml");
         let deny_toml_str = deny_toml_path.to_string_lossy();
-        if utility_file::is_file_generic(&deny_toml_path) {
-            let content = utility_file::read_file_safe(&deny_toml_str);
+        if utility_file_handler::is_file_generic(&deny_toml_path) {
+            let content = utility_file_handler::read_file_safe(&deny_toml_str);
             if let Ok(deny_cfg) = toml::from_str::<toml::Value>(&content) {
                 if let Some(advisories) = deny_cfg.get("advisories") {
                     if let Some(ignore) = advisories.get("ignore") {

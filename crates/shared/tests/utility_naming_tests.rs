@@ -1,6 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::naming_rules::utility_naming::{get_stem, get_suffix};
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

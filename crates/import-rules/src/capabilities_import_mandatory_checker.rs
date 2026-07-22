@@ -106,7 +106,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let content = match utility_file::read_file_generic(file).ok() {
+        let content = match utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -164,7 +164,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let content = match utility_file::read_file_generic(file).ok() {
+        let content = match utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
