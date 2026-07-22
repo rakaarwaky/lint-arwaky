@@ -16,7 +16,6 @@ fn cli_bin() -> Command {
     let mut p = std::env::current_exe().unwrap();
     p.pop();
     p.pop();
-    p.pop();
     p.push("lint-arwaky-cli");
     Command::new(p)
 }

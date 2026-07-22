@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use async_trait::async_trait;
-use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_language_detector_protocol::{
     DetectedLanguages, IExternalLintLanguageDetectorProtocol,
