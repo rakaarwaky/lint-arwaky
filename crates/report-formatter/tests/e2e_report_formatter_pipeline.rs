@@ -8,7 +8,7 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultCode, LintResultMessage};
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_severity_vo::Severity;
 use std::sync::Arc;
@@ -23,13 +23,13 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
 
     let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);
 
-    let results = vec![LintResult::new(
-        shared::common::taxonomy_path_vo::FilePath::new("test.rs".to_string()).unwrap(),
+    let results = vec![LintResult::new_arch_with_column(
+        "test.rs",
         10,
         5,
-        LintResultCode { value: "TEST001".to_string() },
-        LintResultMessage { value: "E2E test violation".to_string() },
+        "TEST001",
         Severity::MEDIUM,
+        "E2E test violation",
     )];
     let report = ScanReport::new(results, vec![]);
 
