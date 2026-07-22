@@ -670,3 +670,20 @@ impl From<String> for ErrorMessage {
         Self { value: s }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(transparent)]
+pub struct SuffixPolicyVO {
+    pub value: String,
+}
+
+impl SuffixPolicyVO {
+    pub fn new(value: String) -> Self {
+        Self { value }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct SuffixVO {
+    pub values: PatternList,
+}

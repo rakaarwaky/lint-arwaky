@@ -12,3 +12,4 @@ pub mod utility_workspace;
 pub use taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
 pub use taxonomy_violation_orphan_vo::AesOrphanViolation;
 pub mod taxonomy_orphan_rule_vo;
+pub mod taxonomy_orphan_rule_vo;

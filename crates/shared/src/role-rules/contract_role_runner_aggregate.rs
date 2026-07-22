@@ -5,7 +5,7 @@ use async_trait::async_trait;
 
 use crate::role_rules::taxonomy_layer_names_constant::LAYER_AGENT;
 use crate::role_rules::taxonomy_layer_names_vo::LayerNames;
-use crate::role_rules::taxonomy_role_rule_vo::RoleRuleVO;
+use crate::config_system::taxonomy_config_vo::RoleRuleVO;
 use crate::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 
 pub fn anchor_taxonomy() {
