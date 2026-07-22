@@ -16,7 +16,9 @@ fn cli_bin() -> Command {
     }
     // Fallback: use the target/debug path
     let mut p = std::env::current_exe().unwrap();
-    p.pop(); p.pop(); p.pop();
+    p.pop();
+    p.pop();
+    p.pop();
     p.push("lint-arwaky-cli");
     Command::new(p)
 }

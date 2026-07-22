@@ -15,22 +15,11 @@ fn cli_bin() -> Command {
     }
     // Fallback: use the target/debug path
     let mut p = std::env::current_exe().unwrap();
-    p.pop(); p.pop(); p.pop();
+    p.pop();
+    p.pop();
+    p.pop();
     p.push("lint-arwaky-cli");
     Command::new(p)
-}
-    // Try relative to current_exe: target/debug/ or target/debug/deps/
-    let mut p = std::env::current_exe().unwrap();
-    p.pop();
-    // Try target/debug/lint-arwaky-cli (pop test bin name + deps, push bin)
-    let mut q = p.clone();
-    q.pop();
-    q.push("lint-arwaky-cli");
-    if q.exists() {
-        return q;
-    }
-    p.push("lint-arwaky-cli");
-    p
 }
 
 #[test]
