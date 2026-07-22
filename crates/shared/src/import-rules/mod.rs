@@ -20,3 +20,4 @@ pub mod utility_path_normalizer;
 pub use taxonomy_dependency_edge_vo::DependencyEdge;
 pub use taxonomy_language_vo::LanguageVO;
 pub use taxonomy_violation_import_vo::AesImportViolation;
+pub use contract_cycle_import_protocol::DependencyEdge;

@@ -2,8 +2,13 @@
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct MandatoryImportRuleVO {
+    pub enabled: BooleanVO,
+    pub pattern: PatternList,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CodeAnalysisRuleVO {
