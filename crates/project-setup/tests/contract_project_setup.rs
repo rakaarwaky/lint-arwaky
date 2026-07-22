@@ -1,12 +1,14 @@
 // PURPOSE: Contract tests — verify all trait implementations for project-setup types.
 // Layer: Contract (trait verification).
 
+use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::{ISetupManagementProtocol, ISetupInstallerProtocol};
+use shared::project_setup::contract_setup_protocol::{
+    ISetupInstallerProtocol, ISetupManagementProtocol,
+};
 use std::sync::Arc;
 
 // ─── Verify SetupInstallerAdapter implements ISetupInstallerProtocol ──

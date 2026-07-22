@@ -28,7 +28,9 @@ fn orchestrator_implements_setup_management_aggregate() {
 #[test]
 fn orchestrator_check_http_returns_success() {
     let orch = build_orchestrator();
-    let url = shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO::new("http://localhost:3001".to_string());
+    let url = shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO::new(
+        "http://localhost:3001".to_string(),
+    );
     let status = orch.check_http(&url);
     assert!(status.value);
 }
@@ -38,7 +40,8 @@ fn orchestrator_check_http_returns_success() {
 #[test]
 fn orchestrator_generates_env_content() {
     let orch = build_orchestrator();
-    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+    let transport =
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
     let home = shared::common::taxonomy_path_vo::DirectoryPath::new("/tmp".to_string());
     let env_content = orch.generate_env(&transport, &home);
     assert!(!env_content.value.is_empty());
@@ -51,7 +54,9 @@ fn orchestrator_detects_default_language() {
     let orch = build_orchestrator();
     let language = orch.detect_language();
     // Should return a valid language (rust, python, or javascript)
-    assert!(language.value == "rust" || language.value == "python" || language.value == "javascript");
+    assert!(
+        language.value == "rust" || language.value == "python" || language.value == "javascript"
+    );
 }
 
 // ─── detect_languages: Returns languages map ──

@@ -24,7 +24,7 @@ async fn install_python_packages_calls_pip() {
     // Since we can't actually run pip in tests, we verify the method signature is correct
     let adapter = adapter();
     let packages: Vec<String> = vec!["requests".to_string(), "click".to_string()];
-    
+
     // The actual call would execute pip, but we verify it doesn't panic on empty input
     let result = adapter.install_python_packages(&[]).await;
     // Empty packages should succeed without error
@@ -37,7 +37,7 @@ async fn install_python_packages_calls_pip() {
 async fn install_npm_packages_calls_npm() {
     let adapter = adapter();
     let packages: Vec<String> = vec!["typescript".to_string()];
-    
+
     // Verify method signature is correct (actual npm execution skipped in tests)
     let result = adapter.install_npm_packages(&[], false).await;
     assert!(result.is_ok());

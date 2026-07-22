@@ -68,13 +68,12 @@ fn taxonomy_vo_imported_only_by_taxonomy_is_orphan() {
     assert!(result.is_orphan);
 }
 
-// ─── Orphan: imported by capabilities but not by contract ──
-// Per FRD: taxonomy orphan = no contract imports it.
-// Contract acts as type enforcement — if contract uses taxonomy,
-// that guarantees implementation layers use it too.
+// ─── Not orphan: imported by capabilities (valid per new FRD) ──
+// Per FRD: taxonomy orphan = no file from other layers imports it.
+// Other layers: contract, capabilities, agent, utility, surface.
 
 #[test]
-fn taxonomy_vo_imported_by_capabilities_only_is_orphan() {
+fn taxonomy_vo_imported_by_capabilities_is_not_orphan() {
     let a = analyzer();
     let f = FilePath::new("crates/shared/src/common/taxonomy_severity_vo.rs".to_string()).unwrap();
     let root = FilePath::new("crates/shared".to_string()).unwrap();
@@ -83,7 +82,7 @@ fn taxonomy_vo_imported_by_capabilities_only_is_orphan() {
         vec!["crates/orphan-detector/src/capabilities_orphan_agent_analyzer.rs"],
     )]);
     let result = a.is_taxonomy_orphan(&f, &root, None, &inbound);
-    assert!(result.is_orphan);
+    assert!(!result.is_orphan);
 }
 
 // ─── Not orphan: imported by both contract and capabilities ─

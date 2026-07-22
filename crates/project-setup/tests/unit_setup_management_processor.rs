@@ -6,7 +6,9 @@ use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProc
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::mcp_server::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::{McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO};
+use shared::project_setup::taxonomy_setup_contract_vo::{
+    McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO,
+};
 use std::sync::Arc;
 
 fn processor() -> SetupManagementProcessor {
@@ -19,9 +21,10 @@ fn processor() -> SetupManagementProcessor {
 #[test]
 fn processor_generates_env_content() {
     let proc = processor();
-    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+    let transport =
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
     let home = DirectoryPath::new("/tmp".to_string());
-    
+
     let env_content = proc.generate_env(&transport, &home);
     assert!(!env_content.value.is_empty());
 }
@@ -31,8 +34,9 @@ fn processor_generates_env_content() {
 #[test]
 fn processor_generates_mcp_config_claude() {
     let proc = processor();
-    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-    
+    let transport =
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+
     let config = proc.mcp_config_claude(&transport);
     assert!(!config.value.is_empty());
 }
@@ -40,8 +44,9 @@ fn processor_generates_mcp_config_claude() {
 #[test]
 fn processor_generates_mcp_config_hermes() {
     let proc = processor();
-    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-    
+    let transport =
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+
     let config = proc.mcp_config_hermes(&transport);
     assert!(!config.value.is_empty());
 }
@@ -49,8 +54,9 @@ fn processor_generates_mcp_config_hermes() {
 #[test]
 fn processor_generates_mcp_config_vscode() {
     let proc = processor();
-    let transport = shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
-    
+    let transport =
+        shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::new("http".to_string());
+
     let config = proc.mcp_config_vscode(&transport);
     assert!(!config.value.is_empty());
 }

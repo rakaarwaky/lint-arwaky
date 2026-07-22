@@ -116,7 +116,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         }
 
         let mut results: Vec<LintResult> = Vec::new();
-        let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
+        // Use expanded files for graph context to capture cross-crate imports
+        let file_vo = shared::orphan_detector::OrphanFileListVO::new(all_workspace_files.clone());
         let context: GraphAnalysisContext = self
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir);

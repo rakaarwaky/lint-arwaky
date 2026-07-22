@@ -28,9 +28,9 @@ The following files are explicitly skipped from orphan detection (they are packa
 
 ### AES501 — Taxonomy Orphan Checker
 
-- **Requirement:** Taxonomy layer files (e.g. `taxonomy_*`) must be imported by at least one contract file.
-- **Rationale:** Contract acts as type enforcement for implementation layers. If a contract uses a taxonomy type, that guarantees the implementation layer uses it too.
-- **Detection:** Check inbound imports — taxonomy file is orphan if no `contract_*` file imports it.
+- **Requirement:** Taxonomy layer files (e.g. `taxonomy_*`) must be imported by at least one file from any other layer (contract, capabilities, agent, utility, or surface).
+- **Rationale:** Taxonomy defines the domain foundation. If no other layer uses a taxonomy type, it may be dead code. Some taxonomy types are used internally by capabilities (not exposed in contract signatures), which is valid.
+- **Detection:** Check inbound imports — taxonomy file is orphan if no `contract_*`, `capabilities_*`, `agent_*`, `utility_*`, or `surface_*` file imports it.
 
 ### AES502 — Contract Orphan Checker
 

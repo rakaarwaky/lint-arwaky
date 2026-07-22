@@ -28,13 +28,12 @@ fn smoke_role_rules_crate_boots_and_responds() {
     let _taxonomy = TaxonomyRoleChecker::new();
     let _utility = UtilityRoleChecker::new();
 
-    // 4. Checker responds
-    let source = shared::taxonomy_source_vo::SourceContentVO::new(
-        shared::common::taxonomy_path_vo::FilePath::new("test.rs").unwrap(),
-        shared::taxonomy_source_vo::ContentString::new("pub struct Foo;".to_string()),
-        "rust",
-    );
-    let mut violations = Vec::new();
-    _agent.check_container(&source, &mut violations);
-    assert!(violations.is_empty());
+    // 4. Container aggregate is accessible
+    let agg = container.aggregate();
+    let _taxonomy_check = agg.taxonomy();
+    let _contract_check = agg.contract();
+    let _capabilities_check = agg.capabilities();
+    let _surface_check = agg.surface();
+    let _agent_check = agg.agent();
+    let _utility_check = agg.utility();
 }

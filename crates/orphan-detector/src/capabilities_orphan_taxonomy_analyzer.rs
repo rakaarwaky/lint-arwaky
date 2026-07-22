@@ -37,9 +37,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             "taxonomy"
         };
 
-        // Taxonomy orphan = no contract file imports it.
-        // Contract acts as type enforcement — if contract uses taxonomy,
-        // that guarantees implementation layers use it too.
+        // Taxonomy orphan = no file from other layers imports it.
+        // Other layers: contract, capabilities, agent, utility, surface
         let importers = match inbound_links.mapping.get(f.value()) {
             Some(v) => v,
             None => {
@@ -47,14 +46,18 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 if Self::has_crate_self_import(f.value()) {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
+                eprintln!("[DEBUG TAX] '{}' NO importers in inbound_links", stem);
                 return OrphanIndicatorResult::new(
                     true,
                     AesOrphanViolation::TaxonomyOrphan {
                         stem: stem.clone(),
                         category,
                         reason: Some(
-                            format!("Taxonomy '{}' is not imported by any contract file.", stem)
-                                .into(),
+                            format!(
+                                "Taxonomy '{}' is not imported by any other layer file.",
+                                stem
+                            )
+                            .into(),
                         ),
                     }
                     .to_string(),
@@ -62,16 +65,27 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 );
             }
         };
+        eprintln!(
+            "[DEBUG TAX] '{}' importers: {:?}",
+            stem,
+            importers
+                .iter()
+                .map(|i| i.split('/').last().unwrap_or(""))
+                .collect::<Vec<_>>()
+        );
 
-        // Check if any importer is a contract file
-        let has_contract_importer = importers.iter().any(|importer| {
-            importer
-                .split('/')
-                .next_back()
-                .is_some_and(|b| b.starts_with("contract_"))
+        // Check if any importer is from another layer (contract, capabilities, agent, utility, surface)
+        let has_other_layer_importer = importers.iter().any(|importer| {
+            importer.split('/').next_back().is_some_and(|b| {
+                b.starts_with("contract_")
+                    || b.starts_with("capabilities_")
+                    || b.starts_with("agent_")
+                    || b.starts_with("utility_")
+                    || b.starts_with("surface_")
+            })
         });
 
-        let is_orphan = !has_contract_importer;
+        let is_orphan = !has_other_layer_importer;
 
         if is_orphan {
             OrphanIndicatorResult::new(
@@ -80,7 +94,11 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     stem: stem.clone(),
                     category,
                     reason: Some(
-                        format!("Taxonomy '{}' is not imported by any contract file.", stem).into(),
+                        format!(
+                            "Taxonomy '{}' is not imported by any other layer file.",
+                            stem
+                        )
+                        .into(),
                     ),
                 }
                 .to_string(),

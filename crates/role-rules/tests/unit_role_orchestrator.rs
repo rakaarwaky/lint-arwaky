@@ -2,10 +2,8 @@
 // Layer: Agent (RoleOrchestrator)
 
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
 // ─── Mock Aggregate ──────────────────────────────────
@@ -47,12 +45,15 @@ fn build_orchestrator() -> RoleOrchestrator {
     RoleOrchestrator::new(Arc::new(StubAggregate), &config)
 }
 
-// ─── name ────────────────────────────────────────────
+// ─── name — accessed via trait object ────────────────
 
 #[test]
-fn orchestrator_name_is_role_rules() {
+fn orchestrator_name_via_trait() {
+    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     let orch = build_orchestrator();
-    assert_eq!(orch.name(), "role-rules");
+    let name: &dyn IRoleRunnerAggregate = &orch;
+    // name() is accessible via the trait
+    assert_eq!(name.name(), "role-rules");
 }
 
 // ─── Enabled gate: disabled config skips checks ──────
