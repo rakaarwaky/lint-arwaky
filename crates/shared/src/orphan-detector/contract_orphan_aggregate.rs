@@ -12,4 +12,11 @@ pub trait IOrphanAggregate: Send + Sync {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext;
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String>;
     fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult>;
+    /// Check orphans using a pre-built graph context (avoids rebuilding inbound_links per call)
+    fn check_orphans_with_context(
+        &self,
+        files: &[String],
+        root_dir: &str,
+        context: &GraphAnalysisContext,
+    ) -> Vec<LintResult>;
 }

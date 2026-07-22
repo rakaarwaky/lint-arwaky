@@ -46,7 +46,16 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 if Self::has_crate_self_import(f.value()) {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
-                eprintln!("[DEBUG TAX] '{}' NO importers in inbound_links", stem);
+                // Debug: check if key exists with different format
+                let key = f.value();
+                let has_key = inbound_links.mapping.contains_key(key);
+                eprintln!(
+                    "[DEBUG KEY] '{}' key='{}' has_key={} map_keys={}",
+                    stem,
+                    key,
+                    has_key,
+                    inbound_links.mapping.len()
+                );
                 return OrphanIndicatorResult::new(
                     true,
                     AesOrphanViolation::TaxonomyOrphan {
@@ -65,25 +74,33 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 );
             }
         };
-        eprintln!(
-            "[DEBUG TAX] '{}' importers: {:?}",
-            stem,
-            importers
-                .iter()
-                .map(|i| i.split('/').last().unwrap_or(""))
-                .collect::<Vec<_>>()
-        );
 
         // Check if any importer is from another layer (contract, capabilities, agent, utility, surface)
         let has_other_layer_importer = importers.iter().any(|importer| {
-            importer.split('/').next_back().is_some_and(|b| {
-                b.starts_with("contract_")
-                    || b.starts_with("capabilities_")
-                    || b.starts_with("agent_")
-                    || b.starts_with("utility_")
-                    || b.starts_with("surface_")
-            })
+            let basename = importer.split('/').next_back().unwrap_or("");
+            let starts = basename.starts_with("contract_")
+                || basename.starts_with("capabilities_")
+                || basename.starts_with("agent_")
+                || basename.starts_with("utility_")
+                || basename.starts_with("surface_");
+            if !starts
+                && !basename.starts_with("taxonomy_")
+                && !basename.starts_with("mod.")
+                && !basename.starts_with("lib.")
+            {
+                eprintln!(
+                    "[DEBUG LAYER] '{}' importer='{}' basename='{}' starts={}",
+                    stem, importer, basename, starts
+                );
+            }
+            starts
         });
+        eprintln!(
+            "[DEBUG HAS] '{}' has_other_layer_importer={} importers={}",
+            stem,
+            has_other_layer_importer,
+            importers.len()
+        );
 
         let is_orphan = !has_other_layer_importer;
 

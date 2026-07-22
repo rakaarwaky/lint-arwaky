@@ -187,11 +187,6 @@ impl OrphanGraphResolver {
                 }
             }
         }
-        eprintln!(
-            "[DEBUG GRAPH] original files: {}, expanded files: {}",
-            files.len(),
-            all_workspace_files.len()
-        );
         let files = &all_workspace_files;
 
         // Build a lookup: module_name -> file_path for crate:: resolution

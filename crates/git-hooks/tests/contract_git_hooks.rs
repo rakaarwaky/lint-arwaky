@@ -9,6 +9,7 @@ use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+#[allow(unused_imports)] // module not yet exported in lib.rs — see commented test below
 use shared::git_hooks::contract_git_command_protocol::IGitCommandProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
