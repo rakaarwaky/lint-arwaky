@@ -18,12 +18,7 @@ pub struct CapabilitiesExternalLintSelector {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
-    fn select_adapters(
-        &self,
-        has_rs: bool,
-        has_py: bool,
-        has_js: bool,
-    ) -> AdapterNameList {
+    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> AdapterNameList {
         let mut adapter_names = Vec::new();
         if has_rs.value() {
             for name in self.rust_adapters.iter() {
@@ -79,4 +74,3 @@ impl CapabilitiesExternalLintSelector {
         )
     }
 }
-

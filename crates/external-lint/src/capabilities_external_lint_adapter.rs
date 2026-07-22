@@ -1,5 +1,5 @@
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
+use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -10,11 +10,8 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_utility_protocol::{
-    IExternalLintCargoProtocol,
-    IExternalLintCommandProtocol,
-    IExternalLintJsProtocol,
-    IExternalLintLanguageProtocol,
-    IExternalLintPathProtocol,
+    IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
+    IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };
 use shared::external_lint::utility_external_lint_io as ext_io;
 
@@ -97,8 +94,7 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
         };
         for _ in 0..10 {
             if ext_io::has_config_file(&current) {
-                return FilePath::new(current.to_string_lossy().to_string())
-                    .unwrap_or_default();
+                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
@@ -220,4 +216,3 @@ impl ExternalLintUtilityAdapter {
         Self
     }
 }
-

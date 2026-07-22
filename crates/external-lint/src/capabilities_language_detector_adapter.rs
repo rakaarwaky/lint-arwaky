@@ -1,4 +1,3 @@
-
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -89,4 +88,3 @@ impl Default for ExternalLintLanguageDetectorAdapter {
         Self::new()
     }
 }
-

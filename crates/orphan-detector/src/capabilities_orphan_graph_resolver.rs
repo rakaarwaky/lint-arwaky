@@ -126,8 +126,10 @@ impl OrphanGraphResolver {
 
     fn import_re() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*(?:\{[^}]*\})?)").ok())
-            .as_ref()
+        RE.get_or_init(|| {
+            Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*(?:\{[^}]*\})?)").ok()
+        })
+        .as_ref()
     }
 
     fn inh_re() -> Option<&'static Regex> {
@@ -142,7 +144,7 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
-                    // Build a lookup: module_name -> file_path for crate:: resolution
+        // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
             let stem = file_stem(f);
@@ -283,7 +285,6 @@ impl OrphanGraphResolver {
             };
             for cap in import_re.captures_iter(&content) {
                 let full_import = cap[1].to_string();
-
 
                 // Handle crate:: and lint_arwaky:: imports
                 let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
@@ -432,7 +433,10 @@ impl OrphanGraphResolver {
                         let prefix = &rest[..open_brace];
                         let inner = &rest[open_brace + 1..];
                         let close_brace = inner.rfind('}').unwrap_or(inner.len());
-                        let items = inner[..close_brace].split(',').map(|s| s.trim()).filter(|s| !s.is_empty());
+                        let items = inner[..close_brace]
+                            .split(',')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty());
                         items.map(|item| format!("{}{}", prefix, item)).collect()
                     } else {
                         vec![rest.to_string()]
@@ -513,8 +517,9 @@ impl OrphanGraphResolver {
         for (crate_name, src_dir) in crate_src_dirs {
             let mut module_map: HashMap<String, String> = HashMap::new();
             let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
-            let all_files =
-                shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&canonical_src);
+            let all_files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
+                &canonical_src,
+            );
             for path_str in all_files {
                 if !path_str.ends_with(".rs")
                     && !path_str.ends_with(".py")
@@ -539,10 +544,7 @@ impl OrphanGraphResolver {
                 let rel_path = canonical_path
                     .strip_prefix(&canonical_src)
                     .unwrap_or(&canonical_path);
-                let rel_str = rel_path
-                    .with_extension("")
-                    .to_string_lossy()
-                    .to_string();
+                let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
                 let normalized_rel = shared::orphan_detector::utility_orphan::normalize_module_path(
                     &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
                 );

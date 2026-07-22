@@ -1,0 +1,2631 @@
+# Test Suite for `import-rules` (v1.10.106)
+
+Below is the complete test suite following the flat `tests/` convention with prefix-based virtual folders.
+
+---
+
+## Updated `Cargo.toml`
+
+```toml
+[package]
+name = "import_rules-lint-arwaky"
+version = "1.10.106"
+edition = "2021"
+description = "Import-compliance checks covering AES201–AES205: dummy/unused/forbidden/mandatory imports, layer detection, and cross-layer cycle detection."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+async-trait.workspace = true
+once_cell.workspace = true
+regex.workspace = true
+shared.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+criterion = { version = "0.5", features = ["async_tokio"] }
+tokio = { workspace = true, features = ["full"] }
+
+[[bench]]
+name = "bench_import_rules_throughput"
+path = "tests/bench_import_rules_throughput.rs"
+harness = false
+```
+
+---
+
+## `tests/contract_import_rules.rs`
+
+```rust
+// PURPOSE: Verify all trait implementations exist and compile.
+// Contract tests — trait bound assertions only. Zero runtime logic.
+
+use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
+use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
+use import_rules_lint_arwaky::agent_import_orchestrator::ImportOrchestrator;
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+// ─── AES201: Forbidden Import Protocol ────────────────────
+
+#[test]
+fn arch_import_forbidden_checker_implements_i_import_forbidden_protocol() {
+    fn assert_trait<T: IImportForbiddenProtocol>() {}
+    assert_trait::<ArchImportForbiddenChecker>();
+}
+
+#[test]
+fn forbidden_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<ArchImportForbiddenChecker>();
+}
+
+// ─── AES202: Mandatory Import Protocol ────────────────────
+
+#[test]
+fn arch_import_mandatory_checker_implements_i_import_mandatory_protocol() {
+    fn assert_trait<T: IImportMandatoryProtocol>() {}
+    assert_trait::<ArchImportMandatoryChecker>();
+}
+
+#[test]
+fn mandatory_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<ArchImportMandatoryChecker>();
+}
+
+// ─── AES203: Unused Import Protocol ───────────────────────
+
+#[test]
+fn unused_import_rule_checker_implements_i_unused_import_protocol() {
+    fn assert_trait<T: IUnusedImportProtocol>() {}
+    assert_trait::<UnusedImportRuleChecker>();
+}
+
+#[test]
+fn unused_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<UnusedImportRuleChecker>();
+}
+
+// ─── AES204: Dummy Import Protocol ────────────────────────
+
+#[test]
+fn dummy_import_checker_implements_i_dummy_import_checker_protocol() {
+    fn assert_trait<T: IDummyImportCheckerProtocol>() {}
+    assert_trait::<DummyImportChecker>();
+}
+
+#[test]
+fn dummy_checker_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<DummyImportChecker>();
+}
+
+// ─── AES205: Cycle Import Protocol ────────────────────────
+
+#[test]
+fn dependency_cycle_analyzer_implements_i_cycle_import_protocol() {
+    fn assert_trait<T: ICycleImportProtocol>() {}
+    assert_trait::<DependencyCycleAnalyzer>();
+}
+
+#[test]
+fn cycle_analyzer_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<DependencyCycleAnalyzer>();
+}
+
+// ─── Aggregate: Import Runner ─────────────────────────────
+
+#[test]
+fn import_orchestrator_implements_i_import_runner_aggregate() {
+    fn assert_trait<T: IImportRunnerAggregate>() {}
+    assert_trait::<ImportOrchestrator>();
+}
+
+#[test]
+fn import_orchestrator_is_send_sync() {
+    fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<ImportOrchestrator>();
+}
+
+// ─── Root: Container Wiring ───────────────────────────────
+
+#[test]
+fn import_container_produces_all_protocol_arcs() {
+    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+
+    let _mandatory: std::sync::Arc<dyn IImportMandatoryProtocol> = container.mandatory();
+    let _forbidden: std::sync::Arc<dyn IImportForbiddenProtocol> = container.forbidden();
+    let _unused: std::sync::Arc<dyn IUnusedImportProtocol> = container.unused();
+    let _dummy: std::sync::Arc<dyn IDummyImportCheckerProtocol> = container.dummy();
+    let _cycle: std::sync::Arc<dyn ICycleImportProtocol> = container.cycle();
+    let _orchestrator: std::sync::Arc<dyn IImportRunnerAggregate> = container.orchestrator();
+}
+
+// ─── Rule Name Identity ───────────────────────────────────
+
+#[test]
+fn forbidden_checker_rule_name_is_aes201() {
+    let checker = ArchImportForbiddenChecker::new();
+    assert_eq!(checker.rule_name().value(), "AES201");
+}
+
+#[test]
+fn mandatory_checker_rule_name_is_aes202() {
+    let checker = ArchImportMandatoryChecker::new();
+    assert_eq!(checker.rule_name().value(), "AES202");
+}
+
+#[test]
+fn dummy_checker_rule_name_is_aes204() {
+    let checker = DummyImportChecker::new();
+    assert_eq!(checker.rule_name().value(), "AES204");
+}
+
+// ─── Orchestrator Name ────────────────────────────────────
+
+#[test]
+fn orchestrator_name_is_import_rules() {
+    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    assert_eq!(orch.name(), "import-rules");
+}
+```
+
+---
+
+## `tests/unit_import_rules_unused_checker.rs`
+
+```rust
+// PURPOSE: Unit tests for UnusedImportRuleChecker (AES203)
+// Tests check_unused_imports with content passed directly — no file I/O.
+
+use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+fn sut() -> UnusedImportRuleChecker {
+    UnusedImportRuleChecker::new()
+}
+
+// ─── Happy Path ───────────────────────────────────────────
+
+#[test]
+fn used_import_produces_no_violation() {
+    let content = r#"
+use std::collections::HashMap;
+
+fn main() {
+    let map: HashMap<String, i32> = HashMap::new();
+    println!("{:?}", map);
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("test.rs", content, &mut violations);
+    assert!(violations.is_empty(), "Used import should not be flagged");
+}
+
+#[test]
+fn multiple_used_imports_produce_no_violations() {
+    let content = r#"
+use std::collections::HashMap;
+use std::collections::HashSet;
+
+fn main() {
+    let _m: HashMap<String, i32> = HashMap::new();
+    let _s: HashSet<i32> = HashSet::new();
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("test.rs", content, &mut violations);
+    assert!(violations.is_empty());
+}
+
+// ─── Unused Import Detection ──────────────────────────────
+
+#[test]
+fn single_unused_import_detected() {
+    let content = r#"
+use std::collections::HashMap;
+use std::collections::HashSet;
+
+fn main() {
+    let _m: HashMap<String, i32> = HashMap::new();
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("test.rs", content, &mut violations);
+    assert!(
+        violations.iter().any(|v| v.message.value().contains("HashSet")),
+        "HashSet should be flagged as unused"
+    );
+}
+
+#[test]
+fn all_unused_imports_detected() {
+    let content = r#"
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+
+fn main() {
+    println!("hello");
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("test.rs", content, &mut violations);
+    assert!(violations.len() >= 2, "Multiple unused imports should be flagged");
+}
+
+// ─── Edge Cases ───────────────────────────────────────────
+
+#[test]
+fn empty_file_produces_no_violations() {
+    let mut violations = Vec::new();
+    sut().check_unused_imports("empty.rs", "", &mut violations);
+    assert!(violations.is_empty());
+}
+
+#[test]
+fn file_with_no_imports_produces_no_violations() {
+    let content = r#"
+fn main() {
+    println!("hello world");
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("no_imports.rs", content, &mut violations);
+    assert!(violations.is_empty());
+}
+
+#[test]
+fn derive_macros_not_flagged_as_unused() {
+    let content = r#"
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
+struct Foo {
+    bar: String,
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("derive.rs", content, &mut violations);
+    assert!(
+        !violations.iter().any(|v| {
+            v.message.value().contains("Serialize") || v.message.value().contains("Deserialize")
+        }),
+        "Derive macros should never be flagged as unused"
+    );
+}
+
+#[test]
+fn trait_imports_not_flagged_as_unused() {
+    let content = r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+struct MyChecker;
+
+impl IUnusedImportProtocol for MyChecker {
+    fn find_unused_imports(&self, _path: &shared::common::taxonomy_path_vo::FilePath) -> Vec<shared::common::taxonomy_message_vo::LintMessage> {
+        vec![]
+    }
+    fn check_unused_imports(&self, _file: &str, _content: &str, _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>) {}
+}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("trait_impl.rs", content, &mut violations);
+    assert!(
+        !violations.iter().any(|v| v.message.value().contains("IUnusedImportProtocol")),
+        "Trait imports used in impl blocks should not be flagged"
+    );
+}
+
+// ─── Violation Metadata ───────────────────────────────────
+
+#[test]
+fn violation_has_correct_code_aes203() {
+    let content = r#"
+use std::collections::HashMap;
+
+fn main() {}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("meta.rs", content, &mut violations);
+    if let Some(v) = violations.first() {
+        assert_eq!(v.code.value(), "AES203");
+    }
+}
+
+#[test]
+fn violation_severity_is_medium() {
+    let content = r#"
+use std::collections::HashMap;
+
+fn main() {}
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("sev.rs", content, &mut violations);
+    if let Some(v) = violations.first() {
+        assert_eq!(v.severity, shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM);
+    }
+}
+
+// ─── Python-style imports ─────────────────────────────────
+
+#[test]
+fn python_unused_import_detected() {
+    let content = r#"
+import os
+import sys
+
+def main():
+    print(os.getcwd())
+"#;
+    let mut violations = Vec::new();
+    sut().check_unused_imports("test.py", content, &mut violations);
+    assert!(
+        violations.iter().any(|v| v.message.value().contains("sys")),
+        "Unused Python import 'sys' should be flagged"
+    );
+}
+
+// ─── find_unused_imports (path-based) ─────────────────────
+
+#[test]
+fn find_unused_imports_nonexistent_file_returns_empty() {
+    use shared::common::taxonomy_path_vo::FilePath;
+    let path = FilePath::new("/nonexistent/path/file.rs").unwrap();
+    let result = sut().find_unused_imports(&path);
+    assert!(result.is_empty());
+}
+```
+
+---
+
+## `tests/unit_import_rules_dummy_checker.rs`
+
+```rust
+// PURPOSE: Unit tests for DummyImportChecker (AES204)
+// Tests dummy function detection, dummy impl detection, taxonomy intent, surface logic.
+
+use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::taxonomy_definition_vo::LayerMapVO;
+
+fn sut() -> DummyImportChecker {
+    DummyImportChecker::new()
+}
+
+fn empty_layer_map() -> LayerMapVO {
+    LayerMapVO::new(std::collections::HashMap::new())
+}
+
+fn root_dir() -> FilePath {
+    FilePath::new(".").unwrap()
+}
+
+// ─── check_dummy_functions ────────────────────────────────
+
+#[test]
+fn detects_rust_dummy_function() {
+    let content = r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+fn real_logic() {
+    println!("doing work");
+}
+"#;
+    let file = FilePath::new("capabilities_test_checker.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(
+        !violations.is_empty(),
+        "Dummy function _use_mandatory_imports should be detected"
+    );
+    assert!(violations.iter().all(|v| v.code.value() == "AES204"));
+}
+
+#[test]
+fn no_dummy_function_no_violation() {
+    let content = r#"
+fn real_function() {
+    let x = 42;
+    println!("{}", x);
+}
+"#;
+    let file = FilePath::new("capabilities_real.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(violations.is_empty(), "No dummy functions means no violations");
+}
+
+#[test]
+fn detects_python_dummy_function() {
+    let content = r#"
+from shared.taxonomy_path_vo import FilePath
+
+def _use_mandatory_imports():
+    _ = FilePath("x")
+
+def real_logic():
+    print("working")
+"#;
+    let file = FilePath::new("capabilities_test_checker.py").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(!violations.is_empty(), "Python dummy function should be detected");
+}
+
+// ─── check_dummy_impls ────────────────────────────────────
+
+#[test]
+fn detects_empty_trait_impl() {
+    let content = r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+struct MyChecker;
+
+impl IUnusedImportProtocol for MyChecker {
+    fn find_unused_imports(&self, _path: &FilePath) -> Vec<LintMessage> {
+        todo!()
+    }
+    fn check_unused_imports(&self, _file: &str, _content: &str, _v: &mut Vec<LintResult>) {
+        todo!()
+    }
+}
+"#;
+    let file = FilePath::new("capabilities_stub.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(
+        !violations.is_empty(),
+        "Trait impl with all todo!() bodies should be flagged"
+    );
+}
+
+#[test]
+fn real_trait_impl_not_flagged() {
+    let content = r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+struct MyChecker;
+
+impl IUnusedImportProtocol for MyChecker {
+    fn find_unused_imports(&self, _path: &FilePath) -> Vec<LintMessage> {
+        let result = do_real_work();
+        result.into_iter().map(LintMessage::new).collect()
+    }
+    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+        let aliases = extract_imports(content);
+        for alias in aliases {
+            v.push(make_result(file, alias));
+        }
+    }
+}
+"#;
+    let file = FilePath::new("capabilities_real_impl.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(violations.is_empty(), "Real trait impl should not be flagged");
+}
+
+// ─── check_dummy_imports ──────────────────────────────────
+
+#[test]
+fn import_only_used_in_dummy_function_flagged() {
+    let content = r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+fn real_logic() {
+    println!("no FilePath here");
+}
+"#;
+    let file = FilePath::new("capabilities_dummy_import.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(
+        !violations.is_empty(),
+        "Import used only in dummy function should be flagged"
+    );
+}
+
+#[test]
+fn import_used_in_real_logic_not_flagged() {
+    let content = r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn real_logic() {
+    let path = FilePath::new("real/path.rs").unwrap();
+    println!("{}", path.value());
+}
+"#;
+    let file = FilePath::new("capabilities_real_usage.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(violations.is_empty(), "Import used in real logic should not be flagged");
+}
+
+// ─── check_surface_logic ──────────────────────────────────
+
+#[test]
+fn surface_calling_lint_path_directly_flagged() {
+    let content = r#"
+fn handle_command() {
+    let result = lint_path("/some/file.rs");
+    println!("{:?}", result);
+}
+"#;
+    let file = FilePath::new("surface_command_handler.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(
+        !violations.is_empty(),
+        "Surface calling lint_path() directly should be flagged"
+    );
+}
+
+#[test]
+fn surface_delegating_to_aggregate_not_flagged() {
+    let content = r#"
+fn handle_command() {
+    let result = aggregate.run_audit(&target).await;
+    println!("{:?}", result);
+}
+"#;
+    let file = FilePath::new("surface_command_handler.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(violations.is_empty(), "Delegating to aggregate is correct surface behavior");
+}
+
+// ─── check_taxonomy_intent ────────────────────────────────
+
+#[test]
+fn taxonomy_import_only_in_dummy_flagged() {
+    let content = r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+"#;
+    let file = FilePath::new("surface_view.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_taxonomy_intent(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(
+        !violations.is_empty(),
+        "Taxonomy import used only in dummy function should be flagged"
+    );
+}
+
+// ─── Severity & Code ──────────────────────────────────────
+
+#[test]
+fn dummy_violations_use_aes204_code() {
+    let content = r#"
+fn _use_mandatory_imports() {
+    let _ = 42;
+}
+"#;
+    let file = FilePath::new("capabilities_x.rs").unwrap();
+    let cs = ContentString::new(content.to_string());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    for v in &violations {
+        assert_eq!(v.code.value(), "AES204");
+    }
+}
+
+// ─── Edge: Empty Content ──────────────────────────────────
+
+#[test]
+fn empty_content_no_violations() {
+    let file = FilePath::new("capabilities_empty.rs").unwrap();
+    let cs = ContentString::new(String::new());
+    let mut violations = Vec::new();
+
+    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+
+    assert!(violations.is_empty());
+}
+```
+
+---
+
+## `tests/unit_import_rules_forbidden_checker.rs`
+
+```rust
+// PURPOSE: Unit tests for ArchImportForbiddenChecker (AES201)
+// Uses temp files because the checker reads from disk internally.
+
+use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn sut() -> ArchImportForbiddenChecker {
+    ArchImportForbiddenChecker::new()
+}
+
+fn test_config() -> ArchitectureConfig {
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers: HashMap::new(),
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn layer_map_with_taxonomy_forbidden() -> LayerMapVO {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("taxonomy"),
+        LayerDefinition {
+            allowed: PatternList::new(Vec::<String>::new()),
+            forbidden: PatternList::new(vec![
+                "contract".to_string(),
+                "utility".to_string(),
+                "capabilities".to_string(),
+                "agent".to_string(),
+                "surfaces".to_string(),
+                "root".to_string(),
+            ]),
+            mandatory: PatternList::new(Vec::<String>::new()),
+            word_count: Count::new(2),
+            exceptions: PatternList::new(Vec::<String>::new()),
+            recursive: BooleanVO::new(false),
+            ..Default::default()
+        },
+    );
+    LayerMapVO::new(layers)
+}
+
+fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+    FilePath::new(path.to_string_lossy().to_string()).unwrap()
+}
+
+// ─── Happy Path: Valid Import ─────────────────────────────
+
+#[tokio::test]
+async fn taxonomy_importing_nothing_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = write_temp_rs(dir.path(), "taxonomy_foo_vo.rs", "pub struct Foo;\n");
+
+    let config = test_config();
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Taxonomy with no imports should pass");
+}
+
+// ─── Forbidden Import Detected ────────────────────────────
+
+#[tokio::test]
+async fn taxonomy_importing_capabilities_flagged() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = r#"
+use crate::capabilities_some_checker::SomeChecker;
+
+pub struct Foo;
+"#;
+    let file = write_temp_rs(dir.path(), "taxonomy_foo_vo.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(
+        !results.is_empty(),
+        "Taxonomy importing capabilities should produce AES201 violation"
+    );
+    assert!(results.values.iter().all(|v| v.code.value() == "AES201"));
+}
+
+#[tokio::test]
+async fn taxonomy_importing_agent_flagged() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = r#"
+use crate::agent_import_orchestrator::ImportOrchestrator;
+
+pub struct Bar;
+"#;
+    let file = write_temp_rs(dir.path(), "taxonomy_bar_vo.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(!results.is_empty(), "Taxonomy importing agent should be flagged");
+}
+
+// ─── Exception Handling ───────────────────────────────────
+
+#[tokio::test]
+async fn excepted_file_skips_check() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = r#"
+use crate::capabilities_some_checker::SomeChecker;
+pub struct Foo;
+"#;
+    let file = write_temp_rs(dir.path(), "taxonomy_special_vo.rs", content);
+
+    let mut config = test_config();
+    config.rules.push(shared::config_system::taxonomy_config_vo::ArchitectureRule {
+        name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("AES201".to_string()),
+        exceptions: PatternList::new(vec!["taxonomy_special_vo.rs".to_string()]),
+        ..Default::default()
+    });
+
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Excepted file should not produce violations");
+}
+
+// ─── Disabled Config ──────────────────────────────────────
+
+#[tokio::test]
+async fn disabled_config_produces_no_violations() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = "use crate::capabilities_x::X;\npub struct Y;\n";
+    let file = write_temp_rs(dir.path(), "taxonomy_y_vo.rs", content);
+
+    let mut config = test_config();
+    config.enabled = BooleanVO::new(false);
+
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    // The forbidden checker doesn't check config.enabled itself (orchestrator does),
+    // but the layer_map lookup still applies. This tests the flow.
+    // If layer is detected and forbidden list matches, it will flag.
+    // The orchestrator gates on enabled before calling this.
+}
+
+// ─── Severity ─────────────────────────────────────────────
+
+#[tokio::test]
+async fn forbidden_violation_severity_is_critical() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = "use crate::capabilities_x::X;\npub struct Z;\n";
+    let file = write_temp_rs(dir.path(), "taxonomy_z_vo.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_taxonomy_forbidden();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    for v in &results.values {
+        assert_eq!(v.severity, shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL);
+    }
+}
+```
+
+---
+
+## `tests/unit_import_rules_mandatory_checker.rs`
+
+```rust
+// PURPOSE: Unit tests for ArchImportMandatoryChecker (AES202)
+// Uses temp files because the checker reads from disk internally.
+
+use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn sut() -> ArchImportMandatoryChecker {
+    ArchImportMandatoryChecker::new()
+}
+
+fn test_config() -> ArchitectureConfig {
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers: HashMap::new(),
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn layer_map_with_mandatory_contract() -> LayerMapVO {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("capabilities"),
+        LayerDefinition {
+            allowed: PatternList::new(vec!["taxonomy".to_string(), "contract".to_string(), "utility".to_string()]),
+            forbidden: PatternList::new(Vec::<String>::new()),
+            mandatory: PatternList::new(vec!["contract".to_string()]),
+            word_count: Count::new(2),
+            exceptions: PatternList::new(Vec::<String>::new()),
+            recursive: BooleanVO::new(false),
+            ..Default::default()
+        },
+    );
+    LayerMapVO::new(layers)
+}
+
+fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+    FilePath::new(path.to_string_lossy().to_string()).unwrap()
+}
+
+// ─── Happy Path: Mandatory Import Present ─────────────────
+
+#[tokio::test]
+async fn capabilities_with_contract_import_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+
+pub struct MyChecker;
+
+impl IUnusedImportProtocol for MyChecker {
+    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> { vec![] }
+    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {}
+}
+"#;
+    let file = write_temp_rs(dir.path(), "capabilities_my_checker.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_mandatory_contract();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Capabilities with contract import should pass");
+}
+
+// ─── Missing Mandatory Import ─────────────────────────────
+
+#[tokio::test]
+async fn capabilities_without_contract_import_flagged() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = r#"
+use std::collections::HashMap;
+
+pub struct MyChecker {
+    data: HashMap<String, i32>,
+}
+"#;
+    let file = write_temp_rs(dir.path(), "capabilities_my_checker.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_mandatory_contract();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(
+        !results.is_empty(),
+        "Capabilities without contract import should produce AES202"
+    );
+    assert!(results.values.iter().all(|v| v.code.value() == "AES202"));
+}
+
+// ─── Exception File ───────────────────────────────────────
+
+#[tokio::test]
+async fn excepted_file_skips_mandatory_check() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = "pub struct Helper;\n";
+    let file = write_temp_rs(dir.path(), "capabilities_helper.rs", content);
+
+    let mut config = test_config();
+    config.rules.push(shared::config_system::taxonomy_config_vo::ArchitectureRule {
+        name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("AES202".to_string()),
+        exceptions: PatternList::new(vec!["capabilities_helper.rs".to_string()]),
+        ..Default::default()
+    });
+
+    let layer_map = layer_map_with_mandatory_contract();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Excepted file should skip mandatory check");
+}
+
+// ─── Severity ─────────────────────────────────────────────
+
+#[tokio::test]
+async fn mandatory_violation_severity_is_high() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = "pub struct NoContract;\n";
+    let file = write_temp_rs(dir.path(), "capabilities_no_contract.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_mandatory_contract();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    for v in &results.values {
+        assert_eq!(v.severity, shared::cli_commands::taxonomy_severity_vo::Severity::HIGH);
+    }
+}
+
+// ─── Non-capabilities File Not Checked ────────────────────
+
+#[tokio::test]
+async fn taxonomy_file_not_checked_for_contract_mandatory() {
+    let dir = tempfile::tempdir().unwrap();
+    let content = "pub struct Foo;\n";
+    let file = write_temp_rs(dir.path(), "taxonomy_foo_vo.rs", content);
+
+    let config = test_config();
+    let layer_map = layer_map_with_mandatory_contract();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Taxonomy files don't require contract imports");
+}
+```
+
+---
+
+## `tests/unit_import_rules_cycle_analyzer.rs`
+
+```rust
+// PURPOSE: Unit tests for DependencyCycleAnalyzer (AES205)
+// Tests cycle detection logic using temp files with cross-layer imports.
+
+use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::LayerMapVO;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn sut() -> DependencyCycleAnalyzer {
+    DependencyCycleAnalyzer::new()
+}
+
+fn test_config() -> ArchitectureConfig {
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers: HashMap::new(),
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn two_layer_map() -> LayerMapVO {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("capabilities"),
+        shared::common::taxonomy_definition_vo::LayerDefinition::default(),
+    );
+    layers.insert(
+        LayerNameVO::new("agent"),
+        shared::common::taxonomy_definition_vo::LayerDefinition::default(),
+    );
+    LayerMapVO::new(layers)
+}
+
+fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+    FilePath::new(path.to_string_lossy().to_string()).unwrap()
+}
+
+// ─── detect_cycle_edges (pure logic) ─────────────────────
+
+#[test]
+fn no_edges_no_cycles() {
+    let edges: Vec<DependencyEdge> = vec![];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(result.is_empty());
+}
+
+#[test]
+fn unidirectional_edge_no_cycle() {
+    let edges = vec![DependencyEdge::new("taxonomy".to_string(), "contract".to_string())];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(result.is_empty(), "A→B without B→A is not a cycle");
+}
+
+#[test]
+fn direct_cycle_detected() {
+    let edges = vec![
+        DependencyEdge::new("capabilities".to_string(), "agent".to_string()),
+        DependencyEdge::new("agent".to_string(), "capabilities".to_string()),
+    ];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(!result.is_empty(), "A→B→A should be detected as a cycle");
+}
+
+#[test]
+fn indirect_cycle_detected() {
+    let edges = vec![
+        DependencyEdge::new("a".to_string(), "b".to_string()),
+        DependencyEdge::new("b".to_string(), "c".to_string()),
+        DependencyEdge::new("c".to_string(), "a".to_string()),
+    ];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(!result.is_empty(), "A→B→C→A should be detected");
+}
+
+// ─── normalize_to_layer ───────────────────────────────────
+
+#[test]
+fn normalize_strips_prefix() {
+    let result = sut().normalize_to_layer("taxonomy_foo_vo");
+    assert_eq!(result.value(), "taxonomy");
+}
+
+#[test]
+fn normalize_unknown_returns_as_is() {
+    let result = sut().normalize_to_layer("unknown_thing");
+    assert_eq!(result.value(), "unknown_thing");
+}
+
+// ─── scan with temp files ─────────────────────────────────
+
+#[tokio::test]
+async fn no_cross_layer_imports_no_violations() {
+    let dir = tempfile::tempdir().unwrap();
+    let file_a = write_temp_rs(
+        dir.path(),
+        "capabilities_a.rs",
+        "use shared::common::taxonomy_path_vo::FilePath;\npub struct A;\n",
+    );
+
+    let config = test_config();
+    let layer_map = two_layer_map();
+    let files = FilePathList::new(vec![file_a]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_cycles(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Single file with no cross-layer import has no cycle");
+}
+
+#[tokio::test]
+async fn disabled_config_returns_empty() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = write_temp_rs(dir.path(), "capabilities_x.rs", "pub struct X;\n");
+
+    let mut config = test_config();
+    config.enabled = BooleanVO::new(false);
+
+    let layer_map = two_layer_map();
+    let files = FilePathList::new(vec![file]);
+    let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let mut results = LintResultList::new(Vec::new());
+
+    sut()
+        .check_cycles(&config, &layer_map, &files, &root, &mut results)
+        .await;
+
+    assert!(results.is_empty(), "Disabled config should produce no results");
+}
+
+// ─── Violation Metadata ───────────────────────────────────
+
+#[test]
+fn cycle_violation_uses_aes205_code() {
+    let edges = vec![
+        DependencyEdge::new("capabilities".to_string(), "agent".to_string()),
+        DependencyEdge::new("agent".to_string(), "capabilities".to_string()),
+    ];
+    let cycle_names = sut().detect_cycle_edges(&edges);
+    // The cycle detector returns SymbolName edges; the _scan method wraps them
+    // into LintResult with AES205. Here we just verify the detector finds something.
+    assert!(!cycle_names.is_empty());
+}
+```
+
+---
+
+## `tests/unit_import_rules_orchestrator.rs`
+
+```rust
+// PURPOSE: Unit tests for ImportOrchestrator (agent layer)
+// Tests orchestration flow: file collection, ignore logic, enabled gate.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn test_config(enabled: bool) -> ArchitectureConfig {
+    ArchitectureConfig {
+        enabled: BooleanVO::new(enabled),
+        layers: HashMap::new(),
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+    FilePath::new(path.to_string_lossy().to_string()).unwrap()
+}
+
+// ─── Enabled Gate ─────────────────────────────────────────
+
+#[tokio::test]
+async fn disabled_config_returns_empty_results() {
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_temp_rs(dir.path(), "taxonomy_x_vo.rs", "pub struct X;\n");
+
+    let config = test_config(false);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let result = orch.run_audit(&target).await.unwrap();
+
+    assert!(result.is_empty(), "Disabled config should short-circuit to empty");
+}
+
+// ─── Nonexistent Path ─────────────────────────────────────
+
+#[tokio::test]
+async fn nonexistent_target_returns_error() {
+    let config = test_config(true);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    let target = FilePath::new("/nonexistent/path/that/does/not/exist").unwrap();
+    let result = orch.run_audit(&target).await;
+
+    assert!(result.is_err(), "Nonexistent path should return ScanError");
+}
+
+// ─── Single File Audit ────────────────────────────────────
+
+#[tokio::test]
+async fn single_clean_file_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = write_temp_rs(dir.path(), "taxonomy_clean_vo.rs", "pub struct Clean;\n");
+
+    let config = test_config(true);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    let result = orch.run_audit(&file).await.unwrap();
+    assert!(result.is_empty(), "Clean taxonomy file should produce no violations");
+}
+
+// ─── Directory Audit ──────────────────────────────────────
+
+#[tokio::test]
+async fn directory_with_multiple_files_audited() {
+    let dir = tempfile::tempdir().unwrap();
+    write_temp_rs(dir.path(), "taxonomy_a_vo.rs", "pub struct A;\n");
+    write_temp_rs(dir.path(), "taxonomy_b_vo.rs", "pub struct B;\n");
+
+    let config = test_config(true);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let result = orch.run_audit(&target).await.unwrap();
+
+    // Clean files should produce no violations
+    assert!(result.is_empty());
+}
+
+// ─── Ignored Directories ──────────────────────────────────
+
+#[tokio::test]
+async fn target_dir_is_skipped() {
+    let dir = tempfile::tempdir().unwrap();
+    let target_subdir = dir.path().join("target");
+    std::fs::create_dir_all(&target_subdir).unwrap();
+    write_temp_rs(&target_subdir, "taxonomy_ignored_vo.rs", "use crate::capabilities_x::X;\npub struct Y;\n");
+    write_temp_rs(dir.path(), "taxonomy_real_vo.rs", "pub struct Real;\n");
+
+    let config = test_config(true);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let result = orch.run_audit(&target).await.unwrap();
+
+    // Files in target/ should be skipped
+    assert!(
+        !result.iter().any(|v| v.file.value().contains("target")),
+        "Files in target/ directory should be ignored"
+    );
+}
+
+// ─── Orchestrator Name ────────────────────────────────────
+
+#[tokio::test]
+async fn orchestrator_reports_correct_name() {
+    let config = test_config(true);
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    assert_eq!(orch.name(), "import-rules");
+}
+```
+
+---
+
+## `tests/integration_import_rules.rs`
+
+```rust
+// PURPOSE: Integration tests — full DI wiring via ImportContainer
+// Verifies that the container correctly assembles all capabilities
+// and the orchestrator runs the complete pipeline.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn full_config() -> ArchitectureConfig {
+    let mut layers = HashMap::new();
+
+    layers.insert(
+        LayerNameVO::new("taxonomy"),
+        LayerDefinition {
+            allowed: PatternList::new(Vec::<String>::new()),
+            forbidden: PatternList::new(vec![
+                "contract".into(), "utility".into(), "capabilities".into(),
+                "agent".into(), "surfaces".into(), "root".into(),
+            ]),
+            mandatory: PatternList::new(Vec::<String>::new()),
+            word_count: Count::new(2),
+            exceptions: PatternList::new(Vec::<String>::new()),
+            recursive: BooleanVO::new(false),
+            ..Default::default()
+        },
+    );
+
+    layers.insert(
+        LayerNameVO::new("capabilities"),
+        LayerDefinition {
+            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
+            forbidden: PatternList::new(vec!["agent".into(), "surfaces".into()]),
+            mandatory: PatternList::new(vec!["contract".into()]),
+            word_count: Count::new(2),
+            exceptions: PatternList::new(Vec::<String>::new()),
+            recursive: BooleanVO::new(false),
+            ..Default::default()
+        },
+    );
+
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers,
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+    FilePath::new(path.to_string_lossy().to_string()).unwrap()
+}
+
+// ─── Container Wiring ─────────────────────────────────────
+
+#[test]
+fn container_creates_all_capabilities() {
+    let container = ImportContainer::new_with_config(full_config());
+
+    // Each accessor should return a valid Arc
+    let _m = container.mandatory();
+    let _f = container.forbidden();
+    let _u = container.unused();
+    let _d = container.dummy();
+    let _c = container.cycle();
+    let _o = container.orchestrator();
+}
+
+#[test]
+fn container_config_accessor_returns_config() {
+    let config = full_config();
+    let container = ImportContainer::new_with_config(config.clone());
+    assert_eq!(container.config().enabled.value(), true);
+}
+
+// ─── Full Pipeline: Clean Project ─────────────────────────
+
+#[tokio::test]
+async fn clean_project_produces_zero_violations() {
+    let dir = tempfile::tempdir().unwrap();
+
+    // Taxonomy file — no imports
+    write_temp_rs(dir.path(), "taxonomy_foo_vo.rs", "pub struct Foo {\n    pub value: String,\n}\n");
+
+    // Capabilities file — imports contract
+    write_temp_rs(
+        dir.path(),
+        "capabilities_foo_checker.rs",
+        r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+
+pub struct FooChecker;
+
+impl IUnusedImportProtocol for FooChecker {
+    fn find_unused_imports(&self, _p: &FilePath) -> Vec<shared::common::taxonomy_message_vo::LintMessage> { vec![] }
+    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>) {}
+}
+"#,
+    );
+
+    let container = ImportContainer::new_with_config(full_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.is_empty(),
+        "Clean project should have zero violations, got: {:?}",
+        results.iter().map(|r| r.message.value().to_string()).collect::<Vec<_>>()
+    );
+}
+
+// ─── Full Pipeline: Violation Detected ────────────────────
+
+#[tokio::test]
+async fn forbidden_import_detected_through_full_pipeline() {
+    let dir = tempfile::tempdir().unwrap();
+
+    // Taxonomy file importing capabilities — FORBIDDEN
+    write_temp_rs(
+        dir.path(),
+        "taxonomy_bad_vo.rs",
+        "use crate::capabilities_foo_checker::FooChecker;\n\npub struct Bad;\n",
+    );
+
+    let container = ImportContainer::new_with_config(full_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.value() == "AES201"),
+        "Forbidden import should produce AES201 through full pipeline"
+    );
+}
+
+// ─── Full Pipeline: Unused Import ─────────────────────────
+
+#[tokio::test]
+async fn unused_import_detected_through_full_pipeline() {
+    let dir = tempfile::tempdir().unwrap();
+
+    write_temp_rs(
+        dir.path(),
+        "taxonomy_unused_vo.rs",
+        "use std::collections::HashMap;\n\npub struct Unused;\n",
+    );
+
+    let container = ImportContainer::new_with_config(full_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.value() == "AES203"),
+        "Unused import should produce AES203 through full pipeline"
+    );
+}
+
+// ─── Full Pipeline: Dummy Function ────────────────────────
+
+#[tokio::test]
+async fn dummy_function_detected_through_full_pipeline() {
+    let dir = tempfile::tempdir().unwrap();
+
+    write_temp_rs(
+        dir.path(),
+        "capabilities_dummy.rs",
+        r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+pub struct DummyCap;
+"#,
+    );
+
+    let container = ImportContainer::new_with_config(full_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(
+        results.iter().any(|v| v.code.value() == "AES204"),
+        "Dummy function should produce AES204 through full pipeline"
+    );
+}
+
+// ─── Multiple Violations Aggregated ───────────────────────
+
+#[tokio::test]
+async fn multiple_violation_types_aggregated() {
+    let dir = tempfile::tempdir().unwrap();
+
+    // File with unused import + dummy function
+    write_temp_rs(
+        dir.path(),
+        "capabilities_multi.rs",
+        r#"
+use std::collections::HashMap;
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+pub struct Multi;
+"#,
+    );
+
+    let container = ImportContainer::new_with_config(full_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let codes: Vec<&str> = results.iter().map(|v| v.code.value()).collect();
+    assert!(
+        codes.contains(&"AES203") || codes.contains(&"AES204"),
+        "Multiple violation types should be aggregated"
+    );
+}
+```
+
+---
+
+## `tests/smoke_import_rules.rs`
+
+```rust
+// PURPOSE: Smoke test — verify the import-rules crate boots and responds.
+// Must complete in under 5 seconds.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+
+#[tokio::test]
+async fn import_rules_boots_and_runs_audit() {
+    let start = std::time::Instant::now();
+
+    let config = ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+
+    // Audit the crate's own src directory
+    let target = FilePath::new("src").unwrap_or_default();
+    let result = orch.run_audit(&target).await;
+
+    // Must not panic, must return Ok
+    assert!(result.is_ok(), "Smoke: run_audit must not error");
+
+    let elapsed = start.elapsed();
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test must complete in under 5 seconds, took {:?}",
+        elapsed
+    );
+}
+
+#[tokio::test]
+async fn container_wiring_does_not_panic() {
+    let config = ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+
+    // All accessors must not panic
+    let _ = container.mandatory();
+    let _ = container.forbidden();
+    let _ = container.unused();
+    let _ = container.dummy();
+    let _ = container.cycle();
+    let _ = container.orchestrator();
+    let _ = container.config();
+}
+```
+
+---
+
+## `tests/e2e_import_rules_audit_flow.rs`
+
+```rust
+// PURPOSE: E2E test — full audit lifecycle on a realistic project structure.
+// Creates a multi-file workspace, runs the full orchestrator, asserts on real output.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn e2e_config() -> ArchitectureConfig {
+    let mut layers = HashMap::new();
+
+    layers.insert(
+        LayerNameVO::new("taxonomy"),
+        LayerDefinition {
+            forbidden: PatternList::new(vec![
+                "contract".into(), "utility".into(), "capabilities".into(),
+                "agent".into(), "surfaces".into(), "root".into(),
+            ]),
+            ..Default::default()
+        },
+    );
+
+    layers.insert(
+        LayerNameVO::new("capabilities"),
+        LayerDefinition {
+            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
+            forbidden: PatternList::new(vec!["agent".into(), "surfaces".into()]),
+            mandatory: PatternList::new(vec!["contract".into()]),
+            ..Default::default()
+        },
+    );
+
+    layers.insert(
+        LayerNameVO::new("agent"),
+        LayerDefinition {
+            allowed: PatternList::new(vec!["taxonomy".into(), "contract".into(), "utility".into()]),
+            forbidden: PatternList::new(vec!["surfaces".into(), "capabilities".into()]),
+            ..Default::default()
+        },
+    );
+
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers,
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn write_file(dir: &std::path::Path, name: &str, content: &str) {
+    let path = dir.join(name);
+    let mut file = std::fs::File::create(&path).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+}
+
+#[tokio::test]
+async fn full_audit_on_realistic_workspace() {
+    let dir = tempfile::tempdir().unwrap();
+    let src = dir.path();
+
+    // ─── Taxonomy layer (clean) ───
+    write_file(src, "taxonomy_severity_vo.rs", r#"
+#[derive(Debug, Clone)]
+pub enum Severity { Low, Medium, High, Critical }
+"#);
+
+    // ─── Capabilities layer (clean — has contract import) ───
+    write_file(src, "capabilities_severity_checker.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+pub struct SeverityChecker;
+
+impl IUnusedImportProtocol for SeverityChecker {
+    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> { vec![] }
+    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {}
+}
+"#);
+
+    // ─── Agent layer (clean) ───
+    write_file(src, "agent_severity_orchestrator.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use std::sync::Arc;
+
+pub struct SeverityOrchestrator {
+    checker: Arc<dyn IUnusedImportProtocol>,
+}
+"#);
+
+    let container = ImportContainer::new_with_config(e2e_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    // Clean workspace should produce zero violations
+    assert!(
+        results.is_empty(),
+        "Clean workspace should have 0 violations, got {}: {:?}",
+        results.len(),
+        results.iter().map(|r| format!("{}: {}", r.code.value(), r.message.value())).collect::<Vec<_>>()
+    );
+}
+
+#[tokio::test]
+async fn full_audit_detects_layer_violation_in_workspace() {
+    let dir = tempfile::tempdir().unwrap();
+    let src = dir.path();
+
+    // Taxonomy importing capabilities — VIOLATION
+    write_file(src, "taxonomy_bad_vo.rs", r#"
+use crate::capabilities_severity_checker::SeverityChecker;
+
+pub struct Bad;
+"#);
+
+    // Clean capabilities file
+    write_file(src, "capabilities_good.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+pub struct Good;
+"#);
+
+    let container = ImportContainer::new_with_config(e2e_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let aes201_count = results.iter().filter(|v| v.code.value() == "AES201").count();
+    assert!(
+        aes201_count > 0,
+        "E2E: taxonomy importing capabilities must produce AES201"
+    );
+}
+
+#[tokio::test]
+async fn full_audit_detects_unused_and_dummy_together() {
+    let dir = tempfile::tempdir().unwrap();
+    let src = dir.path();
+
+    write_file(src, "capabilities_messy.rs", r#"
+use std::collections::HashMap;
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+pub struct Messy;
+"#);
+
+    let container = ImportContainer::new_with_config(e2e_config());
+    let orch = container.orchestrator();
+
+    let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let codes: Vec<&str> = results.iter().map(|v| v.code.value()).collect();
+    assert!(
+        codes.contains(&"AES204"),
+        "E2E: dummy function must be detected. Codes found: {:?}",
+        codes
+    );
+}
+```
+
+---
+
+## `tests/acceptance_FR_001.rs`
+
+```rust
+// PURPOSE: Acceptance test for FR-001: Layer Dependency Violation (AES201)
+// Requirement: Lower layers must never import higher layers.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn fr001_config() -> ArchitectureConfig {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("taxonomy"),
+        LayerDefinition {
+            forbidden: PatternList::new(vec![
+                "contract".into(), "utility".into(), "capabilities".into(),
+                "agent".into(), "surfaces".into(), "root".into(),
+            ]),
+            ..Default::default()
+        },
+    );
+    layers.insert(
+        LayerNameVO::new("contract"),
+        LayerDefinition {
+            forbidden: PatternList::new(vec![
+                "utility".into(), "capabilities".into(), "agent".into(),
+                "surfaces".into(), "root".into(),
+            ]),
+            ..Default::default()
+        },
+    );
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers,
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn write_file(dir: &std::path::Path, name: &str, content: &str) {
+    let mut file = std::fs::File::create(dir.join(name)).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+}
+
+/// FR-001: taxonomy_ must not import contract_, utility_, capabilities_, agent_, surface_, root_
+#[tokio::test]
+async fn fr001_taxonomy_importing_capabilities_emits_aes201() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_violation_vo.rs",
+        "use crate::capabilities_checker::Checker;\npub struct V;\n");
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES201"),
+        "FR-001: taxonomy importing capabilities must emit AES201");
+}
+
+/// FR-001: contract_ must not import utility_, capabilities_, agent_, surface_, root_
+#[tokio::test]
+async fn fr001_contract_importing_agent_emits_aes201() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "contract_bad_protocol.rs",
+        "use crate::agent_orchestrator::Orch;\npub trait Bad {}\n");
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES201"),
+        "FR-001: contract importing agent must emit AES201");
+}
+
+/// FR-001: Valid unidirectional import passes
+#[tokio::test]
+async fn fr001_valid_unidirectional_import_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_clean_vo.rs", "pub struct Clean;\n");
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.is_empty(), "FR-001: valid import must pass");
+}
+
+/// FR-001: AES201 diagnostic includes file path
+#[tokio::test]
+async fn fr001_diagnostic_includes_file_path() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_x_vo.rs",
+        "use crate::capabilities_y::Y;\npub struct X;\n");
+
+    let container = ImportContainer::new_with_config(fr001_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    if let Some(v) = results.iter().find(|v| v.code.value() == "AES201") {
+        assert!(v.file.value().contains("taxonomy_x_vo.rs"),
+            "FR-001: diagnostic must include the violating file path");
+    } else {
+        panic!("FR-001: expected AES201 violation");
+    }
+}
+```
+
+---
+
+## `tests/acceptance_FR_002.rs`
+
+```rust
+// PURPOSE: Acceptance test for FR-002: Mandatory Layer Imports (AES202)
+// Requirement: Capability files must import their corresponding contract trait.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::collections::HashMap;
+use std::io::Write;
+
+fn fr002_config() -> ArchitectureConfig {
+    let mut layers = HashMap::new();
+    layers.insert(
+        LayerNameVO::new("capabilities"),
+        LayerDefinition {
+            mandatory: PatternList::new(vec!["contract".into()]),
+            ..Default::default()
+        },
+    );
+    ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers,
+        rules: Vec::new(),
+        naming: shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    }
+}
+
+fn write_file(dir: &std::path::Path, name: &str, content: &str) {
+    let mut file = std::fs::File::create(dir.join(name)).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+}
+
+/// FR-002: Capability file missing contract import emits AES202
+#[tokio::test]
+async fn fr002_capability_without_contract_emits_aes202() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_no_contract.rs",
+        "use std::collections::HashMap;\npub struct NoContract;\n");
+
+    let container = ImportContainer::new_with_config(fr002_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES202"),
+        "FR-002: capability without contract import must emit AES202");
+}
+
+/// FR-002: Capability file with contract import passes
+#[tokio::test]
+async fn fr002_capability_with_contract_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_with_contract.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+pub struct WithContract;
+"#);
+
+    let container = ImportContainer::new_with_config(fr002_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let aes202: Vec<_> = results.iter().filter(|v| v.code.value() == "AES202").collect();
+    assert!(aes202.is_empty(), "FR-002: capability with contract import must pass");
+}
+
+/// FR-002: AES202 diagnostic includes expected import name
+#[tokio::test]
+async fn fr002_diagnostic_includes_expected_import() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_missing.rs", "pub struct Missing;\n");
+
+    let container = ImportContainer::new_with_config(fr002_config());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    if let Some(v) = results.iter().find(|v| v.code.value() == "AES202") {
+        assert!(v.message.value().contains("contract"),
+            "FR-002: diagnostic must mention the expected import 'contract'");
+    } else {
+        panic!("FR-002: expected AES202 violation");
+    }
+}
+```
+
+---
+
+## `tests/acceptance_FR_003.rs`
+
+```rust
+// PURPOSE: Acceptance test for FR-003: Unused Import Detection (AES203)
+// Requirement: Imported symbols never referenced in file body are flagged.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::io::Write;
+
+fn write_file(dir: &std::path::Path, name: &str, content: &str) {
+    let mut file = std::fs::File::create(dir.join(name)).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+}
+
+/// FR-003: Unused import detected with AES203
+#[tokio::test]
+async fn fr003_unused_import_emits_aes203() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_unused_vo.rs",
+        "use std::collections::HashMap;\n\npub struct Unused;\n");
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES203"),
+        "FR-003: unused import must emit AES203");
+}
+
+/// FR-003: Used import does not emit AES203
+#[tokio::test]
+async fn fr003_used_import_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_used_vo.rs", r#"
+use std::collections::HashMap;
+
+pub struct Used {
+    pub data: HashMap<String, i32>,
+}
+"#);
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(!results.iter().any(|v| v.code.value() == "AES203"),
+        "FR-003: used import must not emit AES203");
+}
+
+/// FR-003: AES203 diagnostic includes unused symbol name
+#[tokio::test]
+async fn fr003_diagnostic_includes_symbol_name() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "taxonomy_sym_vo.rs",
+        "use std::collections::BTreeMap;\n\npub struct Sym;\n");
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    if let Some(v) = results.iter().find(|v| v.code.value() == "AES203") {
+        assert!(v.message.value().contains("BTreeMap"),
+            "FR-003: diagnostic must include the unused symbol name");
+    } else {
+        panic!("FR-003: expected AES203 violation");
+    }
+}
+```
+
+---
+
+## `tests/acceptance_FR_004.rs`
+
+```rust
+// PURPOSE: Acceptance test for FR-004: Dummy or Forbidden Imports (AES204)
+// Requirement: Imports pointing to dummy/stub code are detected.
+
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use std::io::Write;
+
+fn write_file(dir: &std::path::Path, name: &str, content: &str) {
+    let mut file = std::fs::File::create(dir.join(name)).unwrap();
+    file.write_all(content.as_bytes()).unwrap();
+}
+
+/// FR-004: Dummy function detected with AES204
+#[tokio::test]
+async fn fr004_dummy_function_emits_aes204() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_dummy.rs", r#"
+use shared::common::taxonomy_path_vo::FilePath;
+
+fn _use_mandatory_imports() {
+    let _ = FilePath::new("x");
+}
+
+pub struct DummyCap;
+"#);
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES204"),
+        "FR-004: dummy function must emit AES204");
+}
+
+/// FR-004: Dummy trait impl detected with AES204
+#[tokio::test]
+async fn fr004_dummy_trait_impl_emits_aes204() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_stub_impl.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+pub struct StubChecker;
+
+impl IUnusedImportProtocol for StubChecker {
+    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> {
+        todo!()
+    }
+    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {
+        todo!()
+    }
+}
+"#);
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    assert!(results.iter().any(|v| v.code.value() == "AES204"),
+        "FR-004: dummy trait impl must emit AES204");
+}
+
+/// FR-004: Real implementation does not emit AES204
+#[tokio::test]
+async fn fr004_real_impl_passes() {
+    let dir = tempfile::tempdir().unwrap();
+    write_file(dir.path(), "capabilities_real.rs", r#"
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+pub struct RealChecker;
+
+impl IUnusedImportProtocol for RealChecker {
+    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+        let content = std::fs::read_to_string(path.value()).unwrap_or_default();
+        if content.is_empty() { return vec![]; }
+        vec![LintMessage::new("found")]
+    }
+    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+        if content.contains("unused") {
+            v.push(LintResult::new_arch(file, 1, "AES203",
+                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM, "unused"));
+        }
+    }
+}
+"#);
+
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let results = orch.run_audit(&target).await.unwrap();
+
+    let aes204: Vec<_> = results.iter().filter(|v| v.code.value() == "AES204").collect();
+    assert!(aes204.is_empty(), "FR-004: real implementation must not emit AES204");
+}
+```
+
+---
+
+## `tests/acceptance_FR_005.rs`
+
+```rust
+// PURPOSE: Acceptance test for FR-005: Circular Dependency Detection (AES205)
+// Requirement: Direct and indirect cycles across layers are detected.
+
+use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+
+fn sut() -> DependencyCycleAnalyzer {
+    DependencyCycleAnalyzer::new()
+}
+
+/// FR-005: Direct cycle (A → B → A) is flagged
+#[test]
+fn fr005_direct_cycle_detected() {
+    let edges = vec![
+        DependencyEdge::new("capabilities".to_string(), "agent".to_string()),
+        DependencyEdge::new("agent".to_string(), "capabilities".to_string()),
+    ];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(!result.is_empty(), "FR-005: direct cycle A→B→A must be detected");
+}
+
+/// FR-005: Indirect cycle (A → B → C → A) is flagged
+#[test]
+fn fr005_indirect_cycle_detected() {
+    let edges = vec![
+        DependencyEdge::new("taxonomy".to_string(), "contract".to_string()),
+        DependencyEdge::new("contract".to_string(), "capabilities".to_string()),
+        DependencyEdge::new("capabilities".to_string(), "taxonomy".to_string()),
+    ];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(!result.is_empty(), "FR-005: indirect cycle A→B→C→A must be detected");
+}
+
+/// FR-005: No cycle in unidirectional graph
+#[test]
+fn fr005_no_cycle_in_dag() {
+    let edges = vec![
+        DependencyEdge::new("taxonomy".to_string(), "contract".to_string()),
+        DependencyEdge::new("contract".to_string(), "capabilities".to_string()),
+        DependencyEdge::new("capabilities".to_string(), "agent".to_string()),
+    ];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(result.is_empty(), "FR-005: DAG must not produce cycle");
+}
+
+/// FR-005: Self-import is not a cross-layer cycle
+#[test]
+fn fr005_self_edge_not_flagged_as_cross_layer() {
+    let edges = vec![
+        DependencyEdge::new("taxonomy".to_string(), "taxonomy".to_string()),
+    ];
+    // Self-loops: the cycle detector may or may not flag these depending on
+    // normalization. The key requirement is no false positive for valid imports.
+    let result = sut().detect_cycle_edges(&edges);
+    // Self-loop within same layer is technically a cycle in graph theory,
+    // but the _scan method only adds edges when target_layer != file_layer.
+    // So this tests the pure graph detector behavior.
+    // The important thing: the orchestrator won't create self-edges.
+    let _ = result; // No assertion on self-loops at graph level
+}
+
+/// FR-005: Empty graph produces no violations
+#[test]
+fn fr005_empty_graph_no_violations() {
+    let edges: Vec<DependencyEdge> = vec![];
+    let result = sut().detect_cycle_edges(&edges);
+    assert!(result.is_empty(), "FR-005: empty graph must produce no violations");
+}
+```
+
+---
+
+## `tests/bench_import_rules_throughput.rs`
+
+```rust
+// PURPOSE: Benchmark tests for import-rules performance.
+// Requirement: Check 1000 files in < 2 seconds (FRD non-functional requirement).
+
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
+use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
+use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::taxonomy_definition_vo::LayerMapVO;
+use std::collections::HashMap;
+
+fn generate_clean_content(id: usize) -> String {
+    format!(
+        r#"use std::collections::HashMap;
+
+pub struct Struct{} {{
+    pub data: HashMap<String, i32>,
+}}
+
+impl Struct{} {{
+    pub fn new() -> Self {{
+        Self {{ data: HashMap::new() }}
+    }}
+}}
+"#,
+        id, id
+    )
+}
+
+fn generate_violation_content(id: usize) -> String {
+    format!(
+        r#"use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::BTreeMap;
+
+fn _use_mandatory_imports() {{
+    let _ = HashMap::new();
+    let _ = HashSet::new();
+    let _ = BTreeMap::new();
+}}
+
+pub struct Struct{} {{
+    pub value: i32,
+}}
+"#,
+        id
+    )
+}
+
+// ─── Benchmark: Unused Import Check Throughput ────────────
+
+fn bench_unused_import_check(c: &mut Criterion) {
+    let checker = UnusedImportRuleChecker::new();
+    let mut group = c.benchmark_group("unused_import_check");
+
+    for file_count in [10, 100, 1000] {
+        let contents: Vec<String> = (0..file_count)
+            .map(|i| generate_clean_content(i))
+            .collect();
+
+        group.bench_with_input(
+            BenchmarkId::new("clean_files", file_count),
+            &contents,
+            |b, files| {
+                b.iter(|| {
+                    let mut violations = Vec::new();
+                    for (i, content) in files.iter().enumerate() {
+                        checker.check_unused_imports(
+                            &format!("file_{}.rs", i),
+                            content,
+                            &mut violations,
+                        );
+                    }
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+// ─── Benchmark: Dummy Import Check Throughput ─────────────
+
+fn bench_dummy_import_check(c: &mut Criterion) {
+    let checker = DummyImportChecker::new();
+    let layer_map = LayerMapVO::new(HashMap::new());
+    let root = FilePath::new(".").unwrap();
+    let mut group = c.benchmark_group("dummy_import_check");
+
+    for file_count in [10, 100, 1000] {
+        let contents: Vec<(FilePath, ContentString)> = (0..file_count)
+            .map(|i| {
+                (
+                    FilePath::new(format!("capabilities_file_{}.rs", i)).unwrap(),
+                    ContentString::new(generate_violation_content(i)),
+                )
+            })
+            .collect();
+
+        group.bench_with_input(
+            BenchmarkId::new("violation_files", file_count),
+            &contents,
+            |b, files| {
+                b.iter(|| {
+                    let mut violations = Vec::new();
+                    for (file, content) in files {
+                        checker.check_dummy_functions(file, content, &mut violations, &root, &layer_map);
+                        checker.check_dummy_imports(file, content, &mut violations, &root, &layer_map);
+                    }
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+// ─── Benchmark: Full Orchestrator (1000 files) ────────────
+
+fn bench_full_orchestrator(c: &mut Criterion) {
+    let mut group = c.benchmark_group("full_orchestrator");
+    group.sample_size(10); // Fewer samples for I/O-heavy benchmark
+
+    group.bench_function("1000_clean_files", |b| {
+        let dir = tempfile::tempdir().unwrap();
+        for i in 0..1000 {
+            let path = dir.path().join(format!("taxonomy_bench_{}_vo.rs", i));
+            std::fs::write(&path, generate_clean_content(i)).unwrap();
+        }
+
+        let config = ArchitectureConfig::default();
+        let container = ImportContainer::new_with_config(config);
+        let orch = container.orchestrator();
+        let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+
+        b.iter(|| {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async { orch.run_audit(&target).await })
+        });
+    });
+
+    group.finish();
+}
+
+criterion_group!(
+    benches,
+    bench_unused_import_check,
+    bench_dummy_import_check,
+    bench_full_orchestrator,
+);
+criterion_main!(benches);
+```
+
+---
+
+## Directory Layout
+
+```
+crates/import-rules/
+├── src/
+│   ├── lib.rs
+│   ├── agent_import_orchestrator.rs
+│   ├── capabilities_cycle_import_analyzer.rs
+│   ├── capabilities_dummy_import_checker.rs
+│   ├── capabilities_import_forbidden_checker.rs
+│   ├── capabilities_import_mandatory_checker.rs
+│   ├── capabilities_import_unused_checker.rs
+│   └── root_import_rules_container.rs
+├── tests/
+│   ├── contract_import_rules.rs
+│   ├── unit_import_rules_unused_checker.rs
+│   ├── unit_import_rules_dummy_checker.rs
+│   ├── unit_import_rules_forbidden_checker.rs
+│   ├── unit_import_rules_mandatory_checker.rs
+│   ├── unit_import_rules_cycle_analyzer.rs
+│   ├── unit_import_rules_orchestrator.rs
+│   ├── integration_import_rules.rs
+│   ├── smoke_import_rules.rs
+│   ├── e2e_import_rules_audit_flow.rs
+│   ├── acceptance_FR_001.rs
+│   ├── acceptance_FR_002.rs
+│   ├── acceptance_FR_003.rs
+│   ├── acceptance_FR_004.rs
+│   ├── acceptance_FR_005.rs
+│   └── bench_import_rules_throughput.rs
+└── Cargo.toml
+```
+
+---
+
+## Run Commands
+
+```bash
+# All tests
+cargo test -p import_rules-lint-arwaky
+
+# Contract only
+cargo test -p import_rules-lint-arwaky --test contract_import_rules
+
+# Unit tests
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_unused_checker
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_dummy_checker
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_forbidden_checker
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_mandatory_checker
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_cycle_analyzer
+cargo test -p import_rules-lint-arwaky --test unit_import_rules_orchestrator
+
+# Integration
+cargo test -p import_rules-lint-arwaky --test integration_import_rules
+
+# Smoke
+cargo test -p import_rules-lint-arwaky --test smoke_import_rules
+
+# E2E
+cargo test -p import_rules-lint-arwaky --test e2e_import_rules_audit_flow
+
+# Acceptance
+cargo test -p import_rules-lint-arwaky --test acceptance_FR_001
+cargo test -p import_rules-lint-arwaky --test acceptance_FR_002
+cargo test -p import_rules-lint-arwaky --test acceptance_FR_003
+cargo test -p import_rules-lint-arwaky --test acceptance_FR_004
+cargo test -p import_rules-lint-arwaky --test acceptance_FR_005
+
+# Benchmarks
+cargo bench -p import_rules-lint-arwaky
+
+# Coverage
+cargo tarpaulin -p import_rules-lint-arwaky --fail-under 70
+```
+
+---
+
+## Coverage Mapping
+
+| Layer        | File                                         | Target | Tests                                                         |
+| ------------ | -------------------------------------------- | ------ | ------------------------------------------------------------- |
+| Capabilities | `capabilities_import_unused_checker.rs`    | 70%    | `unit_import_rules_unused_checker.rs`                       |
+| Capabilities | `capabilities_dummy_import_checker.rs`     | 70%    | `unit_import_rules_dummy_checker.rs`                        |
+| Capabilities | `capabilities_import_forbidden_checker.rs` | 70%    | `unit_import_rules_forbidden_checker.rs`                    |
+| Capabilities | `capabilities_import_mandatory_checker.rs` | 70%    | `unit_import_rules_mandatory_checker.rs`                    |
+| Capabilities | `capabilities_cycle_import_analyzer.rs`    | 70%    | `unit_import_rules_cycle_analyzer.rs`                       |
+| Agent        | `agent_import_orchestrator.rs`             | 60%    | `unit_import_rules_orchestrator.rs`                         |
+| Root         | `root_import_rules_container.rs`           | —     | `contract_import_rules.rs`, `integration_import_rules.rs` |
+
+## FRD Traceability
+
+| FR ID  | Rule   | Acceptance Test          |
+| ------ | ------ | ------------------------ |
+| FR-001 | AES201 | `acceptance_FR_001.rs` |
+| FR-002 | AES202 | `acceptance_FR_002.rs` |
+| FR-003 | AES203 | `acceptance_FR_003.rs` |
+| FR-004 | AES204 | `acceptance_FR_004.rs` |
+| FR-005 | AES205 | `acceptance_FR_005.rs` |

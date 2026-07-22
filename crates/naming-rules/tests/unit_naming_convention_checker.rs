@@ -3,9 +3,9 @@
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use shared::naming_rules::taxonomy_naming_constant::{

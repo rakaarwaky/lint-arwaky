@@ -68,7 +68,9 @@ async fn test_orchestrator_run_audit_empty_path() {
     let orchestrator = container.orchestrator();
 
     // Run audit on non-existent path — should return error
-    let result = orchestrator.run_audit(&FilePath::new("/nonexistent/path".to_string()).unwrap()).await;
+    let result = orchestrator
+        .run_audit(&FilePath::new("/nonexistent/path".to_string()).unwrap())
+        .await;
 
     assert!(result.is_err(), "Non-existent path should return an error");
 }
@@ -82,13 +84,17 @@ async fn test_orchestrator_run_audit_existing_dir() {
     let orchestrator = container.orchestrator();
 
     // Run audit on current directory — should return Ok (may have violations or not)
-    let result = orchestrator.run_audit(&FilePath::new("./".to_string()).unwrap()).await;
+    let result = orchestrator
+        .run_audit(&FilePath::new("./".to_string()).unwrap())
+        .await;
 
     assert!(result.is_ok(), "Existing path should return Ok");
 
     // Results should be a Vec<LintResult> (possibly empty)
     let results = result.unwrap();
-    assert!(results.iter().all(|r: &LintResult| !r.file.value.is_empty()));
+    assert!(results
+        .iter()
+        .all(|r: &LintResult| !r.file.value.is_empty()));
 }
 
 /// Test that NamingContainer can be created with default config.
@@ -111,15 +117,13 @@ async fn test_convention_and_suffix_checkers_work_together() {
     let suffix_checker = Arc::new(SuffixPrefixChecker::new());
 
     // Create orchestrator with both checkers
-    let orchestrator = NamingOrchestrator::new(
-        convention_checker,
-        suffix_checker,
-        config,
-        layer_map,
-    );
+    let orchestrator =
+        NamingOrchestrator::new(convention_checker, suffix_checker, config, layer_map);
 
     // Should be able to run audit
-    let result = orchestrator.run_audit(&FilePath::new("./".to_string()).unwrap()).await;
+    let result = orchestrator
+        .run_audit(&FilePath::new("./".to_string()).unwrap())
+        .await;
 
     assert!(result.is_ok());
 }
@@ -194,7 +198,9 @@ async fn test_orchestrator_filters_source_files() {
     let orchestrator = container.orchestrator();
 
     // Run audit on current directory — should only process .rs, .py, .js, .ts files
-    let result = orchestrator.run_audit(&FilePath::new("./".to_string()).unwrap()).await;
+    let result = orchestrator
+        .run_audit(&FilePath::new("./".to_string()).unwrap())
+        .await;
 
     assert!(result.is_ok());
 
@@ -206,7 +212,10 @@ async fn test_orchestrator_filters_source_files() {
             .extension()
             .and_then(|e| e.to_str());
         assert!(
-            matches!(ext, Some("rs") | Some("py") | Some("js") | Some("ts") | Some("jsx") | Some("tsx")),
+            matches!(
+                ext,
+                Some("rs") | Some("py") | Some("js") | Some("ts") | Some("jsx") | Some("tsx")
+            ),
             "Non-source file should not appear in results: {:?}",
             r.file.value
         );
