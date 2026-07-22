@@ -152,9 +152,10 @@ impl IConfigOrchestratorAggregate for MockConfigOrchestrator {
 // ─── Helper ──────────────────────────────────────────────────────────
 
 fn build_test_orchestrator() -> McpServerOrchestrator {
+    let container = mcp_server_lint_arwaky::root_mcp_container::McpContainer::new_default();
     McpServerOrchestrator::new(McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
-        external_lint: container.external_lint.clone(),
+        analysis_pipeline: container.analysis_pipeline,
+        external_lint: container.external_lint,
     })
 }
 

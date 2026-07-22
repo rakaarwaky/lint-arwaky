@@ -13,7 +13,7 @@ use std::sync::Arc;
 fn smoke_report_formatter_crate_boots_and_responds() {
     // 1. All formatters instantiate without panic
     let text = Arc::new(TextFormatter::new(Arc::new(
-        shared::code_analysis::root_code_analysis_container::CodeAnalysisContainer::default(),
+        code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer::default(),
     )));
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
