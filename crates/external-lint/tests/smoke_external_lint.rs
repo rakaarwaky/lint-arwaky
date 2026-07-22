@@ -3,7 +3,6 @@
 
 use external_lint_lint_arwaky::ExternalLintContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 #[tokio::test]
 async fn external_lint_boots_and_returns_adapter_names() {

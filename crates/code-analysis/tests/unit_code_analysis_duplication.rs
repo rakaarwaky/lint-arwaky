@@ -3,7 +3,6 @@
 
 use code_analysis_lint_arwaky::CodeDuplicationAnalyzer;
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 
 fn analyzer() -> CodeDuplicationAnalyzer {
     CodeDuplicationAnalyzer::new()

@@ -69,9 +69,6 @@ fn find_workspace_root_walks_up_from_child() {
 #[test]
 fn handle_check_nonexistent_path_returns_exit_code_2() {
     use cli_commands_lint_arwaky::surface_check_action::{handle_check, CheckOptions};
-    use shared::cli_commands::taxonomy_format_vo::Format;
-    use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-    use std::sync::Arc;
 
     // We need a mock pipeline — but handle_check checks path existence first
     // With a nonexistent path, it should return ExitCode 2 before touching pipeline

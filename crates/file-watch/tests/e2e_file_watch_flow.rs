@@ -1,7 +1,7 @@
 // PURPOSE: E2E test — full watch → detect → analyze → lint lifecycle on a real temp directory.
 // Layer: Full pipeline, no internal mocks except the linter (external boundary).
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use std::time::Duration;
 

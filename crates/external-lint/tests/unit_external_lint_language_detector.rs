@@ -5,7 +5,6 @@ use external_lint_lint_arwaky::capabilities_language_detector_adapter::ExternalL
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_language_detector_protocol::IExternalLintLanguageDetectorProtocol;
 use std::fs;
-use std::path::Path;
 
 fn sut() -> ExternalLintLanguageDetectorAdapter {
     ExternalLintLanguageDetectorAdapter::new()

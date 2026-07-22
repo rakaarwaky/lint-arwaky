@@ -4,7 +4,6 @@ use cli_commands_lint_arwaky::surface_common_command::{
     canonicalize_path, create_current_thread_runtime, create_runtime, current_dir,
     resolve_file_path,
 };
-use shared::common::taxonomy_path_vo::FilePath;
 
 // ─── Runtime Factories ───────────────────────────────────────────────────────
 

@@ -2,7 +2,6 @@
 // mapping language flags to adapter name lists.
 
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 fn sut() -> CapabilitiesExternalLintSelector {

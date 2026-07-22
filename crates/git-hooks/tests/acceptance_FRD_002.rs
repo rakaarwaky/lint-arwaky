@@ -27,7 +27,7 @@ async fn frd_002_diff_result_total_matches_file_count() {
     let path = FilePath::new("/tmp/non_repo_frd002_struct").unwrap_or_default();
     let result = checker.get_diff(&path).await;
 
-    let total_files = result.added.len() + result.modified.len() + result.deleted.len();
+    let _total_files = result.added.len() + result.modified.len() + result.deleted.len();
     assert_eq!(
         result.total_changed.value() as usize,
         result.modified.len(),

@@ -1,5 +1,4 @@
 // US-5 — Config Security
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::utility_config_io::{
     read_text_within_canonical_root, MAX_CONFIG_FILE_SIZE,
 };

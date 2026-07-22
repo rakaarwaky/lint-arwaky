@@ -5,8 +5,6 @@
 
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 
 // ─── Container Construction ───────────────────────────────
 

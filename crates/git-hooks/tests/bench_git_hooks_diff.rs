@@ -3,7 +3,7 @@
 // Layer: Capabilities performance
 // Speed: s–min (release gate / nightly)
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;

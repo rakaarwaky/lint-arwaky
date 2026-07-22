@@ -3,7 +3,6 @@
 // Must complete in under 5 seconds.
 
 use code_analysis_lint_arwaky::{CodeAnalysisContainer, CodeAnalysisOrchestrator};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::time::Instant;
 

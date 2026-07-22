@@ -4,7 +4,6 @@
 
 use external_lint_lint_arwaky::ExternalLintContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use std::fs;
 
 #[tokio::test]

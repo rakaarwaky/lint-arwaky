@@ -57,8 +57,8 @@ fn no_redaction_for_short_strings() {
 /// Specification: Strings with non-base64 chars are NOT redacted even if long.
 #[test]
 fn no_redaction_for_non_base64_long_string() {
-    let input = "path: /home/user/very/long/path/that/exceeds/forty/characters/easily";
-    let word = "/home/user/very/long/path/that/exceeds/forty/characters/easily";
+    let _input = "path: /home/user/very/long/path/that/exceeds/forty/characters/easily";
+    let _word = "/home/user/very/long/path/that/exceeds/forty/characters/easily";
     // Contains '/' which is base64, but also contains chars that break the pattern
     // Actually '/' IS in the base64 alphabet per the code: matches!(c, '/' | '+' | '=')
     // But this path has no uppercase — let's use a truly non-base64 string

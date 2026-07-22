@@ -1,10 +1,6 @@
 // Integration tests — full DI wiring via ConfigContainer.
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use std::fs;

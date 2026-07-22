@@ -1,7 +1,6 @@
 // US-1 — Project Config Discovery
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use std::fs;
 use tempfile::TempDir;
 

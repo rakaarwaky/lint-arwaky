@@ -2,7 +2,6 @@
 // Layer: Capabilities (target ≥ 70% coverage)
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;

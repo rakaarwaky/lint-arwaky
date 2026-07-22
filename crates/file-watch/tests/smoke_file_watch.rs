@@ -56,7 +56,7 @@ fn smoke_crate_boots_and_core_types_work() {
     let orch = container.orchestrator(linter);
 
     // 4. ChangeAnalyzer basic operation.
-    let analyzer = ChangeAnalyzer::new();
+    let _analyzer = ChangeAnalyzer::new();
     assert!(ChangeAnalyzer::is_lintable("main.rs"));
     assert!(!ChangeAnalyzer::is_lintable("photo.jpg"));
 

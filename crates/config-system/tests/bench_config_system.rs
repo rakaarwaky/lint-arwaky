@@ -5,7 +5,6 @@ use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus, ProjectConfig};

@@ -2,7 +2,6 @@
 // "Recursive filesystem watching of project paths for create/modify/delete events."
 
 use std::sync::Arc;
-use std::time::Duration;
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;

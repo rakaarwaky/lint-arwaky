@@ -2,11 +2,8 @@
 // checker pipeline through CodeAnalysisCheckerContainer and CodeAnalysisContainer.
 
 use code_analysis_lint_arwaky::{
-    ArchLineChecker, BypassChecker, CodeAnalysisCheckerContainer, CodeAnalysisContainer,
-    CodeAnalysisOrchestrator, CodeDuplicationAnalyzer, MandatoryDefinitionChecker,
+    CodeAnalysisCheckerContainer, CodeAnalysisContainer, CodeAnalysisOrchestrator,
 };
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 // ─── Container wiring: Default construction ──────────────────────────

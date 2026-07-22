@@ -2,8 +2,6 @@
 // and orchestrator composition using the real ExternalLintContainer.
 
 use external_lint_lint_arwaky::*;
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
 
