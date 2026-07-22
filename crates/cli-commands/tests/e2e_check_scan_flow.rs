@@ -1,3 +1,4 @@
+use std::fs;
 // E2E tests — full check/scan lifecycle through the real CLI binary.
 
 use std::process::Command;

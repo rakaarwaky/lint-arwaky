@@ -1,3 +1,4 @@
+use std::fs;
 // Acceptance tests mapping 1:1 to FRD requirements for the `check` command.
 
 use std::process::Command;

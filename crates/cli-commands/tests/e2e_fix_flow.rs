@@ -1,3 +1,4 @@
+use std::fs;
 // E2E tests — fix command lifecycle.
 
 use std::process::Command;

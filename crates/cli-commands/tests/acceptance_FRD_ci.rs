@@ -1,3 +1,4 @@
+use std::fs;
 // Acceptance tests for the `ci` command — threshold and exit codes.
 
 use std::process::Command;

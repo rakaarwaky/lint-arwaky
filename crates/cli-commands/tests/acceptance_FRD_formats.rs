@@ -1,3 +1,4 @@
+use std::fs;
 // Acceptance tests for output format support (text, json, sarif, junit).
 
 use std::process::Command;

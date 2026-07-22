@@ -1,3 +1,4 @@
+use std::fs;
 // Acceptance tests for the `scan` command — multi-workspace discovery.
 
 use std::process::Command;

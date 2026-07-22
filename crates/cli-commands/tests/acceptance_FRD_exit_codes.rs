@@ -1,3 +1,4 @@
+use std::fs;
 // Acceptance tests for standardized exit codes across all commands.
 
 use std::process::Command;
