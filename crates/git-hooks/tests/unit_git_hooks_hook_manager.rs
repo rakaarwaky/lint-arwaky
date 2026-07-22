@@ -61,7 +61,9 @@ async fn uninstall_pre_commit_delegates_to_adapter() {
 #[tokio::test]
 async fn initialize_config_new_path_returns_initialized() {
     let manager = sut();
-    let result = manager.initialize_config("/tmp/nonexistent_project_xyz").await;
+    let result = manager
+        .initialize_config("/tmp/nonexistent_project_xyz")
+        .await;
     assert!(result.value().starts_with("Initialized"));
 }
 

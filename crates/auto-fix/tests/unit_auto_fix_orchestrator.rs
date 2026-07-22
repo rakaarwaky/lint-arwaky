@@ -5,16 +5,16 @@ use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
-use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
+use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{Count, LineNumber, Score};
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::sync::Arc;
 
 // ─── Mock IFixProtocol ────────────────────────────────────
@@ -24,7 +24,9 @@ struct MockFixProtocol;
 impl IFixProtocol for MockFixProtocol {
     fn execute(&self, _path: &FilePath) -> FixResult {
         FixResult::new(
-            shared::common::taxonomy_suggestion_vo::DescriptionVO::new("mock fix result".to_string()),
+            shared::common::taxonomy_suggestion_vo::DescriptionVO::new(
+                "mock fix result".to_string(),
+            ),
             None,
         )
     }
@@ -91,8 +93,8 @@ fn run_fix_delegates_to_fix_protocol() {
 #[test]
 fn manual_report_returns_non_fixable_violations() {
     let violations = vec![
-        LintResult::new_arch("a.rs", 1, "AES203", Severity::Warning, "unused"),
-        LintResult::new_arch("b.rs", 5, "AES305", Severity::Warning, "dead inheritance"),
+        LintResult::new_arch("a.rs", 1, "AES203", Severity::LOW, "unused"),
+        LintResult::new_arch("b.rs", 5, "AES305", Severity::LOW, "dead inheritance"),
     ];
     let report = sut().manual_report(&violations);
     assert_eq!(report.len(), 1);
@@ -102,8 +104,8 @@ fn manual_report_returns_non_fixable_violations() {
 #[test]
 fn manual_report_empty_when_all_fixable() {
     let violations = vec![
-        LintResult::new_arch("a.rs", 1, "AES203", Severity::Warning, "unused"),
-        LintResult::new_arch("b.rs", 2, "AES304", Severity::Warning, "bypass"),
+        LintResult::new_arch("a.rs", 1, "AES203", Severity::LOW, "unused"),
+        LintResult::new_arch("b.rs", 2, "AES304", Severity::LOW, "bypass"),
     ];
     let report = sut().manual_report(&violations);
     assert!(report.is_empty());

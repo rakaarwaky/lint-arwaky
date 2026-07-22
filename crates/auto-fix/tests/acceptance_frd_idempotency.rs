@@ -8,22 +8,38 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{LineNumber, Score};
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
 
-struct MockLinter { results: Vec<LintResult> }
+struct MockLinter {
+    results: Vec<LintResult>,
+}
 impl ICodeAnalysisAggregate for MockLinter {
-    fn run_code_analysis(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> { self.results.clone() }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(100.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
+        self.results.clone()
+    }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(100.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 /// FRD-IDEMPOTENT-01: Unused import fix is idempotent.
@@ -88,11 +104,17 @@ fn frd_full_execute_idempotent() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES203", Severity::Warning, "unused import"),
-    ];
+    let violations = vec![LintResult::new_arch(
+        &file_path,
+        1,
+        "AES203",
+        Severity::LOW,
+        "unused import",
+    )];
 
-    let linter = MockLinter { results: violations.clone() };
+    let linter = MockLinter {
+        results: violations.clone(),
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(false);
     let path = FilePath::new(file_path.clone()).unwrap();
@@ -102,7 +124,9 @@ fn frd_full_execute_idempotent() {
     let content1 = std::fs::read_to_string(&file_path).unwrap();
 
     // Second run with same violations (linter still reports them)
-    let linter2 = MockLinter { results: violations };
+    let linter2 = MockLinter {
+        results: violations,
+    };
     let container2 = AutoFixContainer::new(Arc::new(linter2));
     let orch2 = container2.orchestrator(false);
     let _ = orch2.execute(&path);

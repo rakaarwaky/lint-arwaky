@@ -6,9 +6,9 @@ use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -29,10 +29,18 @@ impl ICodeAnalysisAggregate for ConfigurableLinter {
     fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
         self.results.clone()
     }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(80.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(80.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 // ─── E2E: Unused import removal ───────────────────────────
@@ -49,11 +57,17 @@ fn e2e_unused_import_removed_from_file() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES203", Severity::Warning, "unused import std::io"),
-    ];
+    let violations = vec![LintResult::new_arch(
+        &file_path,
+        1,
+        "AES203",
+        Severity::LOW,
+        "unused import std::io",
+    )];
 
-    let linter = ConfigurableLinter { results: violations };
+    let linter = ConfigurableLinter {
+        results: violations,
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(false);
 
@@ -80,11 +94,17 @@ fn e2e_bypass_comment_removed_from_file() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES304", Severity::Warning, "bypass comment detected"),
-    ];
+    let violations = vec![LintResult::new_arch(
+        &file_path,
+        1,
+        "AES304",
+        Severity::LOW,
+        "bypass comment detected",
+    )];
 
-    let linter = ConfigurableLinter { results: violations };
+    let linter = ConfigurableLinter {
+        results: violations,
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(false);
 
@@ -109,11 +129,17 @@ fn e2e_dry_run_preserves_file_content() {
     let file_path = tmp.path().to_str().unwrap().to_string();
     let original_content = std::fs::read_to_string(&file_path).unwrap();
 
-    let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES203", Severity::Warning, "unused import"),
-    ];
+    let violations = vec![LintResult::new_arch(
+        &file_path,
+        1,
+        "AES203",
+        Severity::LOW,
+        "unused import",
+    )];
 
-    let linter = ConfigurableLinter { results: violations };
+    let linter = ConfigurableLinter {
+        results: violations,
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(true); // dry_run = true
 
@@ -137,11 +163,13 @@ fn e2e_multiple_violations_fixed_in_single_pass() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES203", Severity::Warning, "unused import"),
-        LintResult::new_arch(&file_path, 2, "AES304", Severity::Warning, "bypass comment"),
+        LintResult::new_arch(&file_path, 1, "AES203", Severity::LOW, "unused import"),
+        LintResult::new_arch(&file_path, 2, "AES304", Severity::LOW, "bypass comment"),
     ];
 
-    let linter = ConfigurableLinter { results: violations };
+    let linter = ConfigurableLinter {
+        results: violations,
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(false);
 
@@ -164,11 +192,17 @@ fn e2e_non_fixable_violations_included_in_report() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![
-        LintResult::new_arch(&file_path, 1, "AES305", Severity::Warning, "dead inheritance"),
-    ];
+    let violations = vec![LintResult::new_arch(
+        &file_path,
+        1,
+        "AES305",
+        Severity::LOW,
+        "dead inheritance",
+    )];
 
-    let linter = ConfigurableLinter { results: violations };
+    let linter = ConfigurableLinter {
+        results: violations,
+    };
     let container = AutoFixContainer::new(Arc::new(linter));
     let orch = container.orchestrator(false);
 

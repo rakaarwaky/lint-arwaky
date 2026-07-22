@@ -1,32 +1,48 @@
 // PURPOSE: Benchmark tests — performance regression for auto-fix operations.
 // Uses criterion for statistically sound measurements.
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
+use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{LineNumber, Score};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::io::Write;
 use std::sync::Arc;
 
 // ─── Mock linter for benchmarks ───────────────────────────
 
-struct BenchLinter { results: Vec<LintResult> }
+struct BenchLinter {
+    results: Vec<LintResult>,
+}
 impl ICodeAnalysisAggregate for BenchLinter {
-    fn run_code_analysis(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> { self.results.clone() }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(100.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
+        self.results.clone()
+    }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(100.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 // ─── Benchmarks ───────────────────────────────────────────
@@ -138,13 +154,15 @@ fn bench_execute_pipeline(c: &mut Criterion) {
                     &file_path,
                     (i + 1) as usize,
                     "AES203",
-                    Severity::Warning,
+                    Severity::LOW,
                     format!("unused import {}", i),
                 )
             })
             .collect();
 
-        let linter = BenchLinter { results: violations };
+        let linter = BenchLinter {
+            results: violations,
+        };
         let sut = LintFixProcessor::new(Arc::new(linter));
         let path = FilePath::new(file_path.clone()).unwrap();
 

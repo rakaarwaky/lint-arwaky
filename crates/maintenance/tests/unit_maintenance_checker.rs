@@ -125,10 +125,11 @@ async fn dependency_report_no_files_returns_error() {
     let _ = std::fs::create_dir_all("/tmp/empty_dir_no_deps_xyz_99999");
 
     let result = checker.run_dependency_report(&path).await;
-    assert!(result.is_err(), "Should return error when no dep files found");
-    assert!(result
-        .unwrap_err()
-        .contains("No dependency files found"));
+    assert!(
+        result.is_err(),
+        "Should return error when no dep files found"
+    );
+    assert!(result.unwrap_err().contains("No dependency files found"));
 
     // Cleanup
     let _ = std::fs::remove_dir_all("/tmp/empty_dir_no_deps_xyz_99999");

@@ -24,9 +24,7 @@ async fn run_tool_echo_returns_stdout() {
 #[tokio::test]
 async fn run_tool_nonexistent_binary_returns_failure() {
     let adapter = sut();
-    let output = adapter
-        .run_tool("nonexistent_binary_xyz_99999", &[])
-        .await;
+    let output = adapter.run_tool("nonexistent_binary_xyz_99999", &[]).await;
 
     assert!(!output.success);
     assert!(output.stdout.is_empty());
@@ -37,9 +35,7 @@ async fn run_tool_nonexistent_binary_returns_failure() {
 async fn run_tool_captures_stderr() {
     let adapter = sut();
     // Use a command that writes to stderr
-    let output = adapter
-        .run_tool("sh", &["-c", "echo error_msg >&2"])
-        .await;
+    let output = adapter.run_tool("sh", &["-c", "echo error_msg >&2"]).await;
 
     assert!(output.stderr.contains("error_msg"));
 }
@@ -101,8 +97,5 @@ async fn get_binary_path_returns_valid_path() {
     let adapter = sut();
     let path = adapter.get_binary_path().await;
 
-    assert!(
-        !path.value().is_empty(),
-        "Binary path should not be empty"
-    );
+    assert!(!path.value().is_empty(), "Binary path should not be empty");
 }

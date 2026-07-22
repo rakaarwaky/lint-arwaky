@@ -1,9 +1,9 @@
 // PURPOSE: Unit tests for McpServerOrchestrator — execute_command, list_commands, read_skill
 
-use std::sync::Arc;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
+use rmcp::handler::server::wrapper::Parameters;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -20,7 +20,7 @@ use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use rmcp::handler::server::wrapper::Parameters;
+use std::sync::Arc;
 
 // ─── Mock Implementations ────────────────────────────────────────────
 
@@ -52,7 +52,10 @@ impl ICodeAnalysisAggregate for MockCodeAnalysis {
 struct MockImportRunner;
 #[async_trait::async_trait]
 impl IImportRunnerAggregate for MockImportRunner {
-    async fn run_audit(&self, _target: &FilePath) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
+    async fn run_audit(
+        &self,
+        _target: &FilePath,
+    ) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
         Ok(vec![])
     }
     fn name(&self) -> &str {
@@ -63,7 +66,10 @@ impl IImportRunnerAggregate for MockImportRunner {
 struct MockNamingRunner;
 #[async_trait::async_trait]
 impl INamingRunnerAggregate for MockNamingRunner {
-    async fn run_audit(&self, _target: &FilePath) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
+    async fn run_audit(
+        &self,
+        _target: &FilePath,
+    ) -> Result<Vec<LintResult>, shared::common::taxonomy_adapter_error::ScanError> {
         Ok(vec![])
     }
     fn name(&self) -> &str {
@@ -132,7 +138,10 @@ impl IConfigOrchestratorAggregate for MockConfigOrchestrator {
     ) -> Vec<shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo> {
         vec![]
     }
-    fn load_config_sync(&self, _project_root: &str) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+    fn load_config_sync(
+        &self,
+        _project_root: &str,
+    ) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig::default()
     }
     fn ignored_paths(&self, _project_root: &str) -> Vec<String> {
@@ -167,7 +176,9 @@ fn make_execute_args(action: &str, path: Option<&str>) -> Parameters<ExecuteComm
 #[tokio::test]
 async fn execute_command_version_returns_version_json() {
     let sut = build_test_orchestrator();
-    let result = sut.execute_command(make_execute_args("version", None)).await;
+    let result = sut
+        .execute_command(make_execute_args("version", None))
+        .await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["name"], "lint-arwaky");
     assert!(parsed["version"].is_string());
@@ -203,7 +214,9 @@ async fn execute_command_doctor_returns_checks_array() {
 #[tokio::test]
 async fn execute_command_adapters_returns_adapter_list() {
     let sut = build_test_orchestrator();
-    let result = sut.execute_command(make_execute_args("adapters", None)).await;
+    let result = sut
+        .execute_command(make_execute_args("adapters", None))
+        .await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert!(parsed["adapters"].is_array());
     let adapters = parsed["adapters"].as_array().unwrap();
@@ -291,7 +304,9 @@ async fn execute_command_mcp_config_with_client() {
 #[tokio::test]
 async fn execute_command_mcp_config_defaults_to_all() {
     let sut = build_test_orchestrator();
-    let result = sut.execute_command(make_execute_args("mcp-config", None)).await;
+    let result = sut
+        .execute_command(make_execute_args("mcp-config", None))
+        .await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["client"], "all");
 }
@@ -301,7 +316,9 @@ async fn execute_command_mcp_config_defaults_to_all() {
 #[tokio::test]
 async fn execute_command_install_hook_returns_success() {
     let sut = build_test_orchestrator();
-    let result = sut.execute_command(make_execute_args("install-hook", None)).await;
+    let result = sut
+        .execute_command(make_execute_args("install-hook", None))
+        .await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["status"], "success");
     assert!(parsed["message"].as_str().unwrap().contains("installed"));
@@ -310,7 +327,9 @@ async fn execute_command_install_hook_returns_success() {
 #[tokio::test]
 async fn execute_command_uninstall_hook_returns_success() {
     let sut = build_test_orchestrator();
-    let result = sut.execute_command(make_execute_args("uninstall-hook", None)).await;
+    let result = sut
+        .execute_command(make_execute_args("uninstall-hook", None))
+        .await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["status"], "success");
     assert!(parsed["message"].as_str().unwrap().contains("removed"));

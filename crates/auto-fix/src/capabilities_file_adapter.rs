@@ -16,7 +16,9 @@ impl IFileAdapterProtocol for FileAdapter {
         if !utility_file::path_exists(&path.value) {
             return None;
         }
-        utility_file::read_file_generic(&path.value).ok().map(ContentString::new)
+        utility_file::read_file_generic(&path.value)
+            .ok()
+            .map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
@@ -41,4 +43,3 @@ impl FileAdapter {
         Self
     }
 }
-

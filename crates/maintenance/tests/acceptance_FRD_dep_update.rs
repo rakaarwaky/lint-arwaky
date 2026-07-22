@@ -40,7 +40,10 @@ async fn frd_dep_update_dependency_report_identifies_direct_and_transitive() {
     assert_eq!(serde.unwrap().dep_type, "direct");
 
     // serde_derive is transitive
-    let derive = report.dependencies.iter().find(|d| d.name == "serde_derive");
+    let derive = report
+        .dependencies
+        .iter()
+        .find(|d| d.name == "serde_derive");
     assert!(derive.is_some(), "serde_derive should be in dependencies");
     assert_eq!(derive.unwrap().dep_type, "transitive");
 

@@ -130,7 +130,9 @@ fn is_lintable_rejects_partial_extension() {
 
 #[test]
 fn is_lintable_nested_path() {
-    assert!(ChangeAnalyzer::is_lintable("crates/shared/src/common/mod.rs"));
+    assert!(ChangeAnalyzer::is_lintable(
+        "crates/shared/src/common/mod.rs"
+    ));
 }
 
 // ─── analyze (deduplication) ────────────────────────────────

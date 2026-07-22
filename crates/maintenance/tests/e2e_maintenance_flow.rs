@@ -15,7 +15,11 @@ async fn full_maintenance_lifecycle_on_python_project() {
 
     std::fs::write(format!("{}/src/app.py", dir), "def main(): pass\n").unwrap();
     std::fs::write(format!("{}/src/utils.py", dir), "def helper(): pass\n").unwrap();
-    std::fs::write(format!("{}/tests/test_app.py", dir), "def test_main(): pass\n").unwrap();
+    std::fs::write(
+        format!("{}/tests/test_app.py", dir),
+        "def test_main(): pass\n",
+    )
+    .unwrap();
     std::fs::write(
         format!("{}/requirements.txt", dir),
         "flask==2.3.0\nrequests>=2.28\n",

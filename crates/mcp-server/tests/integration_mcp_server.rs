@@ -1,17 +1,17 @@
 // PURPOSE: Integration tests — real DI container wiring, orchestrator + surface composition
 
-use std::sync::Arc;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
+use rmcp::handler::server::wrapper::Parameters;
+use rmcp::ServerHandler;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
     ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
 };
-use rmcp::handler::server::wrapper::Parameters;
-use rmcp::ServerHandler;
+use std::sync::Arc;
 
 // ─── DI Container Wiring ─────────────────────────────────────────────
 

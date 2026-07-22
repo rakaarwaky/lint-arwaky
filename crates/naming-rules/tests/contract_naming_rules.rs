@@ -2,9 +2,9 @@
 // Layer: Contract verification
 // Coverage target: compile-time trait bound assertions
 
+use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 
 use shared::naming_rules::contract_naming_checker_protocol::{
@@ -66,8 +66,8 @@ fn container_produces_orchestrator_as_aggregate() {
 
 #[test]
 fn container_exposes_checker_references() {
-    use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
     use shared::common::taxonomy_definition_vo::LayerMapVO;
+    use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
     use std::sync::Arc;
 
     let config = Arc::new(ArchitectureConfig::default());

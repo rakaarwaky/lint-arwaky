@@ -41,7 +41,10 @@ async fn full_pre_commit_hook_lifecycle() {
     assert!(hook_path.exists(), "pre-commit hook file must exist");
 
     let content = std::fs::read_to_string(&hook_path).unwrap();
-    assert!(content.contains("#!/bin/bash"), "Hook must have bash shebang");
+    assert!(
+        content.contains("#!/bin/bash"),
+        "Hook must have bash shebang"
+    );
     assert!(
         content.contains("lint-arwaky check ."),
         "Hook must invoke lint-arwaky check"
@@ -61,7 +64,10 @@ async fn full_pre_commit_hook_lifecycle() {
     let uninstall_result = aggregate.uninstall_hook().await;
     assert!(uninstall_result.is_ok());
     assert!(uninstall_result.unwrap().value());
-    assert!(!hook_path.exists(), "Hook file must be removed after uninstall");
+    assert!(
+        !hook_path.exists(),
+        "Hook file must be removed after uninstall"
+    );
 
     // Cleanup
     let _ = std::fs::remove_dir_all(&tmp_dir);

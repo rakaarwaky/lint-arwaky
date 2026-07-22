@@ -2,10 +2,10 @@
 // Maps 1:1 to FRD business rules
 
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -41,8 +41,14 @@ async fn scan_file(filename: &str) -> Vec<shared::cli_commands::taxonomy_result_
 #[tokio::test]
 async fn fr001_valid_snake_case_passes() {
     let results = scan_file("capabilities_user_checker.rs").await;
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
-    assert!(aes101.is_empty(), "Valid snake_case should not trigger AES101");
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
+    assert!(
+        aes101.is_empty(),
+        "Valid snake_case should not trigger AES101"
+    );
 }
 
 // ─── FR-001: Non-snake_case fails ─────────────────────────
@@ -51,7 +57,10 @@ async fn fr001_valid_snake_case_passes() {
 #[tokio::test]
 async fn fr001_camel_case_fails() {
     let results = scan_file("capabilities_userChecker.rs").await;
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
     assert!(!aes101.is_empty(), "camelCase should trigger AES101");
 }
 
@@ -59,7 +68,10 @@ async fn fr001_camel_case_fails() {
 #[tokio::test]
 async fn fr001_uppercase_fails() {
     let results = scan_file("capabilities_User_Checker.rs").await;
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
     assert!(!aes101.is_empty(), "Uppercase should trigger AES101");
 }
 
@@ -69,7 +81,10 @@ async fn fr001_uppercase_fails() {
 #[tokio::test]
 async fn fr001_two_words_fails() {
     let results = scan_file("capabilities_checker.rs").await;
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
     assert!(!aes101.is_empty(), "Two words should trigger AES101");
 }
 
@@ -77,7 +92,10 @@ async fn fr001_two_words_fails() {
 #[tokio::test]
 async fn fr001_three_words_passes() {
     let results = scan_file("capabilities_user_checker.rs").await;
-    let aes101: Vec<_> = results.iter().filter(|r| r.code.code() == "AES101").collect();
+    let aes101: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES101")
+        .collect();
     assert!(aes101.is_empty(), "Three words should pass AES101");
 }
 

@@ -11,7 +11,11 @@ async fn frd_audit_rust_project_uses_cargo_audit() {
     let dir = "/tmp/acceptance_audit_rust_xyz";
     let _ = std::fs::remove_dir_all(dir);
     std::fs::create_dir_all(dir).unwrap();
-    std::fs::write(format!("{}/Cargo.lock", dir), "[[package]]\nname = \"app\"\nversion = \"0.1.0\"\n").unwrap();
+    std::fs::write(
+        format!("{}/Cargo.lock", dir),
+        "[[package]]\nname = \"app\"\nversion = \"0.1.0\"\n",
+    )
+    .unwrap();
 
     let container = MaintenanceContainer::new();
     let orch = container.orchestrator();
@@ -56,7 +60,11 @@ async fn frd_audit_findings_have_required_fields() {
     let _ = std::fs::remove_dir_all(dir);
     std::fs::create_dir_all(dir).unwrap();
     // No Cargo.lock → falls through to bandit path
-    std::fs::write(format!("{}/insecure.py", dir), "import subprocess\nsubprocess.call('ls', shell=True)\n").unwrap();
+    std::fs::write(
+        format!("{}/insecure.py", dir),
+        "import subprocess\nsubprocess.call('ls', shell=True)\n",
+    )
+    .unwrap();
 
     let container = MaintenanceContainer::new();
     let orch = container.orchestrator();
@@ -85,7 +93,10 @@ async fn frd_audit_doctor_checks_all_adapters() {
     // Must check ruff, mypy, bandit, radon
     let expected_adapters = ["ruff", "mypy", "bandit", "radon"];
     for adapter in &expected_adapters {
-        let found = result.adapter_statuses.keys().any(|k| k.value() == *adapter);
+        let found = result
+            .adapter_statuses
+            .keys()
+            .any(|k| k.value() == *adapter);
         assert!(found, "Doctor should check adapter '{}'", adapter);
     }
 }

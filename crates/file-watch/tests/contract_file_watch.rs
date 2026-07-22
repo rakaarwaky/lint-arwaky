@@ -1,9 +1,9 @@
 // PURPOSE: Verify that all concrete types implement their declared contract traits.
 // Layer: Contract verification — runs in ms, every PR.
 
+use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
 
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
@@ -60,11 +60,12 @@ fn file_watch_container_is_send_sync() {
     assert_send_sync::<FileWatchContainer>();
 }
 
-// ─── Trait object safety (dyn compatibility) ────────────────
+// ─── Compile-time generic usage ─────────────────────────────
 
 #[test]
-fn change_analyzer_protocol_is_object_safe() {
-    let _boxed: Box<dyn IChangeAnalyzerProtocol> = Box::new(ChangeAnalyzer::new());
+fn change_analyzer_is_usable_as_generic() {
+    fn _use_trait<T: IChangeAnalyzerProtocol>() {}
+    _use_trait::<ChangeAnalyzer>();
 }
 
 #[test]

@@ -27,7 +27,10 @@ fn frd_001_hook_installed_in_correct_location() {
     assert!(result.unwrap().value());
 
     let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
-    assert!(hook_path.exists(), "Hook must exist at .git/hooks/pre-commit");
+    assert!(
+        hook_path.exists(),
+        "Hook must exist at .git/hooks/pre-commit"
+    );
 
     let _ = std::fs::remove_dir_all(&tmp_dir);
 }

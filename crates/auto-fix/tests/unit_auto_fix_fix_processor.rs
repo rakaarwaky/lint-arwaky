@@ -4,16 +4,16 @@
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
+use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
+use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{Count, LineNumber, Score};
 use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
-use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::common::taxonomy_path_vo::FilePath;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -69,7 +69,7 @@ impl ICodeAnalysisAggregate for MockLinter {
 }
 
 fn make_violation(file: &str, line: usize, code: &str, msg: &str) -> LintResult {
-    LintResult::new_arch(file, line, code, Severity::Warning, msg)
+    LintResult::new_arch(file, line, code, Severity::LOW, msg)
 }
 
 fn sut_with_linter(linter: MockLinter) -> LintFixProcessor {
@@ -333,7 +333,12 @@ fn execute_dry_run_reports_without_modifying() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![make_violation(&file_path, 1, "AES203", "unused import std::io")];
+    let violations = vec![make_violation(
+        &file_path,
+        1,
+        "AES203",
+        "unused import std::io",
+    )];
     let linter = MockLinter::with_violations(violations);
     let sut = sut_dry_run(linter);
 
@@ -370,7 +375,12 @@ fn execute_fixes_unused_import() {
     tmp.flush().unwrap();
 
     let file_path = tmp.path().to_str().unwrap().to_string();
-    let violations = vec![make_violation(&file_path, 1, "AES203", "unused import std::io")];
+    let violations = vec![make_violation(
+        &file_path,
+        1,
+        "AES203",
+        "unused import std::io",
+    )];
     let linter = MockLinter::with_violations(violations);
     let sut = sut_with_linter(linter);
 

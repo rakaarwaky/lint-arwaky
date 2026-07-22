@@ -1,14 +1,14 @@
 // PURPOSE: Acceptance test — FRD Requirement: execute_command tool
 // "execute_command — execute any CLI command via the MCP interface."
 
-use std::sync::Arc;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::ExecuteCommandArgs;
 use rmcp::handler::server::wrapper::Parameters;
+use shared::mcp_server::taxonomy_mcp_tool_args_vo::ExecuteCommandArgs;
+use std::sync::Arc;
 
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
@@ -69,9 +69,22 @@ async fn frd_mcp_001_execute_command_unknown_action_error() {
 async fn frd_mcp_001_all_documented_actions_accepted() {
     let surface = build_surface();
     let actions = vec![
-        "check", "scan", "fix", "ci", "doctor", "orphan", "security",
-        "dependencies", "version", "adapters", "install-hook",
-        "uninstall-hook", "init", "install", "mcp-config", "config-show",
+        "check",
+        "scan",
+        "fix",
+        "ci",
+        "doctor",
+        "orphan",
+        "security",
+        "dependencies",
+        "version",
+        "adapters",
+        "install-hook",
+        "uninstall-hook",
+        "init",
+        "install",
+        "mcp-config",
+        "config-show",
     ];
     for action in actions {
         let args = Parameters(ExecuteCommandArgs {

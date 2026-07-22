@@ -2,13 +2,13 @@
 // Maps 1:1 to FRD business rules
 
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_suffix_vo::SuffixPolicyVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_suffix_vo::SuffixPolicyVO;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO;
 use std::collections::HashMap;
@@ -37,10 +37,7 @@ fn build_strict_container() -> NamingContainer {
     let mut contract_def = LayerDefinition::default();
     contract_def.naming = NamingRuleVO {
         suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "protocol".to_string(),
-            "aggregate".to_string(),
-        ]),
+        allowed_suffix: PatternList::new(vec!["protocol".to_string(), "aggregate".to_string()]),
         ..Default::default()
     };
     layers.insert(LayerNameVO::new("contract"), contract_def);
@@ -84,7 +81,10 @@ async fn scan_file(filename: &str) -> Vec<shared::cli_commands::taxonomy_result_
 #[tokio::test]
 async fn fr002_taxonomy_vo_passes() {
     let results = scan_file("taxonomy_user_vo.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty(), "taxonomy_*_vo should pass");
 }
 
@@ -92,7 +92,10 @@ async fn fr002_taxonomy_vo_passes() {
 #[tokio::test]
 async fn fr002_taxonomy_entity_passes() {
     let results = scan_file("taxonomy_order_entity.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -100,7 +103,10 @@ async fn fr002_taxonomy_entity_passes() {
 #[tokio::test]
 async fn fr002_taxonomy_error_passes() {
     let results = scan_file("taxonomy_parse_error.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -108,7 +114,10 @@ async fn fr002_taxonomy_error_passes() {
 #[tokio::test]
 async fn fr002_taxonomy_event_passes() {
     let results = scan_file("taxonomy_user_event.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -116,7 +125,10 @@ async fn fr002_taxonomy_event_passes() {
 #[tokio::test]
 async fn fr002_taxonomy_constant_passes() {
     let results = scan_file("taxonomy_naming_constant.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -126,7 +138,10 @@ async fn fr002_taxonomy_constant_passes() {
 #[tokio::test]
 async fn fr002_contract_protocol_passes() {
     let results = scan_file("contract_naming_checker_protocol.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -134,7 +149,10 @@ async fn fr002_contract_protocol_passes() {
 #[tokio::test]
 async fn fr002_contract_aggregate_passes() {
     let results = scan_file("contract_naming_runner_aggregate.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -144,7 +162,10 @@ async fn fr002_contract_aggregate_passes() {
 #[tokio::test]
 async fn fr002_agent_orchestrator_passes() {
     let results = scan_file("agent_naming_orchestrator.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty());
 }
 
@@ -154,7 +175,10 @@ async fn fr002_agent_orchestrator_passes() {
 #[tokio::test]
 async fn fr002_taxonomy_with_orchestrator_fails() {
     let results = scan_file("taxonomy_user_orchestrator.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(!aes102.is_empty(), "orchestrator not allowed in taxonomy");
 }
 
@@ -162,7 +186,10 @@ async fn fr002_taxonomy_with_orchestrator_fails() {
 #[tokio::test]
 async fn fr002_agent_with_vo_fails() {
     let results = scan_file("agent_naming_vo.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(!aes102.is_empty(), "vo not allowed in agent");
 }
 
@@ -170,7 +197,10 @@ async fn fr002_agent_with_vo_fails() {
 #[tokio::test]
 async fn fr002_contract_with_vo_fails() {
     let results = scan_file("contract_naming_vo.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(!aes102.is_empty(), "vo not allowed in contract");
 }
 
@@ -180,7 +210,10 @@ async fn fr002_contract_with_vo_fails() {
 #[tokio::test]
 async fn fr002_utility_any_suffix_passes() {
     let results = scan_file("utility_json_parser.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty(), "utility is flexible");
 }
 
@@ -188,7 +221,10 @@ async fn fr002_utility_any_suffix_passes() {
 #[tokio::test]
 async fn fr002_capabilities_any_suffix_passes() {
     let results = scan_file("capabilities_data_transformer.rs").await;
-    let aes102: Vec<_> = results.iter().filter(|r| r.code.code() == "AES102").collect();
+    let aes102: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
     assert!(aes102.is_empty(), "capabilities is flexible");
 }
 

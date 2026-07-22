@@ -14,7 +14,15 @@ fn frd_004_watch_config_custom_path() {
 #[test]
 fn frd_004_watch_config_default_ignore_patterns() {
     let config = WatchConfig::from_path("/tmp".to_string());
-    let expected = [".git", "node_modules", "__pycache__", "target", ".venv", "dist", "build"];
+    let expected = [
+        ".git",
+        "node_modules",
+        "__pycache__",
+        "target",
+        ".venv",
+        "dist",
+        "build",
+    ];
     for p in &expected {
         assert!(
             config.ignore_patterns.contains(&p.to_string()),

@@ -14,21 +14,35 @@ use shared::file_watch::taxonomy_watch_event_vo::WatchEventKind;
 
 // ─── Mock linter that records calls ─────────────────────────
 
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
 
 struct RecordingLinter;
 impl ICodeAnalysisAggregate for RecordingLinter {
-    fn run_code_analysis(&self, _: &FilePath) -> LintResultList { LintResultList::default() }
-    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList { LintResultList::default() }
-    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> { vec![] }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(95.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _: &FilePath) -> LintResultList {
+        LintResultList::default()
+    }
+    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList {
+        LintResultList::default()
+    }
+    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
+        vec![]
+    }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(95.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 // ─── E2E: watch a temp dir, create a file, receive event ────
@@ -111,7 +125,9 @@ async fn e2e_analyze_and_filter_pipeline() {
     let lintable = analyzer.filter_lintable(deduped);
     // .rs and .md are lintable; .bin is not.
     assert_eq!(lintable.len(), 2);
-    assert!(lintable.iter().all(|e| ChangeAnalyzer::is_lintable(&e.path)));
+    assert!(lintable
+        .iter()
+        .all(|e| ChangeAnalyzer::is_lintable(&e.path)));
 }
 
 // ─── E2E: orchestrator with immediate stop ──────────────────
@@ -125,9 +141,7 @@ fn e2e_orchestrator_full_lifecycle_immediate_stop() {
     let linter: Arc<dyn ICodeAnalysisAggregate> = Arc::new(RecordingLinter);
     let orch = WatchOrchestrator::new(provider, linter);
 
-    let config = WatchConfig::from_path(
-        std::env::temp_dir().to_string_lossy().to_string(),
-    );
+    let config = WatchConfig::from_path(std::env::temp_dir().to_string_lossy().to_string());
 
     // Set running = false so the loop exits after initial lint.
     let running = Arc::new(AtomicBool::new(false));

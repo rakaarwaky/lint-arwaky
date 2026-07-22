@@ -82,9 +82,11 @@ fn container_install_uninstall_roundtrip_in_temp_repo() {
     let _ = std::fs::create_dir_all(tmp_dir.join(".git"));
 
     let hook_adapter: Arc<dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol> =
-        Arc::new(git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter::new(
-            FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default(),
-        ));
+        Arc::new(
+            git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter::new(
+                FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default(),
+            ),
+        );
 
     let container = GitContainer::new(hook_adapter);
     let aggregate = container.aggregate();

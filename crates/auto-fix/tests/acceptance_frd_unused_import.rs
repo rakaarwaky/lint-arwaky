@@ -7,22 +7,38 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{LineNumber, Score};
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
 
-struct MockLinter { results: Vec<LintResult> }
+struct MockLinter {
+    results: Vec<LintResult>,
+}
 impl ICodeAnalysisAggregate for MockLinter {
-    fn run_code_analysis(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList { LintResultList::new(self.results.clone()) }
-    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> { self.results.clone() }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(100.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(self.results.clone())
+    }
+    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
+        self.results.clone()
+    }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(100.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 /// FRD-UNUSED-IMPORT-01: Rust `use` statement removed when flagged as AES203.
@@ -41,7 +57,10 @@ fn frd_rust_unused_use_statement_removed() {
     let sut = LintFixProcessor::new(Arc::new(MockLinter { results: vec![] }));
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(2));
-    assert!(result, "AES203 fix should remove the unused `use std::io;` line");
+    assert!(
+        result,
+        "AES203 fix should remove the unused `use std::io;` line"
+    );
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(!content.contains("use std::io;"));
@@ -62,7 +81,10 @@ fn frd_python_unused_import_removed() {
     let sut = LintFixProcessor::new(Arc::new(MockLinter { results: vec![] }));
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    assert!(result, "AES203 fix should remove the unused `import os` line");
+    assert!(
+        result,
+        "AES203 fix should remove the unused `import os` line"
+    );
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(!content.contains("import os"));

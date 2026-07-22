@@ -1,30 +1,44 @@
 // PURPOSE: Smoke test — verifies the auto-fix crate boots and core wiring works.
 // Must complete in under 5 seconds.
 
-use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
+use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
+use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use std::sync::Arc;
 
 struct NoopLinter;
 impl ICodeAnalysisAggregate for NoopLinter {
-    fn run_code_analysis(&self, _: &FilePath) -> LintResultList { LintResultList::new(vec![]) }
-    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList { LintResultList::new(vec![]) }
-    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> { vec![] }
-    fn calc_score(&self, _: &[LintResult]) -> Score { Score::new(100.0) }
-    fn check_critical(&self, _: &[LintResult]) -> bool { false }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String { String::new() }
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> { vec![] }
+    fn run_code_analysis(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(vec![])
+    }
+    fn run_code_analysis_dir(&self, _: &FilePath) -> LintResultList {
+        LintResultList::new(vec![])
+    }
+    fn run_code_analysis_path(&self, _: &FilePath) -> Vec<LintResult> {
+        vec![]
+    }
+    fn calc_score(&self, _: &[LintResult]) -> Score {
+        Score::new(100.0)
+    }
+    fn check_critical(&self, _: &[LintResult]) -> bool {
+        false
+    }
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+        String::new()
+    }
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
 }
 
 #[test]

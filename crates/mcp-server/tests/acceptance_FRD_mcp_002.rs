@@ -1,14 +1,14 @@
 // PURPOSE: Acceptance test — FRD Requirement: list_commands tool
 // "list_commands — list available CLI commands with descriptions and examples."
 
-use std::sync::Arc;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::ListCommandsArgs;
 use rmcp::handler::server::wrapper::Parameters;
+use shared::mcp_server::taxonomy_mcp_tool_args_vo::ListCommandsArgs;
+use std::sync::Arc;
 
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
@@ -33,12 +33,21 @@ async fn frd_mcp_002_list_commands_complete_entries() {
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
     let commands = parsed["commands"].as_array().unwrap();
-    assert!(commands.len() >= 10, "Expected at least 10 commands in catalog");
+    assert!(
+        commands.len() >= 10,
+        "Expected at least 10 commands in catalog"
+    );
 
     for cmd in commands {
         assert!(cmd["name"].is_string(), "Each command must have a name");
-        assert!(cmd["description"].is_string(), "Each command must have a description");
-        assert!(cmd["example"].is_string(), "Each command must have an example");
+        assert!(
+            cmd["description"].is_string(),
+            "Each command must have a description"
+        );
+        assert!(
+            cmd["example"].is_string(),
+            "Each command must have an example"
+        );
         assert!(!cmd["name"].as_str().unwrap().is_empty());
         assert!(!cmd["description"].as_str().unwrap().is_empty());
     }
@@ -55,7 +64,10 @@ async fn frd_mcp_002_list_commands_domain_filter() {
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
     let commands = parsed["commands"].as_array().unwrap();
-    assert!(!commands.is_empty(), "Domain 'hook' should match install-hook/uninstall-hook");
+    assert!(
+        !commands.is_empty(),
+        "Domain 'hook' should match install-hook/uninstall-hook"
+    );
     for cmd in commands {
         assert!(cmd["name"].as_str().unwrap().contains("hook"));
     }

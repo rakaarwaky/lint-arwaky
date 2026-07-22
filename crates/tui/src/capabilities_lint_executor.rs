@@ -2,9 +2,9 @@ use crate::utility_report_formatter::{
     format_config_result, format_dependency_report, format_doctor_report, format_results,
 };
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -757,7 +757,9 @@ impl LintExecutor {
                 // Use run_with_discovery for multi-workspace support.
                 // Falls back to single-scan mode if no workspaces found.
                 let request = ScanRequest::new(
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(path.to_string()),
+                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(
+                        path.to_string(),
+                    ),
                     shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Scan,
                 );
 
@@ -768,9 +770,7 @@ impl LintExecutor {
                         let output = self.format_results(&results);
                         LintExecutionResult::success(output, count)
                     }
-                    Err(e) => {
-                        LintExecutionResult::failure(format!("Pipeline error: {}", e))
-                    }
+                    Err(e) => LintExecutionResult::failure(format!("Pipeline error: {}", e)),
                 }
             }
             None => {

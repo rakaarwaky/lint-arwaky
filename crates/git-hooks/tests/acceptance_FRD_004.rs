@@ -2,10 +2,10 @@
 // REQ: The crate's own source complies with AES rules when complete.
 // Maps to: FRD Success Indicator #4
 
+use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
-use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 
 /// FRD-004: All public types are constructible (no dead code)
@@ -48,7 +48,8 @@ fn frd_004_orchestrator_implements_all_aggregates() {
     fn assert_git_hooks<T: shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate>() {}
     fn assert_hook_mgmt<
         T: shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate,
-    >() {}
+    >() {
+    }
     assert_git_hooks::<GitHooksOrchestrator>();
     assert_hook_mgmt::<GitHooksOrchestrator>();
 }

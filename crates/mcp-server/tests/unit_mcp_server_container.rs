@@ -23,7 +23,6 @@ fn mcp_container_has_all_required_fields() {
 
 #[test]
 fn mcp_container_fields_are_arc_dyn_traits() {
-    use std::sync::Arc;
     use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
     use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
     use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -31,6 +30,7 @@ fn mcp_container_fields_are_arc_dyn_traits() {
     use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
     use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
     use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+    use std::sync::Arc;
 
     fn assert_arc_types(_c: &McpContainer) {
         let _: &Arc<dyn ICodeAnalysisAggregate> = &_c.code_analysis_linter;

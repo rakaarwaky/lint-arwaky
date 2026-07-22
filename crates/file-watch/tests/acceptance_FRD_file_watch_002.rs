@@ -17,7 +17,11 @@ fn frd_002_rapid_changes_deduplicated_to_single_event() {
     let result = analyzer.analyze(events);
 
     // All 10 events collapse to 1.
-    assert_eq!(result.len(), 1, "Rapid changes to same file must deduplicate to 1");
+    assert_eq!(
+        result.len(),
+        1,
+        "Rapid changes to same file must deduplicate to 1"
+    );
     assert_eq!(result[0].path, "src/hot_file.rs");
 }
 
@@ -37,8 +41,7 @@ fn frd_002_distinct_files_not_collapsed() {
 
 #[test]
 fn frd_002_debounce_config_default_is_500ms() {
-    let config = shared::file_watch::taxonomy_watch_config_vo::WatchConfig::from_path(
-        "/tmp".to_string(),
-    );
+    let config =
+        shared::file_watch::taxonomy_watch_config_vo::WatchConfig::from_path("/tmp".to_string());
     assert_eq!(config.debounce_ms, 500, "Default debounce must be 500ms");
 }

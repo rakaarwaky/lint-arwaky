@@ -5,11 +5,11 @@
 use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_common_vo::PatternList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::naming_rules::contract_naming_checker_protocol::{
     INamingConventionChecker, ISuffixPrefixChecker,
 };
@@ -27,7 +27,10 @@ fn build_orchestrator(config: ArchitectureConfig, layer_map: LayerMapVO) -> Nami
 
 #[test]
 fn orchestrator_name_is_naming_rules() {
-    let orch = build_orchestrator(ArchitectureConfig::default(), LayerMapVO::new(HashMap::new()));
+    let orch = build_orchestrator(
+        ArchitectureConfig::default(),
+        LayerMapVO::new(HashMap::new()),
+    );
     assert_eq!(orch.name(), "naming-rules");
 }
 
@@ -35,7 +38,10 @@ fn orchestrator_name_is_naming_rules() {
 
 #[tokio::test]
 async fn run_audit_nonexistent_path_returns_error() {
-    let orch = build_orchestrator(ArchitectureConfig::default(), LayerMapVO::new(HashMap::new()));
+    let orch = build_orchestrator(
+        ArchitectureConfig::default(),
+        LayerMapVO::new(HashMap::new()),
+    );
     let target = FilePath::new("/nonexistent/path/xyz".to_string()).unwrap();
     let result = orch.run_audit(&target).await;
     assert!(result.is_err(), "Non-existent path should return ScanError");
@@ -62,7 +68,10 @@ async fn ignored_patterns_trimmed_correctly() {
 #[tokio::test]
 async fn run_audit_on_empty_dir_returns_empty_results() {
     let dir = tempfile::tempdir().unwrap();
-    let orch = build_orchestrator(ArchitectureConfig::default(), LayerMapVO::new(HashMap::new()));
+    let orch = build_orchestrator(
+        ArchitectureConfig::default(),
+        LayerMapVO::new(HashMap::new()),
+    );
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let result = orch.run_audit(&target).await;
     assert!(result.is_ok());
@@ -77,7 +86,10 @@ async fn run_audit_filters_non_source_extensions() {
     // Create a valid .rs file
     std::fs::write(dir.path().join("capabilities_user_checker.rs"), "// ok").unwrap();
 
-    let orch = build_orchestrator(ArchitectureConfig::default(), LayerMapVO::new(HashMap::new()));
+    let orch = build_orchestrator(
+        ArchitectureConfig::default(),
+        LayerMapVO::new(HashMap::new()),
+    );
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let result = orch.run_audit(&target).await;
     assert!(result.is_ok());

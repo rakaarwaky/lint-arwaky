@@ -63,7 +63,8 @@ fn bench_container_construction(c: &mut Criterion) {
 
     group.bench_function("new_default", |b| {
         b.iter(|| {
-            let _container = git_hooks_lint_arwaky::root_git_hooks_container::GitContainer::new_default();
+            let _container =
+                git_hooks_lint_arwaky::root_git_hooks_container::GitContainer::new_default();
         });
     });
 

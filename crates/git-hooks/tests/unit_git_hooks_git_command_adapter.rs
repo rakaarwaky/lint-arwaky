@@ -149,7 +149,9 @@ async fn symbolic_ref_in_non_repo_returns_none() {
 #[tokio::test]
 async fn diff_name_only_invalid_range_returns_empty() {
     let adapter = sut();
-    let result = adapter.diff_name_only("invalid_range_xyz", &test_path()).await;
+    let result = adapter
+        .diff_name_only("invalid_range_xyz", &test_path())
+        .await;
     assert!(result.is_empty());
 }
 

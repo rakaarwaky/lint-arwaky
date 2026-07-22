@@ -4,14 +4,14 @@
 
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_suffix_vo::SuffixPolicyVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_suffix_vo::SuffixPolicyVO;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
 use shared::naming_rules::taxonomy_naming_rule_vo::NamingRuleVO;
 use std::collections::HashMap;
@@ -89,7 +89,10 @@ async fn taxonomy_vo_suffix_passes_strict() {
     let config = default_config();
     let lm = strict_taxonomy_layer();
     let results = run_check(&["taxonomy_user_vo.rs"], &config, &lm).await;
-    assert!(results.is_empty(), "taxonomy_*_vo should pass strict policy");
+    assert!(
+        results.is_empty(),
+        "taxonomy_*_vo should pass strict policy"
+    );
 }
 
 #[tokio::test]
@@ -123,7 +126,10 @@ async fn taxonomy_with_orchestrator_suffix_fails() {
     let config = default_config();
     let lm = strict_taxonomy_layer();
     let results = run_check(&["taxonomy_user_orchestrator.rs"], &config, &lm).await;
-    assert!(!results.is_empty(), "orchestrator suffix forbidden in taxonomy");
+    assert!(
+        !results.is_empty(),
+        "orchestrator suffix forbidden in taxonomy"
+    );
     assert_eq!(results.values[0].code.code(), "AES102");
 }
 
@@ -132,7 +138,10 @@ async fn taxonomy_with_unknown_suffix_fails_strict() {
     let config = default_config();
     let lm = strict_taxonomy_layer();
     let results = run_check(&["taxonomy_user_parser.rs"], &config, &lm).await;
-    assert!(!results.is_empty(), "parser not in allowed list for taxonomy");
+    assert!(
+        !results.is_empty(),
+        "parser not in allowed list for taxonomy"
+    );
     assert_eq!(results.values[0].code.code(), "AES102");
 }
 
@@ -152,7 +161,10 @@ async fn capabilities_any_suffix_passes_flexible() {
     let config = default_config();
     let lm = flexible_capabilities_layer();
     let results = run_check(&["capabilities_user_checker.rs"], &config, &lm).await;
-    assert!(results.is_empty(), "capabilities is flexible — any suffix OK");
+    assert!(
+        results.is_empty(),
+        "capabilities is flexible — any suffix OK"
+    );
 }
 
 #[tokio::test]

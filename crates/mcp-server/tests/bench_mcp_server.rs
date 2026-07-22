@@ -1,16 +1,14 @@
 // PURPOSE: Benchmark tests — performance regression for MCP server operations
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::sync::Arc;
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
     McpServerDependencies, McpServerOrchestrator,
 };
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs,
-};
 use rmcp::handler::server::wrapper::Parameters;
+use shared::mcp_server::taxonomy_mcp_tool_args_vo::{ExecuteCommandArgs, ListCommandsArgs};
+use std::sync::Arc;
 
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
@@ -51,20 +49,16 @@ fn bench_list_commands(c: &mut Criterion) {
 
     for domain in [None, Some("check"), Some("hook")] {
         let label = domain.unwrap_or("all");
-        group.bench_with_input(
-            BenchmarkId::new("filter", label),
-            &domain,
-            |b, d| {
-                b.iter(|| {
-                    rt.block_on(async {
-                        let args = Parameters(ListCommandsArgs {
-                            domain: d.map(String::from),
-                        });
-                        surface.list_commands(args).await
-                    })
+        group.bench_with_input(BenchmarkId::new("filter", label), &domain, |b, d| {
+            b.iter(|| {
+                rt.block_on(async {
+                    let args = Parameters(ListCommandsArgs {
+                        domain: d.map(String::from),
+                    });
+                    surface.list_commands(args).await
                 })
-            },
-        );
+            })
+        });
     }
     group.finish();
 }

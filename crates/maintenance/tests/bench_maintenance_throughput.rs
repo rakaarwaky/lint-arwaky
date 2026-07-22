@@ -2,8 +2,8 @@
 // Layer: Benchmark (criterion, runs at release gate / nightly).
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
+use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
@@ -26,14 +26,10 @@ fn bench_stats_file_walking(c: &mut Criterion) {
         let orch = MaintenanceCommandsOrchestrator::new();
         let path = FilePath::new(dir.clone()).unwrap();
 
-        group.bench_with_input(
-            BenchmarkId::new("stats", size),
-            &path,
-            |b, p| {
-                b.to_async(tokio::runtime::Runtime::new().unwrap())
-                    .iter(|| orch.stats(p));
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("stats", size), &path, |b, p| {
+            b.to_async(tokio::runtime::Runtime::new().unwrap())
+                .iter(|| orch.stats(p));
+        });
 
         let _ = std::fs::remove_dir_all(&dir);
     }

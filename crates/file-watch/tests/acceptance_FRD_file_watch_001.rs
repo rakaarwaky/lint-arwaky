@@ -22,7 +22,10 @@ async fn frd_001_recursive_watch_detects_nested_file_change() {
     let mut rx = provider.subscribe();
 
     // Act: start recursive watch.
-    provider.start(&config).await.expect("start recursive watcher");
+    provider
+        .start(&config)
+        .await
+        .expect("start recursive watcher");
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     // Create a file in the nested directory.
@@ -61,7 +64,10 @@ async fn frd_001_non_recursive_watch_ignores_nested() {
     let provider = NotifyWatchProvider::new();
     let mut rx = provider.subscribe();
 
-    provider.start(&config).await.expect("start non-recursive watcher");
+    provider
+        .start(&config)
+        .await
+        .expect("start non-recursive watcher");
     tokio::time::sleep(Duration::from_millis(200)).await;
 
     // Write to nested — should NOT trigger event in non-recursive mode.

@@ -2,10 +2,10 @@
 // Layer: Contract verification
 // Speed: ms
 
+use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
-use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
