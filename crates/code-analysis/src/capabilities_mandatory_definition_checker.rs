@@ -2,8 +2,8 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::code_analysis::utility_bypass::skip_cfg_test_block;
-use shared::code_analysis::utility_mandatory::rust_declares_type;
+use shared::code_analysis::utility_bypass_detector::skip_cfg_test_block;
+use shared::code_analysis::utility_mandatory_checker::rust_declares_type;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::taxonomy_definition_vo::LayerDefinition;
 

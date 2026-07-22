@@ -194,14 +194,13 @@ impl AnalysisPipelineOrchestrator {
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
-        let source_files =
-            match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
+        let source_files = match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         // Build context with ALL workspace files for cross-crate import resolution
-        let all_workspace_files = shared::common::utility_file::collect_all_source_files(
+        let all_workspace_files = shared::common::utility_file_handler::collect_all_source_files(
             &std::path::PathBuf::from(orphan_scan_root),
             &ignored,
         );
@@ -290,7 +289,7 @@ impl AnalysisPipelineOrchestrator {
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
         let all_source_files: Vec<String> = {
-            match shared::common::utility_file::scan_directory(&dir_path, &ignored) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
                 Ok(list) => list.values.iter().map(|f| f.value.clone()).collect(),
                 Err(_) => Vec::new(),
             }
@@ -432,7 +431,7 @@ impl AnalysisPipelineOrchestrator {
             .config_orchestrator
             .ignored_paths(scan_root.to_str().unwrap_or("."));
         let all_files: Vec<String> =
-            shared::common::utility_file::collect_all_source_files(&scan_root, &ignored)
+            shared::common::utility_file_handler::collect_all_source_files(&scan_root, &ignored)
                 .iter()
                 .map(|f| f.value.clone())
                 .collect();

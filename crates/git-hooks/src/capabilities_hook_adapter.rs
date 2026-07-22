@@ -1,7 +1,6 @@
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file_handler;
-use shared::common::utility_file_handler;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::utility_git_io as git_io;
 

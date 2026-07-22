@@ -117,7 +117,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = shared::code_analysis::utility_target::detect_source_dir(root);
+        let src_dir = shared::code_analysis::utility_target_resolver::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -139,7 +139,7 @@ impl CodeAnalysisOrchestrator {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let files = shared::code_analysis::utility_target::collect_source_files(
+        let files = shared::code_analysis::utility_target_resolver::collect_source_files(
             src_dir, &dir_path, &ignored,
         );
         if files.is_empty() {

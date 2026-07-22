@@ -36,8 +36,9 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Some(p) => p.value.clone(),
             None => ".".to_string(),
         };
-        let src =
-            shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
+        let src = shared::code_analysis::utility_target_resolver::detect_source_dir(
+            std::path::Path::new(&root),
+        );
         // P1.6 fix: use injected config (self.config) instead of default_aes_config()
         let config = self.config.as_ref();
         let ignored_vec: Vec<String> = config
@@ -66,7 +67,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let source_files = shared::code_analysis::utility_target::collect_source_files(
+        let source_files = shared::code_analysis::utility_target_resolver::collect_source_files(
             &src,
             &dir_path,
             &ignored_vec,

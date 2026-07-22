@@ -13,7 +13,7 @@ use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
     AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
-use shared::code_analysis::utility_bypass::{
+use shared::code_analysis::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
