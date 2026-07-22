@@ -13,10 +13,11 @@ use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 fn bench_checker_instantiation(c: &mut Criterion) {
     let mut group = c.benchmark_group("checker_instantiation");
 
-    for n in [10, 100, 1000] {
-        group.bench_with_input(BenchmarkId::new("instantiation", n), &n, |b, _| {
+    for n in [10usize, 100, 1000] {
+        group.bench_with_input(BenchmarkId::new("instantiation", n), &n, |b, val| {
             b.iter(|| {
-                for _ in 0..*n {
+                let count = *val;
+                for _ in 0..count {
                     let _agent = AgentRoleChecker::new();
                     let _capabilities = CapabilitiesRoleChecker::new();
                     let _contract = ContractRoleChecker::new();
