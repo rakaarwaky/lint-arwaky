@@ -30,4 +30,3 @@ pub trait ICycleImportProtocol: Send + Sync {
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName>;
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO;
 }
-use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;

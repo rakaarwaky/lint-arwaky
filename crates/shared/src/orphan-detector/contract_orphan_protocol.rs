@@ -76,4 +76,3 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult;
 }
-use crate::orphan_detector::taxonomy_orphan_rule_vo::OrphanRuleVO;

@@ -204,6 +204,29 @@ impl OrphanGraphResolver {
                 }
             }
         }
+        // Also scan root_*.rs files directly in crates/ directory (not in src/)
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = root_path.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, path_str, is_dir_entry) in entries {
+                    if is_dir_entry {
+                        continue; // Skip directories, we already scanned their src/
+                    }
+                    // Include root_*.rs files directly in crates/
+                    if name.starts_with("root_")
+                        && (name.ends_with(".rs")
+                            || name.ends_with(".py")
+                            || name.ends_with(".ts")
+                            || name.ends_with(".js"))
+                    {
+                        if !all_workspace_files.contains(&path_str) {
+                            all_workspace_files.push(path_str);
+                        }
+                    }
+                }
+            }
+        }
         let files = &all_workspace_files;
 
         // Build a lookup: module_name -> file_path for crate:: resolution

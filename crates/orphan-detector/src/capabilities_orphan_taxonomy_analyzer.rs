@@ -73,7 +73,6 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
             !b.starts_with("taxonomy_")
         });
-
         let is_orphan = !has_other_layer_importer;
 
         if is_orphan {
