@@ -1,5 +1,5 @@
 // PURPOSE: utility_orphan_io — stateless I/O utilities for orphan detection graph building
-use crate::common::utility_file_handler;
+use super::utility_file_handler;
 use std::path::Path;
 
 /// Read file contents, returning empty string on error (backward compatible).
