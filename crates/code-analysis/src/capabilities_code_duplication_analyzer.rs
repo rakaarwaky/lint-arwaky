@@ -29,8 +29,11 @@ pub struct CodeDuplicationAnalyzer {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation> {
-        let root = shared::code_analysis::utility_target::resolve_target(path);
+    fn handle_duplicates(&self, path: Option<shared::common::taxonomy_path_vo::DirectoryPath>) -> Vec<AesCodeAnalysisViolation> {
+        let root = match &path {
+            Some(p) => p.value.clone(),
+            None => ".".to_string(),
+        };
         let src =
             shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
         // P1.6 fix: use injected config (self.config) instead of default_aes_config()

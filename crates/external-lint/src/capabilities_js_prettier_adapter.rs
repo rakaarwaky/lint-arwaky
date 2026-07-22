@@ -33,12 +33,9 @@ use shared::external_lint::utility_external_lint::{
 //   - Detects warnings by checking for "[warn]" in combined stdout+stderr
 //   - Reports a single LintResult per file (not per-difference)
 
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct PrettierAdapter {
-    executor: Arc<dyn ICommandExecutorProtocol>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
@@ -109,13 +106,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 // (No protocol implementation found in this file)
 
 impl PrettierAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            lint_executor,
-        }
+    pub fn new(lint_executor: Arc<dyn IExternalLintExecutorProtocol>) -> Self {
+        Self { lint_executor }
     }
 }

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use async_trait::async_trait;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file;
@@ -6,7 +8,9 @@ use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct WorkspaceDetector;
+pub struct WorkspaceDetector {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -86,7 +90,7 @@ impl Default for WorkspaceDetector {
 
 impl WorkspaceDetector {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     async fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {

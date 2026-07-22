@@ -16,10 +16,21 @@ use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+#[derive(Clone)]
 struct SearchFilesCache {
     root: std::path::PathBuf,
     file_count: usize,
     files: Arc<Vec<String>>,
+}
+
+impl Default for SearchFilesCache {
+    fn default() -> Self {
+        Self {
+            root: std::path::PathBuf::new(),
+            file_count: 0,
+            files: Arc::new(Vec::new()),
+        }
+    }
 }
 
 pub struct ContractOrphanAnalyzer {

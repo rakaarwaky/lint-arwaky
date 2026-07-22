@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
 use shared::project_setup::taxonomy_language_vo::ProjectLanguage;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
@@ -15,7 +17,9 @@ use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct SetupInstallerAdapter;
+pub struct SetupInstallerAdapter {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -86,6 +90,6 @@ impl Default for SetupInstallerAdapter {
 impl SetupInstallerAdapter {
     pub fn new() -> Self {
         let _dummy = ProjectLanguage::new("rust");
-        Self
+        Self { _p: PhantomData }
     }
 }

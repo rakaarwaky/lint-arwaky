@@ -1,4 +1,7 @@
 
+use std::marker::PhantomData;
+use std::path::Path;
+
 use async_trait::async_trait;
 use shared::common::taxonomy_common_vo::bool;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -12,11 +15,11 @@ use shared::external_lint::utility_external_lint_io as ext_io;
 // Scans a directory tree to detect which programming languages are present.
 // Skips node_modules, target, .git, .jj directories.
 
-use std::path::Path;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ExternalLintLanguageDetectorAdapter;
+pub struct ExternalLintLanguageDetectorAdapter {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -48,7 +51,7 @@ const SKIP_DIRS: &[&str] = &["node_modules", "target", ".git", ".jj", "Graph-It-
 
 impl ExternalLintLanguageDetectorAdapter {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     fn detect_in_dir(dir: &Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {

@@ -31,17 +31,6 @@ use std::sync::OnceLock;
 #[derive(Clone)]
 pub struct NamingConventionChecker {}
 
-/// Parameters for file naming check to avoid too_many_arguments.
-struct FileNamingParams<'a> {
-    file: &'a str,
-    filename: &'a str,
-    layer_name: &'a Option<LayerNameVO>,
-    definition: Option<&'a shared::taxonomy_definition_vo::LayerDefinition>,
-    config: &'a ArchitectureConfig,
-    min_words: usize,
-    violations: &'a mut Vec<LintResult>,
-}
-
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
@@ -67,15 +56,14 @@ impl INamingConventionChecker for NamingConventionChecker {
                 layer.as_ref().map(|l: &String| LayerNameVO::new(l.clone()));
             let def: Option<&shared::taxonomy_definition_vo::LayerDefinition> =
                 layer_name.as_ref().and_then(|l| layer_map.values.get(l));
-            self._check_file_naming(FileNamingParams {
-                file: &f_str,
+            self._check_file_naming(
+                &f_str,
                 filename,
-                layer_name: &layer_name,
-                definition: def,
-                config,
+                &layer_name,
+                def,
                 min_words,
-                violations: &mut results.values,
-            });
+                &mut results.values,
+            );
         }
     }
 }
@@ -145,13 +133,16 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
-    fn _check_file_naming(&self, params: FileNamingParams<'_>) {
-        let file = params.file;
-        let filename = params.filename;
-        let layer_name = params.layer_name;
-        let definition = params.definition;
-        let min_words = params.min_words;
-        let violations = params.violations;
+    #[allow(clippy::too_many_arguments)]
+    fn _check_file_naming(
+        &self,
+        file: &str,
+        filename: &str,
+        layer_name: &Option<LayerNameVO>,
+        definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
+        min_words: usize,
+        violations: &mut Vec<LintResult>,
+    ) {
         let layer_prefixes = LAYER_PREFIXES;
 
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();

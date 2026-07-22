@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_file;
@@ -7,7 +9,9 @@ use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct FileAdapter;
+pub struct FileAdapter {
+    _p: PhantomData<*const ()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -38,7 +42,7 @@ impl Default for FileAdapter {
 
 impl FileAdapter {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 

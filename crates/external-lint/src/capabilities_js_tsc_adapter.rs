@@ -5,7 +5,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::utility_file;
 use shared::taxonomy_adapter_name_vo::AdapterName;
@@ -43,7 +42,6 @@ use regex::Regex;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct TSCAdapter {
-    executor: Arc<dyn ICommandExecutorProtocol>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
@@ -166,13 +164,7 @@ fn tsc_pattern2() -> Option<&'static Regex> {
 }
 
 impl TSCAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            lint_executor,
-        }
+    pub fn new(lint_executor: Arc<dyn IExternalLintExecutorProtocol>) -> Self {
+        Self { lint_executor }
     }
 }

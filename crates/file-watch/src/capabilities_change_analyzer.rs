@@ -1,12 +1,16 @@
-use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
+use std::marker::PhantomData;
+
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ChangeAnalyzer;
+pub struct ChangeAnalyzer {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -45,6 +49,6 @@ impl Default for ChangeAnalyzer {
 
 impl ChangeAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }

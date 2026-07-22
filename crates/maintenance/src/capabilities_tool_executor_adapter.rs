@@ -1,4 +1,6 @@
 
+use std::marker::PhantomData;
+
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_tool_executor_protocol::{IToolExecutorProtocol, ToolOutput};
 
@@ -7,7 +9,9 @@ use std::process::Command;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ToolExecutorAdapter;
+pub struct ToolExecutorAdapter {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -74,7 +78,7 @@ impl Default for ToolExecutorAdapter {
 
 impl ToolExecutorAdapter {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 

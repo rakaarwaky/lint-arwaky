@@ -1,3 +1,6 @@
+use std::marker::PhantomData;
+
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -13,11 +16,12 @@ use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ArchImportForbiddenChecker;
+pub struct ArchImportForbiddenChecker {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -71,13 +75,13 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 
 impl Default for ArchImportForbiddenChecker {
     fn default() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 
 impl ArchImportForbiddenChecker {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     fn _check_forbidden_imports(

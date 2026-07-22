@@ -7,7 +7,6 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -40,7 +39,6 @@ use async_trait::async_trait;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MyPyAdapter {
-    executor: Arc<dyn ICommandExecutorProtocol>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -208,12 +206,10 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
 
 impl MyPyAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
         bin_path: Option<FilePath>,
     ) -> Self {
         Self {
-            executor,
             lint_executor,
             bin_path,
         }

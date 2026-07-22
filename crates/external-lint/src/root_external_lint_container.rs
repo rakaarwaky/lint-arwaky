@@ -34,7 +34,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "ruff".to_string(),
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
-                executor.clone(),
                 lint_executor.clone(),
                 None,
             )),
@@ -42,7 +41,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "bandit".to_string(),
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
-                executor.clone(),
                 lint_executor.clone(),
                 None,
             )),
@@ -50,7 +48,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "mypy".to_string(),
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
-                executor.clone(),
                 lint_executor.clone(),
                 None,
             )),
@@ -58,7 +55,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "eslint".to_string(),
             Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
-                executor.clone(),
                 lint_executor.clone(),
             )),
         );
@@ -66,7 +62,6 @@ impl ExternalLintContainer {
             "prettier".to_string(),
             Arc::new(
                 crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
-                    executor.clone(),
                     lint_executor.clone(),
                 ),
             ),
@@ -74,7 +69,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "tsc".to_string(),
             Arc::new(crate::capabilities_js_tsc_adapter::TSCAdapter::new(
-                executor.clone(),
                 lint_executor.clone(),
             )),
         );

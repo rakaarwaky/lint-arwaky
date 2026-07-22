@@ -3,6 +3,7 @@
 // This is the agent layer orchestrator that wires together all 6 linter groups
 // and produces a unified ScanReport. It depends only on contracts (traits),
 // never on concrete implementations.
+use crate::utility_format_output::{format_junit_output, format_sarif_output};
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -228,8 +229,8 @@ impl AnalysisPipelineOrchestrator {
             Format::Json => {
                 serde_json::to_string_pretty(&filtered_results).unwrap_or_else(|_| "[]".to_string())
             }
-            Format::Sarif => self.format_sarif_output(&filtered_results),
-            Format::Junit => self.format_junit_output(&filtered_results),
+            Format::Sarif => format_sarif_output(&filtered_results),
+            Format::Junit => format_junit_output(&filtered_results),
         }
     }
 
@@ -441,185 +442,4 @@ impl AnalysisPipelineOrchestrator {
 
         Ok(file_results)
     }
-
-    /// Format results as a SARIF 2.1.0 JSON string.
-    fn format_sarif_output(&self, results: &[LintResult]) -> String {
-        #[derive(serde::Serialize)]
-        struct SarifLog {
-            #[serde(rename = "$schema")]
-            schema: &'static str,
-            version: &'static str,
-            runs: Vec<SarifRun>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifRun {
-            tool: SarifTool,
-            results: Vec<SarifResult>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifTool {
-            driver: SarifDriver,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifDriver {
-            name: &'static str,
-            version: &'static str,
-            information_uri: &'static str,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifResult {
-            rule_id: String,
-            level: String,
-            message: SarifMessage,
-            locations: Vec<SarifLocation>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifMessage {
-            text: String,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifLocation {
-            physical_location: SarifPhysicalLocation,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifPhysicalLocation {
-            artifact_location: SarifArtifactLocation,
-            region: SarifRegion,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifArtifactLocation {
-            uri: String,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifRegion {
-            start_line: i64,
-        }
-
-        // Map Severity → SARIF level
-        fn severity_to_sarif_level(
-            sev: &shared::cli_commands::taxonomy_severity_vo::Severity,
-        ) -> &'static str {
-            match sev {
-                shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
-                | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH => "error",
-                shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM => "warning",
-                shared::cli_commands::taxonomy_severity_vo::Severity::LOW
-                | shared::cli_commands::taxonomy_severity_vo::Severity::INFO => "note",
-            }
-        }
-
-        let sarif_results: Vec<SarifResult> = results
-            .iter()
-            .map(|r| SarifResult {
-                rule_id: r.code.to_string(),
-                level: severity_to_sarif_level(&r.severity).to_string(),
-                message: SarifMessage {
-                    text: r.message.value.clone(),
-                },
-                locations: vec![SarifLocation {
-                    physical_location: SarifPhysicalLocation {
-                        artifact_location: SarifArtifactLocation {
-                            uri: r.file.value.clone(),
-                        },
-                        region: SarifRegion {
-                            start_line: std::cmp::max(1, r.line.value()),
-                        },
-                    },
-                }],
-            })
-            .collect();
-
-        let log = SarifLog {
-            schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-            version: "2.1.0",
-            runs: vec![SarifRun {
-                tool: SarifTool {
-                    driver: SarifDriver {
-                        name: "lint-arwaky",
-                        version: env!("CARGO_PKG_VERSION"),
-                        information_uri: "https://github.com/rakaarwaky/lint-arwaky",
-                    },
-                },
-                results: sarif_results,
-            }],
-        };
-
-        serde_json::to_string_pretty(&log).unwrap_or_else(|_| "{}".to_string())
-    }
-
-    /// Format results as JUnit XML.
-    fn format_junit_output(&self, results: &[LintResult]) -> String {
-        let total = results.len();
-        let failures: Vec<_> = results
-            .iter()
-            .filter(|r| {
-                matches!(
-                    r.severity,
-                    shared::cli_commands::taxonomy_severity_vo::Severity::CRITICAL
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::HIGH
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::MEDIUM
-                        | shared::cli_commands::taxonomy_severity_vo::Severity::LOW
-                )
-            })
-            .collect();
-        let failure_count = failures.len();
-
-        let mut xml = String::with_capacity(total.saturating_mul(256));
-        xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        xml.push_str(&format!(
-            "<testsuites name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"
-        ));
-        xml.push_str(&format!(
-            "  <testsuite name=\"lint-arwaky\" tests=\"{total}\" failures=\"{failure_count}\">\n"
-        ));
-
-        for r in results {
-            let classname = xml_escape(&r.code.to_string());
-            let name = xml_escape(&format!("{}:{}", r.file.value, r.line.value()));
-            let message = xml_escape(&r.message.value);
-            let sev = r.severity.to_string();
-            let is_info = r.severity == shared::cli_commands::taxonomy_severity_vo::Severity::INFO;
-
-            xml.push_str(&format!(
-                "    <testcase classname=\"{classname}\" name=\"{name}\">\n"
-            ));
-            if !is_info {
-                xml.push_str(&format!(
-                    "      <failure message=\"{sev}: {message}\" type=\"{sev}\">\n"
-                ));
-                xml.push_str(&format!("        {message}\n"));
-                xml.push_str("      </failure>\n");
-            }
-            xml.push_str("    </testcase>\n");
-        }
-
-        xml.push_str("  </testsuite>\n");
-        xml.push_str("</testsuites>\n");
-        xml
-    }
-}
-
-/// XML-escape a string for safe inclusion in JUnit XML output.
-fn xml_escape(s: &str) -> String {
-    let mut escaped = String::with_capacity(s.len());
-    for c in s.chars() {
-        match c {
-            '&' => escaped.push_str("&amp;"),
-            '<' => escaped.push_str("&lt;"),
-            '>' => escaped.push_str("&gt;"),
-            '"' => escaped.push_str("&quot;"),
-            '\'' => escaped.push_str("&apos;"),
-            other => escaped.push(other),
-        }
-    }
-    escaped
 }

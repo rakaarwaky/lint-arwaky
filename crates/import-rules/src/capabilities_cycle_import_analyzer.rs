@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::marker::PhantomData;
+
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -13,15 +17,14 @@ use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
-use std::collections::HashMap;
-
-use async_trait::async_trait;
 
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DependencyCycleAnalyzer;
+pub struct DependencyCycleAnalyzer {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -65,13 +68,13 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 
 impl Default for DependencyCycleAnalyzer {
     fn default() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     fn _scan(

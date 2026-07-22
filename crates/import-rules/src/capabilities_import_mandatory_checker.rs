@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -19,7 +21,9 @@ use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ArchImportMandatoryChecker;
+pub struct ArchImportMandatoryChecker {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -74,13 +78,13 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 
 impl Default for ArchImportMandatoryChecker {
     fn default() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 
 impl ArchImportMandatoryChecker {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     fn _check_mandatory_imports(

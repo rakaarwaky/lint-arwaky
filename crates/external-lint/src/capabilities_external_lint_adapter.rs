@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_adapter_error::AdapterError;
@@ -20,7 +22,9 @@ use shared::external_lint::utility_external_lint_io as ext_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ExternalLintUtilityAdapter;
+pub struct ExternalLintUtilityAdapter {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementations ──────────────
 
@@ -217,7 +221,7 @@ impl Default for ExternalLintUtilityAdapter {
 
 impl ExternalLintUtilityAdapter {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 }
 

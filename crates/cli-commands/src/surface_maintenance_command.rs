@@ -4,12 +4,16 @@
 //   - doctor:     toolchain diagnostics (cargo, python3, node, git, etc.)
 //   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
 //   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
+use std::marker::PhantomData;
+
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
 
-pub struct MaintenanceCommandsSurface;
+pub struct MaintenanceCommandsSurface {
+    _p: PhantomData<*const ()>,
+}
 
 pub async fn handle_doctor(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,

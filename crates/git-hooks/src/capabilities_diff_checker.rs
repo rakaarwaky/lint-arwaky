@@ -1,3 +1,7 @@
+use std::collections::HashSet;
+use std::marker::PhantomData;
+
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -5,14 +9,14 @@ use shared::common::taxonomy_paths_vo::RenamedFileList;
 use shared::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::utility_git_io as git_io;
-use std::collections::HashSet;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DiffChecker;
+pub struct DiffChecker {
+    _p: PhantomData<()>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -63,7 +67,7 @@ impl Default for DiffChecker {
 
 impl DiffChecker {
     pub fn new() -> Self {
-        Self
+        Self { _p: PhantomData }
     }
 
     fn get_default_branch(&self, project_path: &FilePath) -> String {

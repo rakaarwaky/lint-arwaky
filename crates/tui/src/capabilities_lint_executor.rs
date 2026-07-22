@@ -1,4 +1,4 @@
-use crate::capabilities_report_formatter::ReportFormatterHelper;
+use crate::utility_report_formatter::{format_config_result, format_dependency_report, format_doctor_report, format_results};
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -13,7 +13,6 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
@@ -49,8 +48,7 @@ impl ILintExecutorProtocol for LintExecutor {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
-        let formatter = ReportFormatterHelper::new();
-        let output = formatter.format_results(&results).to_string();
+        let output = format_results(&results).to_string();
         LintExecutionResult {
             output,
             violation_count: count,
@@ -622,15 +620,13 @@ impl LintExecutor {
     }
 
     pub fn format_results(&self, results: &LintResultList) -> String {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_results(results).to_string()
+        format_results(results).to_string()
     }
 
     fn format_doctor_report(
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_doctor_report(diagnostics)
+        format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
@@ -681,15 +677,13 @@ impl LintExecutor {
     }
 
     fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_dependency_report(path, report)
+        format_dependency_report(path, report)
     }
 
     fn format_config_result(
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_config_result(result)
+        format_config_result(result)
     }
 
     /// Check if a binary is available in the system PATH.
