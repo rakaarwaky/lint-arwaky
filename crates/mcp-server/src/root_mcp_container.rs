@@ -1,7 +1,6 @@
 // PURPOSE: McpContainer — DI wiring for MCP server aggregates
 use std::sync::Arc;
 
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -18,7 +17,6 @@ pub struct McpContainer {
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
 }
 
 impl McpContainer {
@@ -67,10 +65,6 @@ impl McpContainer {
             );
         let role_orchestrator = role_container.orchestrator();
 
-        // Wire analysis pipeline action
-        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(cli_commands::surface_check_command::ParallelPipelineAction);
-
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -79,7 +73,6 @@ impl McpContainer {
             external_lint,
             role_orchestrator,
             config_orchestrator: orchestrator,
-            analysis_pipeline,
         }
     }
 }
