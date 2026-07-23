@@ -81,55 +81,57 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(mandatory_results.values);
         results.values.extend(forbidden_results.values);
 
-        for file in files.iter() {
-            let file_path = file.value().to_string();
-            let content =
-                tokio::task::spawn_blocking(move || std::fs::read_to_string(&file_path).ok())
-                    .await
-                    .ok()
-                    .flatten();
-            if let Some(content) = content {
-                self.unused
-                    .check_unused_imports(file.value(), &content, &mut results.values);
+        let file_violations: Vec<LintResult> = files
+            .values
+            .iter()
+            .flat_map(|file| {
+                let mut local_results = Vec::new();
+                if let Ok(content) = std::fs::read_to_string(file.value()) {
+                    self.unused
+                        .check_unused_imports(file.value(), &content, &mut local_results);
 
-                let content_str = ContentString::new(content);
-                self.dummy.check_dummy_imports(
-                    file,
-                    &content_str,
-                    &mut results.values,
-                    &root_dir,
-                    &self.layer_map,
-                );
-                self.dummy.check_dummy_functions(
-                    file,
-                    &content_str,
-                    &mut results.values,
-                    &root_dir,
-                    &self.layer_map,
-                );
-                self.dummy.check_dummy_impls(
-                    file,
-                    &content_str,
-                    &mut results.values,
-                    &root_dir,
-                    &self.layer_map,
-                );
-                self.dummy.check_taxonomy_intent(
-                    file,
-                    &content_str,
-                    &mut results.values,
-                    &root_dir,
-                    &self.layer_map,
-                );
-                self.dummy.check_surface_logic(
-                    file,
-                    &content_str,
-                    &mut results.values,
-                    &root_dir,
-                    &self.layer_map,
-                );
-            }
-        }
+                    let content_str = ContentString::new(content);
+                    self.dummy.check_dummy_imports(
+                        file,
+                        &content_str,
+                        &mut local_results,
+                        &root_dir,
+                        &self.layer_map,
+                    );
+                    self.dummy.check_dummy_functions(
+                        file,
+                        &content_str,
+                        &mut local_results,
+                        &root_dir,
+                        &self.layer_map,
+                    );
+                    self.dummy.check_dummy_impls(
+                        file,
+                        &content_str,
+                        &mut local_results,
+                        &root_dir,
+                        &self.layer_map,
+                    );
+                    self.dummy.check_taxonomy_intent(
+                        file,
+                        &content_str,
+                        &mut local_results,
+                        &root_dir,
+                        &self.layer_map,
+                    );
+                    self.dummy.check_surface_logic(
+                        file,
+                        &content_str,
+                        &mut local_results,
+                        &root_dir,
+                        &self.layer_map,
+                    );
+                }
+                local_results
+            })
+            .collect();
+
+        results.values.extend(file_violations);
 
         self.cycle
             .check_cycles(

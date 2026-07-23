@@ -2423,6 +2423,7 @@ dependencies = [
  "async-trait",
  "criterion",
  "once_cell",
+ "rayon",
  "regex",
  "serde",
  "serde_json",
@@ -2704,7 +2705,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.111"
+version = "1.10.113"
 dependencies = [
  "anyhow",
  "async-trait",

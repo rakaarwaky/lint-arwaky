@@ -36,38 +36,68 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
-        // Pre-compute layer_keys once per audit run (was previously per-file)
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
-        for f in &files.values {
-            let f_str = f.to_string();
-            let basename = f.basename();
+        let file_violations: Vec<LintResult> = files
+            .values
+            .iter()
+            .flat_map(|f| {
+                let f_str = f.to_string();
+                let basename = f.basename();
 
-            let mut is_exception = false;
-            for r in &config.rules {
-                if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename) {
-                    is_exception = true;
-                    break;
+                let mut is_exception = false;
+                for r in &config.rules {
+                    if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename)
+                    {
+                        is_exception = true;
+                        break;
+                    }
                 }
-            }
-            if is_exception {
-                continue;
-            }
+                if is_exception {
+                    return Vec::new();
+                }
 
-            let filename = utility_layer_detector::extract_filename(&f_str);
-            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(
-                    &base_layer,
+                let content =
+                    match shared::common::utility_file_handler::read_file_generic(&f_str).ok() {
+                        Some(c) => c,
+                        None => return Vec::new(),
+                    };
+                let file_content = FileContentVO::new(content);
+                let import_lines: Vec<(LineNumber, LineContentVO)> =
+                    utility_import_resolver::parse_import_lines_helper(file_content.value());
+
+                let mut local_violations = Vec::new();
+                let filename = utility_layer_detector::extract_filename(&f_str);
+                if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename)
+                {
+                    let specialized = utility_layer_detector::resolve_specialized_layer(
+                        &base_layer,
+                        &f_str,
+                        &layer_keys,
+                    );
+                    let layer_name = LayerNameVO::new(specialized.as_str());
+                    if let Some(def) = layer_map.values.get(&layer_name) {
+                        self._check_mandatory_imports_with_lines(
+                            &f_str,
+                            &basename,
+                            def,
+                            &import_lines,
+                            &mut local_violations,
+                        );
+                    }
+                }
+                self._check_scope_mandatory_imports_with_lines(
                     &f_str,
-                    &layer_keys,
+                    &basename,
+                    config,
+                    &import_lines,
+                    &mut local_violations,
                 );
-                let layer_name = LayerNameVO::new(specialized.as_str());
-                if let Some(def) = layer_map.values.get(&layer_name) {
-                    self._check_mandatory_imports(&f_str, def, &mut results.values);
-                }
-            }
-            self._check_scope_mandatory_imports(&f_str, config, &mut results.values);
-        }
+                local_violations
+            })
+            .collect();
+
+        results.values.extend(file_violations);
     }
 }
 
@@ -84,38 +114,22 @@ impl ArchImportMandatoryChecker {
         Self
     }
 
-    fn _check_mandatory_imports(
+    fn _check_mandatory_imports_with_lines(
         &self,
         file: &str,
+        basename: &str,
         definition: &LayerDefinition,
+        import_lines: &[(LineNumber, LineContentVO)],
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.mandatory.values.is_empty() {
-            return;
-        }
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => return,
-        };
-        let basename = file_path.basename();
-        if basename == "__init__.py" {
+        if definition.mandatory.values.is_empty() || basename == "__init__.py" {
             return;
         }
         if definition.exceptions.values.contains(&basename.to_string()) {
             return;
         }
 
-        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
-            Some(c) => c,
-            None => return,
-        };
-        let file_content = FileContentVO::new(content);
-        let import_lines: Vec<(LineNumber, LineContentVO)> =
-            utility_import_resolver::parse_import_lines_helper(file_content.value());
-        let stem: &str = basename
-            .rsplit('.')
-            .next_back()
-            .map_or(basename.as_str(), |s| s);
+        let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
         let source_layer: &str = stem.split('_').next().map_or("unknown", |s| s);
 
         for required in &definition.mandatory.values {
@@ -148,36 +162,26 @@ impl ArchImportMandatoryChecker {
         }
     }
 
-    fn _check_scope_mandatory_imports(
+    fn _check_scope_mandatory_imports_with_lines(
         &self,
         file: &str,
+        basename: &str,
         config: &ArchitectureConfig,
+        import_lines: &[(LineNumber, LineContentVO)],
         violations: &mut Vec<LintResult>,
     ) {
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => return,
-        };
-        let basename = file_path.basename();
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-
-        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
-            Some(c) => c,
-            None => return,
-        };
-        let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
 
         for rule in &config.rules {
             if rule.mandatory.values.is_empty() {
                 continue;
             }
             let scope_identity = Identity::new(&rule.scope.value);
-            // Use shared utility to check if file belongs to scope
             let Some((rule_layer_str, _rule_suffixes)) =
                 shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename.as_str(),
+                    basename,
                     &scope_identity,
                 )
             else {

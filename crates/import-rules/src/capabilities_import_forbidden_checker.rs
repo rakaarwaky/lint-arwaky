@@ -36,37 +36,68 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
-        // Pre-compute layer_keys once per audit run (was previously per-file)
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
-        for f in &files.values {
-            let f_str = f.to_string();
-            let basename = f.basename();
-            let mut is_exception = false;
-            for r in &config.rules {
-                if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename) {
-                    is_exception = true;
-                    break;
+        let file_violations: Vec<LintResult> = files
+            .values
+            .iter()
+            .flat_map(|f| {
+                let f_str = f.to_string();
+                let basename = f.basename();
+                let mut is_exception = false;
+                for r in &config.rules {
+                    if r.name.value.as_str() == "AES201" && r.exceptions.values.contains(&basename)
+                    {
+                        is_exception = true;
+                        break;
+                    }
                 }
-            }
-            if is_exception {
-                continue;
-            }
+                if is_exception {
+                    return Vec::new();
+                }
 
-            let filename = utility_layer_detector::extract_filename(&f_str);
-            if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
-                let specialized = utility_layer_detector::resolve_specialized_layer(
-                    &base_layer,
-                    &f_str,
-                    &layer_keys,
-                );
-                let layer_name = LayerNameVO::new(specialized.as_str());
-                if let Some(def) = layer_map.values.get(&layer_name) {
-                    self._check_forbidden_imports(&f_str, &specialized, def, &mut results.values);
+                let content =
+                    match shared::common::utility_file_handler::read_file_generic(&f_str).ok() {
+                        Some(c) => c,
+                        None => return Vec::new(),
+                    };
+                let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
+                if import_lines.is_empty() {
+                    return Vec::new();
                 }
-            }
-            self._check_scope_forbidden_imports(&f_str, config, &mut results.values);
-        }
+
+                let mut local_violations = Vec::new();
+                let filename = utility_layer_detector::extract_filename(&f_str);
+                if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename)
+                {
+                    let specialized = utility_layer_detector::resolve_specialized_layer(
+                        &base_layer,
+                        &f_str,
+                        &layer_keys,
+                    );
+                    let layer_name = LayerNameVO::new(specialized.as_str());
+                    if let Some(def) = layer_map.values.get(&layer_name) {
+                        self._check_forbidden_imports_with_lines(
+                            &f_str,
+                            &specialized,
+                            def,
+                            &import_lines,
+                            &mut local_violations,
+                        );
+                    }
+                }
+                self._check_scope_forbidden_imports_with_lines(
+                    &f_str,
+                    &basename,
+                    config,
+                    &import_lines,
+                    &mut local_violations,
+                );
+                local_violations
+            })
+            .collect();
+
+        results.values.extend(file_violations);
     }
 }
 
@@ -83,11 +114,15 @@ impl ArchImportForbiddenChecker {
         Self
     }
 
-    fn _check_forbidden_imports(
+    fn _check_forbidden_imports_with_lines(
         &self,
         file: &str,
         layer_name: &str,
         definition: &LayerDefinition,
+        import_lines: &[(
+            shared::taxonomy_common_vo::LineNumber,
+            shared::taxonomy_layer_vo::LineContentVO,
+        )],
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
@@ -109,32 +144,26 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
-            Some(c) => c,
-            None => return,
-        };
-        let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
         let layer_name_vo = LayerNameVO::new(layer_name);
 
-        for (line_num, line) in &import_lines {
+        for (line_num, line) in import_lines {
             if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                let segments: Vec<&str> = module
-                    .value()
-                    .split([':', '.', '/', '\\'])
-                    .filter(|s| !s.is_empty())
-                    .collect();
+                let module_val = module.value();
                 for forbidden in &forbidden_list {
                     let forbidden_identity = Identity::new(forbidden);
                     let (layer, suffixes) =
                         utility_import_resolver::resolve_scope(&forbidden_identity);
                     let is_forbidden = if suffixes.is_empty() {
-                        segments.iter().any(|seg| {
-                            let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                            match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                Some(l) => l == layer,
-                                None => false,
-                            }
-                        })
+                        module_val
+                            .split([':', '.', '/', '\\'])
+                            .filter(|s| !s.is_empty())
+                            .any(|seg| {
+                                let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                                match utility_import_resolver::extract_layer_from_import(&cleaned) {
+                                    Some(l) => l == layer,
+                                    None => false,
+                                }
+                            })
                     } else {
                         utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
                     };
@@ -171,27 +200,18 @@ impl ArchImportForbiddenChecker {
         }
     }
 
-    fn _check_scope_forbidden_imports(
+    fn _check_scope_forbidden_imports_with_lines(
         &self,
         file: &str,
+        basename: &str,
         config: &ArchitectureConfig,
+        import_lines: &[(
+            shared::taxonomy_common_vo::LineNumber,
+            shared::taxonomy_layer_vo::LineContentVO,
+        )],
         violations: &mut Vec<LintResult>,
     ) {
-        let file_path = match FilePath::new(file.to_string()) {
-            Ok(p) => p,
-            Err(_) => return,
-        };
-        let basename = file_path.basename();
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
-            return;
-        }
-
-        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
-            Some(c) => c,
-            None => return,
-        };
-        let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
-        if import_lines.is_empty() {
             return;
         }
 
@@ -199,35 +219,35 @@ impl ArchImportForbiddenChecker {
             if rule.exceptions.values.contains(&basename.to_string()) {
                 continue;
             }
-            // Use shared scope-matching utility to check if file belongs to scope
             let Some((rule_layer_str, _rule_suffixes)) =
                 shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename.as_str(),
+                    basename,
                     &Identity::new(&rule.scope.value),
                 )
             else {
                 continue;
             };
 
-            for (line_num, line) in &import_lines {
+            for (line_num, line) in import_lines {
                 if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                    let segments: Vec<&str> = module
-                        .value()
-                        .split([':', '.', '/', '\\'])
-                        .filter(|s| !s.is_empty())
-                        .collect();
+                    let module_val = module.value();
                     for forbidden in &rule.forbidden.values {
                         let forbidden_identity = Identity::new(forbidden);
                         let (forbidden_layer, forbidden_suffixes) =
                             utility_import_resolver::resolve_scope(&forbidden_identity);
                         let is_forbidden = if forbidden_suffixes.is_empty() {
-                            segments.iter().any(|seg| {
-                                let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                                match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                    Some(l) => l == forbidden_layer,
-                                    None => false,
-                                }
-                            })
+                            module_val
+                                .split([':', '.', '/', '\\'])
+                                .filter(|s| !s.is_empty())
+                                .any(|seg| {
+                                    let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                                    match utility_import_resolver::extract_layer_from_import(
+                                        &cleaned,
+                                    ) {
+                                        Some(l) => l == forbidden_layer,
+                                        None => false,
+                                    }
+                                })
                         } else {
                             utility_import_resolver::import_matches_scope(
                                 line,

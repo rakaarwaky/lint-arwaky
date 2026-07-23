@@ -105,10 +105,11 @@ impl DummyImportChecker {
     }
 
     fn _detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
-        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let filename: &str = utility_layer_detector::extract_filename(file);
         match utility_layer_detector::detect_layer_from_prefix(filename) {
             Some(base) => {
+                let layer_keys: Vec<String> =
+                    layer_map.values.keys().map(|k| k.to_string()).collect();
                 utility_layer_detector::resolve_specialized_layer(&base, file, &layer_keys)
             }
             None => "any".to_string(),

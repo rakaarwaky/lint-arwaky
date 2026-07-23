@@ -1,5 +1,4 @@
-use std::collections::{HashMap, HashSet};
-
+// PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
@@ -15,119 +14,14 @@ use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
-
-// PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
+use std::collections::HashMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 #[derive(Default)]
 pub struct DependencyCycleAnalyzer {}
 
-// ─── Cycle Detection Helper Types ─────────────────────────
-
-#[derive(Clone, Copy, PartialEq)]
-enum Color {
-    White,
-    Gray,
-    Black,
-}
-
-fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
-    let normalized_edges: Vec<DependencyEdge> = edges
-        .iter()
-        .map(|e| {
-            DependencyEdge::new(
-                utility_cycle_detector::normalize_to_layer(&e.source),
-                utility_cycle_detector::normalize_to_layer(&e.target),
-            )
-        })
-        .collect();
-
-    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
-    for e in &normalized_edges {
-        graph
-            .entry(e.source.clone())
-            .or_default()
-            .push(e.target.clone());
-        graph.entry(e.target.clone()).or_default();
-    }
-
-    let mut color: HashMap<String, Color> = HashMap::new();
-    let mut parent: HashMap<String, String> = HashMap::new();
-    let mut cycle_edges_set: HashSet<(String, String)> = HashSet::new();
-
-    for node in graph.keys() {
-        color.entry(node.clone()).or_insert(Color::White);
-    }
-
-    for node in graph.keys().cloned().collect::<Vec<_>>() {
-        if color[&node] == Color::White {
-            dfs_3color(&node, &graph, &mut color, &mut parent, &mut cycle_edges_set);
-        }
-    }
-
-    let mut unique_cycles: Vec<String> = Vec::new();
-    let mut reported: HashSet<String> = HashSet::new();
-
-    for (src, tgt) in &cycle_edges_set {
-        let cycle_nodes = extract_cycle_nodes(src, tgt, &parent);
-        if let Some(cycle) = cycle_nodes {
-            let mut sorted_cycle = cycle.clone();
-            sorted_cycle.sort();
-            let dedup_key = sorted_cycle.join("->");
-            if reported.insert(dedup_key) {
-                for i in 0..cycle.len() {
-                    let next = cycle[(i + 1) % cycle.len()].clone();
-                    unique_cycles.push(format!("{}->{}", cycle[i], next));
-                }
-            }
-        }
-    }
-
-    unique_cycles.into_iter().map(SymbolName::new).collect()
-}
-
-fn dfs_3color(
-    node: &str,
-    graph: &HashMap<String, Vec<String>>,
-    color: &mut HashMap<String, Color>,
-    parent: &mut HashMap<String, String>,
-    cycle_edges: &mut HashSet<(String, String)>,
-) {
-    color.insert(node.to_string(), Color::Gray);
-
-    if let Some(neighbors) = graph.get(node) {
-        for neighbor in neighbors {
-            if *color.get(neighbor).unwrap_or(&Color::White) == Color::Gray {
-                cycle_edges.insert((node.to_string(), neighbor.clone()));
-            } else if *color.get(neighbor).unwrap_or(&Color::White) == Color::White {
-                parent.insert(neighbor.clone(), node.to_string());
-                dfs_3color(neighbor, graph, color, parent, cycle_edges);
-            }
-        }
-    }
-
-    color.insert(node.to_string(), Color::Black);
-}
-
-fn extract_cycle_nodes(
-    src: &str,
-    tgt: &str,
-    parent: &HashMap<String, String>,
-) -> Option<Vec<String>> {
-    let mut path = Vec::new();
-    let mut cur = src;
-    path.push(cur.to_string());
-
-    while cur != tgt {
-        let p = parent.get(cur)?;
-        cur = p;
-        path.push(cur.to_string());
-    }
-
-    path.reverse();
-    Some(path)
-}
+type ScannedFileEdges = (Vec<DependencyEdge>, Option<(String, String)>);
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -159,7 +53,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        detect_cycle_edges(edges)
+        utility_cycle_detector::detect_cycle_edges(edges)
     }
 
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
@@ -186,89 +80,99 @@ impl DependencyCycleAnalyzer {
         }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+
+        let file_results: Vec<ScannedFileEdges> = files
+            .iter()
+            .filter_map(|file| {
+                let file_fp = FilePath::new(file.clone()).ok()?;
+                let basename = file_fp.basename();
+                if let Some(rule) = aes205_rule {
+                    if rule.exceptions.values.contains(&basename.to_string()) {
+                        return None;
+                    }
+                }
+                let content = shared::common::utility_file_handler::read_file_generic(file).ok()?;
+
+                let filename = utility_layer_detector::extract_filename(file);
+                let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
+                    Some(l) => {
+                        let specialized = utility_layer_detector::resolve_specialized_layer(
+                            &l,
+                            file,
+                            &layer_keys,
+                        );
+                        match specialized.split('(').next() {
+                            Some(p) => p.to_string(),
+                            None => specialized,
+                        }
+                    }
+                    None => return None,
+                };
+
+                let modules = utility_import_module_parser::extract_import_modules(&content);
+                let mut local_edges = Vec::new();
+                let mut has_cross_layer = false;
+                for module in modules {
+                    let module_value = module.value();
+                    let is_crate_import = module_value.starts_with("crate::")
+                        || module_value.starts_with("lint_arwaky::");
+                    let is_cross_layer_crate = if is_crate_import {
+                        let stripped = module_value
+                            .strip_prefix("crate::")
+                            .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                            .unwrap_or("");
+                        let first_segment = stripped.split("::").next().unwrap_or("");
+                        layer_keys.iter().any(|k| {
+                            let prefix = format!("{}_", k);
+                            stripped.starts_with(&prefix)
+                        }) || layer_keys.iter().any(|k| k == first_segment)
+                    } else {
+                        false
+                    };
+                    if is_crate_import && !is_cross_layer_crate {
+                        continue;
+                    }
+                    let module_path = if is_crate_import {
+                        module_value
+                            .strip_prefix("crate::")
+                            .or_else(|| module_value.strip_prefix("lint_arwaky::"))
+                            .unwrap_or(module_value)
+                    } else {
+                        module_value
+                    };
+                    if let Some(target_layer) =
+                        utility_layer_detector::detect_module_layer(module_path, &layer_keys)
+                    {
+                        let target_layer_str = match target_layer.split('(').next() {
+                            Some(p) => p.to_string(),
+                            None => target_layer,
+                        };
+                        if target_layer_str != file_layer {
+                            local_edges
+                                .push(DependencyEdge::new(file_layer.clone(), target_layer_str));
+                            has_cross_layer = true;
+                        }
+                    }
+                }
+                let layer_mapping = if has_cross_layer {
+                    Some((file_layer, file.clone()))
+                } else {
+                    None
+                };
+                Some((local_edges, layer_mapping))
+            })
+            .collect();
+
         let mut edges = Vec::new();
         let mut file_by_layer: HashMap<String, String> = HashMap::new();
-
-        for file in files {
-            let file_fp = match FilePath::new(file.clone()) {
-                Ok(p) => p,
-                Err(_) => continue,
-            };
-            let basename = file_fp.basename();
-            if let Some(rule) = aes205_rule {
-                if rule.exceptions.values.contains(&basename.to_string()) {
-                    continue;
-                }
-            }
-            let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
-                Some(c) => c,
-                None => continue,
-            };
-
-            let filename = utility_layer_detector::extract_filename(file);
-            let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
-                Some(l) => {
-                    let specialized =
-                        utility_layer_detector::resolve_specialized_layer(&l, file, &layer_keys);
-                    match specialized.split('(').next() {
-                        Some(p) => p.to_string(),
-                        None => specialized,
-                    }
-                }
-                None => continue,
-            };
-
-            let modules = utility_import_module_parser::extract_import_modules(&content);
-            let mut has_cross_layer = false;
-            for module in modules {
-                let module_value = module.value();
-                let is_crate_import = module_value.starts_with("crate::")
-                    || module_value.starts_with("lint_arwaky::");
-                let is_cross_layer_crate = if is_crate_import {
-                    let stripped = module_value
-                        .strip_prefix("crate::")
-                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
-                        .unwrap_or("");
-                    let first_segment = stripped.split("::").next().unwrap_or("");
-                    layer_keys.iter().any(|k| {
-                        let prefix = format!("{}_", k);
-                        stripped.starts_with(&prefix)
-                    }) || layer_keys.iter().any(|k| k == first_segment)
-                } else {
-                    false
-                };
-                if is_crate_import && !is_cross_layer_crate {
-                    continue;
-                }
-                let module_path = if is_crate_import {
-                    module_value
-                        .strip_prefix("crate::")
-                        .or_else(|| module_value.strip_prefix("lint_arwaky::"))
-                        .unwrap_or(module_value)
-                } else {
-                    module_value
-                };
-                if let Some(target_layer) =
-                    utility_layer_detector::detect_module_layer(module_path, &layer_keys)
-                {
-                    let target_layer_str = match target_layer.split('(').next() {
-                        Some(p) => p.to_string(),
-                        None => target_layer,
-                    };
-                    if target_layer_str != file_layer {
-                        edges.push(DependencyEdge::new(file_layer.clone(), target_layer_str));
-                        has_cross_layer = true;
-                    }
-                }
-            }
-            if has_cross_layer {
-                file_by_layer
-                    .entry(file_layer.clone())
-                    .or_insert_with(|| file.clone());
+        for (local_edges, layer_mapping) in file_results {
+            edges.extend(local_edges);
+            if let Some((fl, f)) = layer_mapping {
+                file_by_layer.entry(fl).or_insert(f);
             }
         }
 
-        let cycle_edge_results = detect_cycle_edges(&edges);
+        let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
         cycle_edge_results.into_iter().map(|sn| {
             let edge_key = sn.value;
             let parts: Vec<&str> = edge_key.split("->").collect();
