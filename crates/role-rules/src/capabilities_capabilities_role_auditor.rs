@@ -15,14 +15,12 @@
 //
 // NOTE: The layer guard is redundant with the caller but kept for defensive programming.
 
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
 use shared::taxonomy_source_vo::SourceContentVO;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-
-
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -84,8 +82,8 @@ impl CapabilitiesRoleChecker {
 
         // ── Collect all structs & enums (skip #[cfg(test)]) ──
         let mut in_cfg_test = false;
-        let mut type_names: Vec<&str> = Vec::new();   // all structs + enums
-        let mut struct_names: Vec<&str> = Vec::new();  // only structs
+        let mut type_names: Vec<&str> = Vec::new(); // all structs + enums
+        let mut struct_names: Vec<&str> = Vec::new(); // only structs
 
         for l in content.lines() {
             let t = l.trim();
@@ -243,7 +241,10 @@ impl CapabilitiesRoleChecker {
                 if let Some(pos) = rest.find("implements ") {
                     let after = &rest[pos + 11..];
                     let before_brace = after.split('{').next().unwrap_or(after);
-                    if before_brace.split(',').any(|imp| proto_names.contains(&imp.trim())) {
+                    if before_brace
+                        .split(',')
+                        .any(|imp| proto_names.contains(&imp.trim()))
+                    {
                         implementor_found = true;
                     }
                 }
@@ -341,11 +342,11 @@ impl CapabilitiesRoleChecker {
                 // extract the part after "import"
                 if let Some(pos) = l.find("import ") {
                     let after = &l[pos + 7..]; // len("import ") = 7
-                        after
-                            .split(',')
-                            .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                            .filter(|s| !s.is_empty())
-                            .collect::<Vec<&str>>()
+                    after
+                        .split(',')
+                        .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
+                        .filter(|s| !s.is_empty())
+                        .collect::<Vec<&str>>()
                 } else {
                     vec![]
                 }
@@ -418,9 +419,9 @@ impl CapabilitiesRoleChecker {
         //    Implementor = class that inherits from a name
         //    imported from _protocol
         //    example: class PaymentCap(ISomeService):  ← implementor
-        let has_implementor = classes.iter().any(|c| {
-            c.parents.iter().any(|p| proto_names.contains(p))
-        });
+        let has_implementor = classes
+            .iter()
+            .any(|c| c.parents.iter().any(|p| proto_names.contains(p)));
 
         if !has_implementor {
             violations.push(LintResult::new_arch(

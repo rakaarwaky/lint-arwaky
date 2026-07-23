@@ -46,20 +46,20 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
   - Non-NotFound I/O error (e.g., permission denied) → logs warning, continues searching.
   - Rules with empty conditions are preserved (not dropped).
 - **Error Handling**:
-  - `InvalidData` error when config file exceeds 1 MiB.
-  - `PermissionDenied` error when symlink points outside project root.
+  - Invalid data error when config file exceeds 1 MiB.
+  - Permission denied error when symlink points outside project root.
   - IO error on invalid path canonicalization.
   - ConfigError propagated from YAML parse or file read failures.
 
 ### FR-002: Language-Aware Config File Resolution
-- **Description**: Map a `ConfigLanguage` enum to the correct set of config filenames to search for.
-- **Input**: `ConfigLanguage` (Rust, Python, TypeScript)
+- **Description**: Map a language type to the correct set of config filenames to search for.
+- **Input**: language type (Rust, Python, TypeScript)
 - **Output**: `Vec<String>` of config filenames to search in priority order.
 - **Business Rules**:
   - Rust → `lint_arwaky.config.rust.yaml`
   - Python → `lint_arwaky.config.python.yaml`
   - TypeScript → `lint_arwaky.config.typescript.yaml`, fallback to `lint_arwaky.config.javascript.yaml`
-  - `ConfigLanguage` is an enum, not a string — prevents path injection (`language = "../../etc/passwd"`).
+  - Language type is a typed enum, not a string — prevents path injection.
 - **Edge Cases**:
   - Unknown language → no config files returned, embedded defaults used.
   - TypeScript config not found but JavaScript config exists → uses JavaScript config.
@@ -68,15 +68,15 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 ### FR-003: Workspace Type Detection
 - **Description**: Detect the language/type of a project by scanning for marker files (Cargo.toml, pyproject.toml, package.json, etc.) and parent directory conventions.
 - **Input**: `path: FilePath`
-- **Output**: `WorkspaceType` (Rust, Python, TypeScript, Unknown)
+- **Output**: workspace type (Rust, Python, TypeScript, Unknown)
 - **Business Rules**:
   - Single-pass directory scan for config files (single syscall instead of up to 10).
   - Parent directory name matching: `crates/` → Rust, `packages/` → TypeScript, `modules/` → Python.
   - Walks up to 2 parent directories if no marker found at target path.
 - **Edge Cases**:
-  - No marker files found at any level → returns `WorkspaceType::Unknown`.
+  - No marker files found at any level → returns unknown workspace type.
   - Multiple marker files present (e.g., both Cargo.toml and package.json) → first match in scan order wins.
-- **Error Handling**: `read_dir` failures are silently ignored (returns `None`), fallback to `Unknown`.
+- **Error Handling**: Directory read failures are silently ignored, fallback to unknown.
 
 ### FR-004: Multi-Workspace Member Discovery
 - **Description**: Discover all workspace member directories under `crates/`, `packages/`, and `modules/` subdirectories.
@@ -96,8 +96,8 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 
 ### FR-005: Config Merging and Default Injection
 - **Description**: Merge loaded config with embedded defaults using field-level merge rules.
-- **Input**: `parsed: ArchitectureConfig`, `language: ConfigLanguage`
-- **Output**: `ConfigResult` (merged config + source info + warnings)
+- **Input**: parsed architecture config, language type
+- **Output**: config result (merged config + source info + warnings)
 - **Business Rules**:
   - **Layers** — concatenated; later definitions override earlier ones for the same layer name.
   - **Rules** — concatenated; rules are deduplicated by name field.
@@ -114,8 +114,8 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 
 ### FR-006: Config Validation
 - **Description**: Validate loaded project config thresholds and adapter settings against schema constraints.
-- **Input**: `config: ProjectConfig`, `adapter_name: AdapterName`
-- **Output**: `ValidationResult` (ok or fail with error messages), `bool` (adapter enabled status)
+- **Input**: project config, adapter name
+- **Output**: validation result (ok or fail with error messages), boolean (adapter enabled status)
 - **Business Rules**:
   - Score threshold must be between 0.0 and 100.0 (inclusive).
   - Complexity threshold must be positive (> 0).
@@ -124,26 +124,26 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Edge Cases**:
   - Score threshold at exactly 0 or 100 → valid.
   - Score threshold at 0.1 → valid.
-  - Unknown adapter name → returns `true` (enabled by default).
+  - Unknown adapter name → returns true (enabled by default).
 - **Error Handling**: Multiple validation errors joined with ` | ` separator.
 
 ### FR-007: Config Caching
 - **Description**: Cache parsed config by file path to avoid repeated YAML parsing.
-- **Input**: `cache_key: String` (file path), `source: ConfigSource`
-- **Output**: `ArchitectureConfig` (cached or freshly parsed)
+- **Input**: cache key (file path string), config source
+- **Output**: architecture config (cached or freshly parsed)
 - **Business Rules**:
   - Cache is a thread-safe map with pre-allocated capacity of 32.
   - Parses only on cache miss.
   - Thread-safe with poisoned lock recovery.
 - **Edge Cases**:
-  - Poisoned mutex lock → recovers gracefully.
+  - Poisoned lock → recovers gracefully.
   - Same file path requested concurrently → only one parse occurs.
-- **Error Handling**: Mutex poisoning handled gracefully.
+- **Error Handling**: Lock poisoning handled gracefully.
 
 ### FR-008: Ignored Paths Assembly
 - **Description**: Build the complete list of ignored paths from config + hardcoded defaults.
-- **Input**: `config: ArchitectureConfig`
-- **Output**: `Vec<String>` of ignored path patterns
+- **Input**: architecture config
+- **Output**: list of ignored path patterns
 - **Business Rules**:
   - Default ignored paths (hardcoded): `target`, `.mimocode`, `.agents`, `node_modules`, `build.rs`, `.git`, `dist`, `build`, `coverage`, `.venv`.
   - Config-specified ignored paths appended with deduplication.
@@ -155,22 +155,22 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: None — pure function.
 
 ### FR-009: TOML Config Parsing
-- **Description**: Parse TOML config files (e.g., `Cargo.toml` `[tool.lint-arwaky]` section) into `ProjectConfig`.
-- **Input**: `path: FilePath`
-- **Output**: `Result<Option<ProjectConfig>, ConfigError>`
+- **Description**: Parse TOML config files (e.g., Cargo.toml tool.lint-arwaky section) into project config.
+- **Input**: file path
+- **Output**: project config or error
 - **Business Rules**:
-  - Reads the `[tool.lint-arwaky]` or `[tool.lint_arwaky]` section from TOML.
-  - Converts TOML value to JSON, then deserializes to `ProjectConfig`.
-  - Returns `Ok(None)` if no `[tool]` section exists (not an error).
+  - Reads the tool.lint-arwaky or tool.lint_arwaky section from TOML.
+  - Converts TOML value to JSON, then deserializes to project config.
+  - Returns none if no tool section exists (not an error).
 - **Edge Cases**:
-  - TOML file exists but has no `[tool]` section → returns `Ok(None)`.
-  - TOML file is not valid TOML → returns `ConfigError`.
-- **Error Handling**: `ConfigError` with specific keys (`tool.lint-arwaky`, `toml.convert`, `toml.parse`).
+  - TOML file exists but has no tool section → returns none.
+  - TOML file is not valid TOML → returns config error.
+- **Error Handling**: Config error with specific keys (tool section, TOML conversion, TOML parsing).
 
 ### FR-010: Config File Listing
 - **Description**: List all config files found at the project root for all supported languages.
-- **Input**: `project_root: FilePath`
-- **Output**: `Result<Vec<(ConfigLanguage, FilePath)>, ConfigError>`
+- **Input**: project root path
+- **Output**: list of (language type, file path) pairs or error
 - **Business Rules**:
   - Iterates all three languages (Rust, Python, TypeScript).
   - For each language, checks all config filenames at project root.
@@ -178,9 +178,9 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
   - Breaks after first config found per language.
 - **Edge Cases**:
   - Multiple languages have config files → all returned.
-  - No config files for any language → returns empty vec.
+  - No config files for any language → returns empty list.
   - I/O error reading a config file → warning logged, continues.
-- **Error Handling**: `ConfigError` propagated for `FilePath` creation failures.
+- **Error Handling**: Config error propagated for file path creation failures.
 
 ## Data Model / Entity Relationship
 

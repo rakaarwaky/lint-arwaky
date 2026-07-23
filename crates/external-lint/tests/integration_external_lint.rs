@@ -74,24 +74,22 @@ fn orchestrator_contains_js_adapters() {
 
 #[test]
 fn orchestrator_with_empty_adapters_returns_empty_names() {
-    let orchestrator =
-        agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
-            agent_external_lint_orchestrator::ExternalLintDeps {
-                adapters: HashMap::new(),
-            },
-        );
+    let orchestrator = agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
+        agent_external_lint_orchestrator::ExternalLintDeps {
+            adapters: HashMap::new(),
+        },
+    );
     let names = orchestrator.adapter_names();
     assert!(names.is_empty());
 }
 
 #[tokio::test]
 async fn orchestrator_with_no_adapters_returns_empty_results() {
-    let orchestrator =
-        agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
-            agent_external_lint_orchestrator::ExternalLintDeps {
-                adapters: HashMap::new(),
-            },
-        );
+    let orchestrator = agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
+        agent_external_lint_orchestrator::ExternalLintDeps {
+            adapters: HashMap::new(),
+        },
+    );
     let path = shared::common::taxonomy_path_vo::FilePath::new("/tmp".to_string()).unwrap();
     let results = orchestrator.scan_all(&path).await;
     assert!(results.is_empty());

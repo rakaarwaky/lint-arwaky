@@ -29,7 +29,12 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
     let junit: Arc<
         dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
     > = Arc::new(JunitFormatter::new());
-    ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit })
+    ReportFormatterOrchestrator::new(ReportFormatterDeps {
+        text,
+        json,
+        sarif,
+        junit,
+    })
 }
 
 #[test]

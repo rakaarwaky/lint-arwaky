@@ -75,24 +75,6 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 - **Edge Cases**: Self-imports, conditional cycles
 - **Error Handling**: Emit AES205 diagnostic with cycle path
 
-## Data Model / Entity Relationship
-
-```
-Import rule (value object)
-  - pattern: string
-  - message: string
-  - severity: severity level
-
-Layer hierarchy
-  - taxonomy: list of strings
-  - contract: list of strings
-  - utility: list of strings
-  - capabilities: list of strings
-  - agent: list of strings
-  - surface: list of strings
-  - root: list of strings
-```
-
 ## API Contract
 
 | Operation | Input | Output | Description |

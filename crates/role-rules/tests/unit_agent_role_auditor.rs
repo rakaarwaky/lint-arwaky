@@ -32,7 +32,10 @@ impl IRoleAggregate for MyOrchestrator {
     let source = make_source("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
     checker().check_agent_routing(&source, "agent", &mut violations);
-    assert!(violations.is_empty(), "Expected no violations, got: {violations:?}");
+    assert!(
+        violations.is_empty(),
+        "Expected no violations, got: {violations:?}"
+    );
 }
 
 // ─── check_agent_routing: Rust — AgentNoAggregate ────

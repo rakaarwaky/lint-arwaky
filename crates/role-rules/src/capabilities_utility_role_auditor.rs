@@ -135,7 +135,10 @@ impl UtilityRoleChecker {
                 for ch in expected.chars() {
                     match temp_iter.next() {
                         Some(actual) if actual == ch => {} // continue
-                        _ => { matched = false; break; }
+                        _ => {
+                            matched = false;
+                            break;
+                        }
                     }
                 }
                 if matched {
@@ -181,7 +184,10 @@ impl UtilityRoleChecker {
                 "AES404",
                 Severity::MEDIUM,
                 AesRoleViolation::UtilityRole {
-                    reason: Some("Utility files must not define classes, interfaces, enums, or types.".into()),
+                    reason: Some(
+                        "Utility files must not define classes, interfaces, enums, or types."
+                            .into(),
+                    ),
                 }
                 .to_string(),
             ));
@@ -320,7 +326,10 @@ impl UtilityRoleChecker {
             if c == '"' || c == '\'' {
                 let q = c;
                 let first_two: String = chars.clone().take(2).collect();
-                if first_two.len() == 2 && first_two.starts_with(q) && first_two.chars().all(|ch| ch == q) {
+                if first_two.len() == 2
+                    && first_two.starts_with(q)
+                    && first_two.chars().all(|ch| ch == q)
+                {
                     in_docstring = true;
                     // Skip the 3 quote chars (current + 2 peeked)
                     for _ in 0..2 {

@@ -22,7 +22,12 @@ fn build_full_orchestrator() -> ReportFormatterOrchestrator {
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
-    ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit })
+    ReportFormatterOrchestrator::new(ReportFormatterDeps {
+        text,
+        json,
+        sarif,
+        junit,
+    })
 }
 
 // ─── Container wiring tests ──

@@ -215,7 +215,11 @@ fn write_violation(
                         _aggregate. Convert an existing struct or keep only internal helpers."
             )
         }
-        AesRoleViolation::AgentTooManyTypes { count, names, reason } => {
+        AesRoleViolation::AgentTooManyTypes {
+            count,
+            names,
+            reason,
+        } => {
             let names_str: Vec<String> = names.iter().map(|n| n.to_string()).collect();
             let names_list = names_str.join(", ");
             let why = resolve_why(
@@ -361,7 +365,10 @@ pub enum AesRoleViolation {
     // AES403 — Capability role
     /// Deprecated: superseded by `CapabilityNoProtocol`, `CapabilityNoImplementor`, and
     /// `CapabilityTooManyTypes`. Kept for backward compatibility with old reports.
-    #[deprecated(since = "1.10.106", note = "Use CapabilityNoProtocol, CapabilityNoImplementor, or CapabilityTooManyTypes")]
+    #[deprecated(
+        since = "1.10.106",
+        note = "Use CapabilityNoProtocol, CapabilityNoImplementor, or CapabilityTooManyTypes"
+    )]
     CapabilityRouting {
         struct_name: SymbolName,
         reason: Option<LintMessage>,

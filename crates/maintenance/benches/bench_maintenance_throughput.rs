@@ -2,7 +2,9 @@
 // Layer: Benchmark (criterion, runs at release gate / nightly).
 
 use criterion::{criterion_group, criterion_main, Criterion};
-use maintenance_lint_arwaky::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
+use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
+    MaintenanceCommandsOrchestrator, MaintenanceDeps,
+};
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use std::sync::Arc;
@@ -17,9 +19,7 @@ fn bench_orchestrator_instantiation(c: &mut Criterion) {
 }
 
 fn bench_checker_instantiation(c: &mut Criterion) {
-    c.bench_function("maintenance_checker", |b| {
-        b.iter(MaintenanceChecker::new)
-    });
+    c.bench_function("maintenance_checker", |b| b.iter(MaintenanceChecker::new));
 }
 
 criterion_group!(

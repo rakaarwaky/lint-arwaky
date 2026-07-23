@@ -178,9 +178,12 @@ impl CodeAnalysisContainer {
     }
 
     pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
-        let checker_container: Arc<dyn CodeAnalysisCheckerContainerRef> = Arc::new(CodeAnalysisCheckerContainer::new(config, layer_map));
+        let checker_container: Arc<dyn CodeAnalysisCheckerContainerRef> =
+            Arc::new(CodeAnalysisCheckerContainer::new(config, layer_map));
         Self {
-            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new_with_container(checker_container)),
+            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new_with_container(
+                checker_container,
+            )),
         }
     }
 

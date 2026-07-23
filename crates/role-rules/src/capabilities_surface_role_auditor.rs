@@ -82,7 +82,10 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
         let mut count = 0;
         for line in content.lines() {
             let trimmed = line.trim();
-            if !trimmed.starts_with("//") && !trimmed.starts_with('#') && trimmed.contains(fn_keyword) {
+            if !trimmed.starts_with("//")
+                && !trimmed.starts_with('#')
+                && trimmed.contains(fn_keyword)
+            {
                 count += 1;
                 if count > 15 {
                     violations.push(LintResult::new_arch(

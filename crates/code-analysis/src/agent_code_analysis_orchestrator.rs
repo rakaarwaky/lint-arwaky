@@ -110,7 +110,8 @@ impl CodeAnalysisOrchestrator {
     }
 
     pub fn new_with_defaults() -> Self {
-        let container = Arc::new(crate::root_code_analysis_container::CodeAnalysisCheckerContainer::default());
+        let container =
+            Arc::new(crate::root_code_analysis_container::CodeAnalysisCheckerContainer::default());
         Self {
             deps: CodeAnalysisDeps { container },
         }
@@ -260,10 +261,12 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer-dependent checks (code-analysis only)
-            self.deps
-                .container
-                .line_checker()
-                .check_line_counts(file, Some(def), &c, &mut violations);
+            self.deps.container.line_checker().check_line_counts(
+                file,
+                Some(def),
+                &c,
+                &mut violations,
+            );
 
             // Mandatory class definition check (AES303)
             self.deps

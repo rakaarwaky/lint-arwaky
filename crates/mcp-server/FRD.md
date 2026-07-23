@@ -2,14 +2,14 @@
 
 ## System Overview
 
-The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools accessible by AI agents and IDEs. It registers four MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`) via the `rmcp` crate, delegates command execution to the analysis pipeline orchestrator, and returns structured JSON responses. The crate follows the AES 7-layer architecture: the MCP server orchestrator (agent) implements the MCP server aggregate, the lint-arwaky MCP server (surface) registers tools and handles protocol, and the MCP container (root) wires all dependencies.
+The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools accessible by AI agents and IDEs. It registers four MCP tools (execute command, list commands, read skill, health check) via the MCP protocol library, delegates command execution to the analysis pipeline orchestrator, and returns structured JSON responses. The crate follows the AES 7-layer architecture: the MCP server orchestrator (agent) implements the MCP server aggregate, the lint-arwaky MCP server (surface) registers tools and handles protocol, and the MCP container (root) wires all dependencies.
 
 ## Functional Requirements
 
 ### FR-001: Execute Command
 
 - **Description**: Execute any lint-arwaky CLI command via the MCP interface. Supports actions: `check`, `scan`, `fix`, `ci`, `doctor`, `version`, `adapters`, `install-hook`, `uninstall-hook`, `init`, `install`, `mcp-config`, `config-show`, `orphan`, `security`, `duplicates`, `dependencies`.
-- **Input**: `ExecuteCommandArgs` with `action: String` and optional `args` map (keys: `path`, `threshold`, `client`).
+- **Input**: Execute command args with action string and optional argument map (keys: path, threshold, client).
 - **Output**: JSON string with `status`, `action`, and action-specific fields (e.g., `total_violations`, `results`, `error`).
 - **Business Rules**:
   - `check` / `scan`: defaults path to `"."`, creates a scan request with scan mode set to scan, delegates to the analysis pipeline aggregate's run method.
@@ -35,7 +35,7 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 ### FR-002: List Commands
 
 - **Description**: List available CLI commands with descriptions and examples, optionally filtered by domain.
-- **Input**: `ListCommandsArgs` with optional `domain: Option<String>`.
+- **Input**: List commands args with optional domain filter string.
 - **Output**: JSON string with `commands` array (each: `name`, `description`, `example`) and `total` count.
 - **Business Rules**:
   - If `domain` is provided and non-empty, only commands whose name contains the domain string are returned.
@@ -50,7 +50,7 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 ### FR-003: Read Skill
 
 - **Description**: Read SKILL.md documentation by section, searching multiple candidate locations.
-- **Input**: `ReadSkillArgs` with optional `section: Option<String>`.
+- **Input**: Read skill args with optional section filter string.
 - **Output**: JSON string with `content` (full or section-specific) or `error` if not found.
 - **Business Rules**:
   - Search order for SKILL.md: `../SKILL.md`, `./SKILL.md`, `./SKILL.md`, XDG config dir (`~/.config/lint-arwaky/SKILL.md`).
@@ -82,12 +82,12 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 
 ### FR-005: MCP Protocol Registration
 
-- **Description**: Register MCP tools and server info with the `rmcp` protocol framework.
+- **Description**: Register MCP tools and server info with the MCP protocol framework.
 - **Input**: None (configured at construction).
-- **Output**: `ServerInfo` with protocol version, server name (`"lint-arwaky"`), version, and `ToolsCapability`.
+- **Output**: Server info with protocol version, server name ("lint-arwaky"), version, and tools capability.
 - **Business Rules**:
-  - Tools are registered via the tool router macro: `execute_command`, `list_commands`, `read_skill`, `health_check`.
-  - Server name is `"lint-arwaky"`, version from the crate version.
+  - Tools are registered via the tool router: execute command, list commands, read skill, health check.
+  - Server name is "lint-arwaky", version from the crate version.
   - Protocol version uses the default protocol version.
 - **Edge Cases**:
   - None (static configuration).

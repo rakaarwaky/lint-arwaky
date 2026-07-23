@@ -13,8 +13,6 @@
 //      returns violations via the violations Vec.
 //   4. Unknown prefixes are silently skipped (handled by other crates).
 
-use std::path::Path;
-use std::sync::Arc;
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -27,6 +25,8 @@ use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
 use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use std::path::Path;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definitions ──────────────────────────
 
@@ -105,11 +105,7 @@ impl RoleOrchestrator {
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
     ///   - root: no role checks (pure DI wiring)
-    pub fn run_all_role_checks(
-        &self,
-        files: &[String],
-        violations: &mut Vec<LintResult>,
-    ) {
+    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
         if !self.config.enabled.value {
             return;
         }
@@ -137,11 +133,15 @@ impl RoleOrchestrator {
 
             match prefix {
                 "agent" => {
-                    self.deps.agent.check_agent_routing(&source_vo, "agent", violations);
+                    self.deps
+                        .agent
+                        .check_agent_routing(&source_vo, "agent", violations);
                 }
                 "root" => {}
                 "surfaces" | "surface" => {
-                    self.deps.surface.check_fn_count_limit(&source_vo, violations);
+                    self.deps
+                        .surface
+                        .check_fn_count_limit(&source_vo, violations);
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
                         || filename.contains("_page")
@@ -152,11 +152,17 @@ impl RoleOrchestrator {
                         || filename.contains("_screen")
                         || filename.contains("_router");
                     if is_smart {
-                        self.deps.surface.check_smart_surface(&source_vo, violations);
+                        self.deps
+                            .surface
+                            .check_smart_surface(&source_vo, violations);
                     } else if is_utility {
-                        self.deps.surface.check_utility_surface(&source_vo, violations);
+                        self.deps
+                            .surface
+                            .check_utility_surface(&source_vo, violations);
                     } else {
-                        self.deps.surface.check_passive_surface(&source_vo, violations);
+                        self.deps
+                            .surface
+                            .check_passive_surface(&source_vo, violations);
                     }
                 }
                 "contract" => {
@@ -174,7 +180,9 @@ impl RoleOrchestrator {
                     );
                 }
                 "utility" => {
-                    self.deps.utility.check_utility_convention(&source_vo, violations);
+                    self.deps
+                        .utility
+                        .check_utility_convention(&source_vo, violations);
                 }
                 "taxonomy" => {
                     self.deps.taxonomy.check_entity(&source_vo, violations);

@@ -1,7 +1,9 @@
 // PURPOSE: Unit tests for MaintenanceCommandsOrchestrator — stats, clean, doctor, cancel.
 // Layer: Agent (target ≥ 60% coverage).
 
-use maintenance_lint_arwaky::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
+use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
+    MaintenanceCommandsOrchestrator, MaintenanceDeps,
+};
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_job_id_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;

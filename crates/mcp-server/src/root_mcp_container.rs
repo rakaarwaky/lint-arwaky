@@ -1,7 +1,9 @@
 // PURPOSE: McpContainer — DI wiring for MCP server aggregates
 use std::sync::Arc;
 
-use cli_commands::agent_analysis_pipeline_orchestrator::{AnalysisPipelineDeps, AnalysisPipelineOrchestrator};
+use cli_commands::agent_analysis_pipeline_orchestrator::{
+    AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
+};
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

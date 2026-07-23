@@ -65,7 +65,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 let mut r = LintResultList::new(Vec::new());
                 self.deps
                     .mandatory
-                    .run_mandatory_imports(&self.deps.config, &self.layer_map, &files, &root_dir, &mut r)
+                    .run_mandatory_imports(
+                        &self.deps.config,
+                        &self.layer_map,
+                        &files,
+                        &root_dir,
+                        &mut r,
+                    )
                     .await;
                 r
             },
@@ -93,9 +99,11 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .flat_map(|file| {
                 let mut local_results = Vec::new();
                 if let Ok(content) = std::fs::read_to_string(file.value()) {
-                    self.deps
-                        .unused
-                        .check_unused_imports(file.value(), &content, &mut local_results);
+                    self.deps.unused.check_unused_imports(
+                        file.value(),
+                        &content,
+                        &mut local_results,
+                    );
 
                     let content_str = ContentString::new(content);
                     self.deps.dummy.check_dummy_imports(

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-use tracing::debug;
 use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -10,6 +8,7 @@ use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_error::ErrorMessage;
 use shared::taxonomy_common_vo::ColumnNumber;
@@ -19,7 +18,8 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
+use std::sync::Arc;
+use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
