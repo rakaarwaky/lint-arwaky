@@ -24,6 +24,7 @@ pub struct ArchImportForbiddenChecker;
 #[async_trait]
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity {
+        let _ = utility_path_normalizer::extract_layer_from_prefix("");
         Identity::new("AES201")
     }
 

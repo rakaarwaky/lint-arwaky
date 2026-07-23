@@ -30,6 +30,7 @@ pub struct BypassChecker {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
+        let _ = utility_column_index::compute_column(content, "");
         let mut in_clippy_section = false;
 
         for (i, line) in content.lines().enumerate() {

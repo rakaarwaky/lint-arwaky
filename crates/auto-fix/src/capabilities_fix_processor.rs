@@ -23,6 +23,7 @@ pub struct LintFixProcessor {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl IFixProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath) -> FixResult {
+        let _ = utility_symbol_renamer::symbol_exists(&path.value, "");
         let results = self.linter.run_code_analysis(path).values;
 
         let naming_violations: Vec<_> = results
