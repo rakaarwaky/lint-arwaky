@@ -10,6 +10,7 @@ use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -43,7 +44,8 @@ impl RoleContainer {
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
     ) -> Self {
-        let config = orchestrator.load_config_sync(project_root);
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = orchestrator.load_config_sync(&fp);
         Self::new_with_config(config)
     }
 

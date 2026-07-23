@@ -20,7 +20,7 @@ pub struct McpServerDependencies {
 }
 
 pub struct McpServerOrchestrator {
-    pub(crate) deps: McpServerDependencies,
+    deps: McpServerDependencies,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -141,9 +141,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "adapters" => {
                 let ext = self.deps.external_lint.clone();
                 let adapter_names = ext.adapter_names();
-                let futures = adapter_names.into_iter().map(|name| async move {
+                let futures = adapter_names.values.into_iter().map(|name| async move {
                     let found = match tokio::process::Command::new("which")
-                        .arg(&name)
+                        .arg(&*name)
                         .output()
                         .await
                     {

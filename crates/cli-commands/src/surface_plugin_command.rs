@@ -9,7 +9,7 @@ pub fn handle_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> ExitCo
     if adapters.is_empty() {
         println!("  (none enabled)");
     } else {
-        for adapter in &adapters {
+        for adapter in adapters.iter() {
             println!("  - {adapter}");
         }
     }

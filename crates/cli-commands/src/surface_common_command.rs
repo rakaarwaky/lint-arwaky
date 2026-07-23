@@ -75,7 +75,7 @@ pub fn run_ci_analysis(
     println!();
 
     let mut reasons: Vec<String> = Vec::new();
-    if has_crit {
+    if has_crit.value() {
         reasons.push("CRITICAL violation(s) detected — auto-fail triggered".to_string());
     }
     if below_threshold {

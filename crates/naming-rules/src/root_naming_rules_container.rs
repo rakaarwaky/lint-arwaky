@@ -1,5 +1,6 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
 use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::{
@@ -37,7 +38,8 @@ impl NamingContainer {
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
     ) -> Self {
-        let config = Arc::new(orchestrator.load_config_sync(project_root));
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = Arc::new(orchestrator.load_config_sync(&fp));
         let layer_map = Arc::new(LayerMapVO::new(config.layers.clone()));
         Self::new(config, layer_map)
     }

@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
@@ -126,12 +127,12 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         stream::iter(futures).buffered(8).collect().await
     }
 
-    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig {
-        let root = std::path::Path::new(project_root);
+    fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig {
+        let root = std::path::Path::new(project_root.value());
         let ws_type = self
             .deps
             .workspace_detector
-            .detect(&FilePath::new(project_root.to_string()).unwrap_or_default());
+            .detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
         // Search upward for config file (up to 3 levels)
@@ -167,29 +168,28 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         config
     }
 
-    fn ignored_paths(&self, project_root: &str) -> Vec<String> {
+    fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
         let config = self.load_config_sync(project_root);
-        ignored_paths_from_config(&config)
+        PatternList::new(ignored_paths_from_config(&config))
     }
 
     fn ignored_paths_for_language(
         &self,
-        project_root: &str,
+        project_root: &FilePath,
         language: ConfigLanguage,
-    ) -> Vec<String> {
-        let path = FilePath::new(project_root.to_string()).unwrap_or_default();
+    ) -> PatternList {
         let runtime = tokio::runtime::Handle::try_current();
         let config = match runtime {
             Ok(rt) => match rt.runtime_flavor() {
                 tokio::runtime::RuntimeFlavor::MultiThread => tokio::task::block_in_place(|| {
-                    rt.block_on(async { self.load_config_for_language(&path, language).await })
+                    rt.block_on(async { self.load_config_for_language(project_root, language).await })
                         .config
                 }),
                 _ => self.load_config_sync(project_root),
             },
             Err(_) => self.load_config_sync(project_root),
         };
-        ignored_paths_from_config(&config)
+        PatternList::new(ignored_paths_from_config(&config))
     }
 
     async fn list_config_files(

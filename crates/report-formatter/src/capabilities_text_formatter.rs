@@ -52,9 +52,7 @@ impl TextFormatter {
         let results_list =
             shared::cli_commands::taxonomy_result_vo::LintResultList::new(report.results.clone());
         let report_path = shared::common::taxonomy_path_vo::FilePath::default();
-        DisplayContent::new(
-            self.code_analysis_linter
-                .format_report(&results_list, &report_path),
-        )
+        self.code_analysis_linter
+            .format_report(&results_list, &report_path)
     }
 }

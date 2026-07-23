@@ -3,6 +3,7 @@
 
 use external_lint_lint_arwaky::ExternalLintContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::fs;
 
@@ -88,7 +89,7 @@ async fn frd_006_adapter_names_exposes_all_registered() {
     ];
     for name in &expected {
         assert!(
-            names.contains(&name.to_string()),
+            names.contains(&AdapterName::raw(name)),
             "Expected adapter '{}' to be registered",
             name
         );

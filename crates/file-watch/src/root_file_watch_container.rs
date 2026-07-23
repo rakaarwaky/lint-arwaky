@@ -8,14 +8,13 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 
 pub struct FileWatchContainer {
-    provider: Arc<NotifyWatchProvider>,
+    provider: Arc<dyn IWatchProviderProtocol>,
 }
 
 impl FileWatchContainer {
     pub fn new() -> Self {
-        Self {
-            provider: Arc::new(NotifyWatchProvider::new()),
-        }
+        let provider: Arc<dyn IWatchProviderProtocol> = Arc::new(NotifyWatchProvider::new());
+        Self { provider }
     }
 
     pub fn provider(&self) -> Arc<dyn IWatchProviderProtocol> {

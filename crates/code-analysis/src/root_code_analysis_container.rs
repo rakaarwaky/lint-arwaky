@@ -1,16 +1,11 @@
-// PURPOSE: Root container for code-analysis — defines CodeAnalysisCheckerContainer and CodeAnalysisContainer
-// Wiring: ICodeMetricAnalyzerProtocol → CodeDuplicationAnalyzer (capabilities layer)
-// ALGORITHM:
-//   CodeAnalysisCheckerContainer: injects checkers (BypassChecker, ArchLineChecker,
-//     MandatoryDefinitionChecker, CodeDuplicationAnalyzer) and exposes them via typed accessors.
-//   CodeAnalysisContainer: wraps CodeAnalysisOrchestrator as IArchLintProtocol for surface consumption.
-
+use crate::agent_code_analysis_orchestrator::{CodeAnalysisDeps, CodeAnalysisOrchestrator};
 use crate::capabilities_check_bypass_checker::BypassChecker;
-use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
+use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
@@ -18,21 +13,27 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use std::sync::Arc;
 
-/// CodeAnalysisCheckerContainer holds only code-analysis protocol implementations.
-/// Other crates (import-rules, naming-rules, role-rules, orphan-detector)
-/// have their own containers and orchestrators.
-#[derive(Clone)]
-pub struct CodeAnalysisCheckerContainer {
-    config: ArchitectureConfig,
-    layer_map: LayerMapVO,
-    bypass_checker: Arc<dyn IBypassCheckerProtocol>,
-    mandatory_definition_checker: Arc<MandatoryDefinitionChecker>,
-    line_checker: Arc<dyn ILineCheckerProtocol>,
-    code_duplication_analyzer: Arc<CodeDuplicationAnalyzer>,
+pub struct CodeAnalysisContainer {
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
-impl CodeAnalysisCheckerContainer {
-    pub fn new(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
+impl CodeAnalysisContainer {
+    pub fn new() -> Self {
+        let config = ArchitectureConfig::default();
+        let layer_map = LayerMapVO::new(std::collections::HashMap::new());
+        let mandatory = Arc::new(MandatoryDefinitionChecker::new());
+        let deps = CodeAnalysisDeps {
+            bypass_checker: Arc::new(BypassChecker::default()) as Arc<dyn IBypassCheckerProtocol>,
+            dead_inheritance_checker: mandatory.clone() as Arc<dyn IDeadInheritanceProtocol>,
+            line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
+            class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
+        };
+        Self {
+            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),
+        }
+    }
+
+    pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         let bypass = config
             .rules
@@ -40,159 +41,23 @@ impl CodeAnalysisCheckerContainer {
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
             .unwrap_or_default();
-        // P1.6 fix: wire config into duplication analyzer via from_config()
-        let dup_analyzer = CodeDuplicationAnalyzer::from_config(Arc::new(config.clone()));
+        let deps = CodeAnalysisDeps {
+            bypass_checker: Arc::new(bypass) as Arc<dyn IBypassCheckerProtocol>,
+            dead_inheritance_checker: mandatory.clone() as Arc<dyn IDeadInheritanceProtocol>,
+            line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
+            class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
+        };
         Self {
-            config,
-            layer_map,
-            bypass_checker: Arc::new(bypass),
-            mandatory_definition_checker: mandatory,
-            line_checker: Arc::new(ArchLineChecker {}),
-            code_duplication_analyzer: Arc::new(dup_analyzer),
+            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),
         }
     }
 
-    pub fn config(&self) -> &ArchitectureConfig {
-        &self.config
-    }
-
-    pub fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol> {
-        &self.bypass_checker
-    }
-
-    pub fn dead_inheritance_checker(&self) -> Arc<dyn IDeadInheritanceProtocol> {
-        self.mandatory_definition_checker.clone()
-    }
-
-    pub fn line_checker(&self) -> &Arc<dyn ILineCheckerProtocol> {
-        &self.line_checker
-    }
-
-    pub fn class_checker(&self) -> Arc<dyn IMandatoryClassProtocol> {
-        self.mandatory_definition_checker.clone()
-    }
-
-    pub fn detect_layer(
-        &self,
-        file: &str,
-        _root_dir: &str,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        let filename = shared::common::utility_layer_detector::extract_filename(file);
-        let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
-        let keys = shared::common::utility_layer_detector::collect_layer_keys(&self.layer_map);
-        Some(shared::taxonomy_layer_vo::LayerNameVO::new(
-            shared::common::utility_layer_detector::resolve_specialized_layer(&layer, file, &keys),
-        ))
-    }
-
-    pub fn get_layer_def(
-        &self,
-        layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
-        shared::common::utility_layer_detector::get_layer_def(&layer.value, &self.config.layers)
-    }
-
-    pub fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer> {
-        &self.code_duplication_analyzer
-    }
-
-    pub fn as_checker_ref(&self) -> &dyn CodeAnalysisCheckerContainerRef {
-        self
-    }
-}
-
-/// Trait for dynamic dispatch of CodeAnalysisCheckerContainer
-pub trait CodeAnalysisCheckerContainerRef: Send + Sync {
-    fn config(&self) -> &ArchitectureConfig;
-    fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol>;
-    fn dead_inheritance_checker(&self) -> Arc<dyn IDeadInheritanceProtocol>;
-    fn line_checker(&self) -> &Arc<dyn ILineCheckerProtocol>;
-    fn class_checker(&self) -> Arc<dyn IMandatoryClassProtocol>;
-    fn detect_layer(
-        &self,
-        file: &str,
-        root_dir: &str,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO>;
-    fn get_layer_def(
-        &self,
-        layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition>;
-    fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer>;
-}
-
-impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
-    fn config(&self) -> &ArchitectureConfig {
-        self.config()
-    }
-    fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol> {
-        self.bypass_checker()
-    }
-    fn dead_inheritance_checker(&self) -> Arc<dyn IDeadInheritanceProtocol> {
-        self.dead_inheritance_checker()
-    }
-    fn line_checker(&self) -> &Arc<dyn ILineCheckerProtocol> {
-        self.line_checker()
-    }
-    fn class_checker(&self) -> Arc<dyn IMandatoryClassProtocol> {
-        self.class_checker()
-    }
-    fn detect_layer(
-        &self,
-        file: &str,
-        root_dir: &str,
-    ) -> Option<shared::taxonomy_layer_vo::LayerNameVO> {
-        self.detect_layer(file, root_dir)
-    }
-    fn get_layer_def(
-        &self,
-        layer: &shared::taxonomy_layer_vo::LayerNameVO,
-    ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
-        self.get_layer_def(layer)
-    }
-    fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer> {
-        self.duplication_checker()
-    }
-}
-
-impl Default for CodeAnalysisCheckerContainer {
-    fn default() -> Self {
-        let config = ArchitectureConfig::default();
-        let layer_map = LayerMapVO::new(std::collections::HashMap::new());
-        Self::new(config, layer_map)
-    }
-}
-
-// CodeAnalysisContainer — wiring for code-analysis feature
-use crate::CodeAnalysisOrchestrator;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-
-pub struct CodeAnalysisContainer {
-    code_analysis_linter: Arc<CodeAnalysisOrchestrator>,
-}
-
-impl CodeAnalysisContainer {
-    pub fn new() -> Self {
-        Self {
-            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new_with_defaults()),
-        }
-    }
-
-    pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
-        let checker_container: Arc<dyn CodeAnalysisCheckerContainerRef> =
-            Arc::new(CodeAnalysisCheckerContainer::new(config, layer_map));
-        Self {
-            code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new_with_container(
-                checker_container,
-            )),
-        }
-    }
-
-    /// Create from config orchestrator — the canonical way per AES architecture.
     pub fn from_orchestrator(
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
     ) -> Self {
-        let config = orchestrator.load_config_sync(project_root);
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = orchestrator.load_config_sync(&fp);
         let layer_map = LayerMapVO::new(config.layers.clone());
         Self::new_with_config(config, layer_map)
     }

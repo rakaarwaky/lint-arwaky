@@ -18,6 +18,8 @@ use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
+use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
@@ -150,8 +152,8 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         LintResultList::new(all)
     }
 
-    fn adapter_names(&self) -> Vec<String> {
-        self.deps.adapters.keys().cloned().collect()
+    fn adapter_names(&self) -> AdapterNameList {
+        AdapterNameList::new(self.deps.adapters.keys().map(|k| AdapterName::raw(k.clone())).collect())
     }
 }
 

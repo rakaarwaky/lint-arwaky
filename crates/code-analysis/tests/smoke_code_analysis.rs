@@ -2,7 +2,7 @@
 // its containers, and can execute a basic scan without panicking.
 // Must complete in under 5 seconds.
 
-use code_analysis_lint_arwaky::{CodeAnalysisContainer, CodeAnalysisOrchestrator};
+use code_analysis_lint_arwaky::CodeAnalysisContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::time::Instant;
 
@@ -40,11 +40,13 @@ fn crate_boots_and_scans_without_panic() {
 }
 
 #[test]
-fn orchestrator_boots_and_lint_path_works() {
+fn orchestrator_boots_and_runs_self_lint() {
     let start = Instant::now();
 
-    let orch = CodeAnalysisOrchestrator::new_with_defaults();
-    let results = orch.run_self_lint(".");
+    let container = CodeAnalysisContainer::new();
+    let aggregate = container.code_analysis_linter();
+    let path = FilePath::new(".".to_string()).unwrap();
+    let results = aggregate.run_code_analysis_path(&path);
 
     // Should return a Vec (possibly empty) without panicking
     let _ = results.len();

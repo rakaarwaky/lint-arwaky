@@ -15,8 +15,8 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let path_buf = std::path::PathBuf::from(&path.value);
 
         // Batch directory scan for config files in the given path (single syscall instead of up to 10)
-        if Self::check_dir_for_language(&path_buf).is_some() {
-            return Self::check_dir_for_language(&path_buf).unwrap();
+        if let Some(lang) = Self::check_dir_for_language(&path_buf) {
+            return lang;
         }
 
         if let Some(parent) = path_buf.parent() {
@@ -31,8 +31,8 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 2 {
-            if Self::check_dir_for_language(&current).is_some() {
-                return Self::check_dir_for_language(&current).unwrap();
+            if let Some(lang) = Self::check_dir_for_language(&current) {
+                return lang;
             }
             if let Some(parent) = current.parent() {
                 current = parent.to_path_buf();

@@ -2,6 +2,7 @@
 // and orchestrator composition using the real ExternalLintContainer.
 
 use external_lint_lint_arwaky::*;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -45,9 +46,9 @@ fn orchestrator_contains_rust_adapters() {
     let container = ExternalLintContainer::new();
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
-    assert!(names.contains(&"clippy".to_string()));
-    assert!(names.contains(&"rustfmt".to_string()));
-    assert!(names.contains(&"cargo-audit".to_string()));
+    assert!(names.contains(&AdapterName::raw("clippy")));
+    assert!(names.contains(&AdapterName::raw("rustfmt")));
+    assert!(names.contains(&AdapterName::raw("cargo-audit")));
 }
 
 #[test]
@@ -55,9 +56,9 @@ fn orchestrator_contains_python_adapters() {
     let container = ExternalLintContainer::new();
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
-    assert!(names.contains(&"ruff".to_string()));
-    assert!(names.contains(&"mypy".to_string()));
-    assert!(names.contains(&"bandit".to_string()));
+    assert!(names.contains(&AdapterName::raw("ruff")));
+    assert!(names.contains(&AdapterName::raw("mypy")));
+    assert!(names.contains(&AdapterName::raw("bandit")));
 }
 
 #[test]
@@ -65,9 +66,9 @@ fn orchestrator_contains_js_adapters() {
     let container = ExternalLintContainer::new();
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
-    assert!(names.contains(&"eslint".to_string()));
-    assert!(names.contains(&"prettier".to_string()));
-    assert!(names.contains(&"tsc".to_string()));
+    assert!(names.contains(&AdapterName::raw("eslint")));
+    assert!(names.contains(&AdapterName::raw("prettier")));
+    assert!(names.contains(&AdapterName::raw("tsc")));
 }
 
 // ─── Orchestrator with Custom Adapters ────────────────────

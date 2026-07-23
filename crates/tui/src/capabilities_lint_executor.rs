@@ -98,9 +98,9 @@ impl ILintExecutorProtocol for LintExecutor {
         let results = self.code_analysis.run_code_analysis(&fp);
         let score = self.code_analysis.calc_score(&results.values);
         let has_critical = self.code_analysis.check_critical(&results.values);
-        let pass = score.value() >= flags.threshold as f64 && !has_critical;
+        let pass = score.value() >= flags.threshold as f64 && !has_critical.value();
         let status = if pass { "PASS" } else { "FAIL" };
-        let output = format!("CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}", path, score, flags.threshold, results.len(), has_critical, status);
+        let output = format!("CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}", path, score, flags.threshold, results.len(), has_critical.value(), status);
         if pass {
             LintExecutionResult::success(output, results.len())
         } else {
@@ -119,16 +119,19 @@ impl ILintExecutorProtocol for LintExecutor {
                 let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| path.to_string());
+                let root_fp =
+                    shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
+                        .unwrap_or_default();
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
                 let ignored = self
                     .config_orchestrator
                     .as_ref()
-                    .map(|o| o.ignored_paths(&scan_root))
+                    .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
                 let source_files =
-                    match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored)
+                    match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
                     {
                         Ok(list) => list.values,
                         Err(e) => {
@@ -148,7 +151,8 @@ impl ILintExecutorProtocol for LintExecutor {
                         0,
                     );
                 }
-                let results = orphan_agg.check_orphans(&file_strs, &scan_root);
+                let files_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_strs.clone());
+                let results = orphan_agg.check_orphans(&files_vo, &root_fp);
                 let count = results.len();
                 let mut output = format!(
                     "Orphan detection for {}\nScanned {} files in {}\n",
@@ -215,7 +219,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 );
                 let security_count = security_results.len();
                 let output = if security_count == 0 {
-                    format!("Security scan for {}\n{} total lint results, none from security adapters (cargo-audit, bandit).\nAdapters scanned: {}", path, results.len(), ext_lint.adapter_names().join(", "))
+                    format!("Security scan for {}\n{} total lint results, none from security adapters (cargo-audit, bandit).\nAdapters scanned: {}", path, results.len(), ext_lint.adapter_names().iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", "))
                 } else {
                     let mut out = format!(
                         "Security scan for {}\nFound {} finding(s) from security adapters:\n\n",
@@ -253,15 +257,17 @@ impl ILintExecutorProtocol for LintExecutor {
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
+        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
+            .unwrap_or_default();
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
         let ignored = self
             .config_orchestrator
             .as_ref()
-            .map(|o| o.ignored_paths(&scan_root))
+            .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
         let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
@@ -839,21 +845,24 @@ impl LintExecutor {
 
         // 6. Orphan detection (AES501-506)
         if let Some(ref orphan_agg) = self.orphan_aggregate {
+            let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+                .unwrap_or_default();
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
             let ignored = self
                 .config_orchestrator
                 .as_ref()
-                .map(|o| o.ignored_paths(path))
+                .map(|o| o.ignored_paths(&root_fp))
                 .unwrap_or_default();
             let source_files =
-                match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
                     Ok(list) => list.values,
                     Err(_) => Vec::new(),
                 };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
-                let orphan_results = orphan_agg.check_orphans(&file_strs, path);
+                let files_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_strs);
+                let orphan_results = orphan_agg.check_orphans(&files_vo, &root_fp);
                 all_results.extend(orphan_results);
             }
         }

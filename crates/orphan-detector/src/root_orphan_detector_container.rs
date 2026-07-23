@@ -1,5 +1,6 @@
 use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
@@ -62,7 +63,8 @@ impl OrphanContainer {
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
     ) -> Self {
-        let config = orchestrator.load_config_sync(project_root);
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = orchestrator.load_config_sync(&fp);
         Self::new_with_config(config)
     }
 

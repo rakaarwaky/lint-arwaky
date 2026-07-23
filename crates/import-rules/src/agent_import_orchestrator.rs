@@ -30,6 +30,7 @@ pub struct ImportOrchestratorDeps {
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
     pub config: ArchitectureConfig,
+    pub ignored_paths: Vec<String>,
 }
 
 pub struct ImportOrchestrator {
@@ -179,7 +180,13 @@ impl ImportOrchestrator {
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
-        DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) || dir_name.starts_with('.')
+        if DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) || dir_name.starts_with('.') {
+            return true;
+        }
+        let path_str = p.to_string_lossy();
+        self.deps.ignored_paths.iter().any(|ignored| {
+            path_str.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
+        })
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {

@@ -6,13 +6,13 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
     MaintenanceCommandsOrchestrator, MaintenanceDeps,
 };
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::project_setup::contract_maintenance_protocol::;
 use std::sync::Arc;
 
 fn bench_orchestrator_instantiation(c: &mut Criterion) {
     c.bench_function("maintenance_orchestrator", |b| {
         b.iter(|| {
-            let checker: Arc<dyn IMaintenanceCheckerProtocol> = Arc::new(MaintenanceChecker::new());
+            let checker: Arc<dyn > = Arc::new(MaintenanceChecker::new());
             MaintenanceCommandsOrchestrator::new(MaintenanceDeps { checker })
         });
     });

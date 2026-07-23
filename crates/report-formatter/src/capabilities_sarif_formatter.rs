@@ -31,65 +31,10 @@ impl IReportFormatterProtocol for SarifFormatter {
 impl SarifFormatter {
     /// Format results as a SARIF 2.1.0 JSON string wrapped in DisplayContent.
     pub fn format_sarif(&self, results: &[LintResult]) -> DisplayContent {
-        #[derive(serde::Serialize)]
-        struct SarifLog {
-            #[serde(rename = "$schema")]
-            schema: &'static str,
-            version: &'static str,
-            runs: Vec<SarifRun>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifRun {
-            tool: SarifTool,
-            results: Vec<SarifResult>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifTool {
-            driver: SarifDriver,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifDriver {
-            name: &'static str,
-            version: &'static str,
-            information_uri: &'static str,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifResult {
-            rule_id: String,
-            level: String,
-            message: SarifMessage,
-            locations: Vec<SarifLocation>,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifMessage {
-            text: String,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifLocation {
-            physical_location: SarifPhysicalLocation,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifPhysicalLocation {
-            artifact_location: SarifArtifactLocation,
-            region: SarifRegion,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifArtifactLocation {
-            uri: String,
-        }
-
-        #[derive(serde::Serialize)]
-        struct SarifRegion {
-            start_line: i64,
-        }
+        use crate::taxonomy_sarif_vo::{
+            SarifArtifactLocation, SarifDriver, SarifLocation, SarifLog, SarifMessage,
+            SarifPhysicalLocation, SarifRegion, SarifResult, SarifRun, SarifTool,
+        };
 
         // Map Severity → SARIF level
         fn severity_to_sarif_level(
