@@ -1,14 +1,14 @@
 // PURPOSE: Unit tests for CodeAnalysisOrchestrator — agent layer orchestration,
 // score calculation, critical check, report formatting.
 
-use code_analysis_lint_arwaky::{has_critical, CodeAnalysisOrchestrator};
+use code_analysis_lint_arwaky::{has_critical, CodeAnalysisContainer};
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 
-fn orchestrator() -> CodeAnalysisOrchestrator {
-    CodeAnalysisOrchestrator::new_with_defaults()
+fn orchestrator() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
+    CodeAnalysisContainer::new().code_analysis_linter()
 }
 
 // ─── calc_score: Perfect score with no violations ────────────────────
@@ -124,14 +124,6 @@ fn run_code_analysis_nonexistent_path_returns_empty() {
     let orch = orchestrator();
     let path = FilePath::new("/nonexistent/path/xyz".to_string()).unwrap();
     let results = orch.run_code_analysis_path(&path);
-    assert!(results.is_empty());
-}
-
-// ─── lint_path public function ───────────────────────────────────────
-
-#[test]
-fn lint_path_nonexistent_returns_empty() {
-    let results = code_analysis_lint_arwaky::lint_path("/nonexistent/path/xyz");
     assert!(results.is_empty());
 }
 

@@ -76,28 +76,6 @@ fn write_violation(
                 lang.interface_kw()
             )
         }
-        #[allow(deprecated)]
-        AesRoleViolation::CapabilityRouting {
-            struct_name,
-            reason,
-        } => {
-            let default = format!(
-                "Capability {}s must implement their corresponding {} traits/interfaces to \
-                 ensure clean interface boundaries.",
-                lang.struct_keyword(),
-                lang.interface_kw()
-            );
-            let why = resolve_why(reason, default);
-            write!(
-                f,
-                "AES403 CAPABILITY_ROLE: {} '{struct_name}' has no {} implementation.\n\
-                        WHY? {why}\n\
-                        FIX: Implement the capability protocol {} for '{struct_name}'.",
-                lang.struct_keyword(),
-                lang.interface_kw(),
-                lang.interface_kw()
-            )
-        }
         AesRoleViolation::CapabilityNoProtocol { reason } => {
             let why = resolve_why(
                 reason,
@@ -363,16 +341,6 @@ pub enum AesRoleViolation {
         reason: Option<LintMessage>,
     },
     // AES403 — Capability role
-    /// Deprecated: superseded by `CapabilityNoProtocol`, `CapabilityNoImplementor`, and
-    /// `CapabilityTooManyTypes`. Kept for backward compatibility with old reports.
-    #[deprecated(
-        since = "1.10.106",
-        note = "Use CapabilityNoProtocol, CapabilityNoImplementor, or CapabilityTooManyTypes"
-    )]
-    CapabilityRouting {
-        struct_name: SymbolName,
-        reason: Option<LintMessage>,
-    },
     CapabilityNoProtocol {
         reason: Option<LintMessage>,
     },

@@ -1,3 +1,4 @@
+use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
@@ -20,17 +21,17 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
 
     /// Synchronous config loading for container initialization.
     /// Searches workspace root for config YAML, falls back to embedded defaults.
-    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+    fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig;
 
     /// Get ignored paths from config (hardcoded defaults + config values).
-    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
+    fn ignored_paths(&self, project_root: &FilePath) -> PatternList;
 
     /// Get ignored paths for a specific language (hardcoded defaults + config values for that language).
     fn ignored_paths_for_language(
         &self,
-        project_root: &str,
+        project_root: &FilePath,
         language: ConfigLanguage,
-    ) -> Vec<String>;
+    ) -> PatternList;
 
     /// List config files found in the project.
     async fn list_config_files(

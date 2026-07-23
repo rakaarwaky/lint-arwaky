@@ -21,6 +21,7 @@ use shared::common::utility_language_detector::detect_language;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
@@ -48,7 +49,7 @@ pub struct RoleOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 #[async_trait]
-impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+impl IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
         let mut results = Vec::new();
         let files = self.collect_files(target);

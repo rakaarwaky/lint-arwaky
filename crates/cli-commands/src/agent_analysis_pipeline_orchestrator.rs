@@ -13,8 +13,10 @@ use shared::cli_commands::taxonomy_scan_report_vo::{
 };
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
@@ -177,14 +179,15 @@ impl AnalysisPipelineOrchestrator {
     async fn run_orphan_detection(&self, path: &str) -> Vec<LintResult> {
         let scan_root = crate::utility_path_resolver::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
+        let root_fp = FilePath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let language = detect_language_from_path(orphan_scan_root);
         let ignored = self
             .deps
             .config_orchestrator
-            .ignored_paths_for_language(orphan_scan_root, language);
+            .ignored_paths_for_language(&root_fp, language);
         let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
@@ -192,19 +195,21 @@ impl AnalysisPipelineOrchestrator {
         // Build context with ALL workspace files for cross-crate import resolution
         let all_workspace_files = shared::common::utility_file_handler::collect_all_source_files(
             &std::path::PathBuf::from(orphan_scan_root),
-            &ignored,
+            ignored.values(),
         );
         let all_file_strs: Vec<String> = all_workspace_files
             .iter()
             .map(|f| f.value.clone())
             .collect();
+        let files_vo = OrphanFileListVO::new(all_file_strs.clone());
         let context = self
             .deps
             .orphan_orchestrator
-            .build_orphan_graph_context(&all_file_strs, orphan_scan_root);
+            .build_orphan_graph_context(&files_vo, &root_fp);
+        let file_vo = OrphanFileListVO::new(file_strs.clone());
         self.deps.orphan_orchestrator.check_orphans_with_context(
-            &file_strs,
-            orphan_scan_root,
+            &file_vo,
+            &root_fp,
             &context,
         )
     }
@@ -234,6 +239,7 @@ impl AnalysisPipelineOrchestrator {
                 self.deps
                     .code_analysis_linter
                     .format_report(&results_list, &report_path)
+                    .to_string()
             }
             Format::Json => {
                 serde_json::to_string_pretty(&filtered_results).unwrap_or_else(|_| "[]".to_string())
@@ -284,28 +290,30 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(".")
             .unwrap_or(std::path::PathBuf::from("."));
         let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
+        let root_fp = FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let ignored = self
             .deps
             .config_orchestrator
-            .ignored_paths_for_language(scan_root.to_str().unwrap_or("."), language);
-        let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
+            .ignored_paths_for_language(&root_fp, language);
+        let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let all_source_files: Vec<String> = {
-            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
                 Ok(list) => list.values.iter().map(|f| f.value.clone()).collect(),
                 Err(_) => Vec::new(),
             }
         };
 
         // Build graph context ONCE with all workspace files (avoids rebuilding per call)
+        let files_vo = OrphanFileListVO::new(all_source_files.clone());
         let orphan_context = self
             .deps
             .orphan_orchestrator
-            .build_orphan_graph_context(&all_source_files, scan_root.to_str().unwrap_or("."));
+            .build_orphan_graph_context(&files_vo, &root_fp);
 
         // Run orphan detection once across all workspace members using pre-built context
         let orphan_results_all = self.deps.orphan_orchestrator.check_orphans_with_context(
-            &all_source_files,
-            scan_root.to_str().unwrap_or("."),
+            &files_vo,
+            &root_fp,
             &orphan_context,
         );
 
@@ -432,12 +440,13 @@ impl AnalysisPipelineOrchestrator {
             None => std::path::PathBuf::from("."),
         };
         let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
+        let root_fp = FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let ignored = self
             .deps
             .config_orchestrator
-            .ignored_paths_for_language(scan_root.to_str().unwrap_or("."), language);
+            .ignored_paths_for_language(&root_fp, language);
         let all_files: Vec<String> =
-            shared::common::utility_file_handler::collect_all_source_files(&scan_root, &ignored)
+            shared::common::utility_file_handler::collect_all_source_files(&scan_root, ignored.values())
                 .iter()
                 .map(|f| f.value.clone())
                 .collect();
@@ -451,13 +460,14 @@ impl AnalysisPipelineOrchestrator {
         };
 
         // Run orphan detection with workspace root using pre-built context
+        let files_vo = OrphanFileListVO::new(all_files.clone());
         let context = self
             .deps
             .orphan_orchestrator
-            .build_orphan_graph_context(&all_files, &scan_root.to_string_lossy());
+            .build_orphan_graph_context(&files_vo, &root_fp);
         let all_results = self.deps.orphan_orchestrator.check_orphans_with_context(
-            &all_files,
-            &scan_root.to_string_lossy(),
+            &files_vo,
+            &root_fp,
             &context,
         );
 

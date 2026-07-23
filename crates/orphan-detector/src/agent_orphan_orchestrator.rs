@@ -8,6 +8,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
@@ -24,7 +25,6 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
-use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -55,32 +55,27 @@ pub struct ArchOrphanAnalyzer {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
-    fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
-            files.to_vec(),
-        );
-        self.resolver.build_graph_context(&[file_vo], root_dir)
+    fn build_orphan_graph_context(
+        &self,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
+    ) -> GraphAnalysisContext {
+        self.resolver.build_graph_context(std::slice::from_ref(files), root_dir.value())
     }
 
-    fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String> {
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
-            files.to_vec(),
-        );
+    fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
         self.resolver
-            .identify_entry_points(&[file_vo], &[])
-            .values
-            .into_iter()
-            .collect()
+            .identify_entry_points(std::slice::from_ref(files), &[])
     }
 
-    fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
+    fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
 
         // Expand files to include all workspace source files for cross-crate import resolution
-        let mut all_workspace_files: Vec<String> = files.to_vec();
-        let root_path = std::path::Path::new(root_dir);
+        let mut all_workspace_files: Vec<String> = files.values.clone();
+        let root_path = std::path::Path::new(root_dir.value());
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
@@ -112,7 +107,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         );
         let context: GraphAnalysisContext = self
             .resolver
-            .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
+            .build_graph_context(std::slice::from_ref(&file_vo), root_dir.value());
 
         let configured = self.get_orphan_entry_points();
         let configured_vo =
@@ -132,7 +127,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .map(|k| k.value.to_string())
             .collect();
 
-        for f in files {
+        for f in &files.values {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
                 Err(_) => continue,
@@ -173,7 +168,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 &alive_files_set,
                 &layer_vo,
                 &all_workspace_files,
-                root_dir,
+                root_dir.value(),
             );
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
@@ -194,8 +189,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
     fn check_orphans_with_context(
         &self,
-        files: &[String],
-        root_dir: &str,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
@@ -203,8 +198,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         }
 
         // Expand files to include all workspace source files for cross-crate import resolution
-        let mut all_workspace_files: Vec<String> = files.to_vec();
-        let root_path = std::path::Path::new(root_dir);
+        let mut all_workspace_files: Vec<String> = files.values.clone();
+        let root_path = std::path::Path::new(root_dir.value());
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
@@ -253,7 +248,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .map(|k| k.value.to_string())
             .collect();
 
-        for f in files {
+        for f in &files.values {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
                 Err(_) => continue,
@@ -294,7 +289,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 &alive_files_set,
                 &layer_vo,
                 &all_workspace_files,
-                root_dir,
+                root_dir.value(),
             );
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {

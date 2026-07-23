@@ -1,4 +1,5 @@
 // PURPOSE: IImportMandatoryProtocol — exclusive contract for mandatory import checks (AES202)
+// Verifies that every file imports from the layers it MUST depend on per its layer scope.
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
@@ -7,6 +8,8 @@ use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use async_trait::async_trait;
 
+/// For each file, check that at least one import targets each layer in the `mandatory` set.
+/// Used by the import orchestrator as part of the AES202 gate.
 #[async_trait]
 pub trait IImportMandatoryProtocol: Send + Sync {
     fn rule_name(&self) -> Identity;

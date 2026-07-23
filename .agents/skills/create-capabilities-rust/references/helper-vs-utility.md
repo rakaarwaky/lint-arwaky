@@ -66,7 +66,7 @@ Rule:
 
 ```text
 Stateless + I/O + domain-agnostic + reusable = taxonomy utility
-Stateless + I/O + domain-specific = utility implementation (infrastructure layer removed)
+Stateless + I/O + domain-specific = utility implementation 
 ```
 
 ## Decision Tree

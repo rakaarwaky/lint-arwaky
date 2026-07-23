@@ -9,10 +9,8 @@ pub use capabilities_check_bypass_checker::BypassChecker;
 pub mod capabilities_code_duplication_analyzer;
 pub use capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 pub mod agent_code_analysis_orchestrator;
-pub use agent_code_analysis_orchestrator::{has_critical, lint_path, CodeAnalysisOrchestrator};
+pub use agent_code_analysis_orchestrator::{has_critical, CodeAnalysisOrchestrator};
 // Re-export for CLI surfaces backward compatibility
 pub use shared::common::utility_compliance_score::compute_score;
 pub mod root_code_analysis_container;
-pub use root_code_analysis_container::{
-    CodeAnalysisCheckerContainer, CodeAnalysisCheckerContainerRef, CodeAnalysisContainer,
-};
+pub use root_code_analysis_container::CodeAnalysisContainer;

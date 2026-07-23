@@ -10,7 +10,8 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use crate::common::taxonomy_common_vo::Score;
+use crate::common::taxonomy_common_vo::{BooleanVO, Score};
+use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_path_vo::FilePath;
 
 /// ICodeAnalysisAggregate — aggregate port for code-analysis orchestration.
@@ -31,10 +32,10 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
     fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult>;
     /// Calculate a quality score (0.0–100.0) from violation results.
     fn calc_score(&self, results: &[LintResult]) -> Score;
-    /// Check if any CRITICAL violations exist in the results.
-    fn check_critical(&self, results: &[LintResult]) -> bool;
     /// Format violations into a human-readable compliance report.
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String;
+    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> DisplayContent;
+    /// Check if any CRITICAL violations exist in the results.
+    fn check_critical(&self, results: &[LintResult]) -> BooleanVO;
     /// Return list of currently active (enabled) rule configurations.
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO>;
 }
