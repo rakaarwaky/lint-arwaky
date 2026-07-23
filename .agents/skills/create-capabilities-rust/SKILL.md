@@ -44,7 +44,7 @@ Capabilities hide these implementations behind Contracts, keeping behavior modul
 
 A capabilities file must:
 
-- implement one domain protocol trait,
+- implement one domain protocol trait (via `impl Trait for Struct`),
 - follow strict 3-block structure,
 - use dependency injection for service collaborators (`Arc<dyn Trait>`),
 - use shared VOs for domain data,
@@ -76,12 +76,89 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
 - **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
 - **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
-- **Contract Implementation:** the capability implements the `protocol_` trait defined in the Contract layer.
+- **Contract Implementation:** the capability implements the protocol trait defined in the Contract layer. The file MUST import from `_protocol` module only (not `_port`). Example: `use shared::role_rules::contract_<name>_protocol::I<Name>;`
 - **State Ownership:** the capability owns business and technical state within its execution scope.
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
 - **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
 - **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.rs` in shared. Capabilities must not contain magic constants.
+
+## AES403 — Capability Composition Rules
+
+The `CapabilitiesRoleChecker` enforces 3 rules per file:
+
+### Rule 1: Internal Helpers Are Allowed
+
+Structs without a trait impl are **allowed** and never flagged. These are internal helper types (cache, builder, config) that don't implement protocol behavior. They must not start with `_`.
+
+```rust
+// ✅ ALLOWED — internal helper, no trait impl needed
+struct Cache {
+    data: Vec<u8>,
+}
+
+impl Cache {
+    fn new() -> Self {
+        Self { data: vec![] }
+    }
+}
+```
+
+### Rule 2: At Least One Implementor Required
+
+The file MUST have at least one struct that implements a protocol trait via `impl <Trait> for <StructName>`. If no struct implements a protocol trait → flag `CapabilityNoImplementor` (AES403, Severity MEDIUM).
+
+```rust
+// ✅ PASSING — implements IAgentRoleChecker
+pub struct MyChecker;
+
+impl IAgentRoleChecker for MyChecker {
+    fn check_container(&self, _s: &str, _v: &mut Vec<LintResult>) {}
+}
+
+// ❌ FAILING — no impl Trait for Struct
+struct HelperA { x: i32 }
+struct HelperB { y: String }
+```
+
+### Rule 3: Maximum 3 Types Per File
+
+Total struct + enum count must not exceed **3**. If exceeded → flag `CapabilityTooManyTypes` (AES403, Severity HIGH). This includes all public/private structs and enums in the file.
+
+```rust
+// ✅ PASSING — exactly 3 types (1 impl + 1 struct + 1 enum)
+pub struct Cap {}
+impl IChecker for Cap {}
+
+struct Helper {}
+enum Status { Active, Inactive }
+
+// ❌ FAILING — 4 types exceeds limit
+pub struct Cap {}
+impl IChecker for Cap {}
+struct A {}
+struct B {}
+enum C { X, Y }
+```
+
+### Detection Patterns
+
+| Language | Implementor Pattern | Non-Implementor |
+|----------|-------------------|-----------------|
+| Rust | `impl Trait for Struct` | Standalone `impl Struct` |
+| Python | `class Name(Protocol):` | Standalone `class Name:` |
+| TS | `class Name implements IProto` | Standalone `class Name {}` |
+
+The guard check requires `_protocol` import only (no `_port` allowed):
+
+```rust
+// ✅ Guard passes — imports from _protocol module
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+
+// ❌ Guard fails — no _protocol import → CapabilityNoProtocol
+struct MyChecker;
+impl Default for MyChecker {}
+```
 
 ## Definition of Done
 
@@ -95,7 +172,10 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
 10. Reusable constants extracted to `taxonomy_<domain>_constant.rs` in shared.
-11. `cargo check -p <crate-name>` passes.
+11. At least one struct implements a protocol trait (Rule 2).
+12. Total struct + enum ≤ 3 (Rule 3).
+13. File imports from `_protocol` module only (no `_port`).
+14. `cargo check -p <crate-name>` passes.
 
 ## References
 
@@ -130,9 +210,13 @@ Read the file and ask: **"Does this implement protocol behavior?"**
 
 If yes → keep as capabilities. If no → check if it's orchestration (→ agent), domain data (→ taxonomy), or pure technical mechanics (→ utility).
 
-### Step 2: Check Missing Trait (AES403)
+### Step 2: Check Protocol Import (AES403 Guard)
 
-Does the capability struct implement a protocol trait? If no → create one.
+The file MUST import from a `_protocol` module. If missing → flag `CapabilityNoProtocol`.
+
+```rust
+use shared::role_rules::contract_<name>_protocol::I<Name>;
+```
 
 ### Step 3: Create Trait File if Missing
 
@@ -142,23 +226,29 @@ Create `contract_<name>_protocol.rs` in the appropriate shared domain folder.
 
 Reorganize: struct definition → domain protocol trait impl → constructors/std traits/helpers.
 
-### Step 5: Verify Struct Discipline
+### Step 5: Verify AES403 Compliance
+
+- **Rule 1:** Internal helper structs without trait impl are ALLOWED (never flagged).
+- **Rule 2:** At least one struct must implement a protocol trait (`impl Trait for Struct`).
+- **Rule 3:** Total struct + enum count ≤ 3.
+
+### Step 6: Verify Struct Discipline
 
 One struct, no local data structs, DI via `Arc<dyn Trait>`, shared VOs.
 
-### Step 6: Verify Helper vs Utility Boundary
+### Step 7: Verify Helper vs Utility Boundary
 
 See `references/helper-vs-utility.md` for the decision tree.
 
-### Step 7: Verify Layer Compliance
+### Step 8: Verify Layer Compliance
 
 No forbidden imports (Agent, other capabilities), no inter-capability dependencies, no business logic leakage, no domain model definition.
 
-### Step 8: Verify Error Handling, VO, and Constants
+### Step 9: Verify Error Handling, VO, and Constants
 
 See `references/error-handling.md` and `references/primitive-vo-policy.md`.
 
-### Step 9: Verify Compilation
+### Step 10: Verify Compilation
 
 ```bash
 cargo check -p <crate-name>
@@ -172,6 +262,9 @@ rg "^\s*use\s+.*(agent_|capabilities_)" crates/<crate>/src/capabilities_*.rs
 
 # List protocol trait implementations
 rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
+
+# Check _protocol import (guard)
+rg -n "use\s+.*_protocol::" crates/<crate>/src/capabilities_*.rs
 ```
 
 ## Common Mistakes
@@ -188,3 +281,6 @@ rg -n "impl\s+I[A-Za-z0-9_]+Protocol\s+for" crates/<crate>/src/capabilities_*.rs
 - Silent error swallowing with `unwrap_or_default()`.
 - Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.rs`).
 - Not delegating low-level technical operations to Utility.
+- Importing from `_port` module instead of `_protocol` module.
+- Having no struct that implements a protocol trait (Rule 2 violation).
+- Exceeding 3 total types (struct + enum) in a file (Rule 3 violation).

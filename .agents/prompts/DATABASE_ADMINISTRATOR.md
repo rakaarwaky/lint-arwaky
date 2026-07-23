@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Database Administrator
+# Review Report: {{feature-name}} — Database Administrator
 
 ## Summary
 

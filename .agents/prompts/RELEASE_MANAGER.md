@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Release Manager
+# Review Report: {{feature-name}} — Release Manager
 
 ## Summary
 

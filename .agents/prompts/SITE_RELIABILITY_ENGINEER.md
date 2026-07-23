@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Site Reliability Engineer
+# Review Report: {{feature-name}} — Site Reliability Engineer
 
 ## Summary
 

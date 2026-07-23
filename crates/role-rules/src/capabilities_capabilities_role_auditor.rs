@@ -69,8 +69,8 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: wajib ada import _protocol ──────────────────
-        //    (tidak pakai _port, hanya _protocol)
+        // ── Guard: must have _protocol import ──────────────────
+        //    (not using _port, only _protocol)
         let has_proto_import = content.contains("use ") && content.contains("_protocol::");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
@@ -83,15 +83,15 @@ impl CapabilitiesRoleChecker {
             return;
         }
 
-        // ── Kumpulkan semua struct & enum (skip #[cfg(test)]) ──
+        // ── Collect all structs & enums (skip #[cfg(test)]) ──
         let mut in_cfg_test = false;
-        let mut type_names: Vec<&str> = Vec::new();   // semua struct + enum
-        let mut struct_names: Vec<&str> = Vec::new();  // hanya struct
+        let mut type_names: Vec<&str> = Vec::new();   // all structs + enums
+        let mut struct_names: Vec<&str> = Vec::new();  // only structs
 
         for l in content.lines() {
             let t = l.trim();
 
-            // skip blok #[cfg(test)]
+            // skip #[cfg(test)] block
             if t.starts_with("#[cfg(test)]") {
                 in_cfg_test = true;
                 continue;
@@ -105,7 +105,7 @@ impl CapabilitiesRoleChecker {
 
             let words: Vec<&str> = t.split_whitespace().collect();
 
-            // deteksi struct
+            // detect struct
             if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
                 if let Some(idx) = words.iter().position(|w| *w == "struct") {
                     if let Some(name) = words.get(idx + 1) {
@@ -118,7 +118,7 @@ impl CapabilitiesRoleChecker {
                 }
             }
 
-            // deteksi enum
+            // detect enum
             if (t.starts_with("pub enum ") || t.starts_with("enum ")) && words.len() >= 2 {
                 if let Some(idx) = words.iter().position(|w| *w == "enum") {
                     if let Some(name) = words.get(idx + 1) {
@@ -131,7 +131,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── ATURAN 3: maks 3 tipe (struct + enum) ─────────────
+        // ── RULE 3: max 3 types (struct + enum) ──────────────
         if type_names.len() > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -143,12 +143,12 @@ impl CapabilitiesRoleChecker {
                     reason: None,
                 },
             ));
-            return; // tidak perlu cek lanjut
+            return; // no further check needed
         }
 
-        // ── ATURAN 2: wajib ≥ 1 struct implementor protocol ───
-        //    Implementor = ada "impl <Trait> for <StructName>"
-        //    (bukan sekadar "for item in collection")
+        // ── RULE 2: must have ≥ 1 struct implementor protocol ──
+        //    Implementor = has "impl <Trait> for <StructName>"
+        //    (not merely "for item in collection")
         let has_implementor = struct_names.iter().any(|s| {
             content.lines().any(|l| {
                 let t = l.trim();
@@ -166,13 +166,13 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── ATURAN 1: struct internal tanpa trait impl → TIDAK di-flag ──
-        // (tidak ada loop yang mem-flag struct individual lagi)
+        // ── RULE 1: internal struct without trait impl → NOT flagged ──
+        // (no loop that flags individual structs anymore)
     }
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: wajib ada import _protocol ──────────────────
-        //    (tidak pakai _port, hanya _protocol)
+        // ── Guard: must have _protocol import ──────────────────
+        //    (not using _port, only _protocol)
         let has_proto_import = content.contains("import ") && content.contains("_protocol");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
@@ -185,8 +185,8 @@ impl CapabilitiesRoleChecker {
             return;
         }
 
-        // ── Kumpulkan nama yang di-import dari _protocol ────────
-        //    contoh: import { IPaymentService, ILogger } from '../payment_protocol'
+        // ── Collect names imported from _protocol ────────────────
+        //    example: import { IPaymentService, ILogger } from '../payment_protocol'
         //    → proto_names = ["IPaymentService", "ILogger"]
         let proto_names: Vec<&str> = content
             .lines()
@@ -195,7 +195,7 @@ impl CapabilitiesRoleChecker {
                 t.starts_with("import ") && t.contains("_protocol")
             })
             .flat_map(|l| {
-                // ambil bagian di dalam { ... }
+                // extract content inside { ... }
                 if let Some(start) = l.find('{') {
                     if let Some(end) = l.find('}') {
                         l[start + 1..end]
@@ -217,7 +217,7 @@ impl CapabilitiesRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
 
-        // ── Kumpulkan semua type declarations (class/interface/enum) ─
+        // ── Collect all type declarations (class/interface/enum) ────
         //    type alias → not counted; inline parsing, no struct needed
         let mut type_count: usize = 0;
         let mut implementor_found = false;
@@ -284,7 +284,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── ATURAN 3: maks 3 tipe ─────────────────────────────
+        // ── RULE 3: max 3 types ──────────────────────────────
         if type_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -299,9 +299,9 @@ impl CapabilitiesRoleChecker {
             return;
         }
 
-        // ── ATURAN 2: wajib ≥ 1 implementor ───────────────────
-        //    Implementor = class yang punya "implements X"
-        //    di mana X ada di proto_names (import dari _protocol)
+        // ── RULE 2: must have ≥ 1 implementor ──────────────────
+        //    Implementor = class that has "implements X"
+        //    where X is in proto_names (imported from _protocol)
         if !implementor_found {
             violations.push(LintResult::new_arch(
                 file,
@@ -312,12 +312,12 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── ATURAN 1: class internal tanpa implements → TIDAK di-flag ──
+        // ── RULE 1: internal class without implements → NOT flagged ──
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: wajib ada import _protocol ──────────────────
-        //    (tidak pakai _port, hanya _protocol)
+        // ── Guard: must have _protocol import ──────────────────
+        //    (not using _port, only _protocol)
         let has_proto_import = (content.contains("import ") || content.contains("from "))
             && content.contains("_protocol");
         if !has_proto_import {
@@ -331,8 +331,8 @@ impl CapabilitiesRoleChecker {
             return;
         }
 
-        // ── Kumpulkan nama yang di-import dari _protocol ────────
-        //    contoh: from shared.some_protocol import ISomeService, IOther
+        // ── Collect names imported from _protocol ────────────────
+        //    example: from shared.some_protocol import ISomeService, IOther
         //    → proto_names = {"ISomeService", "IOther"}
         let proto_names: Vec<&str> = content
             .lines()
@@ -341,7 +341,7 @@ impl CapabilitiesRoleChecker {
                 (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_protocol")
             })
             .flat_map(|l| {
-                // ambil bagian setelah "import"
+                // extract the part after "import"
                 if let Some(pos) = l.find("import ") {
                     let after = &l[pos + 7..]; // len("import ") = 7
                         after
@@ -357,7 +357,7 @@ impl CapabilitiesRoleChecker {
 
         let lines: Vec<&str> = content.lines().collect();
 
-        // ── Kumpulkan semua class (parents only) ────────────────
+        // ── Collect all classes (parents only) ──────────────────
         struct PyClass<'a> {
             parents: Vec<&'a str>,
         }
@@ -371,7 +371,7 @@ impl CapabilitiesRoleChecker {
             }
 
             // parse: class Name(Parent1, Parent2):
-            let after_class = &t[6..]; // buang "class "
+            let after_class = &t[6..]; // skip "class "
             let name = after_class
                 .split(|c: char| ['(', ':', ' '].contains(&c))
                 .next()
@@ -382,7 +382,7 @@ impl CapabilitiesRoleChecker {
                 continue;
             }
 
-            // parse parents dari dalam (...)
+            // parse parents from inside (...)
             let parents: Vec<&str> = if let Some(start) = t.find('(') {
                 if let Some(end) = t.find(')') {
                     t[start + 1..end]
@@ -402,7 +402,7 @@ impl CapabilitiesRoleChecker {
 
         let total_types = classes.len();
 
-        // ── ATURAN 3: maks 3 tipe ─────────────────────────────
+        // ── RULE 3: max 3 types ──────────────────────────────
         if total_types > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -417,10 +417,10 @@ impl CapabilitiesRoleChecker {
             return;
         }
 
-        // ── ATURAN 2: wajib ≥ 1 implementor ABC ───────────────
-        //    Implementor = class yang inherit dari nama yang
-        //    di-import dari _protocol
-        //    contoh: class PaymentCap(ISomeService):  ← implementor
+        // ── RULE 2: must have ≥ 1 ABC implementor ─────────────
+        //    Implementor = class that inherits from a name
+        //    imported from _protocol
+        //    example: class PaymentCap(ISomeService):  ← implementor
         let has_implementor = classes.iter().any(|c| {
             c.parents.iter().any(|p| proto_names.contains(p))
         });
@@ -435,6 +435,6 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── ATURAN 1: class internal tanpa ABC → TIDAK di-flag ──
+        // ── RULE 1: internal class without ABC → NOT flagged ──
     }
 }

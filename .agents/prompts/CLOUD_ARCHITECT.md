@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Cloud Architect
+# Review Report: {{feature-name}} — Cloud Architect
 
 ## Summary
 

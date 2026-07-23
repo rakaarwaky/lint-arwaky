@@ -161,11 +161,11 @@ impl InternalCache {
     assert!(violations.is_empty());
 }
 
-// ─── Rule 2: Tidak ada implementor → flag CapabilityNoImplementor ──
+// ─── Rule 2: No implementor → flag CapabilityNoImplementor ──
 
 #[test]
 fn rust_no_implementor_flagged() {
-    // Hanya internal structs, tidak ada impl Trait for Struct
+    // Only internal structs, no impl Trait for Struct
     let content = r#"
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 

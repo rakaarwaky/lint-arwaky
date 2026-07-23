@@ -14,7 +14,7 @@ REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
-# 1. Pembersihan & Install XDG layout sebelum build
+# 1. Cleanup & Install XDG layout before build
 if [ -d "$CONFIG_DIR" ]; then
     echo "Cleaning existing XDG config dir: $CONFIG_DIR"
     rm -rf "$CONFIG_DIR"
