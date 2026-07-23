@@ -340,7 +340,6 @@ architecture:
               "agent",
               "infrastructure",
               "capabilities",
-              "contract(port)",
               "contract(protocol)",
               "root",
             ]
@@ -353,7 +352,6 @@ architecture:
               "agent",
               "infrastructure",
               "capabilities",
-              "contract(port)",
               "contract(protocol)",
               "surface(command|controller|page|entry)",
               "root",

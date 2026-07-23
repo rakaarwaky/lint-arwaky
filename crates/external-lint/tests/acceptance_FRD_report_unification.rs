@@ -89,7 +89,7 @@ async fn frd_006_adapter_names_exposes_all_registered() {
     ];
     for name in &expected {
         assert!(
-            names.contains(&AdapterName::raw(name)),
+            names.contains(&AdapterName::raw(*name)),
             "Expected adapter '{}' to be registered",
             name
         );
