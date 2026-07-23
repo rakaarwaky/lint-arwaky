@@ -9,6 +9,9 @@
 //   - Adapter installation (pip for Python, npm for JS)
 //   - Language detection and config template loading
 //   - Config file writing and XDG config dir creation
+use std::sync::Arc;
+use std::collections::HashMap;
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::EnvContentVO;
@@ -17,12 +20,7 @@ use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO;
-use std::collections::HashMap;
-
-use async_trait::async_trait;
-
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementOrchestrator {

@@ -71,6 +71,27 @@ impl WorkspaceDetector {
         Self
     }
 
+    fn check_dir_for_language(dir: &std::path::Path) -> Option<WorkspaceType> {
+        let entries = std::fs::read_dir(dir).ok()?;
+        for entry in entries.flatten() {
+            let name = match entry.file_name().to_str() {
+                Some(n) => n.to_lowercase(),
+                None => continue,
+            };
+            match name.as_str() {
+                "cargo.toml" => return Some(WorkspaceType::Rust),
+                "setup.py" | "pyproject.toml" | "requirements.txt" | "setup.cfg" => {
+                    return Some(WorkspaceType::Python)
+                }
+                "package.json" | "tsconfig.json" => {
+                    return Some(WorkspaceType::TypeScript)
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+
     async fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {
         let mut results = Vec::new();
         let mut entries = match tokio::fs::read_dir(dir).await {
