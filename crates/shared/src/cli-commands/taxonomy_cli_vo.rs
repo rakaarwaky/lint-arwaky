@@ -68,6 +68,7 @@ pub enum ScanSubcommands {
 pub enum Commands {
     /// Run all linters and calculate score.
     /// Supports subcommands: quality, import, naming, role, orphan (e.g. `scan quality [path]`)
+    #[command(alias = "check")]
     Scan {
         #[command(subcommand)]
         subcommand: Option<ScanSubcommands>,
