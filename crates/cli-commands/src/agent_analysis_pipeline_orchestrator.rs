@@ -13,13 +13,13 @@ use shared::cli_commands::taxonomy_scan_report_vo::{
 };
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
@@ -179,37 +179,13 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::utility_path_resolver::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let root_fp = FilePath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let language = detect_language_from_path(orphan_scan_root);
         let ignored = self
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
-        let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
-            {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        // Build context with ALL workspace files for cross-crate import resolution
-        let all_workspace_files = shared::common::utility_file_handler::collect_all_source_files(
-            &std::path::PathBuf::from(orphan_scan_root),
-            ignored.values(),
-        );
-        let all_file_strs: Vec<String> = all_workspace_files
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
-        let files_vo = OrphanFileListVO::new(all_file_strs.clone());
-        let context = self
-            .deps
-            .orphan_orchestrator
-            .build_orphan_graph_context(&files_vo, &root_fp);
-        let file_vo = OrphanFileListVO::new(file_strs.clone());
-        self.deps
-            .orphan_orchestrator
-            .check_orphans_with_context(&file_vo, &root_fp, &context)
+        let (_, results) = self.deps.orphan_orchestrator.scan_orphans(&root_fp, ignored.values());
+        results
     }
 
     /// Filter results to the target path and return formatted output string.
@@ -294,29 +270,13 @@ impl AnalysisPipelineOrchestrator {
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
-        let dir_path =
-            DirectoryPath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
-        let all_source_files: Vec<String> = {
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
-            {
-                Ok(list) => list.values.iter().map(|f| f.value.clone()).collect(),
-                Err(_) => Vec::new(),
-            }
-        };
 
-        // Build graph context ONCE with all workspace files (avoids rebuilding per call)
-        let files_vo = OrphanFileListVO::new(all_source_files.clone());
-        let orphan_context = self
+        // Build graph context and run orphan detection via the orphan-detector contract
+        // (all file scanning is encapsulated inside the orphan-detector crate)
+        let (_orphan_context, orphan_results_all) = self
             .deps
             .orphan_orchestrator
-            .build_orphan_graph_context(&files_vo, &root_fp);
-
-        // Run orphan detection once across all workspace members using pre-built context
-        let orphan_results_all = self.deps.orphan_orchestrator.check_orphans_with_context(
-            &files_vo,
-            &root_fp,
-            &orphan_context,
-        );
+            .scan_orphans(&root_fp, ignored.values());
 
         // Pre-compute canonical paths for all workspaces once
         let workspace_canonicals: Vec<_> = workspaces
@@ -334,91 +294,108 @@ impl AnalysisPipelineOrchestrator {
             })
             .collect();
 
-        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter())
+        // Process all workspace members in parallel using futures::future::join_all
+        let filter = self.filter.clone();
+        let mut workspace_futures = Vec::with_capacity(workspaces.len());
+        for (ws, (ws_canonical, ws_fallback)) in
+            workspaces.iter().zip(workspace_canonicals.iter())
         {
-            let mut all_results = Vec::new();
+            let ws_path = ws.path.clone();
+            let ws_canonical = ws_canonical.clone();
+            let ws_fallback = ws_fallback.clone();
+            let orphan_results_all = orphan_results_all.clone();
+            let filter = filter.clone();
+            let deps = &self.deps;
 
-            // 1. Run AES analysis
-            let aes_results = self.deps.code_analysis_linter.run_code_analysis(&ws.path);
-            all_results.extend(aes_results.values);
+            workspace_futures.push(async move {
+                let mut all_results = Vec::new();
 
-            // 2-5. Run async linter groups concurrently (tokio::join! works in existing async context)
-            let (naming_results, import_results, external_results, role_results) = tokio::join!(
-                self.deps.naming_orchestrator.run_audit(&ws.path),
-                self.deps.import_orchestrator.run_audit(&ws.path),
-                self.deps.external_lint.scan_all(&ws.path),
-                self.deps.role_orchestrator.run_audit(&ws.path),
-            );
+                // 1. Run AES analysis (synchronous, fine in async context)
+                let aes_results = deps.code_analysis_linter.run_code_analysis(&ws_path);
+                all_results.extend(aes_results.values);
 
-            match naming_results {
-                Ok(values) => all_results.extend(values),
-                Err(e) => eprintln!("[warn] naming audit failed: {e}"),
-            }
-            match import_results {
-                Ok(values) => all_results.extend(values),
-                Err(e) => eprintln!("[warn] import audit failed: {e}"),
-            }
-            all_results.extend(external_results.values);
-            all_results.extend(role_results);
+                // 2-5. Run async linter groups concurrently
+                let (naming_results, import_results, external_results, role_results) = tokio::join!(
+                    deps.naming_orchestrator.run_audit(&ws_path),
+                    deps.import_orchestrator.run_audit(&ws_path),
+                    deps.external_lint.scan_all(&ws_path),
+                    deps.role_orchestrator.run_audit(&ws_path),
+                );
 
-            // Filter results to this workspace member's path using cached canonical paths
-            let filtered_results: Vec<_> = match &self.filter {
-                Some(code) => all_results
-                    .into_iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        r.code.code() == code
-                            && (ws_canonical
+                match naming_results {
+                    Ok(values) => all_results.extend(values),
+                    Err(e) => eprintln!("[warn] naming audit failed: {e}"),
+                }
+                match import_results {
+                    Ok(values) => all_results.extend(values),
+                    Err(e) => eprintln!("[warn] import audit failed: {e}"),
+                }
+                all_results.extend(external_results.values);
+                all_results.extend(role_results);
+
+                // Filter results to this workspace member's path
+                let filtered_results: Vec<_> = match &filter {
+                    Some(code) => all_results
+                        .into_iter()
+                        .filter(|r| {
+                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            r.code.code() == code
+                                && (ws_canonical
+                                    .as_ref()
+                                    .map(|c| abs_path.starts_with(c))
+                                    .unwrap_or(false)
+                                    || abs_path.starts_with(&ws_fallback))
+                        })
+                        .collect(),
+                    None => all_results
+                        .into_iter()
+                        .filter(|r| {
+                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(false)
-                                || abs_path.starts_with(ws_fallback))
-                    })
-                    .collect(),
-                None => all_results
-                    .into_iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        ws_canonical
-                            .as_ref()
-                            .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(ws_fallback))
-                    })
-                    .collect(),
-            };
+                                .unwrap_or(abs_path.starts_with(&ws_fallback))
+                        })
+                        .collect(),
+                };
 
-            // Filter orphan results to this workspace member's path using cached canonical paths
-            let filtered_orphans: Vec<_> = match &self.filter {
-                Some(code) => orphan_results_all
-                    .iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        r.code.code() == code
-                            && (ws_canonical
+                // Filter orphan results to this workspace member's path
+                let filtered_orphans: Vec<_> = match &filter {
+                    Some(code) => orphan_results_all
+                        .iter()
+                        .filter(|r| {
+                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            r.code.code() == code
+                                && (ws_canonical
+                                    .as_ref()
+                                    .map(|c| abs_path.starts_with(c))
+                                    .unwrap_or(false)
+                                    || abs_path.starts_with(&ws_fallback))
+                        })
+                        .cloned()
+                        .collect(),
+                    None => orphan_results_all
+                        .iter()
+                        .filter(|r| {
+                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(false)
-                                || abs_path.starts_with(ws_fallback))
-                    })
-                    .cloned()
-                    .collect(),
-                None => orphan_results_all
-                    .iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        ws_canonical
-                            .as_ref()
-                            .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(ws_fallback))
-                    })
-                    .cloned()
-                    .collect(),
-            };
+                                .unwrap_or(abs_path.starts_with(&ws_fallback))
+                        })
+                        .cloned()
+                        .collect(),
+                };
 
-            // Merge per-member results with filtered orphans
-            let mut member_results = filtered_results;
-            member_results.extend(filtered_orphans);
-            global_results.extend(member_results);
+                let mut member_results = filtered_results;
+                member_results.extend(filtered_orphans);
+                member_results
+            });
+        }
+
+        let all_results_sets = futures::future::join_all(workspace_futures).await;
+        for results in all_results_sets {
+            global_results.extend(results);
         }
 
         Ok(ScanReport::new(global_results, global_diagnostics))
@@ -447,14 +424,8 @@ impl AnalysisPipelineOrchestrator {
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
-        let all_files: Vec<String> =
-            shared::common::utility_file_handler::collect_all_source_files(
-                &scan_root,
-                ignored.values(),
-            )
-            .iter()
-            .map(|f| f.value.clone())
-            .collect();
+        // Run orphan detection with workspace root — file scanning is inside orphan-detector
+        let (_, all_results) = self.deps.orphan_orchestrator.scan_orphans(&root_fp, ignored.values());
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
@@ -463,17 +434,6 @@ impl AnalysisPipelineOrchestrator {
             let cwd = crate::surface_common_command::current_dir();
             cwd.join(file_path).to_string_lossy().to_string()
         };
-
-        // Run orphan detection with workspace root using pre-built context
-        let files_vo = OrphanFileListVO::new(all_files.clone());
-        let context = self
-            .deps
-            .orphan_orchestrator
-            .build_orphan_graph_context(&files_vo, &root_fp);
-        let all_results = self
-            .deps
-            .orphan_orchestrator
-            .check_orphans_with_context(&files_vo, &root_fp, &context);
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();

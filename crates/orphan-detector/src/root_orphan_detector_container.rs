@@ -31,28 +31,30 @@ impl OrphanContainer {
 
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
-        let arch = Arc::new(ArchOrphanAnalyzer::new(ArchOrphanDeps {
-            resolver,
-            taxonomy_analyzer: Arc::new(
-                crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(),
-            ),
-            contract_analyzer: Arc::new(
-                crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(),
-            ),
-            capabilities_analyzer: Arc::new(
-                crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(),
-            ),
-            utility_analyzer: Arc::new(
-                crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new(),
-            ),
-            agent_analyzer: Arc::new(
-                crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(),
-            ),
-            surfaces_analyzer: Arc::new(
-                crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),
-            ),
+        let arch = Arc::new(ArchOrphanAnalyzer::new(
+            ArchOrphanDeps {
+                resolver,
+                taxonomy_analyzer: Arc::new(
+                    crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(),
+                ),
+                contract_analyzer: Arc::new(
+                    crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(),
+                ),
+                capabilities_analyzer: Arc::new(
+                    crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(),
+                ),
+                utility_analyzer: Arc::new(
+                    crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new(),
+                ),
+                agent_analyzer: Arc::new(
+                    crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(),
+                ),
+                surfaces_analyzer: Arc::new(
+                    crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),
+                ),
+            },
             config,
-        }));
+        ));
         Self {
             analyzer: arch.clone() as Arc<dyn IOrphanAggregate>,
         }

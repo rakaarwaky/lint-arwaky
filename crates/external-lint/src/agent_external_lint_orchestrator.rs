@@ -12,6 +12,7 @@
 // Language detection uses async-aware directory scanning (tokio::fs) to avoid
 // blocking the tokio runtime during recursive file-system traversal.
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -21,6 +22,7 @@ use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::utility_config_parser::parse_adapter_names_from_yaml;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -111,6 +113,14 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             adapter_names.push("tsc");
         }
 
+        // Filter adapter_names by config's adapters section if a config YAML is found
+        if let Some(configured_adapters) =
+            load_configured_adapter_names(root_path, has_rs, has_py, has_js)
+                .filter(|a| !a.is_empty())
+        {
+            adapter_names.retain(|name| configured_adapters.iter().any(|a| a == name));
+        }
+
         let mut futures = Vec::with_capacity(9);
         for name in &adapter_names {
             if let Some(adapter) = self.deps.adapters.get(*name) {
@@ -168,4 +178,53 @@ impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
     }
+}
+
+/// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
+/// Returns parsed adapter names if any config file is found, else None.
+fn load_configured_adapter_names(
+    root_path: &Path,
+    has_rs: bool,
+    has_py: bool,
+    has_js: bool,
+) -> Option<Vec<String>> {
+    let config_names: Vec<String> = {
+        let mut names = Vec::new();
+        names.push("lint_arwaky.config.yaml".to_string());
+        if has_js {
+            names.push("lint_arwaky.config.javascript.yaml".to_string());
+        }
+        if has_py {
+            names.push("lint_arwaky.config.python.yaml".to_string());
+        }
+        if has_rs {
+            names.push("lint_arwaky.config.rust.yaml".to_string());
+        }
+        names
+    };
+
+    let start = if root_path.is_file() {
+        root_path.parent().unwrap_or(root_path)
+    } else {
+        root_path
+    };
+
+    let mut current: Option<&Path> = Some(start);
+    while let Some(dir) = current {
+        for cfg_name in &config_names {
+            let cfg_path = dir.join(cfg_name);
+            if cfg_path.exists() {
+                if let Ok(content) = std::fs::read_to_string(&cfg_path) {
+                    let adapters = parse_adapter_names_from_yaml(&content);
+                    if !adapters.is_empty() {
+                        return Some(adapters);
+                    }
+                }
+            }
+        }
+        // Do not walk up past the root
+        current = dir.parent().filter(|&p| p != dir);
+    }
+
+    None
 }
