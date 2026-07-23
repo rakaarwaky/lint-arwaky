@@ -35,7 +35,6 @@ fn container_new_default_produces_all_dependencies() {
 fn orchestrator_constructed_from_container_deps() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
@@ -48,7 +47,6 @@ fn orchestrator_constructed_from_container_deps() {
 async fn surface_execute_command_flows_through_orchestrator() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
@@ -67,7 +65,6 @@ async fn surface_execute_command_flows_through_orchestrator() {
 async fn surface_list_commands_returns_catalog() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
@@ -85,7 +82,6 @@ async fn surface_list_commands_returns_catalog() {
 fn surface_get_info_reports_tools_capability() {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);

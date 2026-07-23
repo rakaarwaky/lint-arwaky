@@ -6,10 +6,9 @@
 use std::sync::Arc;
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;

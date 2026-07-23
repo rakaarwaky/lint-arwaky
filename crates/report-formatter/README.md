@@ -7,8 +7,8 @@ Report formatting capabilities for lint-arwaky. Provides text, JSON, SARIF, and 
 ```rust
 use report_formatter::{TextFormatter, JsonFormatter, SarifFormatter, JunitFormatter};
 use report_formatter::ReportFormatterOrchestrator;
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 
 // Create formatters
 let text = Arc::new(TextFormatter::new(code_analysis_linter));

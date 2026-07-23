@@ -1,8 +1,8 @@
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;

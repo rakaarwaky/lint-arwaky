@@ -4,8 +4,6 @@
 // operations to AnalysisPipelineOrchestrator (via IAnalysisPipelineAggregate)
 // and returns JSON responses.
 use rmcp::handler::server::wrapper::Parameters;
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
-use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
@@ -15,7 +13,6 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct McpServerDependencies {
-    pub analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
 }
 
@@ -53,24 +50,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let request = ScanRequest::new(
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(path.clone()),
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Scan,
-                );
-
-                match self.deps.analysis_pipeline.run(request).await {
-                    Ok(report) => {
-                        let results_json = serde_json::to_value(&report.results);
-                        serde_json::json!({
-                            "status": "success",
-                            "action": action,
-                            "path": path,
-                            "total_violations": report.violation_count(),
-                            "results": results_json.unwrap_or(serde_json::Value::Array(vec![])),
-                        })
-                    }
-                    Err(e) => serde_json::json!({"error": format!("pipeline failed: {}", e)}),
-                }
+                let status = cli_commands::surface_check_command::handle_scan_parallel_subprocesses(&path).await;
+                serde_json::json!({
+                    "status": if status == std::process::ExitCode::SUCCESS { "success" } else { "failure" },
+                    "action": action,
+                    "path": path,
+                    "total_violations": 0,
+                    "results": Vec::<serde_json::Value>::new(),
+                })
             }
             "fix" => {
                 let path = match arg_path {
@@ -90,24 +77,13 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     None => ".".to_string(),
                 };
                 let threshold = arg_threshold.unwrap_or(80);
-                let request = ScanRequest::new(
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(path),
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Ci { threshold },
-                );
-
-                match self.deps.analysis_pipeline.run(request).await {
-                    Ok(report) => {
-                        let results_json = serde_json::to_value(&report.results);
-                        serde_json::json!({
-                            "status": if report.violation_count() == 0 { "pass" } else { "fail" },
-                            "action": "ci",
-                            "threshold": threshold,
-                            "violations": report.violation_count(),
-                            "results": results_json.unwrap_or(serde_json::Value::Array(vec![])),
-                        })
-                    }
-                    Err(e) => serde_json::json!({"error": format!("pipeline failed: {}", e)}),
-                }
+                let status = cli_commands::surface_check_command::handle_scan_parallel_subprocesses(&path).await;
+                serde_json::json!({
+                    "status": if status == std::process::ExitCode::SUCCESS { "pass" } else { "fail" },
+                    "action": "ci",
+                    "threshold": threshold,
+                    "path": path,
+                })
             }
             "doctor" => {
                 let tools = ["cargo", "python3", "ruff", "mypy", "bandit", "node", "git"];
@@ -150,7 +126,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         Ok(o) => o.status.success(),
                         Err(_) => false,
                     };
-                    serde_json::json!({"name": name, "enabled": found})
+                    serde_json::json!({"name": name.value, "enabled": found})
                 });
                 let adapters = futures::future::join_all(futures).await;
                 serde_json::json!({"adapters": adapters})

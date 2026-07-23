@@ -57,42 +57,10 @@ impl IExternalLintAggregate for MockExternalLint {
     }
 }
 
-struct MockPipeline;
-#[async_trait::async_trait]
-impl shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate
-    for MockPipeline
-{
-    async fn run(
-        &self,
-        _request: shared::cli_commands::taxonomy_scan_request_vo::ScanRequest,
-    ) -> Result<
-        shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
-        shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
-    > {
-        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]))
-    }
-    async fn run_with_discovery(
-        &self,
-    ) -> Result<
-        shared::cli_commands::taxonomy_scan_report_vo::ScanReport,
-        shared::cli_commands::taxonomy_scan_report_vo::PipelineError,
-    > {
-        Ok(shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]))
-    }
-    fn check_orphan_single_file(
-        &self,
-        _file_path: &str,
-        _workspace_root: &str,
-    ) -> Result<Vec<LintResult>, shared::cli_commands::taxonomy_scan_report_vo::PipelineError> {
-        Ok(vec![])
-    }
-}
-
 // ─── Helper ──────────────────────────────────────────────────────────
 
 fn build_test_orchestrator() -> McpServerOrchestrator {
     McpServerOrchestrator::new(McpServerDependencies {
-        analysis_pipeline: Arc::new(MockPipeline),
         external_lint: Arc::new(MockExternalLint),
     })
 }
