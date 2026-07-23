@@ -84,7 +84,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Output**: `Vec<FilePath>` of workspace member paths.
 - **Business Rules**:
   - Scans for subdirectories under `crates/`, `packages/`, `modules/`.
-  - Uses async I/O (`tokio::fs`) for non-blocking filesystem operations.
+  - Uses async I/O for non-blocking filesystem operations.
   - Concurrency bounded to 8 concurrent workspace loads.
   - If root is itself a workspace directory (e.g., `crates/`), returns its direct subdirectories.
   - If root's parent is a workspace directory, returns root as a single-member workspace.
@@ -253,18 +253,18 @@ ConfigError
   - `shared` crate — taxonomy VOs, contracts (protocol and aggregate interfaces), utility functions.
   - Config system root container — wires the orchestrator, reader, validator, and parser via dependency injection.
 - **External**:
-  - `dirs` crate — XDG config directory resolution.
-  - `tokio::fs` — async filesystem I/O for workspace discovery.
-  - `serde_yaml_ng` — YAML deserialization.
-  - `toml` — TOML parsing for `[tool.lint-arwaky]` sections.
+  - XDG config directory resolution library.
+  - Async filesystem I/O for workspace discovery.
+  - YAML 1.2 deserialization library.
+  - TOML parsing library for `[tool.lint-arwaky]` sections.
 
 ## Non-functional Requirements (Detailed)
 
 - **Performance**: Config read from project root < 50ms; config read from XDG paths < 100ms; workspace discovery for 10 members < 500ms (concurrency bound of 8).
 - **Memory**: Memory overhead per parsed config < 10 KB (cached); cache pre-allocated with capacity 32.
-- **Concurrency**: Workspace discovery bounded to 8 concurrent loads via `buffered(8)`; config cache thread-safe via `Mutex`.
-- **Security**: Symlink attack detection via O(1) canonical path check; config file size capped at 1 MiB; `ConfigLanguage` enum prevents path injection; XDG_CONFIG_DIRS limited to 8 entries, absolute paths only.
-- **Reliability**: Poisoned mutex locks recovered via `into_inner()`; YAML parse failures produce warnings not silent defaults.
+- **Concurrency**: Workspace discovery bounded to 8 concurrent loads; config cache thread-safe.
+- **Security**: Symlink attack detection via O(1) canonical path check; config file size capped at 1 MiB; ConfigLanguage enum prevents path injection; XDG_CONFIG_DIRS limited to 8 entries, absolute paths only.
+- **Reliability**: Poisoned mutex locks recovered gracefully; YAML parse failures produce warnings not silent defaults.
 
 ## Test Scenarios / QA Checklist
 

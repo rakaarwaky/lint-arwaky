@@ -81,8 +81,8 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
   - `pip install --user` fails but `--break-system-packages` succeeds: returns `Ok(())`.
   - Network failure during install: returns error with process exit status.
 - **Error Handling**:
-  - Command spawn failure: returns `SetupError::io(message)`.
-  - Command exits with non-zero status: returns `SetupError::other(message)`.
+  - Command spawn failure: returns an IO setup error.
+  - Command exits with non-zero status: returns an other setup error.
 
 ### FR-005: Config Template Loading
 
@@ -94,7 +94,7 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
   - `"python"` → `lint_arwaky.config.python.yaml`
   - `"javascript"` → `lint_arwaky.config.javascript.yaml`
   - Unknown language → defaults to Rust config.
-  - Templates are embedded at compile time via `include_str!`.
+  - Templates are embedded at compile time.
 - **Edge Cases**:
   - Empty string: defaults to Rust config.
   - Case mismatch (e.g., `"Rust"`): defaults to Rust config.
@@ -110,12 +110,12 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
   - Config directory: `~/.config/lint-arwaky/` (XDG `config_dir`).
   - Write reports byte count: `"wrote <filename> (<N> bytes)"`.
 - **Edge Cases**:
-  - XDG config dir cannot be determined: returns `SetupError::invalid_state`.
-  - Directory already exists: `create_dir_all` is idempotent.
+  - XDG config dir cannot be determined: returns an invalid state error.
+  - Directory already exists: directory creation is idempotent.
   - File already exists: overwritten.
 - **Error Handling**:
-  - Write failure: returns `SetupError::io(message)`.
-  - Directory creation failure: returns `SetupError::io(message)`.
+  - Write failure: returns an IO setup error.
+  - Directory creation failure: returns an IO setup error.
 
 ### FR-007: Doctor Checks
 
@@ -220,9 +220,9 @@ CreateConfigDirResult (output)
 - [ ] JavaScript adapter install uses sudo when `sudo: true`.
 - [ ] Empty package list returns `Ok(())` without spawning processes.
 - [ ] Config template for unknown language defaults to Rust.
-- [ ] `write_config_file` returns byte count in description.
-- [ ] `create_global_config_dir` creates `~/.config/lint-arwaky/`.
-- [ ] `file_exists` returns `true` for existing file, `false` for missing.
+- [ ] Config file writing returns byte count in description.
+- [ ] Global config directory creation creates `~/.config/lint-arwaky/`.
+- [ ] File existence check returns `true` for existing file, `false` for missing.
 
 ## Assumptions & Constraints
 

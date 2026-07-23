@@ -16,10 +16,10 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter();
     ReportFormatterOrchestrator::new(ReportFormatterDeps {
-        text_formatter: Arc::new(TextFormatter::new(code_analysis)),
-        json_formatter: Arc::new(JsonFormatter::new()),
-        sarif_formatter: Arc::new(SarifFormatter::new()),
-        junit_formatter: Arc::new(JunitFormatter::new()),
+        text: Arc::new(TextFormatter::new(code_analysis)),
+        json: Arc::new(JsonFormatter::new()),
+        sarif: Arc::new(SarifFormatter::new()),
+        junit: Arc::new(JunitFormatter::new()),
     })
 }
 

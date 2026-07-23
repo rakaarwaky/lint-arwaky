@@ -41,7 +41,7 @@ impl Widget {
 "#;
     let dir = setup_temp_project(vec![("capabilities_widget.rs", clean_struct)]);
 
-    let orch = CodeAnalysisOrchestrator::new();
+    let orch = CodeAnalysisOrchestrator::new_with_defaults();
     let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
 
     // A single clean file should produce no AES301-305 violations
@@ -73,7 +73,7 @@ impl Service {
 "#;
     let dir = setup_temp_project(vec![("capabilities_service.rs", bypass_code)]);
 
-    let orch = CodeAnalysisOrchestrator::new();
+    let orch = CodeAnalysisOrchestrator::new_with_defaults();
     let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
 
     let aes304: Vec<_> = results
@@ -126,7 +126,7 @@ impl Bar {
 "#;
     let dir = setup_temp_project(vec![("capabilities_bar.rs", code)]);
 
-    let orch = CodeAnalysisOrchestrator::new();
+    let orch = CodeAnalysisOrchestrator::new_with_defaults();
     let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
     let score = orch.calc_score(&results);
 

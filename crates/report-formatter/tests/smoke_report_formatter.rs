@@ -1,7 +1,7 @@
 // PURPOSE: Smoke test — verify the report-formatter crate boots and responds within 5 seconds.
 // Layer: Smoke (must complete < 5s).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::ReportFormatterOrchestrator;
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{ReportFormatterDeps, ReportFormatterOrchestrator};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
@@ -11,25 +11,17 @@ use std::sync::Arc;
 
 #[test]
 fn smoke_report_formatter_crate_boots_and_responds() {
-    // 1. All formatters instantiate without panic
-    let text: Arc<
-        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-    > = Arc::new(TextFormatter::new(
+    let code_analysis =
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
-    let json: Arc<
-        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-    > = Arc::new(JsonFormatter::new());
-    let sarif: Arc<
-        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-    > = Arc::new(SarifFormatter::new());
-    let junit: Arc<
-        dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
-    > = Arc::new(JunitFormatter::new());
+            .code_analysis_linter();
 
     // 2. Orchestrator instantiates
-    let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);
+    let orch = ReportFormatterOrchestrator::new(ReportFormatterDeps {
+        text_formatter: Arc::new(TextFormatter::new(code_analysis)),
+        json_formatter: Arc::new(JsonFormatter::new()),
+        sarif_formatter: Arc::new(SarifFormatter::new()),
+        junit_formatter: Arc::new(JunitFormatter::new()),
+    });
 
     // 3. Format method responds
     let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]);
