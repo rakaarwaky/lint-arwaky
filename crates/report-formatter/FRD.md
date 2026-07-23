@@ -197,18 +197,18 @@ JUnit Output Structure
 
 ## API Contract
 
-| Function | Input | Output | Description |
+| Operation | Input | Output | Description |
 |---|---|---|---|
-| `orchestrator::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Route to appropriate formatter |
-| `text_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Human-readable text output |
-| `text_formatter::format_text(report)` | `ScanReport` | `DisplayContent` | Direct text formatting |
-| `json_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Pretty-printed JSON output |
-| `sarif_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | SARIF 2.1.0 JSON output |
-| `sarif_formatter::format_sarif(results)` | `&[LintResult]` | `DisplayContent` | Direct SARIF formatting |
-| `junit_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | JUnit XML output |
-| `junit_formatter::format_junit(results)` | `&[LintResult]` | `DisplayContent` | Direct JUnit formatting |
-| `format_report_default(report)` | `&ScanReport` | `String` | Default text summary fallback |
-| `xml_escape(s)` | `&str` | `String` | XML entity escaping |
+| Format | scan report, format | display content | Route to appropriate formatter |
+| Text Format | scan report, format | display content | Human-readable text output |
+| Text Format Direct | scan report | display content | Direct text formatting |
+| JSON Format | scan report, format | display content | Pretty-printed JSON output |
+| SARIF Format | scan report, format | display content | SARIF 2.1.0 JSON output |
+| SARIF Format Direct | lint results | display content | Direct SARIF formatting |
+| JUnit Format | scan report, format | display content | JUnit XML output |
+| JUnit Format Direct | lint results | display content | Direct JUnit formatting |
+| Default Format | scan report | string | Default text summary fallback |
+| XML Escape | string | string | XML entity escaping |
 
 ## Integration Points
 

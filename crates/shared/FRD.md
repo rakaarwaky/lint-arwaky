@@ -27,21 +27,23 @@ shared (foundation — no feature crate dependencies)
 ## Functional Requirements
 
 ### FR-001: Taxonomy Value Objects (common/)
+
 - **Description**: Provide all domain-level value objects that represent the shared language of the linting system.
 - **Input**: Construction from primitives or deserialization from JSON.
 - **Output**: Strongly-typed VOs used across all feature crates.
 - **Business Rules**:
-  - All VOs implement `Serialize`, `Deserialize`, `Clone`, `Debug`, `PartialEq`.
-  - VOs wrap primitives to enforce type safety: `FilePath`, `LineNumber`, `ColumnNumber`, `Severity`, `ErrorCode`, `Score`, `Timestamp`, `BooleanVO`, `Count`, `PatternList`.
-  - `Severity` enum: `HIGH`, `MEDIUM`, `LOW` with `score_impact()` method.
-  - `FilePath` validates non-empty path strings.
-  - `LineNumber` and `ColumnNumber` use `i64` values (1-indexed).
-  - `Score` supports `is_perfect()`, `is_passing(threshold)`, `deduct(severity)`.
-  - `PatternList` supports flexible construction from `&str`, `String`, `Vec<String>`, `Vec<&str>`.
-- **Edge Cases**: `FilePath::new("")` returns `Err`. `Score::new(f64::NAN)` is valid but `is_perfect()` returns false.
+  - All VOs support serialization, cloning, debugging, and equality comparison.
+  - VOs wrap primitives to enforce type safety: file path, line number, column number, severity, error code, score, timestamp, boolean flag, count, pattern list.
+  - Severity levels: HIGH, MEDIUM, LOW with score impact calculation.
+  - File path validates non-empty path strings.
+  - Line number and column number use integer values (1-indexed).
+  - Score supports perfection check, threshold passing, and severity deduction.
+  - Pattern list supports flexible construction from strings and string lists.
+- **Edge Cases**: Empty file path returns error. Score with NaN is valid but perfection check returns false.
 - **Error Handling**: Invalid VO construction returns `Err` with descriptive error type.
 
 ### FR-002: Lint Result VOs (cli-commands/)
+
 - **Description**: Provide the lint result struct and related types that represent a single lint violation across all features.
 - **Input**: Constructed by feature crates during analysis.
 - **Output**: Lint results serialized to JSON/SARIF/JUnit by CLI and MCP layers.
@@ -54,6 +56,7 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: N/A — pure data structures.
 
 ### FR-003: Contract Traits and Aggregates
+
 - **Description**: Define all protocol traits and aggregate traits that feature crates implement, following the AES contract layer convention.
 - **Input**: N/A — trait definitions only.
 - **Output**: Trait objects used for dependency injection across the workspace.
@@ -80,6 +83,7 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: N/A — trait definitions only, no implementation logic.
 
 ### FR-004: Graph Analysis VOs (code-analysis/)
+
 - **Description**: Provide value objects for import graph construction, reachability analysis, and orphan detection.
 - **Input**: Constructed during graph analysis.
 - **Output**: Graph analysis context, import graph, reverse link map, file definition map, inheritance map, orphan indicator result, and reachability result.
@@ -95,11 +99,12 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: N/A — pure data structures.
 
 ### FR-005: Configuration Value Objects (config-system/)
+
 - **Description**: Provide the architecture configuration and related types that define rule configuration, layer definitions, and ignore paths.
 - **Input**: Parsed from YAML/JSON configuration files.
 - **Output**: Architecture configuration consumed by all feature crates.
 - **Business Rules**:
-  - Architecture config contains: enabled (BooleanVO), layers (HashMap<LayerNameVO, LayerDefinition>), rules (Vec<ArchitectureRule>), naming (NamingConfig), ignored paths (FilePathList), mandatory class definition (BooleanVO).
+  - Architecture config contains: enabled flag, layers map (layer name to layer definition), rules list, naming config, ignored paths list, mandatory class definition flag.
   - Layer definition contains: exceptions (PatternList), orphan (OrphanRuleVO), role (RoleRuleVO), naming (NamingRuleVO).
   - Orphan rule VO has check_orphan (BooleanVO) and orphan_entry_points (PatternList).
   - Role rule VO has flags for each role constraint (no_domain_logic, stateless_execution, etc.).
@@ -109,11 +114,12 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: Malformed config falls back to defaults per field.
 
 ### FR-006: Utility Functions
+
 - **Description**: Provide shared utility functions for file I/O, path normalization, language detection, layer detection, and signature parsing.
 - **Input**: File paths, file content, configuration.
 - **Output**: Computed results used by feature crates.
 - **Business Rules**:
-  - Layer detection utility — Detect AES layer from filename prefix (`taxonomy_*`, `contract_*`, etc.). Returns `Option<String>`.
+  - Layer detection utility — Detect AES layer from filename prefix (`taxonomy_*`, `contract_*`, etc.). Returns optional layer name string.
   - Language detection utility — Detect programming language from file extension. Returns `LanguageVO`.
   - Path normalization utility — Normalize file paths for cross-platform consistency.
   - Signature parser utility — Extract method signatures from Rust/Python/TypeScript source code.
@@ -134,6 +140,7 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: File I/O errors propagated as `Result`. Invalid paths return `Err`.
 
 ### FR-007: Layer Name Constants and VOs
+
 - **Description**: Provide canonical layer name constants and value objects used for layer identification across the workspace.
 - **Input**: N/A — constants and VOs.
 - **Output**: `LayerNameVO`, layer name constants (taxonomy, contract, capabilities, utility, agent, surfaces).
@@ -149,61 +156,62 @@ shared (foundation — no feature crate dependencies)
 
 ```
 Architecture Config
-├── enabled: BooleanVO
-├── layers: HashMap<LayerNameVO, LayerDefinition>
+├── enabled: boolean flag
+├── layers: map of layer name to layer definition
 │   └── Layer Definition
-│       ├── exceptions: PatternList
-│       ├── orphan: Orphan Rule VO
-│       │   ├── check_orphan: BooleanVO
-│       │   └── orphan_entry_points: PatternList
-│       ├── role: Role Rule VO
-│       └── naming: Naming Rule VO
-├── rules: Vec<ArchitectureRule>
-├── naming: NamingConfig
-├── ignored_paths: FilePathList
-└── mandatory_class_definition: BooleanVO
+│       ├── exceptions: pattern list
+│       ├── orphan: orphan rule
+│       │   ├── check_orphan: boolean flag
+│       │   └── orphan_entry_points: pattern list
+│       ├── role: role rule
+│       └── naming: naming rule
+├── rules: list of architecture rules
+├── naming: naming config
+├── ignored_paths: list of file paths
+└── mandatory_class_definition: boolean flag
 
 Lint Result
-├── file: FilePath
-├── line: LineNumber
-├── column: ColumnNumber
-├── code: ErrorCode
-├── message: LintMessage
-├── source: AdapterName
-├── severity: Severity
-├── enclosing_scope: Option<ScopeRef>
-└── related_locations: LocationList
+├── file: file path
+├── line: line number
+├── column: column number
+├── code: error code
+├── message: lint message
+├── source: adapter name
+├── severity: severity level
+├── enclosing_scope: optional scope reference
+└── related_locations: list of related locations
 
 Graph Analysis Context
-├── import_graph: Import Graph
-├── inbound_links: Inbound Link Map
-├── file_definitions: File Definition Map
-└── inheritance_map: Inheritance Map
+├── import_graph: import graph
+├── inbound_links: inbound link map
+├── file_definitions: file definition map
+└── inheritance_map: inheritance map
 ```
 
 ## API Contract
 
-| Module | Key Types / Functions | Description |
-|--------|----------------------|-------------|
-| common path value object | `FilePath` | Typed file path VO with validation |
-| common severity value object | `Severity` | HIGH / MEDIUM / LOW enum |
-| common error value object | `ErrorCode` | Lint rule code (e.g., "AES401") |
-| common lint value object | `LintResult`, `ScopeRef`, `Location`, `LocationList` | Violation output types |
-| common primitive value objects | `BooleanVO`, `Score`, `PatternList`, `Count`, `LineNumber`, `ColumnNumber` | Primitive wrapper VOs |
-| common source content value object | `SourceContentVO`, `ContentString` | File content with metadata |
-| common layer value object | `LayerNameVO`, `LineContentVO` | Layer identification |
-| common definition value object | `LayerDefinition`, `NamingConfig` | Layer configuration |
-| common layer detection utility | Layer detection from filename prefix | Layer detection from filename |
-| common language detection utility | Language detection from file extension | Language detection from extension |
-| common signature parser utility | Method signature extraction | Method signature extraction |
-| code analysis graph value objects | `GraphAnalysisContext`, `ImportGraph`, `OrphanIndicatorResult` | Graph analysis types |
-| config system configuration types | `ArchitectureConfig`, `ArchitectureRule`, `OrphanRuleVO` | Configuration types |
-| config system orchestrator aggregate | Config loading aggregate | Config loading contract |
-| orphan detection aggregate | Orphan detection aggregate | Orphan detection aggregate |
-| orphan detection protocols | Layer-specific orphan protocols | Layer-specific orphan protocols |
-| role enforcement aggregate | Role enforcement aggregate | Role enforcement aggregate |
-| role enforcement protocols | Layer-specific role protocols | Layer-specific role protocols |
-| import rules aggregate | Import rules aggregate | Import rules aggregate |
+
+| Module                               | Key Types / Functions                                                      | Description                        |
+| -------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| common path value object             | `FilePath`                                                                 | Typed file path VO with validation |
+| common severity value object         | `Severity`                                                                 | HIGH / MEDIUM / LOW enum           |
+| common error value object            | `ErrorCode`                                                                | Lint rule code (e.g., "AES401")    |
+| common lint value object             | `LintResult`, `ScopeRef`, `Location`, `LocationList`                       | Violation output types             |
+| common primitive value objects       | `BooleanVO`, `Score`, `PatternList`, `Count`, `LineNumber`, `ColumnNumber` | Primitive wrapper VOs              |
+| common source content value object   | `SourceContentVO`, `ContentString`                                         | File content with metadata         |
+| common layer value object            | `LayerNameVO`, `LineContentVO`                                             | Layer identification               |
+| common definition value object       | layer definition, naming config                                            | Layer configuration                |
+| common layer detection utility       | layer detection from filename prefix                                       | Layer detection from filename      |
+| common language detection utility    | language detection from file extension                                     | Language detection from extension  |
+| common signature parser utility      | method signature extraction                                                | Method signature extraction        |
+| code analysis graph value objects    | graph analysis context, import graph, orphan indicator result              | Graph analysis types               |
+| config system configuration types    | architecture config, architecture rule, orphan rule                        | Configuration types                |
+| config system orchestrator aggregate | config loading aggregate                                                   | Config loading contract            |
+| orphan detection aggregate           | orphan detection aggregate                                                 | Orphan detection aggregate         |
+| orphan detection protocols           | layer-specific orphan protocols                                            | Layer-specific orphan protocols    |
+| role enforcement aggregate           | role enforcement aggregate                                                 | Role enforcement aggregate         |
+| role enforcement protocols           | layer-specific role protocols                                              | Layer-specific role protocols      |
+| import rules aggregate               | import rules aggregate                                                     | Import rules aggregate             |
 
 ## Integration Points
 
@@ -214,7 +222,7 @@ Graph Analysis Context
   - The orphan detection contracts are implemented by the orphan-detector feature crate.
   - The role enforcement contracts are implemented by the role-rules feature crate.
   - The import rules contracts are implemented by the import-rules feature crate.
-- **External**: None — the shared crate has no external dependencies beyond standard Rust crates (serde, async-trait, chrono).
+- **External**: None — the shared crate has no external dependencies beyond standard library crates.
 
 ## Non-functional Requirements (Detailed)
 
@@ -227,42 +235,43 @@ Graph Analysis Context
 
 ## Test Scenarios / QA Checklist
 
-- [ ] `FilePath::new("")` returns `Err`.
-- [ ] `FilePath::new("src/main.rs")` returns `Ok` with correct value.
-- [ ] `Severity::HIGH.score_impact()` returns correct deduction value.
-- [ ] `Score::new(100.0).is_perfect()` returns true.
-- [ ] `Score::new(85.0).is_passing(&Score::new(80.0))` returns true.
-- [ ] `PatternList::new("*.rs")` creates list with one pattern.
-- [ ] Layer detection from prefix "taxonomy_foo.rs" returns `Some("taxonomy")`.
-- [ ] Layer detection from prefix "main.rs" returns `None`.
-- [ ] Language detection for "main.rs" returns Rust.
-- [ ] Language detection for "app.py" returns Python.
-- [ ] Architecture config default has enabled: true, empty layers, empty rules.
-- [ ] Lint result serializes to valid JSON with all required fields.
-- [ ] Graph analysis context with empty maps represents a workspace with no imports.
-- [ ] All protocol traits are object-safe (can be used as `Arc<dyn Trait>`).
-- [ ] No circular dependencies between shared sub-modules.
+- [ ]  `FilePath::new("")` returns `Err`.
+- [ ]  `FilePath::new("src/main.rs")` returns `Ok` with correct value.
+- [ ]  `Severity::HIGH.score_impact()` returns correct deduction value.
+- [ ]  `Score::new(100.0).is_perfect()` returns true.
+- [ ]  `Score::new(85.0).is_passing(&Score::new(80.0))` returns true.
+- [ ]  `PatternList::new("*.rs")` creates list with one pattern.
+- [ ]  Layer detection from prefix "taxonomy_foo.rs" returns `Some("taxonomy")`.
+- [ ]  Layer detection from prefix "main.rs" returns `None`.
+- [ ]  Language detection for "main.rs" returns Rust.
+- [ ]  Language detection for "app.py" returns Python.
+- [ ]  Architecture config default has enabled: true, empty layers, empty rules.
+- [ ]  Lint result serializes to valid JSON with all required fields.
+- [ ]  Graph analysis context with empty maps represents a workspace with no imports.
+- [ ]  All protocol traits are object-safe for dependency injection.
+- [ ]  No circular dependencies between shared sub-modules.
 
 ## Assumptions & Constraints
 
 - The shared crate is the foundation layer — it must never depend on any feature crate.
 - All VOs are serializable for CLI output and MCP tool responses.
 - Protocol traits define internal DI boundaries; aggregate traits define public API surfaces.
-- The crate uses `async_trait` for async protocol methods.
-- Configuration is loaded once and shared via `Arc` or cloning across feature crates.
+- The crate uses async traits for async protocol methods.
+- Configuration is loaded once and shared via dependency injection across feature crates.
 - Layer name constants are string-based for cross-language compatibility.
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **VO** | Value Object — a typed wrapper around a primitive or collection that enforces domain invariants |
-| **Aggregate** | A trait defining the public API surface of a feature crate |
-| **Protocol** | A trait defining an internal DI boundary within a feature crate |
-| **AES** | Architecture Enforcement Standard — the 7-layer coding convention |
-| **Contract** | Pure trait definitions in the shared crate that feature crates implement |
-| **Taxonomy** | The domain foundation layer — stable language of the domain, free from technical concerns |
-| **DI** | Dependency Injection — wiring implementations to trait/interface contracts via `Arc<dyn Trait>` |
+
+| Term          | Definition                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------- |
+| **VO**        | Value Object — a typed wrapper around a primitive or collection that enforces domain invariants |
+| **Aggregate** | A trait defining the public API surface of a feature crate                                       |
+| **Protocol**  | A trait defining an internal DI boundary within a feature crate                                  |
+| **AES**       | Architecture Enforcement Standard — the 7-layer coding convention                               |
+| **Contract**  | Pure trait definitions in the shared crate that feature crates implement                         |
+| **Taxonomy**  | The domain foundation layer — stable language of the domain, free from technical concerns       |
+| **DI**        | Dependency Injection — wiring implementations to trait/interface contracts                      |
 
 ## Reference
 

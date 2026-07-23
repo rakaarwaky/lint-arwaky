@@ -229,23 +229,23 @@ ConfigError
 
 ## API Contract
 
-| Function | Input | Output | Description |
+| Operation | Input | Output | Description |
 |---|---|---|---|
-| `load_project_config(project_root)` | `FilePath` | `ConfigResult` | Auto-detect language and load config |
-| `load_config_for_language(project_root, language)` | `FilePath, ConfigLanguage` | `ConfigResult` | Load config for specific language |
-| `discover_workspaces(root)` | `FilePath` | `Vec<WorkspaceInfo>` | Discover and load configs for all workspace members |
-| `load_config_sync(project_root)` | `&str` | `ArchitectureConfig` | Synchronous config load (no async runtime) |
-| `ignored_paths(project_root)` | `&str` | `Vec<String>` | Get merged ignored paths list |
-| `ignored_paths_for_language(project_root, language)` | `&str, ConfigLanguage` | `Vec<String>` | Get ignored paths for specific language |
-| `read_config(project_root, language)` | `FilePath, ConfigLanguage` | `Result<Option<ConfigSource>, ConfigError>` | Read raw config from filesystem |
-| `list_config_files(project_root)` | `FilePath` | `Result<Vec<(ConfigLanguage, FilePath)>, ConfigError>` | List all config files at project root |
-| `detect(path)` | `FilePath` | `WorkspaceType` | Detect workspace type from marker files |
-| `is_workspace(path)` | `FilePath` | `bool` | Check if path is a workspace root |
-| `discover_workspace_members(root)` | `FilePath` | `Vec<FilePath>` | Find workspace member directories |
-| `is_adapter_enabled(config, name)` | `ProjectConfig, AdapterName` | `bool` | Check if adapter is enabled in config |
-| `validate_thresholds(config)` | `ProjectConfig` | `ValidationResult` | Validate config thresholds |
-| `parse_yaml_config(path)` | `FilePath` | `Result<ProjectConfig, ConfigError>` | Parse YAML config file |
-| `parse_toml_config(path)` | `FilePath` | `Result<Option<ProjectConfig>, ConfigError>` | Parse TOML config section |
+| Load Project Config | project root path | config result | Auto-detect language and load config |
+| Load Config for Language | project root path, language | config result | Load config for specific language |
+| Discover Workspaces | root path | workspace info list | Discover and load configs for all workspace members |
+| Load Config Sync | project root path | architecture config | Synchronous config load (no async runtime) |
+| Ignored Paths | project root path | string list | Get merged ignored paths list |
+| Ignored Paths for Language | project root path, language | string list | Get ignored paths for specific language |
+| Read Config | project root path, language | config source or error | Read raw config from filesystem |
+| List Config Files | project root path | config file list or error | List all config files at project root |
+| Detect | path | workspace type | Detect workspace type from marker files |
+| Is Workspace | path | boolean | Check if path is a workspace root |
+| Discover Workspace Members | root path | file path list | Find workspace member directories |
+| Is Adapter Enabled | config, adapter name | boolean | Check if adapter is enabled in config |
+| Validate Thresholds | config | validation result | Validate config thresholds |
+| Parse YAML Config | file path | config or error | Parse YAML config file |
+| Parse TOML Config | file path | config or error | Parse TOML config section |
 
 ## Integration Points
 

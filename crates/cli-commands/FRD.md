@@ -310,25 +310,22 @@ ExitCode conventions
 
 ## API Contract
 
-| Function | Input | Output | Description |
+| Operation | Input | Output | Description |
 |---|---|---|---|
-| `check handler(opts)` | `CheckOptions` | `ExitCode` | Self-lint analysis on current project |
-| `scan handler(opts)` | `ScanOptions` | `ExitCode` | Multi-workspace analysis with discovery |
-| `ci handler(linter, path, threshold)` | `ICodeAnalysisAggregate, Option<FilePath>, Threshold` | `ExitCode` | CI-mode threshold comparison |
-| `fix handler(path, dry_run, linter, factory)` | `Option<FilePath>, bool, ICodeAnalysisAggregate, factory` | `ExitCode` | Apply automatic fixes |
-| `doctor handler(maintenance)` | `MaintenanceCommandsAggregate` | `ExitCode` | Toolchain diagnostics |
-| `security handler(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Vulnerability scan |
-| `dependencies handler(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Dependency report |
-| `init handler(setup)` | `SetupManagementAggregate` | `ExitCode` | Create config files |
-| `install handler(setup, sudo)` | `SetupManagementAggregate, bool` | `ExitCode` | Install adapter dependencies |
-| `mcp-config handler(client)` | `&str` | `ExitCode` | Print MCP client config JSON |
-| `config-show handler(orchestrator)` | `IConfigOrchestratorAggregate` | `ExitCode` | Display active config files |
-| `adapters handler(external_lint)` | `IExternalLintAggregate` | `ExitCode` | List enabled adapters |
-| `git-diff handler(git, linter, base, path, filter)` | `GitHooksAggregate, ICodeAnalysisAggregate, GitBranchName, Option<&str>, Option<&str>` | `ExitCode` | Analyze git-changed files |
-| `watch handler(watch, path)` | `IWatchAggregate, Option<FilePath>` | `ExitCode` | File watch with auto-lint |
-| `run_ci_analysis(linter, path, threshold)` | `ICodeAnalysisAggregate, Option<FilePath>, Threshold` | `ExitCode` | CI pipeline implementation |
-| `find_workspace_root(path)` | `&str` | `Option<PathBuf>` | Walk up to find workspace root |
-| `detect_language_from_path(path)` | `&str` | `ConfigLanguage` | Detect language from filesystem markers |
+| Check | check options | Exit code | Self-lint analysis on current project |
+| Scan | scan options | Exit code | Multi-workspace analysis with discovery |
+| CI | linter, path, threshold | Exit code | CI-mode threshold comparison |
+| Fix | path, dry-run flag, linter, factory | Exit code | Apply automatic fixes |
+| Doctor | maintenance aggregate | Exit code | Toolchain diagnostics |
+| Security | maintenance aggregate, path | Exit code | Vulnerability scan |
+| Dependencies | maintenance aggregate, path | Exit code | Dependency report |
+| Init | setup aggregate | Exit code | Create config files |
+| Install | setup aggregate, sudo flag | Exit code | Install adapter dependencies |
+| MCP Config | client name | Exit code | Print MCP client config JSON |
+| Config Show | config orchestrator aggregate | Exit code | Display active config files |
+| Adapters | external lint aggregate | Exit code | List enabled adapters |
+| Git Diff | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files |
+| Watch | watch aggregate, path | Exit code | File watch with auto-lint |
 
 ## Integration Points
 

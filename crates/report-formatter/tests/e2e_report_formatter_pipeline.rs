@@ -1,7 +1,9 @@
 // PURPOSE: E2E tests — verify full report-formatter pipeline from orchestrator to all formatters.
 // Layer: E2E (full integration of all layers).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::ReportFormatterOrchestrator;
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
+    ReportFormatterDeps, ReportFormatterOrchestrator,
+};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
@@ -22,7 +24,8 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
 
-    let orch = ReportFormatterOrchestrator::new(text, json, sarif, junit);
+    let orch =
+        ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit });
 
     let results = vec![LintResult::new_arch_with_column(
         "test.rs",
