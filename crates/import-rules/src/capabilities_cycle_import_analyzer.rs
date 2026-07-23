@@ -20,6 +20,7 @@ use shared::taxonomy_name_vo::SymbolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+#[derive(Default)]
 pub struct DependencyCycleAnalyzer {}
 
 // ─── Cycle Detection Helper Types ─────────────────────────
@@ -171,12 +172,6 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for DependencyCycleAnalyzer {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {

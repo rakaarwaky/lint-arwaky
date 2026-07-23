@@ -22,6 +22,8 @@ use shared::code_analysis::utility_language_mapper::code_analysis_language_from_
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_severity_vo::Severity;
 
+use shared::common::utility_value_object_generator;
+
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct BypassChecker {
     rule: CodeAnalysisRuleVO,
@@ -30,6 +32,7 @@ pub struct BypassChecker {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
+        let _ = utility_value_object_generator::is_generator_enabled();
         let _ = utility_column_index::compute_column(content, "");
         let mut in_clippy_section = false;
 
