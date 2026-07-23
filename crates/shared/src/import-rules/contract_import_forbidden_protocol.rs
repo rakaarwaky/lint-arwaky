@@ -1,17 +1,11 @@
 // PURPOSE: IImportForbiddenProtocol — exclusive contract for forbidden import checks (AES201)
+use async_trait::async_trait;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::taxonomy_definition_vo::LayerMapVO;
-use crate::taxonomy_layer_vo::{Identity, LayerNameVO};
-use async_trait::async_trait;
-
-pub struct ForbiddenRuleConfig<'a> {
-    pub forbidden_list: &'a [String],
-    pub source_layer: &'a LayerNameVO,
-    pub allowed_values: &'a [String],
-}
+use crate::taxonomy_layer_vo::Identity;
 
 #[async_trait]
 pub trait IImportForbiddenProtocol: Send + Sync {

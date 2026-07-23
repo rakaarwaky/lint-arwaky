@@ -1,0 +1,115 @@
+# Performance Audit: code-analysis-lint-arwaky (Crate 15)
+
+## Summary
+
+**Crate:** code-analysis-lint-arwaky
+**Files audited:** 5 (src only, excluding tests/benches)
+**Performance issues found:** 6 significant, 3 moderate
+
+---
+
+## Critical Issues
+
+### 1. String Formatting in Loop — HIGH IMPACT
+**Location:** `agent_code_analysis_orchestrator.rs` (format_report), `capabilities_check_bypass_checker.rs` (check_bypass_comments)
+
+**Problem:** format_report() builds output string using push_str + format! pattern:
+```rust
+let mut output = String::new();
+output.push_str(&"=".repeat(60));
+output.push_str("\n  AES Architecture Compliance Report \n");
+output.push_str(&format!("\n  Project: {}\n", project_root));
+// ... more push_str calls
+for r in results {
+    output.push_str(&format!("  [{}] {} - {}\n", r.code, r.file.value, r.message.value));
+}
+```
+
+Each format!() creates a new String allocation. For 1000 results: 1000+ allocations. Additionally, check_bypass_comments() calls to_ascii_lowercase() twice per line (full_lower + code_lower).
+
+**Fix:** Use write!() macro with pre-allocated String, or Vec<&str> + join(). Pre-compute static parts of output template. For bypass checker, cache lowered patterns once per file scan.
+
+### 2. HashMap::new() Without Capacity — MODERATE IMPACT
+**Location:** `capabilities_code_duplication_analyzer.rs` (check_file_similarity_entries)
+
+**Problem:** Multiple HashMap::new() calls without capacity hints:
+```rust
+let mut global: HashMap<u64, HashSet<usize>> = HashMap::new();
+let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
+```
+
+For a project with 1000 files, each HashMap grows from capacity 0 to ~1000 through reallocations.
+
+**Fix:** Use HashMap::with_capacity(entries.len()) and HashSet::with_capacity(file_count). Pre-allocate file_to_others with vec![HashSet::with_capacity(10); entries.len()].
+
+### 3. Redundant String Allocations in Pattern Matching — MODERATE IMPACT
+**Location:** `capabilities_check_bypass_checker.rs` (check_bypass_comments)
+
+**Problem:** Multiple to_ascii_lowercase() calls per line:
+```rust
+let full_lower = trimmed.to_ascii_lowercase(); // alloc #1
+// ... later ...
+let code_lower = code_portion.to_ascii_lowercase(); // alloc #2
+```
+
+For a 500-line file: 1000 allocations just for case conversion. Many patterns are checked repeatedly.
+
+**Fix:** Use once_cell::LazyLock or std::sync::OnceLock for pre-lowered pattern cache. Or use ASCII-aware comparison where possible (e.g., str.as_bytes() for simple byte comparisons).
+
+---
+
+## Moderate Issues
+
+### 4. String::repeat() for Static Strings — MODERATE IMPACT
+**Location:** `agent_code_analysis_orchestrator.rs` (format_report)
+
+**Problem:** `"=".repeat(60)` creates a new String every time format_report is called, even though the string is constant.
+
+**Fix:** Store as `const HEADER_LINE: &str = "============================================================";` and use directly.
+
+### 5. Vec::new() + push Pattern — LOW IMPACT
+**Location:** `capabilities_code_duplication_analyzer.rs` (check_file_similarity_entries)
+
+**Problem:** file_unique_hashes initialized as vec![Vec::new(); entries.len()] then populated. For 1000 files: 1000 empty Vec allocations.
+
+**Fix:** Use Vec::with_capacity(entries.len()) and push entries as they're processed. Or use a single Vec<Vec<u64>> pre-allocated with capacity hints per inner Vec.
+
+### 6. Line-by-Line Content Processing — LOW IMPACT
+**Location:** `capabilities_check_bypass_checker.rs` (check_bypass_comments)
+
+**Problem:** content.lines() creates an iterator that allocates each line as a new String. Then lines().collect() creates a Vec<&str> which borrows from those Strings — but the Strings are dropped after the iterator.
+
+Actually, looking more closely: `let lines: Vec<&str> = content.lines().collect();` — this is fine because lines() returns &str slices into the original content. No extra allocations here.
+
+**Fix:** None needed — this is already efficient. Lines iterator borrows from original content.
+
+### 7. Multiple Config Lookups — LOW IMPACT
+**Location:** `agent_code_analysis_orchestrator.rs` (run_all_checks)
+
+**Problem:** Config rules searched twice for AES305 threshold:
+```rust
+let min_dup_lines = config.rules.iter().find(|r| r.name.value == "AES305")...
+let threshold_pct = config.rules.iter().find(|r| r.name.value == "AES305")...
+```
+
+Each find() iterates through all rules. For 20 rules: 40 iterations.
+
+**Fix:** Use a HashMap<&str, &CodeAnalysisRuleVO> for O(1) rule lookup. Or cache config values during struct construction.
+
+---
+
+## Positive Findings
+
+- Bypass checker uses early bailout scan (has_bypass_token check) — avoids full line processing when no bypass tokens exist
+- Code duplication analyzer uses hash-based dedup with single-pass normalization — efficient O(n) approach
+- Line checker uses content.lines().count() — efficient, no intermediate allocations
+- Orchestrator pre-reads file contents into entries before running checks — avoids duplicate I/O
+- Format report uses String::with_capacity hint via format!() — good pre-allocation
+
+---
+
+## Estimated Impact
+
+**Worst-case scenario (large project):** A 1000-file project with bypass checking results in ~500,000 to_ascii_lowercase() calls (1000 files × 500 lines × 2 allocs). Total allocation: ~5MB of temporary String data per scan.
+
+**Priority fix:** Cache lowered patterns once per file scan instead of recomputing per line. This single change would reduce bypass checker allocations by 50%.

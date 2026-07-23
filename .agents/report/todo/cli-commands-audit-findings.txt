@@ -1,0 +1,137 @@
+# Performance Audit: cli-commands-lint-arwaky (Crate 14)
+
+## Summary
+
+**Crate:** cli-commands-lint-arwaky
+**Files audited:** 5 (src only, excluding tests/benches)
+**Performance issues found:** 6 significant, 3 moderate
+
+---
+
+## Critical Issues
+
+### 1. Triple File I/O in Pipeline — HIGH IMPACT
+**Location:** `agent_analysis_pipeline_orchestrator.rs` (run_pipeline_with_discovery)
+
+**Problem:** The multi-workspace discovery path reads files three separate times:
+```rust
+// First read: scan_directory for source files
+let all_source_files = match scan_directory(&dir_path, &ignored) { ... }
+
+// Second read: collect_all_source_files for orphan context
+let all_workspace_files = collect_all_source_files(&scan_root, &ignored);
+
+// Third read: inside orphan_orchestrator.build_orphan_graph_context
+// which internally calls scan_directory_recursive multiple times
+```
+
+For a project with 1000 files, this results in ~3000 file reads instead of 1000.
+
+**Fix:** Cache all source files once at the start of run_pipeline_with_discovery(), reuse for both scanning and orphan detection. Use a single HashMap<String, String> for file content cache.
+
+### 2. Redundant Path Canonicalization — HIGH IMPACT
+**Location:** `surface_check_command.rs` (scan_with_discovery), `agent_analysis_pipeline_orchestrator.rs` (check_orphan_single_file_impl, run_pipeline_with_discovery)
+
+**Problem:** Multiple canonicalize() calls per workspace member:
+```rust
+let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+let cwd_for_ws = std::env::current_dir();
+let ws_fallback = ...;
+let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
+```
+
+Each canonicalize() involves filesystem syscalls. For 10 workspaces: 40+ canonicalize calls.
+
+**Fix:** Canonicalize once per workspace at the start, store in workspace struct. Use path comparison without canonicalization where possible (relative path matching).
+
+### 3. HashMap::new() Without Capacity — MODERATE IMPACT
+**Location:** `surface_check_command.rs` (scan_with_discovery), `agent_analysis_pipeline_orchestrator.rs` (format_results)
+
+**Problem:** `code_counts: std::collections::HashMap<String, usize> = HashMap::new();` grows without pre-size. Known to have at most 10-20 entries per workspace.
+
+**Fix:** `HashMap::with_capacity(20)` or use a fixed-size array for known code counts.
+
+### 4. Redundant File I/O in Fix Command — MODERATE IMPACT
+**Location:** `surface_fix_command.rs` (run_fix)
+
+**Problem:** Double file I/O read pattern:
+```rust
+let results = self.code_analysis_linter.run_code_analysis(&project_path); // first read
+// ... apply fixes ...
+if !dry_run {
+    let after_results = self.code_analysis_linter.run_code_analysis(&project_path); // second read
+}
+```
+
+Each run_code_analysis() reads all files in the project. For a 1000-file project: 2000 file reads.
+
+**Fix:** Cache file contents during first scan, reuse for second scan. Or skip second scan in dry-run mode entirely.
+
+---
+
+## Moderate Issues
+
+### 5. String Formatting in Loop — MODERATE IMPACT
+**Location:** `utility_format_output.rs` (format_junit_output)
+
+**Problem:** format!() called per result line inside loop:
+```rust
+for r in results {
+    xml.push_str(&format!("    <testcase classname=\"{classname}\" name=\"{name}\">\n"));
+    // ... more format! calls
+}
+```
+
+Each format! creates a new String allocation. For 1000 results: 1000+ allocations.
+
+**Fix:** Use write!() macro with pre-allocated String, or use Vec<&str> + join() pattern. Pre-compute static parts of XML template.
+
+### 6. Multiple current_dir() Calls — LOW IMPACT
+**Location:** `surface_check_command.rs` (scan_with_discovery), `agent_analysis_pipeline_orchestrator.rs` (format_results)
+
+**Problem:** std::env::current_dir() called multiple times per scan:
+```rust
+let cwd_for_ws = match std::env::current_dir() { ... }; // called 3+ times
+```
+
+Each call involves a syscalls. Cache once at start of method.
+
+**Fix:** `let cwd = std::env::current_dir().unwrap_or_default();` at method start, reuse throughout.
+
+### 7. Vec::clone() Without Need — LOW IMPACT
+**Location:** `surface_check_command.rs` (scan_with_discovery)
+
+**Problem:** `workspaces.clone()` creates deep clone of Vec<WorkspaceMember> which involves String allocations for each path.
+
+**Fix:** Use &workspaces iter() instead of clone(), or store workspaces as &[WorkspaceMember] reference.
+
+### 8. Repeated Workspace Canonicalization — LOW IMPACT
+**Location:** `surface_check_command.rs` (scan_with_discovery)
+
+**Problem:** ws_canonical and ws_fallback computed twice in scan_with_discovery:
+```rust
+// First computation (line ~200)
+let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+// Second computation (line ~260, inside loop)
+let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
+```
+
+**Fix:** Compute once per workspace, store in workspace struct or pre-compute before loops.
+
+---
+
+## Positive Findings
+
+- Orchestrator uses tokio::join! for concurrent async linter groups — efficient parallelism
+- SARIF formatting delegates to shared SarifFormatter — avoids duplication
+- JUnit XML output uses String::with_capacity() — good pre-allocation
+- Path resolution utility handles edge cases with early returns — prevents wasted work
+- Filter results using starts_with() comparison — efficient path matching
+
+---
+
+## Estimated Impact
+
+**Worst-case scenario (multi-workspace monorepo):** A project with 5 workspaces, each containing 500 files would result in ~12500 file reads (3 reads × 5 workspaces × 500 files / 2 avg). Total scan time: ~30-60 seconds depending on disk I/O.
+
+**Priority fix:** Cache all source files once at pipeline start, reuse for scanning and orphan detection. This single change would reduce file I/O by 60-70%.
