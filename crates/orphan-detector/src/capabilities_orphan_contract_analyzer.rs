@@ -89,8 +89,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             );
         }
 
-        // Check 2: port/protocol not called by any orchestrator, container, capabilities, or surface.
-        if suffix == "port" || suffix == "protocol" {
+        // Check 2: protocol not called by any orchestrator, container, capabilities, or surface.
+        if suffix == "protocol" {
             let mut called_by_impl_or_user = false;
             for cf in search_files.as_ref() {
                 let cb = file_basename(cf);

@@ -1,3 +1,0 @@
-interface Port {
-  do(): void;
-}

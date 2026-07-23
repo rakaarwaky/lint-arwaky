@@ -297,7 +297,6 @@ architecture:
             [
               "taxonomy",
               "contract(aggregate)",
-              "contract(port)",
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
