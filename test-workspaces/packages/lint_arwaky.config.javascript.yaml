@@ -434,7 +434,7 @@ architecture:
 
     AES402:
       enabled: true
-      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      scope: ["contract(aggregate)", "contract(protocol)"]
       exceptions:
         [
           "index.ts",
