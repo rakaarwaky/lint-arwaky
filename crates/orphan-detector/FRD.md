@@ -77,9 +77,8 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Business Rules**:
   - Protocol contracts — Must be implemented by a capabilities file AND called by an agent or capability via dependency injection.
   - Aggregate contracts — Must be implemented by an agent file AND called by a surface file via dependency injection.
-  - Port contracts — Legacy, marked for removal.
   - Detects `impl Trait for Type` (Rust), `class Foo(Trait)` (Python), `class Foo implements Trait` (TS).
-- **Edge Cases**: Protocol with an implementation but zero callers is still reachable (implementation exists). Port contracts are checked but deprecated.
+- **Edge Cases**: Protocol with an implementation but zero callers is still reachable (implementation exists).
 - **Error Handling**: Files with unparseable signatures are not flagged as orphan (fail-safe).
 
 ### FR-006: Capabilities Orphan Detection (AES503)

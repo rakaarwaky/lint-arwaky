@@ -9,7 +9,7 @@
 ///
 /// Only Rust trait declarations are tracked. Free-standing `fn` definitions
 /// (impl blocks, inherent impls, free functions) are intentionally ignored
-/// because the AES402 rule applies to the contract layer (port / protocol
+/// because the AES402 rule applies to the contract layer (protocol
 /// traits) — implementation details are an adapter concern.
 pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
     let mut results = Vec::new();

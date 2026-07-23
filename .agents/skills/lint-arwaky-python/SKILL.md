@@ -218,7 +218,6 @@ FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
 ### Protocol Requirements (AES403)
 
 - Every capability class MUST inherit from protocol ABC
-- Every infrastructure class MUST inherit from port ABC
 - Every agent class MUST inherit from aggregate ABC
 
 ### Layer Boundaries (AES404)

@@ -102,7 +102,7 @@ impl RoleOrchestrator {
     ///   - agent: type composition, any-type annotations
     ///   - surface: function count, smart vs utility vs passive classification
     ///   - utility: stateless standalone function checks
-    ///   - contract: port vs protocol differentiation
+    ///   - contract: protocol differentiation
     ///   - capabilities: routing checks
     ///   - taxonomy: entity, error, event, constant checks
     ///   - root: no role checks (pure DI wiring)

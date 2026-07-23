@@ -221,7 +221,6 @@ FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
 ### Interface Requirements (AES403)
 
 - Every capability class MUST implement a protocol interface
-- Every infrastructure class MUST implement a port interface
 - Every agent class MUST implement an aggregate interface
 
 ### Layer Boundaries (AES404)

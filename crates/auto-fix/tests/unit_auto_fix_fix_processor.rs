@@ -10,6 +10,7 @@ use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{Count, LineNumber, Score};
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_severity_vo::Severity;
 use std::io::Write;
 use std::sync::Arc;
@@ -52,11 +53,11 @@ impl ICodeAnalysisAggregate for MockLinter {
         Score::new(100.0)
     }
 
-    fn check_critical(&self, _results: &[LintResult]) -> bool {
+    fn check_critical(&self, _results: &[LintResult]) -> BooleanVO {
         false
     }
 
-    fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> String {
+    fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> DisplayContent {
         String::from("mock report")
     }
 

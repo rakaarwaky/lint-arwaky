@@ -36,7 +36,6 @@ fn is_rust_trait_import(name: &str) -> bool {
         return true;
     }
     if name.ends_with("Protocol")
-        || name.ends_with("Port")
         || name.ends_with("Trait")
         || name.ends_with("Aggregate")
         || name.ends_with("Ext")
@@ -420,7 +419,6 @@ pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
             let s = name.value();
             if (s.starts_with('I') && s.len() > 1 && s.chars().nth(1).unwrap_or(' ').is_uppercase())
                 || s.ends_with("Protocol")
-                || s.ends_with("Port")
                 || s.ends_with("Trait")
                 || s.ends_with("Aggregate")
                 || s == "Parser"

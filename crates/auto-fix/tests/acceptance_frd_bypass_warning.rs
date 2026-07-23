@@ -10,6 +10,7 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{LineNumber, Score};
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
@@ -34,7 +35,7 @@ impl ICodeAnalysisAggregate for MockLinter {
         false
     }
     fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
-        String::new()
+        DisplayContent::new("")
     }
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
