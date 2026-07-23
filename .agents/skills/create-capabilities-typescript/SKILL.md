@@ -69,7 +69,7 @@ File: `capabilities_<domain>_<role>.ts`
 - **May depend on:** Taxonomy, Contract, Utility.
 - **Must NOT depend on / import:** other Capabilities, Agent.
 
-Note: do not import infrastructure_* — that layer no longer exists; its mechanics now live in the Utility layer. Utility is an allowed dependency.
+Note: use the Utility layer for I/O, network, and database access.
 
 ## Special Rules (ARCHITECTURE §8)
 
