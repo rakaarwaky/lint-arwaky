@@ -63,11 +63,11 @@ The following files are explicitly skipped from orphan detection (they are packa
 - **Requirement:** Surface files must be reachable based on their group classification.
 - **Detection method:** Inbound import graph only (no identifier-based fallback).
 
-| Group | Roles | Orphan Rule | Detection |
-|-------|-------|-------------|-----------|
-| **Smart** | `_command`, `_controller`, `_page`, `_router` | Must be imported by entry point or container | Check inbound imports from `main.*`, `index.*`, `*_entry.*`, `*_container.*` |
-| **Utility** | `_hook`, `_store`, `_action`, `_screen` | Must be imported by a Smart surface | Check inbound imports from `surface_*_command`, `surface_*_controller`, `surface_*_page`, `surface_*_router` |
-| **Passive** | `_component`, `_view`, `_layout` | Must be imported by Smart OR Utility surface | Check inbound imports from any `surface_*` file |
+| Group       | Roles                                         | Orphan Rule                                  | Detection                                                                                                    |
+| ----------- | --------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Smart**   | `_command`, `_controller`, `_page`, `_router` | Must be imported by entry point or container | Check inbound imports from `main.*`, `index.*`, `*_entry.*`, `*_container.*`                                 |
+| **Utility** | `_hook`, `_store`, `_action`, `_screen`       | Must be imported by a Smart surface          | Check inbound imports from `surface_*_command`, `surface_*_controller`, `surface_*_page`, `surface_*_router` |
+| **Passive** | `_component`, `_view`, `_layout`              | Must be imported by Smart OR Utility surface | Check inbound imports from any `surface_*` file                                                              |
 
 **Dependency chain:** `Entry → Smart → Utility → Passive`
 
@@ -95,20 +95,20 @@ The following files are explicitly skipped from orphan detection (they are packa
 
 Critical shared modules used by orphan-detector:
 
-| Module | Purpose | Criticality |
-|--------|---------|-------------|
-| `shared::code_analysis::taxonomy_analysis_vo` | Graph analysis VOs (ImportGraph, InboundLinkMap, etc.) | Critical |
-| `shared::orphan_detector::contract_orphan_protocol` | Protocol traits for all 6 orphan analyzers | Critical |
-| `shared::orphan_detector::contract_orphan_aggregate` | IOrphanAggregate trait | Critical |
-| `shared::orphan_detector::utility_orphan_io` | File I/O utilities (read, scan, is_file) | Critical |
-| `shared::orphan_detector::utility_orphan_filename` | Filename parsing (stem, suffix, basename) | Critical |
-| `shared::orphan_detector::utility_orphan_path` | Path resolution and ignore checking | Critical |
-| `shared::common::utility_layer_detector` | Layer detection from filename prefix | Critical |
-| `shared::config_system::taxonomy_config_vo` | ArchitectureConfig for exceptions/rules | Critical |
-| `shared::taxonomy_lint_vo` | LintResult, Severity, Location types | Critical |
-| `shared::orphan_detector::utility_orphan` | Module normalization and token extraction | Optional |
-| `shared::orphan_detector::utility_workspace` | Workspace root detection, container wiring check | Optional |
-| `shared::orphan_detector::utility_file_cache` | Cached file reading | Optional |
+| Module                                               | Purpose                                                | Criticality |
+| ---------------------------------------------------- | ------------------------------------------------------ | ----------- |
+| `shared::code_analysis::taxonomy_analysis_vo`        | Graph analysis VOs (ImportGraph, InboundLinkMap, etc.) | Critical    |
+| `shared::orphan_detector::contract_orphan_protocol`  | Protocol traits for all 6 orphan analyzers             | Critical    |
+| `shared::orphan_detector::contract_orphan_aggregate` | IOrphanAggregate trait                                 | Critical    |
+| `shared::orphan_detector::utility_orphan_io`         | File I/O utilities (read, scan, is_file)               | Critical    |
+| `shared::orphan_detector::utility_orphan_filename`   | Filename parsing (stem, suffix, basename)              | Critical    |
+| `shared::orphan_detector::utility_orphan_path`       | Path resolution and ignore checking                    | Critical    |
+| `shared::common::utility_layer_detector`             | Layer detection from filename prefix                   | Critical    |
+| `shared::config_system::taxonomy_config_vo`          | ArchitectureConfig for exceptions/rules                | Critical    |
+| `shared::taxonomy_lint_vo`                           | LintResult, Severity, Location types                   | Critical    |
+| `shared::orphan_detector::utility_orphan`            | Module normalization and token extraction              | Optional    |
+| `shared::orphan_detector::utility_workspace`         | Workspace root detection, container wiring check       | Optional    |
+| `shared::orphan_detector::utility_file_cache`        | Cached file reading                                    | Optional    |
 
 ## Multi-Language Test Scenarios
 

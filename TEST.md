@@ -6,8 +6,8 @@
 
 There are 3 test workspace
 
-| Category         | Path                          | Purpose                               |
-| ---------------- | ----------------------------- | ------------------------------------- |
+| Category         | Path                        | Purpose                               |
+| ---------------- | --------------------------- | ------------------------------------- |
 | Rust (crates)    | `test-workspaces/crates/`   | AES Rust + general quality checks     |
 | Python (modules) | `test-workspaces/modules/`  | AES Python + Ruff/MyPy/Bandit scans   |
 | JS/TS (packages) | `test-workspaces/packages/` | AES JS/TS + ESLint/Prettier/TSC scans |
@@ -50,15 +50,18 @@ The base codebase must be clean of any internal architecture rule violations.
   ```bash
   cargo run --bin lint-arwaky-cli -- check .
   ```
+
 - [ ] _Criteria:_ Output must show **`Total violations: 0`**.
 - [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](file:///home/raka/mcp-arwaky/lint-arwaky/lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
 
   #### B. Cross-Language Functional Verification (Scan Test Projects)
+
 - [ ] Build a clean release and copy the binary:
 
   ```bash
   bash scripts/install.local.sh
   ```
+
 - [ ] Run scan on the test-workspaces folder:
 
   ```bash
@@ -67,6 +70,7 @@ The base codebase must be clean of any internal architecture rule violations.
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
   ```
+
 - [ ] _Criteria:_ Findings count matches target baselines (mandatory 24 unique AES violation codes detected)
 
 #### C. System & MCP Protocol Verification
@@ -76,11 +80,13 @@ The base codebase must be clean of any internal architecture rule violations.
   ```bash
   cargo test --workspace
   ```
+
 - [ ] Run binary health diagnostics:
 
   ```bash
   lint-arwaky-cli doctor
   ```
+
 - [ ] Run JSON-RPC MCP protocol smoke-test:
 
   ```bash

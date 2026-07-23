@@ -13,20 +13,21 @@ description: Comprehensive terminal commands and argument reference for lint-arw
 
 These options apply globally across all subcommands:
 
-| Option | Long Flag | Description |
-| :--- | :--- | :--- |
-| `-v` | `--verbose` | Enable debug logging and detailed diagnostic traces. |
-| `-q` | `--quiet` | Minimize console output (suppress non-error messages). |
-| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration). |
-| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
-| `-h` | `--help` | Print help information for the CLI or specific subcommand. |
-| `-V` | `--version` | Print CLI binary version. |
+| Option | Long Flag            | Description                                                                        |
+| :----- | :------------------- | :--------------------------------------------------------------------------------- |
+| `-v`   | `--verbose`          | Enable debug logging and detailed diagnostic traces.                               |
+| `-q`   | `--quiet`            | Minimize console output (suppress non-error messages).                             |
+| `-o`   | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).              |
+|        | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
+| `-h`   | `--help`             | Print help information for the CLI or specific subcommand.                         |
+| `-V`   | `--version`          | Print CLI binary version.                                                          |
 
 ---
 
 ## 2. Commands & Subcommands Reference
 
 ### `scan` / `check`
+
 Scans target path or workspace, discovers workspace members, and runs all AES linters.
 
 ```bash
@@ -47,15 +48,17 @@ lint-arwaky-cli scan [PATH] --format json --output-dir ~/.local/share/lint-arwak
 ```
 
 **Arguments & Flags**:
-* `[PATH]`: Target path to scan (defaults to current directory `.`).
-* `--format <FORMAT>`: Output format. Options: `text` (default), `json`, `sarif`, `junit`.
-* `--member <NAME>`: Target single workspace member by package name.
-* `--filter <CODE>`: Filter violations by AES rule ID (e.g., `AES101`, `AES401`, `AES504`).
-* `-o, --output-dir <DIR>`: Output directory path to save report files.
+
+- `[PATH]`: Target path to scan (defaults to current directory `.`).
+- `--format <FORMAT>`: Output format. Options: `text` (default), `json`, `sarif`, `junit`.
+- `--member <NAME>`: Target single workspace member by package name.
+- `--filter <CODE>`: Filter violations by AES rule ID (e.g., `AES101`, `AES401`, `AES504`).
+- `-o, --output-dir <DIR>`: Output directory path to save report files.
 
 ---
 
 ### `fix`
+
 Applies safe automatic fixes to compliance violations across the codebase.
 
 ```bash
@@ -70,13 +73,15 @@ lint-arwaky-cli fix [PATH] --dry-run --filter AES101
 ```
 
 **Arguments & Flags**:
-* `[PATH]`: Target path to fix (defaults to `.`).
-* `--dry-run`: Perform a dry run showing diffs without modifying files.
-* `--filter <CODE>`: Apply fixes only for a specific AES rule ID.
+
+- `[PATH]`: Target path to fix (defaults to `.`).
+- `--dry-run`: Perform a dry run showing diffs without modifying files.
+- `--filter <CODE>`: Apply fixes only for a specific AES rule ID.
 
 ---
 
 ### `ci`
+
 Continuous Integration quality gate mode. Evaluates compliance score against a threshold.
 
 ```bash
@@ -88,13 +93,15 @@ lint-arwaky-cli ci [PATH] --threshold 80 --format junit
 ```
 
 **Arguments & Flags**:
-* `[PATH]`: Target path (defaults to `.`).
-* `--threshold <SCORE>`: Minimum acceptable quality score (0–100, default: 80). Exits with code 1 if score is below threshold.
-* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+
+- `[PATH]`: Target path (defaults to `.`).
+- `--threshold <SCORE>`: Minimum acceptable quality score (0–100, default: 80). Exits with code 1 if score is below threshold.
+- `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
 
 ---
 
 ### `orphan`
+
 Checks if a target file is an orphan (AES501–AES506) unreachable from entry points.
 
 ```bash
@@ -103,11 +110,13 @@ lint-arwaky-cli orphan <FILE_PATH>
 ```
 
 **Arguments & Flags**:
-* `<FILE_PATH>`: Relative or absolute path to the target source file.
+
+- `<FILE_PATH>`: Relative or absolute path to the target source file.
 
 ---
 
 ### `security` & `dependencies`
+
 Scans for security vulnerabilities and library dependency CVEs.
 
 ```bash
@@ -121,6 +130,7 @@ lint-arwaky-cli dependencies [PATH]
 ---
 
 ### `watch`
+
 Monitors file system changes and re-runs linting automatically upon file save.
 
 ```bash
@@ -131,6 +141,7 @@ lint-arwaky-cli watch [PATH]
 ---
 
 ### `install-hook` & `uninstall-hook`
+
 Manages Git pre-commit hook integration.
 
 ```bash
@@ -144,6 +155,7 @@ lint-arwaky-cli uninstall-hook
 ---
 
 ### `init` & `install`
+
 Initializes workspace configuration and installs linter adapter dependencies.
 
 ```bash
@@ -157,6 +169,7 @@ lint-arwaky-cli install
 ---
 
 ### `config-show`, `adapters`, & `mcp-config`
+
 Displays workspace configuration and active integrations.
 
 ```bash
@@ -173,6 +186,7 @@ lint-arwaky-cli mcp-config
 ---
 
 ### `doctor` & `version`
+
 Environment diagnostic tools.
 
 ```bash
@@ -219,6 +233,7 @@ lint-arwaky-cli scan --format json --output-dir ~/.local/share/lint-arwaky/repor
 Two XDG installation scripts are available in the `scripts/` directory:
 
 ### Local Installation (User-level)
+
 Cleans and installs binaries to `~/.cargo/bin` and XDG layout to `~/.config/lint-arwaky` and `~/.local/share/lint-arwaky/reports`:
 
 ```bash
@@ -226,6 +241,7 @@ bash scripts/install.local.sh
 ```
 
 ### Global Installation (System-wide)
+
 Installs binaries to `/usr/local/bin`, configuration to `/etc/lint-arwaky`, and report data to `/var/lib/lint-arwaky/reports`:
 
 ```bash
@@ -233,6 +249,7 @@ sudo bash scripts/install.global.sh
 ```
 
 ### Release Pipeline Automation
+
 Executes release build, self-linting, clippy/fmt checks, version bump, Jujutsu (JJ) commit/bookmarking, and crates.io publishing:
 
 ```bash

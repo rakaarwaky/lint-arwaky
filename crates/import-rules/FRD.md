@@ -97,13 +97,13 @@ LayerHierarchy {
 
 ## API Contract
 
-| Function                      | Input                      | Output          | Description  |
-| ----------------------------- | -------------------------- | --------------- | ------------ |
-| `check_forbidden_imports()`   | File path, imports         | Vec<Diagnostic> | Check AES201 |
-| `run_mandatory_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES202 |
-| `check_unused_imports()`      | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
-| `check_dummy_imports()`       | File path, imports         | Vec<Diagnostic> | Check AES204 |
-| `check_cycles()`              | All files, imports         | Vec<Diagnostic> | Check AES205 |
+| Function                    | Input                      | Output          | Description  |
+| --------------------------- | -------------------------- | --------------- | ------------ |
+| `check_forbidden_imports()` | File path, imports         | Vec<Diagnostic> | Check AES201 |
+| `run_mandatory_imports()`   | File path, imports         | Vec<Diagnostic> | Check AES202 |
+| `check_unused_imports()`    | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
+| `check_dummy_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES204 |
+| `check_cycles()`            | All files, imports         | Vec<Diagnostic> | Check AES205 |
 
 ## Integration Points
 
@@ -120,39 +120,39 @@ LayerHierarchy {
 
 ### AES201 — Forbidden Import
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
-| taxonomy imports contract | `taxonomy_vo.rs` with `use contract_protocol::*` | AES201 CRITICAL violation |
-| capabilities imports agent | `capabilities_checker.rs` with `use agent_orchestrator::*` | AES201 CRITICAL violation |
-| valid unidirectional import | `capabilities_checker.rs` with `use taxonomy_vo::*` | No violation |
+| Test Case                   | Input                                                      | Expected Output           |
+| --------------------------- | ---------------------------------------------------------- | ------------------------- |
+| taxonomy imports contract   | `taxonomy_vo.rs` with `use contract_protocol::*`           | AES201 CRITICAL violation |
+| capabilities imports agent  | `capabilities_checker.rs` with `use agent_orchestrator::*` | AES201 CRITICAL violation |
+| valid unidirectional import | `capabilities_checker.rs` with `use taxonomy_vo::*`        | No violation              |
 
 ### AES202 — Mandatory Import
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
+| Test Case               | Input                                             | Expected Output       |
+| ----------------------- | ------------------------------------------------- | --------------------- |
 | missing contract import | `capabilities_checker.rs` without protocol import | AES202 HIGH violation |
-| present contract import | `capabilities_checker.rs` with protocol import | No violation |
+| present contract import | `capabilities_checker.rs` with protocol import    | No violation          |
 
 ### AES203 — Unused Import
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
+| Test Case     | Input                                          | Expected Output         |
+| ------------- | ---------------------------------------------- | ----------------------- |
 | unused symbol | File with `use foo::Bar;` but `Bar` never used | AES203 MEDIUM violation |
-| used symbol | File with `use foo::Bar;` and `Bar` referenced | No violation |
+| used symbol   | File with `use foo::Bar;` and `Bar` referenced | No violation            |
 
 ### AES204 — Dummy Import
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
-| dummy function | File with `fn _use_imports() {}` | AES204 HIGH violation |
+| Test Case        | Input                                | Expected Output       |
+| ---------------- | ------------------------------------ | --------------------- |
+| dummy function   | File with `fn _use_imports() {}`     | AES204 HIGH violation |
 | empty trait impl | File with `impl Trait for Struct {}` | AES204 HIGH violation |
 
 ### AES205 — Circular Dependency
 
-| Test Case | Input | Expected Output |
-|-----------|-------|-----------------|
+| Test Case    | Input                    | Expected Output           |
+| ------------ | ------------------------ | ------------------------- |
 | direct cycle | A imports B, B imports A | AES205 CRITICAL violation |
-| no cycle | A imports B, B imports C | No violation |
+| no cycle     | A imports B, B imports C | No violation              |
 
 ## Assumptions & Constraints
 
@@ -182,8 +182,8 @@ The import-rules crate reads its configuration from `lint_arwaky.config.<languag
 
 ```yaml
 architecture:
-  enabled: true                    # Master switch for all architecture rules
-  rules:                           # Map of rule codes to their configurations
+  enabled: true # Master switch for all architecture rules
+  rules: # Map of rule codes to their configurations
     AES201: { ... }
     AES202: { ... }
     AES203: { ... }
@@ -197,8 +197,8 @@ Each rule (AES201–AES205) follows this schema:
 
 ```yaml
 AES201:
-  enabled: true                    # Enable/disable this specific rule
-  scope:                           # List of layer prefixes this rule applies to
+  enabled: true # Enable/disable this specific rule
+  scope: # List of layer prefixes this rule applies to
     - "taxonomy"
     - "contract"
     - "utility"
@@ -206,15 +206,15 @@ AES201:
     - "agent"
     - "surface"
     - "root"
-  exceptions:                      # Filenames to skip (basename match)
+  exceptions: # Filenames to skip (basename match)
     - "main.rs"
     - "lib.rs"
     - "mod.rs"
-  conditions:                      # (AES201/AES202 only) Layer-specific rules
-    - scope: "taxonomy(vo)"        # File scope pattern
-      allowed: ["taxonomy"]        # Layers this scope can import from
-      mandatory: null              # Required imports (null = none)
-      forbidden:                   # Layers this scope cannot import from
+  conditions: # (AES201/AES202 only) Layer-specific rules
+    - scope: "taxonomy(vo)" # File scope pattern
+      allowed: ["taxonomy"] # Layers this scope can import from
+      mandatory: null # Required imports (null = none)
+      forbidden: # Layers this scope cannot import from
         - "agent"
         - "surface"
         - "contract"
@@ -227,18 +227,18 @@ AES201:
 
 Scope patterns use parentheses to specify sub-layers:
 
-| Pattern | Meaning |
-|---------|---------|
-| `taxonomy` | All taxonomy files |
-| `taxonomy(vo)` | Only taxonomy value objects |
-| `taxonomy(entity,error,event)` | Taxonomy entities, errors, and events |
-| `contract(protocol)` | Only contract protocols |
-| `contract(aggregate)` | Only contract aggregates |
-| `capabilities` | All capability files |
-| `agent(orchestrator)` | Only agent orchestrators |
-| `surface(command\|controller\|page)` | Smart surfaces |
-| `surface(hook\|store\|action\|screen\|router)` | Utility surfaces |
-| `surface(component\|view\|layout)` | Passive surfaces |
+| Pattern                                        | Meaning                               |
+| ---------------------------------------------- | ------------------------------------- |
+| `taxonomy`                                     | All taxonomy files                    |
+| `taxonomy(vo)`                                 | Only taxonomy value objects           |
+| `taxonomy(entity,error,event)`                 | Taxonomy entities, errors, and events |
+| `contract(protocol)`                           | Only contract protocols               |
+| `contract(aggregate)`                          | Only contract aggregates              |
+| `capabilities`                                 | All capability files                  |
+| `agent(orchestrator)`                          | Only agent orchestrators              |
+| `surface(command\|controller\|page)`           | Smart surfaces                        |
+| `surface(hook\|store\|action\|screen\|router)` | Utility surfaces                      |
+| `surface(component\|view\|layout)`             | Passive surfaces                      |
 
 ### Layer Hierarchy (Default)
 
@@ -322,10 +322,10 @@ Files and directories are skipped if they match any of these criteria:
 
 Language is determined by file extension:
 
-| Extension | Language |
-|-----------|----------|
-| `.rs` | Rust |
-| `.py` | Python |
+| Extension     | Language   |
+| ------------- | ---------- |
+| `.rs`         | Rust       |
+| `.py`         | Python     |
 | `.js`, `.jsx` | JavaScript |
 | `.ts`, `.tsx` | TypeScript |
 
@@ -333,14 +333,14 @@ Language is determined by file extension:
 
 After file collection, each file's architectural layer is detected from its filename prefix:
 
-| Filename Pattern | Detected Layer |
-|------------------|----------------|
-| `taxonomy_*.rs` | taxonomy |
-| `contract_*.rs` | contract |
-| `capabilities_*.rs` | capabilities |
-| `utility_*.rs` | utility |
-| `agent_*.rs` | agent |
-| `surface_*.rs` | surface |
-| `root_*.rs` | root |
+| Filename Pattern    | Detected Layer |
+| ------------------- | -------------- |
+| `taxonomy_*.rs`     | taxonomy       |
+| `contract_*.rs`     | contract       |
+| `capabilities_*.rs` | capabilities   |
+| `utility_*.rs`      | utility        |
+| `agent_*.rs`        | agent          |
+| `surface_*.rs`      | surface        |
+| `root_*.rs`         | root           |
 
 Files without a recognized prefix are skipped by layer-dependent rules (AES201, AES202) but still checked by layer-agnostic rules (AES203, AES204).
