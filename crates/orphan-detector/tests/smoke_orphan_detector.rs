@@ -3,6 +3,8 @@
 // Speed: < 5s
 
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 
 #[test]
 fn orphan_detector_boots_and_responds() {
@@ -12,15 +14,18 @@ fn orphan_detector_boots_and_responds() {
     let analyzer = container.analyzer();
 
     // Basic operation: identify entry points
-    let entries = analyzer.identify_orphan_entry_points(&[
+    let file_list = OrphanFileListVO::new(vec![
         "src/main.rs".to_string(),
         "src/lib.rs".to_string(),
         "src/root_container.rs".to_string(),
     ]);
-    assert!(!entries.is_empty());
+    let entries = analyzer.identify_orphan_entry_points(&file_list);
+    assert!(!entries.values.is_empty());
 
     // Basic operation: check orphans on empty set
-    let results = analyzer.check_orphans(&[], "/tmp/smoke");
+    let empty_list = OrphanFileListVO::new(vec![]);
+    let root = FilePath::new("/tmp/smoke".to_string()).unwrap();
+    let results = analyzer.check_orphans(&empty_list, &root);
     assert!(results.is_empty());
 
     let elapsed = start.elapsed();
