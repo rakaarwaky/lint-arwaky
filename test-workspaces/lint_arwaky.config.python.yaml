@@ -27,7 +27,6 @@ ignored_paths:
   - "/venv"
   - "/.mypy_cache"
   - "/.ruff_cache"
-  - "/test-workspaces"
   - "/tests"
 
 architecture:

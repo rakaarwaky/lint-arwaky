@@ -129,18 +129,12 @@ impl CodeAnalysisOrchestrator {
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
         let config = self.container.config();
-        let ignored: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
         let dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
         let files = shared::code_analysis::utility_target_resolver::collect_source_files(
-            src_dir, &dir_path, &ignored,
+            src_dir, &dir_path, &[],
         );
         if files.is_empty() {
             return Vec::new();
