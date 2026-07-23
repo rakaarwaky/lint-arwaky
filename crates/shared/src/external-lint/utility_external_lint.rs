@@ -4,7 +4,6 @@
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
 
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 
@@ -56,7 +55,13 @@ fn has_py_in_dir(dir: &std::path::Path) -> bool {
 }
 
 /// Resolve the executable command for a JS tool (eslint, prettier, tsc).
-pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) -> Vec<String> {
+/// Only uses local binary from node_modules/.bin — never falls back to npx/bunx.
+/// Returns None if the tool is not installed locally.
+pub fn resolve_js_cmd(
+    executable: &str,
+    args: Vec<String>,
+    working_dir: &str,
+) -> Option<Vec<String>> {
     let local_bin = Path::new(working_dir)
         .join("node_modules")
         .join(".bin")
@@ -64,12 +69,9 @@ pub fn resolve_js_cmd(executable: &str, args: Vec<String>, working_dir: &str) ->
     if local_bin.exists() {
         let mut cmd = vec![local_bin.to_string_lossy().to_string()];
         cmd.extend(args);
-        return cmd;
+        return Some(cmd);
     }
-    let runner = if is_bun_available() { "bunx" } else { "npx" };
-    let mut cmd = vec![runner.to_string(), executable.to_string()];
-    cmd.extend(args);
-    cmd
+    None
 }
 
 /// Walk up from the given path to find the JS project root.
@@ -154,16 +156,3 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
 
-static BUN_AVAILABLE: OnceLock<bool> = OnceLock::new();
-
-fn is_bun_available() -> bool {
-    *BUN_AVAILABLE.get_or_init(|| {
-        std::process::Command::new("bun")
-            .arg("--version")
-            .stdout(std::process::Stdio::null())
-            .stderr(std::process::Stdio::null())
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false)
-    })
-}
