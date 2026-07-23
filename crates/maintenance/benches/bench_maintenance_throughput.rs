@@ -6,7 +6,7 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
     MaintenanceCommandsOrchestrator, MaintenanceDeps,
 };
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
-use shared::project_setup::contract_maintenance_protocol::;
+use shared::maintenance::contract_maintenance_protocol::;
 use std::sync::Arc;
 
 fn bench_orchestrator_instantiation(c: &mut Criterion) {

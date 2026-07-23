@@ -3,7 +3,7 @@
 
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 
 fn sut() -> MaintenanceChecker {
     MaintenanceChecker::new()
