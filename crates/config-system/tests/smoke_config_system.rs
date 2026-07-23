@@ -11,7 +11,7 @@ async fn config_system_boots_and_loads_defaults() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = orch.load_project_config(&fp).await;
-    assert!(result.config.enabled.value || !result.config.enabled.value);
+    let _ = result.config.enabled; // validated by successful load
     assert!(!result.source.language.is_empty());
     let elapsed = start.elapsed();
     assert!(

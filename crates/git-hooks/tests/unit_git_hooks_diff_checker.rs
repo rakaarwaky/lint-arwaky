@@ -25,7 +25,7 @@ fn new_creates_instance() {
 
 #[test]
 fn default_creates_instance() {
-    let _checker = DiffChecker::default();
+    let _checker = DiffChecker;
 }
 
 // ─── get_default_branch ───────────────────────────────────

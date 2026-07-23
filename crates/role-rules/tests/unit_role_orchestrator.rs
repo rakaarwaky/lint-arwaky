@@ -59,8 +59,10 @@ fn orchestrator_name_via_trait() {
 
 #[test]
 fn disabled_config_skips_all_checks() {
-    let mut config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    config.enabled = shared::common::taxonomy_common_vo::BooleanVO::new(false);
+    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        enabled: shared::common::taxonomy_common_vo::BooleanVO::new(false),
+        ..Default::default()
+    };
     let orch = RoleOrchestrator::new(Arc::new(StubAggregate), &config);
 
     let files: Vec<String> = vec![

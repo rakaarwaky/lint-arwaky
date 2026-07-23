@@ -88,7 +88,7 @@ fn container_creates_all_capabilities() {
 fn container_config_accessor_returns_config() {
     let config = full_config();
     let container = ImportContainer::new_with_config(config.clone());
-    assert_eq!(container.config().enabled.value(), true);
+    assert!(container.config().enabled.value());
 }
 
 // ─── Full Pipeline: Clean Project ─────────────────────────

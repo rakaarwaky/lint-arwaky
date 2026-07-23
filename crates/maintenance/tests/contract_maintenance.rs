@@ -66,13 +66,13 @@ fn container_exposes_aggregate_as_trait_object() {
 
 #[test]
 fn maintenance_checker_implements_default() {
-    let checker = MaintenanceChecker::default();
+    let checker = MaintenanceChecker;
     let _ = checker;
 }
 
 #[test]
 fn tool_executor_adapter_implements_default() {
-    let adapter = ToolExecutorAdapter::default();
+    let adapter = ToolExecutorAdapter;
     let _ = adapter;
 }
 

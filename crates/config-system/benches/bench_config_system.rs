@@ -39,16 +39,18 @@ fn bench_workspace_detect(c: &mut Criterion) {
 
 fn bench_validate_thresholds(c: &mut Criterion) {
     let validator = ConfigRulesValidator::new();
-    let mut config = ProjectConfig::default();
-    config.adapters = (0..50)
-        .map(|i| {
-            AdapterEntry::new(
-                AdapterName::raw(format!("adapter_{}", i)),
-                AdapterStatus::Enabled,
-                1.0,
-            )
-        })
-        .collect();
+    let config = ProjectConfig {
+        adapters: (0..50)
+            .map(|i| {
+                AdapterEntry::new(
+                    AdapterName::raw(format!("adapter_{}", i)),
+                    AdapterStatus::Enabled,
+                    1.0,
+                )
+            })
+            .collect(),
+        ..Default::default()
+    };
     c.bench_function("validate_thresholds_50_adapters", |b| {
         b.iter(|| validator.validate_thresholds(&config))
     });

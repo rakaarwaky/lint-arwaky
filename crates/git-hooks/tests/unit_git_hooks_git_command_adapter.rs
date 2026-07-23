@@ -104,7 +104,7 @@ fn new_creates_instance() {
 
 #[test]
 fn default_creates_instance() {
-    let _adapter = GitCommandAdapter::default();
+    let _adapter = GitCommandAdapter;
 }
 
 // ─── run_git ──────────────────────────────────────────────

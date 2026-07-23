@@ -2,7 +2,7 @@
 // Extracted from forbidden/mandatory checkers to eliminate duplicated
 // stem/suffix extraction and scope-membership logic.
 
-use super::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_layer_vo::Identity;
 use crate::import_rules::utility_import_resolver;
 
 /// Check if a file belongs to a given scope rule based on its filename.
@@ -97,7 +97,7 @@ pub fn extract_suffix(stem: &str) -> &str {
 
 #[cfg(test)]
 mod tests {
-    use super::{
+    use crate::common::utility_scope_matcher::{
         extract_file_stem, extract_layer_prefix, extract_suffix, file_belongs_to_scope, Identity,
     };
 

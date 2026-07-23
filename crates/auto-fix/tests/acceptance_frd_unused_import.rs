@@ -46,7 +46,7 @@ fn frd_rust_unused_use_statement_removed() {
     let mut tmp = NamedTempFile::new().unwrap();
     writeln!(tmp, "use std::collections::HashMap;").unwrap();
     writeln!(tmp, "use std::io;").unwrap();
-    writeln!(tmp, "").unwrap();
+    writeln!(tmp).unwrap();
     writeln!(tmp, "fn main() {{").unwrap();
     writeln!(tmp, "    let _map: HashMap<String, i32> = HashMap::new();").unwrap();
     writeln!(tmp, "}}").unwrap();
@@ -72,7 +72,7 @@ fn frd_python_unused_import_removed() {
     let mut tmp = NamedTempFile::new().unwrap();
     writeln!(tmp, "import os").unwrap();
     writeln!(tmp, "import json").unwrap();
-    writeln!(tmp, "").unwrap();
+    writeln!(tmp).unwrap();
     writeln!(tmp, "data = json.loads('{{}}')").unwrap();
     tmp.flush().unwrap();
 
@@ -96,7 +96,7 @@ fn frd_typescript_unused_import_removed() {
     let mut tmp = NamedTempFile::new().unwrap();
     writeln!(tmp, "import {{ readFile }} from 'fs';").unwrap();
     writeln!(tmp, "import {{ join }} from 'path';").unwrap();
-    writeln!(tmp, "").unwrap();
+    writeln!(tmp).unwrap();
     writeln!(tmp, "const p = join('/tmp', 'x');").unwrap();
     tmp.flush().unwrap();
 
@@ -136,7 +136,7 @@ fn frd_fix_preserves_code_functionality() {
     let mut tmp = NamedTempFile::new().unwrap();
     writeln!(tmp, "use std::io;").unwrap();
     writeln!(tmp, "use std::fs;").unwrap();
-    writeln!(tmp, "").unwrap();
+    writeln!(tmp).unwrap();
     writeln!(tmp, "fn main() {{").unwrap();
     writeln!(tmp, "    let _ = std::fs::metadata(\".\");").unwrap();
     writeln!(tmp, "}}").unwrap();

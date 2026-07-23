@@ -60,6 +60,6 @@ fn orchestrator_delegates_to_processor() {
     let protocol = Arc::new(SetupManagementProcessor::new(installer));
     let _orchestrator = SetupManagementOrchestrator::new(protocol.clone());
 
-    // Both should reference the same underlying processor
-    assert!(true); // Trait object verification passed above
+    // Both should reference the same underlying processor (trait objects are Send + Sync)
+    // Verification passed by successful construction above
 }

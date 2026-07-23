@@ -138,7 +138,7 @@ async fn non_source_files_are_ignored() {
 
 #[test]
 fn default_constructor_creates_instance() {
-    let detector = ExternalLintLanguageDetectorAdapter::default();
+    let detector = ExternalLintLanguageDetectorAdapter;
     // Just verify it can be constructed via Default
     let _ = detector;
 }

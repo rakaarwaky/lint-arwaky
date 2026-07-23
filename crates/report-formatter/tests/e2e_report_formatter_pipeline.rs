@@ -61,8 +61,6 @@ fn e2e_all_format_types_work_with_results() {
 fn e2e_format_with_diagnostics() {
     let (orch, report) = build_full_pipeline();
 
-    // Add diagnostics to the report
-    let report = report;
     // Format all types and verify they handle diagnostics correctly
     let _text = orch.format(&report, Format::Text);
     let _json = orch.format(&report, Format::Json);

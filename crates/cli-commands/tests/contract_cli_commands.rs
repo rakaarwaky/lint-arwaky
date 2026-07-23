@@ -42,6 +42,7 @@ fn cli_container_exposes_pipeline_aggregate_as_trait_object() {
 }
 
 #[test]
+#[allow(clippy::type_complexity)]
 fn cli_container_exposes_fix_orchestrator_factory() {
     // Compile-time: fix_orchestrator_factory returns a closure producing Arc<dyn LintFixOrchestratorAggregate>
     fn assert_factory(
@@ -56,6 +57,7 @@ fn cli_container_exposes_fix_orchestrator_factory() {
 // ─── Surface Layer Struct Existence ─────────────────────────────────────────
 
 #[test]
+#[allow(clippy::type_complexity)]
 fn check_commands_surface_is_constructible() {
     use cli_commands_lint_arwaky::CheckCommandsSurface;
     // Compile-time: CheckCommandsSurface::new exists with correct signature
@@ -71,6 +73,7 @@ fn check_commands_surface_is_constructible() {
 }
 
 #[test]
+#[allow(clippy::type_complexity)]
 fn fix_commands_surface_is_constructible() {
     use cli_commands_lint_arwaky::FixCommandsSurface;
     fn assert_new(

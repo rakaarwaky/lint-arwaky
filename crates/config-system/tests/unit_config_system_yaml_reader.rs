@@ -140,5 +140,5 @@ async fn list_config_files_deduplicates_typescript_javascript() {
 #[test]
 fn default_and_new_are_equivalent() {
     let _a = ConfigYamlReader::new();
-    let _b = ConfigYamlReader::default();
+    let _b = ConfigYamlReader;
 }

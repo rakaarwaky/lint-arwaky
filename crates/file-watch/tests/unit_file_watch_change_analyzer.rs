@@ -26,7 +26,7 @@ fn new_returns_instance() {
 
 #[test]
 fn default_returns_instance() {
-    let analyzer = ChangeAnalyzer::default();
+    let analyzer = ChangeAnalyzer;
     let _ = &analyzer;
 }
 

@@ -60,7 +60,7 @@ fn crate_boots_and_all_components_wire() {
 #[test]
 fn all_public_types_are_constructible() {
     let _adapter = FileAdapter::new();
-    let _adapter_default = FileAdapter::default();
+    let _adapter_default = FileAdapter;
 
     let linter: Arc<dyn ICodeAnalysisAggregate> = Arc::new(NoopLinter);
     let _processor = LintFixProcessor::new(linter.clone());

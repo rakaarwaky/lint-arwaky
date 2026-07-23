@@ -12,9 +12,10 @@ fn make_validator() -> ConfigRulesValidator {
 }
 
 fn make_config_with_adapters(adapters: Vec<AdapterEntry>) -> ProjectConfig {
-    let mut config = ProjectConfig::default();
-    config.adapters = adapters;
-    config
+    ProjectConfig {
+        adapters,
+        ..Default::default()
+    }
 }
 
 #[test]
@@ -70,8 +71,10 @@ fn adapter_enabled_matches_first_occurrence() {
 #[test]
 fn validate_thresholds_ok_with_valid_values() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(80.0), Count::new(10), Count::new(500));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(80.0), Count::new(10), Count::new(500)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(result.is_valid);
     assert!(result.reason.is_none());
@@ -80,8 +83,10 @@ fn validate_thresholds_ok_with_valid_values() {
 #[test]
 fn validate_thresholds_fails_when_score_above_100() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(101.0), Count::new(10), Count::new(500));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(101.0), Count::new(10), Count::new(500)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(!result.is_valid);
     assert!(result.reason.unwrap().contains("Score threshold"));
@@ -90,8 +95,10 @@ fn validate_thresholds_fails_when_score_above_100() {
 #[test]
 fn validate_thresholds_fails_when_score_negative() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(-1.0), Count::new(10), Count::new(500));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(-1.0), Count::new(10), Count::new(500)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(!result.is_valid);
 }
@@ -99,8 +106,10 @@ fn validate_thresholds_fails_when_score_negative() {
 #[test]
 fn validate_thresholds_fails_when_complexity_zero() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(80.0), Count::new(0), Count::new(500));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(80.0), Count::new(0), Count::new(500)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(!result.is_valid);
     assert!(result.reason.unwrap().contains("Complexity"));
@@ -109,8 +118,10 @@ fn validate_thresholds_fails_when_complexity_zero() {
 #[test]
 fn validate_thresholds_fails_when_max_file_lines_zero() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(80.0), Count::new(10), Count::new(0));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(80.0), Count::new(10), Count::new(0)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(!result.is_valid);
     assert!(result.reason.unwrap().contains("max_file_lines"));
@@ -119,8 +130,10 @@ fn validate_thresholds_fails_when_max_file_lines_zero() {
 #[test]
 fn validate_thresholds_accumulates_multiple_errors() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(200.0), Count::new(0), Count::new(-1));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(200.0), Count::new(0), Count::new(-1)),
+        ..Default::default()
+    };
     let result = sut.validate_thresholds(&config);
     assert!(!result.is_valid);
     let reason = result.reason.unwrap();
@@ -132,23 +145,27 @@ fn validate_thresholds_accumulates_multiple_errors() {
 #[test]
 fn validate_thresholds_boundary_score_0_is_valid() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(0.0), Count::new(1), Count::new(1));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(0.0), Count::new(1), Count::new(1)),
+        ..Default::default()
+    };
     assert!(sut.validate_thresholds(&config).is_valid);
 }
 
 #[test]
 fn validate_thresholds_boundary_score_100_is_valid() {
     let sut = make_validator();
-    let mut config = ProjectConfig::default();
-    config.thresholds = Thresholds::new(Score::new(100.0), Count::new(1), Count::new(1));
+    let config = ProjectConfig {
+        thresholds: Thresholds::new(Score::new(100.0), Count::new(1), Count::new(1)),
+        ..Default::default()
+    };
     assert!(sut.validate_thresholds(&config).is_valid);
 }
 
 #[test]
 fn default_and_new_produce_equivalent_instances() {
     let a = ConfigRulesValidator::new();
-    let b = ConfigRulesValidator::default();
+    let b = ConfigRulesValidator;
     let config = ProjectConfig::default();
     assert_eq!(
         a.validate_thresholds(&config),

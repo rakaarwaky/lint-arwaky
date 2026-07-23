@@ -7,13 +7,13 @@ use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecke
 
 fn bench_orchestrator_instantiation(c: &mut Criterion) {
     c.bench_function("maintenance_orchestrator", |b| {
-        b.iter(|| MaintenanceCommandsOrchestrator::new());
+        b.iter(MaintenanceCommandsOrchestrator::new);
     });
 }
 
 fn bench_checker_instantiation(c: &mut Criterion) {
     c.bench_function("maintenance_checker", |b| {
-        b.iter(|| MaintenanceChecker::new());
+        b.iter(MaintenanceChecker::new);
     });
 }
 

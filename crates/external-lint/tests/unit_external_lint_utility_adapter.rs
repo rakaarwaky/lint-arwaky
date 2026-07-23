@@ -150,7 +150,7 @@ async fn noop_apply_fix_returns_false() {
 
 #[test]
 fn default_creates_instance() {
-    let adapter = ExternalLintUtilityAdapter::default();
+    let adapter = ExternalLintUtilityAdapter;
     let _ = adapter;
 }
 

@@ -118,7 +118,7 @@ fn write_file_returns_false_for_invalid_path() {
 
 #[test]
 fn default_constructor_produces_working_adapter() {
-    let adapter = FileAdapter::default();
+    let adapter = FileAdapter;
     let path = FilePath::new("/nonexistent.rs".to_string()).unwrap();
     assert!(!adapter.path_exists(&path));
 }

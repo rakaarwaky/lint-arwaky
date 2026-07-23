@@ -36,7 +36,7 @@ fn bench_select_adapters(c: &mut Criterion) {
 
 fn bench_container_creation(c: &mut Criterion) {
     c.bench_function("external_lint_container_new", |b| {
-        b.iter(|| external_lint_lint_arwaky::ExternalLintContainer::new());
+        b.iter(external_lint_lint_arwaky::ExternalLintContainer::new);
     });
 }
 

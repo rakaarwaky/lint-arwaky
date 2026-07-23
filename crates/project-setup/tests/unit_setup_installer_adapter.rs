@@ -13,7 +13,7 @@ fn adapter() -> SetupInstallerAdapter {
 
 #[test]
 fn installer_adapter_default_creates_valid_instance() {
-    let _ = SetupInstallerAdapter::default();
+    let _ = SetupInstallerAdapter;
 }
 
 // ─── install_python_packages: Happy path (dry run) ──

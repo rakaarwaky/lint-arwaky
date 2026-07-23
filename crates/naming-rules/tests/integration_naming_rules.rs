@@ -17,24 +17,28 @@ use std::sync::Arc;
 fn build_test_config() -> ArchitectureConfig {
     let mut layers = HashMap::new();
 
-    let mut taxonomy_def = LayerDefinition::default();
-    taxonomy_def.naming = NamingRuleVO {
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "vo".to_string(),
-            "entity".to_string(),
-            "error".to_string(),
-            "event".to_string(),
-            "constant".to_string(),
-        ]),
+    let taxonomy_def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec![
+                "vo".to_string(),
+                "entity".to_string(),
+                "error".to_string(),
+                "event".to_string(),
+                "constant".to_string(),
+            ]),
+            ..Default::default()
+        },
         ..Default::default()
     };
     layers.insert(LayerNameVO::new("taxonomy"), taxonomy_def);
 
-    let mut agent_def = LayerDefinition::default();
-    agent_def.naming = NamingRuleVO {
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+    let agent_def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+            ..Default::default()
+        },
         ..Default::default()
     };
     layers.insert(LayerNameVO::new("agent"), agent_def);

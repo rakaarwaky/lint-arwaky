@@ -62,7 +62,7 @@ fn handler_and_orchestrator_share_arc() {
     let handler = Arc::new(ActionHandler::new(executor));
     let _orchestrator = TuiOrchestrator::new(handler);
 
-    assert!(true); // Trait object verification passed above
+    // Trait object verification passed above
 }
 
 // ─── Constructors ──

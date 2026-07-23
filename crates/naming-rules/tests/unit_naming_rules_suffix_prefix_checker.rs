@@ -22,17 +22,19 @@ fn default_config() -> ArchitectureConfig {
 
 fn strict_taxonomy_layer() -> LayerMapVO {
     let mut map = HashMap::new();
-    let mut def = LayerDefinition::default();
-    def.naming = NamingRuleVO {
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec![
-            "vo".to_string(),
-            "entity".to_string(),
-            "error".to_string(),
-            "event".to_string(),
-            "constant".to_string(),
-        ]),
-        forbidden_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+    let def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec![
+                "vo".to_string(),
+                "entity".to_string(),
+                "error".to_string(),
+                "event".to_string(),
+                "constant".to_string(),
+            ]),
+            forbidden_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+            ..Default::default()
+        },
         ..Default::default()
     };
     map.insert(LayerNameVO::new("taxonomy"), def);
@@ -41,11 +43,13 @@ fn strict_taxonomy_layer() -> LayerMapVO {
 
 fn strict_agent_layer() -> LayerMapVO {
     let mut map = HashMap::new();
-    let mut def = LayerDefinition::default();
-    def.naming = NamingRuleVO {
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec!["orchestrator".to_string()]),
-        forbidden_suffix: PatternList::new(vec!["vo".to_string(), "entity".to_string()]),
+    let def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+            forbidden_suffix: PatternList::new(vec!["vo".to_string(), "entity".to_string()]),
+            ..Default::default()
+        },
         ..Default::default()
     };
     map.insert(LayerNameVO::new("agent"), def);
@@ -198,13 +202,15 @@ async fn entry_point_lib_rs_skipped() {
 #[tokio::test]
 async fn exception_file_in_definition_skipped() {
     let mut map = HashMap::new();
-    let mut def = LayerDefinition::default();
-    def.naming = NamingRuleVO {
-        suffix_policy: SuffixPolicyVO::new("strict".to_string()),
-        allowed_suffix: PatternList::new(vec!["vo".to_string()]),
+    let def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec!["vo".to_string()]),
+            ..Default::default()
+        },
+        exceptions: PatternList::new(vec!["taxonomy_special.rs".to_string()]),
         ..Default::default()
     };
-    def.exceptions = PatternList::new(vec!["taxonomy_special.rs".to_string()]);
     map.insert(LayerNameVO::new("taxonomy"), def);
     let lm = LayerMapVO::new(map);
 

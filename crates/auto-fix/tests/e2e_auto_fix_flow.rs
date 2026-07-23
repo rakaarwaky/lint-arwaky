@@ -49,7 +49,7 @@ fn e2e_unused_import_removed_from_file() {
     let mut tmp = NamedTempFile::new().unwrap();
     writeln!(tmp, "use std::io;").unwrap();
     writeln!(tmp, "use std::fs;").unwrap();
-    writeln!(tmp, "").unwrap();
+    writeln!(tmp).unwrap();
     writeln!(tmp, "fn main() {{").unwrap();
     writeln!(tmp, "    let _ = std::fs::read(\"x\");").unwrap();
     writeln!(tmp, "}}").unwrap();

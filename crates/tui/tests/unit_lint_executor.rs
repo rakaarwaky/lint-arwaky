@@ -20,7 +20,6 @@ fn lint_executor_check_returns_result() {
     let flags = ActionFlags::default();
     let _result = executor.check("/tmp", &flags);
     // Should return a valid result (may have violations)
-    assert!(true);
 }
 
 // ─── scan: Directory scan ──
@@ -30,7 +29,6 @@ fn lint_executor_scan_returns_result() {
     let executor = executor();
     let _result = executor.scan("/tmp");
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── fix: Fix violations ──
@@ -41,7 +39,6 @@ fn lint_executor_fix_returns_result() {
     let flags = ActionFlags::default();
     let _result = executor.fix("/tmp", &flags);
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── ci: CI mode execution ──
@@ -52,7 +49,6 @@ fn lint_executor_ci_returns_result() {
     let flags = ActionFlags::default();
     let _result = executor.ci("/tmp", &flags);
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── orphan: Orphan detection ──
@@ -62,7 +58,6 @@ fn lint_executor_orphan_returns_result() {
     let executor = executor();
     let _result = executor.orphan("/tmp");
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── security: Security scan ──
@@ -72,7 +67,6 @@ fn lint_executor_security_returns_result() {
     let executor = executor();
     let _result = executor.security("/tmp");
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── doctor: Toolchain diagnostics ──
@@ -82,7 +76,6 @@ fn lint_executor_doctor_returns_result() {
     let executor = executor();
     let _result = executor.doctor();
     // Should return a valid result
-    assert!(true);
 }
 
 // ─── version: Version info ──
@@ -92,7 +85,6 @@ fn lint_executor_version_returns_result() {
     let executor = executor();
     let _result = executor.version();
     // Should return version info
-    assert!(true);
 }
 
 // ─── Default constructor ──

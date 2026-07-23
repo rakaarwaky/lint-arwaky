@@ -50,11 +50,13 @@ async fn run_audit_nonexistent_path_returns_error() {
 
 #[tokio::test]
 async fn ignored_patterns_trimmed_correctly() {
-    let mut config = ArchitectureConfig::default();
-    config.ignored_paths = FilePathList::new(vec![
-        FilePath::new("./target/".to_string()).unwrap(),
-        FilePath::new("/node_modules/".to_string()).unwrap(),
-    ]);
+    let config = ArchitectureConfig {
+        ignored_paths: FilePathList::new(vec![
+            FilePath::new("./target/".to_string()).unwrap(),
+            FilePath::new("/node_modules/".to_string()).unwrap(),
+        ]),
+        ..Default::default()
+    };
     let orch = build_orchestrator(config, LayerMapVO::new(HashMap::new()));
     // Orchestrator should have trimmed "./" and "/" prefixes/suffixes
     // We verify indirectly: the orchestrator was constructed without panic

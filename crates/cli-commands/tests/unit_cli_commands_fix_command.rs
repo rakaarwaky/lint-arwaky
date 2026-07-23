@@ -10,6 +10,7 @@ use std::sync::Arc;
 fn fix_surface_construction_compiles() {
     // This is a compile-time contract test disguised as unit test.
     // We verify the constructor signature matches expectations.
+    #[allow(clippy::type_complexity)]
     fn assert_constructor(
         _f: fn(
             Arc<dyn ICodeAnalysisAggregate>,

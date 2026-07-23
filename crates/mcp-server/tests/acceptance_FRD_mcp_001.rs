@@ -89,8 +89,8 @@ async fn frd_mcp_001_all_documented_actions_accepted() {
         let result = surface.execute_command(args).await;
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert!(
-            !parsed.get("error").map_or(false, |e| {
-                e.as_str().map_or(false, |s| s.contains("Unknown action"))
+            !parsed.get("error").is_some_and(|e| {
+                e.as_str().is_some_and(|s| s.contains("Unknown action"))
             }),
             "Action '{}' should be recognized",
             action

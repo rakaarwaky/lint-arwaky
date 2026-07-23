@@ -41,7 +41,7 @@ fn acceptance_report_formatter_text_is_readable() {
     let result = orch.format(&report, Format::Text);
     assert!(!result.value.is_empty());
     // Should contain readable text (not binary or encoded)
-    assert!(result.value.chars().all(|c| c.is_ascii()));
+    assert!(result.value.is_ascii());
 }
 
 // ─── Acceptance: JSON formatter produces valid JSON ──

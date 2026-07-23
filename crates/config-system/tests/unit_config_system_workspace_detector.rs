@@ -188,7 +188,7 @@ async fn discover_members_from_within_workspace_dir() {
 #[test]
 fn default_and_new_are_equivalent() {
     let a = WorkspaceDetector::new();
-    let b = WorkspaceDetector::default();
+    let b = WorkspaceDetector;
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

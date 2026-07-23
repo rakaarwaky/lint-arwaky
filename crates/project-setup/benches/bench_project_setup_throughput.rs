@@ -6,7 +6,7 @@ use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 
 fn bench_container_instantiation(c: &mut Criterion) {
     c.bench_function("setup_container", |b| {
-        b.iter(|| SetupContainer::new());
+        b.iter(SetupContainer::new);
     });
 }
 

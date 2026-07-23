@@ -1,7 +1,6 @@
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::utility_file_handler;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{
@@ -40,7 +39,7 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if utility_file_handler::path_exists(&config_file) {
+        if shared::common::utility_file_handler::path_exists(&config_file) {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
@@ -55,10 +54,10 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let both_exist = shared::common::utility_file_handler::path_exists(path1)
-            && shared::common::utility_file_handler::path_exists(path2);
-        let both_files = shared::common::utility_file_handler::is_file(path1)
-            && shared::common::utility_file_handler::is_file(path2);
+        let both_exist =
+            shared::common::utility_file_handler::path_exists(path1) && shared::common::utility_file_handler::path_exists(path2);
+        let both_files =
+            shared::common::utility_file_handler::is_file(path1) && shared::common::utility_file_handler::is_file(path2);
         let status = match (both_exist, both_files) {
             (false, _) => {
                 if !shared::common::utility_file_handler::path_exists(path1) {
