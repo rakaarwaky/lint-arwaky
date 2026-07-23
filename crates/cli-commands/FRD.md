@@ -267,47 +267,6 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Invalid target path → pipeline error with invalid path variant.
 - **Error Handling**: Pipeline error variants include invalid path and linter-specific errors propagated.
 
-## Data Model / Entity Relationship
-
-```
-ScanRequest
-├── target: ScanTarget (FilePath)
-├── mode: ScanMode (Scan, Check, Ci)
-├── filter: Option<String>
-├── member: Option<String>
-└── format: Format (Text, Json, Sarif, Junit)
-
-ScanReport
-├── results: Vec<LintResult>
-├── diagnostics: Vec<PipelineDiagnostic>
-└── score: Option<Score>
-
-LintResult
-├── file: FilePath
-├── line: LineNumber
-├── code: LintCode
-├── severity: Severity (CRITICAL, HIGH, MEDIUM, LOW, INFO)
-├── message: ErrorMessage
-└── fixable: bool
-
-PipelineDiagnostic
-├── source: String
-├── message: String
-└── severity: DiagnosticSeverity
-
-Format (enum)
-├── Text
-├── Json
-├── Sarif
-└── Junit
-
-ExitCode conventions
-├── 0: Success — no violations
-├── 1: Violations found
-├── 2: System/operational error
-└── 3: Required tool missing
-```
-
 ## API Contract
 
 | Operation | Input | Output | Description |

@@ -85,26 +85,6 @@ The auto-fix crate applies safe, deterministic corrections to source files that 
 - **Error Handling**:
   - None (pure data transformation).
 
-## Data Model / Entity Relationship
-
-```
-LintResult (from code-analysis)
-  ├── code: ErrorCode (e.g., "AES203")
-  ├── message: DescriptionVO
-  ├── file: FilePath
-  └── line: LineNumber
-
-FixResult (output)
-  ├── output: DescriptionVO (human-readable summary)
-  └── error: Option<ErrorCode>
-
-FixApplied (event, emitted per fix)
-  ├── path: FilePath
-  ├── adapter: adapter name ("fix-orchestrator")
-  ├── error_code: ErrorCode
-  └── changes: Count
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

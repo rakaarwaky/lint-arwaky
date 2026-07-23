@@ -152,42 +152,6 @@ shared (foundation — no feature crate dependencies)
 - **Edge Cases**: Case-insensitive comparison for layer name matching.
 - **Error Handling**: N/A — constants and thin wrappers.
 
-## Data Model / Entity Relationship
-
-```
-Architecture Config
-├── enabled: boolean flag
-├── layers: map of layer name to layer definition
-│   └── Layer Definition
-│       ├── exceptions: pattern list
-│       ├── orphan: orphan rule
-│       │   ├── check_orphan: boolean flag
-│       │   └── orphan_entry_points: pattern list
-│       ├── role: role rule
-│       └── naming: naming rule
-├── rules: list of architecture rules
-├── naming: naming config
-├── ignored_paths: list of file paths
-└── mandatory_class_definition: boolean flag
-
-Lint Result
-├── file: file path
-├── line: line number
-├── column: column number
-├── code: error code
-├── message: lint message
-├── source: adapter name
-├── severity: severity level
-├── enclosing_scope: optional scope reference
-└── related_locations: list of related locations
-
-Graph Analysis Context
-├── import_graph: import graph
-├── inbound_links: inbound link map
-├── file_definitions: file definition map
-└── inheritance_map: inheritance map
-```
-
 ## API Contract
 
 

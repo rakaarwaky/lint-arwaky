@@ -18,7 +18,6 @@ FRD (Functional Requirements Document) describes **HOW** (functionally) for engi
 ## Focus
 
 - Functional Requirements (with unique IDs: FR-001, FR-002)
-- Data Model / Entity Relationship
 - API Contract (endpoints, methods, payloads)
 - Integration Points (3rd party, internal)
 - Test Scenarios / QA Checklist

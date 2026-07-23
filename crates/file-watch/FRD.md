@@ -103,27 +103,6 @@ The file-watch crate provides a filesystem monitoring system that detects file c
   - Tokio runtime not yet created — fallback to single-threaded runtime.
 - **Error Handling**: Tokio runtime creation failure returns failure exit code.
 
-## Data Model / Entity Relationship
-
-```
-Watch Configuration
-├── path: string
-├── debounce_ms: u64
-├── recursive: bool
-└── ignore_patterns: list of strings
-
-File Change Event
-├── path: string
-└── kind: modification event type
-
-Watch Error
-└── message: descriptive error message
-
-Exit Code
-├── SUCCESS
-└── FAILURE
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

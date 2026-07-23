@@ -139,45 +139,6 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
   - Path is a file — check parent directory first.
 - **Error Handling**: Sentinel path causes cargo commands to fail with "manifest not found" (expected behavior).
 
-## Data Model / Entity Relationship
-
-```
-External Lint Container (root layer)
-├── executor: subprocess executor
-├── lint executor: the external lint executor
-├── adapters: map of adapter name to linter adapter
-│   ├── "clippy"      → Rust linter adapter
-│   ├── "rustfmt"     → Rust formatter adapter
-│   ├── "cargo-audit" → cargo audit adapter
-│   ├── "ruff"        → Ruff adapter
-│   ├── "mypy"        → Mypy adapter
-│   ├── "bandit"      → Bandit adapter
-│   ├── "eslint"      → ESLint adapter
-│   ├── "prettier"    → Prettier adapter
-│   └── "tsc"         → TypeScript compiler adapter
-└── aggregate: the external lint orchestrator
-
-Lint Result List
-└── values: list of lint results
-
-Lint Result
-├── file: file path
-├── line: line count
-├── message: string
-├── code: string
-├── severity: string
-└── source: optional string
-
-Response Data
-├── stdout: string
-├── stderr: string
-└── returncode: integer
-
-Linter Operation Error
-├── Scan(scan error)
-└── Adapter(adapter error)
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

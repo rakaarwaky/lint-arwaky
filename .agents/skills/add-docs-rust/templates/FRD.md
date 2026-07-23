@@ -1,4 +1,4 @@
-# FRD — <feature-name></feature>
+# FRD — <crate-name>
 
 ## System Overview
 
@@ -6,18 +6,29 @@
 
 ## Functional Requirements
 
-### FR-001: <Feature Name></feature>
+### FR-001: <Feature Name>
 
-- **Description**: <what it does></what>
-- **Input**:
-- **Output**: <output data></output>
-- **Business Rules**: <validation logic></validation>
-- **Edge Cases**: <edge case handling></edge>
-- **Error Handling**: <error scenarios></error>
+- **Description**: <what it does>
+- **Input**: <input data>
+- **Output**: <output data>
+- **Business Rules**: <validation logic>
+- **Edge Cases**: <edge case handling>
+- **Error Handling**: <error scenarios>
 
-### FR-002: <Feature Name></feature>
+### FR-002: <Feature Name>
 
 - ...
+
+## API Contract
+
+| Operation | Input | Output | Description |
+|-----------|-------|--------|-------------|
+| `<name>`  | ...   | ...    | ...         |
+
+## Integration Points
+
+- **3rd Party**: <service name, purpose>
+- **Internal**: <service name, purpose>
 
 ## Non-functional Requirements (Detailed)
 
@@ -27,8 +38,7 @@
 
 ## Test Scenarios / QA Checklist
 
-- [ ] 
-  <test scenario with expected result>
+- [ ] <test scenario with expected result>
 
 ## Assumptions & Constraints
 
@@ -36,8 +46,8 @@
 
 ## Glossary
 
-- **Term**: <definition></definition>
+- **Term**: <definition>
 
 ## Reference
 
-- PRD:
+- PRD: <link to root PRD.md>
