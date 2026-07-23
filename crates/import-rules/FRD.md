@@ -77,13 +77,13 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-| --- | --- | --- | --- |
-| Check for forbidden imports | File path, imports | Diagnostic list | Check AES201 |
-| Check for mandatory imports | File path, imports | Diagnostic list | Check AES202 |
-| Check for unused imports | File path, imports, usages | Diagnostic list | Check AES203 |
-| Check for dummy imports | File path, imports | Diagnostic list | Check AES204 |
-| Check for circular dependencies | All files, imports | Diagnostic list | Check AES205 |
+| Operation                       | Input                      | Output          | Description  |
+| ------------------------------- | -------------------------- | --------------- | ------------ |
+| Check for forbidden imports     | File path, imports         | Diagnostic list | Check AES201 |
+| Check for mandatory imports     | File path, imports         | Diagnostic list | Check AES202 |
+| Check for unused imports        | File path, imports, usages | Diagnostic list | Check AES203 |
+| Check for dummy imports         | File path, imports         | Diagnostic list | Check AES204 |
+| Check for circular dependencies | All files, imports         | Diagnostic list | Check AES205 |
 
 ## Integration Points
 

@@ -132,23 +132,23 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| The setup orchestrator's generate MCP config method | transport protocol | MCP config VO | Generate base MCP config |
-| The setup orchestrator's MCP config Claude method | transport protocol | MCP config VO | Generate Claude Desktop MCP config |
-| The setup orchestrator's MCP config Hermes method | transport protocol | MCP config VO | Generate Hermes MCP config |
-| The setup orchestrator's MCP config VS Code method | transport protocol | MCP config VO | Generate VS Code MCP config |
-| The setup orchestrator's generate env method | transport protocol, home path | env content VO | Generate .env file content |
-| The setup orchestrator's detect language method | none | project language VO | Detect primary project language |
-| The setup orchestrator's detect languages method | none | project languages VO | Detect all project languages |
-| The setup orchestrator's get config template method | language string | static string reference | Load embedded YAML config template |
-| The setup orchestrator's write config file method | filename, content | write config result | Write config file to disk |
-| The setup orchestrator's create global config dir method | none | create config dir result | Create XDG config directory |
-| The setup orchestrator's install Python adapters method | none | success status | Install ruff, mypy, bandit via pip |
-| The setup orchestrator's install JavaScript adapters method | sudo flag | success status | Install eslint, prettier, typescript via npm |
-| The setup orchestrator's check HTTP method | transport URL VO | success status | Check HTTP endpoint (stub) |
-| The setup orchestrator's file exists method | path string | bool | Check if file exists |
-| The setup container's constructor | none | setup container | Wire and return container |
+| Function                                                    | Input                         | Output                   | Description                                  |
+| ----------------------------------------------------------- | ----------------------------- | ------------------------ | -------------------------------------------- |
+| The setup orchestrator's generate MCP config method         | transport protocol            | MCP config VO            | Generate base MCP config                     |
+| The setup orchestrator's MCP config Claude method           | transport protocol            | MCP config VO            | Generate Claude Desktop MCP config           |
+| The setup orchestrator's MCP config Hermes method           | transport protocol            | MCP config VO            | Generate Hermes MCP config                   |
+| The setup orchestrator's MCP config VS Code method          | transport protocol            | MCP config VO            | Generate VS Code MCP config                  |
+| The setup orchestrator's generate env method                | transport protocol, home path | env content VO           | Generate .env file content                   |
+| The setup orchestrator's detect language method             | none                          | project language VO      | Detect primary project language              |
+| The setup orchestrator's detect languages method            | none                          | project languages VO     | Detect all project languages                 |
+| The setup orchestrator's get config template method         | language string               | static string reference  | Load embedded YAML config template           |
+| The setup orchestrator's write config file method           | filename, content             | write config result      | Write config file to disk                    |
+| The setup orchestrator's create global config dir method    | none                          | create config dir result | Create XDG config directory                  |
+| The setup orchestrator's install Python adapters method     | none                          | success status           | Install ruff, mypy, bandit via pip           |
+| The setup orchestrator's install JavaScript adapters method | sudo flag                     | success status           | Install eslint, prettier, typescript via npm |
+| The setup orchestrator's check HTTP method                  | transport URL VO              | success status           | Check HTTP endpoint (stub)                   |
+| The setup orchestrator's file exists method                 | path string                   | bool                     | Check if file exists                         |
+| The setup container's constructor                           | none                          | setup container          | Wire and return container                    |
 
 ## Integration Points
 

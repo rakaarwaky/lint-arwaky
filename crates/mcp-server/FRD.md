@@ -96,14 +96,14 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| The MCP server orchestrator's execute command method | execute command args | JSON string | Execute a CLI command via MCP |
-| The MCP server orchestrator's list commands method | list commands args | JSON string | List available commands |
-| The MCP server orchestrator's read skill method | read skill args | JSON string | Read SKILL.md by section |
-| The MCP server surface's health check method | none | JSON string | Check adapter availability |
-| The MCP server surface's get info method | none | server info | Return MCP server metadata |
-| The MCP container's default factory | none | MCP container | Wire all dependencies |
+| Function                                             | Input                | Output        | Description                   |
+| ---------------------------------------------------- | -------------------- | ------------- | ----------------------------- |
+| The MCP server orchestrator's execute command method | execute command args | JSON string   | Execute a CLI command via MCP |
+| The MCP server orchestrator's list commands method   | list commands args   | JSON string   | List available commands       |
+| The MCP server orchestrator's read skill method      | read skill args      | JSON string   | Read SKILL.md by section      |
+| The MCP server surface's health check method         | none                 | JSON string   | Check adapter availability    |
+| The MCP server surface's get info method             | none                 | server info   | Return MCP server metadata    |
+| The MCP container's default factory                  | none                 | MCP container | Wire all dependencies         |
 
 ## Integration Points
 

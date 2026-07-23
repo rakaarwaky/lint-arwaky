@@ -27,6 +27,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 ## Functional Requirements
 
 ### FR-001: Text Format Output
+
 - **Description**: Produce human-readable text output with severity badges and violation details.
 - **Input**: `report: ScanReport`, `format: Format::Text`
 - **Output**: `DisplayContent` containing formatted text string
@@ -42,6 +43,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: None — formatting is infallible.
 
 ### FR-002: JSON Format Output
+
 - **Description**: Produce pretty-printed JSON output for CI/CD integration.
 - **Input**: `report: ScanReport`, `format: Format::Json`
 - **Output**: `DisplayContent` containing pretty-printed JSON string
@@ -57,6 +59,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: Serialization error caught gracefully.
 
 ### FR-003: SARIF 2.1.0 Format Output
+
 - **Description**: Produce SARIF 2.1.0 JSON format for IDE integration and GitHub Code Scanning.
 - **Input**: `report: ScanReport`, `format: Format::Sarif` (also `results: &[LintResult]` for direct call)
 - **Output**: `DisplayContent` containing SARIF 2.1.0 JSON string
@@ -75,6 +78,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: Serialization error caught gracefully.
 
 ### FR-004: JUnit XML Format Output
+
 - **Description**: Produce JUnit XML format for CI/CD test report integration.
 - **Input**: `report: ScanReport`, `format: Format::Junit` (also `results: &[LintResult]` for direct call)
 - **Output**: `DisplayContent` containing JUnit XML string
@@ -93,6 +97,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: None — XML generation is infallible.
 
 ### FR-005: Format Delegation (Orchestrator)
+
 - **Description**: Route formatting request to the appropriate capabilities formatter based on `Format` enum.
 - **Input**: `report: ScanReport`, `format: Format`
 - **Output**: `DisplayContent`
@@ -109,6 +114,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: None — dispatch is infallible.
 
 ### FR-006: Default Report Fallback
+
 - **Description**: Produce a simple text summary when the requested format doesn't match.
 - **Input**: `report: ScanReport`
 - **Output**: `String` containing summary text
@@ -124,6 +130,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 - **Error Handling**: None — pure function.
 
 ### FR-007: XML Escape Utility
+
 - **Description**: Escape special XML characters for safe inclusion in JUnit XML output.
 - **Input**: `s: &str`
 - **Output**: `String` with escaped characters
@@ -142,18 +149,18 @@ The report-formatter crate provides formatting capabilities for scan report outp
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-|---|---|---|---|
-| Format | scan report, format | display content | Route to appropriate formatter |
-| Text Format | scan report, format | display content | Human-readable text output |
-| Text Format Direct | scan report | display content | Direct text formatting |
-| JSON Format | scan report, format | display content | Pretty-printed JSON output |
-| SARIF Format | scan report, format | display content | SARIF 2.1.0 JSON output |
-| SARIF Format Direct | lint results | display content | Direct SARIF formatting |
-| JUnit Format | scan report, format | display content | JUnit XML output |
-| JUnit Format Direct | lint results | display content | Direct JUnit formatting |
-| Default Format | scan report | string | Default text summary fallback |
-| XML Escape | string | string | XML entity escaping |
+| Operation           | Input               | Output          | Description                    |
+| ------------------- | ------------------- | --------------- | ------------------------------ |
+| Format              | scan report, format | display content | Route to appropriate formatter |
+| Text Format         | scan report, format | display content | Human-readable text output     |
+| Text Format Direct  | scan report         | display content | Direct text formatting         |
+| JSON Format         | scan report, format | display content | Pretty-printed JSON output     |
+| SARIF Format        | scan report, format | display content | SARIF 2.1.0 JSON output        |
+| SARIF Format Direct | lint results        | display content | Direct SARIF formatting        |
+| JUnit Format        | scan report, format | display content | JUnit XML output               |
+| JUnit Format Direct | lint results        | display content | Direct JUnit formatting        |
+| Default Format      | scan report         | string          | Default text summary fallback  |
+| XML Escape          | string              | string          | XML entity escaping            |
 
 ## Integration Points
 
@@ -205,15 +212,15 @@ The report-formatter crate provides formatting capabilities for scan report outp
 
 ## Glossary
 
-| Term | Definition |
-|---|---|
-| SARIF | Static Analysis Results Interchange Format — OASIS standard for tool output |
-| JUnit XML | XML format originally from JUnit, widely used for CI/CD test reporting |
-| DisplayContent | Semantic VO wrapping formatted string output |
-| LintResult | Individual violation finding with file, line, code, severity, message |
-| ScanReport | Aggregated results + diagnostics from a full pipeline run |
-| Report Formatter Protocol | Interface for individual format implementations (text, json, sarif, junit) |
-| Report Formatter Aggregate | Interface for the orchestrator that routes to the correct formatter |
+| Term                       | Definition                                                                  |
+| -------------------------- | --------------------------------------------------------------------------- |
+| SARIF                      | Static Analysis Results Interchange Format — OASIS standard for tool output |
+| JUnit XML                  | XML format originally from JUnit, widely used for CI/CD test reporting      |
+| DisplayContent             | Semantic VO wrapping formatted string output                                |
+| LintResult                 | Individual violation finding with file, line, code, severity, message       |
+| ScanReport                 | Aggregated results + diagnostics from a full pipeline run                   |
+| Report Formatter Protocol  | Interface for individual format implementations (text, json, sarif, junit)  |
+| Report Formatter Aggregate | Interface for the orchestrator that routes to the correct formatter         |
 
 ## Reference
 

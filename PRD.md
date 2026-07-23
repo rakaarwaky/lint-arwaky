@@ -32,6 +32,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
   - SARIF 2.1.0, JUnit XML, JSON reports
   - Git hooks integration
   - Auto-fix capabilities
+
 - Out of scope:
 
   - IDE plugins (VS Code, IntelliJ)
@@ -43,23 +44,23 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 ### P0 — Must Have
 
-- [ ]  Multi-language scanning (Rust, Python, JS/TS)
-- [ ]  24 AES rules enforcement
-- [ ]  CLI with `check`, `scan`, `fix`, `ci` commands
-- [ ]  MCP server with 5 tools
-- [ ]  Self-auditing capability
+- [ ] Multi-language scanning (Rust, Python, JS/TS)
+- [ ] 24 AES rules enforcement
+- [ ] CLI with `check`, `scan`, `fix`, `ci` commands
+- [ ] MCP server with 5 tools
+- [ ] Self-auditing capability
 
 ### P1 — Should Have
 
-- [ ]  External linter adapters (Clippy, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
-- [ ]  SARIF 2.1.0, JUnit XML, JSON reports
-- [ ]  Git hooks integration
-- [ ]  Auto-fix capabilities
-- [ ]  Watch mode for continuous linting
+- [ ] External linter adapters (Clippy, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
+- [ ] SARIF 2.1.0, JUnit XML, JSON reports
+- [ ] Git hooks integration
+- [ ] Auto-fix capabilities
+- [ ] Watch mode for continuous linting
 
 ### P2 — Nice to Have
 
-- [ ]  TUI file browser
+- [ ] TUI file browser
 
 ## Non-functional Requirements (High-level)
 

@@ -63,13 +63,13 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 
 ## API Contract
 
-| Function | Input | Output | Description |
-| --- | --- | --- | --- |
-| The naming convention checker's file naming check method | config, layer map, files, root directory, results | Mutates results | Scan all files; emit AES101/AES000 for naming violations |
-| The suffix/prefix checker's domain suffix check method | config, layer map, files, root directory, results | Mutates results | Scan all files; emit AES102 for forbidden/mismatched suffixes |
-| The naming runner aggregate's audit method | target file path | Result with lint results or scan error | Walk directory, filter source files, run both checkers |
-| The naming convention checker's regex builder | min words | Optional compiled regex | Build/cache regex for given min word count |
-| The naming convention checker's config reader | the architecture configuration | min words value | Extract min words with fallback to 3 |
+| Function                                                 | Input                                             | Output                                 | Description                                                   |
+| -------------------------------------------------------- | ------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------- |
+| The naming convention checker's file naming check method | config, layer map, files, root directory, results | Mutates results                        | Scan all files; emit AES101/AES000 for naming violations      |
+| The suffix/prefix checker's domain suffix check method   | config, layer map, files, root directory, results | Mutates results                        | Scan all files; emit AES102 for forbidden/mismatched suffixes |
+| The naming runner aggregate's audit method               | target file path                                  | Result with lint results or scan error | Walk directory, filter source files, run both checkers        |
+| The naming convention checker's regex builder            | min words                                         | Optional compiled regex                | Build/cache regex for given min word count                    |
+| The naming convention checker's config reader            | the architecture configuration                    | min words value                        | Extract min words with fallback to 3                          |
 
 ## Integration Points
 
@@ -88,20 +88,20 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 
 ## Test Scenarios / QA Checklist
 
-| # | Input | Expected Output | Rule |
-|---|-------|-----------------|------|
-| 1 | `capabilities_user_checker.rs` | No violation (valid 3-word snake_case with layer prefix) | AES101 pass |
-| 2 | `capabilities_UserChecker.rs` | AES101 — uppercase characters violate snake_case | AES101 |
-| 3 | `capabilities_user.rs` | AES101 — only 2 words (min is 3) | AES101 |
-| 4 | `capabilities-user-checker.rs` | AES101 — hyphens instead of underscores | AES101 |
-| 5 | `main.rs` | No violation (barrel/entry exception) | exception |
-| 6 | `mod.rs` | No violation (barrel/entry exception) | exception |
-| 7 | `capabilities_user_checker.rs` (taxonomy layer, suffix `_checker` not in allowed list) | AES102 — suffix mismatch | AES102 |
-| 8 | `taxonomy_user_vo.rs` (taxonomy layer, suffix `_vo` allowed) | No violation | AES102 pass |
-| 9 | `agent_helper.rs` (agent layer, `_helper` is forbidden) | AES102 — forbidden suffix | AES102 |
-| 10 | `custom_foo_bar.rs` (prefix `custom` not in the layer prefix list) | AES000 — unknown prefix | AES000 |
-| 11 | `capabilities_user_checker.rs` (min_words configured to 5) | AES101 — only 3 words, need 5 | AES101 |
-| 12 | `root_container.rs` (root layer, suffix `_container` allowed) | No violation | AES102 pass |
+| #   | Input                                                                                  | Expected Output                                          | Rule        |
+| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------- |
+| 1   | `capabilities_user_checker.rs`                                                         | No violation (valid 3-word snake_case with layer prefix) | AES101 pass |
+| 2   | `capabilities_UserChecker.rs`                                                          | AES101 — uppercase characters violate snake_case         | AES101      |
+| 3   | `capabilities_user.rs`                                                                 | AES101 — only 2 words (min is 3)                         | AES101      |
+| 4   | `capabilities-user-checker.rs`                                                         | AES101 — hyphens instead of underscores                  | AES101      |
+| 5   | `main.rs`                                                                              | No violation (barrel/entry exception)                    | exception   |
+| 6   | `mod.rs`                                                                               | No violation (barrel/entry exception)                    | exception   |
+| 7   | `capabilities_user_checker.rs` (taxonomy layer, suffix `_checker` not in allowed list) | AES102 — suffix mismatch                                 | AES102      |
+| 8   | `taxonomy_user_vo.rs` (taxonomy layer, suffix `_vo` allowed)                           | No violation                                             | AES102 pass |
+| 9   | `agent_helper.rs` (agent layer, `_helper` is forbidden)                                | AES102 — forbidden suffix                                | AES102      |
+| 10  | `custom_foo_bar.rs` (prefix `custom` not in the layer prefix list)                     | AES000 — unknown prefix                                  | AES000      |
+| 11  | `capabilities_user_checker.rs` (min_words configured to 5)                             | AES101 — only 3 words, need 5                            | AES101      |
+| 12  | `root_container.rs` (root layer, suffix `_container` allowed)                          | No violation                                             | AES102 pass |
 
 ## Assumptions & Constraints
 

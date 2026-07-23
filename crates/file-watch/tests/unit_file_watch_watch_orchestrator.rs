@@ -18,7 +18,8 @@ use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::Score;
+use shared::common::taxonomy_common_vo::{BooleanVO, Score};
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 
 struct MockLinter;
@@ -36,11 +37,11 @@ impl ICodeAnalysisAggregate for MockLinter {
     fn calc_score(&self, _results: &[LintResult]) -> Score {
         Score::new(100.0)
     }
-    fn check_critical(&self, _results: &[LintResult]) -> bool {
-        false
+    fn check_critical(&self, _results: &[LintResult]) -> BooleanVO {
+        BooleanVO::new(false)
     }
-    fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> String {
-        String::from("mock report")
+    fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> DisplayContent {
+        DisplayContent::new("mock report")
     }
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]

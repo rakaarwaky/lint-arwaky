@@ -154,28 +154,27 @@ shared (foundation — no feature crate dependencies)
 
 ## API Contract
 
-
-| Module                               | Key Types / Functions                                                      | Description                        |
-| -------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
-| common path value object             | file path value object                                                                 | Typed file path value object with validation |
-| common severity value object         | severity value object                                                                 | HIGH / MEDIUM / LOW levels           |
-| common error value object            | error code                                                                | Lint rule code (e.g., "AES401")    |
-| common lint value object             | lint result, scope reference, location, location list                       | Violation output types             |
+| Module                               | Key Types / Functions                                                | Description                                  |
+| ------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------- |
+| common path value object             | file path value object                                               | Typed file path value object with validation |
+| common severity value object         | severity value object                                                | HIGH / MEDIUM / LOW levels                   |
+| common error value object            | error code                                                           | Lint rule code (e.g., "AES401")              |
+| common lint value object             | lint result, scope reference, location, location list                | Violation output types                       |
 | common primitive value objects       | boolean flag, score, pattern list, count, line number, column number | Primitive wrapper value objects              |
-| common source content value object   | source content value object, content string                                         | File content with metadata         |
-| common layer value object            | layer name value object, line content value object                                             | Layer identification               |
-| common definition value object       | layer definition, naming config                                            | Layer configuration                |
-| common layer detection utility       | layer detection from filename prefix                                       | Layer detection from filename      |
-| common language detection utility    | language detection from file extension                                     | Language detection from extension  |
-| common signature parser utility      | method signature extraction                                                | Method signature extraction        |
-| code analysis graph value objects    | graph analysis context, import graph, orphan indicator result              | Graph analysis types               |
-| config system configuration types    | architecture config, architecture rule, orphan rule                        | Configuration types                |
-| config system orchestrator aggregate | config loading aggregate                                                   | Config loading contract            |
-| orphan detection aggregate           | orphan detection aggregate                                                 | Orphan detection aggregate         |
-| orphan detection protocols           | layer-specific orphan protocols                                            | Layer-specific orphan protocols    |
-| role enforcement aggregate           | role enforcement aggregate                                                 | Role enforcement aggregate         |
-| role enforcement protocols           | layer-specific role protocols                                              | Layer-specific role protocols      |
-| import rules aggregate               | import rules aggregate                                                     | Import rules aggregate             |
+| common source content value object   | source content value object, content string                          | File content with metadata                   |
+| common layer value object            | layer name value object, line content value object                   | Layer identification                         |
+| common definition value object       | layer definition, naming config                                      | Layer configuration                          |
+| common layer detection utility       | layer detection from filename prefix                                 | Layer detection from filename                |
+| common language detection utility    | language detection from file extension                               | Language detection from extension            |
+| common signature parser utility      | method signature extraction                                          | Method signature extraction                  |
+| code analysis graph value objects    | graph analysis context, import graph, orphan indicator result        | Graph analysis types                         |
+| config system configuration types    | architecture config, architecture rule, orphan rule                  | Configuration types                          |
+| config system orchestrator aggregate | config loading aggregate                                             | Config loading contract                      |
+| orphan detection aggregate           | orphan detection aggregate                                           | Orphan detection aggregate                   |
+| orphan detection protocols           | layer-specific orphan protocols                                      | Layer-specific orphan protocols              |
+| role enforcement aggregate           | role enforcement aggregate                                           | Role enforcement aggregate                   |
+| role enforcement protocols           | layer-specific role protocols                                        | Layer-specific role protocols                |
+| import rules aggregate               | import rules aggregate                                               | Import rules aggregate                       |
 
 ## Integration Points
 
@@ -199,21 +198,21 @@ shared (foundation — no feature crate dependencies)
 
 ## Test Scenarios / QA Checklist
 
-- [ ]  File path with empty string returns error.
-- [ ]  File path with valid path returns success with correct value.
-- [ ]  Severity HIGH score impact returns correct deduction value.
-- [ ]  Score 100.0 is perfect returns true.
-- [ ]  Score 85.0 passing threshold 80.0 returns true.
-- [ ]  Pattern list with "*.rs" creates list with one pattern.
-- [ ]  Layer detection from prefix "taxonomy_foo.rs" returns taxonomy.
-- [ ]  Layer detection from prefix "main.rs" returns none.
-- [ ]  Language detection for "main.rs" returns Rust.
-- [ ]  Language detection for "app.py" returns Python.
-- [ ]  Architecture config default has enabled: true, empty layers, empty rules.
-- [ ]  Lint result serializes to valid JSON with all required fields.
-- [ ]  Graph analysis context with empty maps represents a workspace with no imports.
-- [ ]  All protocol traits are object-safe for dependency injection.
-- [ ]  No circular dependencies between shared sub-modules.
+- [ ] File path with empty string returns error.
+- [ ] File path with valid path returns success with correct value.
+- [ ] Severity HIGH score impact returns correct deduction value.
+- [ ] Score 100.0 is perfect returns true.
+- [ ] Score 85.0 passing threshold 80.0 returns true.
+- [ ] Pattern list with "*.rs" creates list with one pattern.
+- [ ] Layer detection from prefix "taxonomy_foo.rs" returns taxonomy.
+- [ ] Layer detection from prefix "main.rs" returns none.
+- [ ] Language detection for "main.rs" returns Rust.
+- [ ] Language detection for "app.py" returns Python.
+- [ ] Architecture config default has enabled: true, empty layers, empty rules.
+- [ ] Lint result serializes to valid JSON with all required fields.
+- [ ] Graph analysis context with empty maps represents a workspace with no imports.
+- [ ] All protocol traits are object-safe for dependency injection.
+- [ ] No circular dependencies between shared sub-modules.
 
 ## Assumptions & Constraints
 
@@ -226,14 +225,13 @@ shared (foundation — no feature crate dependencies)
 
 ## Glossary
 
-
-| Term          | Definition                                                                                       |
-| --------------- | -------------------------------------------------------------------------------------------------- |
+| Term          | Definition                                                                                      |
+| ------------- | ----------------------------------------------------------------------------------------------- |
 | **VO**        | Value Object — a typed wrapper around a primitive or collection that enforces domain invariants |
-| **Aggregate** | A trait defining the public API surface of a feature crate                                       |
-| **Protocol**  | A trait defining an internal DI boundary within a feature crate                                  |
+| **Aggregate** | A trait defining the public API surface of a feature crate                                      |
+| **Protocol**  | A trait defining an internal DI boundary within a feature crate                                 |
 | **AES**       | Architecture Enforcement Standard — the 7-layer coding convention                               |
-| **Contract**  | Pure trait definitions in the shared crate that feature crates implement                         |
+| **Contract**  | Pure trait definitions in the shared crate that feature crates implement                        |
 | **Taxonomy**  | The domain foundation layer — stable language of the domain, free from technical concerns       |
 | **DI**        | Dependency Injection — wiring implementations to trait/interface contracts                      |
 

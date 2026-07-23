@@ -137,18 +137,18 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 
 ## API Contract
 
-| Function | Input | Output | Description |
-| --- | --- | --- | --- |
-| The architecture line checker's line count check method | file, definition, content, violations | Mutates violations | Check AES301 (max) and AES302 (min) line counts |
-| The mandatory definition checker's class definition check method | file, definition, content, violations | Mutates violations | Check AES303 — file must declare at least one primary symbol |
-| The mandatory definition checker's dead inheritance check method | file, content, violations | Mutates violations | Check AES303 — detect empty unit structs, empty classes |
-| The bypass checker's bypass comment detection method | file, content, violations | Mutates violations | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
-| The bypass checker's Cargo.toml check method | content, violations | Mutates violations | Check AES304 — detect Cargo.toml clippy allow bypass |
-| The code duplication analyzer's file similarity check method | entries, min lines, threshold percentage | List of similarity violations | Check AES305 — file-level similarity analysis |
-| The code analysis orchestrator's main check runner | config, files, root directory | List of lint results | Run all AES301–305 checks on workspace files |
-| The code analysis orchestrator's report formatter | results, project root | Formatted string | Format compliance report |
-| Check for critical violations | results | Boolean | Check if any CRITICAL severity violations exist |
-| Calculate compliance score | results | Score value | Calculate compliance score |
+| Function                                                         | Input                                    | Output                        | Description                                                              |
+| ---------------------------------------------------------------- | ---------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| The architecture line checker's line count check method          | file, definition, content, violations    | Mutates violations            | Check AES301 (max) and AES302 (min) line counts                          |
+| The mandatory definition checker's class definition check method | file, definition, content, violations    | Mutates violations            | Check AES303 — file must declare at least one primary symbol             |
+| The mandatory definition checker's dead inheritance check method | file, content, violations                | Mutates violations            | Check AES303 — detect empty unit structs, empty classes                  |
+| The bypass checker's bypass comment detection method             | file, content, violations                | Mutates violations            | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
+| The bypass checker's Cargo.toml check method                     | content, violations                      | Mutates violations            | Check AES304 — detect Cargo.toml clippy allow bypass                     |
+| The code duplication analyzer's file similarity check method     | entries, min lines, threshold percentage | List of similarity violations | Check AES305 — file-level similarity analysis                            |
+| The code analysis orchestrator's main check runner               | config, files, root directory            | List of lint results          | Run all AES301–305 checks on workspace files                             |
+| The code analysis orchestrator's report formatter                | results, project root                    | Formatted string              | Format compliance report                                                 |
+| Check for critical violations                                    | results                                  | Boolean                       | Check if any CRITICAL severity violations exist                          |
+| Calculate compliance score                                       | results                                  | Score value                   | Calculate compliance score                                               |
 
 ## Integration Points
 
@@ -170,28 +170,28 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 
 ## Test Scenarios / QA Checklist
 
-| # | Input | Expected Output | Rule |
-|---|-------|-----------------|------|
-| 1 | File with 1500 lines, max_lines=1000 | AES301 — file exceeds max line count | AES301 |
-| 2 | File with 5 lines, min_lines=10 | AES302 — file below min line count | AES302 |
-| 3 | File with 50 lines, no struct/enum/trait/class/interface | AES303 — mandatory definition missing | AES303 |
-| 4 | `struct Foo;` with no following `impl` block | AES303 — dead inheritance (unit struct) | AES303 |
-| 5 | `struct Foo;` followed by `impl Foo { ... }` | No violation (intentional placeholder) | AES303 pass |
-| 6 | `class Foo: pass` (Python) | AES303 — dead inheritance (empty class) | AES303 |
-| 7 | `class Foo {}` (TypeScript) | AES303 — dead inheritance (empty class) | AES303 |
-| 8 | `let x = foo.unwrap();` | AES304 — unwrap detected | AES304 |
-| 9 | `let x = foo.unwrap_or(default);` | No violation (safe variant) | AES304 pass |
-| 10 | `#[allow(dead_code)]` | AES304 — allow attribute bypass | AES304 |
-| 11 | `// TODO: fix this later` | AES304 — bypass comment detected | AES304 |
-| 12 | `unwrap()` inside `#[cfg(test)]` block | No violation (test block skipped) | AES304 pass |
-| 13 | `unwrap()` inside a string literal | No violation (inside string) | AES304 pass |
-| 14 | `warnings = "allow"` in Cargo.toml `[lints.clippy]` | AES304 — Cargo.toml clippy allow bypass | AES304 |
-| 15 | File with 70% content shared across 2+ files | AES305 — duplication exceeds 50% threshold | AES305 |
-| 16 | File with 30% content shared across 2+ files | No violation (below 50% threshold) | AES305 pass |
-| 17 | Single file in workspace | No duplication violation (no files to compare) | AES305 pass |
-| 18 | File exceeding 2 MiB | AES301 LOW — file skipped (exceeds lintable size) | AES000 |
-| 19 | File with read permission denied | AES000 — file skipped with error reason | AES000 |
-| 20 | `mod.rs` or `__init__.py` | No violation (barrel file exception) | exception |
+| #   | Input                                                    | Expected Output                                   | Rule        |
+| --- | -------------------------------------------------------- | ------------------------------------------------- | ----------- |
+| 1   | File with 1500 lines, max_lines=1000                     | AES301 — file exceeds max line count              | AES301      |
+| 2   | File with 5 lines, min_lines=10                          | AES302 — file below min line count                | AES302      |
+| 3   | File with 50 lines, no struct/enum/trait/class/interface | AES303 — mandatory definition missing             | AES303      |
+| 4   | `struct Foo;` with no following `impl` block             | AES303 — dead inheritance (unit struct)           | AES303      |
+| 5   | `struct Foo;` followed by `impl Foo { ... }`             | No violation (intentional placeholder)            | AES303 pass |
+| 6   | `class Foo: pass` (Python)                               | AES303 — dead inheritance (empty class)           | AES303      |
+| 7   | `class Foo {}` (TypeScript)                              | AES303 — dead inheritance (empty class)           | AES303      |
+| 8   | `let x = foo.unwrap();`                                  | AES304 — unwrap detected                          | AES304      |
+| 9   | `let x = foo.unwrap_or(default);`                        | No violation (safe variant)                       | AES304 pass |
+| 10  | `#[allow(dead_code)]`                                    | AES304 — allow attribute bypass                   | AES304      |
+| 11  | `// TODO: fix this later`                                | AES304 — bypass comment detected                  | AES304      |
+| 12  | `unwrap()` inside `#[cfg(test)]` block                   | No violation (test block skipped)                 | AES304 pass |
+| 13  | `unwrap()` inside a string literal                       | No violation (inside string)                      | AES304 pass |
+| 14  | `warnings = "allow"` in Cargo.toml `[lints.clippy]`      | AES304 — Cargo.toml clippy allow bypass           | AES304      |
+| 15  | File with 70% content shared across 2+ files             | AES305 — duplication exceeds 50% threshold        | AES305      |
+| 16  | File with 30% content shared across 2+ files             | No violation (below 50% threshold)                | AES305 pass |
+| 17  | Single file in workspace                                 | No duplication violation (no files to compare)    | AES305 pass |
+| 18  | File exceeding 2 MiB                                     | AES301 LOW — file skipped (exceeds lintable size) | AES000      |
+| 19  | File with read permission denied                         | AES000 — file skipped with error reason           | AES000      |
+| 20  | `mod.rs` or `__init__.py`                                | No violation (barrel file exception)              | exception   |
 
 ## Assumptions & Constraints
 

@@ -23,6 +23,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 ## Functional Requirements
 
 ### FR-001: Start Filesystem Watcher
+
 - **Description**: Initialize a debounced filesystem watcher on a target path using the `notify` crate.
 - **Input**: Watch configuration containing path (string), debounce interval in milliseconds (u64), recursive flag (bool), and ignore patterns (list of strings).
 - **Output**: Result — Ok on successful start, Err with descriptive message if path doesn't exist or debouncer creation fails.
@@ -38,6 +39,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 - **Error Handling**: Returns an error with descriptive message for: path not found, debouncer creation failure, watch path failure.
 
 ### FR-002: Receive and Broadcast File Change Events
+
 - **Description**: Receive debounced filesystem events, filter by ignore patterns, and broadcast file change events to all subscribers.
 - **Input**: Raw debounced event from the `notify-debouncer-mini` callback.
 - **Output**: File change event broadcast via a tokio broadcast channel (capacity 256).
@@ -51,6 +53,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 - **Error Handling**: No error returned; dropped events are non-fatal.
 
 ### FR-003: Filter Lintable Files
+
 - **Description**: Determine whether a file path is lintable based on its extension.
 - **Input**: File path string.
 - **Output**: Boolean — true if the file has a lintable extension.
@@ -64,6 +67,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 - **Error Handling**: Returns false for non-lintable paths; no error thrown.
 
 ### FR-004: Deduplicate Watch Events
+
 - **Description**: Deduplicate a batch of watch events by file path, keeping only the latest event per file.
 - **Input**: List of file change events.
 - **Output**: List of file change events with unique paths.
@@ -77,6 +81,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 - **Error Handling**: No error paths; pure in-memory operation.
 
 ### FR-005: Run Lint on Changed Files
+
 - **Description**: On each detected file change, run the full code analysis pipeline on the changed file and report violations and score.
 - **Input**: File change event with file path.
 - **Output**: Printed output: `[change] <path> | <count> violations, score <score>`.
@@ -91,6 +96,7 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 - **Error Handling**: Lint failures are non-fatal; event loop continues.
 
 ### FR-006: Graceful Shutdown
+
 - **Description**: Stop the watcher and event loop on Ctrl+C signal.
 - **Input**: Atomic running flag + tokio ctrl_c signal.
 - **Output**: Watcher stopped, success exit code returned.
@@ -105,17 +111,17 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| the watch orchestrator run | watch configuration, atomic running flag | exit code | Synchronous entry: creates runtime if needed, delegates to async run. |
-| the watch orchestrator async run | watch configuration, atomic running flag | exit code | Async event loop: initial lint, start watcher, process events, shutdown. |
-| the notify provider start | watch configuration | result | Create debouncer, register watch path, start receiving events. |
-| the notify provider stop | — | result | Drop debouncer to stop watching. |
-| the notify provider subscribe | — | broadcast receiver | Subscribe to file change events. |
-| the notify provider is available | — | boolean | Check if watch feature is compiled in. |
-| the change analyzer is lintable | file path string | boolean | Check if a file path has a lintable extension. |
-| the change analyzer analyze | list of events | list of events | Deduplicate events by path. |
-| the change analyzer filter lintable | list of events | list of events | Keep only events for lintable files. |
+| Function                            | Input                                    | Output             | Description                                                              |
+| ----------------------------------- | ---------------------------------------- | ------------------ | ------------------------------------------------------------------------ |
+| the watch orchestrator run          | watch configuration, atomic running flag | exit code          | Synchronous entry: creates runtime if needed, delegates to async run.    |
+| the watch orchestrator async run    | watch configuration, atomic running flag | exit code          | Async event loop: initial lint, start watcher, process events, shutdown. |
+| the notify provider start           | watch configuration                      | result             | Create debouncer, register watch path, start receiving events.           |
+| the notify provider stop            | —                                        | result             | Drop debouncer to stop watching.                                         |
+| the notify provider subscribe       | —                                        | broadcast receiver | Subscribe to file change events.                                         |
+| the notify provider is available    | —                                        | boolean            | Check if watch feature is compiled in.                                   |
+| the change analyzer is lintable     | file path string                         | boolean            | Check if a file path has a lintable extension.                           |
+| the change analyzer analyze         | list of events                           | list of events     | Deduplicate events by path.                                              |
+| the change analyzer filter lintable | list of events                           | list of events     | Keep only events for lintable files.                                     |
 
 ## Integration Points
 
@@ -159,12 +165,12 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 
 ## Glossary
 
-| Term | Definition |
-|------|-----------|
-| Debounce | Coalesce multiple rapid events into a single event after a quiet period. |
-| Lintable | A file whose extension matches one of the supported linting targets. |
-| File Change Event | A structured representation of a filesystem change event. |
-| inotify | Linux kernel subsystem for filesystem event monitoring. |
+| Term              | Definition                                                               |
+| ----------------- | ------------------------------------------------------------------------ |
+| Debounce          | Coalesce multiple rapid events into a single event after a quiet period. |
+| Lintable          | A file whose extension matches one of the supported linting targets.     |
+| File Change Event | A structured representation of a filesystem change event.                |
+| inotify           | Linux kernel subsystem for filesystem event monitoring.                  |
 
 ## Reference
 

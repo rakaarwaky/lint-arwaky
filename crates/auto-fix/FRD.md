@@ -87,18 +87,18 @@ The auto-fix crate applies safe, deterministic corrections to source files that 
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| The fix processor's execute method | file path | fix result | Run linter, filter fixable violations, apply fixes, return summary |
-| The fix processor's bypass comment fix method | file path, line number | bool | Remove or replace bypass comment at specified line |
-| The fix processor's unused import fix method | file path, line number | bool | Remove unused import at specified line |
-| The fix processor's non-fixable reporting method | violation list | lint message list | List violations requiring manual fix |
-| The fix orchestrator's run fix method | file path | fix result | Delegate to the fix protocol's execute method |
-| The fix orchestrator's manual report method | violation list | string list | Delegate to non-fixable reporting |
-| The file adapter's read file method | file path | optional content | Read file content |
-| The file adapter's write file method | file path, content | bool | Write content to file |
-| The file adapter's path existence check | file path | bool | Check if file exists |
-| The auto-fix container's orchestrator factory | dry run flag | shared orchestrator reference | Wire and return orchestrator |
+| Function                                         | Input                  | Output                        | Description                                                        |
+| ------------------------------------------------ | ---------------------- | ----------------------------- | ------------------------------------------------------------------ |
+| The fix processor's execute method               | file path              | fix result                    | Run linter, filter fixable violations, apply fixes, return summary |
+| The fix processor's bypass comment fix method    | file path, line number | bool                          | Remove or replace bypass comment at specified line                 |
+| The fix processor's unused import fix method     | file path, line number | bool                          | Remove unused import at specified line                             |
+| The fix processor's non-fixable reporting method | violation list         | lint message list             | List violations requiring manual fix                               |
+| The fix orchestrator's run fix method            | file path              | fix result                    | Delegate to the fix protocol's execute method                      |
+| The fix orchestrator's manual report method      | violation list         | string list                   | Delegate to non-fixable reporting                                  |
+| The file adapter's read file method              | file path              | optional content              | Read file content                                                  |
+| The file adapter's write file method             | file path, content     | bool                          | Write content to file                                              |
+| The file adapter's path existence check          | file path              | bool                          | Check if file exists                                               |
+| The auto-fix container's orchestrator factory    | dry run flag           | shared orchestrator reference | Wire and return orchestrator                                       |
 
 ## Integration Points
 

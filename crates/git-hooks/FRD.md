@@ -129,24 +129,24 @@ The git-hooks crate implements a pre-commit hook system that enforces AES compli
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| The diff checker's run git diff check method | project root | lint result list | Run diff and collect changed files |
-| The diff checker's get diff method | project root | git diff result VO | Get full diff result with lintable filter |
-| The diff checker's get changed files method | project root, base branch | file path list | Get files changed vs base branch |
-| The diff checker's get default branch method | project root | branch name | Detect default branch name |
-| The git hook adapter's install pre-commit method | executable path | result (success status or error) | Write hook script to .git/hooks/pre-commit |
-| The git hook adapter's uninstall pre-commit method | none | result (success status or error) | Remove hook script |
-| The hook manager's install pre-commit method | executable path | result (success status or error) | Delegate to hook adapter |
-| The hook manager's uninstall pre-commit method | none | result (success status or error) | Delegate to hook adapter |
-| The hook manager's initialize config method | path string | description VO | Check/create config file |
-| The hook manager's update ignore rule method | hook ignore update VO | description VO | Add/remove ignore rule |
-| The hook manager's get diff data method | two file paths | git diff data VO | Compare two file paths |
-| The git hooks orchestrator's run git hooks check method | project root | lint result list | Run full git hooks check |
-| The git hooks orchestrator's install hook method | executable path | result (success status or error) | Install pre-commit hook |
-| The git hooks orchestrator's uninstall hook method | none | result (success status or error) | Uninstall pre-commit hook |
-| The git container's constructor | hook manager reference | git container | Wire and return container |
-| The git container's default factory | none | git container | Wire with default adapter |
+| Function                                                | Input                     | Output                           | Description                                |
+| ------------------------------------------------------- | ------------------------- | -------------------------------- | ------------------------------------------ |
+| The diff checker's run git diff check method            | project root              | lint result list                 | Run diff and collect changed files         |
+| The diff checker's get diff method                      | project root              | git diff result VO               | Get full diff result with lintable filter  |
+| The diff checker's get changed files method             | project root, base branch | file path list                   | Get files changed vs base branch           |
+| The diff checker's get default branch method            | project root              | branch name                      | Detect default branch name                 |
+| The git hook adapter's install pre-commit method        | executable path           | result (success status or error) | Write hook script to .git/hooks/pre-commit |
+| The git hook adapter's uninstall pre-commit method      | none                      | result (success status or error) | Remove hook script                         |
+| The hook manager's install pre-commit method            | executable path           | result (success status or error) | Delegate to hook adapter                   |
+| The hook manager's uninstall pre-commit method          | none                      | result (success status or error) | Delegate to hook adapter                   |
+| The hook manager's initialize config method             | path string               | description VO                   | Check/create config file                   |
+| The hook manager's update ignore rule method            | hook ignore update VO     | description VO                   | Add/remove ignore rule                     |
+| The hook manager's get diff data method                 | two file paths            | git diff data VO                 | Compare two file paths                     |
+| The git hooks orchestrator's run git hooks check method | project root              | lint result list                 | Run full git hooks check                   |
+| The git hooks orchestrator's install hook method        | executable path           | result (success status or error) | Install pre-commit hook                    |
+| The git hooks orchestrator's uninstall hook method      | none                      | result (success status or error) | Uninstall pre-commit hook                  |
+| The git container's constructor                         | hook manager reference    | git container                    | Wire and return container                  |
+| The git container's default factory                     | none                      | git container                    | Wire with default adapter                  |
 
 ## Integration Points
 
