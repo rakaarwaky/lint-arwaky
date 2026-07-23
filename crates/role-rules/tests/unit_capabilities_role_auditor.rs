@@ -133,7 +133,7 @@ export class MyChecker {
     assert_eq!(violations[0].code.code(), "AES403");
 }
 
-// ─── Rule 1: Internal struct tanpa trait impl → TIDAK di-flag ──
+// ─── Rule 1: Internal struct without trait impl → NOT flagged ──
 
 #[test]
 fn rust_internal_struct_allowed_without_trait_impl() {
