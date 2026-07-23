@@ -2,12 +2,8 @@ use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
-use cli_commands::agent_analysis_pipeline_orchestrator::{
-    AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
-};
 use maintenance::root_maintenance_container::MaintenanceContainer;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
 use std::sync::Arc;
@@ -74,18 +70,9 @@ impl TuiContainer {
                 ".",
             );
 
-        // Wire analysis pipeline orchestrator — same deps as CLI, just reused for TUI
+        // Wire analysis pipeline action
         let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(AnalysisPipelineOrchestrator::new(AnalysisPipelineDeps {
-                code_analysis_linter: code_analysis_aggregate.clone(),
-                naming_orchestrator: naming_container.orchestrator(),
-                import_orchestrator: import_container.orchestrator(),
-                external_lint: external_lint_container.aggregate(),
-                role_orchestrator: role_container.orchestrator(),
-                orphan_orchestrator: orphan_container.analyzer(),
-                config_orchestrator: config_container.orchestrator(),
-                format: Format::Text,
-            }));
+            Arc::new(cli_commands::surface_parallel_action::ParallelPipelineAction);
 
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate)

@@ -29,10 +29,49 @@ pub struct Cli {
 }
 
 #[derive(Subcommand, Debug)]
+pub enum ScanSubcommands {
+    /// Run code-quality analysis only (AES101-AES306)
+    Quality {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run import-rule checks only (AES201-AES299)
+    Import {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run naming-rule checks only (AES401-AES406)
+    Naming {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run role-rule checks only (AES301-AES399)
+    Role {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Check orphan: file path -> check single file, directory path -> scan all files in directory
+    Orphan {
+        /// File or directory path to check
+        path: Option<String>,
+        /// Scan only a specific workspace member by name
+        #[arg(long)]
+        member: Option<String>,
+    },
+}
+
+#[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Run all linters and calculate score. Discovers workspace members and runs all linters.
-    /// Use `--member <name>` to scan a specific workspace member.
+    /// Run all linters and calculate score.
+    /// Supports subcommands: quality, import, naming, role, orphan (e.g. `scan quality [path]`)
     Scan {
+        #[command(subcommand)]
+        subcommand: Option<ScanSubcommands>,
+
         /// Path to scan
         path: Option<String>,
         /// Scan only a specific workspace member by name (e.g. "shared", "import-rules")
@@ -93,6 +132,18 @@ pub enum Commands {
 
     /// Run role-rule checks only (AES301-AES399)
     ScanRole {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run external linter checks only (Clippy, Ruff, ESLint, etc.)
+    ScanExternal {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run 6 linter subcommands as parallel Rust subprocesses and measure timing
+    ScanParallelSubprocess {
         /// Path to scan
         path: Option<String>,
     },

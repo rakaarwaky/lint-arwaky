@@ -25,9 +25,8 @@ async fn config_system_boots_and_loads_defaults() {
 fn config_system_sync_load_responds() {
     let start = std::time::Instant::now();
     let tmp = TempDir::new().unwrap();
-    let config = ConfigContainer::new()
-        .orchestrator()
-        .load_config_sync(tmp.path().to_str().unwrap());
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let config = ConfigContainer::new().orchestrator().load_config_sync(&fp);
     assert!(config.enabled.value);
     let elapsed = start.elapsed();
     assert!(

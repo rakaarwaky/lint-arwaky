@@ -56,9 +56,9 @@ async fn full_config_lifecycle_rust_workspace() {
     let ws_names: Vec<String> = workspaces.iter().map(|w| w.path.basename()).collect();
     assert!(ws_names.contains(&"core".to_string()));
     assert!(ws_names.contains(&"cli".to_string()));
-    let ignored = orch.ignored_paths(root.to_str().unwrap());
-    assert!(ignored.contains(&"target".to_string()));
-    assert!(ignored.contains(&".git".to_string()));
+    let ignored = orch.ignored_paths(&fp);
+    assert!(ignored.values.contains(&"target".to_string()));
+    assert!(ignored.values.contains(&".git".to_string()));
 }
 
 #[tokio::test]

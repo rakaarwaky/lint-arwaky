@@ -394,13 +394,18 @@ pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
         }
         // Priority 2: Cargo.toml (only if not inside a workspace member)
         if dir.join("Cargo.toml").exists() {
-            // Check if parent has workspace markers — if so, keep walking up
+            // Check if parent or grandparent has workspace markers — if so, keep walking up
             if let Some(parent) = dir.parent() {
+                let parent_name = parent
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
                 if parent.join("crates").is_dir()
                     || parent.join("packages").is_dir()
                     || parent.join("modules").is_dir()
+                    || matches!(parent_name, "crates" | "packages" | "modules")
                 {
-                    // Don't return yet — parent is the real workspace root
+                    // Don't return yet — parent/grandparent is the real workspace root
                 } else {
                     return Some(dir);
                 }
