@@ -76,13 +76,14 @@ fn utility_parent_directory_returns_parent() {
 fn utility_file_size_formats_bytes() {
     assert_eq!(
         utility_file_system::file_size_human(0),
-        shared::common::taxonomy_display_content_vo::DisplayContent::new("0 B".to_string())
+        shared::common::taxonomy_display_content_vo::DisplayContent::new("0B".to_string())
     );
     assert_eq!(
         utility_file_system::file_size_human(1024),
-        shared::common::taxonomy_display_content_vo::DisplayContent::new("1.0 KiB".to_string())
+        shared::common::taxonomy_display_content_vo::DisplayContent::new("1.0K".to_string())
     );
 }
+
 
 // ─── path_components: Path splitting ──
 
