@@ -1,4 +1,3 @@
-# AES011: _tool not in infrastructure suffix list
 # AES005: too short
 # AES009: no class
 # AES014: hardcoded path

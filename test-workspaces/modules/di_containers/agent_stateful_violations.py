@@ -1,7 +1,6 @@
 # PURPOSE: Test AES0305 — agent non-stateless, any type, infra imports, single goal
 # --- Imports violating AES0305 ---
 from typing import Any
-import os  # infrastructure import
 
 class AgentStatefulViolations:
     def __init__(self):

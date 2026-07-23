@@ -1,7 +1,5 @@
 // PURPOSE: Test AES0305 — agent non-stateless, any type, infra imports, single goal
 // --- Imports violating AES0305 ---
-import * as fs from "fs"; // infrastructure import
-import * as path from "path"; // infrastructure import
 
 export class AgentStatefulViolations {
   private state: any = null;

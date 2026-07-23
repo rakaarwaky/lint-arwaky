@@ -1,5 +1,4 @@
 # Taxonomy module
-from infrastructure.utils import deep_nested_complexity # VIOLATION: Taxonomy -> Infrastructure
 
 class DomainModel:
     def __init__(self):
