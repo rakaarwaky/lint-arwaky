@@ -78,20 +78,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             return Vec::new();
         }
 
-        let ignored: Vec<String> = self
-            .config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|p| p.value().to_string())
-            .collect();
-        let filtered_files: Vec<String> = files
-            .iter()
-            .filter(|f| !shared::orphan_detector::utility_orphan_path::is_path_ignored(f, &ignored))
-            .cloned()
-            .collect();
-        let files = filtered_files.as_slice();
-
         // Expand files to include all workspace source files for cross-crate import resolution
         let mut all_workspace_files: Vec<String> = files.to_vec();
         let root_path = std::path::Path::new(root_dir);
@@ -214,20 +200,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if !self.config.enabled.value {
             return Vec::new();
         }
-
-        let ignored: Vec<String> = self
-            .config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|p| p.value().to_string())
-            .collect();
-        let filtered_files: Vec<String> = files
-            .iter()
-            .filter(|f| !shared::orphan_detector::utility_orphan_path::is_path_ignored(f, &ignored))
-            .cloned()
-            .collect();
-        let files = filtered_files.as_slice();
 
         // Expand files to include all workspace source files for cross-crate import resolution
         let mut all_workspace_files: Vec<String> = files.to_vec();

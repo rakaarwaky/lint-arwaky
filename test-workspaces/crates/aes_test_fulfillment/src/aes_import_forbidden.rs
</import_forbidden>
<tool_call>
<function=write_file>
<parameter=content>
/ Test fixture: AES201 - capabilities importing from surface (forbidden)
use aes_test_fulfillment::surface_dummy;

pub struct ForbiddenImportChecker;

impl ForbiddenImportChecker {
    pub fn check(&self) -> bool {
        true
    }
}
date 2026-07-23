@@ -1,0 +1,11 @@
+// Test fixture: AES201 - capabilities importing from surface (forbidden layer)
+use aes_test_fulfillment::surface_dummy::SurfaceDummy;
+
+pub struct ForbiddenImportChecker;
+
+impl ForbiddenImportChecker {
+    pub fn check(&self) -> bool {
+        SurfaceDummy::new();
+        true
+    }
+}
