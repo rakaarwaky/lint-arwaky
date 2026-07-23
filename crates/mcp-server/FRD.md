@@ -97,26 +97,26 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 ## Data Model / Entity Relationship
 
 ```
-ExecuteCommandArgs (input VO)
-  ├── action: String
-  └── args: Option<Map<String, Value>>
-        ├── "path": String
-        ├── "threshold": u64
-        └── "client": String
+Execute Command Args (input value object)
+  ├── action: action string
+  └── args: optional argument map
+        ├── "path": file path
+        ├── "threshold": threshold value
+        └── "client": client name
 
-ListCommandsArgs (input VO)
-  └── domain: Option<String>
+List Commands Args (input value object)
+  └── domain: optional domain filter
 
-ReadSkillArgs (input VO)
-  └── section: Option<String>
+Read Skill Args (input value object)
+  └── section: optional section filter
 
-ScanRequest (to pipeline)
+Scan Request (to pipeline)
   ├── target: scan target (path)
   └── mode: scan mode (scan | ci with threshold)
 
-ServerInfo (MCP protocol)
-  ├── protocol_version: ProtocolVersion
-  ├── server_info: Implementation { name, version }
+Server Info (MCP protocol)
+  ├── protocol_version: protocol version
+  ├── server_info: implementation info { name, version }
   └── capabilities: ServerCapabilities { tools }
 ```
 
