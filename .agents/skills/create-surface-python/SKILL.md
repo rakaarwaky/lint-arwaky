@@ -135,7 +135,7 @@ python -c "import <module>"
 
 ```bash
 # Check forbidden lower-layer imports
-grep -n "^\s*from\s+.*(capabilities_|agent_)" modules/*/src/surface_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 
 # Check syntax
 python -c "import <module>"

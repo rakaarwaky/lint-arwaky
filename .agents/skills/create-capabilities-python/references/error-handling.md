@@ -33,7 +33,7 @@ def execute(input: <DomainVO>) -> list[<ResultVO>]:
     return results
 ```
 
-## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
+## Rule 4: I/O errors belong to utility implementations (layer removed)
 
 Bad in capabilities:
 

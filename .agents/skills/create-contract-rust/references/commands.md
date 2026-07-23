@@ -5,7 +5,7 @@
 rg -n "^\s*pub trait" crates/shared/src/**/contract_*.rs
 
 # Check forbidden imports in contract files
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/shared/src/**/contract_*.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_|surface_)" crates/shared/src/**/contract_*.rs
 
 # Check possible raw primitive signatures
 rg -n "fn .*\b(String|Vec<String>|Option<String>|usize|u32|i32|u64|i64|f32|f64)\b" crates/shared/src/**/contract_*.rs

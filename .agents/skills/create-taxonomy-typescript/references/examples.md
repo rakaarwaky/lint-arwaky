@@ -24,7 +24,7 @@ export interface <ResultVO> {
 
 ```typescript
 // taxonomy_<name>_vo.ts
-import { <NameAnalyzer> } from '../capabilities_<name-capability>'; // BAD
+import { <NameAnalyzer> } from.*capabilities_|from.*agent_|from.*surface_<name-capability>'; // BAD
 ```
 
 Taxonomy must not import from layers.

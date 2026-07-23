@@ -131,7 +131,7 @@ rg -n "impl\s+I[A-Za-z0-9_]+Aggregate\s+for" crates/<crate>/src/agent_*.rs
 rg "\.sum\(\)|\.len\(\)|\.map\(|\.fold\(" crates/<crate>/src/agent_*.rs
 
 # Check forbidden imports (agent must only depend on taxonomy + contract + utility)
-rg "^\s*use\s+.*(capabilities_|infrastructure_)" crates/<crate>/src/agent_*.rs
+rg "^\s*use\s+.*(capabilities_)" crates/<crate>/src/agent_*.rs
 ```
 
 ## Common Mistakes

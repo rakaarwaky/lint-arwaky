@@ -7,7 +7,7 @@
 - [ ] Interface is exported with `export interface`.
 - [ ] Methods have proper TypeScript type annotations.
 - [ ] Contract imports only taxonomy and contract types.
-- [ ] Contract does not import from capabilities, infrastructure, agents, or surface.
+- [ ] Contract does not import from capabilities, agents, or surface.
 - [ ] Contract signatures use shared VOs for domain data.
 - [ ] Error types come from shared taxonomy.
 - [ ] New contract module is registered in `index.ts`.

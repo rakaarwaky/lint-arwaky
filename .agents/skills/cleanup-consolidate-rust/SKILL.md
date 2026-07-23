@@ -451,8 +451,8 @@ capabilities_cursor_data_renderer.rs
 ### Detection Patterns: Same-Technology Adapters (Merge)
 
 ```rust
-infrastructure_ffmpeg_adapter.rs
-infrastructure_video_ffmpeg_adapter.rs
+utility_ffmpeg_adapter.rs
+utility_video_ffmpeg_adapter.rs
 // Both use FFmpeg → merge into 1 adapter
 ```
 

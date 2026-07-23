@@ -14,7 +14,7 @@ rg "\.sum\(\)|\.len\(\)|\.map\(|\.fold\(|\.collect\(" crates/<crate>/src/agent_*
 rg "std::fs|File::open|reqwest|hyper|sqlx|rusqlite" crates/<crate>/src/agent_*.rs
 
 # Check forbidden imports
-rg "^\s*use\s+.*(capabilities_|infrastructure_|surface_)" crates/<crate>/src/agent_*.rs
+rg "^\s*use\s+.*(capabilities_|surface_)" crates/<crate>/src/agent_*.rs
 
 # Find unwrap_or_default usage
 rg "unwrap_or_default\(\)" crates/<crate>/src/agent_*.rs

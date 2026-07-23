@@ -19,8 +19,8 @@
 - [ ] Service dependencies use protocol interfaces via DI.
 - [ ] Value/configuration fields use shared VOs.
 - [ ] Zero I/O in capabilities layer (AES404).
-- [ ] Low-level technical operations delegate to `utility_*` (infrastructure layer removed).
-- [ ] No forbidden imports from `agent_*`.
+- [ ] Low-level technical operations delegate to `utility_*` (layer removed).
+- [ ] No forbidden imports from.*capabilities_|from.*agent_|from.*surface_*`.
 - [ ] No direct dependency on concrete `capabilities_*` implementations (No Inter-Capability Dependency).
 - [ ] No orchestration inside the capability: no flow control across capabilities, no error-escalation policy (No Orchestration).
 - [ ] No domain models (Entities/Value Objects) defined in the file — consumed from Taxonomy only (No Domain Definition).

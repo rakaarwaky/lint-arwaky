@@ -103,7 +103,7 @@ python -c "import <module>"
 grep -n "^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/shared/src/**/contract_*.py
 
 # Check forbidden imports
-grep -n "from capabilities_\|from agent_\|from surface_" modules/shared/src/*/contract_*.py
+grep -n "from.*capabilities_|from.*agent_|from.*surface_" modules/shared/src/*/contract_*.py
 ```
 
 ## Common Mistakes

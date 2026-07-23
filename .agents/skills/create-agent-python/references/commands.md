@@ -14,7 +14,7 @@ grep -n "sum(\|len(\|\.iter\(\)\|\.map(" modules/*/src/agent_*.py
 grep -n "open(\|Path(\|os\.\|requests\.\|httpx\." modules/*/src/agent_*.py
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*(capabilities_|infrastructure_)" modules/*/src/agent_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 
 # Check syntax
 python -c "import <module>"

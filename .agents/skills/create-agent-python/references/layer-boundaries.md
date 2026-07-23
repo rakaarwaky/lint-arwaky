@@ -14,7 +14,7 @@
 | Aggregate ABC implementation                       | Database operations (`sqlite3.`, `asyncpg.`)            |
 | Private helpers supporting orchestration           | Direct stdout/stderr printing                           |
 |                                                    | Direct environment/system-clock/global-state mutation   |
-|                                                    | Direct import from concrete `capabilities_*` modules    |
+|                                                    | Direct import from.*capabilities_|from.*agent_|from.*surface_*` modules    |
 |                                                    | Direct import from concrete `utility_*` modules         |
 |                                                    | Locally defined domain data structures                  |
 |                                                    | Raw primitives for domain values in aggregate contracts |

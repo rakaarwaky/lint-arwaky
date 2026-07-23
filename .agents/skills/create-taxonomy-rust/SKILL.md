@@ -121,7 +121,7 @@ cargo check -p shared
 rg -n "^\s*pub struct|^\s*pub enum" crates/<crate>/src --glob '!**/shared/**'
 
 # Check forbidden imports in taxonomy files
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_|surface_)" crates/shared/src/**/taxonomy_*.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_|surface_)" crates/shared/src/**/taxonomy_*.rs
 ```
 
 ## Common Mistakes

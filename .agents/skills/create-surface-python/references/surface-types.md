@@ -16,7 +16,7 @@ Smart surfaces:
 Smart surfaces MUST NOT:
 
 - import capabilities,
-- import infrastructure,
+- import capabilities,
 - import concrete agents,
 - perform I/O,
 - compute domain results,

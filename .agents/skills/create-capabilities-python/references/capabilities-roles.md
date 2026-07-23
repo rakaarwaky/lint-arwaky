@@ -79,7 +79,7 @@ The guard check requires `_protocol` import only:
 
 ```python
 # ✅ Guard passes — imports from _protocol module
-from shared.role_rules.contract_agent_role_protocol import IAgentRoleChecker
+from.*capabilities_|from.*agent_|from.*surface_role_protocol import IAgentRoleChecker
 
 # ❌ Guard fails — no _protocol import → CapabilityNoProtocol
 class MyChecker:

@@ -215,7 +215,7 @@ lint-arwaky-cli scan packages/ --format sarif > ~/.local/share/lint-arwaky/repor
 
 ```
 ALLOWED:    taxonomy_*, contract_*
-FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
+FORBIDDEN:  capabilities_*, agent_* (peer layers)
 ```
 
 ### Interface Requirements (AES403)
@@ -228,7 +228,6 @@ FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
 | Layer | Can Contain | Cannot Contain |
 | :--- | :--- | :--- |
 | capabilities | Pure computation, validation | I/O, network, database |
-| infrastructure | I/O, network, database | Business logic, computation |
 | agent | Orchestration flow | Computation, I/O, business |
 
 ---

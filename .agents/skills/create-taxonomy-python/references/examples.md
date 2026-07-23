@@ -24,7 +24,7 @@ class <ResultVO>:
 
 ```python
 # taxonomy_<name>_vo.py
-from capabilities_<name-capability> import <NameAnalyzer>  # BAD
+from.*capabilities_|from.*agent_|from.*surface_<name-capability> import <NameAnalyzer>  # BAD
 ```
 
 Taxonomy must not import from layers.

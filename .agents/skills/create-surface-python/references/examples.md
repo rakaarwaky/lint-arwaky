@@ -5,7 +5,7 @@
 ```python
 from shared.cli_commands.contract_import_runner_aggregate import IImportRunnerAggregate
 from shared.cli_commands.taxonomy_import_scan_request_vo import ImportScanRequest
-from shared.surface.taxonomy_surface_error import SurfaceError
+from.*capabilities_|from.*agent_|from.*surface_error import SurfaceError
 from shared.tui.taxonomy_tui_event_vo import TuiEvent
 from shared.tui.taxonomy_ui_state_vo import UiState
 
@@ -56,7 +56,7 @@ class StatusComponent:
 ## BAD: Smart Surface Imports Capabilities
 
 ```python
-from capabilities_my_checker import MyChecker  # BAD
+from.*capabilities_|from.*agent_|from.*surface_my_checker import MyChecker  # BAD
 
 class CheckCommand:
     def __init__(self):
@@ -77,7 +77,7 @@ class StatusComponent:
 ## BAD: Utility Surface Imports Smart Surface
 
 ```python
-from surface_check_command import CheckCommand  # BAD
+from.*capabilities_|from.*agent_|from.*surface_check_command import CheckCommand  # BAD
 
 class MyAction:
     def __init__(self):

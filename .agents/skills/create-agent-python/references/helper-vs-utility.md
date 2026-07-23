@@ -25,7 +25,7 @@ Extract ONLY if ALL of these are true:
 
 A function with I/O can be a taxonomy utility if it is stateless, domain-agnostic, and reusable.
 
-Stateless + I/O + domain-specific = infrastructure/port implementation.
+Stateless + I/O + domain-specific = capabilities implementation.
 
 ## Decision Tree
 

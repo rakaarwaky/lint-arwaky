@@ -14,7 +14,7 @@ grep -n "\.length\|\.reduce\|\.map\|\.filter" packages/*/src/agent_*.ts
 grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/agent_*.ts
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*infrastructure_" packages/*/src/agent_*.ts
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
 
 # Check TypeScript
 npx tsc --noEmit

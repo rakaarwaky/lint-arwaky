@@ -158,7 +158,7 @@ Verify class/interface implementation exists and is callable:
 ```typescript
 // tests/contract_aes.ts
 import { describe, it, expect } from "vitest";
-import { AesCapability } from "../src/capabilities_aes";
+import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
 
 describe("AesContract", () => {
   it("implements encrypt method", () => {
@@ -182,7 +182,7 @@ One file per module or logical group. Public API only.
 ```typescript
 // tests/unit_aes_encrypt.ts
 import { describe, it, expect, beforeEach } from "vitest";
-import { AesCapability } from "../src/capabilities_aes";
+import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
 
 describe("AesEncrypt", () => {
   let cap: AesCapability;
@@ -370,7 +370,7 @@ describe("FRD-043", () => {
 ```typescript
 // benches/bench_aes_throughput.ts
 import { bench, describe, fit } from "vitest/plugin/testing";
-import { AesCapability } from "../src/capabilities_aes";
+import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
 
 const key = Buffer.from("0123456789abcdef" * 2, "hex").slice(0, 32);
 
