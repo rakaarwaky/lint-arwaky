@@ -17,6 +17,7 @@ use shared::code_analysis::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
+use shared::code_analysis::utility_column_index;
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_severity_vo::Severity;

@@ -10,8 +10,9 @@ The Agentic Engineering System is a layered, AI-native architecture pattern. It 
 
 The architecture supports multi-language workspaces.
 
+
 | Term               | Meaning                                                           |
-| ------------------ | ----------------------------------------------------------------- |
+| -------------------- | ------------------------------------------------------------------- |
 | Project Workspaces | Project root containing all configuration and language members    |
 | Workspace Member   | One self-contained crate, package, or module inside the workspace |
 | Crates directory   | Rust workspace members                                            |
@@ -76,8 +77,9 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 
 ### Components
 
+
 | Role         | Meaning                               |
-| ------------ | ------------------------------------- |
+| -------------- | --------------------------------------- |
 | Value object | Immutable data concept                |
 | Entity       | Stateful domain concept with identity |
 | Event        | Immutable domain fact                 |
@@ -105,8 +107,9 @@ Contract defines the public behavior of the system without exposing implementati
 
 ### Components
 
+
 | Role      | Meaning                                                                                           |
-| --------- | ------------------------------------------------------------------------------------------------- |
+| ----------- | --------------------------------------------------------------------------------------------------- |
 | Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. |
 | Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               |
 
@@ -170,8 +173,9 @@ Utility may depend only on Taxonomy.
 
 ### Technical Concern Examples
 
+
 | Concern                 | Responsibility                                      |
-| ----------------------- | --------------------------------------------------- |
+| ------------------------- | ----------------------------------------------------- |
 | File discovery          | Walk directories, detect files, apply ignore        |
 | External tool execution | Run linters, compilers, formatters, analyzers       |
 | Parsing and matching    | Parse text, match patterns, extract structured data |
@@ -253,8 +257,9 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
+
 | Category                | Concern        | Responsibility                                 |
-| ----------------------- | -------------- | ---------------------------------------------- |
+| ------------------------- | ---------------- | ------------------------------------------------ |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
 |                         | Computation    | Calculate scores, totals, or derived values    |
 |                         | Transformation | Map, filter, reduce, or reshape data           |
@@ -293,8 +298,9 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
+
 | Flow Type               | Purpose                                |
-| ----------------------- | -------------------------------------- |
+| ------------------------- | ---------------------------------------- |
 | Sequential execution    | Run steps in order                     |
 | Looping                 | Process multiple items or events       |
 | Branching               | Choose path based on result            |
@@ -334,11 +340,12 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                          | Rule                                            |
-| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
+
+| Group            | Roles                             | Dependencies                           | Rule                                            |
+| ------------------ | ----------------------------------- | ---------------------------------------- | ------------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -356,8 +363,9 @@ Root is the composition layer. It assembles the system by connecting concrete im
 
 ### Components
 
+
 | Role      | Meaning                                                                           |
-| --------- | --------------------------------------------------------------------------------- |
+| ----------- | ----------------------------------------------------------------------------------- |
 | Container | Wires one feature by connecting Capabilities to Contract protocols and aggregates |
 | Entry     | Bootstraps the application and composes feature containers                        |
 

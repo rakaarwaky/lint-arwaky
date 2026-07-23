@@ -2,6 +2,7 @@
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
 // Wiring: IHookManagerProtocol → GitHookAdapter (capabilities layer)
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_command_protocol::IGitCommandProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;

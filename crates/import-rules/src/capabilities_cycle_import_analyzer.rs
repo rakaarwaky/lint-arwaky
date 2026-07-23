@@ -20,7 +20,7 @@ use shared::taxonomy_name_vo::SymbolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DependencyCycleAnalyzer;
+pub struct DependencyCycleAnalyzer {}
 
 // ─── Cycle Detection Helper Types ─────────────────────────
 
@@ -174,13 +174,13 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 
 impl Default for DependencyCycleAnalyzer {
     fn default() -> Self {
-        Self
+        Self {}
     }
 }
 
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn _scan(
