@@ -1,5 +1,18 @@
-use std::sync::Arc;
+// PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
+//
+// Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
+// (not a linter), the adapter parses diff output lines to report each
+// formatting difference as an individual LintResult.
+//
+// Key design decisions:
+//   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
+//   - Uses ICommandExecutorProtocol for subprocess execution with 120s timeout
+//   - apply_fix runs `cargo fmt` (without --check) to auto-format
+//   - Only reports added lines (+ prefix) as violations, not context lines
 
+use std::path::Path;
+use std::sync::Arc;
+use tracing::debug;
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -18,22 +31,9 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use tracing::debug;
-
 use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
 
-// PURPOSE: RsFmtAdapter — ILinterAdapterProtocol implementation for rustfmt integration
-//
-// Runs `cargo fmt --check` on Rust projects. Since rustfmt is a formatter
-// (not a linter), the adapter parses diff output lines to report each
-// formatting difference as an individual LintResult.
-//
-// Key design decisions:
-//   - Resolves Cargo.toml parent dir as working directory (via resolve_cargo_working_dir)
-//   - Uses ICommandExecutorProtocol for subprocess execution with 120s timeout
-//   - apply_fix runs `cargo fmt` (without --check) to auto-format
-//   - Only reports added lines (+ prefix) as violations, not context lines
-use std::path::Path;
+
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -70,7 +70,6 @@ impl CapabilitiesRoleChecker {
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // ── Guard: must have _protocol import ──────────────────
-        //    (not using _port, only _protocol)
         let has_proto_import = content.contains("use ") && content.contains("_protocol::");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
@@ -172,7 +171,6 @@ impl CapabilitiesRoleChecker {
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // ── Guard: must have _protocol import ──────────────────
-        //    (not using _port, only _protocol)
         let has_proto_import = content.contains("import ") && content.contains("_protocol");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
@@ -317,7 +315,6 @@ impl CapabilitiesRoleChecker {
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // ── Guard: must have _protocol import ──────────────────
-        //    (not using _port, only _protocol)
         let has_proto_import = (content.contains("import ") || content.contains("from "))
             && content.contains("_protocol");
         if !has_proto_import {

@@ -292,7 +292,6 @@ Checks:
 - **Non-stateless execution** — state assignment outside `__init__` / constructor
 - **Direct capabilities imports** — agent must not import capabilities directly; must communicate via contract protocols/aggregates
 - **Direct capability implementation** — agent must delegate execution to capabilities via protocols
-- **`any` type annotations** — forbidden in agent layer
 - **Single execution goal** — orchestrator must coordinate at minimum 2 subsystems
 - **Container initialization** — complex domain logic in container module
 

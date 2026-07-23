@@ -1,7 +1,7 @@
 // PURPOSE: Verify all trait implementations exist for role-rules structs.
 // Layer: Contract verification — runs in ms, every PR.
 
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleAggregateImpl;
+use role_rules_lint_arwaky::agent_role_orchestrator::RoleCheckerDeps;
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
@@ -13,8 +13,7 @@ use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::contract_role_aggregate::IRoleAggregate;
-use shared::role_rules::contract_role_protocol::IContractRoleChecker;
+use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
@@ -118,20 +117,6 @@ fn role_orchestrator_is_send_sync() {
     assert_send_sync::<RoleOrchestrator>();
 }
 
-// ─── IRoleAggregate ────────────────────────────────
-
-#[test]
-fn role_aggregate_impl_implements_i_role_aggregate() {
-    fn assert_trait<T: IRoleAggregate>() {}
-    assert_trait::<RoleAggregateImpl>();
-}
-
-#[test]
-fn role_aggregate_impl_is_send_sync() {
-    fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<RoleAggregateImpl>();
-}
-
 // ─── Container wiring ──────────────────────────────
 
 #[test]
@@ -140,15 +125,6 @@ fn role_container_creates_instance() {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
     );
     let _ = &container;
-}
-
-#[test]
-fn role_container_aggregate_returns_trait_object() {
-    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    let container = RoleContainer::new_with_config(config);
-    let agg: std::sync::Arc<dyn IRoleAggregate> = container.aggregate();
-    // Verify trait object is usable — call taxonomy() accessor
-    let _taxonomy_checker: &dyn ITaxonomyRoleChecker = agg.taxonomy();
 }
 
 #[test]

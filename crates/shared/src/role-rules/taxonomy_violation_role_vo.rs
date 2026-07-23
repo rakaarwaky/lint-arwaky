@@ -185,6 +185,51 @@ fn write_violation(
                         logic to the constructor."
             )
         }
+        AesRoleViolation::AgentNoAggregate { reason } => {
+            let why = resolve_why(
+                reason,
+                "file has 'agent_' prefix but no _aggregate import — this file is \
+                 broken/useless. Either it is not a real agent (rename or delete), or \
+                 a proper aggregate contract has not been created yet (create the \
+                 aggregate first, then implement it here)",
+            );
+            write!(
+                f,
+                "AES405 AGENT_ROLE: Agent file has no _aggregate implementation.\n\
+                        WHY? {why}\n\
+                        FIX: Rename the file if it is not an agent, delete if obsolete, \
+                        or create the required aggregate contract first then implement it here."
+            )
+        }
+        AesRoleViolation::AgentNoImplementor { reason } => {
+            let why = resolve_why(
+                reason,
+                "At least one struct must implement an _aggregate trait (impl Trait for Struct). \
+                 Internal helper structs are allowed.",
+            );
+            write!(
+                f,
+                "AES405 AGENT_ROLE: No struct implements an _aggregate trait.\n\
+                        WHY? {why}\n\
+                        FIX: At least one struct in this file must implement the agent \
+                        _aggregate. Convert an existing struct or keep only internal helpers."
+            )
+        }
+        AesRoleViolation::AgentTooManyTypes { count, names, reason } => {
+            let names_str: Vec<String> = names.iter().map(|n| n.to_string()).collect();
+            let names_list = names_str.join(", ");
+            let why = resolve_why(
+                reason,
+                "Max 3 types (struct/enum) allowed in agent files. \
+                 Refactor excess types to taxonomy layer.",
+            );
+            write!(
+                f,
+                "AES405 AGENT_ROLE: Too many types ({count} struct/enum) in agent file: [{names_list}].\n\
+                        WHY? {why}\n\
+                        FIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer."
+            )
+        }
         AesRoleViolation::HighLevelPolicy { reason } => {
             let why = resolve_why(
                 reason,
@@ -253,20 +298,6 @@ fn write_violation(
                         WHY? {why}\n\
                         FIX: Add the 'ServiceContainerAggregate' implementation for the \
                         container class."
-            )
-        }
-        AesRoleViolation::AnyType { reason } => {
-            let why = resolve_why(
-                reason,
-                "Using 'any' or 'Any' type annotations bypasses type safety and violates \
-                 agent-level domain-driven design.",
-            );
-            write!(
-                f,
-                "AES405 AGENT_ROLE: Forbidden 'any' type annotation found.\n\
-                        WHY? {why}\n\
-                        FIX: Replace 'any' annotations with strongly-typed objects, \
-                        structures, or domain Value Objects (VO)."
             )
         }
         AesRoleViolation::AgentFileSizeLimit { max_lines } => write!(
@@ -355,6 +386,17 @@ pub enum AesRoleViolation {
         reason: Option<LintMessage>,
     },
     // AES405 — Agent role
+    AgentNoAggregate {
+        reason: Option<LintMessage>,
+    },
+    AgentNoImplementor {
+        reason: Option<LintMessage>,
+    },
+    AgentTooManyTypes {
+        count: usize,
+        names: Vec<SymbolName>,
+        reason: Option<LintMessage>,
+    },
     StatelessExecution {
         reason: Option<LintMessage>,
     },
@@ -371,9 +413,6 @@ pub enum AesRoleViolation {
         reason: Option<LintMessage>,
     },
     MustImplementContract {
-        reason: Option<LintMessage>,
-    },
-    AnyType {
         reason: Option<LintMessage>,
     },
     AgentFileSizeLimit {

@@ -1,6 +1,18 @@
+// PURPOSE: PyRuffAdapter — ILinterAdapterProtocol implementation for Ruff linter integration
+//
+// Executes `ruff check --output-format=json` as a subprocess and parses
+// the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
+// line numbers, severity levels, and rule codes.
+//
+// Key handling:
+//   - Falls back to parent directory if target is a file (Ruff requires a directory)
+//   - Searches for pyproject.toml to determine the correct working directory
+//   - Maps Ruff severity levels (error/warning/info) to AES severity
+//   - Converts relative Ruff paths to absolute project paths
+
 use serde_json::Value;
 use std::sync::Arc;
-
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
@@ -16,23 +28,9 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-
 use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
 
-// PURPOSE: PyRuffAdapter — ILinterAdapterProtocol implementation for Ruff linter integration
-//
-// Executes `ruff check --output-format=json` as a subprocess and parses
-// the JSON output. Ruff outputs a JSON array of diagnostics with file paths,
-// line numbers, severity levels, and rule codes.
-//
-// Key handling:
-//   - Falls back to parent directory if target is a file (Ruff requires a directory)
-//   - Searches for pyproject.toml to determine the correct working directory
-//   - Maps Ruff severity levels (error/warning/info) to AES severity
-//   - Converts relative Ruff paths to absolute project paths
-
-use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

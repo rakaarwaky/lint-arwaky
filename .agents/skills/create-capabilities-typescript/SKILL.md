@@ -1,6 +1,6 @@
 ---
 name: create-capabilities-typescript
-description: "Create and validate TypeScript capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, one class per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate TypeScript capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, max 3 types per file, protocol interface contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
   tags:
     [
@@ -44,7 +44,7 @@ Capabilities hide these implementations behind Contracts, keeping behavior modul
 
 A capabilities file must:
 
-- implement one domain protocol interface (via `implements` keyword),
+- implement at least one domain protocol interface (via `implements` keyword),
 - follow strict 3-block structure,
 - use dependency injection for service collaborators,
 - use shared VOs for domain data,
@@ -76,7 +76,7 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
 - **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
 - **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
-- **Contract Implementation:** the capability implements the protocol interface defined in the Contract layer. The file MUST import from `_protocol` module only (not `_port`). Example: `import { I<Name> } from '..._protocol';`
+- **Contract Implementation:** the capability implements the protocol interface defined in the Contract layer. The file MUST import from `_protocol` module only. Example: `import { I<Name> } from '..._protocol';`
 - **State Ownership:** the capability owns business and technical state within its execution scope.
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
@@ -85,101 +85,22 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 
 ## AES403 — Capability Composition Rules
 
-The `CapabilitiesRoleChecker` enforces 3 rules per file:
-
-### Rule 1: Internal Helpers Are Allowed
-
-Classes without `implements` are **allowed** and never flagged. These are internal helper types that don't implement protocol behavior. They must not start with `_`.
-
-```typescript
-// ✅ ALLOWED — internal helper, no implements keyword needed
-class Cache {
-  private data: Array<string>;
-}
-```
-
-### Rule 2: At Least One Implementor Required
-
-The file MUST have at least one class that implements a protocol interface via `implements`. If no class implements an interface → flag `CapabilityNoImplementor` (AES403, Severity MEDIUM).
-
-```typescript
-// ✅ PASSING — implements IAgentRoleChecker
-class MyChecker implements IAgentRoleChecker {
-  checkContainer(source: string, violations: any[]) {}
-}
-
-// ❌ FAILING — no implements keyword
-class HelperA {
-  doA() {}
-}
-
-class HelperB {
-  doB() {}
-}
-```
-
-### Rule 3: Maximum 3 Types Per File
-
-Total type declarations (class, interface, enum) must not exceed **3**. If exceeded → flag `CapabilityTooManyTypes` (AES403, Severity HIGH).
-
-**Important:** `type` aliases are NOT counted — they are not new types.
-
-```typescript
-// ✅ PASSING — exactly 3 types (1 class + 1 interface + 1 enum)
-class Cap implements IAgentRoleChecker {
-  checkContainer(source: string, violations: any[]) {}
-}
-
-interface Helper {}
-
-enum Status { Active, Inactive }
-
-// ❌ FAILING — 4 types exceeds limit
-class Cap implements IAgentRoleChecker {
-  checkContainer(source: string, violations: any[]) {}
-}
-
-class A {}
-class B {}
-enum C { X, Y }
-```
-
-### Detection Patterns
-
-| Language | Implementor Pattern | Non-Implementor |
-|----------|-------------------|-----------------|
-| Rust | `impl Trait for Struct` | Standalone `impl Struct` |
-| Python | `class Name(Protocol):` | Standalone `class Name:` |
-| TS | `class Name implements IProto` | Standalone `class Name {}` |
-
-The guard check requires `_protocol` import only (no `_port` allowed):
-
-```typescript
-// ✅ Guard passes — imports from _protocol module
-import { IAgentRoleChecker } from 'shared/role_rules/contract_agent_role_protocol';
-
-// ❌ Guard fails — no _protocol import → CapabilityNoProtocol
-export class MyChecker {
-  doWork() {}
-}
-```
+See `references/capabilities-roles.md` for the full AES403 rules: Rule 1 (internal helpers allowed), Rule 2 (at least one implementor required), Rule 3 (max 3 types per file), detection patterns, and guard check.
 
 ## Definition of Done
 
-1. ONE implementation class per file.
-2. Class implements ONE domain protocol interface in Block 2.
-3. Block 2 contains ONLY the domain protocol method implementations.
-4. Utility methods, static factories, private helpers in Block 3.
-5. No locally defined domain models — Entities/Value Objects are consumed from Taxonomy, not defined here.
-6. Service dependencies use DI via protocol interfaces.
-7. Value/configuration fields use shared VOs.
-8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
-9. Low-level technical operations delegate to Utility standalone functions.
-10. Reusable constants extracted to `taxonomy_<domain>_constant.ts` in shared.
-11. At least one class implements a protocol interface (Rule 2).
-12. Total type count ≤ 3 (class + interface + enum, not counting `type` aliases) (Rule 3).
-13. File imports from `_protocol` module only (no `_port`).
-14. `npx tsc --noEmit` passes.
+1. At least one class implements a protocol interface in Block 2 (Rule 2).
+2. Block 2 contains ONLY the domain protocol method implementations.
+3. Utility methods, static factories, private helpers in Block 3.
+4. No locally defined domain models — Entities/Value Objects are consumed from Taxonomy, not defined here.
+5. Service dependencies use DI via protocol interfaces.
+6. Value/configuration fields use shared VOs.
+7. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
+8. Low-level technical operations delegate to Utility standalone functions.
+9. Reusable constants extracted to `taxonomy_<domain>_constant.ts` in shared.
+10. Total type count ≤ 3 (class + interface + enum, not counting `type` aliases) (Rule 3).
+11. File imports from `_protocol` module only.
+12. `npx tsc --noEmit` passes.
 
 ## References
 
@@ -195,6 +116,7 @@ Read these files for detailed rules:
 | `references/examples.md`            | All BAD/GOOD code examples                             |
 | `references/commands.md`            | Quick heuristic check commands                         |
 | `references/checklist.md`           | Verification checklist                                 |
+| `references/capabilities-roles.md`  | AES403 capabilities roles (helpers, implementor, type count) |
 
 ## Templates
 
@@ -235,9 +157,9 @@ Reorganize: class definition + constructor → protocol methods → utility/fact
 - **Rule 2:** At least one class must implement a protocol interface (`class Name implements IProto`).
 - **Rule 3:** Total type count ≤ 3 (class + interface + enum, not counting `type` aliases).
 
-### Step 6: Verify Class Discipline
+### Step 6: Verify Type Discipline
 
-One class, no local data interfaces, DI via protocol interfaces, shared VOs.
+At least one class implements a protocol interface, max 3 total types (class + interface + enum), DI via protocol interfaces, shared VOs.
 
 ### Step 7: Verify Helper vs Utility Boundary
 
@@ -283,6 +205,6 @@ grep -n "import.*_protocol" packages/*/src/capabilities_*.ts
 - Silent error swallowing with `?? ''` or `|| 0`.
 - Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.ts`).
 - Not delegating low-level technical operations to Utility.
-- Importing from `_port` module instead of `_protocol` module.
+- Importing from the wrong module instead of `_protocol`.
 - Having no class that implements a protocol interface (Rule 2 violation).
 - Exceeding 3 total types in a file (Rule 3 violation).

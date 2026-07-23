@@ -16,24 +16,15 @@ fn smoke_role_rules_crate_boots_and_responds() {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
     );
 
-    // 2. Orchestrator is accessible
+    // 2. Orchestrator is accessible and named correctly
     let orch = container.orchestrator();
     assert_eq!(orch.name(), "role-rules");
 
-    // 3. All checkers instantiate
+    // 3. All checkers instantiate independently
     let _agent = AgentRoleChecker::new();
     let _capabilities = CapabilitiesRoleChecker::new();
     let _contract = ContractRoleChecker::new();
     let _surface = SurfaceRoleChecker::new();
     let _taxonomy = TaxonomyRoleChecker::new();
     let _utility = UtilityRoleChecker::new();
-
-    // 4. Container aggregate is accessible
-    let agg = container.aggregate();
-    let _taxonomy_check = agg.taxonomy();
-    let _contract_check = agg.contract();
-    let _capabilities_check = agg.capabilities();
-    let _surface_check = agg.surface();
-    let _agent_check = agg.agent();
-    let _utility_check = agg.utility();
 }

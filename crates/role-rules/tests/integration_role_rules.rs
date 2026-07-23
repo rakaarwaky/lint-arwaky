@@ -2,8 +2,6 @@
 // Layer: Integration (uses real RoleContainer).
 
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::role_rules::contract_role_aggregate::IRoleAggregate;
-use std::sync::Arc;
 
 fn container() -> RoleContainer {
     RoleContainer::new_with_config(
@@ -20,23 +18,17 @@ fn container_creates_orchestrator_successfully() {
 }
 
 #[test]
-fn container_aggregate_returns_trait_object() {
+fn container_orchestrator_is_usable() {
     let c = container();
-    let agg: Arc<dyn IRoleAggregate> = c.aggregate();
-    // Verify all 6 checkers are accessible
-    let _taxonomy = agg.taxonomy();
-    let _contract = agg.contract();
-    let _capabilities = agg.capabilities();
-    let _surface = agg.surface();
-    let _agent = agg.agent();
-    let _utility = agg.utility();
+    let orch = c.orchestrator();
+    // Verify orchestrator is usable — name() returns the feature identifier
+    assert_eq!(orch.name(), "role-rules");
 }
 
 #[test]
 fn container_orchestrator_is_send_sync() {
     let c = container();
     let orch = c.orchestrator();
-    // Verify orchestrator is Send + Sync
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<
         std::sync::Arc<

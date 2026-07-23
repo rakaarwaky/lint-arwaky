@@ -14,10 +14,6 @@ pub struct TaxonomyRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_vo(&self) -> Vec<LintResult> {
-        self.check_vo_impl()
-    }
-
     fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         self.check_entity_impl(source, violations);
     }
@@ -207,10 +203,6 @@ impl TaxonomyRoleChecker {
                 }
             }
         }
-    }
-
-    fn check_vo_impl(&self) -> Vec<LintResult> {
-        vec![]
     }
 
     fn check_entity_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {

@@ -1,4 +1,4 @@
-// PURPOSE: Unit tests for AgentRoleChecker (AES405) — any-type annotation.
+// PURPOSE: Unit tests for AgentRoleChecker (AES405) — agent type composition.
 // Layer: Capabilities (AgentRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
@@ -16,71 +16,93 @@ fn make_source(file: &str, content: &str) -> SourceContentVO {
     SourceContentVO::new(fp, cs, "rust")
 }
 
-// ─── check_any_type_annotation: Happy Path ──────────
+// ─── check_agent_routing: Rust happy path ────────────
 
 #[test]
-fn no_any_annotation_no_violation() {
-    let content = "fn main() {\n    let x: i32 = 42;\n}";
-    let source = make_source("agent_main.rs", content);
+fn rust_agent_with_aggregate_import_passes() {
+    let content = r#"
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+
+pub struct MyOrchestrator {}
+
+impl IRoleAggregate for MyOrchestrator {
+    fn run(&self) {}
+}
+"#;
+    let source = make_source("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
-    checker().check_any_type_annotation(&source, &mut violations);
-    assert!(violations.is_empty());
+    checker().check_agent_routing(&source, "agent", &mut violations);
+    assert!(violations.is_empty(), "Expected no violations, got: {violations:?}");
 }
 
-// ─── check_any_type_annotation: AES405 Violation ─────
+// ─── check_agent_routing: Rust — AgentNoAggregate ────
 
 #[test]
-fn rust_any_annotation_flagged() {
-    let content = "use std::any::Any;\nlet x: Box<dyn Any> = Box::new(42);";
-    let source = make_source("agent_foo.rs", content);
-    let mut violations = Vec::new();
-    checker().check_any_type_annotation(&source, &mut violations);
-    // The checker may or may not flag this depending on implementation
-    assert!(violations.len() <= 1);
+fn rust_agent_without_aggregate_import_flagged() {
+    let content = r#"
+pub struct MyOrchestrator {}
+
+impl MyOrchestrator {
+    pub fn run(&self) {}
 }
-
-#[test]
-fn python_any_annotation_flagged() {
-    let source = make_source("agent_foo.py", "x: Any = something");
+"#;
+    let source = make_source("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
-    checker().check_any_type_annotation(&source, &mut violations);
+    checker().check_agent_routing(&source, "agent", &mut violations);
     assert_eq!(violations.len(), 1);
     assert_eq!(violations[0].code.code(), "AES405");
 }
 
+// ─── check_agent_routing: Rust — AgentNoImplementor ──
+
 #[test]
-fn typescript_any_annotation_flagged() {
-    let source = make_source("agent_foo.ts", "let x: any = 'hello';");
+fn rust_agent_no_implementor_flagged() {
+    let content = r#"
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+
+pub struct InternalHelper {}
+
+impl InternalHelper {
+    pub fn helper(&self) {}
+}
+"#;
+    let source = make_source("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
-    checker().check_any_type_annotation(&source, &mut violations);
+    checker().check_agent_routing(&source, "agent", &mut violations);
     assert_eq!(violations.len(), 1);
     assert_eq!(violations[0].code.code(), "AES405");
 }
 
-// ─── check_container / orchestrator / lifecycle (no-op) ──
+// ─── check_agent_routing: layer guard ────────────────
 
 #[test]
-fn check_container_no_violation() {
-    let source = make_source("agent_foo_orchestrator.rs", "pub struct Foo;");
+fn non_agent_layer_is_skipped() {
+    let content = "no aggregate import at all";
+    let source = make_source("capabilities_foo.rs", content);
     let mut violations = Vec::new();
-    checker().check_container(&source, &mut violations);
+    checker().check_agent_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
 }
 
-#[test]
-fn check_orchestrator_no_violation() {
-    let source = make_source("agent_foo_orchestrator.rs", "pub struct Foo;");
-    let mut violations = Vec::new();
-    checker().check_orchestrator(&source, &mut violations);
-    assert!(violations.is_empty());
-}
+// ─── check_agent_routing: Rust — AgentTooManyTypes ───
 
 #[test]
-fn check_lifecycle_no_violation() {
-    let source = make_source("agent_foo_lifecycle.rs", "pub struct Foo;");
+fn rust_agent_too_many_types_flagged() {
+    let content = r#"
+use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+
+pub struct TypeA {}
+pub struct TypeB {}
+pub struct TypeC {}
+pub struct TypeD {}
+
+impl IRoleAggregate for TypeA {}
+"#;
+    let source = make_source("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
-    checker().check_lifecycle(&source, &mut violations);
-    assert!(violations.is_empty());
+    checker().check_agent_routing(&source, "agent", &mut violations);
+    assert_eq!(violations.len(), 1);
+    assert_eq!(violations[0].code.code(), "AES405");
 }
 
 // ─── Default trait ──────────────────────────────────
