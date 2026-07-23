@@ -1,7 +1,6 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -23,7 +22,6 @@ pub struct CliContainer {
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub report_formatter: Arc<dyn IReportFormatterAggregate>,
-    pub analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
 }
 
 impl CliContainer {
@@ -95,10 +93,6 @@ impl CliContainer {
                 },
             ));
 
-        // Wire analysis pipeline action
-        let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(crate::surface_parallel_action::ParallelPipelineAction);
-
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -109,12 +103,7 @@ impl CliContainer {
             git_aggregate,
             multi_project_orchestrator,
             report_formatter: report_formatter_agg,
-            analysis_pipeline,
         }
-    }
-
-    pub fn pipeline_aggregate(&self) -> Arc<dyn IAnalysisPipelineAggregate> {
-        self.analysis_pipeline.clone()
     }
 
     pub fn fix_orchestrator_factory(

@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -21,25 +21,9 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-use cli_commands_lint_arwaky::AnalysisPipelineOrchestrator;
 use cli_commands_lint_arwaky::CliContainer;
 
-// ─── Agent Layer Contracts ───────────────────────────────────────────────────
-
-#[test]
-fn analysis_pipeline_orchestrator_implements_i_analysis_pipeline_aggregate() {
-    fn assert_trait<T: IAnalysisPipelineAggregate>() {}
-    assert_trait::<AnalysisPipelineOrchestrator>();
-}
-
 // ─── Root Layer Contracts ────────────────────────────────────────────────────
-
-#[test]
-fn cli_container_exposes_pipeline_aggregate_as_trait_object() {
-    // Compile-time: CliContainer::pipeline_aggregate returns Arc<dyn IAnalysisPipelineAggregate>
-    fn assert_return_type(_f: fn(&CliContainer) -> Arc<dyn IAnalysisPipelineAggregate>) {}
-    assert_return_type(CliContainer::pipeline_aggregate);
-}
 
 #[test]
 #[allow(clippy::type_complexity)]
@@ -63,7 +47,6 @@ fn check_commands_surface_is_constructible() {
     // Compile-time: CheckCommandsSurface::new exists with correct signature
     fn assert_new(
         _f: fn(
-            Arc<dyn IAnalysisPipelineAggregate>,
             Arc<dyn IReportFormatterAggregate>,
             Option<Arc<dyn IConfigOrchestratorAggregate>>,
         ) -> CheckCommandsSurface,
@@ -112,8 +95,6 @@ fn report_formatter_orchestrator_implements_i_report_formatter_aggregate() {
 
 #[test]
 fn all_aggregate_traits_are_object_safe() {
-    // If any trait is not object-safe, this will fail to compile.
-    let _: Option<Arc<dyn IAnalysisPipelineAggregate>> = None;
     let _: Option<Arc<dyn IReportFormatterAggregate>> = None;
     let _: Option<Arc<dyn IReportFormatterProtocol>> = None;
     let _: Option<Arc<dyn ICodeAnalysisAggregate>> = None;
