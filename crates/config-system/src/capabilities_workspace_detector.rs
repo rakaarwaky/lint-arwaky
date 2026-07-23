@@ -73,23 +73,33 @@ impl WorkspaceDetector {
 
     fn check_dir_for_language(dir: &std::path::Path) -> Option<WorkspaceType> {
         let entries = std::fs::read_dir(dir).ok()?;
+        let mut has_rust = false;
+        let mut has_python = false;
+        let mut has_typescript = false;
         for entry in entries.flatten() {
             let name = match entry.file_name().to_str() {
                 Some(n) => n.to_lowercase(),
                 None => continue,
             };
             match name.as_str() {
-                "cargo.toml" => return Some(WorkspaceType::Rust),
+                "cargo.toml" => has_rust = true,
                 "setup.py" | "pyproject.toml" | "requirements.txt" | "setup.cfg" => {
-                    return Some(WorkspaceType::Python)
+                    has_python = true
                 }
-                "package.json" | "tsconfig.json" => {
-                    return Some(WorkspaceType::TypeScript)
-                }
+                "package.json" | "tsconfig.json" => has_typescript = true,
                 _ => {}
             }
         }
-        None
+        // Priority: Rust > Python > TypeScript
+        if has_rust {
+            Some(WorkspaceType::Rust)
+        } else if has_python {
+            Some(WorkspaceType::Python)
+        } else if has_typescript {
+            Some(WorkspaceType::TypeScript)
+        } else {
+            None
+        }
     }
 
     async fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {

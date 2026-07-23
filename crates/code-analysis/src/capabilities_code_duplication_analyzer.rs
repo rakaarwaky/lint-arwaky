@@ -159,6 +159,7 @@ impl CodeDuplicationAnalyzer {
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
+                file_unique_hashes.push(Vec::new());
                 continue;
             }
             let mut file_hashes: HashSet<u64> = HashSet::new();

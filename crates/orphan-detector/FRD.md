@@ -220,7 +220,7 @@ Lint Result (output)
 - **Performance**: 1,000 files < 500ms; 5,000 files < 2s; 10,000 files < 5s.
 - **Memory**: Graph construction should hold all edges in memory; for 10,000 files with average 10 imports each, peak memory < 50MB.
 - **Accuracy**: Zero false positives on transitively reachable code. A file is valid if it is transitively reachable from an entry point.
-- **Concurrency**: Thread-safe via `Send + Sync` on all protocol traits. Container uses `Arc<dyn ...>` for shared ownership.
+- **Concurrency**: Thread-safe via async runtime. Protocol-based shared ownership for concurrent analysis.
 - **Configurability**: All behavior overridable via the architecture configuration. No hardcoded assumptions about project structure beyond workspace directory conventions.
 
 ## Test Scenarios / QA Checklist

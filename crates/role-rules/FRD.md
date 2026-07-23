@@ -134,33 +134,33 @@ Target Path
 
 ```
 Source Content Value Object
-├── file: FilePath
-├── content: ContentString
-└── language: String
+├── file: file path
+├── content: file content
+└── language: language identifier
 
 Role Checker Dependencies
-├── taxonomy: Arc<dyn ITaxonomyRoleChecker>
-├── contract: Arc<dyn IContractRoleChecker>
-├── capabilities: Arc<dyn ICapabilitiesRoleChecker>
-├── surface: Arc<dyn ISurfaceRoleChecker>
-├── agent: Arc<dyn IAgentRoleChecker>
-└── utility: Arc<dyn IUtilityRoleChecker>
+├── taxonomy: taxonomy role checker protocol
+├── contract: contract role checker protocol
+├── capabilities: capabilities role checker protocol
+├── surface: surface role checker protocol
+├── agent: agent role checker protocol
+└── utility: utility role checker protocol
 
 Role Orchestrator
-├── deps: RoleCheckerDeps
-├── config: ArchitectureConfig
-└── ignored_paths: Vec<String>
+├── dependencies: role checker dependencies
+├── config: architecture configuration
+└── ignored paths: list of path patterns to skip
 
 Lint Result (output)
-├── file: FilePath
-├── line: LineNumber
-├── column: ColumnNumber
-├── code: ErrorCode
-├── message: LintMessage
-├── source: AdapterName
-├── severity: Severity
-├── enclosing_scope: Option<ScopeRef>
-└── related_locations: LocationList
+├── file: file path
+├── line: line number
+├── column: column number
+├── code: error code
+├── message: lint message
+├── source: adapter name
+├── severity: severity level
+├── enclosing scope: optional scope reference
+└── related locations: list of related locations
 ```
 
 ## API Contract
