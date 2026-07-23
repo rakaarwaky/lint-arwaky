@@ -73,7 +73,7 @@ The guard check requires `_protocol` import only:
 
 ```typescript
 // ✅ Guard passes — imports from _protocol module
-import { IAgentRoleChecker } from 'shared/role_rules/contract_agent_role_protocol';
+import { IAgentRoleChecker } from.*capabilities_|from.*agent_|from.*surface_role_protocol';
 
 // ❌ Guard fails — no _protocol import → CapabilityNoProtocol
 export class MyChecker {

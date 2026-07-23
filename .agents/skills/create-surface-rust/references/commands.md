@@ -2,10 +2,10 @@
 
 ```bash
 # Check forbidden lower-layer imports in all surface files
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_)" crates/*/src/surface_*.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_)" crates/*/src/surface_*.rs
 
 # Check smart surfaces for forbidden imports
-rg -n "^\s*use\s+.*(capabilities_|infrastructure_|agent_)" crates/*/src/surface_*_command.rs crates/*/src/surface_*_controller.rs
+rg -n "^\s*use\s+.*(capabilities_|agent_)" crates/*/src/surface_*_command.rs crates/*/src/surface_*_controller.rs
 
 # Check utility surfaces importing smart surfaces
 rg -n "surface_.*_(command|controller|page|entry)" crates/*/src/surface_*_hook.rs crates/*/src/surface_*_store.rs crates/*/src/surface_*_action.rs crates/*/src/surface_*_screen.rs

@@ -38,7 +38,7 @@ Create and validate TypeScript **capabilities layer** files following AES rules.
 A capabilities file contains the **concrete implementation** of the system's behavior. This layer encapsulates both:
 
 - **Business logic**: computations, validations, transformations, assessments
-- **External adaptation**: database access, third-party API calls, file system access, infrastructure mechanics
+- **External adaptation**: database access, third-party API calls, file system access
 
 Capabilities hide these implementations behind Contracts, keeping behavior modular, swappable, and fully isolated from orchestration.
 
@@ -69,7 +69,7 @@ File: `capabilities_<domain>_<role>.ts`
 - **May depend on:** Taxonomy, Contract, Utility.
 - **Must NOT depend on / import:** other Capabilities, Agent.
 
-Note: do **not** import `infrastructure_*` — that layer no longer exists; its mechanics now live in the Utility layer. Utility is an allowed dependency.
+Note: do not import infrastructure_* — that layer no longer exists; its mechanics now live in the Utility layer. Utility is an allowed dependency.
 
 ## Special Rules (ARCHITECTURE §8)
 
@@ -183,7 +183,7 @@ npx tsc --noEmit
 
 ```bash
 # Check forbidden imports (no agent, no other capabilities)
-grep -n "^\s*from\s+.*agent_\|^\s*from\s+.*capabilities_" packages/*/src/capabilities_*.ts
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
 
 # List protocol interface implementations
 grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts

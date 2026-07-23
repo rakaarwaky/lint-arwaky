@@ -49,4 +49,4 @@ match self.reader.read(file) {
 }
 ```
 
-The agent calls a port. The port implementation lives in infrastructure.
+The agent calls a protocol. The protocol implementation lives in capabilities.

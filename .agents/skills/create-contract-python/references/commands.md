@@ -5,7 +5,7 @@
 grep -n "^class I[A-Za-z0-9_]*Port\|^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/shared/src/**/contract_*.py
 
 # Check forbidden imports in contract files
-grep -n "from capabilities_\|from infrastructure_\|from agent_\|from surface_" modules/shared/src/*/contract_*.py
+grep -n "from.*capabilities_|from.*agent_|from.*surface_" modules/shared/src/*/contract_*.py
 
 # Check methods without @abstractmethod
 grep -n "^class " modules/shared/src/*/contract_*.py | while read line; do

@@ -153,7 +153,7 @@ Verify class/interface implementation exists and is callable:
 ```python
 # tests/contract_aes.py
 import pytest
-from packages.src.capabilities_aes import AesCapability
+from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
 
 
 class TestAesContract:
@@ -181,7 +181,7 @@ One file per module or logical group. Public API only.
 ```python
 # tests/unit_aes_encrypt.py
 import pytest
-from packages.src.capabilities_aes import AesCapability
+from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
 
 
 class TestAesEncrypt:
@@ -371,7 +371,7 @@ def test_frq_043_wrong_key_rejected():
 ```python
 # benches/bench_aes_throughput.py
 import pytest
-from packages.src.capabilities_aes import AesCapability
+from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
 
 
 @pytest.fixture

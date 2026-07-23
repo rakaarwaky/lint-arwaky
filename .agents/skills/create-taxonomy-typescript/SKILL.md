@@ -121,7 +121,7 @@ npx tsc --noEmit
 grep -rn "^interface\|^type \|^enum " packages/*/src/ --exclude-dir=shared
 
 # Check forbidden imports in taxonomy files
-grep -n "from.*capabilities_\|from.*infrastructure_\|from.*agent_" packages/shared/src/*/taxonomy_*.ts
+grep -n "from.*capabilities_|from.*agent_|from.*surface_" packages/shared/src/*/taxonomy_*.ts
 
 # Check possible I/O in taxonomy files
 grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/shared/src/*/taxonomy_*.ts

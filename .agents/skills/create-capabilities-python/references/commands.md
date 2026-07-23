@@ -5,7 +5,7 @@
 grep -n "open(\|Path(\|os\.\|requests\.\|httpx\.\|sqlite3\.\|asyncpg\." modules/*/src/capabilities_*.py
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*agent_" modules/*/src/capabilities_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 
 # List classes in capabilities files
 grep -n "^class " modules/*/src/capabilities_*.py
@@ -17,7 +17,7 @@ grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
 grep -rnE "capabilities_[a-z_]+_[a-z_]+\.py$" modules/*/src/capabilities_*.py || echo "FILENAME VIOLATION"
 
 # Check for inter-capability dependency (forbidden)
-grep -n "^\s*from\s+.*capabilities_" modules/*/src/capabilities_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 
 # Check for orchestration anti-patterns in capabilities (No Orchestration, §8)
 grep -nE "for .* in|while |\.escalate\(|error_escalation" modules/*/src/capabilities_*.py

@@ -5,7 +5,7 @@
 grep -n "fs\.\|readFile\|writeFile\|fetch\|axios" packages/*/src/capabilities_*.ts
 
 # Check forbidden imports
-grep -n "^\s*from\s+.*agent_" packages/*/src/capabilities_*.ts
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
 
 # List protocol interface implementations
 grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
@@ -14,7 +14,7 @@ grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts
 grep -rnE "capabilities_[a-z_]+_[a-z_]+\.ts$" packages/*/src/capabilities_*.ts || echo "FILENAME VIOLATION"
 
 # Check for inter-capability dependency (forbidden)
-grep -n "^\s*from\s+.*capabilities_" packages/*/src/capabilities_*.ts
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
 
 # Check for orchestration anti-patterns in capabilities (No Orchestration, §8)
 grep -nE "for \(.* of|while \(|\.escalate\(|error_escalation" packages/*/src/capabilities_*.ts

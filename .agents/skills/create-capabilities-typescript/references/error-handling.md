@@ -34,7 +34,7 @@ function execute(input: <DomainVO>): <ResultVO>[] {
 }
 ```
 
-## Rule 4: I/O errors belong to utility implementations (infrastructure layer removed)
+## Rule 4: I/O errors belong to utility implementations (layer removed)
 
 Bad in capabilities:
 

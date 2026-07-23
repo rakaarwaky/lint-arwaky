@@ -2,10 +2,10 @@
 
 ```bash
 # Check forbidden lower-layer imports in all surface files
-grep -n "^\s*from\s+.*(capabilities_|infrastructure_|agent_)" modules/*/src/surface_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 
 # Check smart surfaces for forbidden imports
-grep -n "^\s*from\s+.*(capabilities_|infrastructure_|agent_)" modules/*/src/surface_*_command.py modules/*/src/surface_*_controller.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*_controller.py
 
 # Check utility surfaces importing smart surfaces
 grep -n "surface_.*_command\|surface_.*_controller" modules/*/src/surface_*_hook.py modules/*/src/surface_*_store.py modules/*/src/surface_*_action.py modules/*/src/surface_*_screen.py

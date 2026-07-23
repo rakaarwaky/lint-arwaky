@@ -21,7 +21,7 @@
 - [ ] Agent contains zero I/O.
 - [ ] Agent contains zero business logic.
 - [ ] Agent contains zero domain computation.
-- [ ] No forbidden imports from concrete `capabilities_*`.
-- [ ] No forbidden imports from concrete `infrastructure_*`.
+- [ ] No forbidden imports from.*capabilities_|from.*agent_|from.*surface_*`.
+- [ ] No forbidden imports from.*capabilities_|from.*agent_|from.*surface_*`.
 - [ ] Aggregate module is registered in the shared package's `index.ts`.
 - [ ] `npx tsc --noEmit` passes.

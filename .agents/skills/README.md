@@ -19,8 +19,8 @@ Skills for lint-arwaky MCP server and CLI. Each skill is a self-contained direct
 ├── create-capabilities-rust/      # Capabilities: protocol traits, zero I/O
 ├── create-contract-python/    # Contract layer: pure ABC definitions
 ├── create-contract-rust/        # Contract layer: pure trait definitions
-├── create-infrastructure-python/  # Infrastructure: port ABCs, zero business logic
-├── create-infrastructure-rust/      # Infrastructure: port traits, zero business logic
+├── create-capabilities-python/  # Capabilities: protocol ABCs, business logic
+├── create-capabilities-rust/      # Capabilities: protocol traits, business logic
 ├── create-surface-python/       # Surface: smart/utility/passive types, AES406
 ├── create-surface-rust/         # Surface: smart/utility/passive types, AES406
 ├── create-taxonomy-python/      # Taxonomy: strict suffixes, dataclass rules

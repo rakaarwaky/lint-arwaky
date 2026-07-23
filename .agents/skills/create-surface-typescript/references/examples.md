@@ -5,7 +5,7 @@
 ```typescript
 import { IImportRunnerAggregate } from "../shared/cli_commands/contract_import_runner_aggregate";
 import { ImportScanRequest } from "../shared/cli_commands/taxonomy_import_scan_request_vo";
-import { SurfaceError } from "../shared/surface/taxonomy_surface_error";
+import { SurfaceError } from.*capabilities_|from.*agent_|from.*surface_error";
 import { TuiEvent } from "../shared/tui/taxonomy_tui_event_vo";
 import { UiState } from "../shared/tui/taxonomy_ui_state_vo";
 
@@ -89,7 +89,7 @@ export class StatusComponent {
 ## BAD: Utility Surface Imports Smart Surface
 
 ```typescript
-import { CheckCommand } from "./surface_check_command"; // BAD
+import { CheckCommand } from.*capabilities_|from.*agent_|from.*surface_check_command"; // BAD
 
 export class MyAction {
   constructor() {

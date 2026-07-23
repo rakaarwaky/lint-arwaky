@@ -103,7 +103,7 @@ npx tsc --noEmit
 grep -n "^export interface I[A-Za-z0-9_]*Protocol\|^export interface I[A-Za-z0-9_]*Aggregate" packages/shared/src/**/contract_*.ts
 
 # Check forbidden imports
-grep -n "from.*capabilities_\|from.*agent_\|from.*surface_" packages/shared/src/*/contract_*.ts
+grep -n "from.*capabilities_|from.*agent_|from.*surface_" packages/shared/src/*/contract_*.ts
 ```
 
 ## Common Mistakes

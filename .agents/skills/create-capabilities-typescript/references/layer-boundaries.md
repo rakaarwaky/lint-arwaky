@@ -4,7 +4,7 @@
 
 | Allowed                                   | Forbidden                                              |
 | ----------------------------------------- | ------------------------------------------------------ |
-| Computation, validation, calculation      | Direct import from `agent_*`                           |
+| Computation, validation, calculation      | Direct import from.*capabilities_|from.*agent_|from.*surface_*`                           |
 | Data transformation, business rules       | Direct dependency on concrete `capabilities_*` modules |
 | Domain behavior using shared models       | Locally defined domain data structures                 |
 | Interface implementation                  |                                                        |
@@ -19,7 +19,7 @@ A capability may depend ONLY on these layers:
 
 - **Taxonomy** — VOs, constants, entities, events
 - **Contract** — protocol interfaces, aggregate interfaces
-- **Utility** — standalone stateless functions (the former infrastructure mechanics now live here)
+- **Utility** — standalone stateless functions (the utility layer handles these concerns)
 
 ## Forbidden Dependencies (ARCHITECTURE §8)
 

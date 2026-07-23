@@ -20,7 +20,7 @@
 - [ ] Service dependencies use `Arc<dyn Trait>`.
 - [ ] Value/configuration fields use shared VOs.
 - [ ] Low-level technical operations delegate to `utility_*`Reusable technical mechanics extracted to Utility, not duplicated across capabilities (DRY).
-- [ ] No forbidden imports from `agent_*`.
+- [ ] No forbidden imports from.*capabilities_|from.*agent_|from.*surface_*`.
 - [ ] No direct dependency on concrete `capabilities_*` (No Cross-Capability Dependency).
 - [ ] No orchestration inside the capability
 - [ ] No domain models (Entities/ValueObjects/Event/Error/Constant) defined in the file — consumed from Taxonomy only.

@@ -130,7 +130,7 @@ grep -n "class.*I[A-Za-z0-9_]*Aggregate" modules/*/src/agent_*.py
 grep -n "sum(\|len(\|\.iter\(\)\|\.map(" modules/*/src/agent_*.py
 
 # Check forbidden imports (agent must only depend on taxonomy + contract + utility)
-grep -n "^\s*from\s+.*(capabilities_|infrastructure_)" modules/*/src/agent_*.py
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
 ```
 
 ## Common Mistakes

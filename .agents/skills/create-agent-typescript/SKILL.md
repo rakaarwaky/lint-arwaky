@@ -130,7 +130,7 @@ grep -n "implements I[A-Za-z0-9_]*Aggregate" packages/*/src/agent_*.ts
 grep -n "\.length\|\.reduce\|\.map\|\.filter" packages/*/src/agent_*.ts
 
 # Check forbidden imports (agent must only depend on taxonomy + contract + utility)
-grep -n "^\s*from\s+.*capabilities_\|^\s*from\s+.*infrastructure_" packages/*/src/agent_*.ts
+grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
 ```
 
 ## Common Mistakes

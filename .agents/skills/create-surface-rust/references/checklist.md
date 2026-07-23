@@ -6,7 +6,7 @@
 - [ ] Utility surface imports only taxonomy and passive surfaces.
 - [ ] Passive surface imports only taxonomy.
 - [ ] No surface file imports capabilities.
-- [ ] No surface file imports infrastructure.
+- [ ] No surface file imports capabilities.
 - [ ] No surface file imports concrete agents.
 - [ ] Smart surface delegates to aggregates via `Arc<dyn IAggregate>`.
 - [ ] Utility surface does not import concrete smart surfaces.

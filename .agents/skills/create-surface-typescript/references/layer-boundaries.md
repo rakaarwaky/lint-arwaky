@@ -31,13 +31,13 @@ Allowed:
 ```typescript
 import { KeyEvent } from "../shared/tui/taxonomy_key_event_vo";
 import { TuiAction } from "../shared/tui/taxonomy_tui_action_vo";
-import { ShortcutComponent } from "./surface_shortcut_component";
+import { ShortcutComponent } from.*capabilities_|from.*agent_|from.*surface_shortcut_component";
 ```
 
 Forbidden:
 
 ```typescript
-import { CheckCommand } from "./surface_check_command";
+import { CheckCommand } from.*capabilities_|from.*agent_|from.*surface_check_command";
 import { MyChecker } from "../capabilities/my_checker";
 ```
 
@@ -52,6 +52,6 @@ import { StatusViewModel } from "../shared/tui/taxonomy_status_view_model_vo";
 Forbidden:
 
 ```typescript
-import { CheckCommand } from "./surface_check_command";
+import { CheckCommand } from.*capabilities_|from.*agent_|from.*surface_check_command";
 import { MyChecker } from "../capabilities/my_checker";
 ```

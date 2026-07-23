@@ -20,8 +20,8 @@ from shared.cli_commands.contract_import_runner_aggregate import IImportRunnerAg
 Forbidden:
 
 ```python
-from capabilities_my_checker import MyChecker
-from agent_import_runner import ImportRunner
+from.*capabilities_|from.*agent_|from.*surface_my_checker import MyChecker
+from.*capabilities_|from.*agent_|from.*surface_import_runner import ImportRunner
 ```
 
 ## Utility Surface
@@ -31,14 +31,14 @@ Allowed:
 ```python
 from shared.tui.taxonomy_key_event_vo import KeyEvent
 from shared.tui.taxonomy_tui_action_vo import TuiAction
-from surface_shortcut_component import ShortcutComponent
+from.*capabilities_|from.*agent_|from.*surface_shortcut_component import ShortcutComponent
 ```
 
 Forbidden:
 
 ```python
-from surface_check_command import CheckCommand
-from capabilities_my_checker import MyChecker
+from.*capabilities_|from.*agent_|from.*surface_check_command import CheckCommand
+from.*capabilities_|from.*agent_|from.*surface_my_checker import MyChecker
 ```
 
 ## Passive Surface
@@ -52,6 +52,6 @@ from shared.tui.taxonomy_status_view_model_vo import StatusViewModel
 Forbidden:
 
 ```python
-from surface_check_command import CheckCommand
-from capabilities_my_checker import MyChecker
+from.*capabilities_|from.*agent_|from.*surface_check_command import CheckCommand
+from.*capabilities_|from.*agent_|from.*surface_my_checker import MyChecker
 ```

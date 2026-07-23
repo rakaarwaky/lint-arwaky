@@ -30,7 +30,7 @@ function escapeRegex(str: string): string {
 export function getTargetLayerFromSuffix(suffix: string): string {
   switch (suffix) {
     case "port":
-      return "infrastructure";
+      return "capabilities";
     case "protocol":
       return "capabilities";
     default:

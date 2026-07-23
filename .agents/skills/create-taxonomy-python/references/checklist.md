@@ -4,7 +4,7 @@
 - [ ] No domain classes with data are defined in layer files.
 - [ ] Taxonomy file naming uses allowed suffixes only.
 - [ ] Taxonomy files do not import from capabilities.
-- [ ] Taxonomy files do not import from infrastructure.
+- [ ] Taxonomy files do not import from capabilities.
 - [ ] Taxonomy files do not import from agents.
 - [ ] Taxonomy files do not import from surface.
 - [ ] Taxonomy files do not import from root containers.
