@@ -21,8 +21,14 @@ use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct ExternalLintDeps {
+    pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
+}
+
 pub struct ExternalLintOrchestrator {
-    adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
+    deps: ExternalLintDeps,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -105,7 +111,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 
         let mut futures = Vec::with_capacity(9);
         for name in &adapter_names {
-            if let Some(adapter) = self.adapters.get(*name) {
+            if let Some(adapter) = self.deps.adapters.get(*name) {
                 let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();
                 let path_clone = path.clone();
                 let name_owned = name.to_string();
@@ -145,13 +151,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
     }
 
     fn adapter_names(&self) -> Vec<String> {
-        self.adapters.keys().cloned().collect()
+        self.deps.adapters.keys().cloned().collect()
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ExternalLintOrchestrator {
-    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
-        Self { adapters }
+    pub fn new(deps: ExternalLintDeps) -> Self {
+        Self { deps }
     }
 }

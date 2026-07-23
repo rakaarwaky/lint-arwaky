@@ -15,11 +15,16 @@ use std::path::Path;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct NamingOrchestratorDeps {
+    pub naming_convention_checker: Arc<dyn INamingConventionChecker>,
+    pub suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
+    pub config: Arc<ArchitectureConfig>,
+    pub layer_map: Arc<LayerMapVO>,
+}
+
 pub struct NamingOrchestrator {
-    naming_convention_checker: Arc<dyn INamingConventionChecker>,
-    suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
-    config: Arc<ArchitectureConfig>,
-    layer_map: Arc<LayerMapVO>,
+    deps: NamingOrchestratorDeps,
     ignored_patterns: PatternList,
 }
 
@@ -43,19 +48,21 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         );
         let files = shared::naming_rules::utility_file_filter::filter_source_files(&all_files);
 
-        self.naming_convention_checker
+        self.deps
+            .naming_convention_checker
             .check_file_naming(
-                self.config.as_ref(),
-                self.layer_map.as_ref(),
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
                 &files,
                 target,
                 &mut results,
             )
             .await;
-        self.suffix_prefix_checker
+        self.deps
+            .suffix_prefix_checker
             .check_domain_suffixes(
-                self.config.as_ref(),
-                self.layer_map.as_ref(),
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
                 &files,
                 target,
                 &mut results,
@@ -72,14 +79,10 @@ impl INamingRunnerAggregate for NamingOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl NamingOrchestrator {
-    pub fn new(
-        naming_convention_checker: Arc<dyn INamingConventionChecker>,
-        suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
-        config: Arc<ArchitectureConfig>,
-        layer_map: Arc<LayerMapVO>,
-    ) -> Self {
+    pub fn new(deps: NamingOrchestratorDeps) -> Self {
         let ignored_patterns = PatternList {
-            values: config
+            values: deps
+                .config
                 .ignored_paths
                 .values
                 .iter()
@@ -93,10 +96,7 @@ impl NamingOrchestrator {
                 .collect(),
         };
         Self {
-            naming_convention_checker,
-            suffix_prefix_checker,
-            config,
-            layer_map,
+            deps,
             ignored_patterns,
         }
     }

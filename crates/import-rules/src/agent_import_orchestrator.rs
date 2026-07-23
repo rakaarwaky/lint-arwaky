@@ -23,13 +23,17 @@ use shared::taxonomy_definition_vo::LayerMapVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+pub struct ImportOrchestratorDeps {
+    pub mandatory: Arc<dyn IImportMandatoryProtocol>,
+    pub forbidden: Arc<dyn IImportForbiddenProtocol>,
+    pub unused: Arc<dyn IUnusedImportProtocol>,
+    pub cycle: Arc<dyn ICycleImportProtocol>,
+    pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
+    pub config: ArchitectureConfig,
+}
+
 pub struct ImportOrchestrator {
-    mandatory: Arc<dyn IImportMandatoryProtocol>,
-    forbidden: Arc<dyn IImportForbiddenProtocol>,
-    unused: Arc<dyn IUnusedImportProtocol>,
-    cycle: Arc<dyn ICycleImportProtocol>,
-    dummy: Arc<dyn IDummyImportCheckerProtocol>,
-    config: ArchitectureConfig,
+    deps: ImportOrchestratorDeps,
     layer_map: LayerMapVO,
 }
 
@@ -38,7 +42,7 @@ pub struct ImportOrchestrator {
 #[async_trait]
 impl IImportRunnerAggregate for ImportOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
-        if !self.config.enabled.value {
+        if !self.deps.config.enabled.value {
             return Ok(Vec::new());
         }
         let path = Path::new(target.value());
@@ -59,16 +63,18 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let (mandatory_results, forbidden_results) = tokio::join!(
             async {
                 let mut r = LintResultList::new(Vec::new());
-                self.mandatory
-                    .run_mandatory_imports(&self.config, &self.layer_map, &files, &root_dir, &mut r)
+                self.deps
+                    .mandatory
+                    .run_mandatory_imports(&self.deps.config, &self.layer_map, &files, &root_dir, &mut r)
                     .await;
                 r
             },
             async {
                 let mut r = LintResultList::new(Vec::new());
-                self.forbidden
+                self.deps
+                    .forbidden
                     .check_forbidden_imports(
-                        &self.config,
+                        &self.deps.config,
                         &self.layer_map,
                         &files,
                         &root_dir,
@@ -87,39 +93,40 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .flat_map(|file| {
                 let mut local_results = Vec::new();
                 if let Ok(content) = std::fs::read_to_string(file.value()) {
-                    self.unused
+                    self.deps
+                        .unused
                         .check_unused_imports(file.value(), &content, &mut local_results);
 
                     let content_str = ContentString::new(content);
-                    self.dummy.check_dummy_imports(
+                    self.deps.dummy.check_dummy_imports(
                         file,
                         &content_str,
                         &mut local_results,
                         &root_dir,
                         &self.layer_map,
                     );
-                    self.dummy.check_dummy_functions(
+                    self.deps.dummy.check_dummy_functions(
                         file,
                         &content_str,
                         &mut local_results,
                         &root_dir,
                         &self.layer_map,
                     );
-                    self.dummy.check_dummy_impls(
+                    self.deps.dummy.check_dummy_impls(
                         file,
                         &content_str,
                         &mut local_results,
                         &root_dir,
                         &self.layer_map,
                     );
-                    self.dummy.check_taxonomy_intent(
+                    self.deps.dummy.check_taxonomy_intent(
                         file,
                         &content_str,
                         &mut local_results,
                         &root_dir,
                         &self.layer_map,
                     );
-                    self.dummy.check_surface_logic(
+                    self.deps.dummy.check_surface_logic(
                         file,
                         &content_str,
                         &mut local_results,
@@ -133,9 +140,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
         results.values.extend(file_violations);
 
-        self.cycle
+        self.deps
+            .cycle
             .check_cycles(
-                &self.config,
+                &self.deps.config,
                 &self.layer_map,
                 &files,
                 &root_dir,
@@ -153,24 +161,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ImportOrchestrator {
-    pub fn new(
-        mandatory: Arc<dyn IImportMandatoryProtocol>,
-        forbidden: Arc<dyn IImportForbiddenProtocol>,
-        unused: Arc<dyn IUnusedImportProtocol>,
-        cycle: Arc<dyn ICycleImportProtocol>,
-        dummy: Arc<dyn IDummyImportCheckerProtocol>,
-        config: ArchitectureConfig,
-    ) -> Self {
-        let layer_map = LayerMapVO::new(config.layers.clone());
-        Self {
-            mandatory,
-            forbidden,
-            unused,
-            cycle,
-            dummy,
-            config,
-            layer_map,
-        }
+    pub fn new(deps: ImportOrchestratorDeps) -> Self {
+        let layer_map = LayerMapVO::new(deps.config.layers.clone());
+        Self { deps, layer_map }
     }
 
     fn is_ignored(&self, p: &Path) -> bool {

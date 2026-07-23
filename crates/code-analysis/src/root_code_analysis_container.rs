@@ -102,7 +102,12 @@ impl CodeAnalysisCheckerContainer {
 }
 
 /// Trait for dynamic dispatch of CodeAnalysisCheckerContainer
-pub trait CodeAnalysisCheckerContainerRef {
+pub trait CodeAnalysisCheckerContainerRef: Send + Sync {
+    fn config(&self) -> &ArchitectureConfig;
+    fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol>;
+    fn dead_inheritance_checker(&self) -> Arc<dyn IDeadInheritanceProtocol>;
+    fn line_checker(&self) -> &Arc<dyn ILineCheckerProtocol>;
+    fn class_checker(&self) -> Arc<dyn IMandatoryClassProtocol>;
     fn detect_layer(
         &self,
         file: &str,
@@ -112,9 +117,25 @@ pub trait CodeAnalysisCheckerContainerRef {
         &self,
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
     ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition>;
+    fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer>;
 }
 
 impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
+    fn config(&self) -> &ArchitectureConfig {
+        self.config()
+    }
+    fn bypass_checker(&self) -> &Arc<dyn IBypassCheckerProtocol> {
+        self.bypass_checker()
+    }
+    fn dead_inheritance_checker(&self) -> Arc<dyn IDeadInheritanceProtocol> {
+        self.dead_inheritance_checker()
+    }
+    fn line_checker(&self) -> &Arc<dyn ILineCheckerProtocol> {
+        self.line_checker()
+    }
+    fn class_checker(&self) -> Arc<dyn IMandatoryClassProtocol> {
+        self.class_checker()
+    }
     fn detect_layer(
         &self,
         file: &str,
@@ -127,6 +148,9 @@ impl CodeAnalysisCheckerContainerRef for CodeAnalysisCheckerContainer {
         layer: &shared::taxonomy_layer_vo::LayerNameVO,
     ) -> Option<&shared::common::taxonomy_definition_vo::LayerDefinition> {
         self.get_layer_def(layer)
+    }
+    fn duplication_checker(&self) -> &Arc<CodeDuplicationAnalyzer> {
+        self.duplication_checker()
     }
 }
 

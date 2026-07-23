@@ -1,6 +1,7 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
+use crate::agent_analysis_pipeline_orchestrator::{AnalysisPipelineDeps, AnalysisPipelineOrchestrator};
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
@@ -88,26 +89,26 @@ impl CliContainer {
             Arc::new(report_formatter::JunitFormatter::new());
         let report_formatter_agg: Arc<dyn IReportFormatterAggregate> =
             Arc::new(report_formatter::ReportFormatterOrchestrator::new(
-                text_formatter,
-                json_formatter,
-                sarif_formatter,
-                junit_formatter,
+                report_formatter::ReportFormatterDeps {
+                    text: text_formatter,
+                    json: json_formatter,
+                    sarif: sarif_formatter,
+                    junit: junit_formatter,
+                },
             ));
 
         // Wire analysis pipeline orchestrator
         let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(crate::AnalysisPipelineOrchestrator::new(
-                crate::agent_analysis_pipeline_orchestrator::CheckArgs {
-                    code_analysis_linter: code_analysis_linter.clone(),
-                    naming_orchestrator: naming_orchestrator.clone(),
-                    import_orchestrator: import_orchestrator.clone(),
-                    external_lint: external_lint.clone(),
-                    role_orchestrator: role_orchestrator.clone(),
-                    orphan_orchestrator: orphan_orchestrator.clone(),
-                    config_orchestrator: multi_project_orchestrator.clone(),
-                    format: Format::Text,
-                },
-            ));
+            Arc::new(AnalysisPipelineOrchestrator::new(AnalysisPipelineDeps {
+                code_analysis_linter: code_analysis_linter.clone(),
+                naming_orchestrator: naming_orchestrator.clone(),
+                import_orchestrator: import_orchestrator.clone(),
+                external_lint: external_lint.clone(),
+                role_orchestrator: role_orchestrator.clone(),
+                orphan_orchestrator: orphan_orchestrator.clone(),
+                config_orchestrator: multi_project_orchestrator.clone(),
+                format: Format::Text,
+            }));
 
         Self {
             code_analysis_linter,

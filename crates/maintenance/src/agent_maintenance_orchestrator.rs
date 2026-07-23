@@ -27,9 +27,17 @@ use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-pub struct MaintenanceCommandsOrchestrator {}
+
+pub struct MaintenanceDeps {
+    pub checker: Arc<dyn IMaintenanceCheckerProtocol>,
+}
+
+pub struct MaintenanceCommandsOrchestrator {
+    deps: MaintenanceDeps,
+}
 
 use async_trait::async_trait;
 
@@ -164,21 +172,18 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     async fn cancel(&self, _job_id: JobId) {}
 
     async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
-        checker.diagnose_toolchain().await
+        self.deps.checker.diagnose_toolchain().await
     }
 
     async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
-        checker.run_security_scan(project_path).await
+        self.deps.checker.run_security_scan(project_path).await
     }
 
     async fn run_dependency_report(
         &self,
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
-        let checker = crate::capabilities_maintenance_checker::MaintenanceChecker::new();
-        checker.run_dependency_report(project_path).await
+        self.deps.checker.run_dependency_report(project_path).await
     }
 }
 
@@ -221,14 +226,9 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl Default for MaintenanceCommandsOrchestrator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl MaintenanceCommandsOrchestrator {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(deps: MaintenanceDeps) -> Self {
+        Self { deps }
     }
 }
