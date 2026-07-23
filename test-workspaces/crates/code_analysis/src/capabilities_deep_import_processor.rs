@@ -1,10 +1,10 @@
 // AES007: import with 5+ segments
-use crate::contract::sub::module::WrongNamePort;
+use crate::contract::some_protocol::SomeProtocol;
 
 pub struct DeepImportProcessor;
 
-impl WrongNamePort for DeepImportProcessor {
-    fn execute(&self, _input: String) -> bool {
+impl SomeProtocol for DeepImportProcessor {
+    fn required_fn(&self) -> bool {
         true
     }
 }
