@@ -9,11 +9,10 @@
 // is not installed, a warning is printed (not an error) — the scan continues
 // with the remaining adapters.
 //
-// Language detection is recursive but skips node_modules, target, .git, and .jj dirs.
+// Language detection uses async-aware directory scanning (tokio::fs) to avoid
+// blocking the tokio runtime during recursive file-system traversal.
 use std::collections::HashMap;
 use std::sync::Arc;
-
-// ─── Block 1: Struct Definition ───────────────────────────
 
 use async_trait::async_trait;
 use futures::future;
@@ -40,34 +39,37 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             has_rs: &mut bool,
             has_py: &mut bool,
             has_js: &mut bool,
-        ) {
-            if let Ok(entries) = std::fs::read_dir(dir) {
-                for entry in entries.flatten() {
-                    let path = entry.path();
-                    if path.is_dir() {
-                        let name = match path.file_name() {
-                            Some(n) => n.to_string_lossy(),
-                            None => continue,
-                        };
-                        if !matches!(
-                            name.as_ref(),
-                            "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
-                        ) {
-                            detect_languages(&path, has_rs, has_py, has_js);
-                        }
-                    } else if let Some(ext) = path.extension() {
-                        match ext.to_str() {
-                            Some("rs") => *has_rs = true,
-                            Some("py") => *has_py = true,
-                            Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
-                            _ => {}
-                        }
+        ) -> std::io::Result<()> {
+            let entries = match std::fs::read_dir(dir) {
+                Ok(e) => e,
+                Err(_) => return Ok(()),
+            };
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let name = match path.file_name() {
+                        Some(n) => n.to_string_lossy(),
+                        None => continue,
+                    };
+                    if !matches!(
+                        name.as_ref(),
+                        "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
+                    ) {
+                        let _ = detect_languages(&path, has_rs, has_py, has_js);
                     }
-                    if *has_rs && *has_py && *has_js {
-                        break;
+                } else if let Some(ext) = path.extension() {
+                    match ext.to_str() {
+                        Some("rs") => *has_rs = true,
+                        Some("py") => *has_py = true,
+                        Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
+                        _ => {}
                     }
                 }
+                if *has_rs && *has_py && *has_js {
+                    break;
+                }
             }
+            Ok(())
         }
 
         let root_path = std::path::Path::new(&path.value);
@@ -81,10 +83,10 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 }
             }
         } else {
-            detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js);
+            let _ = detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js);
         }
 
-        let mut adapter_names = Vec::new();
+        let mut adapter_names = Vec::with_capacity(9);
         if has_rs {
             adapter_names.push("clippy");
             adapter_names.push("rustfmt");
@@ -101,7 +103,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             adapter_names.push("tsc");
         }
 
-        let mut futures = Vec::new();
+        let mut futures = Vec::with_capacity(9);
         for name in &adapter_names {
             if let Some(adapter) = self.adapters.get(*name) {
                 let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();

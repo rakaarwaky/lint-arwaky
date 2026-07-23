@@ -66,26 +66,36 @@ impl ILinterAdapterProtocol for PrettierAdapter {
             .lint_executor
             .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
             .await?;
-
         let mut results = Vec::new();
         let combined_output = format!("{}{}", response.stdout, response.stderr);
 
-        if combined_output.contains("[warn]") {
-            let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                path.clone(),
-                Some(path.clone()),
-            );
-            results.push(LintResult {
-                file: filename_vo,
-                line: LineNumber::new(1),
-                column: ColumnNumber::new(0),
-                code: ErrorCode::raw("formatting"),
-                message: LintMessage::new("Code style issues found. Run Prettier to fix."),
-                source: Some(self.name()),
-                severity: Severity::LOW,
-                enclosing_scope: Default::default(),
-                related_locations: Default::default(),
-            });
+        for line in combined_output.lines() {
+            let trimmed = line.trim();
+            if let Some(file_str) = trimmed.strip_prefix("[warn]") {
+                let file_str = file_str.trim();
+                if file_str.is_empty()
+                    || file_str.starts_with("Code style issues")
+                    || file_str.starts_with("Forget to run")
+                {
+                    continue;
+                }
+                let file_fp = FilePath::new(file_str.to_string()).unwrap_or_else(|_| path.clone());
+                let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
+                    file_fp,
+                    Some(path.clone()),
+                );
+                results.push(LintResult {
+                    file: filename_vo,
+                    line: LineNumber::new(1),
+                    column: ColumnNumber::new(0),
+                    code: ErrorCode::raw("formatting"),
+                    message: LintMessage::new(format!("Code style issue in {}. Run Prettier to fix.", file_str)),
+                    source: Some(self.name()),
+                    severity: Severity::LOW,
+                    enclosing_scope: Default::default(),
+                    related_locations: Default::default(),
+                });
+            }
         }
 
         Ok(LintResultList::new(results))
@@ -99,10 +109,6 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-// (No protocol implementation found in this file)
-
-// (No protocol implementation found in this file)
 
 impl PrettierAdapter {
     pub fn new(lint_executor: Arc<dyn IExternalLintExecutorProtocol>) -> Self {
