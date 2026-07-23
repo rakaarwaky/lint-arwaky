@@ -54,7 +54,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
   - Empty results → produces empty array string.
   - Serialization failure → returns empty array string.
   - Format mismatch → returns default text summary.
-- **Error Handling**: Serialization error caught via `unwrap_or_else`.
+- **Error Handling**: Serialization error caught gracefully.
 
 ### FR-003: SARIF 2.1.0 Format Output
 - **Description**: Produce SARIF 2.1.0 JSON format for IDE integration and GitHub Code Scanning.
@@ -72,7 +72,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
   - Line number 0 or negative → clamped to 1.
   - Format mismatch → returns default text summary.
   - Serialization failure → returns empty object string.
-- **Error Handling**: Serialization error caught via `unwrap_or_else`.
+- **Error Handling**: Serialization error caught gracefully.
 
 ### FR-004: JUnit XML Format Output
 - **Description**: Produce JUnit XML format for CI/CD test report integration.
@@ -165,12 +165,12 @@ Format (enum)
 DisplayContent (VO)
 └── value: String
 
-IReportFormatterProtocol (trait)
-├── format(&self, report: &ScanReport, format: Format) -> DisplayContent
-└── supported_format(&self) -> Format
+Report Formatter Protocol (interface)
+├── format(report, format) -> DisplayContent
+└── supported_format() -> Format
 
-IReportFormatterAggregate (trait)
-└── format(&self, report: &ScanReport, format: Format) -> DisplayContent
+Report Formatter Aggregate (interface)
+└── format(report, format) -> DisplayContent
 
 SARIF Output Structure
 ├── $schema: SARIF 2.1.0 schema URI
@@ -199,14 +199,14 @@ JUnit Output Structure
 
 | Function | Input | Output | Description |
 |---|---|---|---|
-| `ReportFormatterOrchestrator::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Route to appropriate formatter |
-| `TextFormatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Human-readable text output |
-| `TextFormatter::format_text(report)` | `ScanReport` | `DisplayContent` | Direct text formatting |
-| `JsonFormatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Pretty-printed JSON output |
-| `SarifFormatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | SARIF 2.1.0 JSON output |
-| `SarifFormatter::format_sarif(results)` | `&[LintResult]` | `DisplayContent` | Direct SARIF formatting |
-| `JunitFormatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | JUnit XML output |
-| `JunitFormatter::format_junit(results)` | `&[LintResult]` | `DisplayContent` | Direct JUnit formatting |
+| `orchestrator::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Route to appropriate formatter |
+| `text_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Human-readable text output |
+| `text_formatter::format_text(report)` | `ScanReport` | `DisplayContent` | Direct text formatting |
+| `json_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | Pretty-printed JSON output |
+| `sarif_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | SARIF 2.1.0 JSON output |
+| `sarif_formatter::format_sarif(results)` | `&[LintResult]` | `DisplayContent` | Direct SARIF formatting |
+| `junit_formatter::format(report, format)` | `ScanReport, Format` | `DisplayContent` | JUnit XML output |
+| `junit_formatter::format_junit(results)` | `&[LintResult]` | `DisplayContent` | Direct JUnit formatting |
 | `format_report_default(report)` | `&ScanReport` | `String` | Default text summary fallback |
 | `xml_escape(s)` | `&str` | `String` | XML entity escaping |
 
@@ -217,7 +217,7 @@ JUnit Output Structure
   - `code-analysis` — code analysis aggregate for text formatter delegation.
   - `cli-commands` — consumed via report formatter aggregate from CLI container wiring.
 - **External**:
-  - `serde_json` — JSON serialization for JSON and SARIF formatters.
+  - JSON serialization library for JSON and SARIF formatters.
   - No other external dependencies — formatters are self-contained.
 
 ## Non-functional Requirements (Detailed)

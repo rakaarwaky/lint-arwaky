@@ -86,9 +86,9 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 - **Input**: None (configured at construction).
 - **Output**: `ServerInfo` with protocol version, server name (`"lint-arwaky"`), version, and `ToolsCapability`.
 - **Business Rules**:
-  - Tools are registered via `#[tool_router]` macro: `execute_command`, `list_commands`, `read_skill`, `health_check`.
-  - Server name is `"lint-arwaky"`, version from `CARGO_PKG_VERSION`.
-  - Protocol version uses `ProtocolVersion::default()`.
+  - Tools are registered via the tool router macro: `execute_command`, `list_commands`, `read_skill`, `health_check`.
+  - Server name is `"lint-arwaky"`, version from the crate version.
+  - Protocol version uses the default protocol version.
 - **Edge Cases**:
   - None (static configuration).
 - **Error Handling**:
@@ -146,7 +146,7 @@ ServerInfo (MCP protocol)
 
 ## Non-functional Requirements (Detailed)
 
-- **Performance**: Standard operations (execute_command, list_commands, read_skill) should complete under 5 seconds. Health check involves multiple `which` subprocess calls; concurrent execution via `futures::future::join_all`.
+- **Performance**: Standard operations (execute_command, list_commands, read_skill) should complete under 5 seconds. Health check involves multiple `which` subprocess calls; concurrent execution via async join.
 - **Memory**: Server holds shared references to all pipeline orchestrators. Memory usage scales with the number of registered aggregates.
 - **Accuracy**: JSON responses must conform to MCP JSON-RPC standards. Tool discovery must be reliable for AI clients.
 - **Concurrency**: MCP server is `Clone`-able; tool handlers are `async` and can handle concurrent requests.
@@ -168,7 +168,7 @@ ServerInfo (MCP protocol)
 - [ ] `health_check` returns adapter availability for all 5 adapters.
 - [ ] `health_check` with clippy installed returns `"available"`.
 - [ ] `health_check` with missing adapter returns `"not_installed"`.
-- [ ] MCP `get_info` returns correct server name and version.
+- [ ] MCP get info returns correct server name and version.
 - [ ] All 4 tools are discoverable via MCP tool listing.
 
 ## Assumptions & Constraints

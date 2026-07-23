@@ -55,10 +55,10 @@ The git-hooks crate implements a pre-commit hook system that enforces AES compli
   - If executable path is empty, defaults to `"lint-arwaky"`.
   - If not a git repository (no `.git/` dir): returns `SuccessStatus(false)` without error.
 - **Edge Cases**:
-  - `.git/hooks/` already exists: `create_dir_all` is idempotent.
+  - `.git/hooks/` already exists: directory creation is idempotent.
   - Hook file already exists: overwritten.
   - Not a git repository: returns success with `false` (not an error).
-  - Windows: permission setting is skipped (no `#[cfg(unix)]` block).
+  - Windows: permission setting is skipped (Unix-only feature).
 - **Error Handling**:
   - Directory creation failure: returns `GitHookError` with message.
   - File write failure: returns `GitHookError` with message.
@@ -212,12 +212,12 @@ SuccessStatus (output)
 - [ ] Hook installation skips gracefully when not a git repo.
 - [ ] Hook uninstallation removes `.git/hooks/pre-commit`.
 - [ ] Hook uninstallation is idempotent (no error if already removed).
-- [ ] `get_diff_data` returns `MissingFirst` when first path missing.
-- [ ] `get_diff_data` returns `Unchanged` when both paths exist as files.
-- [ ] `initialize_config` returns `ALREADY_EXISTS` when config present.
-- [ ] `update_ignore_rule` returns error when config file missing.
-- [ ] Full `run_git_hooks_check` returns lint results for changed files.
-- [ ] `install_hook` + `uninstall_hook` round-trip works correctly.
+- [ ] Diff data comparison returns `MissingFirst` when first path missing.
+- [ ] Diff data comparison returns `Unchanged` when both paths exist as files.
+- [ ] Config initialization returns `ALREADY_EXISTS` when config present.
+- [ ] Ignore rule update returns error when config file missing.
+- [ ] Full git hooks check returns lint results for changed files.
+- [ ] Hook install and uninstall round-trip works correctly.
 
 ## Assumptions & Constraints
 

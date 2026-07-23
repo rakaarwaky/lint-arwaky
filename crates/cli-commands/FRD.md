@@ -211,7 +211,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Input**: `external_lint: Arc<dyn IExternalLintAggregate>`
 - **Output**: `ExitCode` (always 0)
 - **Business Rules**:
-  - Queries `adapter_names()` from the external lint aggregate.
+  - Queries adapter names from the external lint aggregate.
   - Lists each adapter on a separate line with bullet prefix.
   - Shows "(none enabled)" when no adapters found.
 - **Edge Cases**:
@@ -225,7 +225,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Output**: `ExitCode` (0 = clean, 1 = violations)
 - **Business Rules**:
   - Gets changed files from git diff since specified base branch.
-  - Filters to lintable files only (via `is_lintable()`).
+  - Filters to lintable files only.
   - Applies optional filter to changed files.
   - Runs per-file AES analysis with violation details (file:line, severity, message).
   - Shows up to 3 violations per file in summary.
@@ -312,20 +312,20 @@ ExitCode conventions
 
 | Function | Input | Output | Description |
 |---|---|---|---|
-| `handle_check(opts)` | `CheckOptions` | `ExitCode` | Self-lint analysis on current project |
-| `handle_scan(opts)` | `ScanOptions` | `ExitCode` | Multi-workspace analysis with discovery |
-| `handle_ci(linter, path, threshold)` | `ICodeAnalysisAggregate, Option<FilePath>, Threshold` | `ExitCode` | CI-mode threshold comparison |
-| `handle_fix(path, dry_run, linter, factory)` | `Option<FilePath>, bool, ICodeAnalysisAggregate, factory` | `ExitCode` | Apply automatic fixes |
-| `handle_doctor(maintenance)` | `MaintenanceCommandsAggregate` | `ExitCode` | Toolchain diagnostics |
-| `handle_security(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Vulnerability scan |
-| `handle_dependencies(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Dependency report |
-| `handle_init(setup)` | `SetupManagementAggregate` | `ExitCode` | Create config files |
-| `handle_install(setup, sudo)` | `SetupManagementAggregate, bool` | `ExitCode` | Install adapter dependencies |
-| `handle_mcp_config(client)` | `&str` | `ExitCode` | Print MCP client config JSON |
-| `handle_config_show(orchestrator)` | `IConfigOrchestratorAggregate` | `ExitCode` | Display active config files |
-| `handle_adapters(external_lint)` | `IExternalLintAggregate` | `ExitCode` | List enabled adapters |
-| `handle_git_diff(git, linter, base, path, filter)` | `GitHooksAggregate, ICodeAnalysisAggregate, GitBranchName, Option<&str>, Option<&str>` | `ExitCode` | Analyze git-changed files |
-| `handle_watch(watch, path)` | `IWatchAggregate, Option<FilePath>` | `ExitCode` | File watch with auto-lint |
+| `check handler(opts)` | `CheckOptions` | `ExitCode` | Self-lint analysis on current project |
+| `scan handler(opts)` | `ScanOptions` | `ExitCode` | Multi-workspace analysis with discovery |
+| `ci handler(linter, path, threshold)` | `ICodeAnalysisAggregate, Option<FilePath>, Threshold` | `ExitCode` | CI-mode threshold comparison |
+| `fix handler(path, dry_run, linter, factory)` | `Option<FilePath>, bool, ICodeAnalysisAggregate, factory` | `ExitCode` | Apply automatic fixes |
+| `doctor handler(maintenance)` | `MaintenanceCommandsAggregate` | `ExitCode` | Toolchain diagnostics |
+| `security handler(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Vulnerability scan |
+| `dependencies handler(maintenance, path)` | `MaintenanceCommandsAggregate, Option<FilePath>` | `ExitCode` | Dependency report |
+| `init handler(setup)` | `SetupManagementAggregate` | `ExitCode` | Create config files |
+| `install handler(setup, sudo)` | `SetupManagementAggregate, bool` | `ExitCode` | Install adapter dependencies |
+| `mcp-config handler(client)` | `&str` | `ExitCode` | Print MCP client config JSON |
+| `config-show handler(orchestrator)` | `IConfigOrchestratorAggregate` | `ExitCode` | Display active config files |
+| `adapters handler(external_lint)` | `IExternalLintAggregate` | `ExitCode` | List enabled adapters |
+| `git-diff handler(git, linter, base, path, filter)` | `GitHooksAggregate, ICodeAnalysisAggregate, GitBranchName, Option<&str>, Option<&str>` | `ExitCode` | Analyze git-changed files |
+| `watch handler(watch, path)` | `IWatchAggregate, Option<FilePath>` | `ExitCode` | File watch with auto-lint |
 | `run_ci_analysis(linter, path, threshold)` | `ICodeAnalysisAggregate, Option<FilePath>, Threshold` | `ExitCode` | CI pipeline implementation |
 | `find_workspace_root(path)` | `&str` | `Option<PathBuf>` | Walk up to find workspace root |
 | `detect_language_from_path(path)` | `&str` | `ConfigLanguage` | Detect language from filesystem markers |
@@ -342,9 +342,9 @@ ExitCode conventions
   - `project-setup` — maintenance commands aggregate, setup management aggregate.
   - `file-watch` — watch aggregate for file monitoring.
 - **External**:
-  - `tokio` — async runtime for concurrent linter execution.
-  - `ctrlc` — signal handling for graceful watch shutdown.
-  - `regex` — secret redaction pattern matching.
+  - Async runtime for concurrent linter execution.
+  - Signal handling for graceful watch shutdown.
+  - Regex library for secret redaction pattern matching.
 
 ## Non-functional Requirements (Detailed)
 
