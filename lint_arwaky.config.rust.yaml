@@ -36,6 +36,17 @@ ignored_paths:
   - "**/build.rs"
   - "/.agents"
   - "/benches"
+  - "./output"
+  - "/dist"
+  - "/build"
+  - "/.tsbuildinfo"
+  - "/.next"
+  - "/coverage"
+  - "/__pycache__"
+  - "/.venv"
+  - "/venv"
+  - "/.mypy_cache"
+  - "/.ruff_cache"
 
 architecture:
   enabled: true

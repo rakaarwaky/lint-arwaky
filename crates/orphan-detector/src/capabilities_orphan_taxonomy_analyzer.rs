@@ -123,10 +123,11 @@ impl TaxonomyOrphanAnalyzer {
         Self {}
     }
 
-    /// Fallback: check if any .rs file in the same crate imports this module via `crate::` path.
-    /// The graph resolver doesn't always track crate:: imports within the same crate.
+    /// Fallback: check if any source file in the same crate imports this module via
+    /// `crate::` path, relative import, or direct reference.
+    /// The graph resolver doesn't always track same-crate imports (especially TS/JS).
     fn has_crate_self_import(file_path: &str) -> bool {
-        let stem = std::path::Path::new(file_path)
+        let stem = std::path:: Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("");
@@ -153,7 +154,7 @@ impl TaxonomyOrphanAnalyzer {
             return false;
         };
 
-        // Scan all .rs files in the crate's src/ directory
+        // Scan all source files (.rs, .py, .ts, .js) in the crate's src/ directory
         let all_files =
             shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&src_dir);
         for f in all_files {
@@ -161,10 +162,14 @@ impl TaxonomyOrphanAnalyzer {
                 continue;
             }
             let path = std::path::PathBuf::from(&f);
-            if path.extension().is_some_and(|e| e == "rs") {
+            // Support Rust, Python, TypeScript, and JavaScript files
+            if path.extension().is_some_and(|e| {
+                let ext = e.to_str().unwrap_or("");
+                matches!(ext, "rs" | "py" | "ts" | "js")
+            }) {
                 let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&f);
                 // Check for any import pattern containing the stem
-                // This handles: crate::stem, crate::common::stem, crate::module::stem, etc.
+                // This handles: crate::stem, common::stem, module::stem, etc.
                 if content.contains(stem) {
                     return true;
                 }

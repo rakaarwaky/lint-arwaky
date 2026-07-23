@@ -15,20 +15,39 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
-  - "/.mimocode"
-  - "./output"
+ignored_paths:
+  - "/target"
   - "/.git"
   - "/.github"
   - "/scratch"
   - "/packages"
   - "/node_modules"
+  - "/.opencode"
+  - "/.mimocode"
+  - "/.jj"
+  - "/scripts"
+  - ".min.js"
+  - ".min.css"
+  - "/.dsc_cache"
+  - "/tests"
+  - "/test-workspaces"
+  - "/mimocode"
+  - "build.rs"
+  - "/build.rs"
+  - "**/build.rs"
+  - "/.agents"
+  - "/benches"
+  - "./output"
   - "/dist"
   - "/build"
   - "/.tsbuildinfo"
   - "/.next"
   - "/coverage"
-  - "/tests"
-  - "/test-workspaces"
+  - "/__pycache__"
+  - "/.venv"
+  - "/venv"
+  - "/.mypy_cache"
+  - "/.ruff_cache"
 
 architecture:
   enabled: true
