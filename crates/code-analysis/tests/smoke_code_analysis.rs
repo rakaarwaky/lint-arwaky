@@ -29,7 +29,7 @@ fn crate_boots_and_scans_without_panic() {
 
     // 6. Format report (should not panic)
     let report = aggregate.format_report(&results, &root);
-    assert!(report.contains("AES Architecture Compliance Report"));
+    assert!(report.value.contains("AES Architecture Compliance Report"));
 
     let elapsed = start.elapsed();
     assert!(

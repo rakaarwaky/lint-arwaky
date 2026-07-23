@@ -80,7 +80,7 @@ architecture:
             - strict: ["vo", "entity", "error", "event", "constant"]
         contract:
           suffix:
-            - strict: ["port", "protocol", "aggregate"]
+            - strict: ["protocol", "aggregate"]
         capabilities:
           suffix:
             - flexible:
@@ -282,7 +282,7 @@ architecture:
               "root",
             ]
 
-        - scope: "contract(port|protocol)"
+        - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
@@ -299,7 +299,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden: ["agent", "infrastructure", "surface", "capabilities", "root"]
-          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+          forbidden_inheritance: ["contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
@@ -311,12 +311,12 @@ architecture:
               purpose: "implement"
             - layer: "contract"
               purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
@@ -324,7 +324,7 @@ architecture:
               purpose: "implement"
             - layer: "contract"
               purpose: "call"
-            - layer: "contract(port|protocol|aggregate)"
+            - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "agent(orchestrator)"
@@ -332,7 +332,6 @@ architecture:
             [
               "taxonomy",
               "contract(aggregate)",
-              "contract(port)",
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
@@ -342,8 +341,6 @@ architecture:
               purpose: "implement"
             - layer: "contract(aggregate)"
               purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "call"
             - layer: "contract(protocol)"
               purpose: "call"
 
@@ -355,7 +352,6 @@ architecture:
               "agent",
               "infrastructure",
               "capabilities",
-              "contract(port)",
               "contract(protocol)",
               "root",
             ]
@@ -373,7 +369,6 @@ architecture:
               "agent",
               "infrastructure",
               "capabilities",
-              "contract(port)",
               "contract(protocol)",
               "surface(command|controller|page|entry)",
               "root",

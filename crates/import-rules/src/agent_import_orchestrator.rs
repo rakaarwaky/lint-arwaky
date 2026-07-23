@@ -29,13 +29,14 @@ pub struct ImportOrchestratorDeps {
     pub unused: Arc<dyn IUnusedImportProtocol>,
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
-    pub config: ArchitectureConfig,
-    pub ignored_paths: Vec<String>,
+
 }
 
 pub struct ImportOrchestrator {
     deps: ImportOrchestratorDeps,
     layer_map: LayerMapVO,
+    config: ArchitectureConfig,
+    ignored_paths: Vec<String>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -43,7 +44,7 @@ pub struct ImportOrchestrator {
 #[async_trait]
 impl IImportRunnerAggregate for ImportOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
-        if !self.deps.config.enabled.value {
+        if !self.config.enabled.value {
             return Ok(Vec::new());
         }
         let path = Path::new(target.value());
@@ -67,7 +68,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 self.deps
                     .mandatory
                     .run_mandatory_imports(
-                        &self.deps.config,
+                        &self.config,
                         &self.layer_map,
                         &files,
                         &root_dir,
@@ -81,7 +82,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 self.deps
                     .forbidden
                     .check_forbidden_imports(
-                        &self.deps.config,
+                        &self.config,
                         &self.layer_map,
                         &files,
                         &root_dir,
@@ -152,7 +153,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         self.deps
             .cycle
             .check_cycles(
-                &self.deps.config,
+                &self.config,
                 &self.layer_map,
                 &files,
                 &root_dir,
@@ -170,9 +171,18 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ImportOrchestrator {
-    pub fn new(deps: ImportOrchestratorDeps) -> Self {
-        let layer_map = LayerMapVO::new(deps.config.layers.clone());
-        Self { deps, layer_map }
+    pub fn new(
+        deps: ImportOrchestratorDeps,
+        config: ArchitectureConfig,
+        ignored_paths: Vec<String>,
+    ) -> Self {
+        let layer_map = LayerMapVO::new(config.layers.clone());
+        Self {
+            deps,
+            config,
+            layer_map,
+            ignored_paths,
+        }
     }
 
     fn is_ignored(&self, p: &Path) -> bool {
@@ -184,7 +194,7 @@ impl ImportOrchestrator {
             return true;
         }
         let path_str = p.to_string_lossy();
-        self.deps.ignored_paths.iter().any(|ignored| {
+        self.ignored_paths.iter().any(|ignored| {
             path_str.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
         })
     }

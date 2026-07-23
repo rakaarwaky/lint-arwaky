@@ -23,7 +23,8 @@ async fn us3_no_config_file_uses_defaults() {
 async fn us3_defaults_are_valid_and_usable() {
     let tmp = TempDir::new().unwrap();
     let orch = ConfigContainer::new().orchestrator();
-    let config = orch.load_config_sync(tmp.path().to_str().unwrap());
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let config = orch.load_config_sync(&fp);
     assert!(config.enabled.value);
-    assert!(!orch.ignored_paths(tmp.path().to_str().unwrap()).is_empty());
+    assert!(!orch.ignored_paths(&fp).is_empty());
 }
