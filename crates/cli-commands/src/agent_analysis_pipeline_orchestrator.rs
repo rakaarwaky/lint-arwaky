@@ -13,7 +13,6 @@ use shared::cli_commands::taxonomy_scan_report_vo::{
 };
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;

@@ -36,6 +36,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 ## Functional Requirements
 
 ### FR-001: Detect Project Languages
+
 - **Description**: Recursively scan the target path to determine which languages (Rust, Python, JS/TS) are present.
 - **Input**: Target path (file or directory).
 - **Output**: Three booleans: has Rust, has Python, has JS.
@@ -51,6 +52,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: Read failures on individual directories are silently ignored; partial scan results returned.
 
 ### FR-002: Select Adapters by Language
+
 - **Description**: Based on detected languages, select the appropriate set of linter adapters to run.
 - **Input**: Booleans for has Rust, has Python, has JS.
 - **Output**: Adapter name list — ordered list of adapter names.
@@ -66,6 +68,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: No error; empty list for no matches.
 
 ### FR-003: Execute Adapters Concurrently
+
 - **Description**: Run all selected adapters in parallel, collecting results.
 - **Input**: Target path to scan.
 - **Output**: Aggregated results from all adapters.
@@ -81,6 +84,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: Per-adapter errors are caught; "No such file or directory" or "os error 2" → warning about missing tool. Other errors → generic adapter failure warning.
 
 ### FR-004: Normalize External Tool Output
+
 - **Description**: Each adapter normalizes its external tool's stdout/JSON output into lint result structs compatible with the unified lint-arwaky format.
 - **Input**: Raw output from external linter subprocess (JSON or text).
 - **Output**: Result list with normalized violations.
@@ -96,6 +100,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: Parse failures return adapter error or scan error.
 
 ### FR-005: Execute Subprocess Commands
+
 - **Description**: Run external linter tools as subprocesses with timeout, stdout/stderr capture, and error mapping.
 - **Input**: Command args, working directory, timeout, adapter name.
 - **Output**: Result containing stdout, stderr, and return code, or an operation error.
@@ -111,6 +116,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: Scan error for scan operations, adapter error for adapter-specific failures.
 
 ### FR-006: Resolve JS Tool Paths
+
 - **Description**: For JS/TS tools, prefer local `node_modules/.bin/` binaries over global installations.
 - **Input**: Tool name, arguments, working directory.
 - **Output**: Resolved command with full path.
@@ -127,6 +133,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Error Handling**: Missing tools result in command failure at execution time.
 
 ### FR-007: Resolve Cargo Working Directory
+
 - **Description**: For Rust tools (clippy, rustfmt, cargo-audit), find the directory containing `Cargo.toml` or `Cargo.lock`.
 - **Input**: Target path.
 - **Output**: Resolved working directory.
@@ -141,19 +148,19 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| the external lint orchestrator scan all | target path | lint result list | Detect languages, select adapters, run all concurrently, aggregate results. |
-| the external lint orchestrator adapter names | — | list of strings | List all registered adapter names. |
-| the external lint executor exec cmd scan | args, dir, timeout, adapter, path | result | Execute a scan subprocess with error mapping. |
-| the external lint executor exec cmd adapter | args, dir, timeout, adapter | result | Execute an adapter subprocess with error mapping. |
-| the external lint executor js apply fix | path, tool, fix arg | result | Run JS tool with fix flag. |
-| the external lint selector select adapters | has Rust, has Python, has JS | adapter name list | Select adapters based on detected languages. |
-| the external lint utility has python files | target path | boolean | Check if path contains Python files. |
-| the external lint utility resolve js cmd | executable, args, working dir | pattern list | Resolve JS tool command with local/global fallback. |
-| the external lint utility resolve js working dir | target path | file path | Find nearest directory with JS config files. |
-| the external lint utility resolve cargo working dir | target path | file path | Find directory containing Cargo.toml. |
-| the external lint container aggregate | — | the external lint aggregate | Access the assembled orchestrator. |
+| Function                                            | Input                             | Output                      | Description                                                                 |
+| --------------------------------------------------- | --------------------------------- | --------------------------- | --------------------------------------------------------------------------- |
+| the external lint orchestrator scan all             | target path                       | lint result list            | Detect languages, select adapters, run all concurrently, aggregate results. |
+| the external lint orchestrator adapter names        | —                                 | list of strings             | List all registered adapter names.                                          |
+| the external lint executor exec cmd scan            | args, dir, timeout, adapter, path | result                      | Execute a scan subprocess with error mapping.                               |
+| the external lint executor exec cmd adapter         | args, dir, timeout, adapter       | result                      | Execute an adapter subprocess with error mapping.                           |
+| the external lint executor js apply fix             | path, tool, fix arg               | result                      | Run JS tool with fix flag.                                                  |
+| the external lint selector select adapters          | has Rust, has Python, has JS      | adapter name list           | Select adapters based on detected languages.                                |
+| the external lint utility has python files          | target path                       | boolean                     | Check if path contains Python files.                                        |
+| the external lint utility resolve js cmd            | executable, args, working dir     | pattern list                | Resolve JS tool command with local/global fallback.                         |
+| the external lint utility resolve js working dir    | target path                       | file path                   | Find nearest directory with JS config files.                                |
+| the external lint utility resolve cargo working dir | target path                       | file path                   | Find directory containing Cargo.toml.                                       |
+| the external lint container aggregate               | —                                 | the external lint aggregate | Access the assembled orchestrator.                                          |
 
 ## Integration Points
 
@@ -207,12 +214,12 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ## Glossary
 
-| Term | Definition |
-|------|-----------|
-| Adapter | A wrapper around an external linter tool that normalizes its output to the unified format. |
-| Language Detection | Filesystem scan to determine which programming languages are present in the project. |
-| Canonicalize | Resolve a relative file path to its absolute path. |
-| Normalization | Convert tool-specific severity/message/line format to the unified LintResult format. |
+| Term               | Definition                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| Adapter            | A wrapper around an external linter tool that normalizes its output to the unified format. |
+| Language Detection | Filesystem scan to determine which programming languages are present in the project.       |
+| Canonicalize       | Resolve a relative file path to its absolute path.                                         |
+| Normalization      | Convert tool-specific severity/message/line format to the unified LintResult format.       |
 
 ## Reference
 

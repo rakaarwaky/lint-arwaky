@@ -23,6 +23,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 ## Functional Requirements
 
 ### FR-001: Import Graph Construction
+
 - **Description**: Build a bidirectional import graph from all workspace source files, resolving cross-crate and cross-language imports.
 - **Input**: List of source file paths (`Vec<String>`) and workspace root directory.
 - **Output**: A graph analysis context containing the forward import graph, reverse link index, trait/class definition map, and implementation relationship map.
@@ -34,6 +35,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Unreadable files are skipped with no error. Invalid paths produce no entry in the graph.
 
 ### FR-002: Entry Point Discovery
+
 - **Description**: Identify valid entry points that anchor the reachability graph.
 - **Input**: List of file paths and optional configured entry point patterns from the architecture configuration.
 - **Output**: Set of entry point file paths.
@@ -45,6 +47,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Missing or inaccessible entry point files are excluded from the set.
 
 ### FR-003: Reachability Tracing
+
 - **Description**: Perform BFS from all entry points through the import graph to determine which files are transitively reachable ("alive").
 - **Input**: Entry point set (`Vec<String>`) and the forward import graph.
 - **Output**: `Vec<String>` of all reachable file paths.
@@ -56,6 +59,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Cycles in the graph are handled by the visited set — no infinite loops.
 
 ### FR-004: Taxonomy Orphan Detection (AES501)
+
 - **Description**: Check that taxonomy layer files (`taxonomy_*`) are imported by at least one file from any other layer.
 - **Input**: File path, root directory, reverse link map.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -66,6 +70,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Files with no detectable imports are treated as orphan candidates.
 
 ### FR-005: Contract Orphan Detection (AES502)
+
 - **Description**: Check that contract files have at least one implementation or consumer.
 - **Input**: File path, root directory, definition map, inheritance map, all workspace files.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -78,6 +83,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Files with unparseable signatures are not flagged as orphan (fail-safe).
 
 ### FR-006: Capabilities Orphan Detection (AES503)
+
 - **Description**: Check that capability files are wired in a root container or reachable from entry points.
 - **Input**: File path, root directory, reachable file paths set.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -89,6 +95,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Files with no struct/trait names detectable are treated as potential orphans.
 
 ### FR-007: Utility Orphan Detection (AES504)
+
 - **Description**: Check that utility files are imported by at least one consumer layer (agent, capability, or surface).
 - **Input**: File path, root directory, all workspace files, reverse link map.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -99,6 +106,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Unparseable import statements cause the utility to be treated as a candidate orphan.
 
 ### FR-008: Agent Orphan Detection (AES505)
+
 - **Description**: Check that agent orchestrator files are called by surface layer files or binary entry points.
 - **Input**: File path, root directory, all workspace files.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -110,6 +118,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Files that cannot be parsed for trait implementations are flagged as HIGH severity orphans.
 
 ### FR-009: Surface Orphan Detection (AES506)
+
 - **Description**: Check that surface files are reachable based on their group classification (Smart, Utility, Passive).
 - **Input**: File path, root directory, reachable file paths set, optional layer definition.
 - **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
@@ -123,6 +132,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: Files with unclassifiable suffixes default to Passive group.
 
 ### FR-010: Barrel File Exception Handling
+
 - **Description**: Skip known barrel/package marker files from orphan detection.
 - **Input**: File path.
 - **Output**: Skip signal (no violation produced).
@@ -135,6 +145,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Error Handling**: N/A — simple filename suffix check.
 
 ### FR-011: Configuration-Driven Orphan Rules
+
 - **Description**: Respect per-layer configuration for enabling/disabling orphan checks and providing exceptions.
 - **Input**: Architecture configuration with layer definitions.
 - **Output**: Filtered scan results.
@@ -149,21 +160,21 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| Build orphan graph context | File list, root directory | Graph analysis context | Build full import graph for the workspace |
-| Identify orphan entry points | File list | Set of entry point paths | Discover all valid entry points |
-| Full orphan scan | File list, root directory | Lint results | Full orphan scan with graph construction |
-| Orphan scan with context | File list, root directory, pre-built graph | Lint results | Orphan scan with pre-built graph (avoids rebuild) |
-| Check taxonomy orphan | File path, root directory, layer definition, reverse link map | Orphan indicator result | Check single taxonomy file for orphan status |
-| Check contract orphan | File path, root directory, definition map, inheritance map, all files | Orphan indicator result | Check single contract file for orphan status |
-| Check capabilities orphan | File path, root directory, reachable file set | Orphan indicator result | Check single capabilities file for orphan status |
-| Check utility orphan | File path, root directory, all files, reverse link map | Orphan indicator result | Check single utility file for orphan status |
-| Check agent orphan | File path, root directory, all files | Orphan indicator result | Check single agent file for orphan status |
-| Check surface orphan | File path, root directory, reachable file set, layer definition | Orphan indicator result | Check single surface file for orphan status |
-| Create default DI container | — | Orphan detection container | Default dependency injection container |
-| Create DI container with config | Architecture configuration | Orphan detection container | DI container with custom config |
-| Create DI from config orchestrator | Config orchestrator reference, root directory | Orphan detection container | Canonical DI from config orchestrator |
+| Function                           | Input                                                                 | Output                     | Description                                       |
+| ---------------------------------- | --------------------------------------------------------------------- | -------------------------- | ------------------------------------------------- |
+| Build orphan graph context         | File list, root directory                                             | Graph analysis context     | Build full import graph for the workspace         |
+| Identify orphan entry points       | File list                                                             | Set of entry point paths   | Discover all valid entry points                   |
+| Full orphan scan                   | File list, root directory                                             | Lint results               | Full orphan scan with graph construction          |
+| Orphan scan with context           | File list, root directory, pre-built graph                            | Lint results               | Orphan scan with pre-built graph (avoids rebuild) |
+| Check taxonomy orphan              | File path, root directory, layer definition, reverse link map         | Orphan indicator result    | Check single taxonomy file for orphan status      |
+| Check contract orphan              | File path, root directory, definition map, inheritance map, all files | Orphan indicator result    | Check single contract file for orphan status      |
+| Check capabilities orphan          | File path, root directory, reachable file set                         | Orphan indicator result    | Check single capabilities file for orphan status  |
+| Check utility orphan               | File path, root directory, all files, reverse link map                | Orphan indicator result    | Check single utility file for orphan status       |
+| Check agent orphan                 | File path, root directory, all files                                  | Orphan indicator result    | Check single agent file for orphan status         |
+| Check surface orphan               | File path, root directory, reachable file set, layer definition       | Orphan indicator result    | Check single surface file for orphan status       |
+| Create default DI container        | —                                                                     | Orphan detection container | Default dependency injection container            |
+| Create DI container with config    | Architecture configuration                                            | Orphan detection container | DI container with custom config                   |
+| Create DI from config orchestrator | Config orchestrator reference, root directory                         | Orphan detection container | Canonical DI from config orchestrator             |
 
 ## Integration Points
 
@@ -217,15 +228,15 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **Orphan** | A source file not transitively reachable from any entry point |
-| **Entry point** | A file that anchors the reachability graph (main, lib, container, entry) |
-| **Barrel file** | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`) |
-| **Alive file** | A file reachable via BFS from any entry point through the import graph |
-| **AES** | Architecture Enforcement Standard — the 7-layer coding convention |
-| **DI** | Dependency Injection — wiring implementations to trait/interface contracts |
-| **Inbound link** | A file that imports the target file (reverse import edge) |
+| Term             | Definition                                                                 |
+| ---------------- | -------------------------------------------------------------------------- |
+| **Orphan**       | A source file not transitively reachable from any entry point              |
+| **Entry point**  | A file that anchors the reachability graph (main, lib, container, entry)   |
+| **Barrel file**  | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)   |
+| **Alive file**   | A file reachable via BFS from any entry point through the import graph     |
+| **AES**          | Architecture Enforcement Standard — the 7-layer coding convention          |
+| **DI**           | Dependency Injection — wiring implementations to trait/interface contracts |
+| **Inbound link** | A file that imports the target file (reverse import edge)                  |
 
 ## Reference
 

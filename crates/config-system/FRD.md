@@ -32,6 +32,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 ## Functional Requirements
 
 ### FR-001: Config File Discovery and Loading
+
 - **Description**: Locate and load the first matching YAML config file for a given project root and language, following a 5-level priority chain.
 - **Input**: `project_root: FilePath`, `language: ConfigLanguage`
 - **Output**: `Result<Option<ConfigSource>, ConfigError>` — the loaded config source with raw content, path, and language, or `None` if no config found.
@@ -52,6 +53,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
   - ConfigError propagated from YAML parse or file read failures.
 
 ### FR-002: Language-Aware Config File Resolution
+
 - **Description**: Map a language type to the correct set of config filenames to search for.
 - **Input**: language type (Rust, Python, TypeScript)
 - **Output**: `Vec<String>` of config filenames to search in priority order.
@@ -66,6 +68,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: None — pure mapping function.
 
 ### FR-003: Workspace Type Detection
+
 - **Description**: Detect the language/type of a project by scanning for marker files (Cargo.toml, pyproject.toml, package.json, etc.) and parent directory conventions.
 - **Input**: `path: FilePath`
 - **Output**: workspace type (Rust, Python, TypeScript, Unknown)
@@ -79,6 +82,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: Directory read failures are silently ignored, fallback to unknown.
 
 ### FR-004: Multi-Workspace Member Discovery
+
 - **Description**: Discover all workspace member directories under `crates/`, `packages/`, and `modules/` subdirectories.
 - **Input**: `root: FilePath`
 - **Output**: `Vec<FilePath>` of workspace member paths.
@@ -95,6 +99,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: Warnings for directory read failures, graceful degradation.
 
 ### FR-005: Config Merging and Default Injection
+
 - **Description**: Merge loaded config with embedded defaults using field-level merge rules.
 - **Input**: parsed architecture config, language type
 - **Output**: config result (merged config + source info + warnings)
@@ -113,6 +118,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: ConfigError logged as warning string, defaults used as fallback.
 
 ### FR-006: Config Validation
+
 - **Description**: Validate loaded project config thresholds and adapter settings against schema constraints.
 - **Input**: project config, adapter name
 - **Output**: validation result (ok or fail with error messages), boolean (adapter enabled status)
@@ -125,9 +131,10 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
   - Score threshold at exactly 0 or 100 → valid.
   - Score threshold at 0.1 → valid.
   - Unknown adapter name → returns true (enabled by default).
-- **Error Handling**: Multiple validation errors joined with ` | ` separator.
+- **Error Handling**: Multiple validation errors joined with `|` separator.
 
 ### FR-007: Config Caching
+
 - **Description**: Cache parsed config by file path to avoid repeated YAML parsing.
 - **Input**: cache key (file path string), config source
 - **Output**: architecture config (cached or freshly parsed)
@@ -141,6 +148,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: Lock poisoning handled gracefully.
 
 ### FR-008: Ignored Paths Assembly
+
 - **Description**: Build the complete list of ignored paths from config + hardcoded defaults.
 - **Input**: architecture config
 - **Output**: list of ignored path patterns
@@ -155,6 +163,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: None — pure function.
 
 ### FR-009: TOML Config Parsing
+
 - **Description**: Parse TOML config files (e.g., Cargo.toml tool.lint-arwaky section) into project config.
 - **Input**: file path
 - **Output**: project config or error
@@ -168,6 +177,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Error Handling**: Config error with specific keys (tool section, TOML conversion, TOML parsing).
 
 ### FR-010: Config File Listing
+
 - **Description**: List all config files found at the project root for all supported languages.
 - **Input**: project root path
 - **Output**: list of (language type, file path) pairs or error
@@ -184,23 +194,23 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-|---|---|---|---|
-| Load Project Config | project root path | config result | Auto-detect language and load config |
-| Load Config for Language | project root path, language | config result | Load config for specific language |
-| Discover Workspaces | root path | workspace info list | Discover and load configs for all workspace members |
-| Load Config Sync | project root path | architecture config | Synchronous config load (no async runtime) |
-| Ignored Paths | project root path | string list | Get merged ignored paths list |
-| Ignored Paths for Language | project root path, language | string list | Get ignored paths for specific language |
-| Read Config | project root path, language | config source or error | Read raw config from filesystem |
-| List Config Files | project root path | config file list or error | List all config files at project root |
-| Detect | path | workspace type | Detect workspace type from marker files |
-| Is Workspace | path | boolean | Check if path is a workspace root |
-| Discover Workspace Members | root path | file path list | Find workspace member directories |
-| Is Adapter Enabled | config, adapter name | boolean | Check if adapter is enabled in config |
-| Validate Thresholds | config | validation result | Validate config thresholds |
-| Parse YAML Config | file path | config or error | Parse YAML config file |
-| Parse TOML Config | file path | config or error | Parse TOML config section |
+| Operation                  | Input                       | Output                    | Description                                         |
+| -------------------------- | --------------------------- | ------------------------- | --------------------------------------------------- |
+| Load Project Config        | project root path           | config result             | Auto-detect language and load config                |
+| Load Config for Language   | project root path, language | config result             | Load config for specific language                   |
+| Discover Workspaces        | root path                   | workspace info list       | Discover and load configs for all workspace members |
+| Load Config Sync           | project root path           | architecture config       | Synchronous config load (no async runtime)          |
+| Ignored Paths              | project root path           | string list               | Get merged ignored paths list                       |
+| Ignored Paths for Language | project root path, language | string list               | Get ignored paths for specific language             |
+| Read Config                | project root path, language | config source or error    | Read raw config from filesystem                     |
+| List Config Files          | project root path           | config file list or error | List all config files at project root               |
+| Detect                     | path                        | workspace type            | Detect workspace type from marker files             |
+| Is Workspace               | path                        | boolean                   | Check if path is a workspace root                   |
+| Discover Workspace Members | root path                   | file path list            | Find workspace member directories                   |
+| Is Adapter Enabled         | config, adapter name        | boolean                   | Check if adapter is enabled in config               |
+| Validate Thresholds        | config                      | validation result         | Validate config thresholds                          |
+| Parse YAML Config          | file path                   | config or error           | Parse YAML config file                              |
+| Parse TOML Config          | file path                   | config or error           | Parse TOML config section                           |
 
 ## Integration Points
 
@@ -261,15 +271,15 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 
 ## Glossary
 
-| Term | Definition |
-|---|---|
-| AES | Architecture Enforcement Specification — the coding standard enforced by lint-arwaky |
-| ConfigLanguage | Typed enum restricting language input to Rust, Python, TypeScript |
-| WorkspaceType | Enum identifying project language from marker files |
-| ArchitectureConfig | Parsed configuration containing layers, rules, naming, and thresholds |
-| ConfigSource | Metadata about a loaded config file (language, path, raw content) |
-| ConfigResult | Merged config + source info + warnings from the loading process |
-| XDG | XDG Base Directory Specification — standard for user/system config paths |
+| Term               | Definition                                                                           |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| AES                | Architecture Enforcement Specification — the coding standard enforced by lint-arwaky |
+| ConfigLanguage     | Typed enum restricting language input to Rust, Python, TypeScript                    |
+| WorkspaceType      | Enum identifying project language from marker files                                  |
+| ArchitectureConfig | Parsed configuration containing layers, rules, naming, and thresholds                |
+| ConfigSource       | Metadata about a loaded config file (language, path, raw content)                    |
+| ConfigResult       | Merged config + source info + warnings from the loading process                      |
+| XDG                | XDG Base Directory Specification — standard for user/system config paths             |
 
 ## Reference
 

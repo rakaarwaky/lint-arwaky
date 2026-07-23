@@ -139,18 +139,17 @@ The maintenance crate provides operational health and upkeep commands for the li
 
 ## API Contract
 
-
 | Function                                           | Input           | Output                | Description                                                    |
-| ---------------------------------------------------- | ----------------- | ----------------------- | ---------------------------------------------------------------- |
-| the maintenance orchestrator doctor                | —              | doctor result         | Check environment health: tool installations, config presence. |
+| -------------------------------------------------- | --------------- | --------------------- | -------------------------------------------------------------- |
+| the maintenance orchestrator doctor                | —               | doctor result         | Check environment health: tool installations, config presence. |
 | the maintenance orchestrator stats                 | project path    | maintenance stats     | Count Python files and test files, compute ratio.              |
-| the maintenance orchestrator clean                 | —              | ()                    | Remove cache directories from project tree.                    |
-| the maintenance orchestrator update                | —              | ()                    | Upgrade Python linter tools via pip.                           |
-| the maintenance orchestrator diagnose toolchain    | —              | toolchain diagnostics | Check Rust/Python/JS/VCS tool installations.                   |
+| the maintenance orchestrator clean                 | —               | ()                    | Remove cache directories from project tree.                    |
+| the maintenance orchestrator update                | —               | ()                    | Upgrade Python linter tools via pip.                           |
+| the maintenance orchestrator diagnose toolchain    | —               | toolchain diagnostics | Check Rust/Python/JS/VCS tool installations.                   |
 | the maintenance orchestrator run security scan     | project path    | security scan report  | Run cargo-audit or bandit for vulnerability scanning.          |
 | the maintenance orchestrator run dependency report | project path    | result                | Parse and list project dependencies.                           |
 | the maintenance orchestrator cancel                | job id          | ()                    | Cancel a running operation (currently no-op).                  |
-| the maintenance checker diagnose toolchain         | —              | toolchain diagnostics | Business logic for toolchain diagnostics.                      |
+| the maintenance checker diagnose toolchain         | —               | toolchain diagnostics | Business logic for toolchain diagnostics.                      |
 | the maintenance checker run security scan          | project path    | security scan report  | Business logic for security scanning.                          |
 | the maintenance checker run dependency report      | project path    | result                | Business logic for dependency reporting.                       |
 | the tool executor run tool                         | tool name, args | tool output           | Run an external tool as subprocess.                            |
@@ -179,22 +178,22 @@ The maintenance crate provides operational health and upkeep commands for the li
 
 ## Test Scenarios / QA Checklist
 
-- [ ]  Doctor with all tools installed — returns healthy: true, all statuses "OK".
-- [ ]  Doctor with missing ruff — returns issue "Linter adapter 'ruff' is not installed".
-- [ ]  Doctor with no config file — returns issue "No configuration file found".
-- [ ]  Stats on Python project — correct file count and test ratio.
-- [ ]  Stats on empty directory — returns all zeros.
-- [ ]  Clean removes `.pytest_cache` directories from project.
-- [ ]  Clean skips `target/` and `.git/` directories.
-- [ ]  Update upgrades ruff, mypy, bandit, radon independently.
-- [ ]  Diagnose toolchain with cargo installed — reports "OK".
-- [ ]  Diagnose toolchain with missing clippy — reports "FAIL" (required).
-- [ ]  Security scan on Rust project with Cargo.lock — runs cargo-audit.
-- [ ]  Security scan on Python project — runs bandit.
-- [ ]  Dependency report on Rust project — parses Cargo.lock + Cargo.toml.
-- [ ]  Dependency report with no dependency files — returns error.
-- [ ]  Dependency report on Python project with pyproject.toml — parses dependencies.
-- [ ]  Tool exists returns true for `cargo`, false for nonexistent tool.
+- [ ] Doctor with all tools installed — returns healthy: true, all statuses "OK".
+- [ ] Doctor with missing ruff — returns issue "Linter adapter 'ruff' is not installed".
+- [ ] Doctor with no config file — returns issue "No configuration file found".
+- [ ] Stats on Python project — correct file count and test ratio.
+- [ ] Stats on empty directory — returns all zeros.
+- [ ] Clean removes `.pytest_cache` directories from project.
+- [ ] Clean skips `target/` and `.git/` directories.
+- [ ] Update upgrades ruff, mypy, bandit, radon independently.
+- [ ] Diagnose toolchain with cargo installed — reports "OK".
+- [ ] Diagnose toolchain with missing clippy — reports "FAIL" (required).
+- [ ] Security scan on Rust project with Cargo.lock — runs cargo-audit.
+- [ ] Security scan on Python project — runs bandit.
+- [ ] Dependency report on Rust project — parses Cargo.lock + Cargo.toml.
+- [ ] Dependency report with no dependency files — returns error.
+- [ ] Dependency report on Python project with pyproject.toml — parses dependencies.
+- [ ] Tool exists returns true for `cargo`, false for nonexistent tool.
 
 ## Assumptions & Constraints
 
@@ -206,9 +205,8 @@ The maintenance crate provides operational health and upkeep commands for the li
 
 ## Glossary
 
-
 | Term              | Definition                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------- |
+| ----------------- | ----------------------------------------------------------------------------------------------- |
 | Toolchain         | The set of programming language tools (compilers, linters, formatters) installed on the system. |
 | Dependency Report | A listing of all project dependencies with name, version, and classification.                   |
 | Cache Directory   | Temporary build/lint output directories that can be safely deleted.                             |

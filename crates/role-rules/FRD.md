@@ -24,6 +24,7 @@ Target Path
 ## Functional Requirements
 
 ### FR-001: File Collection and Classification
+
 - **Description**: Walk the target directory, collect source files, and classify each by its filename prefix to determine its AES layer.
 - **Input**: Target file path (directory or single file) and architecture configuration.
 - **Output**: All violations found across all files.
@@ -37,6 +38,7 @@ Target Path
 - **Error Handling**: Unreadable files produce a default empty content string and are checked with empty content (no crash).
 
 ### FR-002: Taxonomy Purity and Primitive Restriction (AES401)
+
 - **Description**: Audit taxonomy layer files (`taxonomy_*`) for raw primitive types in type annotations and ensure constant files contain only pure constant declarations.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -50,6 +52,7 @@ Target Path
 - **Error Handling**: Empty files produce no violations. Files with unsupported language produce no violations.
 
 ### FR-003: Contract Primitive Restriction (AES402)
+
 - **Description**: Audit contract layer files (`contract_*`) for raw primitive types in method signatures.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -62,6 +65,7 @@ Target Path
 - **Error Handling**: Unparseable signatures are skipped (fail-safe, no false positives).
 
 ### FR-004: Capability Protocol Implementation (AES403)
+
 - **Description**: Audit capability files (`capabilities_*` / `capability_*`) for correct protocol implementation and composition constraints.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -74,6 +78,7 @@ Target Path
 - **Error Handling**: Files that cannot be parsed for imports/types produce no violations (fail-safe).
 
 ### FR-005: Utility Purity (AES404)
+
 - **Description**: Audit utility files (`utility_*`) to ensure they contain only stateless standalone functions with no type definitions.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -89,6 +94,7 @@ Target Path
 - **Error Handling**: Empty files produce no violations.
 
 ### FR-006: Agent Orchestrator Composition (AES405)
+
 - **Description**: Audit agent files (`agent_*`) for correct aggregate implementation and composition constraints.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -101,6 +107,7 @@ Target Path
 - **Error Handling**: Files that cannot be parsed produce no violations (fail-safe).
 
 ### FR-007: Surface Passive Role (AES406)
+
 - **Description**: Audit surface files (`surface_*` / `surfaces_*`) for role-appropriate constraints based on Smart/Utility/Passive classification.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
@@ -120,6 +127,7 @@ Target Path
 - **Error Handling**: Files with unclassifiable suffixes default to Passive group.
 
 ### FR-008: Configuration-Driven Ignore and Toggle
+
 - **Description**: Respect per-layer configuration for ignore paths and enable/disable toggles.
 - **Input**: Architecture configuration.
 - **Output**: Filtered scan results.
@@ -132,27 +140,27 @@ Target Path
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| Run role enforcement audit | Target file path | Lint results | Run all role checks on target path |
-| Get auditor name | — | String | Returns "role-rules" |
-| Dispatch all files to layer checkers | File list, lint result collector | — | Dispatch all files to layer checkers |
-| Taxonomy entity primitive check | Source content, lint result collector | — | AES401 entity primitive check |
-| Taxonomy error primitive check | Source content, lint result collector | — | AES401 error primitive check |
-| Taxonomy event primitive check | Source content, lint result collector | — | AES401 event primitive check |
-| Taxonomy constant purity check | Source content, lint result collector | — | AES401 constant purity check |
-| Contract protocol primitive check | Source content | Lint results | AES402 protocol primitive check |
-| Contract aggregate primitive check | Source content | Lint results | AES402 aggregate primitive check |
-| Capability composition check | Source content, root dir, lint result collector | — | AES403 capability composition check |
-| Utility purity check | Source content, lint result collector | — | AES404 utility purity check |
-| Agent composition check | Source content, root dir, lint result collector | — | AES405 agent composition check |
-| Surface global function count | Source content, lint result collector | — | AES406 global function count |
-| Smart surface checks | Source content, lint result collector | — | AES406 smart surface checks |
-| Utility surface checks | Source content, lint result collector | — | AES406 utility surface checks |
-| Passive surface checks | Source content, lint result collector | — | AES406 passive surface checks |
-| Create DI container with config | Architecture configuration | Role enforcement container | DI container with config |
-| Create DI from config orchestrator | Config orchestrator reference, root dir | Role enforcement container | Canonical DI from config orchestrator |
-| Expose orchestrator | — | Role runner aggregate | Expose orchestrator as trait object |
+| Function                             | Input                                           | Output                     | Description                           |
+| ------------------------------------ | ----------------------------------------------- | -------------------------- | ------------------------------------- |
+| Run role enforcement audit           | Target file path                                | Lint results               | Run all role checks on target path    |
+| Get auditor name                     | —                                               | String                     | Returns "role-rules"                  |
+| Dispatch all files to layer checkers | File list, lint result collector                | —                          | Dispatch all files to layer checkers  |
+| Taxonomy entity primitive check      | Source content, lint result collector           | —                          | AES401 entity primitive check         |
+| Taxonomy error primitive check       | Source content, lint result collector           | —                          | AES401 error primitive check          |
+| Taxonomy event primitive check       | Source content, lint result collector           | —                          | AES401 event primitive check          |
+| Taxonomy constant purity check       | Source content, lint result collector           | —                          | AES401 constant purity check          |
+| Contract protocol primitive check    | Source content                                  | Lint results               | AES402 protocol primitive check       |
+| Contract aggregate primitive check   | Source content                                  | Lint results               | AES402 aggregate primitive check      |
+| Capability composition check         | Source content, root dir, lint result collector | —                          | AES403 capability composition check   |
+| Utility purity check                 | Source content, lint result collector           | —                          | AES404 utility purity check           |
+| Agent composition check              | Source content, root dir, lint result collector | —                          | AES405 agent composition check        |
+| Surface global function count        | Source content, lint result collector           | —                          | AES406 global function count          |
+| Smart surface checks                 | Source content, lint result collector           | —                          | AES406 smart surface checks           |
+| Utility surface checks               | Source content, lint result collector           | —                          | AES406 utility surface checks         |
+| Passive surface checks               | Source content, lint result collector           | —                          | AES406 passive surface checks         |
+| Create DI container with config      | Architecture configuration                      | Role enforcement container | DI container with config              |
+| Create DI from config orchestrator   | Config orchestrator reference, root dir         | Role enforcement container | Canonical DI from config orchestrator |
+| Expose orchestrator                  | —                                               | Role runner aggregate      | Expose orchestrator as trait object   |
 
 ## Integration Points
 
@@ -212,15 +220,15 @@ Target Path
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **AES** | Architecture Enforcement Standard — the 7-layer coding convention |
-| **Smart surface** | Surface with `_command`, `_controller`, `_page`, `_entry` suffix — may contain orchestration |
+| Term                | Definition                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| **AES**             | Architecture Enforcement Standard — the 7-layer coding convention                                |
+| **Smart surface**   | Surface with `_command`, `_controller`, `_page`, `_entry` suffix — may contain orchestration     |
 | **Utility surface** | Surface with `_hook`, `_store`, `_action`, `_screen`, `_router` suffix — supports smart surfaces |
-| **Passive surface** | Any surface file not classified as Smart or Utility — presentation-only |
-| **Primitive type** | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures |
-| **Noise stripping** | Removal of comments, docstrings, macros, and template literals before rule checking |
-| **VO** | Value Object — a typed wrapper around a primitive that replaces raw types in signatures |
+| **Passive surface** | Any surface file not classified as Smart or Utility — presentation-only                          |
+| **Primitive type**  | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures              |
+| **Noise stripping** | Removal of comments, docstrings, macros, and template literals before rule checking              |
+| **VO**              | Value Object — a typed wrapper around a primitive that replaces raw types in signatures          |
 
 ## Reference
 

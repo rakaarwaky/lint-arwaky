@@ -33,6 +33,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 ## Functional Requirements
 
 ### FR-001: Check Command (Self-Lint)
+
 - **Description**: Run full architecture compliance analysis on the current lint-arwaky project itself.
 - **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `format: Format`, `git_diff: bool`
 - **Output**: `ExitCode` (0 = pass, 1 = violations found, 2 = error)
@@ -49,6 +50,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
 ### FR-002: Scan Command (Multi-Workspace)
+
 - **Description**: Multi-workspace discovery scan that auto-detects workspace members and runs analysis on each.
 - **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`
 - **Output**: `ExitCode` (0 = clean, 1 = violations, 2 = error)
@@ -67,6 +69,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Pipeline errors per workspace logged as warnings; global errors return exit code 2.
 
 ### FR-003: CI Command
+
 - **Description**: CI-optimized analysis with configurable threshold and auto-fail on CRITICAL violations.
 - **Input**: `code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>`, `path: Option<FilePath>`, `threshold: Threshold`
 - **Output**: `ExitCode` (0 = pass, 1 = fail)
@@ -82,6 +85,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: None — pure computation on existing results.
 
 ### FR-004: Fix Command
+
 - **Description**: Apply automatic safe fixes to files that violate rules.
 - **Input**: `path: Option<FilePath>`, `dry_run: bool`
 - **Output**: `ExitCode` (0 = all fixed, 1 = remaining violations)
@@ -99,6 +103,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Exit code 1 if any violations remain after fix.
 
 ### FR-005: Doctor Command
+
 - **Description**: Toolchain diagnostics — check availability and version of required tools.
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`
 - **Output**: `ExitCode` (always 0 — diagnostic only)
@@ -116,6 +121,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: None — diagnostic only, always exit 0.
 
 ### FR-006: Security Command
+
 - **Description**: Vulnerability scanning via cargo-audit (Rust) or bandit (Python).
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`, `path: Option<FilePath>`
 - **Output**: `ExitCode` (0 = clean, 1 = vulnerabilities found, 3 = tool missing)
@@ -131,6 +137,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Tool not found → exit code 3; scan failures → exit code 2.
 
 ### FR-007: Dependencies Command
+
 - **Description**: Dependency report from Cargo.lock / pyproject.toml / package.json.
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`, `path: Option<FilePath>`
 - **Output**: `ExitCode` (0 = success, 2 = error)
@@ -146,6 +153,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: `Err` from dependency report → error message + exit code 2.
 
 ### FR-008: Init Command
+
 - **Description**: Create default lint-arwaky configuration files and distribute documentation.
 - **Input**: `setup_orchestrator: Arc<dyn SetupManagementAggregate>`
 - **Output**: `ExitCode` (0 = success, 1 = partial failure)
@@ -162,6 +170,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Per-file errors logged; overall exit code 1 if any failure.
 
 ### FR-009: Install Command
+
 - **Description**: Install adapter dependencies for detected languages.
 - **Input**: `setup_orchestrator: Arc<dyn SetupManagementAggregate>`, `sudo: bool`
 - **Output**: `ExitCode` (0 = success, 1 = partial failure)
@@ -177,6 +186,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Per-language install status reported; overall exit code 1 if any failure.
 
 ### FR-010: MCP Config Command
+
 - **Description**: Print MCP server configuration JSON for a specified client.
 - **Input**: `client: &str` (claude, cursor, windsurf, copilot, hermes, vscode, all)
 - **Output**: `ExitCode` (always 0)
@@ -192,6 +202,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Binary resolution failure → fallback string; canonicalization failure → error message.
 
 ### FR-011: Config Show Command
+
 - **Description**: Display active configuration files and their contents with secret redaction.
 - **Input**: the config orchestrator aggregate
 - **Output**: `ExitCode` (always 0)
@@ -207,6 +218,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: Config read errors logged as warnings.
 
 ### FR-012: Adapters Command
+
 - **Description**: List enabled external lint adapters discovered by the external-lint layer.
 - **Input**: the external lint aggregate
 - **Output**: `ExitCode` (always 0)
@@ -220,6 +232,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: None.
 
 ### FR-013: Git Diff Command
+
 - **Description**: Run AES analysis only on files changed since a specified git base.
 - **Input**: `git_aggregate: Arc<dyn GitHooksAggregate>`, `code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>`, `base: GitBranchName`, `project_path: Option<&str>`, `filter: Option<&str>`
 - **Output**: `ExitCode` (0 = clean, 1 = violations)
@@ -236,6 +249,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handling**: None — analysis runs per-file independently.
 
 ### FR-014: Watch Command
+
 - **Description**: Monitor file changes and trigger re-scans on modified files.
 - **Input**: `watch_aggregate: Arc<dyn IWatchAggregate>`, `path: Option<FilePath>`
 - **Output**: `ExitCode` (2 = error setting up handler)
@@ -249,6 +263,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Error Handler**: Signal handler registration failure → exit code 2.
 
 ### FR-015: Analysis Pipeline Orchestration
+
 - **Description**: Coordinate all 6 linter groups to produce a unified ScanReport.
 - **Input**: `ScanRequest` (target path, mode, filter, member, format)
 - **Output**: `Result<ScanReport, PipelineError>`
@@ -269,22 +284,22 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-|---|---|---|---|
-| Check | check options | Exit code | Self-lint analysis on current project |
-| Scan | scan options | Exit code | Multi-workspace analysis with discovery |
-| CI | linter, path, threshold | Exit code | CI-mode threshold comparison |
-| Fix | path, dry-run flag, linter, factory | Exit code | Apply automatic fixes |
-| Doctor | maintenance aggregate | Exit code | Toolchain diagnostics |
-| Security | maintenance aggregate, path | Exit code | Vulnerability scan |
-| Dependencies | maintenance aggregate, path | Exit code | Dependency report |
-| Init | setup aggregate | Exit code | Create config files |
-| Install | setup aggregate, sudo flag | Exit code | Install adapter dependencies |
-| MCP Config | client name | Exit code | Print MCP client config JSON |
-| Config Show | config orchestrator aggregate | Exit code | Display active config files |
-| Adapters | external lint aggregate | Exit code | List enabled adapters |
-| Git Diff | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files |
-| Watch | watch aggregate, path | Exit code | File watch with auto-lint |
+| Operation    | Input                                             | Output    | Description                             |
+| ------------ | ------------------------------------------------- | --------- | --------------------------------------- |
+| Check        | check options                                     | Exit code | Self-lint analysis on current project   |
+| Scan         | scan options                                      | Exit code | Multi-workspace analysis with discovery |
+| CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison            |
+| Fix          | path, dry-run flag, linter, factory               | Exit code | Apply automatic fixes                   |
+| Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                   |
+| Security     | maintenance aggregate, path                       | Exit code | Vulnerability scan                      |
+| Dependencies | maintenance aggregate, path                       | Exit code | Dependency report                       |
+| Init         | setup aggregate                                   | Exit code | Create config files                     |
+| Install      | setup aggregate, sudo flag                        | Exit code | Install adapter dependencies            |
+| MCP Config   | client name                                       | Exit code | Print MCP client config JSON            |
+| Config Show  | config orchestrator aggregate                     | Exit code | Display active config files             |
+| Adapters     | external lint aggregate                           | Exit code | List enabled adapters                   |
+| Git Diff     | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files               |
+| Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint               |
 
 ## Integration Points
 
@@ -352,15 +367,15 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Glossary
 
-| Term | Definition |
-|---|---|
-| AES | Architecture Enforcement Specification — the coding standard enforced by lint-arwaky |
-| Pipeline | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan |
-| Surface | Thin CLI handler layer — parses args, delegates to agents, formats output |
-| Aggregate | Agent-layer orchestrator implementing a contract trait |
-| DI Container | Composition root that wires capabilities to contract protocols |
-| LintResult | Individual violation finding with file, line, code, severity, message |
-| ScanReport | Aggregated results + diagnostics from a full pipeline run |
+| Term         | Definition                                                                           |
+| ------------ | ------------------------------------------------------------------------------------ |
+| AES          | Architecture Enforcement Specification — the coding standard enforced by lint-arwaky |
+| Pipeline     | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan |
+| Surface      | Thin CLI handler layer — parses args, delegates to agents, formats output            |
+| Aggregate    | Agent-layer orchestrator implementing a contract trait                               |
+| DI Container | Composition root that wires capabilities to contract protocols                       |
+| LintResult   | Individual violation finding with file, line, code, severity, message                |
+| ScanReport   | Aggregated results + diagnostics from a full pipeline run                            |
 
 ## Reference
 

@@ -26,6 +26,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 ## Functional Requirements
 
 ### FR-001: Render 3-Panel Layout
+
 - **Description**: Render a three-panel layout with header, shortcut bar, and status bar.
 - **Input**: Application state — current application state.
 - **Output**: Ratatui frame rendered to terminal.
@@ -42,6 +43,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Terminal I/O errors propagate from the draw call.
 
 ### FR-002: Navigate File List
+
 - **Description**: Navigate the file list panel using keyboard shortcuts with context-aware scrolling.
 - **Input**: Key events (j/k, Up/Down, Home/End, PageUp/PageDown).
 - **Output**: Updated application state with new selection index, scroll offset, and preview content.
@@ -60,6 +62,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: No error paths; bounds checking prevents overflow.
 
 ### FR-003: Navigate Directories
+
 - **Description**: Enter directories and navigate back to parent, clamped to project root boundary.
 - **Input**: Key events (h/Left, l/Right/Enter).
 - **Output**: Updated application state with new current directory and file listing.
@@ -76,6 +79,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Directory read failures result in empty listing with status message.
 
 ### FR-004: Focus Cycling Between Panels
+
 - **Description**: Cycle keyboard focus between Tree, FileList, and Preview panels.
 - **Input**: Tab / BackTab (Shift+Tab).
 - **Output**: Updated application state with new panel focus value.
@@ -88,6 +92,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: No error paths; pure state transition.
 
 ### FR-005: Run Lint Actions (Path-Scoped)
+
 - **Description**: Execute lint actions on the currently selected file or directory.
 - **Input**: Key events (c, s, f, t, o, Ctrl+S, Ctrl+D, Ctrl+P).
 - **Output**: Updated application state with preview text showing action results and violation count.
@@ -111,6 +116,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Action failures return a lint execution result with success: false and error message.
 
 ### FR-006: Run Global Actions
+
 - **Description**: Execute actions that operate globally (not path-scoped).
 - **Input**: Key events (d, i, I, m, C, H, U, a, v, w).
 - **Output**: Updated application state with preview text showing action results.
@@ -132,6 +138,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Failures return a lint execution result with error message.
 
 ### FR-007: Search and Filter Files
+
 - **Description**: Incremental file filtering within the current directory listing.
 - **Input**: `/` to start, character input, Backspace, Enter, Esc.
 - **Output**: Filtered file list in application state.
@@ -149,6 +156,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: No error paths; pure string matching.
 
 ### FR-008: Mouse Interaction
+
 - **Description**: Support mouse clicks, scroll wheel, and drag for panel interaction and scrolling.
 - **Input**: Mouse events (click, scroll, drag).
 - **Output**: Updated application state with focus changes and scroll position.
@@ -166,6 +174,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: No error paths; bounds checking prevents overflow.
 
 ### FR-009: Copy Actions
+
 - **Description**: Copy preview content to clipboard or save to file.
 - **Input**: `y` (clipboard), `Ctrl+Y` (file).
 - **Output**: Updated status message.
@@ -180,6 +189,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Clipboard and file write failures return descriptive status messages.
 
 ### FR-010: Help Overlay
+
 - **Description**: Toggle a help overlay showing all keyboard shortcuts.
 - **Input**: `?` key.
 - **Output**: Help overlay rendered in Preview panel.
@@ -192,6 +202,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: No error paths.
 
 ### FR-011: Path Input Dialog
+
 - **Description**: Startup dialog for entering project root path.
 - **Input**: Character input, Backspace, Enter, Tab.
 - **Output**: Updated application state with project root set.
@@ -209,6 +220,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 - **Error Handling**: Invalid path stays in dialog; no crash.
 
 ### FR-012: Background Scan with Progress
+
 - **Description**: Run multi-adapter scan in a background thread with real-time progress updates.
 - **Input**: `s` key (scan action).
 - **Output**: Preview panel shows scan output when complete; status bar shows progress during scan.
@@ -227,25 +239,25 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## API Contract
 
-| Function | Input | Output | Description |
-|----------|-------|--------|-------------|
-| the TUI command surface run | — | result | Initialize terminal, run event loop, restore terminal on exit. |
-| the TUI orchestrator handle event | application state, TUI event | () | Delegate event to action handler. |
-| the TUI orchestrator load directory | application state, path | () | Delegate directory load to action handler. |
-| the TUI orchestrator load preview | application state | () | Delegate preview load to action handler. |
-| the TUI orchestrator start scan | application state | optional channel receiver | Start background scan thread, return progress channel. |
-| the TUI orchestrator poll scan | application state, channel receiver | () | Poll scan progress and update state. |
-| the action handler handle | application state, TUI event | () | Central event dispatch — maps every TUI event to a state mutation or I/O. |
-| the action handler load directory | application state, path | () | Read directory, sort entries (dirs first), reset selection. |
-| the action handler load preview | application state | () | Load file preview for selected entry if it's a file. |
-| the lint executor check | path, flags | lint execution result | Run AES compliance check. |
-| the lint executor scan | path | lint execution result | Run comprehensive multi-adapter scan. |
-| the lint executor fix | path, flags | lint execution result | Auto-fix violations. |
-| the lint executor ci | path, flags | lint execution result | CI mode with threshold check. |
-| the lint executor doctor | — | lint execution result | Environment diagnostics. |
-| the file system utility list directory | path | list of file entries | List directory entries (excluding hidden files). |
-| the file system utility read file preview | path, max lines | display content | Read file with line numbers, truncate at max_lines. |
-| the file system utility copy text to clipboard | string | boolean | Copy text via arboard or xclip/wl-copy fallback. |
+| Function                                       | Input                               | Output                    | Description                                                               |
+| ---------------------------------------------- | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------- |
+| the TUI command surface run                    | —                                   | result                    | Initialize terminal, run event loop, restore terminal on exit.            |
+| the TUI orchestrator handle event              | application state, TUI event        | ()                        | Delegate event to action handler.                                         |
+| the TUI orchestrator load directory            | application state, path             | ()                        | Delegate directory load to action handler.                                |
+| the TUI orchestrator load preview              | application state                   | ()                        | Delegate preview load to action handler.                                  |
+| the TUI orchestrator start scan                | application state                   | optional channel receiver | Start background scan thread, return progress channel.                    |
+| the TUI orchestrator poll scan                 | application state, channel receiver | ()                        | Poll scan progress and update state.                                      |
+| the action handler handle                      | application state, TUI event        | ()                        | Central event dispatch — maps every TUI event to a state mutation or I/O. |
+| the action handler load directory              | application state, path             | ()                        | Read directory, sort entries (dirs first), reset selection.               |
+| the action handler load preview                | application state                   | ()                        | Load file preview for selected entry if it's a file.                      |
+| the lint executor check                        | path, flags                         | lint execution result     | Run AES compliance check.                                                 |
+| the lint executor scan                         | path                                | lint execution result     | Run comprehensive multi-adapter scan.                                     |
+| the lint executor fix                          | path, flags                         | lint execution result     | Auto-fix violations.                                                      |
+| the lint executor ci                           | path, flags                         | lint execution result     | CI mode with threshold check.                                             |
+| the lint executor doctor                       | —                                   | lint execution result     | Environment diagnostics.                                                  |
+| the file system utility list directory         | path                                | list of file entries      | List directory entries (excluding hidden files).                          |
+| the file system utility read file preview      | path, max lines                     | display content           | Read file with line numbers, truncate at max_lines.                       |
+| the file system utility copy text to clipboard | string                              | boolean                   | Copy text via arboard or xclip/wl-copy fallback.                          |
 
 ## Integration Points
 
@@ -307,12 +319,12 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## Glossary
 
-| Term | Definition |
-|------|-----------|
-| Panel Focus | Which panel (Tree/FileList/Preview) receives keyboard input. |
-| Preview Mode | What content the Preview panel displays (file content, lint results, help overlay). |
-| Application State | Central state holding all TUI state (selection, scroll, focus, etc.). |
-| Layer Badge | Colored tag showing the AES layer (taxonomy/contract/capabilities/agent/root/surface/utility) of a file. |
+| Term              | Definition                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| Panel Focus       | Which panel (Tree/FileList/Preview) receives keyboard input.                                             |
+| Preview Mode      | What content the Preview panel displays (file content, lint results, help overlay).                      |
+| Application State | Central state holding all TUI state (selection, scroll, focus, etc.).                                    |
+| Layer Badge       | Colored tag showing the AES layer (taxonomy/contract/capabilities/agent/root/surface/utility) of a file. |
 
 ## Reference
 
