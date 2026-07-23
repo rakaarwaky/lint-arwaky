@@ -395,7 +395,7 @@ architecture:
 
     AES402:
       enabled: true
-      scope: ["contract(aggregate)", "contract(port|protocol)"]
+      scope: ["contract(aggregate)", "contract(protocol)"]
       exceptions: ["__init__.py", "__main__.py", "main.py"]
 
     AES403:
