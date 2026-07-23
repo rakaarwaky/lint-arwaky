@@ -103,15 +103,10 @@ fn import_orchestrator_is_send_sync() {
 // ─── Root: Container Wiring ───────────────────────────────
 
 #[test]
-fn import_container_produces_all_protocol_arcs() {
+fn import_container_produces_aggregate_arc() {
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
     let container = ImportContainer::new_with_config(config);
 
-    let _mandatory: std::sync::Arc<dyn IImportMandatoryProtocol> = container.mandatory();
-    let _forbidden: std::sync::Arc<dyn IImportForbiddenProtocol> = container.forbidden();
-    let _unused: std::sync::Arc<dyn IUnusedImportProtocol> = container.unused();
-    let _dummy: std::sync::Arc<dyn IDummyImportCheckerProtocol> = container.dummy();
-    let _cycle: std::sync::Arc<dyn ICycleImportProtocol> = container.cycle();
     let _orchestrator: std::sync::Arc<dyn IImportRunnerAggregate> = container.orchestrator();
 }
 

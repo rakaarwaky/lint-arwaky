@@ -78,32 +78,30 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 ## Data Model / Entity Relationship
 
 ```
-ImportRuleVO {
-    pattern: String
-    message: String
-    severity: Severity
-}
+Import rule (value object)
+  - pattern: string
+  - message: string
+  - severity: severity level
 
-LayerHierarchy {
-    taxonomy: Vec<String>
-    contract: Vec<String>
-    utility: Vec<String>
-    capabilities: Vec<String>
-    agent: Vec<String>
-    surface: Vec<String>
-    root: Vec<String>
-}
+Layer hierarchy
+  - taxonomy: list of strings
+  - contract: list of strings
+  - utility: list of strings
+  - capabilities: list of strings
+  - agent: list of strings
+  - surface: list of strings
+  - root: list of strings
 ```
 
 ## API Contract
 
-| Function                    | Input                      | Output          | Description  |
-| --------------------------- | -------------------------- | --------------- | ------------ |
-| `check_forbidden_imports()` | File path, imports         | Vec<Diagnostic> | Check AES201 |
-| `run_mandatory_imports()`   | File path, imports         | Vec<Diagnostic> | Check AES202 |
-| `check_unused_imports()`    | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
-| `check_dummy_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES204 |
-| `check_cycles()`            | All files, imports         | Vec<Diagnostic> | Check AES205 |
+| Function                           | Input                      | Output          | Description  |
+| ---------------------------------- | -------------------------- | --------------- | ------------ |
+| Check for forbidden imports        | File path, imports         | Vec<Diagnostic> | Check AES201 |
+| Check for mandatory imports        | File path, imports         | Vec<Diagnostic> | Check AES202 |
+| Check for unused imports           | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
+| Check for dummy imports            | File path, imports         | Vec<Diagnostic> | Check AES204 |
+| Check for circular dependencies    | All files, imports         | Vec<Diagnostic> | Check AES205 |
 
 ## Integration Points
 
@@ -112,7 +110,7 @@ LayerHierarchy {
 
 ## Non-functional Requirements (Detailed)
 
-- Performance: Check 1000 files in < 2 seconds (validated via criterion benchmark in `benches/bench_import_rules_throughput.rs`)
+- Performance: Check 1000 files in < 2 seconds (validated via criterion benchmark in the benchmark suite)
 - Memory: O(n) where n = number of imports
 - Accuracy: Zero false positives for valid imports
 
@@ -283,7 +281,7 @@ architecture:
 
 ## Appendix B: File Discovery Algorithm
 
-The `ImportOrchestrator::collect_files()` method discovers source files for analysis. Here is the algorithm:
+The file collection method of the import analysis orchestrator discovers source files for analysis. Here is the algorithm:
 
 ### Algorithm
 

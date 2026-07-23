@@ -1,7 +1,7 @@
 // PURPOSE: Verify that all public structs implement their required contract traits.
 // Layer: Contract verification — runs in ms, every PR.
 
-use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
+use maintenance_lint_arwaky::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
@@ -9,6 +9,7 @@ use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::contract_tool_executor_protocol::IToolExecutorProtocol;
+use std::sync::Arc;
 
 // ─── MaintenanceChecker implements IMaintenanceCheckerProtocol ───
 
@@ -74,12 +75,6 @@ fn maintenance_checker_implements_default() {
 fn tool_executor_adapter_implements_default() {
     let adapter = ToolExecutorAdapter;
     let _ = adapter;
-}
-
-#[test]
-fn orchestrator_implements_default() {
-    let orch = MaintenanceCommandsOrchestrator::default();
-    let _ = orch;
 }
 
 #[test]

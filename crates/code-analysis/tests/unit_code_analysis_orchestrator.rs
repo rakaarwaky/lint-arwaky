@@ -8,7 +8,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 
 fn orchestrator() -> CodeAnalysisOrchestrator {
-    CodeAnalysisOrchestrator::new()
+    CodeAnalysisOrchestrator::new_with_defaults()
 }
 
 // ─── calc_score: Perfect score with no violations ────────────────────

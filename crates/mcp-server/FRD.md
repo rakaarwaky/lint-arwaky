@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools accessible by AI agents and IDEs. It registers four MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`) via the `rmcp` crate, delegates command execution to the `AnalysisPipelineOrchestrator`, and returns structured JSON responses. The crate follows the AES 7-layer architecture: `McpServerOrchestrator` (agent) implements `IMcpServerAggregate`, `LintArwakyMcpServer` (surface) registers tools and handles protocol, and `McpContainer` (root) wires all dependencies.
+The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools accessible by AI agents and IDEs. It registers four MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`) via the `rmcp` crate, delegates command execution to the analysis pipeline orchestrator, and returns structured JSON responses. The crate follows the AES 7-layer architecture: the MCP server orchestrator (agent) implements the MCP server aggregate, the lint-arwaky MCP server (surface) registers tools and handles protocol, and the MCP container (root) wires all dependencies.
 
 ## Functional Requirements
 
@@ -12,12 +12,12 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 - **Input**: `ExecuteCommandArgs` with `action: String` and optional `args` map (keys: `path`, `threshold`, `client`).
 - **Output**: JSON string with `status`, `action`, and action-specific fields (e.g., `total_violations`, `results`, `error`).
 - **Business Rules**:
-  - `check` / `scan`: defaults path to `"."`, creates `ScanRequest` with `ScanMode::Scan`, delegates to `IAnalysisPipelineAggregate::run`.
-  - `ci`: defaults path to `"."`, defaults threshold to 80, creates `ScanRequest` with `ScanMode::Ci { threshold }`, returns `pass` if violations == 0 else `fail`.
+  - `check` / `scan`: defaults path to `"."`, creates a scan request with scan mode set to scan, delegates to the analysis pipeline aggregate's run method.
+  - `ci`: defaults path to `"."`, defaults threshold to 80, creates a scan request with CI scan mode and threshold, returns `pass` if violations == 0 else `fail`.
   - `fix`: returns placeholder success response.
   - `doctor`: checks availability of tools (`cargo`, `python3`, `ruff`, `mypy`, `bandit`, `node`, `git`) via `which`.
-  - `adapters`: queries `IExternalLintAggregate::adapter_names()` and checks each via `which`.
-  - `version`: returns `CARGO_PKG_VERSION`.
+  - `adapters`: queries the external lint aggregate's adapter names and checks each via `which`.
+  - `version`: returns the crate version.
   - `install-hook` / `uninstall-hook`: returns success messages.
   - `init` / `install` / `mcp-config` / `config-show`: returns status JSON.
   - `orphan` / `security` / `duplicates` / `dependencies`: returns action + path.
@@ -40,7 +40,7 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 - **Business Rules**:
   - If `domain` is provided and non-empty, only commands whose name contains the domain string are returned.
   - If `domain` is `None` or empty, all commands are returned.
-  - Commands are sourced from `COMMAND_CATALOG` in `taxonomy_command_catalog_vo`.
+  - Commands are sourced from the command catalog in the taxonomy layer.
 - **Edge Cases**:
   - No commands match the domain filter: returns empty `commands` array with `total: 0`.
   - Empty catalog: returns empty array.
@@ -111,8 +111,8 @@ ReadSkillArgs (input VO)
   └── section: Option<String>
 
 ScanRequest (to pipeline)
-  ├── target: ScanTarget (path)
-  └── mode: ScanMode (Scan | Ci { threshold })
+  ├── target: scan target (path)
+  └── mode: scan mode (scan | ci with threshold)
 
 ServerInfo (MCP protocol)
   ├── protocol_version: ProtocolVersion
@@ -124,20 +124,20 @@ ServerInfo (MCP protocol)
 
 | Function | Input | Output | Description |
 |----------|-------|--------|-------------|
-| `McpServerOrchestrator::execute_command(args)` | `Parameters<ExecuteCommandArgs>` | `String` (JSON) | Execute a CLI command via MCP |
-| `McpServerOrchestrator::list_commands(args)` | `Parameters<ListCommandsArgs>` | `String` (JSON) | List available commands |
-| `McpServerOrchestrator::read_skill(args)` | `Parameters<ReadSkillArgs>` | `String` (JSON) | Read SKILL.md by section |
-| `LintArwakyMcpServer::health_check()` | None | `String` (JSON) | Check adapter availability |
-| `LintArwakyMcpServer::get_info()` | None | `ServerInfo` | Return MCP server metadata |
-| `McpContainer::new_default()` | None | `McpContainer` | Wire all dependencies |
+| The MCP server orchestrator's execute command method | execute command args | JSON string | Execute a CLI command via MCP |
+| The MCP server orchestrator's list commands method | list commands args | JSON string | List available commands |
+| The MCP server orchestrator's read skill method | read skill args | JSON string | Read SKILL.md by section |
+| The MCP server surface's health check method | none | JSON string | Check adapter availability |
+| The MCP server surface's get info method | none | server info | Return MCP server metadata |
+| The MCP container's default factory | none | MCP container | Wire all dependencies |
 
 ## Integration Points
 
 - **Internal**:
-  - `cli-commands` crate: `IAnalysisPipelineAggregate` for running lint pipelines, `COMMAND_CATALOG` for command metadata.
-  - `external-lint` crate: `IExternalLintAggregate` for adapter discovery.
-  - `code-analysis`, `import-rules`, `naming-rules`, `orphan-detector`, `role-rules`, `config-system` crates: wired via `McpContainer` for full pipeline support.
-  - `shared` crate: VOs, contracts, config types.
+  - The CLI commands crate: the analysis pipeline aggregate for running lint pipelines, the command catalog for command metadata.
+  - The external lint crate: the external lint aggregate for adapter discovery.
+  - The analysis, import rules, naming rules, orphan detection, role rules, and config system crates: wired via the MCP container for full pipeline support.
+  - The shared crate: VOs, contracts, config types.
 - **External**:
   - `rmcp` crate: MCP protocol framework (JSON-RPC, tool registration, server handler).
   - `serde_json`: JSON serialization/deserialization.
@@ -147,7 +147,7 @@ ServerInfo (MCP protocol)
 ## Non-functional Requirements (Detailed)
 
 - **Performance**: Standard operations (execute_command, list_commands, read_skill) should complete under 5 seconds. Health check involves multiple `which` subprocess calls; concurrent execution via `futures::future::join_all`.
-- **Memory**: Server holds references to all pipeline orchestrators (`Arc<dyn ...>`). Memory usage scales with the number of registered aggregates.
+- **Memory**: Server holds shared references to all pipeline orchestrators. Memory usage scales with the number of registered aggregates.
 - **Accuracy**: JSON responses must conform to MCP JSON-RPC standards. Tool discovery must be reliable for AI clients.
 - **Concurrency**: MCP server is `Clone`-able; tool handlers are `async` and can handle concurrent requests.
 - **Security**: The `execute_command` tool accepts arbitrary action strings; unknown actions return errors but do not execute arbitrary system commands.
@@ -174,7 +174,7 @@ ServerInfo (MCP protocol)
 ## Assumptions & Constraints
 
 - The `rmcp` crate provides a stable MCP JSON-RPC protocol implementation.
-- The `AnalysisPipelineOrchestrator` correctly handles all `ScanMode` variants.
+- The analysis pipeline orchestrator correctly handles all scan mode variants.
 - System has `which` command available for adapter detection.
 - SKILL.md exists in at least one of the searched candidate locations for `read_skill` to succeed.
 - The MCP server runs within a Tokio async runtime.

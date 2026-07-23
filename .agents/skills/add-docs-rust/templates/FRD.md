@@ -1,4 +1,4 @@
-# FRD — <feature-name>
+# FRD — <feature-name></feature>
 
 ## System Overview
 
@@ -6,33 +6,18 @@
 
 ## Functional Requirements
 
-### FR-001: <Feature Name>
+### FR-001: <Feature Name></feature>
 
-- **Description**: <what it does>
-- **Input**: <input data>
-- **Output**: <output data>
-- **Business Rules**: <validation logic>
-- **Edge Cases**: <edge case handling>
-- **Error Handling**: <error scenarios>
+- **Description**: <what it does></what>
+- **Input**: 
+- **Output**: <output data></output>
+- **Business Rules**: <validation logic></validation>
+- **Edge Cases**: <edge case handling></edge>
+- **Error Handling**: <error scenarios></error>
 
-### FR-002: <Feature Name>
+### FR-002: <Feature Name></feature>
 
 - ...
-
-## Data Model / Entity Relationship
-
-<Entity diagram or data structure definitions>
-
-## API Contract
-
-| Endpoint | Method | Payload | Response |
-| -------- | ------ | ------- | -------- |
-| `/path`  | GET    | -       | `{...}`  |
-
-## Integration Points
-
-- **3rd Party**: <service name, purpose>
-- **Internal**: <service name, purpose>
 
 ## Non-functional Requirements (Detailed)
 
@@ -42,7 +27,8 @@
 
 ## Test Scenarios / QA Checklist
 
-- [ ] <test scenario with expected result>
+- [ ] 
+  <test scenario with expected result>
 
 ## Assumptions & Constraints
 
@@ -50,8 +36,8 @@
 
 ## Glossary
 
-- **Term**: <definition>
+- **Term**: <definition></definition>
 
 ## Reference
 
-- PRD: <link to root PRD.md>
+- PRD:

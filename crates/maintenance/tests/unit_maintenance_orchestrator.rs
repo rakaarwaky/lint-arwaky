@@ -1,13 +1,17 @@
 // PURPOSE: Unit tests for MaintenanceCommandsOrchestrator — stats, clean, doctor, cancel.
 // Layer: Agent (target ≥ 60% coverage).
 
-use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
+use maintenance_lint_arwaky::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
+use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_job_id_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use std::sync::Arc;
 
 fn sut() -> MaintenanceCommandsOrchestrator {
-    MaintenanceCommandsOrchestrator::new()
+    let checker: Arc<dyn IMaintenanceCheckerProtocol> = Arc::new(MaintenanceChecker::new());
+    MaintenanceCommandsOrchestrator::new(MaintenanceDeps { checker })
 }
 
 // ─── stats ───

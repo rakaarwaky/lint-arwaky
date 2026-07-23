@@ -72,23 +72,11 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 // ─── Container Wiring ─────────────────────────────────────
 
 #[test]
-fn container_creates_all_capabilities() {
+fn container_creates_orchestrator() {
     let container = ImportContainer::new_with_config(full_config());
 
-    // Each accessor should return a valid Arc
-    let _m = container.mandatory();
-    let _f = container.forbidden();
-    let _u = container.unused();
-    let _d = container.dummy();
-    let _c = container.cycle();
+    // Orchestrator accessor should return a valid Arc
     let _o = container.orchestrator();
-}
-
-#[test]
-fn container_config_accessor_returns_config() {
-    let config = full_config();
-    let container = ImportContainer::new_with_config(config.clone());
-    assert!(container.config().enabled.value());
 }
 
 // ─── Full Pipeline: Clean Project ─────────────────────────

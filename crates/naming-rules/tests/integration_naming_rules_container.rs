@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use naming_rules_lint_arwaky::{
-    agent_naming_orchestrator::NamingOrchestrator,
+    agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps},
     capabilities_naming_convention_checker::NamingConventionChecker,
     capabilities_suffix_prefix_checker::SuffixPrefixChecker,
     root_naming_rules_container::NamingContainer,
@@ -118,7 +118,12 @@ async fn test_convention_and_suffix_checkers_work_together() {
 
     // Create orchestrator with both checkers
     let orchestrator =
-        NamingOrchestrator::new(convention_checker, suffix_checker, config, layer_map);
+        NamingOrchestrator::new(NamingOrchestratorDeps {
+            naming_convention_checker: convention_checker,
+            suffix_prefix_checker: suffix_checker,
+            config,
+            layer_map,
+        });
 
     // Should be able to run audit
     let result = orchestrator

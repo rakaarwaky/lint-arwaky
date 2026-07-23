@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The project-setup crate provides scaffolding facilities, doctor checks, and adapter installation for new and existing projects. It detects project languages (Rust, Python, JavaScript), generates MCP configuration for different AI clients (Claude, Hermes, VS Code), creates `.env` files, installs linter adapters via pip/npm, loads language-specific config templates, and manages XDG config directories. The crate follows the AES 7-layer architecture: `SetupManagementProcessor` (capabilities) implements `ISetupManagementProtocol`, `SetupManagementOrchestrator` (agent) delegates to the protocol, and `SetupContainer` (root) wires dependencies.
+The project-setup crate provides scaffolding facilities, doctor checks, and adapter installation for new and existing projects. It detects project languages (Rust, Python, JavaScript), generates MCP configuration for different AI clients (Claude, Hermes, VS Code), creates `.env` files, installs linter adapters via pip/npm, loads language-specific config templates, and manages XDG config directories. The crate follows the AES 7-layer architecture: the setup management processor (capabilities) implements the setup management protocol, the setup management orchestrator (agent) delegates to the protocol, and the setup container (root) wires dependencies.
 
 ## Functional Requirements
 
@@ -166,32 +166,32 @@ CreateConfigDirResult (output)
 
 | Function | Input | Output | Description |
 |----------|-------|--------|-------------|
-| `SetupManagementOrchestrator::generate_mcp_config(transport)` | `&TransportProtocol` | `McpConfigVO` | Generate base MCP config |
-| `SetupManagementOrchestrator::mcp_config_claude(transport)` | `&TransportProtocol` | `McpConfigVO` | Generate Claude Desktop MCP config |
-| `SetupManagementOrchestrator::mcp_config_hermes(transport)` | `&TransportProtocol` | `McpConfigVO` | Generate Hermes MCP config |
-| `SetupManagementOrchestrator::mcp_config_vscode(transport)` | `&TransportProtocol` | `McpConfigVO` | Generate VS Code MCP config |
-| `SetupManagementOrchestrator::generate_env(transport, home)` | `&TransportProtocol, &DirectoryPath` | `EnvContentVO` | Generate .env file content |
-| `SetupManagementOrchestrator::detect_language()` | None | `ProjectLanguageVO` | Detect primary project language |
-| `SetupManagementOrchestrator::detect_languages()` | None | `ProjectLanguagesVO` | Detect all project languages |
-| `SetupManagementOrchestrator::get_config_template(language)` | `&str` | `&'static str` | Load embedded YAML config template |
-| `SetupManagementOrchestrator::write_config_file(filename, content)` | `&str, &str` | `WriteConfigResult` | Write config file to disk |
-| `SetupManagementOrchestrator::create_global_config_dir()` | None | `CreateConfigDirResult` | Create XDG config directory |
-| `SetupManagementOrchestrator::install_python_adapters()` | None | `SuccessStatus` | Install ruff, mypy, bandit via pip |
-| `SetupManagementOrchestrator::install_javascript_adapters(sudo)` | `bool` | `SuccessStatus` | Install eslint, prettier, typescript via npm |
-| `SetupManagementOrchestrator::check_http(url)` | `&TransportUrlVO` | `SuccessStatus` | Check HTTP endpoint (stub) |
-| `SetupManagementOrchestrator::file_exists(path)` | `&str` | `bool` | Check if file exists |
-| `SetupContainer::new()` | None | `SetupContainer` | Wire and return container |
+| The setup orchestrator's generate MCP config method | transport protocol | MCP config VO | Generate base MCP config |
+| The setup orchestrator's MCP config Claude method | transport protocol | MCP config VO | Generate Claude Desktop MCP config |
+| The setup orchestrator's MCP config Hermes method | transport protocol | MCP config VO | Generate Hermes MCP config |
+| The setup orchestrator's MCP config VS Code method | transport protocol | MCP config VO | Generate VS Code MCP config |
+| The setup orchestrator's generate env method | transport protocol, home path | env content VO | Generate .env file content |
+| The setup orchestrator's detect language method | none | project language VO | Detect primary project language |
+| The setup orchestrator's detect languages method | none | project languages VO | Detect all project languages |
+| The setup orchestrator's get config template method | language string | static string reference | Load embedded YAML config template |
+| The setup orchestrator's write config file method | filename, content | write config result | Write config file to disk |
+| The setup orchestrator's create global config dir method | none | create config dir result | Create XDG config directory |
+| The setup orchestrator's install Python adapters method | none | success status | Install ruff, mypy, bandit via pip |
+| The setup orchestrator's install JavaScript adapters method | sudo flag | success status | Install eslint, prettier, typescript via npm |
+| The setup orchestrator's check HTTP method | transport URL VO | success status | Check HTTP endpoint (stub) |
+| The setup orchestrator's file exists method | path string | bool | Check if file exists |
+| The setup container's constructor | none | setup container | Wire and return container |
 
 ## Integration Points
 
 - **Internal**:
-  - `shared` crate: VOs (`McpConfigVO`, `EnvContentVO`, `ProjectLanguageVO`, `SuccessStatus`, `SetupError`), contracts (`ISetupManagementProtocol`, `ISetupInstallerProtocol`, `SetupManagementAggregate`), utilities (`utility_filesystem_checker`, `utility_setup_io`).
+  - The shared crate: VOs (`McpConfigVO`, `EnvContentVO`, `ProjectLanguageVO`, `SuccessStatus`, `SetupError`), contracts (the setup management protocol, the setup installer protocol, the setup management aggregate), utilities (the filesystem checker utility, the setup I/O utility).
 - **External**:
   - `pip` / `python3 -m pip`: Python package installation.
   - `npm`: JavaScript package installation.
   - `dirs` crate: XDG config directory resolution.
   - Filesystem: config file writing, directory creation, file existence checks.
-  - Embedded YAML templates: `include_str!` from `lint_arwaky.config.*.yaml`.
+  - Embedded YAML templates: compile-time embedded config files per language.
 
 ## Non-functional Requirements (Detailed)
 
