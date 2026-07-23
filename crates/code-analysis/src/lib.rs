@@ -13,4 +13,6 @@ pub use agent_code_analysis_orchestrator::{has_critical, lint_path, CodeAnalysis
 // Re-export for CLI surfaces backward compatibility
 pub use shared::common::utility_compliance_score::compute_score;
 pub mod root_code_analysis_container;
-pub use root_code_analysis_container::{CodeAnalysisCheckerContainer, CodeAnalysisCheckerContainerRef, CodeAnalysisContainer};
+pub use root_code_analysis_container::{
+    CodeAnalysisCheckerContainer, CodeAnalysisCheckerContainerRef, CodeAnalysisContainer,
+};

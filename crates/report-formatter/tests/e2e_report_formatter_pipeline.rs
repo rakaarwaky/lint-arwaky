@@ -24,8 +24,12 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
 
-    let orch =
-        ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit });
+    let orch = ReportFormatterOrchestrator::new(ReportFormatterDeps {
+        text,
+        json,
+        sarif,
+        junit,
+    });
 
     let results = vec![LintResult::new_arch_with_column(
         "test.rs",

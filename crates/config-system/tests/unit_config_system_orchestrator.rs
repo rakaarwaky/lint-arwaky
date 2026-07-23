@@ -1,5 +1,7 @@
 // Unit tests for ConfigOrchestrator — config loading, caching, workspace discovery.
-use config_system_lint_arwaky::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
+use config_system_lint_arwaky::agent_config_orchestrator::{
+    ConfigOrchestrator, ConfigOrchestratorDeps,
+};
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;

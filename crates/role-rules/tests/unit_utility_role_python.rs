@@ -50,10 +50,7 @@ x = 1
     let mut violations: Vec<LintResult> = Vec::new();
 
     checker.check_utility_convention(&source, &mut violations);
-    assert!(
-        violations.is_empty(),
-        "Docstrings should not be flagged"
-    );
+    assert!(violations.is_empty(), "Docstrings should not be flagged");
 }
 
 #[test]

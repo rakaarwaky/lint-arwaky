@@ -11,16 +11,18 @@
 //   - Falls back to column-less regex if column-full regex doesn't match
 //   - apply_fix always returns false (mypy is a type checker, not a formatter)
 
-use regex::Regex;
-use std::sync::Arc;
-use std::sync::OnceLock;
 use async_trait::async_trait;
+use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::external_lint::utility_external_lint::{
+    default_working_dir, has_python_files, noop_apply_fix,
+};
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -28,10 +30,8 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{
-    default_working_dir, has_python_files, noop_apply_fix,
-};
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

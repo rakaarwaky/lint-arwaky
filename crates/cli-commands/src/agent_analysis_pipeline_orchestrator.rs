@@ -202,9 +202,11 @@ impl AnalysisPipelineOrchestrator {
             .deps
             .orphan_orchestrator
             .build_orphan_graph_context(&all_file_strs, orphan_scan_root);
-        self.deps
-            .orphan_orchestrator
-            .check_orphans_with_context(&file_strs, orphan_scan_root, &context)
+        self.deps.orphan_orchestrator.check_orphans_with_context(
+            &file_strs,
+            orphan_scan_root,
+            &context,
+        )
     }
 
     /// Filter results to the target path and return formatted output string.
@@ -323,7 +325,8 @@ impl AnalysisPipelineOrchestrator {
             })
             .collect();
 
-        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
+        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter())
+        {
             let mut all_results = Vec::new();
 
             // 1. Run AES analysis

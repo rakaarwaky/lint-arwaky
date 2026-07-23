@@ -117,13 +117,12 @@ async fn test_convention_and_suffix_checkers_work_together() {
     let suffix_checker = Arc::new(SuffixPrefixChecker::new());
 
     // Create orchestrator with both checkers
-    let orchestrator =
-        NamingOrchestrator::new(NamingOrchestratorDeps {
-            naming_convention_checker: convention_checker,
-            suffix_prefix_checker: suffix_checker,
-            config,
-            layer_map,
-        });
+    let orchestrator = NamingOrchestrator::new(NamingOrchestratorDeps {
+        naming_convention_checker: convention_checker,
+        suffix_prefix_checker: suffix_checker,
+        config,
+        layer_map,
+    });
 
     // Should be able to run audit
     let result = orchestrator

@@ -1,7 +1,9 @@
 // PURPOSE: Acceptance tests — verify FRD requirements for report-formatter.
 // Layer: Acceptance (FRD requirement validation).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{ReportFormatterDeps, ReportFormatterOrchestrator};
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
+    ReportFormatterDeps, ReportFormatterOrchestrator,
+};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;

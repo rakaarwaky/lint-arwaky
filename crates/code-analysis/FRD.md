@@ -135,39 +135,6 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
   - Permission-denied files — AES000 with reason
 - **Error Handling**: Emit AES000/AES301 with error message; file is skipped for further checks
 
-## Data Model / Entity Relationship
-
-```
-Code analysis rule (value object)
-  - rule code (e.g., "AES301")
-  - max lines threshold (file too large)
-  - min lines threshold (file too short / duplication window)
-  - duplication threshold percentage
-
-Code analysis violation (enum)
-  ├── File too large variant { reason }
-  ├── File too short variant { reason }
-  ├── Mandatory class definition variant { reason }
-  ├── Dead inheritance variant { reason }
-  ├── Bypass comment variant { reason }
-  ├── Unwrap/expect variant { reason }
-  ├── Panic variant { reason }
-  ├── Todo variant { reason }
-  ├── Unimplemented variant { reason }
-  └── Code duplication variant { optional lint message }
-
-Diagnostic / LintResult {
-    file: FilePath
-    line: u32
-    code: String                 (e.g., "AES301")
-    severity: Severity           (CRITICAL | HIGH | MEDIUM | LOW)
-    message: LintMessage
-}
-
-Language (enum) — Python | JavaScript | TypeScript | Rust | Unknown
-Violation kind (enum) — BypassComment | UnwrapExpect | Panic | Todo | Unimplemented
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

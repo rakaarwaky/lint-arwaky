@@ -61,29 +61,6 @@ The naming-rules crate enforces strict naming conventions across the codebase to
   - Custom or unknown layers without a definition — skipped (no def means no suffix policy)
 - **Error Handling**: Emit AES102 with the layer name, used suffix, and the full allowed/forbidden lists
 
-## Data Model / Entity Relationship
-
-```
-Naming violation (value object)
-  ├── Naming convention variant { min words, separator, reason }
-  ├── Suffix forbidden variant { layer name, forbidden suffix, reason }
-  ├── Suffix mismatch variant { layer name, used suffix, allowed list, reason }
-  └── Unknown prefix variant { prefix, allowed list, reason }
-
-The layer map (value object)
-  └── values: mapping of layer name to layer definition
-        ├── naming configuration
-        │     ├── allowed suffix list
-        │     ├── forbidden suffix list
-        │     └── suffix policy ("strict" | "flexible")
-        ├── exceptions (filenames to skip)
-        └── code analysis configuration
-
-The architecture configuration
-  └── naming configuration (value object)
-        └── word count setting (min words, default 3)
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

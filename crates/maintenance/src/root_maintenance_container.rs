@@ -14,7 +14,9 @@ impl MaintenanceContainer {
     pub fn new() -> Self {
         let checker: Arc<dyn IMaintenanceCheckerProtocol> = Arc::new(MaintenanceChecker::new());
         let orchestrator: Arc<dyn MaintenanceCommandsAggregate> =
-            Arc::new(MaintenanceCommandsOrchestrator::new(MaintenanceDeps { checker }));
+            Arc::new(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
+                checker,
+            }));
         Self { orchestrator }
     }
 

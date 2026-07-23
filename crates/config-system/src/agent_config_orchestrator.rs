@@ -45,7 +45,12 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> ConfigResult {
-        match self.deps.config_reader.read_config(project_root, language).await {
+        match self
+            .deps
+            .config_reader
+            .read_config(project_root, language)
+            .await
+        {
             Ok(Some(source)) => {
                 let cache_key = source.path.to_string();
                 let mut parsed = {
@@ -191,7 +196,10 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         &self,
         project_root: &FilePath,
     ) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError> {
-        self.deps.config_reader.list_config_files(project_root).await
+        self.deps
+            .config_reader
+            .list_config_files(project_root)
+            .await
     }
 
     async fn read_config(
@@ -199,7 +207,10 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> Result<Option<ConfigSource>, ConfigError> {
-        self.deps.config_reader.read_config(project_root, language).await
+        self.deps
+            .config_reader
+            .read_config(project_root, language)
+            .await
     }
 }
 

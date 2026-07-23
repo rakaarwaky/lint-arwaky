@@ -184,7 +184,8 @@ impl CheckCommandsSurface {
             })
             .collect();
 
-        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
+        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter())
+        {
             // Run pipeline for this workspace member via agent layer
             let request = ScanRequest {
                 target: ScanTarget::new(ws.path.value.clone()),
@@ -236,7 +237,9 @@ impl CheckCommandsSurface {
 
         // Print per-workspace results
         if multi && matches!(format, Format::Text) {
-            for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
+            for (ws, (ws_canonical, ws_fallback)) in
+                workspaces.iter().zip(workspace_canonicals.iter())
+            {
                 let ws_name = std::path::Path::new(&ws.path.value)
                     .file_name()
                     .map(|n| n.to_string_lossy())
@@ -339,7 +342,9 @@ impl CheckCommandsSurface {
     fn filter_results_to_path(&self, results: Vec<LintResult>, path: &str) -> Vec<LintResult> {
         // Cache cwd and canonicalize once
         let canonical_scan_path = std::path::PathBuf::from(path);
-        let canonical_scan_path = canonical_scan_path.canonicalize().unwrap_or(canonical_scan_path);
+        let canonical_scan_path = canonical_scan_path
+            .canonicalize()
+            .unwrap_or(canonical_scan_path);
         let cwd = crate::surface_common_command::current_dir();
 
         results

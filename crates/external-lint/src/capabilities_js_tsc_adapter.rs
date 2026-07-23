@@ -11,27 +11,27 @@
 //   - Skips files that don't end in .ts or .tsx
 //   - All tsc errors are reported as HIGH severity
 
-use std::sync::OnceLock;
 use regex::Regex;
-use std::path::Path;
-use std::sync::Arc;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::external_lint::utility_external_lint::{
+    canonicalize_path, noop_apply_fix, resolve_js_cmd,
+    resolve_js_working_dir as resolve_working_dir,
+};
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{
-    canonicalize_path, noop_apply_fix, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
-};
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

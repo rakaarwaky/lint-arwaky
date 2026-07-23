@@ -143,9 +143,9 @@ shared (foundation — no feature crate dependencies)
 
 - **Description**: Provide canonical layer name constants and value objects used for layer identification across the workspace.
 - **Input**: N/A — constants and VOs.
-- **Output**: `LayerNameVO`, layer name constants (taxonomy, contract, capabilities, utility, agent, surfaces).
+- **Output**: Layer name value object with layer name constants (taxonomy, contract, capabilities, utility, agent, surfaces).
 - **Business Rules**:
-  - `LayerNameVO` wraps a layer name string with serialization support.
+  - Layer name value object wraps a layer name string with serialization support.
   - Constants for all six architectural layers.
   - Layer name helper functions for each layer plus root and global.
   - Used by orphan-detector and role-rules for layer classification.
@@ -193,13 +193,13 @@ Graph Analysis Context
 
 | Module                               | Key Types / Functions                                                      | Description                        |
 | -------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
-| common path value object             | `FilePath`                                                                 | Typed file path VO with validation |
-| common severity value object         | `Severity`                                                                 | HIGH / MEDIUM / LOW enum           |
-| common error value object            | `ErrorCode`                                                                | Lint rule code (e.g., "AES401")    |
-| common lint value object             | `LintResult`, `ScopeRef`, `Location`, `LocationList`                       | Violation output types             |
-| common primitive value objects       | `BooleanVO`, `Score`, `PatternList`, `Count`, `LineNumber`, `ColumnNumber` | Primitive wrapper VOs              |
-| common source content value object   | `SourceContentVO`, `ContentString`                                         | File content with metadata         |
-| common layer value object            | `LayerNameVO`, `LineContentVO`                                             | Layer identification               |
+| common path value object             | file path value object                                                                 | Typed file path value object with validation |
+| common severity value object         | severity value object                                                                 | HIGH / MEDIUM / LOW levels           |
+| common error value object            | error code                                                                | Lint rule code (e.g., "AES401")    |
+| common lint value object             | lint result, scope reference, location, location list                       | Violation output types             |
+| common primitive value objects       | boolean flag, score, pattern list, count, line number, column number | Primitive wrapper value objects              |
+| common source content value object   | source content value object, content string                                         | File content with metadata         |
+| common layer value object            | layer name value object, line content value object                                             | Layer identification               |
 | common definition value object       | layer definition, naming config                                            | Layer configuration                |
 | common layer detection utility       | layer detection from filename prefix                                       | Layer detection from filename      |
 | common language detection utility    | language detection from file extension                                     | Language detection from extension  |
@@ -235,14 +235,14 @@ Graph Analysis Context
 
 ## Test Scenarios / QA Checklist
 
-- [ ]  `FilePath::new("")` returns `Err`.
-- [ ]  `FilePath::new("src/main.rs")` returns `Ok` with correct value.
-- [ ]  `Severity::HIGH.score_impact()` returns correct deduction value.
-- [ ]  `Score::new(100.0).is_perfect()` returns true.
-- [ ]  `Score::new(85.0).is_passing(&Score::new(80.0))` returns true.
-- [ ]  `PatternList::new("*.rs")` creates list with one pattern.
-- [ ]  Layer detection from prefix "taxonomy_foo.rs" returns `Some("taxonomy")`.
-- [ ]  Layer detection from prefix "main.rs" returns `None`.
+- [ ]  File path with empty string returns error.
+- [ ]  File path with valid path returns success with correct value.
+- [ ]  Severity HIGH score impact returns correct deduction value.
+- [ ]  Score 100.0 is perfect returns true.
+- [ ]  Score 85.0 passing threshold 80.0 returns true.
+- [ ]  Pattern list with "*.rs" creates list with one pattern.
+- [ ]  Layer detection from prefix "taxonomy_foo.rs" returns taxonomy.
+- [ ]  Layer detection from prefix "main.rs" returns none.
 - [ ]  Language detection for "main.rs" returns Rust.
 - [ ]  Language detection for "app.py" returns Python.
 - [ ]  Architecture config default has enabled: true, empty layers, empty rules.

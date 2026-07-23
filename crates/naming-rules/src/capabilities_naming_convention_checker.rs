@@ -85,13 +85,24 @@ impl NamingConventionChecker {
     /// Build naming regex dynamically based on min_words.
     fn naming_regex(min_words: usize) -> Option<&'static Regex> {
         static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
-            OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(),
-            OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
+            OnceLock::new(),
         ];
         let idx = min_words.min(9);
         REGEX_TABLE[idx]
             .get_or_init(|| {
-                let pattern = format!(r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$", min_words.saturating_sub(1));
+                let pattern = format!(
+                    r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$",
+                    min_words.saturating_sub(1)
+                );
                 Regex::new(&pattern).ok()
             })
             .as_ref()

@@ -9,7 +9,7 @@
 ### FR-001: <Feature Name></feature>
 
 - **Description**: <what it does></what>
-- **Input**: 
+- **Input**:
 - **Output**: <output data></output>
 - **Business Rules**: <validation logic></validation>
 - **Edge Cases**: <edge case handling></edge>

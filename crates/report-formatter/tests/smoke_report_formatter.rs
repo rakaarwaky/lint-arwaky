@@ -1,7 +1,9 @@
 // PURPOSE: Smoke test — verify the report-formatter crate boots and responds within 5 seconds.
 // Layer: Smoke (must complete < 5s).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{ReportFormatterDeps, ReportFormatterOrchestrator};
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
+    ReportFormatterDeps, ReportFormatterOrchestrator,
+};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;

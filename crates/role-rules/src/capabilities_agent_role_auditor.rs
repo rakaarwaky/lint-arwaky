@@ -74,8 +74,7 @@ impl AgentRoleChecker {
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // Guard: must have _aggregate import
-        let has_aggregate_import =
-            content.contains("use ") && content.contains("_aggregate::");
+        let has_aggregate_import = content.contains("use ") && content.contains("_aggregate::");
         if !has_aggregate_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -175,8 +174,7 @@ impl AgentRoleChecker {
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // Guard: must have _aggregate import
-        let has_aggregate_import =
-            content.contains("import ") && content.contains("_aggregate");
+        let has_aggregate_import = content.contains("import ") && content.contains("_aggregate");
         if !has_aggregate_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -224,7 +222,7 @@ impl AgentRoleChecker {
                 .or_else(|| t.strip_prefix("class "));
             if let Some(rest) = class_body {
                 let name = rest
-                    .split(|c: char| c == ' ' || c == '(' || c == '{')
+                    .split([' ', '(', '{'])
                     .next()
                     .unwrap_or("")
                     .trim();
@@ -254,7 +252,7 @@ impl AgentRoleChecker {
                 .or_else(|| t.strip_prefix("interface "));
             if let Some(rest) = iface_body {
                 let name = rest
-                    .split(|c: char| c == ' ' || c == '{' || c == '<')
+                    .split([' ', '{', '<'])
                     .next()
                     .unwrap_or("")
                     .trim();
@@ -270,7 +268,7 @@ impl AgentRoleChecker {
                 .or_else(|| t.strip_prefix("enum "));
             if let Some(rest) = enum_body {
                 let name = rest
-                    .split(|c: char| c == ' ' || c == '{')
+                    .split([' ', '{'])
                     .next()
                     .unwrap_or("")
                     .trim();
@@ -314,9 +312,8 @@ impl AgentRoleChecker {
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // Guard: must have _aggregate import
-        let has_aggregate_import =
-            (content.contains("import ") || content.contains("from "))
-                && content.contains("_aggregate");
+        let has_aggregate_import = (content.contains("import ") || content.contains("from "))
+            && content.contains("_aggregate");
         if !has_aggregate_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -333,8 +330,7 @@ impl AgentRoleChecker {
             .lines()
             .filter(|l| {
                 let t = l.trim();
-                (t.starts_with("from ") || t.starts_with("import "))
-                    && t.contains("_aggregate")
+                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_aggregate")
             })
             .flat_map(|l| {
                 if let Some(pos) = l.find("import ") {
@@ -362,7 +358,7 @@ impl AgentRoleChecker {
             // skip "class " prefix
             let after_class = &t[6..];
             let name = after_class
-                .split(|c: char| c == '(' || c == ':' || c == ' ')
+                .split(['(', ':', ' '])
                 .next()
                 .unwrap_or("")
                 .trim();

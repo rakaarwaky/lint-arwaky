@@ -10,9 +10,8 @@
 //   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
 //   - apply_fix always returns false (Bandit is a scanner, not a fixer)
 
-use serde_json::Value;
-use std::sync::Arc;
 use async_trait::async_trait;
+use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
@@ -26,13 +25,12 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
+use std::sync::Arc;
 
 use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
     default_working_dir, has_python_files, noop_apply_fix,
 };
-
-
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

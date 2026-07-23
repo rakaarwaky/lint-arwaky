@@ -1,7 +1,9 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
-use crate::agent_analysis_pipeline_orchestrator::{AnalysisPipelineDeps, AnalysisPipelineOrchestrator};
+use crate::agent_analysis_pipeline_orchestrator::{
+    AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
+};
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;

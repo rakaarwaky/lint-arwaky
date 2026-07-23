@@ -4,7 +4,9 @@ pub use shared::cli_commands::taxonomy_command_catalog_vo::CommandMetadataVO;
 pub use shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
 pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
 pub mod agent_analysis_pipeline_orchestrator;
-pub use agent_analysis_pipeline_orchestrator::{AnalysisPipelineDeps, AnalysisPipelineOrchestrator};
+pub use agent_analysis_pipeline_orchestrator::{
+    AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
+};
 pub mod utility_format_output;
 pub mod utility_path_resolver;
 // Re-export report-formatter capabilities for backward compatibility
