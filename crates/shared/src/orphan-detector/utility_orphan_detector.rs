@@ -57,7 +57,7 @@ pub fn contains_delimited(content: &str, token: &str) -> bool {
     }
 
     let delimiters: &[char] = &[
-        ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'',
+        ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'', ':',
     ];
 
     for (idx, _) in content.char_indices() {

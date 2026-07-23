@@ -54,10 +54,10 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let both_exist =
-            shared::common::utility_file_handler::path_exists(path1) && shared::common::utility_file_handler::path_exists(path2);
-        let both_files =
-            shared::common::utility_file_handler::is_file(path1) && shared::common::utility_file_handler::is_file(path2);
+        let both_exist = shared::common::utility_file_handler::path_exists(path1)
+            && shared::common::utility_file_handler::path_exists(path2);
+        let both_files = shared::common::utility_file_handler::is_file(path1)
+            && shared::common::utility_file_handler::is_file(path2);
         let status = match (both_exist, both_files) {
             (false, _) => {
                 if !shared::common::utility_file_handler::path_exists(path1) {

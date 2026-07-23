@@ -26,7 +26,10 @@ fn build_strict_container() -> NamingContainer {
                 "event".to_string(),
                 "constant".to_string(),
             ]),
-            forbidden_suffix: PatternList::new(vec!["orchestrator".to_string(), "checker".to_string()]),
+            forbidden_suffix: PatternList::new(vec![
+                "orchestrator".to_string(),
+                "checker".to_string(),
+            ]),
             ..Default::default()
         },
         ..Default::default()

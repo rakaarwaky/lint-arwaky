@@ -50,12 +50,13 @@ exit 0
 ",
             exe_str
         );
-        shared::common::utility_file_handler::write_file(&hook_path, &hook_content).map_err(|e| {
-            shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
-                "Failed to write hook: {}",
-                e
-            )))
-        })?;
+        shared::common::utility_file_handler::write_file(&hook_path, &hook_content).map_err(
+            |e| {
+                shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
+                    format!("Failed to write hook: {}", e),
+                ))
+            },
+        )?;
         #[cfg(unix)]
         {
             git_io::set_permissions(&hook_path, 0o755).map_err(|e| {

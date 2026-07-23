@@ -54,33 +54,9 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                 }
 
-                // Utility is only imported by other utilities — dead code
-                let importer_names: Vec<String> = external_importers
-                    .iter()
-                    .filter_map(|i| {
-                        std::path::Path::new(i)
-                            .file_stem()
-                            .and_then(|s| s.to_str())
-                            .map(|s| s.to_string())
-                    })
-                    .collect();
-
-                return OrphanIndicatorResult::new(
-                    true,
-                    AesOrphanViolation::UtilityDeadCode {
-                        stem: module_name.clone(),
-                        imported_by: importer_names,
-                        reason: Some(
-                            format!(
-                                "Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.",
-                                module_name
-                            )
-                            .into(),
-                        ),
-                    }
-                    .to_string(),
-                    Severity::MEDIUM,
-                );
+                // Don't return early here — fall through to Phase 2 which does
+                // token-based matching that can detect cross-crate imports
+                // (e.g. `use shared::common::utility_foo::...` from another crate)
             }
         }
 
@@ -205,6 +181,11 @@ impl UtilityOrphanAnalyzer {
                     return true;
                 }
             }
+        }
+
+        // Check for inline fully qualified calls: module_name::function()
+        if content.contains(&format!("{}::", module_name)) {
+            return true;
         }
 
         // Check for grouped imports: use { module_name, ... }
