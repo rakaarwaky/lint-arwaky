@@ -41,11 +41,11 @@ Target Path
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
 - **Business Rules**:
-  - Entity check: Scan `_entity` files for raw primitives in type annotations. Primitives: `String`, `i32`, `bool`, `Vec<`, `HashMap<` (Rust); `str`, `int`, `float`, `bool`, `list`, `dict` (Python); `string`, `number`, `boolean`, `any` (JS/TS).
+  - Entity check: Scan `_entity` files for raw primitives in type annotations. Primitives: string, integer, boolean, array, map (Rust); str, int, float, bool, list, dict (Python); string, number, boolean, any (JS/TS).
   - Error check: Same primitive scan on `_error` files.
   - Event check: Same primitive scan on `_event` files.
-  - Constant check: Ensure `_constant` files contain only `pub const` / `pub static` (Rust). Flag any struct, enum, fn, impl, mod, trait, class, or type alias.
-  - **Skip rules**: Lines starting with `class `, `pub struct `, `struct ` are excluded (type definitions). Lines containing `pub(crate) value:` or `pub value:` are excluded (internal VO wrappers). Lines starting with `fn from(` or `fn visit_` are excluded.
+  - Constant check: Ensure `_constant` files contain only constant declarations (`pub const` / `pub static` in Rust). Flag any struct, enum, fn, impl, mod, trait, class, or type alias.
+  - **Skip rules**: Lines starting with `class `, `struct ` are excluded (type definitions). Lines containing internal VO wrappers are excluded. Lines starting with function definitions are excluded.
 - **Edge Cases**: Taxonomy file with mixed valid and invalid annotations — only the violating lines are reported. Constant file with a helper function buried in comments — noise stripping removes comments first.
 - **Error Handling**: Empty files produce no violations. Files with unsupported language produce no violations.
 
@@ -78,14 +78,14 @@ Target Path
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
 - **Business Rules**:
-  - **Rust**: Forbid `pub struct`, `pub enum`.
+  - **Rust**: Forbid `struct`, `enum` definitions in utility files.
   - **TypeScript**: Forbid `export class`, `export interface`, `export enum`, `export type`.
   - **Python**: Forbid `class `, `def ` (any function definition).
   - **Noise stripping before detection**:
     - Rust: line comments (`//`), block comments (`/* */`), `macro_rules!` bodies.
     - TypeScript: line comments (`//`), block comments (`/* */`), template literals (`` ` ``).
     - Python: line comments (`#`), docstrings (`"""` / `'''`).
-- **Edge Cases**: Utility file with a `pub struct` inside a comment — noise stripping removes the comment, no violation. Utility file with only helper functions in Python — flagged (Python utility forbids `def`).
+- **Edge Cases**: Utility file with a `struct` inside a comment — noise stripping removes the comment, no violation. Utility file with only helper functions in Python — flagged (Python utility forbids `def`).
 - **Error Handling**: Empty files produce no violations.
 
 ### FR-006: Agent Orchestrator Composition (AES405)
@@ -111,7 +111,7 @@ Target Path
     - Passive: All other surface files — presentation-only.
   - **Global check (all surfaces)**: Function count limit — max 15 `fn`/`def`/`function` occurrences per file.
   - **Passive + Utility checks**:
-    - Hierarchy check: Max 10 public methods per class/impl block.
+    - Hierarchy check: Max 10 public methods per class/implementation block.
     - Method body length: Max 80 lines per method.
     - If-nesting depth: Max 3 levels.
   - **Domain logic check (passive + utility, layer-map-dependent)**: Max 3 control-flow statements (`if`, `else`, `for`, `while`, `match`, `switch`, `try`, `except`, `catch`). Exceeding flagged as domain logic violation.
@@ -210,19 +210,19 @@ Lint Result (output)
 ## Test Scenarios / QA Checklist
 
 - [ ] AES401: Taxonomy entity file with `String` field — violation reported at exact line.
-- [ ] AES401: Taxonomy entity file with `FilePath` field — no violation (custom VO, not primitive).
-- [ ] AES401: Taxonomy constant file with `pub const X: i32 = 5` — no violation.
-- [ ] AES401: Taxonomy constant file with `pub fn helper()` — violation (function in constant file).
+- [ ] AES401: Taxonomy entity file with custom value object field — no violation (custom VO, not primitive).
+- [ ] AES401: Taxonomy constant file with constant declaration only — no violation.
+- [ ] AES401: Taxonomy constant file with function definition — violation (function in constant file).
 - [ ] AES402: Contract protocol with `String` in method signature — violation.
-- [ ] AES402: Contract protocol with `FilePath` in method signature — no violation.
+- [ ] AES402: Contract protocol with custom value object in method signature — no violation.
 - [ ] AES402: Contract aggregate with zero methods — no violations.
 - [ ] AES403: Capability file with no protocol import — missing protocol import violation.
 - [ ] AES403: Capability file with protocol import but no implementor — missing protocol implementor violation.
 - [ ] AES403: Capability file with 4 type declarations — too many types violation.
 - [ ] AES403: Capability file with 3 types including helper struct — passes (helper not counted if no protocol impl).
-- [ ] AES404: Utility file with `pub struct Config` — violation.
-- [ ] AES404: Utility file with only `pub fn helper()` — no violation.
-- [ ] AES404: Utility file with `pub struct` inside `/* */` comment — noise stripped, no violation.
+- [ ] AES404: Utility file with struct definition — violation.
+- [ ] AES404: Utility file with only function definitions — no violation.
+- [ ] AES404: Utility file with struct inside comment — noise stripped, no violation.
 - [ ] AES405: Agent file with no aggregate import — missing aggregate import violation.
 - [ ] AES405: Agent file with aggregate import but no implementor — missing aggregate implementor violation.
 - [ ] AES406: Smart surface with 16 functions — violation (global limit applies).

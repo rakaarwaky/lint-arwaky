@@ -36,7 +36,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 ### FR-002: Entry Point Discovery
 - **Description**: Identify valid entry points that anchor the reachability graph.
 - **Input**: List of file paths and optional configured entry point patterns from the architecture configuration.
-- **Output**: `HashSet<String>` of entry point file paths.
+- **Output**: Set of entry point file paths.
 - **Business Rules**:
   - Default entry point patterns: `main.rs`, `lib.rs`, `main.py`, `__main__.py`, `main.ts`, `main.js`, `index.ts`, `index.js`, `*_container.*`, `*_entry.*`.
   - Merges configured additional entry point patterns from each layer definition in the architecture configuration.
@@ -49,7 +49,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Input**: Entry point set (`Vec<String>`) and the forward import graph.
 - **Output**: `Vec<String>` of all reachable file paths.
 - **Business Rules**:
-  - Uses breadth-first search with a `HashSet` visited tracker to avoid revisiting nodes.
+  - Uses breadth-first search with a visited tracker to avoid revisiting nodes.
   - A file is "alive" if it is transitively reachable from any entry point.
   - The alive set is used by capabilities, agent, and surfaces orphan analyzers.
 - **Edge Cases**: Isolated files with no imports from any entry point are flagged. Entry points that import nothing are valid (they are roots).
