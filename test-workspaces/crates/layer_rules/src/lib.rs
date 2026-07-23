@@ -45,3 +45,9 @@ pub mod cycle_violation_aggregate;
 
 #[path = "contract_aes201_debug_aggregate.rs"]
 pub mod aes201_debug_aggregate;
+
+#[path = "contract_orphan_protocol.rs"]
+pub mod orphan_protocol;
+
+#[path = "contract_dead_inherit_aggregate.rs"]
+pub mod dead_inherit_aggregate;

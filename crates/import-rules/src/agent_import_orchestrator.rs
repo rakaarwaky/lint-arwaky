@@ -31,7 +31,6 @@ pub struct ImportOrchestrator {
     dummy: Arc<dyn IDummyImportCheckerProtocol>,
     config: ArchitectureConfig,
     layer_map: LayerMapVO,
-    ignored_paths: Vec<String>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -161,12 +160,6 @@ impl ImportOrchestrator {
         config: ArchitectureConfig,
     ) -> Self {
         let layer_map = LayerMapVO::new(config.layers.clone());
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
         Self {
             mandatory,
             forbidden,
@@ -175,26 +168,15 @@ impl ImportOrchestrator {
             dummy,
             config,
             layer_map,
-            ignored_paths,
         }
     }
 
     fn is_ignored(&self, p: &Path) -> bool {
-        let s = p.to_string_lossy();
-        if shared::common::utility_file_handler::is_path_ignored(&s, &self.ignored_paths) {
-            return true;
-        }
         let dir_name = p
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
-        if DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) {
-            return true;
-        }
-        if let Some(stripped) = dir_name.strip_prefix('.') {
-            return self.ignored_paths.iter().any(|i| i.contains(stripped));
-        }
-        false
+        DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) || dir_name.starts_with('.')
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {
