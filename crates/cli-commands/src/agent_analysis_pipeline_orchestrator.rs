@@ -4,6 +4,7 @@
 // and produces a unified ScanReport. It depends only on contracts (traits),
 // never on concrete implementations.
 use crate::utility_format_output::{format_junit_output, format_sarif_output};
+use crate::utility_path_resolver::detect_language_from_path;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -193,7 +194,8 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::utility_path_resolver::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
-        let ignored = self.config_orchestrator.ignored_paths(orphan_scan_root);
+        let language = detect_language_from_path(orphan_scan_root);
+        let ignored = self.config_orchestrator.ignored_paths_for_language(orphan_scan_root, language);
         let source_files =
             match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
                 Ok(list) => list.values,
@@ -285,9 +287,10 @@ impl AnalysisPipelineOrchestrator {
         // Collect ALL source files from workspace root for cross-workspace orphan detection
         let scan_root = crate::surface_check_action::find_workspace_root(".")
             .unwrap_or(std::path::PathBuf::from("."));
+        let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
         let ignored = self
             .config_orchestrator
-            .ignored_paths(scan_root.to_str().unwrap_or("."));
+            .ignored_paths_for_language(scan_root.to_str().unwrap_or("."), language);
         let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".")).unwrap_or_default();
         let all_source_files: Vec<String> = {
             match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
@@ -428,9 +431,10 @@ impl AnalysisPipelineOrchestrator {
             Some(r) => r,
             None => std::path::PathBuf::from("."),
         };
+        let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
         let ignored = self
             .config_orchestrator
-            .ignored_paths(scan_root.to_str().unwrap_or("."));
+            .ignored_paths_for_language(scan_root.to_str().unwrap_or("."), language);
         let all_files: Vec<String> =
             shared::common::utility_file_handler::collect_all_source_files(&scan_root, &ignored)
                 .iter()

@@ -158,7 +158,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
     fn ignored_paths(&self, project_root: &str) -> Vec<String> {
         let config = self.load_config_sync(project_root);
-        Self::ignored_paths_from_config(&config)
+        ignored_paths_from_config(&config)
     }
 
     fn ignored_paths_for_language(&self, project_root: &str, language: ConfigLanguage) -> Vec<String> {
@@ -167,33 +167,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let config = match runtime {
             Ok(rt) => {
                 rt.block_on(async { self.load_config_for_language(&path, language).await })
-                    .unwrap_or_else(|_| self.load_config_sync(project_root))
+                    .config
             }
             Err(_) => self.load_config_sync(project_root),
         };
-        Self::ignored_paths_from_config(&config)
-    }
-
-    fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
-        let mut ignored: Vec<String> = vec![
-            "target".to_string(),
-            ".mimocode".to_string(),
-            ".agents".to_string(),
-            "node_modules".to_string(),
-            "build.rs".to_string(),
-            ".git".to_string(),
-            "dist".to_string(),
-            "build".to_string(),
-            "coverage".to_string(),
-            ".venv".to_string(),
-        ];
-        for fp in config.ignored_paths.values.iter() {
-            let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-            if !v.is_empty() && !ignored.contains(&v) {
-                ignored.push(v);
-            }
-        }
-        ignored
+        ignored_paths_from_config(&config)
     }
 
     async fn list_config_files(
@@ -231,4 +209,26 @@ impl ConfigOrchestrator {
     pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
         &self.validator
     }
+}
+
+fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
+    let mut ignored: Vec<String> = vec![
+        "target".to_string(),
+        ".mimocode".to_string(),
+        ".agents".to_string(),
+        "node_modules".to_string(),
+        "build.rs".to_string(),
+        ".git".to_string(),
+        "dist".to_string(),
+        "build".to_string(),
+        "coverage".to_string(),
+        ".venv".to_string(),
+    ];
+    for fp in config.ignored_paths.values.iter() {
+        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
+        if !v.is_empty() && !ignored.contains(&v) {
+            ignored.push(v);
+        }
+    }
+    ignored
 }

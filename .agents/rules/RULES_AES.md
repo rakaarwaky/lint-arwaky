@@ -1,6 +1,5 @@
 opencode
 
-
 # AES (Agentic Engineering System) Rules — v3.0
 
 See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full 7-layer specification.
@@ -34,14 +33,14 @@ See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full 7-layer specification.
 | AES305 | Duplication Code     | MEDIUM   | Quality | Duplicate code blocks detected across files.                                       |
 
 
-| Code   | Name                | Severity | Group | Description                                                                               |
-| -------- | --------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------- |
-| AES401 | Taxonomy Role       | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in /entity/error/event. |
-| AES402 | Contract Role       | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.      |
-| AES403 | Capabilities Role   | HIGH     | Role  | Capability has no protocol implementation                                                 |
-| AES404 | Infrastructure Role | HIGH     | Role  | Infrastructure has no  port implementation                                              |
-| AES405 | Agent Role          | MEDIUM   | Role  | orchestrator do not call  any port  or protocol                                         |
-| AES406 | Surface Role        | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 25 functions.                  |
+| Code   | Name              | Severity | Group | Description                                                                               |
+| -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------- |
+| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in /entity/error/event. |
+| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.      |
+| AES403 | Capabilities Role | HIGH     | Role  | Capability has no protocol implementation                                                 |
+| AES404 | Utility Role      | HIGH     | Role  | Infrastructure has no  port implementation                                              |
+| AES405 | Agent Role        | MEDIUM   | Role  | orchestrator do not call  any port  or protocol                                         |
+| AES406 | Surface Role      | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 25 functions.                  |
 
 
 | Code   | Name                  | Severity | Group  | Description                                                                          |
