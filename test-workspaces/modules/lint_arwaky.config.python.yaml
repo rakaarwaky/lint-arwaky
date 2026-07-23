@@ -278,20 +278,16 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
               purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
@@ -366,20 +362,16 @@ architecture:
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
-            - layer: "contract(port)"
-              purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
 
         - scope: "infrastructure"
           allowed: ["taxonomy", "contract"]
-          mandatory: ["taxonomy", "contract(port)"]
+          mandatory: ["taxonomy"]
           forbidden:
             ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
-              purpose: "implement"
-            - layer: "contract(port)"
               purpose: "implement"
             - layer: "contract(protocol|aggregate)"
               purpose: "call"
