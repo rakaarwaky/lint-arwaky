@@ -117,36 +117,63 @@ pub enum Commands {
     ScanQuality {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run import-rule checks only (AES201-AES299)
     ScanImport {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run naming-rule checks only (AES401-AES406)
     ScanNaming {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run role-rule checks only (AES301-AES399)
     ScanRole {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run external linter checks only (Clippy, Ruff, ESLint, etc.)
     ScanExternal {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Check orphan: file path -> check single file, directory path -> scan all files in directory
+    ScanOrphan {
+        /// File or directory path to check
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run 6 linter subcommands as parallel Rust subprocesses and measure timing
     ScanParallelSubprocess {
         /// Path to scan
         path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Scan for security vulnerabilities

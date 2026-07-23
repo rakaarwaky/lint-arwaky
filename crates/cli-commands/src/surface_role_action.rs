@@ -11,6 +11,7 @@ use crate::surface_common_command;
 
 pub fn handle_scan_role(
     path: Option<FilePath>,
+    format: Format,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     report_formatter: Arc<dyn IReportFormatterAggregate>,
 ) -> ExitCode {
@@ -32,7 +33,7 @@ pub fn handle_scan_role(
     };
     let results = rt.block_on(role_orchestrator.run_audit(&root_fp));
     let report = ScanReport::new(results.clone(), vec![]);
-    let output = report_formatter.format(&report, Format::Text);
+    let output = report_formatter.format(&report, format);
     println!("{output}");
     if results.is_empty() {
         ExitCode::SUCCESS
