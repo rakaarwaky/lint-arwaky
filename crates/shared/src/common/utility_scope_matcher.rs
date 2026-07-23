@@ -91,8 +91,6 @@ pub fn extract_layer_prefix(stem: &str) -> &str {
 /// assert_eq!(extract_suffix("utility_parser"), "parser");
 /// assert_eq!(extract_suffix("no_suffix"), "suffix");
 /// ```
-
-
 pub fn extract_suffix(stem: &str) -> &str {
     stem.rsplit('_').next().map_or("", |s| s)
 }
