@@ -151,6 +151,13 @@ debug = 1          # line tables only (faster than full debug info)
 incremental = true
 codegen-units = 256 # more units = faster incremental builds
 
+# Test profile: prevent rust-lld segmentation fault from bloated DWARF symbols
+[profile.test]
+opt-level = 0
+debug = 1
+split-debuginfo = "packed"
+
+
 # Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.
 # The gate is: `cargo clippy --workspace --all-targets -- -D warnings`
 # Only "forbid" rules (compile-breaking) and one truly universal "warn" rule

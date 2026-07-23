@@ -47,8 +47,8 @@ async fn e2e_mixed_files_produces_correct_violations() {
         // Valid file (should produce NO AES101 violations)
         "capabilities_user_checker.rs",
         // Invalid files (should produce AES101 violations)
-        "badfile.rs",            // No layer prefix, too few words → AES101
-        "Capabilities_Check.rs", // Uppercase → AES101
+        "capabilities_short.rs",        // Valid prefix 'capabilities_', too few words (2) → AES101
+        "capabilities_User_Checker.rs", // Valid prefix 'capabilities_', uppercase 'User' → AES101
     ]);
 
     let container = build_container();
