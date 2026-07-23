@@ -2,6 +2,34 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 
+/// Parse adapter names from the `adapters` section of a config YAML.
+/// Returns names of adapters whose status is "enabled" (default).
+/// Ignores special entries like "architecture" (internal analysis).
+pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
+    let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    let Some(adapters) = raw.get("adapters").and_then(|a| a.as_sequence()) else {
+        return Vec::new();
+    };
+    adapters
+        .iter()
+        .filter_map(|entry| {
+            let name = entry.get("name")?.as_str()?;
+            let status = entry
+                .get("status")
+                .and_then(|s| s.as_str())
+                .unwrap_or("enabled");
+            if status != "disabled" && name != "architecture" {
+                Some(name.to_string())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     parse_config_yaml_with_warnings(yaml_str).0
 }

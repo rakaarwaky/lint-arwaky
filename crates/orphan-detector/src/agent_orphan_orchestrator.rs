@@ -4,6 +4,7 @@ use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
@@ -13,6 +14,7 @@ use shared::orphan_detector::contract_orphan_protocol::{
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+
 use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
@@ -39,17 +41,10 @@ pub struct ArchOrphanDeps {
     pub utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
     pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
-    pub config: ArchitectureConfig,
 }
 
 pub struct ArchOrphanAnalyzer {
-    resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-    taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
-    contract_analyzer: Arc<dyn IContractOrphanProtocol>,
-    capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-    utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
-    agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
-    surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    deps: ArchOrphanDeps,
     config: ArchitectureConfig,
 }
 
@@ -60,12 +55,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         files: &OrphanFileListVO,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
-        self.resolver
+        self.deps.resolver
             .build_graph_context(std::slice::from_ref(files), root_dir.value())
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
-        self.resolver
+        self.deps.resolver
             .identify_entry_points(std::slice::from_ref(files), &[])
     }
 
@@ -107,7 +102,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             all_workspace_files.clone(),
         );
         let context: GraphAnalysisContext = self
-            .resolver
+            .deps.resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir.value());
 
         let configured = self.get_orphan_entry_points();
@@ -116,7 +111,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 configured,
             );
         let entry_points = self
-            .resolver
+            .deps.resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
@@ -188,6 +183,29 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         results
     }
 
+    fn scan_orphans(
+        &self,
+        root_dir: &FilePath,
+        ignored: &[String],
+    ) -> (GraphAnalysisContext, Vec<LintResult>) {
+        let root_path = std::path::Path::new(root_dir.value());
+        let mut all_files = Vec::new();
+        if root_path.is_dir() {
+            let dir_path =
+                shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
+                    .unwrap_or_else(|_| panic!("Invalid directory path: {}", root_dir.value()));
+            if let Ok(list) =
+                shared::common::utility_file_handler::scan_directory(&dir_path, ignored)
+            {
+                all_files = list.values.iter().map(|f| f.value.clone()).collect();
+            }
+        }
+        let files_vo = OrphanFileListVO::new(all_files);
+        let context = self.build_orphan_graph_context(&files_vo, root_dir);
+        let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
+        (context, results)
+    }
+
     fn check_orphans_with_context(
         &self,
         files: &OrphanFileListVO,
@@ -237,7 +255,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             all_workspace_files.clone(),
         );
         let entry_points = self
-            .resolver
+            .deps.resolver
             .identify_entry_points(&[file_vo], &[configured_vo]);
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
@@ -312,17 +330,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
-    pub fn new(deps: ArchOrphanDeps) -> Self {
-        Self {
-            resolver: deps.resolver,
-            taxonomy_analyzer: deps.taxonomy_analyzer,
-            contract_analyzer: deps.contract_analyzer,
-            capabilities_analyzer: deps.capabilities_analyzer,
-            utility_analyzer: deps.utility_analyzer,
-            agent_analyzer: deps.agent_analyzer,
-            surfaces_analyzer: deps.surfaces_analyzer,
-            config: deps.config,
-        }
+    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
+        Self { deps, config }
     }
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
@@ -402,7 +411,7 @@ impl ArchOrphanAnalyzer {
         };
 
         if layer_str.contains(LAYER_TAXONOMY) {
-            return self.taxonomy_analyzer.is_taxonomy_orphan(
+            return self.deps.taxonomy_analyzer.is_taxonomy_orphan(
                 &fp,
                 &root,
                 None,
@@ -411,7 +420,7 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_CONTRACT) {
-            return self.contract_analyzer.is_contract_orphan(
+            return self.deps.contract_analyzer.is_contract_orphan(
                 &fp,
                 &root,
                 &context.file_definitions,
@@ -429,12 +438,12 @@ impl ArchOrphanAnalyzer {
 
         if layer_str.contains(LAYER_CAPABILITIES) {
             return self
-                .capabilities_analyzer
+                .deps.capabilities_analyzer
                 .is_capabilities_orphan(&fp, &root, &alive_set);
         }
 
         if layer_str.contains(LAYER_UTILITY) {
-            return self.utility_analyzer.is_utility_orphan(
+            return self.deps.utility_analyzer.is_utility_orphan(
                 &fp,
                 &root,
                 all_files,
@@ -443,12 +452,12 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_AGENT) {
-            return self.agent_analyzer.is_agent_orphan(&fp, &root, all_files);
+            return self.deps.agent_analyzer.is_agent_orphan(&fp, &root, all_files);
         }
 
         if layer_str.contains(LAYER_SURFACES) {
             return self
-                .surfaces_analyzer
+                .deps.surfaces_analyzer
                 .is_surface_orphan(&fp, &root, &alive_set, None);
         }
 

@@ -24,4 +24,12 @@ pub trait IOrphanAggregate: Send + Sync {
         root_dir: &FilePath,
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult>;
+    /// Scan a directory and run orphan detection — encapsulates all file I/O.
+    /// Takes a root path and ignored path patterns (as string slices).
+    /// Returns (graph_context, orphan_results) — context can be reused for filtered queries.
+    fn scan_orphans(
+        &self,
+        root_dir: &FilePath,
+        ignored: &[String],
+    ) -> (GraphAnalysisContext, Vec<LintResult>);
 }

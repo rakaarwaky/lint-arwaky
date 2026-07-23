@@ -15,16 +15,18 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use std::sync::Arc;
 
 fn build_analyzer(config: ArchitectureConfig) -> ArchOrphanAnalyzer {
-    ArchOrphanAnalyzer::new(ArchOrphanDeps {
-        resolver: Arc::new(OrphanGraphResolver::new()),
-        taxonomy_analyzer: Arc::new(TaxonomyOrphanAnalyzer::new()),
-        contract_analyzer: Arc::new(ContractOrphanAnalyzer::new()),
-        capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new()),
-        utility_analyzer: Arc::new(UtilityOrphanAnalyzer::new()),
-        agent_analyzer: Arc::new(AgentOrphanAnalyzer::new()),
-        surfaces_analyzer: Arc::new(SurfacesOrphanAnalyzer::new()),
+    ArchOrphanAnalyzer::new(
+        ArchOrphanDeps {
+            resolver: Arc::new(OrphanGraphResolver::new()),
+            taxonomy_analyzer: Arc::new(TaxonomyOrphanAnalyzer::new()),
+            contract_analyzer: Arc::new(ContractOrphanAnalyzer::new()),
+            capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new()),
+            utility_analyzer: Arc::new(UtilityOrphanAnalyzer::new()),
+            agent_analyzer: Arc::new(AgentOrphanAnalyzer::new()),
+            surfaces_analyzer: Arc::new(SurfacesOrphanAnalyzer::new()),
+        },
         config,
-    })
+    )
 }
 
 // ─── Disabled config returns empty results ────────────────
