@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.local.sh — release build + local user installation (XDG user layout)
+# install.global.sh — release build + global system-wide installation
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,19 +8,23 @@ CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
 RELEASE_DIR="$PROJECT_ROOT/target/release"
 DIST_DIR="$PROJECT_ROOT/dist"
 
-INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
-CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
-REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Warning: Global installation typically requires root privileges (e.g. sudo)."
+fi
+
+INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-/usr/local/bin}"
+CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-/etc/lint-arwaky}"
+REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-/var/lib/lint-arwaky/reports}"
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
 # 1. Pembersihan & Install XDG layout sebelum build
 if [ -d "$CONFIG_DIR" ]; then
-    echo "Cleaning existing XDG config dir: $CONFIG_DIR"
+    echo "Cleaning existing global config dir: $CONFIG_DIR"
     rm -rf "$CONFIG_DIR"
 fi
 if [ -d "$REPORT_DIR" ]; then
-    echo "Cleaning existing XDG report dir: $REPORT_DIR"
+    echo "Cleaning existing global report dir: $REPORT_DIR"
     rm -rf "$REPORT_DIR"
 fi
 
@@ -97,4 +101,4 @@ if [ -d "$AGENTS_SRC" ]; then
 fi
 
 CURRENT_VERSION=$(grep '^version' "$CARGO_TOML" | head -1 | sed 's/version = "\(.*\)"/\1/' | tr -d '\r')
-echo "Done (Local): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
+echo "Done (Global): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
