@@ -644,8 +644,8 @@ impl SurfaceRoleChecker {
             code: ErrorCode::raw("AES406"),
             message: LintMessage::new(format!(
                 "AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.",
-                &f.to_string(),
-                &detail
+                f,
+                detail
             )),
             source: Some(AdapterName::raw("surface_hierarchy")),
             severity: Severity::HIGH,

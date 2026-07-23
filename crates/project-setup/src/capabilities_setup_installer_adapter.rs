@@ -21,6 +21,10 @@ pub struct SetupInstallerAdapter;
 #[async_trait]
 impl ISetupInstallerProtocol for SetupInstallerAdapter {
     async fn install_python_packages(&self, packages: &[String]) -> Result<(), SetupError> {
+        if packages.is_empty() {
+            return Ok(());
+        }
+
         let status = tokio::process::Command::new("pip")
             .args(["install", "--user"])
             .args(packages)
@@ -52,11 +56,16 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
         packages: &[String],
         sudo: bool,
     ) -> Result<(), SetupError> {
+        if packages.is_empty() {
+            return Ok(());
+        }
+
         let (cmd, args) = if sudo {
             ("sudo", vec!["npm", "install", "-g"])
         } else {
             ("npm", vec!["install", "-g"])
         };
+
         let status = tokio::process::Command::new(cmd)
             .args(args)
             .args(packages)

@@ -21,10 +21,13 @@ fn cli_bin() -> Command {
         }
     }
     let mut cmd = Command::new("cargo");
-    cmd.arg("run").arg("--quiet").arg("--bin").arg("lint-arwaky-cli").arg("--");
+    cmd.arg("run")
+        .arg("--quiet")
+        .arg("--bin")
+        .arg("lint-arwaky-cli")
+        .arg("--");
     cmd
 }
-
 
 #[test]
 fn frd_check_01_runs_analysis_on_target_path() {
