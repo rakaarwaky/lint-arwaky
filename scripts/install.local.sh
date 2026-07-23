@@ -96,5 +96,8 @@ if [ -d "$AGENTS_SRC" ]; then
     done
 fi
 
-CURRENT_VERSION=$(grep '^version' "$CARGO_TOML" | head -1 | sed 's/version = "\(.*\)"/\1/' | tr -d '\r')
+CURRENT_VERSION=$(cargo metadata --no-deps --format-version 1 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1 || true)
+if [ -z "$CURRENT_VERSION" ]; then
+    CURRENT_VERSION=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$CARGO_TOML" | head -1)
+fi
 echo "Done (Local): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
