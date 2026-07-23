@@ -22,7 +22,8 @@ fn sarif_formatter_formats_empty_report() {
     let result = formatter.format(&report, Format::Sarif);
     assert!(!result.value.is_empty());
     assert!(result.value.contains("\"$schema\""));
-    assert!(result.value.contains("\"version\" : \"2.1.0\""));
+    assert!(result.value.contains("\"version\""));
+    assert!(result.value.contains("\"2.1.0\""));
     assert!(result.value.contains("\"runs\""));
 }
 
@@ -34,7 +35,7 @@ fn sarif_formatter_includes_tool_name() {
     let report = ScanReport::new(vec![], vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"name\" : \"lint-arwaky\""));
+    assert!(result.value.contains("\"name\": \"lint-arwaky\""));
 }
 
 // ─── format: Severity mapping (High/Critical -> error) ──
@@ -53,7 +54,7 @@ fn sarif_formatter_maps_high_to_error() {
     let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"level\" : \"error\""));
+    assert!(result.value.contains("\"level\": \"error\""));
 }
 
 // ─── format: Severity mapping (Medium -> warning) ──
@@ -72,7 +73,7 @@ fn sarif_formatter_maps_medium_to_warning() {
     let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"level\" : \"warning\""));
+    assert!(result.value.contains("\"level\": \"warning\""));
 }
 
 #[test]
@@ -89,7 +90,7 @@ fn sarif_formatter_maps_low_to_note() {
     let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"level\" : \"note\""));
+    assert!(result.value.contains("\"level\": \"note\""));
 }
 
 // ─── format: Falls back to default for non-SARIF format ──

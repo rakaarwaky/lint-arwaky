@@ -13,80 +13,200 @@ metadata:
     - create-capabilities-python
 ---
 
+# lint-arwaky-python — Complete Command & Argument Reference
+
+Run `lint-arwaky-cli` scanner and MCP server for Python projects. Validates AES (Architecture Error Standards) compliance, checks layer violations, and helps fix architecture issues.
+
 ---
 
-# lint-arwaky-python
+## 1. Global CLI Options
 
-## Purpose
+These options apply globally across all `lint-arwaky-cli` subcommands:
 
-Run lint-arwaky CLI scanner and MCP server for Python projects. Validates AES (Architecture Error Standards) compliance, checks layer violations, and helps fix architecture issues.
+| Option | Long Flag | Description |
+| :--- | :--- | :--- |
+| `-v` | `--verbose` | Enable debug logging and detailed diagnostic traces. |
+| `-q` | `--quiet` | Minimize console output (suppress non-error messages). |
+| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration). |
+| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
+| `-h` | `--help` | Print help information for the CLI or specific subcommand. |
+| `-V` | `--version` | Print CLI binary version. |
 
-## When to Use
+---
 
-- Before committing changes
-- After refactoring modules
-- When verifying AES compliance
-- When user asks to scan Python project
+## 2. Complete Commands & Subcommands Reference
 
-## The Fundamental Question
-
-> **"Is this Python project AES compliant?"**
-
-If no → **Run lint-arwaky scanner and fix violations**
-
-## Workflow
-
-### Step 1: Run CLI Scanner
+### `scan` / `check`
+Scans target Python workspace, discovers modules, and runs all linters.
 
 ```bash
-# Scan Python project for AES violations
-python -m lint_arwaky scan <project-path> --language python
+# Basic scan (defaults to text format)
+lint-arwaky-cli scan test-workspaces/modules
 
-# Scan specific module
-python -m lint_arwaky scan modules/animator --language python
+# Scan with specific output format (text | json | sarif | junit)
+lint-arwaky-cli scan test-workspaces/modules --format json
 
-# Check specific rule
-python -m lint_arwaky check aes201 --language python
+# Filter scan results by rule code (e.g. AES201, AES401)
+lint-arwaky-cli scan test-workspaces/modules --filter AES201
+
+# Save reports to custom directory
+lint-arwaky-cli scan test-workspaces/modules --format json --output-dir ~/.local/share/lint-arwaky/reports
 ```
 
-### Step 2: Review Violations
+**Arguments & Flags**:
+* `[PATH]`: Target path to scan (defaults to current directory `.`).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+* `--member <NAME>`: Target single workspace member by module name.
+* `--filter <CODE>`: Filter violations by AES rule ID.
+* `-o, --output-dir <DIR>`: Output directory path to save report files.
 
-Analyze scan results for:
+---
 
-- AES201 import violations (cross-layer imports)
-- AES403 missing protocol inheritance
-- AES404 mixed layer responsibilities
-- AES405 magic constants
-- AES406 surface role violations
-
-### Step 3: Fix Violations
-
-Use appropriate skills to fix violations:
+### `fix`
+Applies safe automatic fixes to compliance violations across the codebase.
 
 ```bash
-# For import violations
-python -m lint_arwaky fix cross-import modules/
+# Apply automatic fixes
+lint-arwaky-cli fix modules/
 
-# For missing protocols
-python -m lint_arwaky fix protocol modules/
+# Preview changes without modifying files (Dry Run)
+lint-arwaky-cli fix modules/ --dry-run
 
-# For layer violations
-python -m lint_arwaky fix layer modules/
+# Preview fixes for specific rule code
+lint-arwaky-cli fix modules/ --dry-run --filter AES101
 ```
 
-### Step 4: Verify Fixes
+**Arguments & Flags**:
+* `[PATH]`: Target path to fix (defaults to `.`).
+* `--dry-run`: Perform a dry run showing diffs without modifying files.
+* `--filter <CODE>`: Apply fixes only for a specific AES rule ID.
 
-Run scanner again to confirm violations resolved:
+---
+
+### `ci`
+Continuous Integration quality gate mode. Evaluates compliance score against a threshold.
 
 ```bash
-# Re-scan after fixes
-python -m lint_arwaky scan <project-path> --language python
+# CI mode with default threshold
+lint-arwaky-cli ci modules/
 
-# Verify specific rule
-python -m lint_arwaky check aes201 --language python
+# CI mode with custom score threshold (exits with status 1 if score < 80)
+lint-arwaky-cli ci modules/ --threshold 80 --format junit
 ```
 
-## AES Rules for Python
+**Arguments & Flags**:
+* `[PATH]`: Target path (defaults to `.`).
+* `--threshold <SCORE>`: Minimum acceptable quality score (0–100, default: 80).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+
+---
+
+### `orphan`
+Checks if a target Python source file is an orphan (AES501–AES506) unreachable from entry points.
+
+```bash
+# Check single file for orphan status
+lint-arwaky-cli orphan modules/animator/utility_helper.py
+```
+
+**Arguments & Flags**:
+* `<FILE_PATH>`: Relative or absolute path to the target source file.
+
+---
+
+### `security` & `dependencies`
+Scans for security vulnerabilities and library dependency CVEs.
+
+```bash
+# Scan code for security issues (Bandit, Cargo Audit, ESLint Security)
+lint-arwaky-cli security modules/
+
+# Scan Python library dependencies for vulnerabilities
+lint-arwaky-cli dependencies modules/
+```
+
+---
+
+### `watch`
+Monitors file system changes and re-runs linting automatically upon file save.
+
+```bash
+# Watch directory and re-lint on changes
+lint-arwaky-cli watch modules/
+```
+
+---
+
+### `install-hook` & `uninstall-hook`
+Manages Git pre-commit hook integration.
+
+```bash
+# Install git pre-commit hook
+lint-arwaky-cli install-hook
+
+# Uninstall git pre-commit hook
+lint-arwaky-cli uninstall-hook
+```
+
+---
+
+### `init` & `install`
+Initializes workspace configuration and installs linter adapter dependencies.
+
+```bash
+# Create default lint_arwaky.config.yaml in workspace
+lint-arwaky-cli init
+
+# Install required external linter tools (ruff, mypy, bandit, etc.)
+lint-arwaky-cli install
+```
+
+---
+
+### `config-show`, `adapters`, & `mcp-config`
+Displays workspace configuration and active integrations.
+
+```bash
+# Show active configuration tokens and rules
+lint-arwaky-cli config-show
+
+# List all active linter adapters (Ruff, Mypy, Radon, Bandit, etc.)
+lint-arwaky-cli adapters
+
+# Print MCP server configuration JSON for AI client integration
+lint-arwaky-cli mcp-config
+```
+
+---
+
+### `doctor` & `version`
+Environment diagnostic tools.
+
+```bash
+# Health check for Python tooling and environment
+lint-arwaky-cli doctor
+
+# Display binary version information
+lint-arwaky-cli version
+```
+
+---
+
+## 3. Report Redirection & XDG Storage
+
+Output can be saved directly to the XDG `reports` directory (`~/.local/share/lint-arwaky/reports/`):
+
+```bash
+# Save JSON report
+lint-arwaky-cli scan modules/ --format json > ~/.local/share/lint-arwaky/reports/scan_python.json
+
+# Save SARIF report for GitHub Code Scanning
+lint-arwaky-cli scan modules/ --format sarif > ~/.local/share/lint-arwaky/reports/scan_python.sarif
+```
+
+---
+
+## 4. AES Rules for Python
 
 ### Layer Import Rules (AES201)
 
@@ -103,29 +223,15 @@ FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
 
 ### Layer Boundaries (AES404)
 
-| Layer          | Can Contain                  | Cannot Contain              |
-| -------------- | ---------------------------- | --------------------------- |
-| capabilities   | Pure computation, validation | I/O, network, database      |
-| infrastructure | I/O, network, database       | Business logic, computation |
-| agent          | Orchestration flow           | Computation, I/O, business  |
+| Layer | Can Contain | Cannot Contain |
+| :--- | :--- | :--- |
+| capabilities | Pure computation, validation | I/O, network, database |
+| infrastructure | I/O, network, database | Business logic, computation |
+| agent | Orchestration flow | Computation, I/O, business |
 
-## Quick Commands
+---
 
-```bash
-# Scan entire project
-python -m lint_arwaky scan modules/ --language python
-
-# Check specific rule
-python -m lint_arwaky check aes201 --language python
-
-# Fix violations automatically
-python -m lint_arwaky fix all modules/ --language python
-
-# Run MCP server for IDE integration
-python -m lint_arwaky mcp --language python
-```
-
-## Verification Checklist
+## 5. Verification Checklist
 
 - [ ] All layer imports follow AES201 rules
 - [ ] All classes inherit appropriate protocol ABCs (AES403)
@@ -133,12 +239,14 @@ python -m lint_arwaky mcp --language python
 - [ ] No magic constants in layers (AES405)
 - [ ] Surface files follow role-based imports (AES406)
 
-## Common Issues (FIX)
+---
 
-| Issue                          | Fix Strategy                        |
-| ------------------------------ | ----------------------------------- |
-| Cross-layer imports            | Use contract layer protocols via DI |
-| Missing protocol inheritance   | Create protocol ABC and inherit     |
-| Mixed layer responsibilities   | Move code to appropriate layer      |
-| Magic constants                | Extract to taxonomy constants       |
-| Surface importing capabilities | Use aggregate contracts instead     |
+## 6. Common Issues & Fix Strategies
+
+| Issue | Fix Strategy |
+| :--- | :--- |
+| Cross-layer imports | Use contract layer protocols via DI |
+| Missing protocol inheritance | Create protocol ABC and inherit |
+| Mixed layer responsibilities | Move code to appropriate layer |
+| Magic constants | Extract to taxonomy constants |
+| Surface importing capabilities | Use aggregate contracts instead |

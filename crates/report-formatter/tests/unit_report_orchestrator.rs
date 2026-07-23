@@ -68,7 +68,7 @@ fn orchestrator_routes_to_sarif_formatter() {
     let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"@schema\""));
+    assert!(result.value.contains("\"$schema\""));
 }
 
 // ─── format: Routes to correct formatter (JUnit) ──

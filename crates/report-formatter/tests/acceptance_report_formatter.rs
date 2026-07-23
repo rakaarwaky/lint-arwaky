@@ -66,7 +66,7 @@ fn acceptance_report_formatter_sarif_schema() {
     let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Sarif);
-    assert!(result.value.contains("\"@schema\""));
+    assert!(result.value.contains("\"$schema\""));
 }
 
 // ─── Acceptance: JUnit formatter produces valid XML ──
