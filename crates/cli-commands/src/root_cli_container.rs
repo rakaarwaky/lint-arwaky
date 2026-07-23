@@ -1,13 +1,9 @@
 // PURPOSE: CliContainer — DI wiring for CLI binary aggregates
 use std::sync::Arc;
 
-use crate::agent_analysis_pipeline_orchestrator::{
-    AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
-};
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol;
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -99,18 +95,9 @@ impl CliContainer {
                 },
             ));
 
-        // Wire analysis pipeline orchestrator
+        // Wire analysis pipeline action
         let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(AnalysisPipelineOrchestrator::new(AnalysisPipelineDeps {
-                code_analysis_linter: code_analysis_linter.clone(),
-                naming_orchestrator: naming_orchestrator.clone(),
-                import_orchestrator: import_orchestrator.clone(),
-                external_lint: external_lint.clone(),
-                role_orchestrator: role_orchestrator.clone(),
-                orphan_orchestrator: orphan_orchestrator.clone(),
-                config_orchestrator: multi_project_orchestrator.clone(),
-                format: Format::Text,
-            }));
+            Arc::new(crate::surface_parallel_action::ParallelPipelineAction);
 
         Self {
             code_analysis_linter,

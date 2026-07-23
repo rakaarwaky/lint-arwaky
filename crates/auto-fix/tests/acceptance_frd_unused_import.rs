@@ -30,10 +30,10 @@ impl ICodeAnalysisAggregate for MockLinter {
     fn calc_score(&self, _: &[LintResult]) -> Score {
         Score::new(100.0)
     }
-    fn check_critical(&self, _: &[LintResult]) -> bool {
-        false
+    fn check_critical(&self, _: &[LintResult]) -> shared::common::taxonomy_common_vo::BooleanVO {
+        shared::common::taxonomy_common_vo::BooleanVO::new(false)
     }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> DisplayContent {
         DisplayContent::new("")
     }
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {

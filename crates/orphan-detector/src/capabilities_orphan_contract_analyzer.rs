@@ -209,22 +209,25 @@ impl ContractOrphanAnalyzer {
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
         let root = std::path::Path::new(root_dir.value()).to_path_buf();
+        let top_root =
+            shared::orphan_detector::utility_workspace_scanner::find_workspace_root(&root)
+                .unwrap_or_else(|_| root.clone());
         if let Ok(mut guard) = self.search_cache.lock() {
             if let Some(cache) = guard.as_ref() {
-                if cache.root == root && cache.file_count == all_files.len() {
+                if cache.root == top_root && cache.file_count == all_files.len() {
                     return cache.files.clone();
                 }
             }
             let mut search_files: Vec<String> = all_files.to_vec();
             for ws_dir in &["crates", "packages", "modules"] {
-                let ws_path = root.join(ws_dir);
+                let ws_path = top_root.join(ws_dir);
                 if ws_path.exists() {
                     collect_source_files(&ws_path, &mut search_files);
                 }
             }
             let files = Arc::new(search_files);
             *guard = Some(SearchFilesCache {
-                root,
+                root: top_root,
                 file_count: all_files.len(),
                 files: files.clone(),
             });

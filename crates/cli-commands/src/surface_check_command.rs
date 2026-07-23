@@ -165,7 +165,6 @@ impl CheckCommandsSurface {
             println!();
         }
 
-        let mut global_all_results = Vec::new();
         let filter_str = filter.map(String::from);
 
         // Pre-compute canonical paths for all workspaces once
@@ -184,56 +183,24 @@ impl CheckCommandsSurface {
             })
             .collect();
 
-        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter())
-        {
-            // Run pipeline for this workspace member via agent layer
-            let request = ScanRequest {
-                target: ScanTarget::new(ws.path.value.clone()),
-                mode: ScanMode::Scan,
-                filter: filter_str.clone(),
-                member: Some(ws.workspace_type.clone()),
-                format: Format::Text, // Internal format, not displayed
-            };
+        // Single-pass pipeline scan on root path
+        let request = ScanRequest {
+            target: ScanTarget::new(path.to_string()),
+            mode: ScanMode::Scan,
+            filter: filter_str.clone(),
+            member: None,
+            format: Format::Text,
+        };
 
-            let report = match rt.block_on(self.pipeline.run(request)) {
-                Ok(r) => r,
-                Err(e) => {
-                    eprintln!("[warn] pipeline failed for {}: {e}", ws.path.value);
-                    continue;
-                }
-            };
+        let report = match rt.block_on(self.pipeline.run(request)) {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("[error] pipeline failed for {path}: {e}");
+                return ExitCode::from(2);
+            }
+        };
 
-            // Filter results to this workspace member's path
-            let filtered_results: Vec<_> = if let Some(code) = filter {
-                report
-                    .results
-                    .into_iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        r.code.code() == code
-                            && (ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(false)
-                                || abs_path.starts_with(ws_fallback))
-                    })
-                    .collect()
-            } else {
-                report
-                    .results
-                    .into_iter()
-                    .filter(|r| {
-                        let abs_path = cwd.join(&r.file.value);
-                        ws_canonical
-                            .as_ref()
-                            .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(ws_fallback))
-                    })
-                    .collect()
-            };
-
-            global_all_results.extend(filtered_results);
-        }
+        let global_all_results = report.results;
 
         // Print per-workspace results
         if multi && matches!(format, Format::Text) {

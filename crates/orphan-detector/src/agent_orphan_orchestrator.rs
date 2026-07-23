@@ -55,9 +55,41 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         files: &OrphanFileListVO,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
+        let root_path = std::path::Path::new(root_dir.value());
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let mut all_workspace_files: Vec<String> = files.values.clone();
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = top_root.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, _path_str, is_dir_entry) in entries {
+                    if !is_dir_entry {
+                        continue;
+                    }
+                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
+                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                        let workspace_files =
+                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
+                                &src_dir,
+                            );
+                        for f in workspace_files {
+                            let rel = std::path::Path::new(&f)
+                                .strip_prefix(&top_root)
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or(f);
+                            if !all_workspace_files.contains(&rel) {
+                                all_workspace_files.push(rel);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        let full_files_vo = OrphanFileListVO::new(all_workspace_files);
         self.deps
             .resolver
-            .build_graph_context(std::slice::from_ref(files), root_dir.value())
+            .build_graph_context(std::slice::from_ref(&full_files_vo), root_dir.value())
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
@@ -72,25 +104,31 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         }
 
         // Expand files to include all workspace source files for cross-crate import resolution
-        let mut all_workspace_files: Vec<String> = files.values.clone();
         let root_path = std::path::Path::new(root_dir.value());
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let mut all_workspace_files: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = root_path.join(ws_dir);
+            let ws_path = top_root.join(ws_dir);
             if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
                 let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
                 for (name, _path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
                     }
-                    let src_dir = root_path.join(ws_dir).join(&name).join("src");
+                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
                         let workspace_files =
                             shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
                                 &src_dir,
                             );
                         for f in workspace_files {
-                            if !all_workspace_files.contains(&f) {
-                                all_workspace_files.push(f);
+                            let rel = std::path::Path::new(&f)
+                                .strip_prefix(&top_root)
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or(f);
+                            if !all_workspace_files.contains(&rel) {
+                                all_workspace_files.push(rel);
                             }
                         }
                     }
@@ -222,25 +260,31 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         }
 
         // Expand files to include all workspace source files for cross-crate import resolution
-        let mut all_workspace_files: Vec<String> = files.values.clone();
         let root_path = std::path::Path::new(root_dir.value());
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let mut all_workspace_files: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = root_path.join(ws_dir);
+            let ws_path = top_root.join(ws_dir);
             if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
                 let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
                 for (name, _path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
                     }
-                    let src_dir = root_path.join(ws_dir).join(&name).join("src");
+                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
                         let workspace_files =
                             shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
                                 &src_dir,
                             );
                         for f in workspace_files {
-                            if !all_workspace_files.contains(&f) {
-                                all_workspace_files.push(f);
+                            let rel = std::path::Path::new(&f)
+                                .strip_prefix(&top_root)
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or(f);
+                            if !all_workspace_files.contains(&rel) {
+                                all_workspace_files.push(rel);
                             }
                         }
                     }

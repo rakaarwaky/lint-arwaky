@@ -3,11 +3,11 @@ use std::env;
 use std::process::ExitCode;
 
 use cli_commands::surface_check_action;
-use cli_commands::surface_fix_command;
+use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands, ScanSubcommands};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 
@@ -66,19 +66,83 @@ fn main() -> ExitCode {
 
     match cli.command {
         Commands::Scan {
+            subcommand,
             path,
             member,
             format,
-        } => surface_check_action::handle_scan(surface_check_action::ScanOptions {
-            path: path.map(|p| FilePath::new(p).unwrap_or_default()),
-            pipeline: container.pipeline_aggregate(),
-            report_formatter: container.report_formatter.clone(),
-            multi_project_orchestrator: Some(container.multi_project_orchestrator.clone()),
-            filter,
-            member,
-            format,
-        }),
-        Commands::Fix { path, dry_run } => surface_fix_command::handle_fix(
+        } => match subcommand {
+            Some(ScanSubcommands::Quality { path: sub_path }) => {
+                cli_commands::surface_quality_action::handle_scan_quality(
+                    sub_path
+                        .or(path)
+                        .map(|p| FilePath::new(p).unwrap_or_default()),
+                    container.code_analysis_linter.clone(),
+                    container.report_formatter.clone(),
+                )
+            }
+            Some(ScanSubcommands::Import { path: sub_path }) => {
+                cli_commands::surface_import_action::handle_scan_import(
+                    sub_path
+                        .or(path)
+                        .map(|p| FilePath::new(p).unwrap_or_default()),
+                    container.import_orchestrator.clone(),
+                    container.report_formatter.clone(),
+                )
+            }
+            Some(ScanSubcommands::Naming { path: sub_path }) => {
+                cli_commands::surface_naming_action::handle_scan_naming(
+                    sub_path
+                        .or(path)
+                        .map(|p| FilePath::new(p).unwrap_or_default()),
+                    container.naming_orchestrator.clone(),
+                    container.report_formatter.clone(),
+                )
+            }
+            Some(ScanSubcommands::Role { path: sub_path }) => {
+                cli_commands::surface_role_action::handle_scan_role(
+                    sub_path
+                        .or(path)
+                        .map(|p| FilePath::new(p).unwrap_or_default()),
+                    container.role_orchestrator.clone(),
+                    container.report_formatter.clone(),
+                )
+            }
+            Some(ScanSubcommands::Orphan {
+                path: sub_path,
+                member: sub_member,
+            }) => {
+                let target_path = sub_path.or(path).unwrap_or_else(|| ".".to_string());
+                let target_member = sub_member.or(member);
+                let path_obj = std::path::Path::new(&target_path);
+                if path_obj.is_file() {
+                    let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
+                        container.pipeline_aggregate(),
+                        container.report_formatter.clone(),
+                        None,
+                    );
+                    surface.check_orphan_single_file(&target_path);
+                    ExitCode::SUCCESS
+                } else {
+                    cli_commands::surface_orphan_action::handle_scan_orphan(
+                        Some(FilePath::new(target_path).unwrap_or_default()),
+                        target_member,
+                        container.orphan_orchestrator.clone(),
+                        container.multi_project_orchestrator.clone(),
+                        container.report_formatter.clone(),
+                    )
+                }
+            }
+            None => surface_check_action::handle_scan(surface_check_action::ScanOptions {
+                path: path.map(|p| FilePath::new(p).unwrap_or_default()),
+                pipeline: container.pipeline_aggregate(),
+                report_formatter: container.report_formatter.clone(),
+                multi_project_orchestrator: Some(container.multi_project_orchestrator.clone()),
+                filter,
+                member,
+                format,
+            }),
+        },
+        Commands::Fix { path, dry_run } => surface_fix_action::handle_fix(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             dry_run,
             container.code_analysis_linter.clone(),
@@ -117,7 +181,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             } else {
                 // Directory mode — scan all files
-                cli_commands::surface_orphan_command::handle_scan_orphan(
+                cli_commands::surface_orphan_action::handle_scan_orphan(
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
                     container.orphan_orchestrator.clone(),
@@ -127,27 +191,49 @@ fn main() -> ExitCode {
             }
         }
         Commands::ScanQuality { path } => {
-            cli_commands::surface_quality_command::handle_scan_quality(
+            cli_commands::surface_quality_action::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 container.code_analysis_linter.clone(),
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanImport { path } => cli_commands::surface_import_command::handle_scan_import(
+        Commands::ScanImport { path } => cli_commands::surface_import_action::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanNaming { path } => cli_commands::surface_naming_command::handle_scan_naming(
+        Commands::ScanNaming { path } => cli_commands::surface_naming_action::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanRole { path } => cli_commands::surface_role_command::handle_scan_role(
+        Commands::ScanRole { path } => cli_commands::surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
+        Commands::ScanExternal { path } => {
+            cli_commands::surface_external_action::handle_scan_external(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                container.external_lint.clone(),
+                container.report_formatter.clone(),
+            )
+        }
+        Commands::ScanParallelSubprocess { path } => {
+            let target_path = path.unwrap_or_else(|| ".".to_string());
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(r) => r,
+                Err(_) => return ExitCode::from(2),
+            };
+            rt.block_on(
+                cli_commands::surface_parallel_action::handle_scan_parallel_subprocesses(
+                    &target_path,
+                ),
+            )
+        }
         Commands::Security { path } => {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();
