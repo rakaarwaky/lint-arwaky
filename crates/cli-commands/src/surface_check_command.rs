@@ -32,7 +32,9 @@ impl CheckCommandsSurface {
     pub fn check_orphan_single_file(&self, _file_path: &str) {}
 }
 
-/// scan = runs 6 parallel subprocesses of the 6 surface actions (orphan, naming, quality, role, import, external)
+pub type CheckOptions = ScanOptions;
+
+/// scan/check = runs 6 parallel subprocesses of the 6 surface actions (orphan, naming, quality, role, import, external)
 pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     let root = match &opts.path {
         Some(p) => p.value().to_string(),
@@ -48,6 +50,8 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
     rt.block_on(handle_scan_parallel_subprocesses(&root))
 }
+
+pub use handle_scan as handle_check;
 
 pub async fn handle_scan_parallel_subprocesses(path: &str) -> ExitCode {
     println!("============================================================");

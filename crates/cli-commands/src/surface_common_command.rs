@@ -8,7 +8,6 @@
 //     as auto-fail regardless of score.
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -56,61 +55,20 @@ pub fn current_dir() -> std::path::PathBuf {
 
 pub fn run_ci_analysis(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    import_orchestrator: Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>,
+    naming_orchestrator: Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
+    role_orchestrator: Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
+    orphan_orchestrator: Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
-    let root = match path {
-        Some(p) => p,
-        None => FilePath::new(".").unwrap_or_default(),
-    };
-    let results = code_analysis_linter.run_code_analysis_path(&root);
-    let score = code_analysis_linter.calc_score(&results);
-    let has_crit = code_analysis_linter.check_critical(&results);
-    // P2.7: compare as floats, not truncated u32
-    let below_threshold = score.value() < threshold.value() as f64;
-
-    println!("Architecture Compliance CI");
-    println!("Score: {:.1} / 100", score.value());
-    println!("Threshold: {}", threshold.value());
-    println!();
-
-    let mut reasons: Vec<String> = Vec::new();
-    if has_crit.value() {
-        reasons.push("CRITICAL violation(s) detected — auto-fail triggered".to_string());
-    }
-    if below_threshold {
-        reasons.push(format!(
-            "Score below threshold ({:.1} < {})",
-            score.value(),
-            threshold.value()
-        ));
-    }
-
-    let (mut critical_count, mut high_count, mut medium_count, mut low_count) = (0usize, 0, 0, 0);
-    for r in &results {
-        match r.severity {
-            Severity::CRITICAL => critical_count += 1,
-            Severity::HIGH => high_count += 1,
-            Severity::MEDIUM => medium_count += 1,
-            Severity::LOW => low_count += 1,
-            _ => {}
-        }
-    }
-
-    println!(
-        "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
-        critical_count, high_count, medium_count, low_count
-    );
-    println!();
-
-    if reasons.is_empty() {
-        println!("Result: PASS (exit code 0)");
-        ExitCode::SUCCESS
-    } else {
-        for r in &reasons {
-            println!("  {}", r);
-        }
-        println!("Result: FAIL (exit code 1)");
-        ExitCode::from(1)
-    }
+    crate::surface_ci_command::handle_ci(
+        code_analysis_linter,
+        import_orchestrator,
+        naming_orchestrator,
+        role_orchestrator,
+        orphan_orchestrator,
+        path,
+        threshold,
+    )
 }

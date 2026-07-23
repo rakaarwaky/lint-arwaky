@@ -149,6 +149,10 @@ fn main() -> ExitCode {
         ),
         Commands::Ci { path, threshold } => surface_ci_action::handle_ci(
             container.code_analysis_linter.clone(),
+            container.import_orchestrator.clone(),
+            container.naming_orchestrator.clone(),
+            container.role_orchestrator.clone(),
+            container.orphan_orchestrator.clone(),
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             Threshold::new(threshold),
         ),

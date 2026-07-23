@@ -13,7 +13,7 @@ pub use report_formatter::capabilities_text_formatter;
 pub use report_formatter::ReportFormatterOrchestrator;
 pub mod surface_check_command;
 pub use surface_check_command::CheckCommandsSurface;
-pub mod surface_ci_action;
+pub mod surface_ci_command;
 pub mod surface_common_command;
 pub mod surface_fix_action;
 pub use surface_fix_action::FixCommandsSurface;

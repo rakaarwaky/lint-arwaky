@@ -6,13 +6,14 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Functional Requirements
 
-### FR-001: Check Command (Self-Lint)
+### FR-001: Check Command (Alias of Scan)
 
-- **Description**: Run full architecture compliance analysis on the current lint-arwaky project itself.
-- **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `format: Format`, `git_diff: bool`
+- **Description**: Run full architecture compliance analysis on the target project or workspace. `check` and `scan` are 1:1 equivalent command aliases.
+- **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`, `git_diff: bool`
 - **Output**: `ExitCode` (0 = pass, 1 = violations found, 2 = error)
 - **Business Rules**:
-  - Runs the complete 6-group analysis pipeline sequentially: code analysis (AES301-305), naming rules (AES101-102), import rules (AES201-205), external adapters (Clippy, Ruff, ESLint), role rules (AES401-406), orphan detection (AES501-506).
+  - `check` and `scan` are 1:1 equivalent aliases that invoke the exact same parallel subprocess analysis pipeline.
+  - Runs the complete 6-group analysis pipeline in parallel: code analysis (AES301-305), naming rules (AES101-102), import rules (AES201-205), external adapters (Clippy, Ruff, ESLint), role rules (AES401-406), orphan detection (AES501-506).
   - Results filtered to the target path using canonical path comparison.
   - Supports `--git-diff` for staged-only scanning via the git hooks aggregate.
   - Path validated before scanning — returns exit code 2 if path doesn't exist.
@@ -23,12 +24,13 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Non-existent path provided → early return with error.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
-### FR-002: Scan Command (Multi-Workspace)
+### FR-002: Scan Command (Alias of Check)
 
-- **Description**: Multi-workspace discovery scan that auto-detects workspace members and runs analysis on each.
+- **Description**: Multi-workspace discovery scan that auto-detects workspace members and runs analysis on each. `scan` and `check` are 1:1 equivalent command aliases.
 - **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`
 - **Output**: `ExitCode` (0 = clean, 1 = violations, 2 = error)
 - **Business Rules**:
+  - `scan` and `check` are 1:1 equivalent command aliases operating identically across single-project and multi-workspace environments.
   - Auto-discovers workspace members via the config orchestrator aggregate.
   - Each workspace member gets isolated analysis with filtered results.
   - `--member <name>` targets a specific workspace member by directory name.
@@ -261,8 +263,8 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 | Operation    | Input                                             | Output    | Description                             |
 | -------------- | --------------------------------------------------- | ----------- | ----------------------------------------- |
-| Check        | check options                                     | Exit code | Self-lint analysis on current project   |
-| Scan         | scan options                                      | Exit code | Multi-workspace analysis with discovery |
+| Check        | check options                                     | Exit code | Analysis on project (1:1 equivalent alias of Scan) |
+| Scan         | scan options                                      | Exit code | Multi-workspace analysis (1:1 equivalent alias of Check) |
 | CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison            |
 | Fix          | path, dry-run flag, linter, factory               | Exit code | Apply automatic fixes                   |
 | Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                   |
