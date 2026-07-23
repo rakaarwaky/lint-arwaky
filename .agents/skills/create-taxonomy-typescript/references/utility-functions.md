@@ -29,8 +29,6 @@ function escapeRegex(str: string): string {
 ```typescript
 export function getTargetLayerFromSuffix(suffix: string): string {
   switch (suffix) {
-    case "port":
-      return "capabilities";
     case "protocol":
       return "capabilities";
     default:

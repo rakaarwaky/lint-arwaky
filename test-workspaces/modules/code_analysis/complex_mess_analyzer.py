@@ -95,13 +95,13 @@ def analyze_data_complexity(
         db_type = config.get("type", "sqlite")
         if db_type == "postgres":
             if "host" in config:
-                if "port" in config:
-                    if config["port"] == 5432:
+                if "db_port" in config:
+                    if config["db_port"] == 5432:
                         result["data"]["db"] = "postgres_default"
                     else:
                         result["data"]["db"] = "postgres_custom"
                 else:
-                    result["warnings"].append("No port for postgres")
+                    result["warnings"].append("No db_port for postgres")
             else:
                 result["errors"].append("No host for postgres")
         elif db_type == "mysql":

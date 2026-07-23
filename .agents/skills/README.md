@@ -42,10 +42,9 @@ Core architecture skills following the 7-layer AES model:
 | Skill                     | Purpose                                                                                              |
 | ------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `create-capabilities-*`   | Protocol traits/ABCs, zero I/O, 3-block structure                                                    |
-| `create-infrastructure-*` | Port traits/ABCs, zero business logic, I/O only                                                      |
 | `create-agent-*`          | Aggregate traits/ABCs, orchestration only, zero computation/I/O/business                             |
 | `create-taxonomy-*`       | Strict suffixes (`_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`), dataclass placement |
-| `create-contract-*`       | Pure trait/ABC definitions with `_port`, `_protocol`, `_aggregate` suffixes                          |
+| `create-contract-*`       | Pure trait/ABC definitions with `_protocol`, `_aggregate` suffixes                                   |
 | `create-surface-*`        | Smart/utility/passive types, AES406 role violations                                                  |
 
 ### Utility Skills (6 pairs)

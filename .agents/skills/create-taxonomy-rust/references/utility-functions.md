@@ -35,7 +35,6 @@ pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
 // BAD: knows AES layer mapping rules
 pub fn get_target_layer_from_suffix(suffix: &str) -> &'static str {
     match suffix {
-        "port" => "capabilities",
         "protocol" => "capabilities",
         _ => "unknown",
     }

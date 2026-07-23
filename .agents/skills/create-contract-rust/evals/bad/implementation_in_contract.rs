@@ -5,6 +5,6 @@ pub trait IFileSystemPort: Send + Sync {
 
 impl IFileSystemPort for FileAdapter {
     async fn read_file(&self, path: &FilePath) -> Result<FileContent, FileReadError> {
-        todo!() // BAD: implementation belongs in infrastructure
+        todo!() // BAD: implementation belongs in capabilities
     }
 }

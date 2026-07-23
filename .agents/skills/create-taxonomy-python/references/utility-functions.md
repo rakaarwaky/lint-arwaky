@@ -25,9 +25,7 @@ def match_whole_token(haystack: str, needle: str) -> bool:
 
 ```python
 def get_target_layer_from_suffix(suffix: str) -> str:
-    if suffix == "port":
-        return "capabilities"
-    elif suffix == "protocol":
+    if suffix == "protocol":
         return "capabilities"
     else:
         return "unknown"
