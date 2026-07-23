@@ -3,6 +3,8 @@
 // Speed: s
 
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use std::fs;
 
 fn create_test_project(dir: &std::path::Path) {
@@ -53,7 +55,7 @@ fn full_orphan_detection_lifecycle() {
     let container = OrphanContainer::new();
     let analyzer = container.analyzer();
 
-    let files: Vec<String> = vec![
+    let raw_files: Vec<String> = vec![
         dir.path().join("src/main.rs").to_str().unwrap().to_string(),
         dir.path().join("src/lib.rs").to_str().unwrap().to_string(),
         dir.path()
@@ -73,18 +75,19 @@ fn full_orphan_detection_lifecycle() {
             .to_string(),
     ];
 
-    let root_dir = dir.path().to_str().unwrap();
+    let files = OrphanFileListVO::new(raw_files.clone());
+    let root_dir = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
 
     // Step 1: Build graph
-    let ctx = analyzer.build_orphan_graph_context(&files, root_dir);
+    let ctx = analyzer.build_orphan_graph_context(&files, &root_dir);
     assert!(!ctx.import_graph.mapping.is_empty());
 
     // Step 2: Identify entry points
     let entries = analyzer.identify_orphan_entry_points(&files);
-    assert!(entries.iter().any(|e| e.contains("main.rs")));
+    assert!(entries.values.iter().any(|e| e.contains("main.rs")));
 
     // Step 3: Check orphans
-    let results = analyzer.check_orphans(&files, root_dir);
+    let results = analyzer.check_orphans(&files, &root_dir);
 
     // The dead analyzer should be flagged; the greeter should not
     let _dead_flagged = results

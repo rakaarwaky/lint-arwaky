@@ -82,6 +82,39 @@ pub enum Commands {
         path: String,
     },
 
+    /// Scan a project for orphan files (AES501-AES506)
+    ScanOrphan {
+        /// Path to scan
+        path: Option<String>,
+        /// Scan only a specific workspace member by name
+        #[arg(long)]
+        member: Option<String>,
+    },
+
+    /// Run code-quality analysis only (AES101-AES306)
+    ScanQuality {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run import-rule checks only (AES201-AES299)
+    ScanImport {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run naming-rule checks only (AES401-AES406)
+    ScanNaming {
+        /// Path to scan
+        path: Option<String>,
+    },
+
+    /// Run role-rule checks only (AES301-AES399)
+    ScanRole {
+        /// Path to scan
+        path: Option<String>,
+    },
+
     /// Scan for security vulnerabilities
     Security {
         /// Path to scan

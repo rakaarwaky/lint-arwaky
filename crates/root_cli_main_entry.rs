@@ -127,6 +127,37 @@ fn main() -> ExitCode {
             surface.check_orphan_single_file(&path);
             ExitCode::SUCCESS
         }
+        Commands::ScanOrphan { path, member } => {
+            cli_commands::surface_orphan_command::handle_scan_orphan(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                member,
+                container.orphan_orchestrator.clone(),
+                container.multi_project_orchestrator.clone(),
+                container.report_formatter.clone(),
+            )
+        }
+        Commands::ScanQuality { path } => {
+            cli_commands::surface_quality_command::handle_scan_quality(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                container.code_analysis_linter.clone(),
+                container.report_formatter.clone(),
+            )
+        }
+        Commands::ScanImport { path } => cli_commands::surface_import_command::handle_scan_import(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            container.import_orchestrator.clone(),
+            container.report_formatter.clone(),
+        ),
+        Commands::ScanNaming { path } => cli_commands::surface_naming_command::handle_scan_naming(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            container.naming_orchestrator.clone(),
+            container.report_formatter.clone(),
+        ),
+        Commands::ScanRole { path } => cli_commands::surface_role_command::handle_scan_role(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            container.role_orchestrator.clone(),
+            container.report_formatter.clone(),
+        ),
         Commands::Security { path } => {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();

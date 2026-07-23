@@ -10,8 +10,10 @@ use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraph
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
 use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use std::sync::Arc;
 
 fn build_analyzer(config: ArchitectureConfig) -> ArchOrphanAnalyzer {
@@ -38,7 +40,9 @@ fn check_orphans_disabled_config_returns_empty() {
         ..Default::default()
     };
     let analyzer = build_analyzer(config);
-    let results = analyzer.check_orphans(&["src/lib.rs".to_string()], "/tmp/project");
+    let files = OrphanFileListVO::new(vec!["src/lib.rs".to_string()]);
+    let root = FilePath::new("/tmp/project".to_string()).unwrap();
+    let results = analyzer.check_orphans(&files, &root);
     assert!(results.is_empty());
 }
 
@@ -48,7 +52,9 @@ fn check_orphans_disabled_config_returns_empty() {
 fn check_orphans_empty_files_returns_empty() {
     let config = ArchitectureConfig::default();
     let analyzer = build_analyzer(config);
-    let results = analyzer.check_orphans(&[], "/tmp/project");
+    let files = OrphanFileListVO::new(vec![]);
+    let root = FilePath::new("/tmp/project".to_string()).unwrap();
+    let results = analyzer.check_orphans(&files, &root);
     assert!(results.is_empty());
 }
 
@@ -58,7 +64,9 @@ fn check_orphans_empty_files_returns_empty() {
 fn build_orphan_graph_context_returns_valid_context() {
     let config = ArchitectureConfig::default();
     let analyzer = build_analyzer(config);
-    let ctx = analyzer.build_orphan_graph_context(&["src/lib.rs".to_string()], "/tmp/project");
+    let files = OrphanFileListVO::new(vec!["src/lib.rs".to_string()]);
+    let root = FilePath::new("/tmp/project".to_string()).unwrap();
+    let ctx = analyzer.build_orphan_graph_context(&files, &root);
     assert!(ctx.import_graph.mapping.contains_key("src/lib.rs"));
 }
 
@@ -68,14 +76,17 @@ fn build_orphan_graph_context_returns_valid_context() {
 fn identify_orphan_entry_points_finds_main_and_lib() {
     let config = ArchitectureConfig::default();
     let analyzer = build_analyzer(config);
-    let entries = analyzer.identify_orphan_entry_points(&[
+    let files = OrphanFileListVO::new(vec![
         "src/main.rs".to_string(),
         "src/lib.rs".to_string(),
         "src/capabilities_foo.rs".to_string(),
     ]);
-    assert!(entries.contains("src/main.rs"));
-    assert!(entries.contains("src/lib.rs"));
-    assert!(!entries.contains("src/capabilities_foo.rs"));
+    let entries = analyzer.identify_orphan_entry_points(&files);
+    assert!(entries.values.contains(&"src/main.rs".to_string()));
+    assert!(entries.values.contains(&"src/lib.rs".to_string()));
+    assert!(!entries
+        .values
+        .contains(&"src/capabilities_foo.rs".to_string()));
 }
 
 // ─── Ignored paths are filtered ───────────────────────────
@@ -89,9 +100,8 @@ fn check_orphans_respects_ignored_paths() {
         ..Default::default()
     };
     let analyzer = build_analyzer(config);
-    let results = analyzer.check_orphans(
-        &["src/generated/taxonomy_auto_vo.rs".to_string()],
-        "/tmp/project",
-    );
+    let files = OrphanFileListVO::new(vec!["src/generated/taxonomy_auto_vo.rs".to_string()]);
+    let root = FilePath::new("/tmp/project".to_string()).unwrap();
+    let results = analyzer.check_orphans(&files, &root);
     assert!(results.is_empty());
 }
