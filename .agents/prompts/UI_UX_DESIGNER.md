@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — UI/UX Designer
+# Review Report: {{feature-name}} — UI/UX Designer
 
 ## Summary
 

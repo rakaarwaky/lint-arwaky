@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — API Developer
+# Review Report: {{feature-name}} — API Developer
 
 ## Summary
 

@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Testing Engineer
+# Review Report: {{feature-name}} — Testing Engineer
 
 ## Summary
 

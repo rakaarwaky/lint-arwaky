@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — System Administrator
+# Review Report: {{feature-name}} — System Administrator
 
 ## Summary
 

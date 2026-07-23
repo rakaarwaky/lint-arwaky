@@ -338,11 +338,11 @@ pub enum AesRoleViolation {
     CapabilityNoProtocol {
         reason: Option<LintMessage>,
     },
-    /// Tidak ada struct yang mengimplementasi trait protocol/port
+    /// No struct implementing the protocol/port trait
     CapabilityNoImplementor {
         reason: Option<LintMessage>,
     },
-    /// Jumlah struct + enum melebihi 3
+    /// Number of structs + enums exceeds 3
     CapabilityTooManyTypes {
         count: usize,
         reason: Option<LintMessage>,

@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Technical Lead
+# Review Report: {{feature-name}} — Technical Lead
 
 ## Summary
 

@@ -44,7 +44,7 @@ Capabilities hide these implementations behind Contracts, keeping behavior modul
 
 A capabilities file must:
 
-- implement one domain protocol ABC,
+- implement one domain protocol ABC (via class inheritance),
 - follow strict 3-block structure,
 - use dependency injection for service collaborators,
 - use shared VOs for domain data,
@@ -76,12 +76,99 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 - **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
 - **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
 - **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
-- **Contract Implementation:** the capability implements the `protocol_` ABC defined in the Contract layer.
+- **Contract Implementation:** the capability inherits the protocol ABC defined in the Contract layer. The file MUST import from `_protocol` module only (not `_port`). Example: `from shared.role_rules.contract_<name>_protocol import I<Name>`
 - **State Ownership:** the capability owns business and technical state within its execution scope.
 - **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
 - **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
 - **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
 - **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.py` in shared. Capabilities must not contain magic constants.
+
+## AES403 — Capability Composition Rules
+
+The `CapabilitiesRoleChecker` enforces 3 rules per file:
+
+### Rule 1: Internal Helpers Are Allowed
+
+Classes without ABC inheritance are **allowed** and never flagged. These are internal helper types that don't implement protocol behavior. They must not start with `_`.
+
+```python
+# ✅ ALLOWED — internal helper, no ABC inheritance needed
+class Cache:
+    def __init__(self):
+        self.data = []
+```
+
+### Rule 2: At Least One Implementor Required
+
+The file MUST have at least one class that inherits from a protocol ABC. If no class inherits an ABC → flag `CapabilityNoImplementor` (AES403, Severity MEDIUM).
+
+```python
+# ✅ PASSING — inherits IAgentRoleChecker
+class MyChecker(IAgentRoleChecker):
+    def check_container(self, source, violations):
+        pass
+
+# ❌ FAILING — no ABC inheritance
+class HelperA:
+    def do_a(self):
+        pass
+
+class HelperB:
+    def do_b(self):
+        pass
+```
+
+### Rule 3: Maximum 3 Types Per File
+
+Total class count must not exceed **3**. If exceeded → flag `CapabilityTooManyTypes` (AES403, Severity HIGH).
+
+```python
+# ✅ PASSING — exactly 3 classes
+class Cap(IAgentRoleChecker):
+    def check_container(self, source, violations):
+        pass
+
+class Helper:
+    def do_work(self):
+        pass
+
+class Status:
+    pass
+
+# ❌ FAILING — 4 classes exceeds limit
+class Cap(IAgentRoleChecker):
+    def check_container(self, source, violations):
+        pass
+
+class A:
+    pass
+
+class B:
+    pass
+
+class C:
+    pass
+```
+
+### Detection Patterns
+
+| Language | Implementor Pattern | Non-Implementor |
+|----------|-------------------|-----------------|
+| Rust | `impl Trait for Struct` | Standalone `impl Struct` |
+| Python | `class Name(Protocol):` | Standalone `class Name:` |
+| TS | `class Name implements IProto` | Standalone `class Name {}` |
+
+The guard check requires `_protocol` import only (no `_port` allowed):
+
+```python
+# ✅ Guard passes — imports from _protocol module
+from shared.role_rules.contract_agent_role_protocol import IAgentRoleChecker
+
+# ❌ Guard fails — no _protocol import → CapabilityNoProtocol
+class MyChecker:
+    def do_work(self):
+        pass
+```
 
 ## Definition of Done
 
@@ -95,7 +182,10 @@ Note: do **not** import `infrastructure_*` — that layer no longer exists; its 
 8. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
 9. Low-level technical operations delegate to Utility standalone functions.
 10. Reusable constants extracted to `taxonomy_<domain>_constant.py` in shared.
-11. `python -c "import <module>"` passes.
+11. At least one class inherits a protocol ABC (Rule 2).
+12. Total class count ≤ 3 (Rule 3).
+13. File imports from `_protocol` module only (no `_port`).
+14. `python -c "import <module>"` passes.
 
 ## References
 
@@ -129,9 +219,13 @@ Read the file and ask: **"Does this implement protocol behavior?"**
 
 If yes → keep as capabilities. If no → check if it's orchestration (→ agent), domain data (→ taxonomy), or pure technical mechanics (→ utility).
 
-### Step 2: Check Missing Protocol (AES403)
+### Step 2: Check Protocol Import (AES403 Guard)
 
-Does the capability class inherit a protocol ABC? If no → create one.
+The file MUST import from a `_protocol` module. If missing → flag `CapabilityNoProtocol`.
+
+```python
+from shared.role_rules.contract_<name>_protocol import I<Name>
+```
 
 ### Step 3: Create Protocol File if Missing
 
@@ -141,23 +235,29 @@ Create `contract_<name>_protocol.py` in the appropriate shared domain folder.
 
 Reorganize: class definition + `__init__` → protocol methods → dunders/factories/helpers.
 
-### Step 5: Verify Class Discipline
+### Step 5: Verify AES403 Compliance
+
+- **Rule 1:** Internal helper classes without ABC inheritance are ALLOWED (never flagged).
+- **Rule 2:** At least one class must inherit a protocol ABC (`class Name(Protocol):`).
+- **Rule 3:** Total class count ≤ 3.
+
+### Step 6: Verify Class Discipline
 
 One class, no local data classes, DI via protocol interfaces, shared VOs.
 
-### Step 6: Verify Helper vs Utility Boundary
+### Step 7: Verify Helper vs Utility Boundary
 
 See `references/helper-vs-utility.md` for the decision tree.
 
-### Step 7: Verify Layer Compliance
+### Step 8: Verify Layer Compliance
 
 No forbidden imports (Agent, other capabilities), no inter-capability dependencies, no business logic leakage, no domain model definition.
 
-### Step 8: Verify Error Handling, VO, and Constants
+### Step 9: Verify Error Handling, VO, and Constants
 
 See `references/error-handling.md` and `references/primitive-vo-policy.md`.
 
-### Step 9: Verify Compilation
+### Step 10: Verify Compilation
 
 ```bash
 python -c "import <module>"
@@ -171,6 +271,9 @@ grep -n "^\s*from\s+.*(agent_|capabilities_)" modules/*/src/capabilities_*.py
 
 # List protocol ABC implementations
 grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
+
+# Check _protocol import (guard)
+grep -n "from\s+.*_protocol" modules/*/src/capabilities_*.py
 ```
 
 ## Common Mistakes
@@ -186,3 +289,6 @@ grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
 - Silent error swallowing with `or ""` or `or 0`.
 - Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.py`).
 - Not delegating low-level technical operations to Utility.
+- Importing from `_port` module instead of `_protocol` module.
+- Having no class that inherits a protocol ABC (Rule 2 violation).
+- Exceeding 3 total classes in a file (Rule 3 violation).

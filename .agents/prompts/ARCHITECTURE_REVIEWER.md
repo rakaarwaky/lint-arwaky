@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Architecture Reviewer
+# Review Report: {{feature-name}} — Architecture Reviewer
 
 ## Summary
 

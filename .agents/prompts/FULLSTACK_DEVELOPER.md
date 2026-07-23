@@ -15,7 +15,7 @@ When your review is complete, save the report to:
 ### Report Structure
 
 ```markdown
-# Review Report: {{nama-fitur}} — Full Stack Developer
+# Review Report: {{feature-name}} — Full Stack Developer
 
 ## Summary
 
