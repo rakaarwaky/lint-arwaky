@@ -565,21 +565,6 @@ impl OrphanGraphResolver {
                 inbound_links.entry(dep).or_default().push(f.clone());
             }
 
-            // Pass 3b: TypeScript/JavaScript relative imports with quoted paths
-            // Handles: `import { X } from './path'`, `import X from '../path'`, `require('./path')`
-            if let Some(ts_re) = Self::ts_import_path_re() {
-                for cap in ts_re.captures_iter(&content) {
-                    let quoted_path = &cap[2]; // The captured path without quotes
-                    Self::resolve_ts_relative_import(f, quoted_path, &module_to_file, &mut import_graph, &mut inbound_links);
-                }
-            }
-            if let Some(req_re) = Self::ts_require_path_re() {
-                for cap in req_re.captures_iter(&content) {
-                    let quoted_path = &cap[2];
-                    Self::resolve_ts_relative_import(f, quoted_path, &module_to_file, &mut import_graph, &mut inbound_links);
-                }
-            }
-
             // Pass 4: Python class inheritance
             if let Some(re) = Self::inh_re() {
                 for cap in re.captures_iter(&content) {

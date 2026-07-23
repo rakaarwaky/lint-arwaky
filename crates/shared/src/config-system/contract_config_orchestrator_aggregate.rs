@@ -25,6 +25,9 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
     /// Get ignored paths from config (hardcoded defaults + config values).
     fn ignored_paths(&self, project_root: &str) -> Vec<String>;
 
+    /// Get ignored paths for a specific language (hardcoded defaults + config values for that language).
+    fn ignored_paths_for_language(&self, project_root: &str, language: ConfigLanguage) -> Vec<String>;
+
     /// List config files found in the project.
     async fn list_config_files(
         &self,
