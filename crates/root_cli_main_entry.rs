@@ -2,7 +2,8 @@
 use std::env;
 use std::process::ExitCode;
 
-use cli_commands::surface_check_action;
+use cli_commands::surface_check_command;
+use cli_commands::surface_ci_action;
 use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
@@ -17,7 +18,7 @@ fn main() -> ExitCode {
     let raw_args: Vec<String> = env::args().collect();
     if raw_args.len() <= 1 {
         let container = CliContainer::new_default();
-        return surface_check_action::handle_default_check(
+        return surface_check_command::handle_default_check(
             ".",
             container.code_analysis_linter.clone(),
         );
@@ -116,7 +117,6 @@ fn main() -> ExitCode {
                 let path_obj = std::path::Path::new(&target_path);
                 if path_obj.is_file() {
                     let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
-                        container.pipeline_aggregate(),
                         container.report_formatter.clone(),
                         None,
                     );
@@ -132,9 +132,8 @@ fn main() -> ExitCode {
                     )
                 }
             }
-            None => surface_check_action::handle_scan(surface_check_action::ScanOptions {
+            None => surface_check_command::handle_scan(surface_check_command::ScanOptions {
                 path: path.map(|p| FilePath::new(p).unwrap_or_default()),
-                pipeline: container.pipeline_aggregate(),
                 report_formatter: container.report_formatter.clone(),
                 multi_project_orchestrator: Some(container.multi_project_orchestrator.clone()),
                 filter,
@@ -148,7 +147,7 @@ fn main() -> ExitCode {
             container.code_analysis_linter.clone(),
             container.fix_orchestrator_factory(),
         ),
-        Commands::Ci { path, threshold } => surface_check_action::handle_ci(
+        Commands::Ci { path, threshold } => surface_ci_action::handle_ci(
             container.code_analysis_linter.clone(),
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             Threshold::new(threshold),
@@ -173,7 +172,6 @@ fn main() -> ExitCode {
             if path_obj.is_file() {
                 // Single file mode
                 let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
-                    container.pipeline_aggregate(),
                     container.report_formatter.clone(),
                     None,
                 );
@@ -229,7 +227,7 @@ fn main() -> ExitCode {
                 Err(_) => return ExitCode::from(2),
             };
             rt.block_on(
-                cli_commands::surface_parallel_action::handle_scan_parallel_subprocesses(
+                cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
                     &target_path,
                 ),
             )

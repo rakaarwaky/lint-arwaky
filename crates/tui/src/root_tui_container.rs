@@ -72,7 +72,7 @@ impl TuiContainer {
 
         // Wire analysis pipeline action
         let analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate> =
-            Arc::new(cli_commands::surface_parallel_action::ParallelPipelineAction);
+            Arc::new(cli_commands::surface_check_command::ParallelPipelineAction);
 
         let lint_executor = Arc::new(
             LintExecutor::new(code_analysis_aggregate)

@@ -1,5 +1,4 @@
 // cli-commands — taxonomy and contract types
-pub mod contract_analysis_pipeline_aggregate;
 pub mod contract_report_formatter_aggregate;
 pub mod contract_report_formatter_protocol;
 pub mod taxonomy_cli_vo;
