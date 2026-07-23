@@ -155,4 +155,3 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
     }
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
-

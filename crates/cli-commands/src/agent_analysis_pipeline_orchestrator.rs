@@ -184,7 +184,10 @@ impl AnalysisPipelineOrchestrator {
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
-        let (_, results) = self.deps.orphan_orchestrator.scan_orphans(&root_fp, ignored.values());
+        let (_, results) = self
+            .deps
+            .orphan_orchestrator
+            .scan_orphans(&root_fp, ignored.values());
         results
     }
 
@@ -297,8 +300,7 @@ impl AnalysisPipelineOrchestrator {
         // Process all workspace members in parallel using futures::future::join_all
         let filter = self.filter.clone();
         let mut workspace_futures = Vec::with_capacity(workspaces.len());
-        for (ws, (ws_canonical, ws_fallback)) in
-            workspaces.iter().zip(workspace_canonicals.iter())
+        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter())
         {
             let ws_path = ws.path.clone();
             let ws_canonical = ws_canonical.clone();
@@ -338,7 +340,9 @@ impl AnalysisPipelineOrchestrator {
                     Some(code) => all_results
                         .into_iter()
                         .filter(|r| {
-                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            let abs_path = std::env::current_dir()
+                                .unwrap_or_default()
+                                .join(&r.file.value);
                             r.code.code() == code
                                 && (ws_canonical
                                     .as_ref()
@@ -350,7 +354,9 @@ impl AnalysisPipelineOrchestrator {
                     None => all_results
                         .into_iter()
                         .filter(|r| {
-                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            let abs_path = std::env::current_dir()
+                                .unwrap_or_default()
+                                .join(&r.file.value);
                             ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
@@ -364,7 +370,9 @@ impl AnalysisPipelineOrchestrator {
                     Some(code) => orphan_results_all
                         .iter()
                         .filter(|r| {
-                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            let abs_path = std::env::current_dir()
+                                .unwrap_or_default()
+                                .join(&r.file.value);
                             r.code.code() == code
                                 && (ws_canonical
                                     .as_ref()
@@ -377,7 +385,9 @@ impl AnalysisPipelineOrchestrator {
                     None => orphan_results_all
                         .iter()
                         .filter(|r| {
-                            let abs_path = std::env::current_dir().unwrap_or_default().join(&r.file.value);
+                            let abs_path = std::env::current_dir()
+                                .unwrap_or_default()
+                                .join(&r.file.value);
                             ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
@@ -425,7 +435,10 @@ impl AnalysisPipelineOrchestrator {
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
         // Run orphan detection with workspace root — file scanning is inside orphan-detector
-        let (_, all_results) = self.deps.orphan_orchestrator.scan_orphans(&root_fp, ignored.values());
+        let (_, all_results) = self
+            .deps
+            .orphan_orchestrator
+            .scan_orphans(&root_fp, ignored.values());
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
