@@ -337,9 +337,21 @@ pub fn read_file_safe(path: &str) -> String {
     fs::read_to_string(path).unwrap_or_default()
 }
 
-/// Read file content with generic path.
+/// Maximum allowed file size for full memory reads (10MB).
+pub const MAX_FILE_READ_SIZE_BYTES: u64 = 10 * 1024 * 1024;
+
+/// Read file content with generic path, verifying file size does not exceed MAX_FILE_READ_SIZE_BYTES.
 pub fn read_file_generic<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
-    fs::read_to_string(path)
+    let p = path.as_ref();
+    let metadata = fs::metadata(p)?;
+    if metadata.len() > MAX_FILE_READ_SIZE_BYTES {
+        return Err(std::io::Error::other(format!(
+            "File size {} bytes exceeds maximum limit of {} bytes",
+            metadata.len(),
+            MAX_FILE_READ_SIZE_BYTES
+        )));
+    }
+    fs::read_to_string(p)
 }
 
 /// Check if path exists.

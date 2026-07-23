@@ -47,12 +47,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
-                    let name = match path.file_name() {
-                        Some(n) => n.to_string_lossy(),
+                    let name = match path.file_name().and_then(|n| n.to_str()) {
+                        Some(n) => n,
                         None => continue,
                     };
                     if !matches!(
-                        name.as_ref(),
+                        name,
                         "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
                     ) {
                         let _ = detect_languages(&path, has_rs, has_py, has_js);
@@ -132,7 +132,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         }
 
         let results = future::join_all(futures).await;
-        let mut all = Vec::new();
+        let total_capacity: usize = results
+            .iter()
+            .filter_map(|r| r.as_ref().ok())
+            .map(|v| v.len())
+            .sum();
+        let mut all = Vec::with_capacity(total_capacity);
         for values in results.into_iter().flatten() {
             all.extend(values);
         }

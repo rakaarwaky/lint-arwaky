@@ -76,6 +76,7 @@ fn write_violation(
                 lang.interface_kw()
             )
         }
+        #[allow(deprecated)]
         AesRoleViolation::CapabilityRouting {
             struct_name,
             reason,
@@ -100,18 +101,44 @@ fn write_violation(
         AesRoleViolation::CapabilityNoProtocol { reason } => {
             let why = resolve_why(
                 reason,
-                "file has 'capabilities_' prefix but no protocol/port import — this file is \
+                "file has 'capabilities_' prefix but no _protocol import — this file is \
                  broken/useless. Either it is not a real capability (rename or delete), or \
                  a proper contract protocol requirement has not been created yet (create the \
                  protocol first, then implement it here)",
             );
             write!(
                 f,
-                "AES403 CAPABILITY_ROLE: Capabilities file has no protocol trait/interface \
-                        implementation.\n\
+                "AES403 CAPABILITY_ROLE: Capabilities file has no _protocol implementation.\n\
                         WHY? {why}\n\
                         FIX: Rename the file if it is not a capability, delete if obsolete, \
                         or create the required contract protocol first then implement it here."
+            )
+        }
+        AesRoleViolation::CapabilityNoImplementor { reason } => {
+            let why = resolve_why(
+                reason,
+                "At least one struct must implement a _protocol trait (impl Trait for Struct). \
+                 Internal helper structs are allowed.",
+            );
+            write!(
+                f,
+                "AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\n\
+                        WHY? {why}\n\
+                        FIX: At least one struct in this file must implement the capability \
+                        _protocol. Convert an existing struct or keep only internal helpers."
+            )
+        }
+        AesRoleViolation::CapabilityTooManyTypes { count, reason } => {
+            let why = resolve_why(
+                reason,
+                "Max 3 types (struct/enum) allowed in capabilities. \
+                 Refactor excess types to taxonomy layer.",
+            );
+            write!(
+                f,
+                "AES403 CAPABILITY_ROLE: Too many types ({count} struct/enum) in capabilities file.\n\
+                        WHY? {why}\n\
+                        FIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer."
             )
         }
         AesRoleViolation::SingleBottleneck { reason } => {
@@ -301,11 +328,23 @@ pub enum AesRoleViolation {
         reason: Option<LintMessage>,
     },
     // AES403 — Capability role
+    /// Deprecated: superseded by `CapabilityNoProtocol`, `CapabilityNoImplementor`, and
+    /// `CapabilityTooManyTypes`. Kept for backward compatibility with old reports.
+    #[deprecated(since = "1.10.106", note = "Use CapabilityNoProtocol, CapabilityNoImplementor, or CapabilityTooManyTypes")]
     CapabilityRouting {
         struct_name: SymbolName,
         reason: Option<LintMessage>,
     },
     CapabilityNoProtocol {
+        reason: Option<LintMessage>,
+    },
+    /// Tidak ada struct yang mengimplementasi trait protocol/port
+    CapabilityNoImplementor {
+        reason: Option<LintMessage>,
+    },
+    /// Jumlah struct + enum melebihi 3
+    CapabilityTooManyTypes {
+        count: usize,
         reason: Option<LintMessage>,
     },
     SingleBottleneck {

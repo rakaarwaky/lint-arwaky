@@ -1,21 +1,28 @@
+// PURPOSE: CapabilitiesRoleChecker — AES403: enforce capability type composition.
+//
+// ALGORITHM (per language):
+//   1. Guard: file must import from a _protocol module.
+//      If missing → flag CapabilityNoProtocol.
+//   2. Collect all type declarations (struct/enum/class/interface).
+//      Skip #[cfg(test)] blocks (Rust).
+//   3. Rule 3 — Max 3 types. If exceeded → flag CapabilityTooManyTypes.
+//   4. Rule 2 — At least 1 implementor required:
+//        Rust:   impl <Trait> for <Struct>
+//        Python: class <Name>(<ABCProtocol>):
+//        TS:     class <Name> implements <IProtocol>
+//      If none → flag CapabilityNoImplementor.
+//   5. Rule 1 — Internal helper types without trait impl are ALLOWED.
+//
+// NOTE: The layer guard is redundant with the caller but kept for defensive programming.
+
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
 use shared::taxonomy_source_vo::SourceContentVO;
-
-// PURPOSE: CapabilitiesRoleChecker — AES403: detect capability routing (missing interface implementation)
-//
-// ALGORITHM:
-//   1. check_capability_routing — Scans capabilities-layer files for struct definitions.
-//      For each struct, checks if the file contains `impl I{StructName}`, `impl ... for {StructName}`,
-//      or `impl {StructName}`. If not and the file has <= 3 structs, flags CapabilityRouting.
-//      Skips `#[cfg(test)]` blocks.
-//
-// NOTE: The layer guard is redundant with the caller but kept for defensive programming.
-//      This checker assumes Rust syntax; Python/JS support would need additional parsing.
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -42,7 +49,8 @@ impl ICapabilitiesRoleChecker for CapabilitiesRoleChecker {
         } else if li.is_py {
             self._check_python_routing(file, content, violations);
         } else if li.is_js {
-            self._check_js_routing(file, content, violations);
+            // is_js = true for both JavaScript AND TypeScript
+            self._check_ts_routing(file, content, violations);
         }
     }
 }
@@ -61,8 +69,9 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let has_proto_import = content.contains("use ")
-            && (content.contains("_protocol::") || content.contains("_port::"));
+        // ── Guard: wajib ada import _protocol ──────────────────
+        //    (tidak pakai _port, hanya _protocol)
+        let has_proto_import = content.contains("use ") && content.contains("_protocol::");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -73,59 +82,98 @@ impl CapabilitiesRoleChecker {
             ));
             return;
         }
+
+        // ── Kumpulkan semua struct & enum (skip #[cfg(test)]) ──
         let mut in_cfg_test = false;
-        let structs: Vec<&str> = content
-            .lines()
-            .filter_map(|l| {
-                let t = l.trim();
-                if t.starts_with("#[cfg(test)]") {
-                    in_cfg_test = true;
-                    return None;
+        let mut type_names: Vec<&str> = Vec::new();   // semua struct + enum
+        let mut struct_names: Vec<&str> = Vec::new();  // hanya struct
+
+        for l in content.lines() {
+            let t = l.trim();
+
+            // skip blok #[cfg(test)]
+            if t.starts_with("#[cfg(test)]") {
+                in_cfg_test = true;
+                continue;
+            }
+            if in_cfg_test {
+                if t.starts_with('}') {
+                    in_cfg_test = false;
                 }
-                if in_cfg_test {
-                    if t == "}" || t.starts_with("}") {
-                        in_cfg_test = false;
+                continue;
+            }
+
+            let words: Vec<&str> = t.split_whitespace().collect();
+
+            // deteksi struct
+            if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
+                if let Some(idx) = words.iter().position(|w| *w == "struct") {
+                    if let Some(name) = words.get(idx + 1) {
+                        let name = name.trim_end_matches(';').trim_end_matches('{');
+                        if !name.is_empty() && !name.starts_with('_') {
+                            type_names.push(name);
+                            struct_names.push(name);
+                        }
                     }
-                    return None;
                 }
-                let words: Vec<&str> = t.split_whitespace().collect();
-                if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                    let struct_idx = words.iter().position(|w| *w == "struct").unwrap_or(0);
-                    Some(match words.get(struct_idx + 1) {
-                        Some(w) => w.trim_end_matches(';'),
-                        None => "",
-                    })
-                } else {
-                    None
+            }
+
+            // deteksi enum
+            if (t.starts_with("pub enum ") || t.starts_with("enum ")) && words.len() >= 2 {
+                if let Some(idx) = words.iter().position(|w| *w == "enum") {
+                    if let Some(name) = words.get(idx + 1) {
+                        let name = name.trim_end_matches(';').trim_end_matches('{');
+                        if !name.is_empty() && !name.starts_with('_') {
+                            type_names.push(name);
+                        }
+                    }
                 }
-            })
-            .filter(|n| !n.is_empty() && !n.starts_with('_'))
-            .collect();
-        for s in &structs {
-            let hi = content.contains(&format!("impl I{}", s))
-                || content.contains(&format!("for {} ", s))
-                || content.contains(&format!("for {}{{", s))
-                || content.contains(&format!("for {} {{", s))
-                || content.contains(&format!("impl {} ", s))
-                || content.contains(&format!("impl {}{{", s));
-            if !hi && structs.len() <= 3 {
-                violations.push(LintResult::new_arch(
-                    file,
-                    0,
-                    "AES403",
-                    Severity::MEDIUM,
-                    AesRoleViolation::CapabilityRouting {
-                        struct_name: SymbolName::new(*s),
-                        reason: None,
-                    },
-                ));
             }
         }
+
+        // ── ATURAN 3: maks 3 tipe (struct + enum) ─────────────
+        if type_names.len() > 3 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::HIGH,
+                AesRoleViolation::CapabilityTooManyTypes {
+                    count: type_names.len(),
+                    reason: None,
+                },
+            ));
+            return; // tidak perlu cek lanjut
+        }
+
+        // ── ATURAN 2: wajib ≥ 1 struct implementor protocol ───
+        //    Implementor = ada "impl <Trait> for <StructName>"
+        //    (bukan sekadar "for item in collection")
+        let has_implementor = struct_names.iter().any(|s| {
+            content.lines().any(|l| {
+                let t = l.trim();
+                t.starts_with("impl ") && t.contains(&format!("for {s}"))
+            })
+        });
+
+        if !has_implementor {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoImplementor { reason: None },
+            ));
+        }
+
+        // ── ATURAN 1: struct internal tanpa trait impl → TIDAK di-flag ──
+        // (tidak ada loop yang mem-flag struct individual lagi)
     }
 
-    fn _check_js_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let has_proto_import = content.contains("import ")
-            && (content.contains("_protocol") || content.contains("_port"));
+    fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        // ── Guard: wajib ada import _protocol ──────────────────
+        //    (tidak pakai _port, hanya _protocol)
+        let has_proto_import = content.contains("import ") && content.contains("_protocol");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -136,66 +184,142 @@ impl CapabilitiesRoleChecker {
             ));
             return;
         }
+
+        // ── Kumpulkan nama yang di-import dari _protocol ────────
+        //    contoh: import { IPaymentService, ILogger } from '../payment_protocol'
+        //    → proto_names = ["IPaymentService", "ILogger"]
+        let proto_names: Vec<&str> = content
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                t.starts_with("import ") && t.contains("_protocol")
+            })
+            .flat_map(|l| {
+                // ambil bagian di dalam { ... }
+                if let Some(start) = l.find('{') {
+                    if let Some(end) = l.find('}') {
+                        l[start + 1..end]
+                            .split(',')
+                            .map(|s| {
+                                // handle "IPaymentService as IPay"
+                                s.trim().split(" as ").next().unwrap_or("").trim()
+                            })
+                            .filter(|s| !s.is_empty())
+                            .collect::<Vec<&str>>()
+                    } else {
+                        vec![]
+                    }
+                } else {
+                    vec![]
+                }
+            })
+            .collect();
+
         let lines: Vec<&str> = content.lines().collect();
-        let mut classes: Vec<(&str, usize)> = Vec::new();
-        for (i, l) in lines.iter().enumerate() {
+
+        // ── Kumpulkan semua type declarations (class/interface/enum) ─
+        //    type alias → not counted; inline parsing, no struct needed
+        let mut type_count: usize = 0;
+        let mut implementor_found = false;
+
+        for l in &lines {
             let t = l.trim();
-            if t.starts_with("class ") {
-                let name = match t.split_whitespace().nth(1) {
-                    Some(n) => match n.split('{').next() {
-                        Some(n) => match n.split(':').next() {
-                            Some(n) => n.split_whitespace().next().unwrap_or_default(),
-                            None => "",
-                        },
-                        None => "",
-                    },
-                    None => "",
-                };
+
+            // ── class ──
+            let class_body = t
+                .strip_prefix("export class ")
+                .or_else(|| t.strip_prefix("class "));
+            if let Some(rest) = class_body {
+                let name = rest
+                    .split(|c: char| [' ', '(', '{'].contains(&c))
+                    .next()
+                    .unwrap_or("")
+                    .trim();
+
+                if name.is_empty() || name.starts_with('_') {
+                    continue;
+                }
+                type_count += 1;
+
+                // parse implements
+                if let Some(pos) = rest.find("implements ") {
+                    let after = &rest[pos + 11..];
+                    let before_brace = after.split('{').next().unwrap_or(after);
+                    if before_brace.split(',').any(|imp| proto_names.contains(&imp.trim())) {
+                        implementor_found = true;
+                    }
+                }
+                continue;
+            }
+
+            // ── interface ──
+            let iface_body = t
+                .strip_prefix("export interface ")
+                .or_else(|| t.strip_prefix("interface "));
+            if let Some(rest) = iface_body {
+                let name = rest
+                    .split(|c: char| [' ', '{', '<'].contains(&c))
+                    .next()
+                    .unwrap_or("")
+                    .trim();
                 if !name.is_empty() && !name.starts_with('_') {
-                    classes.push((name, i));
+                    type_count += 1;
+                }
+                continue;
+            }
+
+            // ── enum ──
+            let enum_body = t
+                .strip_prefix("export enum ")
+                .or_else(|| t.strip_prefix("enum "));
+            if let Some(rest) = enum_body {
+                let name = rest
+                    .split(|c: char| [' ', '{'].contains(&c))
+                    .next()
+                    .unwrap_or("")
+                    .trim();
+                if !name.is_empty() && !name.starts_with('_') {
+                    type_count += 1;
                 }
             }
         }
-        if classes.len() > 3 {
+
+        // ── ATURAN 3: maks 3 tipe ─────────────────────────────
+        if type_count > 3 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::HIGH,
+                AesRoleViolation::CapabilityTooManyTypes {
+                    count: type_count,
+                    reason: None,
+                },
+            ));
             return;
         }
-        for (name, start_line) in &classes {
-            let mut has_method = false;
-            for line in lines.iter().skip(start_line + 1).map(|l| l.trim()) {
-                if line.starts_with('}') || line.starts_with(';') {
-                    break;
-                }
-                if line.starts_with("function ")
-                    || line.starts_with("public ")
-                    || line.starts_with("private ")
-                    || line.starts_with("protected ")
-                    || line.starts_with("static ")
-                    || line.starts_with("get ")
-                    || line.starts_with("set ")
-                    || line.starts_with("async ")
-                {
-                    has_method = true;
-                    break;
-                }
-            }
-            if !has_method {
-                violations.push(LintResult::new_arch(
-                    file,
-                    0,
-                    "AES403",
-                    Severity::MEDIUM,
-                    AesRoleViolation::CapabilityRouting {
-                        struct_name: SymbolName::new(*name),
-                        reason: None,
-                    },
-                ));
-            }
+
+        // ── ATURAN 2: wajib ≥ 1 implementor ───────────────────
+        //    Implementor = class yang punya "implements X"
+        //    di mana X ada di proto_names (import dari _protocol)
+        if !implementor_found {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoImplementor { reason: None },
+            ));
         }
+
+        // ── ATURAN 1: class internal tanpa implements → TIDAK di-flag ──
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        // ── Guard: wajib ada import _protocol ──────────────────
+        //    (tidak pakai _port, hanya _protocol)
         let has_proto_import = (content.contains("import ") || content.contains("from "))
-            && (content.contains("_protocol") || content.contains("_port"));
+            && content.contains("_protocol");
         if !has_proto_import {
             violations.push(LintResult::new_arch(
                 file,
@@ -206,59 +330,111 @@ impl CapabilitiesRoleChecker {
             ));
             return;
         }
-        let lines: Vec<&str> = content.lines().collect();
-        let mut classes: Vec<(&str, usize)> = Vec::new();
-        for (i, l) in lines.iter().enumerate() {
-            let t = l.trim();
-            if t.starts_with("class ") {
-                let name = match t.split_whitespace().nth(1) {
-                    Some(n) => n.trim_end_matches(':'),
-                    None => "",
-                };
-                if !name.is_empty() && !name.starts_with('_') {
-                    classes.push((name, i));
+
+        // ── Kumpulkan nama yang di-import dari _protocol ────────
+        //    contoh: from shared.some_protocol import ISomeService, IOther
+        //    → proto_names = {"ISomeService", "IOther"}
+        let proto_names: Vec<&str> = content
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_protocol")
+            })
+            .flat_map(|l| {
+                // ambil bagian setelah "import"
+                if let Some(pos) = l.find("import ") {
+                    let after = &l[pos + 7..]; // len("import ") = 7
+                        after
+                            .split(',')
+                            .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
+                            .filter(|s| !s.is_empty())
+                            .collect::<Vec<&str>>()
+                } else {
+                    vec![]
                 }
-            }
+            })
+            .collect();
+
+        let lines: Vec<&str> = content.lines().collect();
+
+        // ── Kumpulkan semua class (parents only) ────────────────
+        struct PyClass<'a> {
+            parents: Vec<&'a str>,
         }
-        if classes.len() > 3 {
+
+        let mut classes: Vec<PyClass> = Vec::new();
+
+        for l in &lines {
+            let t = l.trim();
+            if !t.starts_with("class ") {
+                continue;
+            }
+
+            // parse: class Name(Parent1, Parent2):
+            let after_class = &t[6..]; // buang "class "
+            let name = after_class
+                .split(|c: char| ['(', ':', ' '].contains(&c))
+                .next()
+                .unwrap_or("")
+                .trim();
+
+            if name.is_empty() || name.starts_with('_') {
+                continue;
+            }
+
+            // parse parents dari dalam (...)
+            let parents: Vec<&str> = if let Some(start) = t.find('(') {
+                if let Some(end) = t.find(')') {
+                    t[start + 1..end]
+                        .split(',')
+                        .map(|s| s.trim())
+                        .filter(|s| !s.is_empty())
+                        .collect()
+                } else {
+                    vec![]
+                }
+            } else {
+                vec![]
+            };
+
+            classes.push(PyClass { parents });
+        }
+
+        let total_types = classes.len();
+
+        // ── ATURAN 3: maks 3 tipe ─────────────────────────────
+        if total_types > 3 {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::HIGH,
+                AesRoleViolation::CapabilityTooManyTypes {
+                    count: total_types,
+                    reason: None,
+                },
+            ));
             return;
         }
-        for (name, start_line) in &classes {
-            let mut body_lines = 0;
-            let mut has_method = false;
-            let mut indent: Option<usize> = None;
-            for line in lines.iter().skip(start_line + 1) {
-                if line.trim().is_empty() {
-                    continue;
-                }
-                let leading = line.len() - line.trim_start().len();
-                if indent.is_none() {
-                    if leading == 0 {
-                        break;
-                    }
-                    indent = Some(leading);
-                }
-                if line.trim_start().starts_with("def ") {
-                    has_method = true;
-                    break;
-                }
-                body_lines += 1;
-                if body_lines > 20 {
-                    break;
-                }
-            }
-            if !has_method {
-                violations.push(LintResult::new_arch(
-                    file,
-                    0,
-                    "AES403",
-                    Severity::MEDIUM,
-                    AesRoleViolation::CapabilityRouting {
-                        struct_name: SymbolName::new(*name),
-                        reason: None,
-                    },
-                ));
-            }
+
+        // ── ATURAN 2: wajib ≥ 1 implementor ABC ───────────────
+        //    Implementor = class yang inherit dari nama yang
+        //    di-import dari _protocol
+        //    contoh: class PaymentCap(ISomeService):  ← implementor
+        let has_implementor = classes.iter().any(|c| {
+            c.parents.iter().any(|p| proto_names.contains(p))
+        });
+
+        if !has_implementor {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoImplementor { reason: None },
+            ));
         }
+
+        // ── ATURAN 1: class internal tanpa ABC → TIDAK di-flag ──
     }
 }

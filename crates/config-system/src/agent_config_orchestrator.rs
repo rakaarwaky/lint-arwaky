@@ -205,11 +205,12 @@ impl ConfigOrchestrator {
         config_reader: Arc<dyn IConfigReaderProtocol>,
         validator: Arc<dyn IConfigValidatorProtocol>,
     ) -> Self {
+        // Pre-allocate cache with capacity hint for multi-workspace projects
         Self {
             workspace_detector,
             config_reader,
             validator,
-            config_cache: Mutex::new(HashMap::new()),
+            config_cache: Mutex::new(HashMap::with_capacity(32)),
         }
     }
 
@@ -219,21 +220,33 @@ impl ConfigOrchestrator {
 }
 
 fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
-    let mut ignored: Vec<String> = vec![
-        "target".to_string(),
-        ".mimocode".to_string(),
-        ".agents".to_string(),
-        "node_modules".to_string(),
-        "build.rs".to_string(),
-        ".git".to_string(),
-        "dist".to_string(),
-        "build".to_string(),
-        "coverage".to_string(),
-        ".venv".to_string(),
+    // Use const array for default paths, HashSet for O(1) dedup
+    const DEFAULT_IGNORED: [&str; 10] = [
+        "target",
+        ".mimocode",
+        ".agents",
+        "node_modules",
+        "build.rs",
+        ".git",
+        "dist",
+        "build",
+        "coverage",
+        ".venv",
     ];
+
+    let mut seen: std::collections::HashSet<&str> =
+        std::collections::HashSet::from_iter(&DEFAULT_IGNORED);
+    let mut ignored: Vec<String> = Vec::with_capacity(10 + config.ignored_paths.values.len());
+
+    // Add default paths
+    for &name in &DEFAULT_IGNORED {
+        ignored.push(name.to_string());
+    }
+
+    // Add config paths with dedup
     for fp in config.ignored_paths.values.iter() {
         let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && !ignored.contains(&v) {
+        if !v.is_empty() && seen.insert(&v) {
             ignored.push(v);
         }
     }

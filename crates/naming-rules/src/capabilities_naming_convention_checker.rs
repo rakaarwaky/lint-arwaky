@@ -84,15 +84,14 @@ impl NamingConventionChecker {
 
     /// Build naming regex dynamically based on min_words.
     fn naming_regex(min_words: usize) -> Option<&'static Regex> {
-        static RE3: OnceLock<Option<Regex>> = OnceLock::new();
-        static RE4: OnceLock<Option<Regex>> = OnceLock::new();
-        let re_lock = match min_words {
-            3 => &RE3,
-            _ => &RE4,
-        };
-        re_lock
+        static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
+            OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(),
+            OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new(),
+        ];
+        let idx = min_words.min(9);
+        REGEX_TABLE[idx]
             .get_or_init(|| {
-                let pattern = format!(r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$", min_words - 1);
+                let pattern = format!(r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$", min_words.saturating_sub(1));
                 Regex::new(&pattern).ok()
             })
             .as_ref()
@@ -121,20 +120,26 @@ impl NamingConventionChecker {
             return;
         }
 
+        let stem = get_stem(filename).unwrap_or_default();
+
         if layer_name.is_none() {
-            let stem = get_stem(filename).unwrap_or_default();
-            let actual_prefix = stem.split('_').next().unwrap_or_default().to_string();
+            let actual_prefix = stem.split('_').next().unwrap_or_default();
 
             if !actual_prefix.is_empty() && !layer_prefixes.iter().any(|p| stem.starts_with(p)) {
-                let allowed: Vec<String> = layer_prefixes
-                    .iter()
-                    .map(|p| p.trim_end_matches('_').to_string())
-                    .collect();
+                static ALLOWED_LAZY: OnceLock<Vec<String>> = OnceLock::new();
+                let allowed = ALLOWED_LAZY
+                    .get_or_init(|| {
+                        LAYER_PREFIXES
+                            .iter()
+                            .map(|p| p.trim_end_matches('_').to_string())
+                            .collect()
+                    })
+                    .clone();
                 violations.push(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::UnknownPrefix {
-                        prefix: actual_prefix.clone(),
+                        prefix: actual_prefix.to_string(),
                         allowed,
                         reason: Some(LintMessage::new(format!(
                             "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
@@ -149,7 +154,6 @@ impl NamingConventionChecker {
                 return;
             }
 
-            let stem = get_stem(filename).unwrap_or_default();
             violations.push(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
@@ -174,8 +178,6 @@ impl NamingConventionChecker {
                 return;
             }
         }
-
-        let stem = get_stem(filename).unwrap_or_default();
 
         if Self::naming_regex(min_words).is_none_or(|re| !re.is_match(stem)) {
             violations.push(string_filename_result(

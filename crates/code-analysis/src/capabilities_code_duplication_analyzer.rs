@@ -153,8 +153,8 @@ impl CodeDuplicationAnalyzer {
 
         // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
         // P2.3: HashMap<u64, HashSet<usize>> — hash-based, file-only
-        let mut global: HashMap<u64, HashSet<usize>> = HashMap::new();
-        let mut file_unique_hashes: Vec<Vec<u64>> = vec![Vec::new(); entries.len()];
+        let mut global: HashMap<u64, HashSet<usize>> = HashMap::with_capacity(entries.len());
+        let mut file_unique_hashes: Vec<Vec<u64>> = Vec::with_capacity(entries.len());
 
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
@@ -194,7 +194,10 @@ impl CodeDuplicationAnalyzer {
         }
 
         // Build O(1) file_to_others map
-        let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
+        let mut file_to_others: Vec<HashSet<usize>> = Vec::with_capacity(entries.len());
+        for _ in 0..entries.len() {
+            file_to_others.push(HashSet::new());
+        }
         for file_indices in global.values() {
             if file_indices.len() > 1 {
                 let unique: Vec<usize> = file_indices.iter().copied().collect();
@@ -208,8 +211,8 @@ impl CodeDuplicationAnalyzer {
             }
         }
 
-        // Generate violations
-        let mut violations = Vec::new();
+        // Generate violations (pre-allocate with capacity hint)
+        let mut violations = Vec::with_capacity(entries.len());
         for (fi, (file_path, _)) in entries.iter().enumerate() {
             let lines: Vec<&str> = entries[fi].1.lines().collect();
             if lines.len() < min_dup_lines {

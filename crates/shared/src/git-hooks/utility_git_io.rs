@@ -23,6 +23,28 @@ pub fn run_git_command(args: &[&str], dir: &str) -> (String, String, bool) {
     }
 }
 
+/// Execute a git command asynchronously and return stdout/stderr/success status.
+pub async fn run_git_command_async(args: &[&str], dir: &str) -> (String, String, bool) {
+    let output = tokio::process::Command::new("git")
+        .args(args)
+        .current_dir(dir)
+        .output()
+        .await;
+
+    match output {
+        Ok(o) => (
+            String::from_utf8_lossy(&o.stdout).to_string(),
+            String::from_utf8_lossy(&o.stderr).to_string(),
+            o.status.success(),
+        ),
+        Err(e) => (
+            String::new(),
+            format!("Failed to execute git: {}", e),
+            false,
+        ),
+    }
+}
+
 /// Parse successful command output into trimmed non-empty lines.
 pub fn parse_output_lines(output: &str) -> Vec<String> {
     output

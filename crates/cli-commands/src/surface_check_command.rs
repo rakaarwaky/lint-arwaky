@@ -152,6 +152,9 @@ impl CheckCommandsSurface {
             workspaces
         };
 
+        // Cache cwd once for all workspace iterations
+        let cwd = std::env::current_dir().unwrap_or_default();
+
         let multi = workspaces.len() > 1;
         if multi && matches!(format, Format::Text) {
             println!(
@@ -165,7 +168,23 @@ impl CheckCommandsSurface {
         let mut global_all_results = Vec::new();
         let filter_str = filter.map(String::from);
 
-        for ws in &workspaces {
+        // Pre-compute canonical paths for all workspaces once
+        let workspace_canonicals: Vec<_> = workspaces
+            .iter()
+            .map(|ws| {
+                let raw = std::path::Path::new(&ws.path.value);
+                let canonical = raw.canonicalize().ok();
+                let fallback = if raw.is_absolute() {
+                    raw.to_path_buf()
+                } else {
+                    cwd.join(raw)
+                };
+                let fallback = std::fs::canonicalize(&fallback).unwrap_or(fallback);
+                (canonical, fallback)
+            })
+            .collect();
+
+        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
             // Run pipeline for this workspace member via agent layer
             let request = ScanRequest {
                 target: ScanTarget::new(ws.path.value.clone()),
@@ -184,33 +203,18 @@ impl CheckCommandsSurface {
             };
 
             // Filter results to this workspace member's path
-            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-            let cwd_for_ws = match std::env::current_dir() {
-                Ok(d) => d,
-                Err(_) => std::path::PathBuf::new(),
-            };
-            let ws_fallback = {
-                let raw = std::path::Path::new(&ws.path.value);
-                if raw.is_absolute() {
-                    raw.to_path_buf()
-                } else {
-                    cwd_for_ws.join(raw)
-                }
-            };
-            let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
-
             let filtered_results: Vec<_> = if let Some(code) = filter {
                 report
                     .results
                     .into_iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         r.code.code() == code
                             && (ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
                                 .unwrap_or(false)
-                                || abs_path.starts_with(&ws_fallback))
+                                || abs_path.starts_with(ws_fallback))
                     })
                     .collect()
             } else {
@@ -218,11 +222,11 @@ impl CheckCommandsSurface {
                     .results
                     .into_iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(&ws_fallback))
+                            .unwrap_or(abs_path.starts_with(ws_fallback))
                     })
                     .collect()
             };
@@ -232,51 +236,36 @@ impl CheckCommandsSurface {
 
         // Print per-workspace results
         if multi && matches!(format, Format::Text) {
-            for ws in &workspaces {
+            for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
                 let ws_name = std::path::Path::new(&ws.path.value)
                     .file_name()
                     .map(|n| n.to_string_lossy())
                     .unwrap_or_default();
                 let ws_type = &ws.workspace_type;
 
-                // Re-filter for this workspace
-                let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-                let cwd_for_ws = match std::env::current_dir() {
-                    Ok(d) => d,
-                    Err(_) => std::path::PathBuf::new(),
-                };
-                let ws_fallback = {
-                    let raw = std::path::Path::new(&ws.path.value);
-                    if raw.is_absolute() {
-                        raw.to_path_buf()
-                    } else {
-                        cwd_for_ws.join(raw)
-                    }
-                };
-                let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
-
+                // Re-filter for this workspace using cached canonical paths
                 let member_results: Vec<_> = if let Some(code) = filter {
                     global_all_results
                         .iter()
                         .filter(|r| {
-                            let abs_path = cwd_for_ws.join(&r.file.value);
+                            let abs_path = cwd.join(&r.file.value);
                             r.code.code() == code
                                 && (ws_canonical
                                     .as_ref()
                                     .map(|c| abs_path.starts_with(c))
                                     .unwrap_or(false)
-                                    || abs_path.starts_with(&ws_fallback))
+                                    || abs_path.starts_with(ws_fallback))
                         })
                         .collect()
                 } else {
                     global_all_results
                         .iter()
                         .filter(|r| {
-                            let abs_path = cwd_for_ws.join(&r.file.value);
+                            let abs_path = cwd.join(&r.file.value);
                             ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(abs_path.starts_with(&ws_fallback))
+                                .unwrap_or(abs_path.starts_with(ws_fallback))
                         })
                         .collect()
                 };
@@ -284,8 +273,9 @@ impl CheckCommandsSurface {
                 let total = member_results.len();
                 println!("── [{ws_type}] {ws_name} — {total} violations ──");
                 if !member_results.is_empty() {
+                    // Pre-allocate with capacity hint for known code counts (max ~20)
                     let mut code_counts: std::collections::HashMap<String, usize> =
-                        std::collections::HashMap::new();
+                        std::collections::HashMap::with_capacity(20);
                     for r in &member_results {
                         *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
                     }
@@ -347,10 +337,9 @@ impl CheckCommandsSurface {
 
     /// Filter results to the target path.
     fn filter_results_to_path(&self, results: Vec<LintResult>, path: &str) -> Vec<LintResult> {
+        // Cache cwd and canonicalize once
         let canonical_scan_path = std::path::PathBuf::from(path);
-        let canonical_scan_path = canonical_scan_path
-            .canonicalize()
-            .unwrap_or(canonical_scan_path);
+        let canonical_scan_path = canonical_scan_path.canonicalize().unwrap_or(canonical_scan_path);
         let cwd = crate::surface_common_command::current_dir();
 
         results

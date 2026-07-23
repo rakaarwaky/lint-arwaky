@@ -261,17 +261,13 @@ impl CodeAnalysisOrchestrator {
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
         // P1.5 fix: read thresholds from config instead of hardcoding
-        let min_dup_lines = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES305")
+        // Cache rule lookup once to avoid double iteration
+        let aes305_rule = config.rules.iter().find(|r| r.name.value == "AES305");
+        let min_dup_lines = aes305_rule
             .map(|r| r.code_analysis.min_lines.value as usize)
             .filter(|&v| v > 0)
             .unwrap_or(10);
-        let threshold_pct = config
-            .rules
-            .iter()
-            .find(|r| r.name.value == "AES305")
+        let threshold_pct = aes305_rule
             .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
         let dup_violations = self
@@ -293,10 +289,12 @@ impl CodeAnalysisOrchestrator {
 
     /// Format a compliance report from results.
     pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
-        let mut output = String::new();
-        output.push_str(&"=".repeat(60));
+        // Pre-allocated header (static string, no repeat allocation)
+        let header = "============================================================";
+        let mut output = String::with_capacity(results.len() * 80 + 120);
+        output.push_str(header);
         output.push_str("\n  AES Architecture Compliance Report \n");
-        output.push_str(&"=".repeat(60));
+        output.push_str(header);
         output.push_str(&format!("\n  Project: {}\n", project_root));
         output.push_str(&format!("  Violations: {}\n", results.len()));
         output.push('\n');

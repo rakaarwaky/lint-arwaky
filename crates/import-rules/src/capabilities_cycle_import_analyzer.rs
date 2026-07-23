@@ -80,6 +80,7 @@ impl DependencyCycleAnalyzer {
         }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
         let file_results: Vec<ScannedFileEdges> = files
             .iter()
@@ -101,10 +102,11 @@ impl DependencyCycleAnalyzer {
                             file,
                             &layer_keys,
                         );
-                        match specialized.split('(').next() {
-                            Some(p) => p.to_string(),
-                            None => specialized,
-                        }
+                        let base_part = specialized
+                            .find('(')
+                            .map(|i| &specialized[..i])
+                            .unwrap_or(&specialized);
+                        base_part.to_string()
                     }
                     None => return None,
                 };
@@ -122,10 +124,10 @@ impl DependencyCycleAnalyzer {
                             .or_else(|| module_value.strip_prefix("lint_arwaky::"))
                             .unwrap_or("");
                         let first_segment = stripped.split("::").next().unwrap_or("");
-                        layer_keys.iter().any(|k| {
-                            let prefix = format!("{}_", k);
-                            stripped.starts_with(&prefix)
-                        }) || layer_keys.iter().any(|k| k == first_segment)
+                        layer_prefixes
+                            .iter()
+                            .any(|prefix| stripped.starts_with(prefix))
+                            || layer_keys.iter().any(|k| k == first_segment)
                     } else {
                         false
                     };

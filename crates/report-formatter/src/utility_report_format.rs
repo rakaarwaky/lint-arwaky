@@ -7,7 +7,7 @@ use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 ///
 /// Used by all formatters as the fallback when the requested format doesn't match.
 pub fn format_report_default(report: &ScanReport) -> String {
-    let mut output = String::new();
+    let mut output = String::with_capacity(256 + report.results.len() * 32);
     output.push_str("Lint Arwaky Report\n");
     output.push_str(&format!("Violations: {}\n", report.results.len()));
     output.push_str(&format!("Diagnostics: {}\n", report.diagnostics.len()));
@@ -19,7 +19,7 @@ pub fn format_report_default(report: &ScanReport) -> String {
 
     // Group violations by code
     let mut code_counts: std::collections::HashMap<String, usize> =
-        std::collections::HashMap::new();
+        std::collections::HashMap::with_capacity(20);
     for r in &report.results {
         *code_counts.entry(r.code.to_string()).or_insert(0) += 1;
     }

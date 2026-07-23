@@ -21,6 +21,7 @@ shared.workspace = true
 rmcp.workspace = true
 schemars = "1.2"
 tokio.workspace = true
+futures.workspace = true
 anyhow.workspace = true
 import_rules.workspace = true
 naming_rules.workspace = true
