@@ -18,8 +18,8 @@ use crate::import_rules::utility_import_resolver;
 ///
 /// # Examples
 /// ```rust
-/// use crate::common::utility_scope_matcher::file_belongs_to_scope;
-/// use crate::taxonomy_layer_vo::Identity;
+/// use shared_lint_arwaky::common::utility_scope_matcher::file_belongs_to_scope;
+/// use shared_lint_arwaky::common::taxonomy_layer_vo::Identity;
 ///
 /// // "surfaces_auth.rs" belongs to layer "surfaces" (no suffix constraint)
 /// let result = file_belongs_to_scope("surfaces_auth.rs", &Identity::new("surfaces"));
@@ -57,7 +57,7 @@ pub fn file_belongs_to_scope(
 ///
 /// # Examples
 /// ```rust
-/// use crate::common::utility_scope_matcher::extract_file_stem;
+/// use shared_lint_arwaky::common::utility_scope_matcher::extract_file_stem;
 ///
 /// assert_eq!(extract_file_stem("surfaces_auth.rs"), "surfaces_auth");
 /// assert_eq!(extract_file_stem("mod.rs"), "mod");
@@ -71,7 +71,7 @@ pub fn extract_file_stem(basename: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use crate::common::utility_scope_matcher::extract_layer_prefix;
+/// use shared_lint_arwaky::common::utility_scope_matcher::extract_layer_prefix;
 ///
 /// assert_eq!(extract_layer_prefix("surfaces_auth"), "surfaces");
 /// assert_eq!(extract_layer_prefix("utility_parser"), "utility");
@@ -85,12 +85,14 @@ pub fn extract_layer_prefix(stem: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use crate::common::utility_scope_matcher::extract_suffix;
+/// use shared_lint_arwaky::common::utility_scope_matcher::extract_suffix;
 ///
 /// assert_eq!(extract_suffix("surfaces_auth"), "auth");
 /// assert_eq!(extract_suffix("utility_parser"), "parser");
-/// assert_eq!(extract_suffix("no_suffix"), "");
+/// assert_eq!(extract_suffix("no_suffix"), "suffix");
 /// ```
+
+
 pub fn extract_suffix(stem: &str) -> &str {
     stem.rsplit('_').next().map_or("", |s| s)
 }

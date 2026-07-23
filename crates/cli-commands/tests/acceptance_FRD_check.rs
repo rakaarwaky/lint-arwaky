@@ -4,6 +4,9 @@ use std::fs;
 use std::process::Command;
 
 fn cli_bin() -> Command {
+    if let Ok(path) = std::env::var("CARGO_BIN_EXE_lint-arwaky-cli") {
+        return Command::new(path);
+    }
     let bin = std::env::current_exe().unwrap();
     let mut dir = bin.parent().unwrap();
     for _ in 0..5 {
@@ -11,14 +14,17 @@ fn cli_bin() -> Command {
         if candidate.exists() {
             return Command::new(candidate);
         }
-        dir = dir.parent().unwrap_or(dir);
+        if let Some(parent) = dir.parent() {
+            dir = parent;
+        } else {
+            break;
+        }
     }
-    let mut p = std::env::current_exe().unwrap();
-    p.pop();
-    p.pop();
-    p.push("lint-arwaky-cli");
-    Command::new(p)
+    let mut cmd = Command::new("cargo");
+    cmd.arg("run").arg("--quiet").arg("--bin").arg("lint-arwaky-cli").arg("--");
+    cmd
 }
+
 
 #[test]
 fn frd_check_01_runs_analysis_on_target_path() {

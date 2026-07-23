@@ -149,13 +149,15 @@ opt-level = 0
 opt-level = 0
 debug = 1          # line tables only (faster than full debug info)
 incremental = true
-codegen-units = 256 # more units = faster incremental builds
+codegen-units = 16
 
-# Test profile: prevent rust-lld segmentation fault from bloated DWARF symbols
+# Test profile: prevent rust-lld memory allocation issues from bloated DWARF symbols
 [profile.test]
 opt-level = 0
-debug = 1
-split-debuginfo = "packed"
+debug = 0
+codegen-units = 16
+
+
 
 
 # Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.
