@@ -84,7 +84,6 @@ fn utility_file_size_formats_bytes() {
     );
 }
 
-
 // ─── path_components: Path splitting ──
 
 #[test]

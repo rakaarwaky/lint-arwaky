@@ -134,7 +134,9 @@ impl CodeAnalysisOrchestrator {
             Err(_) => return Vec::new(),
         };
         let files = shared::code_analysis::utility_target_resolver::collect_source_files(
-            src_dir, &dir_path, &[],
+            src_dir,
+            &dir_path,
+            &[],
         );
         if files.is_empty() {
             return Vec::new();

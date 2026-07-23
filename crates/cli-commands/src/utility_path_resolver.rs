@@ -34,7 +34,6 @@ pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
 }
 
 fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
-    path.components().any(|c| {
-        matches!(c, std::path::Component::Normal(name) if name == component)
-    })
+    path.components()
+        .any(|c| matches!(c, std::path::Component::Normal(name) if name == component))
 }

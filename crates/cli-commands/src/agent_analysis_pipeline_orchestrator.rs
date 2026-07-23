@@ -195,7 +195,9 @@ impl AnalysisPipelineOrchestrator {
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let dir_path = DirectoryPath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let language = detect_language_from_path(orphan_scan_root);
-        let ignored = self.config_orchestrator.ignored_paths_for_language(orphan_scan_root, language);
+        let ignored = self
+            .config_orchestrator
+            .ignored_paths_for_language(orphan_scan_root, language);
         let source_files =
             match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
                 Ok(list) => list.values,

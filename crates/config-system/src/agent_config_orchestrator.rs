@@ -161,14 +161,21 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         ignored_paths_from_config(&config)
     }
 
-    fn ignored_paths_for_language(&self, project_root: &str, language: ConfigLanguage) -> Vec<String> {
+    fn ignored_paths_for_language(
+        &self,
+        project_root: &str,
+        language: ConfigLanguage,
+    ) -> Vec<String> {
         let path = FilePath::new(project_root.to_string()).unwrap_or_default();
         let runtime = tokio::runtime::Handle::try_current();
         let config = match runtime {
-            Ok(rt) => {
-                rt.block_on(async { self.load_config_for_language(&path, language).await })
-                    .config
-            }
+            Ok(rt) => match rt.runtime_flavor() {
+                tokio::runtime::RuntimeFlavor::MultiThread => tokio::task::block_in_place(|| {
+                    rt.block_on(async { self.load_config_for_language(&path, language).await })
+                        .config
+                }),
+                _ => self.load_config_sync(project_root),
+            },
             Err(_) => self.load_config_sync(project_root),
         };
         ignored_paths_from_config(&config)

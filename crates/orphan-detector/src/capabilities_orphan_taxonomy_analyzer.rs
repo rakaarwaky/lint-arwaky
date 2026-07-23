@@ -127,7 +127,7 @@ impl TaxonomyOrphanAnalyzer {
     /// `crate::` path, relative import, or direct reference.
     /// The graph resolver doesn't always track same-crate imports (especially TS/JS).
     fn has_crate_self_import(file_path: &str) -> bool {
-        let stem = std::path:: Path::new(file_path)
+        let stem = std::path::Path::new(file_path)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("");

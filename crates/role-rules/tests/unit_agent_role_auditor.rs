@@ -16,8 +16,6 @@ fn make_source(file: &str, content: &str) -> SourceContentVO {
     SourceContentVO::new(fp, cs, "rust")
 }
 
-
-
 // ─── check_any_type_annotation: Happy Path ──────────
 
 #[test]

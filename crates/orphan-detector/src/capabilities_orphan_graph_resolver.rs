@@ -142,19 +142,15 @@ impl OrphanGraphResolver {
     /// Captures the quoted module path (single quotes, double quotes, or backticks).
     fn ts_import_path_re() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| {
-            Regex::new(r#"(?:from|import)\s+.*?(['\"`])([^'\"`]+)\1"#).ok()
-        })
-        .as_ref()
+        RE.get_or_init(|| Regex::new(r#"(?:from|import)\s+.*?(['\"`])([^'\"`]+)\1"#).ok())
+            .as_ref()
     }
 
     /// Regex for CommonJS require: `require('./path')`
     fn ts_require_path_re() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| {
-            Regex::new(r#"require\((['\"`])([^'\"`]+)\1\)"#).ok()
-        })
-        .as_ref()
+        RE.get_or_init(|| Regex::new(r#"require\((['\"`])([^'\"`]+)\1\)"#).ok())
+            .as_ref()
     }
 
     /// Regex for `pub use crate::module;` module re-exports (not type re-exports like `::Type`)

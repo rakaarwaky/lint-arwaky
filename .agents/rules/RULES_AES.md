@@ -1,8 +1,6 @@
-opencode
-
 # AES (Agentic Engineering System) Rules — v3.0
 
-See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full 7-layer specification.
+See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 
 ---
 
@@ -33,24 +31,24 @@ See [ARCHITECTURE.md](../ARCHITECTURE.md) for the full 7-layer specification.
 | AES305 | Duplication Code     | MEDIUM   | Quality | Duplicate code blocks detected across files.                                       |
 
 
-| Code   | Name              | Severity | Group | Description                                                                               |
-| -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------- |
-| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in /entity/error/event. |
-| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.      |
-| AES403 | Capabilities Role | HIGH     | Role  | Capability has no protocol implementation                                                 |
-| AES404 | Utility Role      | HIGH     | Role  | Infrastructure has no  port implementation                                              |
-| AES405 | Agent Role        | MEDIUM   | Role  | orchestrator do not call  any port  or protocol                                         |
-| AES406 | Surface Role      | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 25 functions.                  |
+| Code   | Name              | Severity | Group | Description                                                                                     |
+| -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
+| AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
+| AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
+| AES403 | Capabilities Role | HIGH     | Role  | Capability has no protocol implementation.                                                      |
+| AES404 | Utility Role      | HIGH     | Role  | Utility violates stateless function rules, contains trait impls                                 |
+| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains state, direct capabilities imports, inline I/O, or single execution goal. |
+| AES406 | Surface Role      | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
 
 
-| Code   | Name                  | Severity | Group  | Description                                                                          |
-| -------- | ----------------------- | ---------- | -------- | -------------------------------------------------------------------------------------- |
-| AES501 | Taxonomy Orphan       | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                         |
-| AES502 | Contract Orphan       | LOW      | Orphan | Contract trait not implemented by expected layer; port/protocol not called by agent. |
-| AES503 | Capabilities Orphan   | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.               |
-| AES504 | Infrastructure Orphan | MEDIUM   | Orphan | Infrastructure not wired in any container AND unreachable in import graph.           |
-| AES505 | Agent Orphan          | HIGH     | Orphan | Aggregate contracts  that implement by agents are not call by the surface           |
-| AES506 | Surface Orphan        | HIGH     | Orphan | Smart surface not imported by entry/router; utility not imported by smart surface.   |
+| Code   | Name                | Severity | Group  | Description                                                                                                                                       |
+| -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AES501 | Taxonomy Orphan     | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                                                                                      |
+| AES502 | Contract Orphan     | LOW      | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                        |
+| AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                            |
+| AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                 |
+| AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                 |
+| AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface. |
 
 ---
 
@@ -66,7 +64,7 @@ Filename must follow pattern: `prefix_concept_suffix` or `prefix_concept1_concep
 - Separator: **underscore** (`_`)
 - Minimum **2 words** (prefix + suffix)
 - Maximum: Unlimited
-- Examples: `capabilities_user_checker.rs`, `infrastructure_db_adapter.py`
+- Examples: `capabilities_user_checker.rs`, `utility_path_resolver.rs`, `capabilities_db_adapter.py`
 
 **Exceptions:** `main.rs`, `lib.rs`, `mod.rs`, `root_cli_main_entry.rs`, `root_mcp_main_entry.rs`, `root_tui_main_entry.rs`, `root_composition_container.rs`, `__init__.py`, `index.ts`, `index.js`, barrel/entry files.
 
@@ -85,15 +83,15 @@ Suffix must match the layer definition. Three sub-checks:
 #### Suffix Policy per Layer
 
 
-| Layer            | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                               | Forbidden Suffixes                                                                                                         |
-| ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `root`           | strict   | `_entry`, `_container`                                                                                                                                                                                                                                                                                                                                                                                                                         | N/A                                                                                                                        |
-| `taxonomy`       | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_utility`, `_helper`                                                                                                                                                                                                                                                                                                                                                                       | N/A                                                                                                                        |
-| `contract`       | strict   | `_port`, `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                             | N/A                                                                                                                        |
-| `capabilities`   | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_aggregator`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`,                                                                                                  | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_utility`, `_helper`, `_port`, `_protocol`, `_aggregate` |
-| `infrastructure` | flexible | `_adapter`, `_provider`, `_scanner`, `_client`, `_schemas`, `_lifespan`, `_wrapper`, `_tracer`, `_tracker`, `_variants`, `_detector`, `_patterns`, `_system`, `_repository`, `_cache`, `_loader`, `_writer`, `_reader`, `_driver`, `_connector`, `_gateway`, `_serializer`, `_encoder`, `_decoder`, `_fetcher`, `_watcher`, `_indexer`, `_dispatcher`, `_recorder`, `_proxy`, `_publisher`, `_subscriber`, `_listener`, `_poller`, `_streamer` | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_utility`, `_helper`, `_port`, `_protocol`, `_aggregate` |
-| `surfaces`       | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                       | N/A                                                                                                                        |
-| `agent`          | strict   | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                | N/A                                                                                                                        |
+| Layer          | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Forbidden Suffixes                                                                                     |
+| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `root`         | strict   | `_entry`, `_container`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                                    |
+| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | N/A                                                                                                    |
+| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | N/A                                                                                                    |
+| `utility`      | flexible | `_parser`, `_splitter`, `_trimmer`, `_slugifier`, `_sanitizer`, `_normalizer`, `_extractor`, `_replacer`, `_converter`, `_counter`, `_resolver`, `_detector`, `_builder`, `_joiner`, `_serializer`, `_deserializer`, `_encoder`, `_decoder`, `_hasher`, `_generator`, `_formatter`, `_comparator`, `_differ`, `_matcher`, `_checker`, `_calculator`, `_mapper`, `_merger`, `_grouper`, `_sorter`, `_deduplicator`, `_printer`                                                                                                                                                               | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`                           |
+| `capabilities` | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_helper`, `_repository`, `_gateway`, `_client`, `_provider`, `_fetcher`, `_reader`, `_writer`, `_scanner`, `_publisher`, `_subscriber`, `_adapter`, `_connector`, `_uploader`, `_downloader`, `_sender`, `_receiver`, `_dispatcher`, `_watcher`, `_monitor` | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility` |
+| `agent`        | strict   | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | N/A                                                                                                    |
+| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | N/A                                                                                                    |
 
 ---
 
@@ -103,22 +101,23 @@ Suffix must match the layer definition. Three sub-checks:
 
 **Severity:** CRITICAL
 
-A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `contract_`, etc.), not directory path.
+A single rule with **12 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `utility_`, `contract_`, `capabilities_`, `agent_`, `surface_`, `root_`), not directory path.
 
 
-| #  | Scope                                                           | Allowed Imports                                                   | Mandatory Imports                                     | Forbidden Imports                                                                                 |
-| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| 1  | `taxonomy(vo)`                                                  | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                          | taxonomy(vo&#124;constant)                            | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 3  | `taxonomy(constant)`                                            | taxonomy                                                          | None                                                  | agent*, infrastructure*, surface*, contract*, capabilities\_, root                                |
-| 4  | `contract(port&#124;protocol)`                                  | taxonomy, contract                                                | taxonomy                                              | agent*, infrastructure*, surface*, capabilities*, contract(aggregate), root                       |
-| 5  | `contract(aggregate)`                                           | taxonomy, contract                                                | taxonomy, contract(port&#124;protocol&#124;aggregate) | agent*, infrastructure*, surface*, capabilities*, root                                            |
-| 6  | `capabilities`                                                  | taxonomy, contract                                                | taxonomy, contract(protocol)                          | infrastructure*, surface*, agent*, capabilities*, root                                            |
-| 7  | `infrastructure`                                                | taxonomy, contract                                                | taxonomy, contract(port)                              | surface*, capabilities*, agent*, infrastructure*, root                                            |
-| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(port), contract(protocol) | taxonomy, contract(aggregate)                         | surfaces, infrastructure, capabilities, root                                                      |
-| 9  | `surfaces(command&#124;controller&#124;page&#124;entry)`        | taxonomy, contract                                                | taxonomy, contract(aggregate)                         | agent*, infrastructure*, capabilities\_, contract(port), contract(protocol), root                 |
-| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                          | None                                                  | agent*, infrastructure*, capabilities*, contract(port), contract(protocol), smart surfaces*, root |
-| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                          | taxonomy                                              | agent*, contract*, infrastructure*, capabilities*, all surface\_, root                            |
+| #  | Scope                                                           | Allowed Imports                                            | Mandatory Imports             | Forbidden Imports                                                |
+| ---- | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------ |
+| 1  | `taxonomy(vo)`                                                  | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root       |
+| 2  | `taxonomy(entity,error,event)`                                  | taxonomy                                                   | taxonomy(vo&#124;constant)    | agent*, surface*, contract*, utility*, capabilities*, root       |
+| 3  | `taxonomy(constant)`                                            | taxonomy                                                   | None                          | agent*, surface*, contract*, utility*, capabilities*, root       |
+| 4  | `utility`                                                       | taxonomy                                                   | None                          | agent*, surface*, contract*, capabilities*, root                 |
+| 5  | `contract(protocol)`                                            | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, contract(aggregate), root       |
+| 6  | `contract(aggregate)`                                           | taxonomy, contract                                         | taxonomy                      | agent*, surface*, capabilities*, root                            |
+| 7  | `capabilities`                                                  | taxonomy, contract(protocol), utility                      | taxonomy, contract(protocol)  | surface*, agent*, capabilities*, root                            |
+| 8  | `agent(orchestrator)`                                           | taxonomy, contract(aggregate), contract(protocol), utility | taxonomy, contract(aggregate) | surface*, capabilities*, root                                    |
+| 9  | `surfaces(command&#124;controller&#124;page)`                   | taxonomy, contract(aggregate), utility                     | None                          | agent*, capabilities*, contract(protocol), root                  |
+| 10 | `surfaces(hook&#124;store&#124;action&#124;screen&#124;router)` | taxonomy                                                   | None                          | agent*, capabilities*, contract(protocol), smart surfaces*, root |
+| 11 | `surfaces(component&#124;view&#124;layout)`                     | taxonomy                                                   | None                          | agent*, contract*, capabilities*, all surface*, root             |
+| 12 | `root`                                                          | taxonomy, contract, capabilities, agent, surface           | None                          | None                                                             |
 
 ---
 
@@ -157,7 +156,7 @@ Import statement matches a forbidden dummy pattern. Used to detect fake/redundan
 **Severity:** HIGH
 
 Circular dependency detected between layers. Layer dependencies must be unidirectional (bottom-up).
-Allowed direction: `taxonomy → contract → capabilities/infrastructure → agent → surface`.
+Allowed direction: `taxonomy → contract / utility → capabilities → agent → surface → root`.
 Any back-edge or cross-layer cycle is a violation.
 
 ---
@@ -217,6 +216,8 @@ Forbidden bypass patterns detected:
 - `noqa`
 - `type: ignore`
 - `eslint-disable`
+- `ts-ignore`
+- `ts-expect-error`
 
 **FIX:** Use proper error handling.
 
@@ -241,7 +242,7 @@ Duplicate code blocks detected across files within the project scope.
 Constant purity violation or primitive usage in domain models. Two sub-checks:
 
 1. **Constant purity** — `_constant` files must only contain `pub const` / `pub static` declarations
-2. **Primitive in taxonomy** — `_entity`, `_error`, `_event` files must not use direct primitive types (e.g. `String`, `i32`, `int`) in field declarations. `_vo`, `_helper`, `_utility` files ARE allowed to use primitives directly.
+2. **Primitive in taxonomy** — `_entity`, `_error`, `_event` files must not use direct primitive types (e.g. `String`, `i32`, `int`) in field declarations. `_vo` files ARE allowed to use primitives directly.
 
 **FIX:** Replace primitives with taxonomy value objects.
 
@@ -272,11 +273,13 @@ Capability routing and protocol enforcement. Two sub-checks:
 
 ---
 
-### AES404 — Infrastructure Role
+### AES404 — Utility Role
 
 **Severity:** HIGH
 
-Infrastructure role boundary violation. Infrastructure files must reference at least one `_port` contract — missing a port import means the file is broken/useless (no external dependency to adapt). Additionally, infrastructure files must only implement `_port` contracts and must not contain business logic, routing, or orchestration.
+Utility role boundary violation. Utility files must contain stateless standalone functions only. They must not contain stateful objects, struct/class state, trait implementations, or contract implementations. Furthermore, Utility files may only depend on Taxonomy, and must not import any other layer (`contract`, `capabilities`, `agent`, `surface`, `root`).
+
+**FIX:** Refactor Utility to stateless functions and remove non-taxonomy imports or move stateful logic into Capabilities.
 
 ---
 
@@ -287,8 +290,8 @@ Infrastructure role boundary violation. Infrastructure files must reference at l
 Checks:
 
 - **Non-stateless execution** — state assignment outside `__init__` / constructor
-- **Low-level infrastructure imports** — agent must not import infrastructure or capabilities directly
-- **Infrastructure re-implementation** — agent must not re-implement infrastructure logic inline (e.g., filesystem I/O, source parsing, directory walking, network calls). All infrastructure operations must go through contract ports defined in the contract layer.
+- **Direct capabilities imports** — agent must not import capabilities directly; must communicate via contract protocols/aggregates
+- **Direct capability implementation** — agent must delegate execution to capabilities via protocols
 - **`any` type annotations** — forbidden in agent layer
 - **Single execution goal** — orchestrator must coordinate at minimum 2 subsystems
 - **Container initialization** — complex domain logic in container module
@@ -305,7 +308,7 @@ Checks:
 
 - **File > 15 functions** — surface file has too many responsibilities
 - **Active domain logic in passive surface** — passive surfaces (`_component`, `_view`, `_layout`) must not contain business logic
-- **Role boundary violation** — surface enters forbidden territory (e.g. importing infrastructure directly)
+- **Role boundary violation** — surface enters forbidden territory (e.g. importing capabilities or non-aggregate contracts directly)
 
 ---
 
@@ -325,9 +328,8 @@ Taxonomy file (VO, entity, error, event, constant) has no inbound imports from a
 
 Contract trait not implemented by the expected layer:
 
-- `_port` → not implemented by any `infrastructure_` & not called by any agent\_
-- `_protocol` → not implemented by any `capabilities_` & not called by any agent\_
-- `_aggregate` → not called by any agent* file not called by any surfaces*
+- `_protocol` → not implemented by any `capabilities_` & not called by any `agent_`
+- `_aggregate` → not implemented by any `agent_` & not called by any `surface_`
 
 ---
 
@@ -339,11 +341,11 @@ Capability file not wired in any `_container` AND unreachable in the import grap
 
 ---
 
-### AES504 — Infrastructure Orphan
+### AES504 — Utility Orphan
 
 **Severity:** MEDIUM
 
-Infrastructure file not wired in any `_container` AND unreachable in the import graph.
+Utility file is not imported or consumed by any capability, agent, or surface layer (or is only imported by other utility files).
 
 ---
 
@@ -351,7 +353,7 @@ Infrastructure file not wired in any `_container` AND unreachable in the import 
 
 **Severity:** HIGH
 
-Aggregate contracts that are implemented by agents are not called by the surface. Agent orchestrator not called by any `surface_` file or entry point. Suffix `_orchestrator` is checked.
+Agent orchestrator not called by any `surface_` file or entry point. Suffix `_orchestrator` is checked.
 
 ---
 
