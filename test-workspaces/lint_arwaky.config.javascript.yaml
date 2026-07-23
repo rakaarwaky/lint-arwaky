@@ -15,12 +15,10 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
-ignored_paths:
   - "/target"
   - "/.git"
   - "/.github"
   - "/scratch"
-  - "/packages"
   - "/node_modules"
   - "/.opencode"
   - "/.mimocode"

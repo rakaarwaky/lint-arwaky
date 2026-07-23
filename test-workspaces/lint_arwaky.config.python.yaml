@@ -19,7 +19,6 @@ ignored_paths:
   - "/.git"
   - "/.github"
   - "/scratch"
-  - "/packages"
   - "/node_modules"
   - "/.opencode"
   - "/.mimocode"
