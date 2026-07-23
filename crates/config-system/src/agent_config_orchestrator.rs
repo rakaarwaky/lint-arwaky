@@ -157,6 +157,24 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     }
 
     fn ignored_paths(&self, project_root: &str) -> Vec<String> {
+        let config = self.load_config_sync(project_root);
+        Self::ignored_paths_from_config(&config)
+    }
+
+    fn ignored_paths_for_language(&self, project_root: &str, language: ConfigLanguage) -> Vec<String> {
+        let path = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let runtime = tokio::runtime::Handle::try_current();
+        let config = match runtime {
+            Ok(rt) => {
+                rt.block_on(async { self.load_config_for_language(&path, language).await })
+                    .unwrap_or_else(|_| self.load_config_sync(project_root))
+            }
+            Err(_) => self.load_config_sync(project_root),
+        };
+        Self::ignored_paths_from_config(&config)
+    }
+
+    fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
         let mut ignored: Vec<String> = vec![
             "target".to_string(),
             ".mimocode".to_string(),
@@ -169,7 +187,6 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             "coverage".to_string(),
             ".venv".to_string(),
         ];
-        let config = self.load_config_sync(project_root);
         for fp in config.ignored_paths.values.iter() {
             let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
             if !v.is_empty() && !ignored.contains(&v) {
