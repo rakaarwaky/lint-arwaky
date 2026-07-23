@@ -40,5 +40,8 @@ pub mod project_setup;
 #[path = "role-rules/mod.rs"]
 pub mod role_rules;
 
+#[path = "report-formatter/mod.rs"]
+pub mod report_formatter;
+
 #[path = "maintenance/mod.rs"]
 pub mod maintenance;

@@ -5,8 +5,8 @@ use std::sync::Arc;
 use std::time::Instant;
 use tokio::process::Command;
 
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 

@@ -2,32 +2,6 @@
 
 ## System Overview
 
-```
-┌──────────────────────────────────────────────────┐
-│              Surface Layer                        │
-│  check/scan/ci command surface handler            │
-│  fix command surface handler                      │
-│  doctor/security command surface handler          │
-│  init/install/mcp command surface handler         │
-│  config-show command surface handler              │
-│  adapters command surface handler                 │
-│  git-diff command surface handler                 │
-│  watch command surface handler                    │
-│  CI & path utility handlers                       │
-├──────────────────────────────────────────────────┤
-│              Agent Layer                          │
-│  analysis pipeline orchestrator                   │
-│  (analysis pipeline aggregate interface)          │
-├──────────────────────────────────────────────────┤
-│              Utility Layer                        │
-│  output format helpers (SARIF/JUnit)              │
-│  path resolver (workspace root, language)         │
-├──────────────────────────────────────────────────┤
-│              Root Container                       │
-│  CLI container (DI wiring)                        │
-└──────────────────────────────────────────────────┘
-```
-
 The cli-commands crate provides the unified command-line interface that drives the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers that parse CLI args and delegate all business logic to agent/orchestration layers. Report formatting is delegated to the report-formatter crate via the report formatter aggregate.
 
 ## Functional Requirements
@@ -71,7 +45,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 ### FR-003: CI Command
 
 - **Description**: CI-optimized analysis with configurable threshold and auto-fail on CRITICAL violations.
-- **Input**: `code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>`, `path: Option<FilePath>`, `threshold: Threshold`
+- **Input**: `FilePath`threshold: Threshold`
 - **Output**: `ExitCode` (0 = pass, 1 = fail)
 - **Business Rules**:
   - Computes architecture compliance score via the score calculation function.
@@ -284,8 +258,9 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## API Contract
 
+
 | Operation    | Input                                             | Output    | Description                             |
-| ------------ | ------------------------------------------------- | --------- | --------------------------------------- |
+| -------------- | --------------------------------------------------- | ----------- | ----------------------------------------- |
 | Check        | check options                                     | Exit code | Self-lint analysis on current project   |
 | Scan         | scan options                                      | Exit code | Multi-workspace analysis with discovery |
 | CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison            |
@@ -327,34 +302,34 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Test Scenarios / QA Checklist
 
-- [ ] FR-001: `check` runs full pipeline and returns correct exit code
-- [ ] FR-001: `check` with non-existent path returns exit code 2
-- [ ] FR-001: `check --git-diff` filters to staged files only
-- [ ] FR-002: `scan` discovers workspace members and runs per-member analysis
-- [ ] FR-002: `scan --member <name>` targets specific workspace member
-- [ ] FR-002: `scan` with non-existent member name prints available members
-- [ ] FR-002: `scan` falls back to single-scan when no workspaces found
-- [ ] FR-003: `ci` passes when score >= threshold and no CRITICAL
-- [ ] FR-003: `ci` fails on CRITICAL violation regardless of score
-- [ ] FR-003: `ci` compares score as float (not truncated integer)
-- [ ] FR-004: `fix` applies fixes and reports fixed count
-- [ ] FR-004: `fix --dry-run` previews without applying changes
-- [ ] FR-005: `doctor` shows all tool statuses and returns exit 0
-- [ ] FR-006: `security` returns exit 3 when tool missing
-- [ ] FR-006: `security` returns exit 1 when vulnerabilities found
-- [ ] FR-007: `dependencies` lists up to 30 deps then truncates
-- [ ] FR-008: `init` creates config files for detected languages
-- [ ] FR-008: `init` skips existing files
-- [ ] FR-009: `install` installs Python and JS adapters
-- [ ] FR-010: `mcp-config` generates correct JSON for each client
-- [ ] FR-010: `mcp-config` resolves binary via sibling lookup
-- [ ] FR-011: `config-show` displays config content with secrets redacted
-- [ ] FR-011: `config-show` shows "no config found" when none exists
-- [ ] FR-012: `adapters` lists enabled adapters or "(none enabled)"
-- [ ] FR-013: `git-diff` analyzes only changed files
-- [ ] FR-014: `watch` monitors files and re-scans on changes
-- [ ] FR-015: Pipeline runs all 6 linter groups and merges results
-- [ ] FR-015: Pipeline handles naming/import audit failures as warnings
+- [ ]  FR-001: `check` runs full pipeline and returns correct exit code
+- [ ]  FR-001: `check` with non-existent path returns exit code 2
+- [ ]  FR-001: `check --git-diff` filters to staged files only
+- [ ]  FR-002: `scan` discovers workspace members and runs per-member analysis
+- [ ]  FR-002: `scan --member <name>` targets specific workspace member
+- [ ]  FR-002: `scan` with non-existent member name prints available members
+- [ ]  FR-002: `scan` falls back to single-scan when no workspaces found
+- [ ]  FR-003: `ci` passes when score >= threshold and no CRITICAL
+- [ ]  FR-003: `ci` fails on CRITICAL violation regardless of score
+- [ ]  FR-003: `ci` compares score as float (not truncated integer)
+- [ ]  FR-004: `fix` applies fixes and reports fixed count
+- [ ]  FR-004: `fix --dry-run` previews without applying changes
+- [ ]  FR-005: `doctor` shows all tool statuses and returns exit 0
+- [ ]  FR-006: `security` returns exit 3 when tool missing
+- [ ]  FR-006: `security` returns exit 1 when vulnerabilities found
+- [ ]  FR-007: `dependencies` lists up to 30 deps then truncates
+- [ ]  FR-008: `init` creates config files for detected languages
+- [ ]  FR-008: `init` skips existing files
+- [ ]  FR-009: `install` installs Python and JS adapters
+- [ ]  FR-010: `mcp-config` generates correct JSON for each client
+- [ ]  FR-010: `mcp-config` resolves binary via sibling lookup
+- [ ]  FR-011: `config-show` displays config content with secrets redacted
+- [ ]  FR-011: `config-show` shows "no config found" when none exists
+- [ ]  FR-012: `adapters` lists enabled adapters or "(none enabled)"
+- [ ]  FR-013: `git-diff` analyzes only changed files
+- [ ]  FR-014: `watch` monitors files and re-scans on changes
+- [ ]  FR-015: Pipeline runs all 6 linter groups and merges results
+- [ ]  FR-015: Pipeline handles naming/import audit failures as warnings
 
 ## Assumptions & Constraints
 
@@ -367,15 +342,16 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Glossary
 
-| Term         | Definition                                                                           |
-| ------------ | ------------------------------------------------------------------------------------ |
+
+| Term         | Definition                                                                            |
+| -------------- | --------------------------------------------------------------------------------------- |
 | AES          | Architecture Enforcement Specification — the coding standard enforced by lint-arwaky |
-| Pipeline     | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan |
+| Pipeline     | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan  |
 | Surface      | Thin CLI handler layer — parses args, delegates to agents, formats output            |
-| Aggregate    | Agent-layer orchestrator implementing a contract trait                               |
-| DI Container | Composition root that wires capabilities to contract protocols                       |
-| LintResult   | Individual violation finding with file, line, code, severity, message                |
-| ScanReport   | Aggregated results + diagnostics from a full pipeline run                            |
+| Aggregate    | Agent-layer orchestrator implementing a contract trait                                |
+| DI Container | Composition root that wires capabilities to contract protocols                        |
+| LintResult   | Individual violation finding with file, line, code, severity, message                 |
+| ScanReport   | Aggregated results + diagnostics from a full pipeline run                             |
 
 ## Reference
 

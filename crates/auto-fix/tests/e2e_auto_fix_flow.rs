@@ -5,7 +5,7 @@ use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::Score;
+use shared::common::taxonomy_common_vo::{BooleanVO, Score};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -32,10 +32,10 @@ impl ICodeAnalysisAggregate for ConfigurableLinter {
     fn calc_score(&self, _: &[LintResult]) -> Score {
         Score::new(80.0)
     }
-    fn check_critical(&self, _: &[LintResult]) -> bool {
-        false
+    fn check_critical(&self, _: &[LintResult]) -> BooleanVO {
+        BooleanVO::new(false)
     }
-    fn format_report(&self, _: &LintResultList, _: &FilePath) -> String {
+    fn format_report(&self, _: &LintResultList, _: &FilePath) -> DisplayContent {
         DisplayContent::new("")
     }
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {

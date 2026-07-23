@@ -45,7 +45,7 @@ impl ICodeAnalysisAggregate for MockCodeAnalysisAggregate {
     }
 
     fn check_critical(&self, _results: &[LintResult]) -> BooleanVO {
-        false
+        BooleanVO::new(false)
     }
 
     fn format_report(&self, _results: &LintResultList, _project_root: &FilePath) -> DisplayContent {

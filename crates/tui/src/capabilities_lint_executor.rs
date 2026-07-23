@@ -2,9 +2,7 @@ use crate::utility_report_formatter::{
     format_config_result, format_dependency_report, format_doctor_report, format_results,
 };
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -43,7 +41,6 @@ pub struct LintExecutor {
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
-    analysis_pipeline: Option<Arc<dyn IAnalysisPipelineAggregate>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -569,7 +566,6 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
-            analysis_pipeline: None,
         }
     }
 
@@ -640,14 +636,6 @@ impl LintExecutor {
         multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     ) -> Self {
         self.config_orchestrator = Some(multi_project_orchestrator);
-        self
-    }
-
-    pub fn with_analysis_pipeline(
-        mut self,
-        analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
-    ) -> Self {
-        self.analysis_pipeline = Some(analysis_pipeline);
         self
     }
 
@@ -759,43 +747,7 @@ impl LintExecutor {
 
 impl LintExecutor {
     fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
-        // Delegate to AnalysisPipelineOrchestrator — centralizes all 6-linter pipeline logic.
-        match &self.analysis_pipeline {
-            Some(pipeline) => {
-                let rt = match tokio::runtime::Runtime::new() {
-                    Ok(rt) => rt,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Failed to create runtime: {}",
-                            e
-                        ));
-                    }
-                };
-
-                // Use run_with_discovery for multi-workspace support.
-                // Falls back to single-scan mode if no workspaces found.
-                let request = ScanRequest::new(
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(
-                        path.to_string(),
-                    ),
-                    shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Scan,
-                );
-
-                match rt.block_on(pipeline.run(request)) {
-                    Ok(report) => {
-                        let count = report.results.len();
-                        let results = LintResultList::new(report.results);
-                        let output = self.format_results(&results);
-                        LintExecutionResult::success(output, count)
-                    }
-                    Err(e) => LintExecutionResult::failure(format!("Pipeline error: {}", e)),
-                }
-            }
-            None => {
-                // Fallback: legacy inline pipeline (should never happen in production).
-                self.run_legacy_scan(path)
-            }
-        }
+        self.run_legacy_scan(path)
     }
 
     /// Legacy inline pipeline — kept as fallback only. All callers should use analysis_pipeline.

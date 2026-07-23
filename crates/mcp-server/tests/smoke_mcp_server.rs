@@ -17,7 +17,6 @@ async fn mcp_server_boots_and_responds_under_5_seconds() {
     // Boot: construct container → orchestrator → surface
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);
@@ -48,7 +47,6 @@ async fn mcp_server_health_check_responds_under_5_seconds() {
 
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     let orchestrator = McpServerOrchestrator::new(deps);

@@ -1,6 +1,6 @@
 use crate::surface_common_command;
-use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::cli_commands::utility_path_resolver;
 use shared::common::taxonomy_path_vo::FilePath;

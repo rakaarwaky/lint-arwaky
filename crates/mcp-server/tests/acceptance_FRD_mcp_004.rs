@@ -13,7 +13,6 @@ use std::sync::Arc;
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
     let deps = McpServerDependencies {
-        analysis_pipeline: container.analysis_pipeline.clone(),
         external_lint: container.external_lint.clone(),
     };
     LintArwakyMcpServer::new(Arc::new(McpServerOrchestrator::new(deps)))

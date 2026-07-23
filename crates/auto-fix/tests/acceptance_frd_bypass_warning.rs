@@ -15,7 +15,7 @@ use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;
 
-use shared::common::taxonomy_boolean_vo::BooleanVO;
+use shared::common::taxonomy_common_vo::BooleanVO;
 
 struct MockLinter {
     results: Vec<LintResult>,

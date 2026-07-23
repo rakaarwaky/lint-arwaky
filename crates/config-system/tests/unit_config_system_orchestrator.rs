@@ -88,7 +88,8 @@ async fn load_config_for_language_injects_defaults_when_no_layers() {
 #[test]
 fn load_config_sync_returns_defaults_for_empty_dir() {
     let tmp = TempDir::new().unwrap();
-    let config = make_orchestrator().load_config_sync(tmp.path().to_str().unwrap());
+    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
     assert!(config.enabled.value);
 }
 
@@ -101,18 +102,20 @@ fn load_config_sync_finds_config_in_current_dir() {
     )
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
-    let config = make_orchestrator().load_config_sync(tmp.path().to_str().unwrap());
+    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
     assert!(!config.enabled.value);
 }
 
 #[test]
 fn ignored_paths_includes_hardcoded_defaults() {
     let tmp = TempDir::new().unwrap();
-    let paths = make_orchestrator().ignored_paths(tmp.path().to_str().unwrap());
-    assert!(paths.contains(&"target".to_string()));
-    assert!(paths.contains(&"node_modules".to_string()));
-    assert!(paths.contains(&".git".to_string()));
-    assert!(paths.contains(&"dist".to_string()));
+    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let paths = make_orchestrator().ignored_paths(&fp);
+    assert!(paths.values.contains(&"target".to_string()));
+    assert!(paths.values.contains(&"node_modules".to_string()));
+    assert!(paths.values.contains(&".git".to_string()));
+    assert!(paths.values.contains(&"dist".to_string()));
 }
 
 #[tokio::test]
