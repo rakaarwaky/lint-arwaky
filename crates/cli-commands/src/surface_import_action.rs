@@ -11,6 +11,7 @@ use crate::surface_common_command;
 
 pub fn handle_scan_import(
     path: Option<FilePath>,
+    format: Format,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     report_formatter: Arc<dyn IReportFormatterAggregate>,
 ) -> ExitCode {
@@ -38,7 +39,7 @@ pub fn handle_scan_import(
         }
     };
     let report = ScanReport::new(results.clone(), vec![]);
-    let output = report_formatter.format(&report, Format::Text);
+    let output = report_formatter.format(&report, format);
     println!("{output}");
     if results.is_empty() {
         ExitCode::SUCCESS

@@ -9,6 +9,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 pub fn handle_scan_quality(
     path: Option<FilePath>,
+    format: Format,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     report_formatter: Arc<dyn IReportFormatterAggregate>,
 ) -> ExitCode {
@@ -26,7 +27,7 @@ pub fn handle_scan_quality(
     };
     let results = code_analysis_linter.run_code_analysis_path(&root_fp);
     let report = ScanReport::new(results.clone(), vec![]);
-    let output = report_formatter.format(&report, Format::Text);
+    let output = report_formatter.format(&report, format);
     println!("{output}");
     if results.is_empty() {
         ExitCode::SUCCESS

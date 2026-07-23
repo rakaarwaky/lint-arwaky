@@ -15,6 +15,7 @@ use crate::surface_common_command;
 
 pub fn handle_scan_external(
     path: Option<FilePath>,
+    format: Format,
     external_lint: Arc<dyn IExternalLintAggregate>,
     report_formatter: Arc<dyn IReportFormatterAggregate>,
 ) -> ExitCode {
@@ -36,7 +37,7 @@ pub fn handle_scan_external(
     };
     let results = rt.block_on(external_lint.scan_all(&root_fp));
     let report = ScanReport::new(results.values, vec![]);
-    let output = report_formatter.format(&report, Format::Text);
+    let output = report_formatter.format(&report, format);
     println!("{output}");
     if report.violation_count() > 0 {
         ExitCode::from(1)

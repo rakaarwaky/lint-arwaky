@@ -3,7 +3,7 @@ use std::env;
 use std::process::ExitCode;
 
 use cli_commands::surface_check_command;
-use cli_commands::surface_ci_action;
+use cli_commands::surface_ci_command;
 use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
@@ -147,7 +147,7 @@ fn main() -> ExitCode {
             container.code_analysis_linter.clone(),
             container.fix_orchestrator_factory(),
         ),
-        Commands::Ci { path, threshold } => surface_ci_action::handle_ci(
+        Commands::Ci { path, threshold } => surface_ci_command::handle_ci(
             container.code_analysis_linter.clone(),
             container.import_orchestrator.clone(),
             container.naming_orchestrator.clone(),
