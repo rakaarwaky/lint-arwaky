@@ -77,6 +77,7 @@ fn main() -> ExitCode {
                     sub_path
                         .or(path)
                         .map(|p| FilePath::new(p).unwrap_or_default()),
+                    format.clone(),
                     container.code_analysis_linter.clone(),
                     container.report_formatter.clone(),
                 )
@@ -86,6 +87,7 @@ fn main() -> ExitCode {
                     sub_path
                         .or(path)
                         .map(|p| FilePath::new(p).unwrap_or_default()),
+                    format.clone(),
                     container.import_orchestrator.clone(),
                     container.report_formatter.clone(),
                 )
@@ -95,6 +97,7 @@ fn main() -> ExitCode {
                     sub_path
                         .or(path)
                         .map(|p| FilePath::new(p).unwrap_or_default()),
+                    format.clone(),
                     container.naming_orchestrator.clone(),
                     container.report_formatter.clone(),
                 )
@@ -104,6 +107,7 @@ fn main() -> ExitCode {
                     sub_path
                         .or(path)
                         .map(|p| FilePath::new(p).unwrap_or_default()),
+                    format.clone(),
                     container.role_orchestrator.clone(),
                     container.report_formatter.clone(),
                 )
@@ -192,36 +196,41 @@ fn main() -> ExitCode {
                 )
             }
         }
-        Commands::ScanQuality { path } => {
+        Commands::ScanQuality { path, format } => {
             cli_commands::surface_quality_action::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
+                format,
                 container.code_analysis_linter.clone(),
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanImport { path } => cli_commands::surface_import_action::handle_scan_import(
+        Commands::ScanImport { path, format } => cli_commands::surface_import_action::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanNaming { path } => cli_commands::surface_naming_action::handle_scan_naming(
+        Commands::ScanNaming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanRole { path } => cli_commands::surface_role_action::handle_scan_role(
+        Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanExternal { path } => {
+        Commands::ScanExternal { path, format } => {
             cli_commands::surface_external_action::handle_scan_external(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
+                format,
                 container.external_lint.clone(),
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanParallelSubprocess { path } => {
+        Commands::ScanParallelSubprocess { path, format } => {
             let target_path = path.unwrap_or_else(|| ".".to_string());
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -233,6 +242,7 @@ fn main() -> ExitCode {
             rt.block_on(
                 cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
                     &target_path,
+                    format,
                 ),
             )
         }

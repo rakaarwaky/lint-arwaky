@@ -72,22 +72,22 @@ pub async fn handle_scan_parallel_subprocesses(path: &str, format: Format) -> Ex
     // Spawn 6 subprocesses concurrently in Rust
     let format_str = format.to_string();
     let p_quality = Command::new(&exe_path)
-        .args(["scan-quality", path.as_str(), "--format", &format_str])
+        .args(["scan-quality", path, "--format", &format_str])
         .output();
     let p_role = Command::new(&exe_path)
-        .args(["scan-role", path.as_str(), "--format", &format_str])
+        .args(["scan-role", path, "--format", &format_str])
         .output();
     let p_import = Command::new(&exe_path)
-        .args(["scan-import", path.as_str(), "--format", &format_str])
+        .args(["scan-import", path, "--format", &format_str])
         .output();
     let p_naming = Command::new(&exe_path)
-        .args(["scan-naming", path.as_str(), "--format", &format_str])
+        .args(["scan-naming", path, "--format", &format_str])
         .output();
     let p_orphan = Command::new(&exe_path)
-        .args(["scan-orphan", path.as_str(), "--format", &format_str])
+        .args(["scan-orphan", path, "--format", &format_str])
         .output();
     let p_external = Command::new(&exe_path)
-        .args(["scan-external", path.as_str(), "--format", &format_str])
+        .args(["scan-external", path, "--format", &format_str])
         .output();
 
     let (res_quality, res_role, res_import, res_naming, res_orphan, res_external) =
@@ -146,5 +146,5 @@ pub fn handle_default_check(
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };
-    rt.block_on(handle_scan_parallel_subprocesses(_project_root))
+    rt.block_on(handle_scan_parallel_subprocesses(_project_root, Format::Text))
 }
