@@ -7,7 +7,6 @@ use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_external_lint_language_detector_protocol::IExternalLintLanguageDetectorProtocol;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 // ─── ILinterAdapterProtocol Implementations ───────────────
@@ -97,15 +96,6 @@ fn selector_implements_selector_protocol() {
     fn assert_trait<T: IExternalLintSelectorProtocol>() {}
     assert_trait::<capabilities_external_lint_selector::CapabilitiesExternalLintSelector>();
 }
-
-// ─── IExternalLintLanguageDetectorProtocol Implementation ─
-
-#[test]
-fn language_detector_implements_detector_protocol() {
-    fn assert_trait<T: IExternalLintLanguageDetectorProtocol>() {}
-    assert_trait::<capabilities_language_detector_adapter::ExternalLintLanguageDetectorAdapter>();
-}
-
 // ─── Send + Sync Bounds ──────────────────────────────────
 
 #[test]

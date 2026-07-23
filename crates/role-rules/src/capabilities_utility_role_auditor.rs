@@ -31,11 +31,11 @@ impl IUtilityRoleChecker for UtilityRoleChecker {
 
         // Detect language from extension and apply appropriate checks
         if ext == "rs" || ext == "rust" {
-            self._check_rust_utility(&content, &file, violations);
+            self._check_rust_utility(content, file, violations);
         } else if ext == "ts" || ext == "tsx" {
-            self._check_ts_utility(&content, &file, violations);
+            self._check_ts_utility(content, file, violations);
         } else if ext == "py" {
-            self._check_python_utility(&content, &file, violations);
+            self._check_python_utility(content, file, violations);
         }
     }
 }
@@ -105,9 +105,7 @@ impl UtilityRoleChecker {
                 if c == '{' {
                     brace_depth += 1;
                 } else if c == '}' {
-                    if brace_depth > 0 {
-                        brace_depth -= 1;
-                    }
+                    brace_depth = brace_depth.saturating_sub(1);
                     if brace_depth == 0 {
                         in_macro = false;
                     }

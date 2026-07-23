@@ -234,8 +234,8 @@ fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
         ".venv",
     ];
 
-    let mut seen: std::collections::HashSet<&str> =
-        std::collections::HashSet::from_iter(&DEFAULT_IGNORED);
+    let mut seen: std::collections::HashSet<String> =
+        std::collections::HashSet::from_iter(DEFAULT_IGNORED.iter().map(|s| s.to_string()));
     let mut ignored: Vec<String> = Vec::with_capacity(10 + config.ignored_paths.values.len());
 
     // Add default paths
@@ -246,7 +246,7 @@ fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
     // Add config paths with dedup
     for fp in config.ignored_paths.values.iter() {
         let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && seen.insert(&v) {
+        if !v.is_empty() && seen.insert(v.clone()) {
             ignored.push(v);
         }
     }
