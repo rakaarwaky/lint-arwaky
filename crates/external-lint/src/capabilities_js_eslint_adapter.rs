@@ -61,11 +61,14 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         let wd = resolve_working_dir(path);
         let abs_path = canonicalize_path(path_str);
 
-        let cmd = resolve_js_cmd(
+        let cmd = match resolve_js_cmd(
             "eslint",
             vec![abs_path, "--format".to_string(), "json".to_string()],
             &wd.value,
-        );
+        ) {
+            Some(c) => c,
+            None => return Ok(LintResultList::default()),
+        };
 
         let response = self
             .lint_executor

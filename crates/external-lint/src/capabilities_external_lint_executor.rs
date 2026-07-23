@@ -85,7 +85,12 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
     ) -> Result<ComplianceStatus, LinterOperationError> {
         let wd = resolve_js_working_dir(path);
         let abs_path = canonicalize_path(&path.value);
-        let cmd = resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value);
+        let cmd = match resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value) {
+            Some(c) => c,
+            None => {
+                return Ok(ComplianceStatus::new(false));
+            }
+        };
         let response = self
             .exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool))
             .await?;

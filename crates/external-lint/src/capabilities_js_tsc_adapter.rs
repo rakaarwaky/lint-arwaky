@@ -68,7 +68,10 @@ impl ILinterAdapterProtocol for TSCAdapter {
             args.push(abs_path);
         }
 
-        let cmd = resolve_js_cmd("tsc", args, &wd.value);
+        let cmd = match resolve_js_cmd("tsc", args, &wd.value) {
+            Some(c) => c,
+            None => return Ok(LintResultList::default()),
+        };
 
         let response = self
             .lint_executor
