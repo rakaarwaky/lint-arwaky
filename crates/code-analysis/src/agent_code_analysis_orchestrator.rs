@@ -17,7 +17,7 @@
 //   4. Run duplication check using pre-read entries (AES305)
 //   5. Return aggregated LintResult list
 
-use crate::CodeAnalysisCheckerContainer;
+use crate::root_code_analysis_container::CodeAnalysisCheckerContainerRef;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
@@ -31,9 +31,14 @@ use std::path::Path;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct CodeAnalysisDeps {
+    pub container: Arc<dyn CodeAnalysisCheckerContainerRef>,
+}
+
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
-    container: Arc<CodeAnalysisCheckerContainer>,
+    deps: CodeAnalysisDeps,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -65,7 +70,8 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        self.container
+        self.deps
+            .container
             .config()
             .rules
             .iter()
@@ -75,11 +81,6 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl Default for CodeAnalysisOrchestrator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 /// Run a full AES self-lint on a path.
 #[rustfmt::skip]
@@ -92,7 +93,7 @@ pub fn lint_path
             Err(_) => return Vec::new(),
         },
     };
-    let orchestrator = CodeAnalysisOrchestrator::new();
+    let orchestrator = CodeAnalysisOrchestrator::new_with_defaults();
     orchestrator.run_self_lint(&root.value)
 }
 
@@ -104,14 +105,21 @@ pub fn has_critical
 }
 
 impl CodeAnalysisOrchestrator {
-    pub fn new() -> Self {
+    pub fn new(deps: CodeAnalysisDeps) -> Self {
+        Self { deps }
+    }
+
+    pub fn new_with_defaults() -> Self {
+        let container = Arc::new(crate::root_code_analysis_container::CodeAnalysisCheckerContainer::default());
         Self {
-            container: Arc::new(CodeAnalysisCheckerContainer::default()),
+            deps: CodeAnalysisDeps { container },
         }
     }
 
-    pub fn new_with_container(container: Arc<CodeAnalysisCheckerContainer>) -> Self {
-        Self { container }
+    pub fn new_with_container(container: Arc<dyn CodeAnalysisCheckerContainerRef>) -> Self {
+        Self {
+            deps: CodeAnalysisDeps { container },
+        }
     }
 
     /// Run AES analysis on the current project (self-lint).
@@ -128,7 +136,7 @@ impl CodeAnalysisOrchestrator {
 
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
-        let config = self.container.config();
+        let config = self.deps.container.config();
         let dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
@@ -175,7 +183,8 @@ impl CodeAnalysisOrchestrator {
                     &cargo_path.to_string_lossy(),
                 ) {
                     Ok(Some(cargo_content)) => {
-                        self.container
+                        self.deps
+                            .container
                             .bypass_checker()
                             .check_cargo_toml(&cargo_content, &mut violations);
                     }
@@ -224,10 +233,12 @@ impl CodeAnalysisOrchestrator {
             entries.push((file.clone(), c.clone()));
 
             // Layer-independent checks (run on ALL files)
-            self.container
+            self.deps
+                .container
                 .bypass_checker()
                 .check_bypass_comments(file, &c, &mut violations);
-            self.container
+            self.deps
+                .container
                 .dead_inheritance_checker()
                 .check_dead_inheritance(file, &c, &mut violations);
 
@@ -236,11 +247,11 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer detection
-            let layer = match self.container.detect_layer(file, root_dir) {
+            let layer = match self.deps.container.detect_layer(file, root_dir) {
                 Some(l) => l,
                 None => continue,
             };
-            let def = match self.container.get_layer_def(&layer) {
+            let def = match self.deps.container.get_layer_def(&layer) {
                 Some(d) => d,
                 None => continue,
             };
@@ -249,19 +260,19 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer-dependent checks (code-analysis only)
-            self.container
+            self.deps
+                .container
                 .line_checker()
                 .check_line_counts(file, Some(def), &c, &mut violations);
 
             // Mandatory class definition check (AES303)
-            self.container
+            self.deps
+                .container
                 .class_checker()
                 .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
-        // P1.5 fix: read thresholds from config instead of hardcoding
-        // Cache rule lookup once to avoid double iteration
         let aes305_rule = config.rules.iter().find(|r| r.name.value == "AES305");
         let min_dup_lines = aes305_rule
             .map(|r| r.code_analysis.min_lines.value as usize)
@@ -271,6 +282,7 @@ impl CodeAnalysisOrchestrator {
             .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
         let dup_violations = self
+            .deps
             .container
             .duplication_checker()
             .check_file_similarity_entries(&entries, min_dup_lines, threshold_pct);

@@ -19,10 +19,14 @@ use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+pub struct ConfigOrchestratorDeps {
+    pub workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
+    pub config_reader: Arc<dyn IConfigReaderProtocol>,
+    pub validator: Arc<dyn IConfigValidatorProtocol>,
+}
+
 pub struct ConfigOrchestrator {
-    workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
-    config_reader: Arc<dyn IConfigReaderProtocol>,
-    validator: Arc<dyn IConfigValidatorProtocol>,
+    deps: ConfigOrchestratorDeps,
     config_cache: Mutex<HashMap<String, Arc<ArchitectureConfig>>>,
 }
 
@@ -31,7 +35,7 @@ pub struct ConfigOrchestrator {
 #[async_trait]
 impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult {
-        let ws_type = self.workspace_detector.detect(project_root);
+        let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
         self.load_config_for_language(project_root, language).await
     }
@@ -41,7 +45,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> ConfigResult {
-        match self.config_reader.read_config(project_root, language).await {
+        match self.deps.config_reader.read_config(project_root, language).await {
             Ok(Some(source)) => {
                 let cache_key = source.path.to_string();
                 let mut parsed = {
@@ -80,6 +84,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
     async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
         let workspaces = self
+            .deps
             .workspace_detector
             .discover_workspace_members(root)
             .await;
@@ -94,8 +99,8 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         }
 
         let futures = workspaces.into_iter().map(|ws| {
-            let detector = self.workspace_detector.clone();
-            let reader = self.config_reader.clone();
+            let detector = self.deps.workspace_detector.clone();
+            let reader = self.deps.config_reader.clone();
             async move {
                 let ws_type = detector.detect(&ws);
                 let language = ConfigLanguage::from(ws_type);
@@ -119,6 +124,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig {
         let root = std::path::Path::new(project_root);
         let ws_type = self
+            .deps
             .workspace_detector
             .detect(&FilePath::new(project_root.to_string()).unwrap_or_default());
         let language = ConfigLanguage::from(ws_type);
@@ -185,7 +191,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         &self,
         project_root: &FilePath,
     ) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError> {
-        self.config_reader.list_config_files(project_root).await
+        self.deps.config_reader.list_config_files(project_root).await
     }
 
     async fn read_config(
@@ -193,29 +199,22 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> Result<Option<ConfigSource>, ConfigError> {
-        self.config_reader.read_config(project_root, language).await
+        self.deps.config_reader.read_config(project_root, language).await
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ConfigOrchestrator {
-    pub fn new(
-        workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
-        config_reader: Arc<dyn IConfigReaderProtocol>,
-        validator: Arc<dyn IConfigValidatorProtocol>,
-    ) -> Self {
-        // Pre-allocate cache with capacity hint for multi-workspace projects
+    pub fn new(deps: ConfigOrchestratorDeps) -> Self {
         Self {
-            workspace_detector,
-            config_reader,
-            validator,
+            deps,
             config_cache: Mutex::new(HashMap::with_capacity(32)),
         }
     }
 
     pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
-        &self.validator
+        &self.deps.validator
     }
 }
 
