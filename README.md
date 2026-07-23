@@ -28,7 +28,7 @@ cargo build --release
 # Expected: Lint Arwaky v1.10.74 (AES Semantic Builder)
 
 # Self-lint
-./target/release/lint-arwaky-cli check .
+./target/release/lint-arwaky-cli scan .
 ```
 
 ## Architecture
@@ -67,8 +67,7 @@ lint-arwaky/
 
 | Command                               | Description                               |
 | ------------------------------------- | ----------------------------------------- |
-| `lint-arwaky-cli check [path]`        | Full architecture compliance analysis     |
-| `lint-arwaky-cli scan [path]`         | External project scan                     |
+| `lint-arwaky-cli scan [path]`         | Full architecture compliance analysis     |
 | `lint-arwaky-cli fix [path]`          | Apply safe fixes (`--dry-run` to preview) |
 | `lint-arwaky-cli ci [path]`           | CI mode with exit codes                   |
 | `lint-arwaky-cli orphan <path>`       | Check if file is dead/unreachable code    |

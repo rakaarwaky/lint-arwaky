@@ -30,19 +30,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Run all linters and calculate score
-    Check {
-        /// Path to check
-        path: Option<String>,
-        /// Only check git diff
-        #[arg(long)]
-        git_diff: bool,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Alias for check (CI-friendly). Discovers workspace members and runs all linters.
+    /// Run all linters and calculate score. Discovers workspace members and runs all linters.
     /// Use `--member <name>` to scan a specific workspace member.
     Scan {
         /// Path to scan
@@ -76,17 +64,11 @@ pub enum Commands {
     /// Diagnose environment health
     Doctor,
 
-    /// Check if a file is an orphan (AES501-AES506)
+    /// Check orphan: file path → check single file, directory path → scan all files in directory
     Orphan {
-        /// File path to check
+        /// File or directory path to check
         path: String,
-    },
-
-    /// Scan a project for orphan files (AES501-AES506)
-    ScanOrphan {
-        /// Path to scan
-        path: Option<String>,
-        /// Scan only a specific workspace member by name
+        /// Scan only a specific workspace member by name (only for directory mode)
         #[arg(long)]
         member: Option<String>,
     },

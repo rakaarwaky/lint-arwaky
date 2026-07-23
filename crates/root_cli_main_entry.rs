@@ -65,20 +65,6 @@ fn main() -> ExitCode {
     let filter = cli.filter.clone();
 
     match cli.command {
-        Commands::Check {
-            path,
-            git_diff,
-            format,
-        } => surface_check_action::handle_check(surface_check_action::CheckOptions {
-            path: path.map(|p| FilePath::new(p).unwrap_or_default()),
-            git_diff,
-            pipeline: container.pipeline_aggregate(),
-            report_formatter: container.report_formatter.clone(),
-            filter,
-            git_aggregate: None,
-            config: shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
-            format,
-        }),
         Commands::Scan {
             path,
             member,
@@ -118,23 +104,27 @@ fn main() -> ExitCode {
                 orchestrator,
             ))
         }
-        Commands::Orphan { path } => {
-            let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
-                container.pipeline_aggregate(),
-                container.report_formatter.clone(),
-                None,
-            );
-            surface.check_orphan_single_file(&path);
-            ExitCode::SUCCESS
-        }
-        Commands::ScanOrphan { path, member } => {
-            cli_commands::surface_orphan_command::handle_scan_orphan(
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                member,
-                container.orphan_orchestrator.clone(),
-                container.multi_project_orchestrator.clone(),
-                container.report_formatter.clone(),
-            )
+        Commands::Orphan { path, member } => {
+            let path_obj = std::path::Path::new(&path);
+            if path_obj.is_file() {
+                // Single file mode
+                let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
+                    container.pipeline_aggregate(),
+                    container.report_formatter.clone(),
+                    None,
+                );
+                surface.check_orphan_single_file(&path);
+                ExitCode::SUCCESS
+            } else {
+                // Directory mode — scan all files
+                cli_commands::surface_orphan_command::handle_scan_orphan(
+                    Some(FilePath::new(path).unwrap_or_default()),
+                    member,
+                    container.orphan_orchestrator.clone(),
+                    container.multi_project_orchestrator.clone(),
+                    container.report_formatter.clone(),
+                )
+            }
         }
         Commands::ScanQuality { path } => {
             cli_commands::surface_quality_command::handle_scan_quality(

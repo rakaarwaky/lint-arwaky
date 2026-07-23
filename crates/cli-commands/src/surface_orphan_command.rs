@@ -1,6 +1,6 @@
 use std::process::ExitCode;
 use std::sync::Arc;
-
+use shared::cli_commands::utility_path_resolver;
 use shared::cli_commands::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
@@ -8,9 +8,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-
 use crate::surface_common_command;
-use crate::utility_path_resolver;
+
 
 pub fn handle_scan_orphan(
     path: Option<FilePath>,

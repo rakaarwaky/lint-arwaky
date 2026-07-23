@@ -11,7 +11,7 @@ _# Build everything
 cargo build --release
 
 # Self-lint
-cargo run --bin lint-arwaky-cli -- check
+cargo run --bin lint-arwaky-cli -- scan .
 
 # Scan —
 cargo run --bin lint-arwaky-cli -- scan <project-path>

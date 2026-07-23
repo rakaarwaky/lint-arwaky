@@ -39,8 +39,8 @@ impl IHookManagerProtocol for GitHookAdapter {
         let hook_content = format!(
             "#!/bin/bash
 # Lint Arwaky Pre-Commit Hook
-echo \"Running Lint Arwaky check...\"
-{} check .
+echo \"Running Lint Arwaky scan...\"
+{} scan .
 if [ $? -ne 0 ]; then
  echo \"Linting failed. Please fix issues before committing.\"
  exit 1

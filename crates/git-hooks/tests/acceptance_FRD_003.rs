@@ -67,8 +67,8 @@ fn frd_003_hook_invokes_lint_check_command() {
     let content = std::fs::read_to_string(&hook_path).unwrap();
 
     assert!(
-        content.contains("check ."),
-        "Hook must run lint-arwaky check on the project"
+        content.contains("scan ."),
+        "Hook must run lint-arwaky scan on the project"
     );
 }
 

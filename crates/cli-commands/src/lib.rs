@@ -8,7 +8,6 @@ pub use agent_analysis_pipeline_orchestrator::{
     AnalysisPipelineDeps, AnalysisPipelineOrchestrator,
 };
 pub mod utility_format_output;
-pub mod utility_path_resolver;
 // Re-export report-formatter capabilities for backward compatibility
 pub use report_formatter::agent_report_formatter_orchestrator;
 pub use report_formatter::capabilities_json_formatter;
@@ -30,6 +29,7 @@ pub mod surface_watch_command;
 pub use surface_watch_command::WatchCommandsSurface;
 pub mod root_cli_container;
 pub mod surface_config_command;
+pub mod surface_external_command;
 pub mod surface_import_command;
 pub mod surface_naming_command;
 pub mod surface_orphan_command;

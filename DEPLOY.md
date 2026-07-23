@@ -138,7 +138,7 @@ The `health_check` MCP tool reports on adapter health and system state.
 
 ```bash
 # Full self-lint
-lint-arwaky-cli check .
+lint-arwaky-cli scan .
 
 # Deep directory scan
 lint-arwaky-cli scan <path> .

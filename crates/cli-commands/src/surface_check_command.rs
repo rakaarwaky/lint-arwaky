@@ -308,10 +308,11 @@ impl CheckCommandsSurface {
 
     /// Check if a single file is an orphan.
     pub fn check_orphan_single_file(&self, file_path: &str) {
-        let scan_root = match crate::utility_path_resolver::find_workspace_root(file_path) {
-            Some(r) => r,
-            None => std::path::PathBuf::from("."),
-        };
+        let scan_root =
+            match shared::cli_commands::utility_path_resolver::find_workspace_root(file_path) {
+                Some(r) => r,
+                None => std::path::PathBuf::from("."),
+            };
 
         // Call agent layer for orphan detection
         let file_results = match self

@@ -1,10 +1,10 @@
 // PURPOSE: Stateless path resolution utilities
 
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    shared::common::utility_file_handler::find_workspace_root(path)
+    crate::common::utility_file_handler::find_workspace_root(path)
 }
 
 /// Detect ConfigLanguage from a file system path by checking for workspace type markers in the path.
@@ -12,19 +12,19 @@ pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
 pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
     let path_buf = std::path::PathBuf::from(path);
 
-    if shared::common::utility_file_handler::path_exists(path_buf.join("Cargo.toml"))
+    if crate::common::utility_file_handler::path_exists(path_buf.join("Cargo.toml"))
         || path_contains_component(&path_buf, "crates")
     {
         return ConfigLanguage::Rust;
     }
-    if shared::common::utility_file_handler::path_exists(path_buf.join("package.json"))
+    if crate::common::utility_file_handler::path_exists(path_buf.join("package.json"))
         || path_contains_component(&path_buf, "packages")
     {
         return ConfigLanguage::TypeScript;
     }
-    if shared::common::utility_file_handler::path_exists(path_buf.join("pyproject.toml"))
-        || shared::common::utility_file_handler::path_exists(path_buf.join("setup.py"))
-        || shared::common::utility_file_handler::path_exists(path_buf.join("requirements.txt"))
+    if crate::common::utility_file_handler::path_exists(path_buf.join("pyproject.toml"))
+        || crate::common::utility_file_handler::path_exists(path_buf.join("setup.py"))
+        || crate::common::utility_file_handler::path_exists(path_buf.join("requirements.txt"))
         || path_contains_component(&path_buf, "modules")
     {
         return ConfigLanguage::Python;
