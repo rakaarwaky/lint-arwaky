@@ -34,7 +34,7 @@ metadata:
 Add crate-level documentation and `///` doc comments:
 
 - `PRD.md` — stakeholder alignment (Problem Statement / Goals & Success Metrics / User Personas / Scope / Feature Requirements / Non-functional Requirements).
-- `FRD.md` — engineering specs (Functional Requirements with IDs / Data Model / API Contract / Integration Points / Test Scenarios).
+- `FRD.md` — engineering specs (Functional Requirements with IDs / API Contract / Integration Points / Test Scenarios).
 - `README.md` — developer onboarding (Quick Start / Architecture / Project Structure / Available Commands / Configuration / Testing / Contributing).
 - `///` doc comments on all public items for `cargo doc` visibility.
 
@@ -187,15 +187,11 @@ pub struct ImportOrchestrator {
 
 - ...
 
-## Data Model / Entity Relationship
-
-<Entity diagram or data structure definitions>
-
 ## API Contract
 
-| Endpoint | Method | Payload | Response |
-| -------- | ------ | ------- | -------- |
-| `/path`  | GET    | -       | `{...}`  |
+| Operation | Input | Output | Description |
+|-----------|-------|--------|-------------|
+| `<name>`  | ...   | ...    | ...         |
 
 ## Integration Points
 
@@ -311,10 +307,9 @@ Write crate-level FRD.md following the FRD template. It MUST contain:
 1. Reference to PRD
 2. System Overview
 3. Functional Requirements (with unique IDs: FR-001, FR-002)
-4. Data Model
-5. API Contract
-6. Integration Points
-7. Test Scenarios
+4. API Contract
+5. Integration Points
+6. Test Scenarios
 
 Use precise, unambiguous language. Include edge cases and error handling.
 
@@ -390,7 +385,7 @@ pub fn validate(&self, data: &HashMap<String, Value>) -> Result<(bool, String), 
 ## Verification Checklist
 
 - [ ] PRD.md exists with Problem Statement, Goals, Personas, Scope, Features
-- [ ] FRD.md exists with Functional Requirements (FR-001 IDs), Data Model, API Contract
+- [ ] FRD.md exists with Functional Requirements (FR-001 IDs), API Contract
 - [ ] README.md exists with Quick Start, Architecture, Commands, Testing
 - [ ] Documents serve correct audience (PRD=stakeholders, FRD=engineers, README=developers)
 - [ ] All public structs have `///` doc comments

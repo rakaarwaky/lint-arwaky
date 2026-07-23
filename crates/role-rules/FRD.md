@@ -130,39 +130,6 @@ Target Path
 - **Edge Cases**: Empty ignored_paths list — no files excluded. Ignored path pattern with leading `/` — matched against both full path and trimmed directory name.
 - **Error Handling**: N/A — simple string matching.
 
-## Data Model / Entity Relationship
-
-```
-Source Content Value Object
-├── file: file path
-├── content: file content
-└── language: language identifier
-
-Role Checker Dependencies
-├── taxonomy: taxonomy role checker protocol
-├── contract: contract role checker protocol
-├── capabilities: capabilities role checker protocol
-├── surface: surface role checker protocol
-├── agent: agent role checker protocol
-└── utility: utility role checker protocol
-
-Role Orchestrator
-├── dependencies: role checker dependencies
-├── config: architecture configuration
-└── ignored paths: list of path patterns to skip
-
-Lint Result (output)
-├── file: file path
-├── line: line number
-├── column: column number
-├── code: error code
-├── message: lint message
-├── source: adapter name
-├── severity: severity level
-├── enclosing scope: optional scope reference
-└── related locations: list of related locations
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

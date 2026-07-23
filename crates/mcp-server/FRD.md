@@ -94,32 +94,6 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 - **Error Handling**:
   - None (declarative registration).
 
-## Data Model / Entity Relationship
-
-```
-Execute Command Args (input value object)
-  ├── action: action string
-  └── args: optional argument map
-        ├── "path": file path
-        ├── "threshold": threshold value
-        └── "client": client name
-
-List Commands Args (input value object)
-  └── domain: optional domain filter
-
-Read Skill Args (input value object)
-  └── section: optional section filter
-
-Scan Request (to pipeline)
-  ├── target: scan target (path)
-  └── mode: scan mode (scan | ci with threshold)
-
-Server Info (MCP protocol)
-  ├── protocol_version: protocol version
-  ├── server_info: implementation info { name, version }
-  └── capabilities: ServerCapabilities { tools }
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

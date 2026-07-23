@@ -130,38 +130,6 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
 - **Error Handling**:
   - Process spawn failure: treated as `not_found`.
 
-## Data Model / Entity Relationship
-
-```
-McpConfigVO (output)
-  └── value: HashMap<String, Value> (JSON-compatible config)
-
-EnvContentVO (output)
-  └── value: String (env file content)
-
-ProjectLanguagesVO (output)
-  └── values: Vec<ProjectLanguageVO>
-
-ProjectLanguageVO
-  └── value: String ("rust" | "python" | "javascript")
-
-McpBinaryNameVO (internal)
-  └── value: String (resolved binary path)
-
-SetupError (error)
-  ├── Io(String)
-  └── Other(String)
-
-SuccessStatus (output)
-  └── success: bool
-
-WriteConfigResult (output)
-  └── DescriptionVO (e.g., "wrote config.yaml (128 bytes)")
-
-CreateConfigDirResult (output)
-  └── PathBuf (created directory path)
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

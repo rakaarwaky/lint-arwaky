@@ -147,41 +147,6 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Edge Cases**: Empty exceptions list means all files in the layer are checked. Nonexistent ignored paths are silently ignored.
 - **Error Handling**: Malformed config values default to permissive (check enabled, no exceptions).
 
-## Data Model / Entity Relationship
-
-```
-Graph Analysis Context
-├── Import Graph (forward edges)
-├── Inbound Link Map (reverse index)
-├── File Definition Map (trait/class definitions)
-└── Inheritance Map (implementation relationships)
-
-Orphan Indicator Result
-├── is_orphan: bool
-├── reason: String
-└── severity: Severity
-
-Reachability Result
-└── values: Vec<FilePath>
-
-Orphan File List
-└── values: Vec<String>
-
-Orphan Entry Pattern List
-└── values: Vec<String>
-
-Lint Result (output)
-├── file: FilePath
-├── line: LineNumber
-├── column: ColumnNumber
-├── code: ErrorCode (AES501–AES506)
-├── message: LintMessage
-├── source: AdapterName ("architecture")
-├── severity: Severity
-├── enclosing_scope: Option<ScopeRef>
-└── related_locations: LocationList
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |

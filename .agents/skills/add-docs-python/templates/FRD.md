@@ -1,4 +1,4 @@
-# FRD — <feature-name>
+# FRD — <crate-name>
 
 ## System Overview
 
@@ -19,15 +19,11 @@
 
 - ...
 
-## Data Model / Entity Relationship
-
-<Entity diagram or data structure definitions>
-
 ## API Contract
 
-| Endpoint | Method | Payload | Response |
-| -------- | ------ | ------- | -------- |
-| `/path`  | GET    | -       | `{...}`  |
+| Operation | Input | Output | Description |
+|-----------|-------|--------|-------------|
+| `<name>`  | ...   | ...    | ...         |
 
 ## Integration Points
 

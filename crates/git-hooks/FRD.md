@@ -127,36 +127,6 @@ The git-hooks crate implements a pre-commit hook system that enforces AES compli
 - **Error Handling**:
   - Config file not found: returns error description (not a `GitHookError`).
 
-## Data Model / Entity Relationship
-
-```
-GitDiffResultVO (output from get_diff)
-  ├── added: FilePathList
-  ├── modified: FilePathList
-  ├── deleted: FilePathList
-  ├── renamed: RenamedFileList
-  ├── lintable_files: FilePathList
-  ├── all_files: FilePathList
-  └── total_changed: Count
-
-GitDiffDataVO (output from get_diff_data)
-  ├── version1: GitDiffSideVO { path, score }
-  ├── version2: GitDiffSideVO { path, score }
-  ├── difference: f64
-  └── status: GitDiffStatus (MissingFirst | MissingSecond | NotAFile | Unchanged)
-
-GitHookError (error)
-  └── message: LintMessage
-
-HookIgnoreUpdateVO (input)
-  ├── config_path: String
-  ├── rule: String
-  └── remove: bool
-
-SuccessStatus (output)
-  └── success: bool
-```
-
 ## API Contract
 
 | Function | Input | Output | Description |
