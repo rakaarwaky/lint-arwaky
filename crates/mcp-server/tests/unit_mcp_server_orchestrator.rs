@@ -7,11 +7,11 @@ use rmcp::handler::server::wrapper::Parameters;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::{BooleanVO, Score};
 use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_common_vo::{BooleanVO, Score};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{

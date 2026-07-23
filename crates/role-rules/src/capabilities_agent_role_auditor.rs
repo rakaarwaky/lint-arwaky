@@ -221,11 +221,7 @@ impl AgentRoleChecker {
                 .strip_prefix("export class ")
                 .or_else(|| t.strip_prefix("class "));
             if let Some(rest) = class_body {
-                let name = rest
-                    .split([' ', '(', '{'])
-                    .next()
-                    .unwrap_or("")
-                    .trim();
+                let name = rest.split([' ', '(', '{']).next().unwrap_or("").trim();
                 if name.is_empty() || name.starts_with('_') {
                     continue;
                 }
@@ -251,11 +247,7 @@ impl AgentRoleChecker {
                 .strip_prefix("export interface ")
                 .or_else(|| t.strip_prefix("interface "));
             if let Some(rest) = iface_body {
-                let name = rest
-                    .split([' ', '{', '<'])
-                    .next()
-                    .unwrap_or("")
-                    .trim();
+                let name = rest.split([' ', '{', '<']).next().unwrap_or("").trim();
                 if !name.is_empty() && !name.starts_with('_') {
                     type_names.push(name);
                 }
@@ -267,11 +259,7 @@ impl AgentRoleChecker {
                 .strip_prefix("export enum ")
                 .or_else(|| t.strip_prefix("enum "));
             if let Some(rest) = enum_body {
-                let name = rest
-                    .split([' ', '{'])
-                    .next()
-                    .unwrap_or("")
-                    .trim();
+                let name = rest.split([' ', '{']).next().unwrap_or("").trim();
                 if !name.is_empty() && !name.starts_with('_') {
                     type_names.push(name);
                 }

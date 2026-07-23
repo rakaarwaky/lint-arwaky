@@ -1,6 +1,4 @@
-use code_analysis_lint_arwaky::{
-    root_code_analysis_container::CodeAnalysisContainer,
-};
+use code_analysis_lint_arwaky::root_code_analysis_container::CodeAnalysisContainer;
 
 // ─── CodeAnalysisContainer: new() ────────────────────────────────────
 

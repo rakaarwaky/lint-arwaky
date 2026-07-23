@@ -35,7 +35,7 @@ impl <NameOrchestrator> {
 }
 ```
 
-Fix: Use an injected port.
+Fix: Use an injected protocol.
 
 ## BAD: Dataclass Defined in Agent File
 

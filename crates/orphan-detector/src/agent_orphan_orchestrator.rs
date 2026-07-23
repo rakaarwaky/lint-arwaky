@@ -8,11 +8,11 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
@@ -60,7 +60,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         files: &OrphanFileListVO,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
-        self.resolver.build_graph_context(std::slice::from_ref(files), root_dir.value())
+        self.resolver
+            .build_graph_context(std::slice::from_ref(files), root_dir.value())
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {

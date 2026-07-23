@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test for AES403 — capability routing (protocol/port imports).
+// PURPOSE: Acceptance test for AES403 — capability routing (protocol imports).
 // Layer: Acceptance (FRD requirement validation).
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;

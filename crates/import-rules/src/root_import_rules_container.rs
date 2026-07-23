@@ -36,8 +36,7 @@ impl ImportContainer {
         Arc::new(ImportOrchestrator::new(
             ImportOrchestratorDeps {
                 mandatory: Arc::new(
-                    crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(
-                    ),
+                    crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(),
                 ),
                 forbidden: Arc::new(
                     crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new(),

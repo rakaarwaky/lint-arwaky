@@ -344,7 +344,7 @@ pub enum AesRoleViolation {
     CapabilityNoProtocol {
         reason: Option<LintMessage>,
     },
-    /// No struct implementing the protocol/port trait
+    /// No struct implementing the protocol trait
     CapabilityNoImplementor {
         reason: Option<LintMessage>,
     },

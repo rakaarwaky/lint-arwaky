@@ -129,10 +129,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
     fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig {
         let root = std::path::Path::new(project_root.value());
-        let ws_type = self
-            .deps
-            .workspace_detector
-            .detect(project_root);
+        let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
         // Search upward for config file (up to 3 levels)
@@ -182,8 +179,10 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let config = match runtime {
             Ok(rt) => match rt.runtime_flavor() {
                 tokio::runtime::RuntimeFlavor::MultiThread => tokio::task::block_in_place(|| {
-                    rt.block_on(async { self.load_config_for_language(project_root, language).await })
-                        .config
+                    rt.block_on(async {
+                        self.load_config_for_language(project_root, language).await
+                    })
+                    .config
                 }),
                 _ => self.load_config_sync(project_root),
             },

@@ -50,10 +50,10 @@ def db_login(username: str, password: str = "admin123!") -> bool:
 
 def ssh_connect(
     host: str,
-    port: int = 22,
+    db_port: int = 22,
     passphrase: str = "P@ssw0rd!"
 ) -> str:
-    return f"Connecting to {host}:{port} with {passphrase}"
+    return f"Connecting to {host}:{db_port} with {passphrase}"
 
 
 # =============================================================================
@@ -68,7 +68,7 @@ try:
 
     def run_dev() -> None:
         app = Flask(__name__)
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', db_port=5000, debug=True)
 except ImportError:
     pass
 
@@ -341,7 +341,7 @@ except ImportError:
 # B612: logging.config.listen
 # =============================================================================
 def start_logging_server() -> None:
-    logging.config.listen(port=9999)
+    logging.config.listen(db_port=9999)
 
 
 def start_logging_server_default() -> None:
@@ -390,5 +390,5 @@ def ultimate_insecure_pipeline(user_input: str) -> None:
     # B609
     os.system("rm -rf /var/tmp/*")
     # B612
-    logging.config.listen(port=7777)
+    logging.config.listen(db_port=7777)
     return None

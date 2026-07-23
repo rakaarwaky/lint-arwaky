@@ -295,8 +295,8 @@ def ftp_upload(host, username, password, local_path, remote_path):
     ftp.quit()
 
 
-def telnet_connect(host, port):
-    tn = telnetlib.Telnet(host, port)
+def telnet_connect(host, db_port):
+    tn = telnetlib.Telnet(host, db_port)
     tn.read_until(b"login: ")
     tn.write(b"admin\n")
     tn.read_until(b"Password: ")

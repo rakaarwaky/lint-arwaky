@@ -358,7 +358,7 @@ impl ActionHandler {
     }
 
     /// Run a lint action that requires a selected path.
-    /// Dispatches to the lint port and stores result output + violation count in state.
+    /// Dispatches to the lint hook and stores result output + violation count in state.
     fn run_action<F>(&self, state: &mut AppState, action: F)
     where
         F: FnOnce(

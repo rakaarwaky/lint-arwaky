@@ -1,4 +1,4 @@
-// PURPOSE: Unit tests for CapabilitiesRoleChecker (AES403) — protocol/port import routing.
+// PURPOSE: Unit tests for CapabilitiesRoleChecker (AES403) — protocol import routing.
 // Layer: Capabilities (CapabilitiesRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;

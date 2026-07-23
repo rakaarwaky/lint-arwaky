@@ -9,7 +9,7 @@ use crate::cli_commands::taxonomy_format_vo::Format;
 use crate::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 
-/// IReportFormatterAggregate — aggregate port for report formatting.
+/// IReportFormatterAggregate — aggregate protocol for report formatting.
 ///
 /// Implemented by ReportFormatterOrchestrator (agent layer).
 /// Provides a single method for formatting a ScanReport into any supported format.

@@ -70,7 +70,7 @@ The surface layer MUST NOT:
 8. Utility surface does not import concrete smart surfaces.
 9. Passive surface contains only rendering/display logic.
 10. Surface state fields use shared VOs.
-11. Service dependencies use port interfaces via DI.
+11. Service dependencies use protocol interfaces via DI.
 12. Errors are handled explicitly.
 13. `npx tsc --noEmit` passes.
 
@@ -119,7 +119,7 @@ No capabilities imports, no concrete agent imports, no business logic, no domain
 
 ### Step 5: Verify DI and VO Usage
 
-Service fields use port interfaces, state fields use shared VOs.
+Service fields use protocol interfaces, state fields use shared VOs.
 
 ### Step 6: Verify Error Handling
 
