@@ -1,7 +1,9 @@
 // PURPOSE: Integration tests — verify DI container wiring and cross-layer collaboration.
 // Layer: Integration (uses real orchestrator with all formatters).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::ReportFormatterOrchestrator;
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
+    ReportFormatterDeps, ReportFormatterOrchestrator,
+};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
@@ -20,7 +22,7 @@ fn build_full_orchestrator() -> ReportFormatterOrchestrator {
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
-    ReportFormatterOrchestrator::new(text, json, sarif, junit)
+    ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit })
 }
 
 // ─── Container wiring tests ──

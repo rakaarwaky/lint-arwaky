@@ -193,7 +193,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ### FR-011: Config Show Command
 - **Description**: Display active configuration files and their contents with secret redaction.
-- **Input**: `orchestrator: Arc<dyn IConfigOrchestratorAggregate>`
+- **Input**: the config orchestrator aggregate
 - **Output**: `ExitCode` (always 0)
 - **Business Rules**:
   - Lists all config files found at project root.
@@ -208,7 +208,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ### FR-012: Adapters Command
 - **Description**: List enabled external lint adapters discovered by the external-lint layer.
-- **Input**: `external_lint: Arc<dyn IExternalLintAggregate>`
+- **Input**: the external lint aggregate
 - **Output**: `ExitCode` (always 0)
 - **Business Rules**:
   - Queries adapter names from the external lint aggregate.

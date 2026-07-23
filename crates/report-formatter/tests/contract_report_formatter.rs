@@ -1,7 +1,9 @@
 // PURPOSE: Contract tests — verify ReportFormatterOrchestrator satisfies IReportFormatterAggregate.
 // Layer: Contract (contract compliance validation).
 
-use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::ReportFormatterOrchestrator;
+use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
+    ReportFormatterDeps, ReportFormatterOrchestrator,
+};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
@@ -27,7 +29,7 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
     let junit: Arc<
         dyn shared::cli_commands::contract_report_formatter_protocol::IReportFormatterProtocol,
     > = Arc::new(JunitFormatter::new());
-    ReportFormatterOrchestrator::new(text, json, sarif, junit)
+    ReportFormatterOrchestrator::new(ReportFormatterDeps { text, json, sarif, junit })
 }
 
 #[test]
