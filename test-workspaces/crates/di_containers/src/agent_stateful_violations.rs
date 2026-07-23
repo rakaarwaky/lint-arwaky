@@ -1,5 +1,4 @@
 // PURPOSE: Test AES0305 — agent non-stateless, any type, infra imports, single goal
-use std::fs;  // infrastructure import
 use std::path::Path;
 
 pub struct AgentStatefulViolations {

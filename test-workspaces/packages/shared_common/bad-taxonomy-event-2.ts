@@ -1,7 +1,6 @@
 // Highly violating file designed to maximize errors
 import { NonExistentService } from "../nonexistent/service";
 import { AnotherFakeSymbol } from "../../capabilities/fake/symbol";
-import { NonExistentInfra } from "../../infrastructure/nonexistent/infra";
 
 // eslint-disable-next-line
 // @ts-ignore

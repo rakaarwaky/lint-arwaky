@@ -1,5 +1,4 @@
 use crate::capabilities::some_module;
-use crate::infrastructure::some_adapter;
 
 export class ForbiddenImportVo {
     value: string;
