@@ -1,10 +1,10 @@
 // PURPOSE: Aggregate: MaintenanceCommandsAggregate trait — contract for maintenance operations (stats, doctor, clean, update, cancel)
 use crate::common::taxonomy_action_vo::JobId;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::project_setup::taxonomy_doctor_vo::{
+use crate::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
-use crate::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
+use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use async_trait::async_trait;
 
 #[async_trait]

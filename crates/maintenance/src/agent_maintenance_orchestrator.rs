@@ -13,12 +13,12 @@
 // All I/O is delegated to IMaintenanceCheckerProtocol (capabilities layer).
 use shared::common::taxonomy_action_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::project_setup::taxonomy_doctor_vo::{
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
-use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

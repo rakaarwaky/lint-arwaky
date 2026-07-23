@@ -20,12 +20,12 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 
 use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::utility_dependency_io as dep_io;
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::project_setup::taxonomy_doctor_vo::{
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,
 };
-use shared::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -1,9 +1,9 @@
 // PURPOSE: IMaintenanceCheckerProtocol — protocol for maintenance checker capabilities
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::project_setup::taxonomy_doctor_vo::{
+use crate::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
-use crate::project_setup::taxonomy_stats_vo::MaintenanceStatsVO;
+use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use async_trait::async_trait;
 
 #[async_trait]

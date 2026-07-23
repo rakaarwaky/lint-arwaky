@@ -12,9 +12,9 @@ use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
+use shared::maintenance::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
@@ -652,7 +652,7 @@ impl LintExecutor {
     }
 
     fn format_doctor_report(
-        diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
+        diagnostics: &shared::maintenance::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
         format_doctor_report(diagnostics)
     }

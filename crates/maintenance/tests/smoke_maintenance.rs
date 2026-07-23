@@ -5,7 +5,7 @@ use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecke
 use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 
-use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::contract_tool_executor_protocol::IToolExecutorProtocol;
 
 #[tokio::test]

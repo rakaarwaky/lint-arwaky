@@ -6,7 +6,7 @@
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
-use shared::project_setup::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
+use shared::maintenance::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
 
 /// Format lint results into a human-readable string.
