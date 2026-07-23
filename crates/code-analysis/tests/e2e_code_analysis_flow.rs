@@ -1,7 +1,7 @@
 // PURPOSE: E2E tests — full scan lifecycle from path input through all
 // checkers to formatted report output. Uses real filesystem (temp dir).
 
-use code_analysis_lint_arwaky::{CodeAnalysisContainer, CodeAnalysisOrchestrator};
+use code_analysis_lint_arwaky::CodeAnalysisContainer;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::fs;
@@ -18,6 +18,10 @@ fn setup_temp_project(files: Vec<(&str, &str)>) -> tempfile::TempDir {
         fs::write(&file_path, content).unwrap();
     }
     dir
+}
+
+fn make_aggregate() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
+    CodeAnalysisContainer::new().code_analysis_linter()
 }
 
 // ─── E2E: Clean project produces zero violations ─────────────────────
@@ -41,8 +45,10 @@ impl Widget {
 "#;
     let dir = setup_temp_project(vec![("capabilities_widget.rs", clean_struct)]);
 
-    let orch = CodeAnalysisOrchestrator::new_with_defaults();
-    let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
+    let orch = make_aggregate();
+    let results = orch.run_code_analysis_path(
+        &FilePath::new(dir.path().join("src").to_str().unwrap().to_string()).unwrap(),
+    );
 
     // A single clean file should produce no AES301-305 violations
     let arch_violations: Vec<_> = results
@@ -73,8 +79,10 @@ impl Service {
 "#;
     let dir = setup_temp_project(vec![("capabilities_service.rs", bypass_code)]);
 
-    let orch = CodeAnalysisOrchestrator::new_with_defaults();
-    let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
+    let orch = make_aggregate();
+    let results = orch.run_code_analysis_path(
+        &FilePath::new(dir.path().join("src").to_str().unwrap().to_string()).unwrap(),
+    );
 
     let aes304: Vec<_> = results
         .iter()
@@ -106,8 +114,8 @@ impl Foo {
     let results = aggregate.run_code_analysis(&root);
     let report = aggregate.format_report(&results, &root);
 
-    assert!(report.contains("AES Architecture Compliance Report"));
-    assert!(report.contains("Violations:"));
+    assert!(report.value.contains("AES Architecture Compliance Report"));
+    assert!(report.value.contains("Violations:"));
 }
 
 // ─── E2E: Score calculation after scan ───────────────────────────────
@@ -126,8 +134,10 @@ impl Bar {
 "#;
     let dir = setup_temp_project(vec![("capabilities_bar.rs", code)]);
 
-    let orch = CodeAnalysisOrchestrator::new_with_defaults();
-    let results = orch.run_scan(dir.path().join("src").to_str().unwrap());
+    let orch = make_aggregate();
+    let results = orch.run_code_analysis_path(
+        &FilePath::new(dir.path().join("src").to_str().unwrap().to_string()).unwrap(),
+    );
     let score = orch.calc_score(&results);
 
     // Clean code → score should be 100 or close

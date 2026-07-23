@@ -33,22 +33,27 @@ impl ImportContainer {
             .iter()
             .map(|fp| fp.value.clone())
             .collect();
-        Arc::new(ImportOrchestrator::new(ImportOrchestratorDeps {
-            mandatory: Arc::new(
-                crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(),
-            ),
-            forbidden: Arc::new(
-                crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new(),
-            ),
-            unused: Arc::new(
-                crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new(),
-            ),
-            cycle: Arc::new(
-                crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(),
-            ),
-            dummy: Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new()),
-            config: self.config.clone(),
+        Arc::new(ImportOrchestrator::new(
+            ImportOrchestratorDeps {
+                mandatory: Arc::new(
+                    crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(
+                    ),
+                ),
+                forbidden: Arc::new(
+                    crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new(),
+                ),
+                unused: Arc::new(
+                    crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new(),
+                ),
+                cycle: Arc::new(
+                    crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new(),
+                ),
+                dummy: Arc::new(
+                    crate::capabilities_dummy_import_checker::DummyImportChecker::new(),
+                ),
+            },
+            self.config.clone(),
             ignored_paths,
-        }))
+        ))
     }
 }

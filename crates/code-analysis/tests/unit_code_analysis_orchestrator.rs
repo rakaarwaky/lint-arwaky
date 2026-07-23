@@ -2,7 +2,7 @@
 // score calculation, critical check, report formatting.
 
 use code_analysis_lint_arwaky::{has_critical, CodeAnalysisContainer};
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -89,22 +89,22 @@ fn format_report_contains_header() {
         Severity::CRITICAL,
         "unwrap detected",
     )];
-    let list: Vec<LintResult> = results;
+    let list = LintResultList::new(results);
     let root = FilePath::new("/project".to_string()).unwrap();
     let report = orch.format_report(&list, &root);
-    assert!(report.contains("AES Architecture Compliance Report"));
-    assert!(report.contains("/project"));
-    assert!(report.contains("Violations: 1"));
-    assert!(report.contains("AES304"));
+    assert!(report.value.contains("AES Architecture Compliance Report"));
+    assert!(report.value.contains("/project"));
+    assert!(report.value.contains("Violations: 1"));
+    assert!(report.value.contains("AES304"));
 }
 
 #[test]
 fn format_report_empty_results() {
     let orch = orchestrator();
-    let list: Vec<LintResult> = vec![];
+    let list = LintResultList::new(vec![]);
     let root = FilePath::new("/project".to_string()).unwrap();
     let report = orch.format_report(&list, &root);
-    assert!(report.contains("Violations: 0"));
+    assert!(report.value.contains("Violations: 0"));
 }
 
 // ─── active_rules ────────────────────────────────────────────────────

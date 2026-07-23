@@ -76,7 +76,7 @@ architecture:
                 ]
         contract:
           suffix:
-            - strict: ["port", "protocol", "aggregate"]
+            - strict: ["protocol", "aggregate"]
         capabilities:
           suffix:
             - flexible:
@@ -250,7 +250,7 @@ architecture:
               "root",
             ]
 
-        - scope: "contract(port|protocol)"
+        - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
@@ -268,7 +268,7 @@ architecture:
           mandatory: ["taxonomy"]
           forbidden:
             ["agent", "infrastructure", "surface", "capabilities", "root"]
-          forbidden_inheritance: ["contract(port)", "contract(protocol)"]
+          forbidden_inheritance: ["contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
