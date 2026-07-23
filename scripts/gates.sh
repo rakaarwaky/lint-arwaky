@@ -39,7 +39,7 @@ gate "AES Self-Lint (check . = 0 violations)" bash -c '
 '
 
 gate "AES Codes (test-workspaces >= 24)" bash -c '
-    codes=$(cargo run --bin lint-arwaky-cli -- scan test-workspaces 2>&1 | grep "Total Unique AES Codes" | grep -oP "\d+")
+    codes=$(cargo run --bin lint-arwaky-cli -- scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  unique codes: ${codes:-0}"
     [ "${codes:-0}" -ge 24 ]
 '

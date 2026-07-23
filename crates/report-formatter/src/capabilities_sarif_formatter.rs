@@ -104,9 +104,9 @@ impl SarifFormatter {
             }
         }
 
-        let sarif_results: Vec<SarifResult> = results
-            .iter()
-            .map(|r| SarifResult {
+        let mut sarif_results = Vec::with_capacity(results.len());
+        for r in results {
+            sarif_results.push(SarifResult {
                 rule_id: r.code.to_string(),
                 level: severity_to_sarif_level(&r.severity).to_string(),
                 message: SarifMessage {
@@ -122,8 +122,8 @@ impl SarifFormatter {
                         },
                     },
                 }],
-            })
-            .collect();
+            });
+        }
 
         let log = SarifLog {
             schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",

@@ -110,17 +110,22 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
             }
             "doctor" => {
-                let mut checks = Vec::new();
-                for tool in &["cargo", "python3", "ruff", "mypy", "bandit", "node", "git"] {
-                    let found = match std::process::Command::new("which").arg(tool).output() {
+                let tools = ["cargo", "python3", "ruff", "mypy", "bandit", "node", "git"];
+                let futures = tools.iter().map(|tool| async move {
+                    let found = match tokio::process::Command::new("which")
+                        .arg(tool)
+                        .output()
+                        .await
+                    {
                         Ok(o) => o.status.success(),
                         Err(_) => false,
                     };
-                    checks.push(serde_json::json!({
+                    serde_json::json!({
                         "tool": tool,
                         "status": if found { "ok" } else { "not_found" }
-                    }));
-                }
+                    })
+                });
+                let checks = futures::future::join_all(futures).await;
                 serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
             }
             "orphan" | "security" | "duplicates" | "dependencies" => {
@@ -136,14 +141,18 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "adapters" => {
                 let ext = self.deps.external_lint.clone();
                 let adapter_names = ext.adapter_names();
-                let mut adapters = Vec::new();
-                for name in &adapter_names {
-                    let found = match std::process::Command::new("which").arg(name).output() {
+                let futures = adapter_names.into_iter().map(|name| async move {
+                    let found = match tokio::process::Command::new("which")
+                        .arg(&name)
+                        .output()
+                        .await
+                    {
                         Ok(o) => o.status.success(),
                         Err(_) => false,
                     };
-                    adapters.push(serde_json::json!({"name": name, "enabled": found}));
-                }
+                    serde_json::json!({"name": name, "enabled": found})
+                });
+                let adapters = futures::future::join_all(futures).await;
                 serde_json::json!({"adapters": adapters})
             }
             "install-hook" => {
@@ -164,7 +173,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
             _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
         };
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        serde_json::to_string(&result).unwrap_or_default()
     }
 
     async fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
@@ -184,7 +193,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             })
             .collect();
         let result = serde_json::json!({ "commands": commands, "total": commands.len() });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        serde_json::to_string(&result).unwrap_or_default()
     }
 
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {

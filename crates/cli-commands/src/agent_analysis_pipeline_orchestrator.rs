@@ -259,6 +259,9 @@ impl AnalysisPipelineOrchestrator {
     /// runs all 6 linter groups per member, runs cross-workspace orphan detection,
     /// filters results to each member's path, and aggregates into a single ScanReport.
     pub async fn run_pipeline_with_discovery(&self) -> Result<ScanReport, PipelineError> {
+        // Cache cwd once for all workspace iterations
+        let cwd = std::env::current_dir().unwrap_or_default();
+
         // Discover workspaces
         let workspaces = self
             .config_orchestrator
@@ -313,7 +316,23 @@ impl AnalysisPipelineOrchestrator {
             &orphan_context,
         );
 
-        for ws in &workspaces {
+        // Pre-compute canonical paths for all workspaces once
+        let workspace_canonicals: Vec<_> = workspaces
+            .iter()
+            .map(|ws| {
+                let raw = std::path::Path::new(&ws.path.value);
+                let canonical = raw.canonicalize().ok();
+                let fallback = if raw.is_absolute() {
+                    raw.to_path_buf()
+                } else {
+                    cwd.join(raw)
+                };
+                let fallback = std::fs::canonicalize(&fallback).unwrap_or(fallback);
+                (canonical, fallback)
+            })
+            .collect();
+
+        for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
             let mut all_results = Vec::new();
 
             // 1. Run AES analysis
@@ -339,70 +358,55 @@ impl AnalysisPipelineOrchestrator {
             all_results.extend(external_results.values);
             all_results.extend(role_results);
 
-            // Filter results to this workspace member's path
-            let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-            let cwd_for_ws = match std::env::current_dir() {
-                Ok(d) => d,
-                Err(_) => std::path::PathBuf::new(),
-            };
-            let ws_fallback = {
-                let raw = std::path::Path::new(&ws.path.value);
-                if raw.is_absolute() {
-                    raw.to_path_buf()
-                } else {
-                    cwd_for_ws.join(raw)
-                }
-            };
-            let ws_fallback = std::fs::canonicalize(&ws_fallback).unwrap_or(ws_fallback);
-
+            // Filter results to this workspace member's path using cached canonical paths
             let filtered_results: Vec<_> = match &self.filter {
                 Some(code) => all_results
                     .into_iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         r.code.code() == code
                             && (ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
                                 .unwrap_or(false)
-                                || abs_path.starts_with(&ws_fallback))
+                                || abs_path.starts_with(ws_fallback))
                     })
                     .collect(),
                 None => all_results
                     .into_iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(&ws_fallback))
+                            .unwrap_or(abs_path.starts_with(ws_fallback))
                     })
                     .collect(),
             };
 
-            // Filter orphan results to this workspace member's path
+            // Filter orphan results to this workspace member's path using cached canonical paths
             let filtered_orphans: Vec<_> = match &self.filter {
                 Some(code) => orphan_results_all
                     .iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         r.code.code() == code
                             && (ws_canonical
                                 .as_ref()
                                 .map(|c| abs_path.starts_with(c))
                                 .unwrap_or(false)
-                                || abs_path.starts_with(&ws_fallback))
+                                || abs_path.starts_with(ws_fallback))
                     })
                     .cloned()
                     .collect(),
                 None => orphan_results_all
                     .iter()
                     .filter(|r| {
-                        let abs_path = cwd_for_ws.join(&r.file.value);
+                        let abs_path = cwd.join(&r.file.value);
                         ws_canonical
                             .as_ref()
                             .map(|c| abs_path.starts_with(c))
-                            .unwrap_or(abs_path.starts_with(&ws_fallback))
+                            .unwrap_or(abs_path.starts_with(ws_fallback))
                     })
                     .cloned()
                     .collect(),

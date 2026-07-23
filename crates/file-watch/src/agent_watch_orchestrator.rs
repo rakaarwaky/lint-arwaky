@@ -32,14 +32,21 @@ pub struct WatchOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IWatchAggregate for WatchOrchestrator {
     fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
-                std::process::exit(1);
-            }
-        };
-        rt.block_on(self.run_async(config, running))
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.block_on(self.run_async(config, running))
+        } else {
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("Failed to create tokio runtime: {}", e);
+                    return ExitCode::FAILURE;
+                }
+            };
+            rt.block_on(self.run_async(config, running))
+        }
     }
 }
 
@@ -75,20 +82,29 @@ impl WatchOrchestrator {
 
         while running.load(Ordering::SeqCst) {
             tokio::select! {
-                Ok(event) = rx.recv() => {
-                    if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
-                        let event_fp = FilePath::new(&event.path).unwrap_or_default();
-                        let lint_results = self.linter.run_code_analysis_path(&event_fp);
-                        let lint_score = self.linter.calc_score(&lint_results);
-                        println!(
-                            "[change] {} | {} violations, score {:.1}",
-                            event.path,
-                            lint_results.len(),
-                            lint_score
-                        );
+                res = rx.recv() => {
+                    match res {
+                        Ok(event) => {
+                            if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path) {
+                                let event_fp = FilePath::new(&event.path).unwrap_or_default();
+                                let lint_results = self.linter.run_code_analysis_path(&event_fp);
+                                let lint_score = self.linter.calc_score(&lint_results);
+                                println!(
+                                    "[change] {} | {} violations, score {:.1}",
+                                    event.path,
+                                    lint_results.len(),
+                                    lint_score
+                                );
+                            }
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => continue,
                     }
                 }
-                _ = tokio::time::sleep(std::time::Duration::from_millis(100)) => {}
+                _ = tokio::signal::ctrl_c() => {
+                    running.store(false, Ordering::SeqCst);
+                    break;
+                }
             }
         }
 

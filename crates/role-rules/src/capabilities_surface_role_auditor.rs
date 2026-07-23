@@ -79,14 +79,22 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
         } else {
             "fn "
         };
-        if content.matches(fn_keyword).count() > 15 {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES406",
-                Severity::HIGH,
-                AesRoleViolation::SurfaceRoleViolation { reason: None },
-            ));
+        let mut count = 0;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if !trimmed.starts_with("//") && !trimmed.starts_with('#') && trimmed.contains(fn_keyword) {
+                count += 1;
+                if count > 15 {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES406",
+                        Severity::HIGH,
+                        AesRoleViolation::SurfaceRoleViolation { reason: None },
+                    ));
+                    return;
+                }
+            }
         }
     }
 }

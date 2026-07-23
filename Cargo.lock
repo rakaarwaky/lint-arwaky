@@ -2843,6 +2843,7 @@ dependencies = [
  "criterion",
  "dirs",
  "external-lint-lint-arwaky",
+ "futures",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",

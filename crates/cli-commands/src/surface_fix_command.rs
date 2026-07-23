@@ -59,7 +59,11 @@ impl FixCommandsSurface {
 
         println!("{}", fix_result.output.value);
 
-        if !dry_run {
+        if dry_run {
+            // Skip second scan in dry-run mode — no changes applied, no need to re-lint
+            println!("Dry-run complete — no changes applied.");
+            ExitCode::SUCCESS
+        } else {
             let after_results = self.code_analysis_linter.run_code_analysis(&project_path);
             let fixed_count = results.len().saturating_sub(after_results.len());
             println!(
@@ -74,9 +78,6 @@ impl FixCommandsSurface {
                 println!("Fix complete — {} violations remain.", after_results.len());
                 ExitCode::from(1)
             }
-        } else {
-            println!("Dry-run complete — no changes applied.");
-            ExitCode::SUCCESS
         }
     }
 }

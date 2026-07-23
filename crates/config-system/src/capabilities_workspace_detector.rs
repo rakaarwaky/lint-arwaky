@@ -14,17 +14,9 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
-        if shared::common::utility_file_handler::path_exists(path_buf.join("Cargo.toml")) {
-            return WorkspaceType::Rust;
-        }
-        if shared::common::utility_file_handler::path_exists(path_buf.join("package.json")) {
-            return WorkspaceType::TypeScript;
-        }
-        if shared::common::utility_file_handler::path_exists(path_buf.join("pyproject.toml"))
-            || shared::common::utility_file_handler::path_exists(path_buf.join("setup.py"))
-            || shared::common::utility_file_handler::path_exists(path_buf.join("requirements.txt"))
-        {
-            return WorkspaceType::Python;
+        // Batch directory scan for config files in the given path (single syscall instead of up to 10)
+        if Self::check_dir_for_language(&path_buf).is_some() {
+            return Self::check_dir_for_language(&path_buf).unwrap();
         }
 
         if let Some(parent) = path_buf.parent() {
@@ -39,19 +31,8 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 2 {
-            if shared::common::utility_file_handler::path_exists(current.join("Cargo.toml")) {
-                return WorkspaceType::Rust;
-            }
-            if shared::common::utility_file_handler::path_exists(current.join("package.json")) {
-                return WorkspaceType::TypeScript;
-            }
-            if shared::common::utility_file_handler::path_exists(current.join("pyproject.toml"))
-                || shared::common::utility_file_handler::path_exists(current.join("setup.py"))
-                || shared::common::utility_file_handler::path_exists(
-                    current.join("requirements.txt"),
-                )
-            {
-                return WorkspaceType::Python;
+            if Self::check_dir_for_language(&current).is_some() {
+                return Self::check_dir_for_language(&current).unwrap();
             }
             if let Some(parent) = current.parent() {
                 current = parent.to_path_buf();

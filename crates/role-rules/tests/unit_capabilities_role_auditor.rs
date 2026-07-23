@@ -133,6 +133,117 @@ export class MyChecker {
     assert_eq!(violations[0].code.code(), "AES403");
 }
 
+// ─── Rule 1: Internal struct tanpa trait impl → TIDAK di-flag ──
+
+#[test]
+fn rust_internal_struct_allowed_without_trait_impl() {
+    // 1 implementor + 1 internal helper = total 2, lolos (Rule 1)
+    let content = r#"
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+
+pub struct MyChecker;
+
+impl IAgentRoleChecker for MyChecker {}
+
+struct InternalCache {
+    data: Vec<u8>,
+}
+
+impl InternalCache {
+    fn new() -> Self {
+        Self { data: vec![] }
+    }
+}
+"#;
+    let source = make_source("capabilities_my_checker.rs", content);
+    let mut violations = Vec::new();
+    checker().check_capability_routing(&source, "capabilities", &mut violations);
+    assert!(violations.is_empty());
+}
+
+// ─── Rule 2: Tidak ada implementor → flag CapabilityNoImplementor ──
+
+#[test]
+fn rust_no_implementor_flagged() {
+    // Hanya internal structs, tidak ada impl Trait for Struct
+    let content = r#"
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+
+struct HelperA {
+    x: i32,
+}
+
+impl HelperA {
+    fn new() -> Self {
+        Self { x: 0 }
+    }
+}
+
+struct HelperB {
+    y: String,
+}
+"#;
+    let source = make_source("capabilities_helper.rs", content);
+    let mut violations = Vec::new();
+    checker().check_capability_routing(&source, "capabilities", &mut violations);
+    assert_eq!(violations.len(), 1);
+    // Should be CapabilityNoImplementor, not CapabilityRouting
+    assert_eq!(violations[0].code.code(), "AES403");
+}
+
+// ─── Rule 3: Terlalu banyak types → flag CapabilityTooManyTypes ──
+
+#[test]
+fn rust_too_many_types_flagged() {
+    // 1 impl + 2 struct + 1 enum = 4 types > 3
+    let content = r#"
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+
+pub struct Cap {}
+
+impl IAgentRoleChecker for Cap {}
+
+struct A {}
+
+struct B {}
+
+enum C {
+    X,
+    Y,
+}
+"#;
+    let source = make_source("capabilities_too_many.rs", content);
+    let mut violations = Vec::new();
+    checker().check_capability_routing(&source, "capabilities", &mut violations);
+    assert_eq!(violations.len(), 1);
+    assert_eq!(violations[0].code.code(), "AES403");
+}
+
+// ─── Rule 3: Tepat 3 types → LOLOS ──
+
+#[test]
+fn rust_exactly_three_types_passes() {
+    // 1 impl + 1 struct + 1 enum = 3 types, lolos
+    let content = r#"
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+
+pub struct Cap {}
+
+impl IAgentRoleChecker for Cap {}
+
+struct Helper {}
+
+enum Status {
+    Active,
+    Inactive,
+}
+"#;
+    let source = make_source("capabilities_exact_three.rs", content);
+    let mut violations = Vec::new();
+    checker().check_capability_routing(&source, "capabilities", &mut violations);
+    assert!(violations.is_empty());
+}
+
 // ─── Default trait ──────────────────────────────────
 
 #[test]

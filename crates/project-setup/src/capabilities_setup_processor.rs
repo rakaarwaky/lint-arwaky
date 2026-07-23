@@ -1,6 +1,5 @@
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::common::utility_command_runner as proc_io;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use shared::project_setup::taxonomy_setup_contract_vo::{
     McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
@@ -113,9 +112,12 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                 return McpBinaryNameVO::new(c.clone());
             }
         }
-        let (stdout, _, success) = proc_io::run_command("which", &["lint-arwaky-mcp"]);
-        let which_output = if success && !stdout.is_empty() {
-            stdout.trim().to_string()
+        let which_output = if let Ok(path) = std::env::var("PATH") {
+            path.split(':')
+                .map(|p| std::path::Path::new(p).join("lint-arwaky-mcp"))
+                .find(|p| p.is_file())
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| "lint-arwaky-mcp".to_string())
         } else {
             "lint-arwaky-mcp".to_string()
         };
@@ -273,7 +275,10 @@ impl SetupManagementProcessor {
         };
         for path in entries {
             if path.is_dir() {
-                let name = path.file_name().unwrap_or_default().to_string_lossy();
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => continue,
+                };
                 if name.starts_with('.')
                     || name == "target"
                     || name == "node_modules"

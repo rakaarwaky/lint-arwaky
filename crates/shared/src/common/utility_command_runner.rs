@@ -32,3 +32,35 @@ pub fn run_command_in_dir(
         ),
     }
 }
+
+/// Execute a command asynchronously and return `(stdout, stderr, success)`.
+pub async fn run_command_async(name: &str, args: &[&str]) -> (String, String, bool) {
+    run_command_in_dir_async(name, args, None).await
+}
+
+/// Execute a command asynchronously in an optional working directory.
+pub async fn run_command_in_dir_async(
+    name: &str,
+    args: &[&str],
+    current_dir: Option<&str>,
+) -> (String, String, bool) {
+    let mut command = tokio::process::Command::new(name);
+    command.args(args);
+
+    if let Some(dir) = current_dir {
+        command.current_dir(dir);
+    }
+
+    match command.output().await {
+        Ok(output) => (
+            String::from_utf8_lossy(&output.stdout).to_string(),
+            String::from_utf8_lossy(&output.stderr).to_string(),
+            output.status.success(),
+        ),
+        Err(error) => (
+            String::new(),
+            format!("Failed to execute {name}: {error}"),
+            false,
+        ),
+    }
+}

@@ -125,6 +125,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
 
+        let layer_keys: Vec<String> = self
+            .config
+            .layers
+            .keys()
+            .map(|k| k.value.to_string())
+            .collect();
+
         for f in files {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
@@ -138,12 +145,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     Some(l) => l,
                     None => continue,
                 };
-            let layer_keys: Vec<String> = self
-                .config
-                .layers
-                .keys()
-                .map(|k| k.value.to_string())
-                .collect();
             let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
                 &base_layer,
                 file_fp.value(),
@@ -245,6 +246,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
 
+        let layer_keys: Vec<String> = self
+            .config
+            .layers
+            .keys()
+            .map(|k| k.value.to_string())
+            .collect();
+
         for f in files {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
@@ -258,12 +266,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     Some(l) => l,
                     None => continue,
                 };
-            let layer_keys: Vec<String> = self
-                .config
-                .layers
-                .keys()
-                .map(|k| k.value.to_string())
-                .collect();
             let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
                 &base_layer,
                 file_fp.value(),

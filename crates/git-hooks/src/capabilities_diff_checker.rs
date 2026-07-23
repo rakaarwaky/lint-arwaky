@@ -20,14 +20,18 @@ pub struct DiffChecker;
 #[async_trait::async_trait]
 impl IDiffProtocol for DiffChecker {
     async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        let default_branch = self.get_default_branch(path);
-        let _changed_files = self.collect_changed_files(path, &default_branch);
+        let default_branch = self.get_default_branch_async(path).await;
+        let _changed_files = self
+            .collect_changed_files_async(path, &default_branch)
+            .await;
         LintResultList::new(Vec::new())
     }
 
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
-        let default_branch = self.get_default_branch(path);
-        let changed_files = self.collect_changed_files(path, &default_branch);
+        let default_branch = self.get_default_branch_async(path).await;
+        let changed_files = self
+            .collect_changed_files_async(path, &default_branch)
+            .await;
         let lintable_vec: Vec<FilePath> = changed_files
             .values
             .iter()
@@ -50,28 +54,29 @@ impl IDiffProtocol for DiffChecker {
             .cloned()
             .collect();
         let lintable_files = FilePathList::new(lintable_vec);
+        let total_count = changed_files.values.len() as i64;
         GitDiffResultVO {
             added: FilePathList::new(Vec::new()),
             modified: changed_files.clone(),
             deleted: FilePathList::new(Vec::new()),
             renamed: RenamedFileList::new(vec![]),
             lintable_files,
-            all_files: changed_files.clone(),
-            total_changed: shared::taxonomy_common_vo::Count::new(changed_files.values.len() as i64),
+            all_files: changed_files,
+            total_changed: shared::taxonomy_common_vo::Count::new(total_count),
         }
     }
 
     async fn get_changed_files(&self, path: &FilePath, base: &GitBranchName) -> FilePathList {
         let branch_str = if base.value().is_empty() || base.value() == "." {
-            self.get_default_branch(path)
+            self.get_default_branch_async(path).await
         } else {
             base.value().to_string()
         };
-        self.collect_changed_files(path, &branch_str)
+        self.collect_changed_files_async(path, &branch_str).await
     }
 
     async fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
-        GitBranchName::new(self.get_default_branch(path))
+        GitBranchName::new(self.get_default_branch_async(path).await)
     }
 }
 
@@ -88,11 +93,12 @@ impl DiffChecker {
         Self
     }
 
-    fn get_default_branch(&self, project_path: &FilePath) -> String {
-        let (stdout, _, success) = git_io::run_git_command(
+    async fn get_default_branch_async(&self, project_path: &FilePath) -> String {
+        let (stdout, _, success) = git_io::run_git_command_async(
             &["symbolic-ref", "refs/remotes/origin/HEAD"],
             &project_path.value,
-        );
+        )
+        .await;
         if success {
             let ref_str = stdout.trim().to_string();
             if let Some(branch) = ref_str.rsplit('/').next() {
@@ -104,7 +110,11 @@ impl DiffChecker {
         "main".to_string()
     }
 
-    fn collect_changed_files(&self, project_path: &FilePath, default_branch: &str) -> FilePathList {
+    async fn collect_changed_files_async(
+        &self,
+        project_path: &FilePath,
+        default_branch: &str,
+    ) -> FilePathList {
         let mut changed_set: HashSet<FilePath> = HashSet::new();
         let variants = [
             format!("origin/{}...HEAD", default_branch),
@@ -113,27 +123,35 @@ impl DiffChecker {
             "master...HEAD".to_string(),
         ];
         for variant in &variants {
-            if self.try_variant(&mut changed_set, variant, project_path) {
+            if self
+                .try_variant_async(&mut changed_set, variant, project_path)
+                .await
+            {
                 break;
             }
         }
         if changed_set.is_empty() {
-            self.try_fallback_head(&mut changed_set, project_path);
+            self.try_fallback_head_async(&mut changed_set, project_path)
+                .await;
         }
         if changed_set.is_empty() {
-            self.try_ls_files(&mut changed_set, project_path);
+            self.try_ls_files_async(&mut changed_set, project_path)
+                .await;
         }
-        FilePathList::new(changed_set.into_iter().collect())
+        let mut vec = Vec::with_capacity(changed_set.len());
+        vec.extend(changed_set);
+        FilePathList::new(vec)
     }
 
-    fn try_variant(
+    async fn try_variant_async(
         &self,
         changed_set: &mut HashSet<FilePath>,
         variant: &str,
         project_path: &FilePath,
     ) -> bool {
         let (stdout, _, success) =
-            git_io::run_git_command(&["diff", "--name-only", variant], &project_path.value);
+            git_io::run_git_command_async(&["diff", "--name-only", variant], &project_path.value)
+                .await;
         if success {
             for line in git_io::parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
@@ -144,9 +162,14 @@ impl DiffChecker {
         !changed_set.is_empty()
     }
 
-    fn try_fallback_head(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
+    async fn try_fallback_head_async(
+        &self,
+        changed_set: &mut HashSet<FilePath>,
+        project_path: &FilePath,
+    ) {
         let (stdout, _, success) =
-            git_io::run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
+            git_io::run_git_command_async(&["diff", "--name-only", "HEAD"], &project_path.value)
+                .await;
         if success {
             for line in git_io::parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
@@ -156,11 +179,16 @@ impl DiffChecker {
         }
     }
 
-    fn try_ls_files(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        let (stdout, _, success) = git_io::run_git_command(
+    async fn try_ls_files_async(
+        &self,
+        changed_set: &mut HashSet<FilePath>,
+        project_path: &FilePath,
+    ) {
+        let (stdout, _, success) = git_io::run_git_command_async(
             &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,
-        );
+        )
+        .await;
         if success {
             for line in git_io::parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
