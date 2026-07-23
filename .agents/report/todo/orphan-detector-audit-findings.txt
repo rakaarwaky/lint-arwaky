@@ -1,0 +1,102 @@
+# Performance Audit: orphan-detector-lint-arwaky (Crate 11)
+
+## Summary
+
+**Crate:** orphan-detector-lint-arwaky
+**Files audited:** 10
+**Performance issues found:** 9 significant, 2 moderate
+
+---
+
+## Critical Issues
+
+### 1. O(n*m) File Reading Loops — HIGH IMPACT
+**Location:** `capabilities_orphan_utility_analyzer.rs` (is_utility_orphan, Phase 2), `capabilities_orphan_agent_analyzer.rs` (is_agent_orphan, trait loop), `capabilities_orphan_contract_analyzer.rs` (find_unimplemented_traits, has_trait_implementation, port/protocol check, aggregate check)
+
+**Problem:** All three analyzers read file content inside nested loops over all_files or search_files. Utility analyzer reads each file once per utility file being checked. Agent analyzer reads each file for every aggregate trait found. Contract analyzer reads each file multiple times (once per trait check pass).
+
+```rust
+// Utility: for other_file in all_files { read_file_safe(other_file) }
+// Agent: for agg_name in &traits { for cf in all_files { read_file_safe(cf) } }
+// Contract: for trait_name in &trait_names { for cf in search_files { read_file_safe(cf) } }
+```
+
+**Fix:** Pre-read all file contents into a HashMap<String, String> cache before any analysis passes. Use the cached content instead of repeated filesystem reads.
+
+### 2. has_crate_self_import Scans All Files — HIGH IMPACT
+**Location:** `capabilities_orphan_taxonomy_analyzer.rs` (has_crate_self_import)
+
+**Problem:** When inbound_links is empty or has_only_mod, this fallback scans ALL source files (.rs, .py, .ts, .js) in the entire src/ directory, reading each file and checking content.contains(stem). This is O(n*m) per taxonomy file.
+
+**Fix:** Pre-compute a global symbol index (HashMap<String, Vec<String>>) during graph building so this lookup becomes O(1) instead of scanning all files.
+
+### 3. layer_keys Vec<String> Allocation Per File — MODERATE IMPACT
+**Location:** `agent_orphan_orchestrator.rs` (check_orphans ~line 180, check_orphans_with_context ~line 320)
+
+**Problem:** `let layer_keys: Vec<String> = self.config.layers.keys().map(|k| k.value.to_string()).collect();` allocates a new Vec<String> on every single file iteration inside the main analysis loop.
+
+**Fix:** Cache layer_keys in ArchOrphanAnalyzer struct during construction, or use &str references from config directly.
+
+### 4. HashMap::new() Without Capacity Hints — MODERATE IMPACT
+**Location:** `capabilities_orphan_graph_resolver.rs` (build_graph_context_inner)
+
+**Problem:** import_graph, inbound_links, inheritance_map, file_definitions, module_to_file, workspace_modules, crate_src_dirs — all initialized with HashMap::new(), causing multiple reallocations as files are processed.
+
+**Fix:** Pass estimated capacity to HashMap::with_capacity(files.len()) based on files.len().
+
+### 5. Duplicate Workspace File Expansion Logic — MODERATE IMPACT
+**Location:** `agent_orphan_orchestrator.rs` (check_orphans and check_orphans_with_context)
+
+**Problem:** Both methods contain identical workspace file expansion logic (~40 lines). The HashSet::new() for reachable set grows without pre-size.
+
+**Fix:** Extract to a private helper method. Pre-size HashSet with entry_points.len().
+
+---
+
+## Moderate Issues
+
+### 6. Token-based Fallback Contains Check — LOW IMPACT
+**Location:** `capabilities_orphan_utility_analyzer.rs` (Phase 2)
+
+**Problem:** For each file, iterates through all tokens and calls contains_delimited() per token. If a module has many import tokens, this is redundant substring search.
+
+**Fix:** Build a single combined regex or use binary search on sorted tokens.
+
+### 7. Single Mutex Contention Under Concurrency — LOW IMPACT
+**Location:** `capabilities_orphan_capabilities_analyzer.rs` (container_cache), `capabilities_orphan_contract_analyzer.rs` (search_cache)
+
+**Problem:** Both caches use Mutex<Option<...>>. Under concurrent access, single lock guards entire cache operations.
+
+**Fix:** Consider RwLock for read-heavy workloads, or use OnceLock for one-time initialization patterns.
+
+### 8. Regex Pattern Matching Without Early Exit — LOW IMPACT
+**Location:** `capabilities_orphan_agent_analyzer.rs` (extract_aggregate_traits)
+
+**Problem:** Runs 4 separate regex passes (impl_generic, dyn, py_class, ts_implements) on entire content even after finding needed traits. All results collected then sorted/deduped.
+
+**Fix:** Return early when a minimum threshold of traits is found, or use a single-pass approach.
+
+### 9. Redundant String Formatting in Pattern Matching — LOW IMPACT
+**Location:** `capabilities_orphan_utility_analyzer.rs` (check_import_pattern)
+
+**Problem:** Multiple content.contains(&format!("...")) calls create new String allocations each time. Each format! call allocates a temporary string.
+
+**Fix:** Use str.contains() with static patterns directly, or use regex OnceLock for multi-pattern matching.
+
+---
+
+## Positive Findings
+
+- Regex compilation uses OnceLock caching (import_re, inh_re, pub_mod_path_re, etc.) — efficient
+- Single-pass file reading in graph resolver build_graph_context_inner — good
+- Container search cache in capabilities analyzer prevents redundant workspace scans
+- Contract analyzer uses Arc<Vec<String>> for cached search files — avoids clones
+- Surfaces analyzer is clean with no fallback scanning — efficient reachability-only check
+
+---
+
+## Estimated Impact
+
+**Worst-case scenario (large project):** The O(n*m) file reading loops dominate execution time. For a project with 500 source files and 10 utility modules, this results in ~5000 file reads instead of ~500 cached reads — a 10x overhead.
+
+**Priority fix:** Pre-read all files into cache before analysis passes. This single change would eliminate the dominant performance bottleneck across all three analyzers.

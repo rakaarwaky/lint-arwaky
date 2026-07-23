@@ -2,20 +2,7 @@
 use crate::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq, Hash)]
-pub struct DependencyEdge {
-    pub source: String,
-    pub target: String,
-}
-
-impl DependencyEdge {
-    pub fn new(source: impl Into<String>, target: impl Into<String>) -> Self {
-        Self {
-            source: source.into(),
-            target: target.into(),
-        }
-    }
-}
+use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::LayerNameVO;
 use crate::taxonomy_name_vo::SymbolName;

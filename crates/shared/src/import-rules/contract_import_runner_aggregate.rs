@@ -6,10 +6,11 @@
 //
 // run_audit is async because it may perform file I/O and spawn blocking
 // tasks internally. The caller provides a FilePath target (file or dir).
+use async_trait::async_trait;
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_adapter_error::ScanError;
 use crate::common::taxonomy_path_vo::FilePath;
-use async_trait::async_trait;
+
 
 /// IImportRunnerAggregate — aggregate port for import-rules orchestration.
 ///
