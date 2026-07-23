@@ -1,4 +1,5 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
+use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::{
@@ -50,11 +51,11 @@ impl NamingContainer {
     }
 
     pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
-        Arc::new(crate::agent_naming_orchestrator::NamingOrchestrator::new(
-            self.naming_convention_checker.clone(),
-            self.suffix_prefix_checker.clone(),
-            self.config.clone(),
-            self.layer_map.clone(),
-        ))
+        Arc::new(NamingOrchestrator::new(NamingOrchestratorDeps {
+            naming_convention_checker: self.naming_convention_checker.clone(),
+            suffix_prefix_checker: self.suffix_prefix_checker.clone(),
+            config: self.config.clone(),
+            layer_map: self.layer_map.clone(),
+        }))
     }
 }

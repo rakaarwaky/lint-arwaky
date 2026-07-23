@@ -5,24 +5,24 @@
 ```
 ┌───────────────────────────────────────────────────────┐
 │                    Surface Layer                       │
-│  cli-commands calls IReportFormatterAggregate.format() │
+│  cli-commands calls report formatter aggregate         │
 ├───────────────────────────────────────────────────────┤
 │                    Agent Layer                         │
-│  agent_report_formatter_orchestrator.rs                │
-│  ReportFormatterOrchestrator (delegates by Format)     │
+│  report formatter orchestrator                         │
+│  (routes formatting by format type)                    │
 ├───────────────────────────────────────────────────────┤
 │                  Capabilities Layer                    │
-│  capabilities_text_formatter.rs   (Text)               │
-│  capabilities_json_formatter.rs   (JSON)               │
-│  capabilities_sarif_formatter.rs  (SARIF 2.1.0)       │
-│  capabilities_junit_formatter.rs  (JUnit XML)          │
+│  text formatter (Text)                                │
+│  JSON formatter (JSON)                                │
+│  SARIF 2.1.0 formatter (SARIF)                        │
+│  JUnit XML formatter (JUnit)                          │
 ├───────────────────────────────────────────────────────┤
 │                   Utility Layer                        │
-│  utility_report_format.rs  (default text fallback)     │
+│  default text report fallback                          │
 └───────────────────────────────────────────────────────┘
 ```
 
-The report-formatter crate provides formatting capabilities for `ScanReport` output. It implements `IReportFormatterProtocol` for each output format (text, JSON, SARIF, JUnit) and exposes `IReportFormatterAggregate` via `ReportFormatterOrchestrator` for the surface layer to consume. The surface layer never formats output directly — it always delegates through the aggregate trait.
+The report-formatter crate provides formatting capabilities for scan report output. It implements the report formatter protocol for each output format (text, JSON, SARIF, JUnit) and exposes the report formatter aggregate via the orchestrator for the surface layer to consume. The surface layer never formats output directly — it always delegates through the aggregate trait.
 
 ## Functional Requirements
 
@@ -31,13 +31,13 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
 - **Input**: `report: ScanReport`, `format: Format::Text`
 - **Output**: `DisplayContent` containing formatted text string
 - **Business Rules**:
-  - Delegates to `ICodeAnalysisAggregate::format_report()` for detailed output.
-  - Reconstructs `LintResultList` from report results and passes default `FilePath`.
-  - Falls back to `format_report_default()` if format doesn't match `Format::Text`.
+  - Delegates to the code analysis aggregate for detailed output formatting.
+  - Reconstructs the lint result list from report results and passes default file path.
+  - Falls back to the default text summary if format doesn't match text format.
   - Output includes violation counts by code, severity breakdown, and file locations.
 - **Edge Cases**:
   - Empty results list → produces clean report with 0 violations.
-  - Format mismatch → returns default text summary via `format_report_default()`.
+  - Format mismatch → returns default text summary.
   - Report with diagnostics → includes diagnostic information in output.
 - **Error Handling**: None — formatting is infallible.
 
@@ -46,13 +46,13 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
 - **Input**: `report: ScanReport`, `format: Format::Json`
 - **Output**: `DisplayContent` containing pretty-printed JSON string
 - **Business Rules**:
-  - Serializes `report.results` (Vec<LintResult>) via `serde_json::to_string_pretty`.
-  - Falls back to `"[]"` string on serialization failure.
-  - Falls back to `format_report_default()` if format doesn't match `Format::Json`.
-  - Each `LintResult` includes: file, line, code, severity, message.
+  - Serializes report results via the JSON serialization library.
+  - Falls back to empty array string on serialization failure.
+  - Falls back to the default text summary if format doesn't match JSON format.
+  - Each lint result includes: file, line, code, severity, message.
 - **Edge Cases**:
-  - Empty results → produces `"[]"`.
-  - Serialization failure → returns `"[]"`.
+  - Empty results → produces empty array string.
+  - Serialization failure → returns empty array string.
   - Format mismatch → returns default text summary.
 - **Error Handling**: Serialization error caught via `unwrap_or_else`.
 
@@ -61,17 +61,17 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
 - **Input**: `report: ScanReport`, `format: Format::Sarif` (also `results: &[LintResult]` for direct call)
 - **Output**: `DisplayContent` containing SARIF 2.1.0 JSON string
 - **Business Rules**:
-  - Includes tool metadata: name (`lint-arwaky`), version (`CARGO_PKG_VERSION`), information URI.
-  - Maps severity levels: CRITICAL/HIGH → `error`, MEDIUM → `warning`, LOW/INFO → `note`.
-  - Each result includes: `rule_id`, `level`, `message.text`, `locations[].physical_location`.
-  - Physical location includes `artifact_location.uri` and `region.start_line`.
+  - Includes tool metadata: name, version, information URI.
+  - Maps severity levels: CRITICAL/HIGH → error, MEDIUM → warning, LOW/INFO → note.
+  - Each result includes: rule ID, level, message text, physical location.
+  - Physical location includes artifact URI and start line.
   - Schema URI points to OASIS SARIF 2.1.0 schema.
-  - Line numbers clamped to minimum 1 via `std::cmp::max(1, r.line.value())`.
+  - Line numbers clamped to minimum 1.
 - **Edge Cases**:
-  - Empty results → valid SARIF with empty `results` array.
+  - Empty results → valid SARIF with empty results array.
   - Line number 0 or negative → clamped to 1.
   - Format mismatch → returns default text summary.
-  - Serialization failure → returns `"{}"`.
+  - Serialization failure → returns empty object string.
 - **Error Handling**: Serialization error caught via `unwrap_or_else`.
 
 ### FR-004: JUnit XML Format Output
@@ -79,15 +79,15 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
 - **Input**: `report: ScanReport`, `format: Format::Junit` (also `results: &[LintResult]` for direct call)
 - **Output**: `DisplayContent` containing JUnit XML string
 - **Business Rules**:
-  - Each violation becomes a `<testcase>` with `classname` (rule code) and `name` (file:line).
-  - Non-INFO violations include `<failure>` element with `message` and `type` attributes.
-  - INFO severity violations produce clean `<testcase>` without `<failure>`.
+  - Each violation becomes a test case with classname (rule code) and name (file:line).
+  - Non-INFO violations include failure element with message and type attributes.
+  - INFO severity violations produce clean test case without failure element.
   - XML is properly escaped: `&`, `<`, `>`, `"`, `'` → named entities.
-  - Root element: `<testsuites>` with `tests` and `failure` counts.
-  - Pre-allocated string capacity: `total * 256` bytes.
+  - Root element: testsuites with tests and failure counts.
+  - Pre-allocated string capacity based on result count.
 - **Edge Cases**:
   - Empty results → valid XML with 0 tests, 0 failures.
-  - All violations INFO severity → no `<failure>` elements.
+  - All violations INFO severity → no failure elements.
   - Special characters in messages → properly XML-escaped.
   - Format mismatch → returns default text summary.
 - **Error Handling**: None — XML generation is infallible.
@@ -97,12 +97,12 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
 - **Input**: `report: ScanReport`, `format: Format`
 - **Output**: `DisplayContent`
 - **Business Rules**:
-  - `Format::Text` → `TextFormatter`
-  - `Format::Json` → `JsonFormatter`
-  - `Format::Sarif` → `SarifFormatter`
-  - `Format::Junit` → `JunitFormatter`
-  - Each formatter implements `IReportFormatterProtocol`.
-  - Orchestrator holds `Arc<dyn IReportFormatterProtocol>` for each format.
+  - Text format → text formatter.
+  - JSON format → JSON formatter.
+  - SARIF format → SARIF formatter.
+  - JUnit format → JUnit formatter.
+  - Each formatter implements the report formatter protocol.
+  - Orchestrator holds a reference to each format's formatter implementation.
 - **Edge Cases**:
   - Unknown format variant → exhaustive match ensures compile-time safety.
   - Formatter panicked → not caught (trait method is infallible).
@@ -116,7 +116,7 @@ The report-formatter crate provides formatting capabilities for `ScanReport` out
   - Shows violation count, diagnostic count, and score (if available).
   - Groups violations by code, sorted by count (descending).
   - Shows diagnostics with source, severity, and message.
-  - Pre-allocated capacity: `256 + results.len() * 32` bytes.
+  - Pre-allocated capacity based on result count.
 - **Edge Cases**:
   - Empty results → "Violations: 0".
   - No score in report → score line omitted.
@@ -213,20 +213,20 @@ JUnit Output Structure
 ## Integration Points
 
 - **Internal**:
-  - `shared` — taxonomy VOs (`ScanReport`, `LintResult`, `Format`, `DisplayContent`), contract traits (`IReportFormatterProtocol`, `IReportFormatterAggregate`).
-  - `code-analysis` — `ICodeAnalysisAggregate` for `TextFormatter` delegation to `format_report()`.
-  - `cli-commands` — consumed via `IReportFormatterAggregate` from `CliContainer` wiring.
+  - `shared` — taxonomy VOs, contract traits (report formatter protocol, report formatter aggregate).
+  - `code-analysis` — code analysis aggregate for text formatter delegation.
+  - `cli-commands` — consumed via report formatter aggregate from CLI container wiring.
 - **External**:
   - `serde_json` — JSON serialization for JSON and SARIF formatters.
   - No other external dependencies — formatters are self-contained.
 
 ## Non-functional Requirements (Detailed)
 
-- **Performance**: Pre-allocated string capacity based on result count to minimize reallocation. Text formatter: `256 + results.len() * 32`. JUnit formatter: `total * 256`.
-- **Memory**: No heap allocation beyond output string — formatters are stateless except `TextFormatter` which holds an `Arc<dyn ICodeAnalysisAggregate>`.
+- **Performance**: Pre-allocated string capacity based on result count to minimize reallocation.
+- **Memory**: No heap allocation beyond output string — formatters are stateless except text formatter which holds a reference to the code analysis aggregate.
 - **Correctness**: SARIF output matches OASIS SARIF 2.1.0 schema. JUnit XML is valid XML with proper escaping. JSON output is valid and pretty-printed.
-- **Thread Safety**: All formatters implement `Send + Sync` via trait bounds. `Arc<dyn IReportFormatterProtocol>` allows concurrent access.
-- **Extensibility**: New formats added by implementing `IReportFormatterProtocol` and adding variant to `Format` enum.
+- **Thread Safety**: All formatters implement Send + Sync via trait bounds.
+- **Extensibility**: New formats added by implementing the report formatter protocol and adding variant to the Format enum.
 
 ## Test Scenarios / QA Checklist
 
@@ -251,10 +251,10 @@ JUnit Output Structure
 
 ## Assumptions & Constraints
 
-- All formatters are infallible — they cannot return errors (only `DisplayContent`).
-- `ScanReport` is the single input type for all formatters.
-- Format routing is determined at compile time via exhaustive match on `Format` enum.
-- Text formatter depends on `ICodeAnalysisAggregate` for `format_report()` — other formatters are stateless.
+- All formatters are infallible — they cannot return errors (only display content).
+- Scan report is the single input type for all formatters.
+- Format routing is determined at compile time via exhaustive match on Format enum.
+- Text formatter depends on code analysis aggregate for detailed formatting — other formatters are stateless.
 - SARIF output uses the OASIS SARIF 2.1.0 schema — not earlier versions.
 - JUnit XML follows the standard JUnit schema compatible with CI/CD parsers.
 
@@ -267,8 +267,8 @@ JUnit Output Structure
 | DisplayContent | Semantic VO wrapping formatted string output |
 | LintResult | Individual violation finding with file, line, code, severity, message |
 | ScanReport | Aggregated results + diagnostics from a full pipeline run |
-| IReportFormatterProtocol | Trait for individual format implementations (text, json, sarif, junit) |
-| IReportFormatterAggregate | Trait for the orchestrator that routes to the correct formatter |
+| Report Formatter Protocol | Interface for individual format implementations (text, json, sarif, junit) |
+| Report Formatter Aggregate | Interface for the orchestrator that routes to the correct formatter |
 
 ## Reference
 

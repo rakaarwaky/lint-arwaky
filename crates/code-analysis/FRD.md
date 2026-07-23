@@ -6,17 +6,19 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                    CodeAnalysisOrchestrator                               │
+│                   The code analysis orchestrator                         │
 │  (agent layer — collects files, runs checks, formats reports)            │
 ├──────────┬──────────┬──────────┬──────────┬──────────┬─────────────────┤
-│ ArchLine │ Mandatory│ Bypass   │ Dead     │ Code     │ Cargo.toml      │
-│ Checker  │ Def      │ Checker  │ Inher.   │ Dupl.    │ Bypass          │
-│ AES301/  │ Checker  │ AES304   │ Checker  │ Analyzer │ Checker         │
-│ AES302   │ AES303   │          │ AES303   │ AES305   │ AES304          │
+│ Arch.    │ Mandatory│ Bypass   │ Dead     │ Code     │ Cargo.toml      │
+│ Line     │ Def.     │ Checker  │ Inher.   │ Dupl.    │ Bypass          │
+│ Checker  │ Checker  │ AES304   │ Checker  │ Analyzer │ Checker         │
+│ AES301/  │ AES303   │          │ AES303   │ AES305   │ AES304          │
+│ AES302   │          │          │          │          │                 │
 ├──────────┴──────────┴──────────┴──────────┴──────────┴─────────────────┤
 │ Shared utilities: file reader, bypass detector, language mapper,         │
 │ column index, compliance score, code duplication detector                │
-│ Config: ArchitectureConfig → per-rule thresholds, forbidden patterns     │
+│ Config: the architecture configuration → per-rule thresholds,            │
+│ forbidden patterns                                                      │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -28,12 +30,12 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 - **Input**: Source file path + content
 - **Output**: AES301 diagnostic if line count exceeds maximum
 - **Business Rules**:
-  - Max line count is read from `LayerDefinition.code_analysis.max_lines.value`
+  - Max line count is read from the layer definition's code analysis configuration
   - Default max: 1000 lines (configurable per rule in YAML)
   - Applies to: Rust, Python, TypeScript, JavaScript source files
   - Barrel files (`mod.rs`, `__init__.py`) are skipped
   - Files in the layer's exception list are skipped
-  - If no `LayerDefinition` is provided, the check is skipped
+  - If no layer definition is provided, the check is skipped
 - **Edge Cases**:
   - Files with long comments or docstrings still count all lines including blank lines
   - Generated code — no special exclusion; the rule applies uniformly
@@ -46,7 +48,7 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 - **Input**: Source file path + content
 - **Output**: AES302 diagnostic if line count is below minimum
 - **Business Rules**:
-  - Min line count is read from `LayerDefinition.code_analysis.min_lines.value`
+  - Min line count is read from the layer definition's code analysis configuration
   - Default min: 10 lines
   - Applies to: Rust, Python, TypeScript, JavaScript source files
   - Barrel files and exception files are skipped
@@ -89,7 +91,7 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
   - **Language-scoped patterns**: Python `raise NotImplementedError` / `assert false`; JS/TS `throw new Error(...)` / `throw new TypeError(...)`, etc.
   - **Cargo.toml bypass**: `workspace.lints.clippy` or `lints.clippy` sections with `level = "allow"` values
   - `#[cfg(test)]` blocks and `static Lazy<Regex>` multiline initializations are skipped
-  - Patterns are read from `ArchitectureConfig.code_analysis.forbidden_bypass.values` (YAML-configurable)
+  - Patterns are read from the architecture configuration's forbidden bypass settings (YAML-configurable)
   - Fallback default pattern list applied if config is empty
 - **Edge Cases**:
   - Bypass tokens inside string literals or char literals — not flagged (byte-level position check)
@@ -136,24 +138,23 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 ## Data Model / Entity Relationship
 
 ```
-CodeAnalysisRuleVO {
-    rule_code: String            (e.g., "AES301")
-    max_lines: Option<u32>       (file too large threshold)
-    min_lines: Option<u32>       (file too short / duplication window)
-    threshold_pct: f64           (duplication threshold percentage)
-}
+Code analysis rule (value object)
+  - rule code (e.g., "AES301")
+  - max lines threshold (file too large)
+  - min lines threshold (file too short / duplication window)
+  - duplication threshold percentage
 
-AesCodeAnalysisViolation (enum)
-  ├── FileTooLarge { reason }
-  ├── FileTooShort { reason }
-  ├── MandatoryClassDefinition { reason }
-  ├── DeadInheritance { reason }
-  ├── BypassComment { reason }
-  ├── UnwrapExpect { reason }
-  ├── Panic { reason }
-  ├── Todo { reason }
-  ├── Unimplemented { reason }
-  └── CodeDuplication { reason: Option<LintMessage> }
+Code analysis violation (enum)
+  ├── File too large variant { reason }
+  ├── File too short variant { reason }
+  ├── Mandatory class definition variant { reason }
+  ├── Dead inheritance variant { reason }
+  ├── Bypass comment variant { reason }
+  ├── Unwrap/expect variant { reason }
+  ├── Panic variant { reason }
+  ├── Todo variant { reason }
+  ├── Unimplemented variant { reason }
+  └── Code duplication variant { optional lint message }
 
 Diagnostic / LintResult {
     file: FilePath
@@ -164,34 +165,34 @@ Diagnostic / LintResult {
 }
 
 Language (enum) — Python | JavaScript | TypeScript | Rust | Unknown
-ViolationKind (enum) — BypassComment | UnwrapExpect | Panic | Todo | Unimplemented
+Violation kind (enum) — BypassComment | UnwrapExpect | Panic | Todo | Unimplemented
 ```
 
 ## API Contract
 
 | Function | Input | Output | Description |
 | --- | --- | --- | --- |
-| `ArchLineChecker::check_line_counts()` | file, definition, content, violations | Mutates violations | Check AES301 (max) and AES302 (min) line counts |
-| `MandatoryDefinitionChecker::check_mandatory_class_definition()` | file, definition, content, violations | Mutates violations | Check AES303 — file must declare at least one primary symbol |
-| `MandatoryDefinitionChecker::check_dead_inheritance()` | file, content, violations | Mutates violations | Check AES303 — detect empty unit structs, empty classes |
-| `BypassChecker::check_bypass_comments()` | file, content, violations | Mutates violations | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
-| `BypassChecker::check_cargo_toml()` | content, violations | Mutates violations | Check AES304 — detect Cargo.toml clippy allow bypass |
-| `CodeDuplicationAnalyzer::check_file_similarity_entries()` | entries, min_lines, threshold_pct | Vec<(String, Violation)> | Check AES305 — file-level similarity analysis |
-| `CodeAnalysisOrchestrator::run_all_checks()` | config, files, root_dir | Vec<LintResult> | Run all AES301–305 checks on workspace files |
-| `CodeAnalysisOrchestrator::format_report()` | results, project_root | String | Format compliance report |
-| `has_critical()` | results | bool | Check if any CRITICAL severity violations exist |
-| `compute_score()` | results | f64 | Calculate compliance score |
+| The architecture line checker's line count check method | file, definition, content, violations | Mutates violations | Check AES301 (max) and AES302 (min) line counts |
+| The mandatory definition checker's class definition check method | file, definition, content, violations | Mutates violations | Check AES303 — file must declare at least one primary symbol |
+| The mandatory definition checker's dead inheritance check method | file, content, violations | Mutates violations | Check AES303 — detect empty unit structs, empty classes |
+| The bypass checker's bypass comment detection method | file, content, violations | Mutates violations | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
+| The bypass checker's Cargo.toml check method | content, violations | Mutates violations | Check AES304 — detect Cargo.toml clippy allow bypass |
+| The code duplication analyzer's file similarity check method | entries, min lines, threshold percentage | List of similarity violations | Check AES305 — file-level similarity analysis |
+| The code analysis orchestrator's main check runner | config, files, root directory | List of lint results | Run all AES301–305 checks on workspace files |
+| The code analysis orchestrator's report formatter | results, project root | Formatted string | Format compliance report |
+| Check for critical violations | results | Boolean | Check if any CRITICAL severity violations exist |
+| Calculate compliance score | results | Score value | Calculate compliance score |
 
 ## Integration Points
 
 - **Internal**:
-  - `shared::config_system` — reads `ArchitectureConfig` YAML for per-rule thresholds, forbidden bypass patterns, ignored paths
-  - `shared::taxonomy_definition_vo` — `LayerDefinition` for min/max lines, mandatory class toggle, exception lists
-  - `shared::code_analysis::utility_file_reader` — reads files with 2 MiB size limit
-  - `shared::code_analysis::utility_bypass_detector` — word-boundary matching, string/char position checks, cfg(test) skip logic
-  - `shared::code_analysis::utility_language_mapper` — detects source language from file extension
-  - `shared::code_analysis::utility_code_duplication_detector` — window normalization, hash-based dedup
-  - `shared::common::utility_compliance_score` — compliance score calculation
+  - The configuration system in the shared crate — reads architecture configuration YAML for per-rule thresholds, forbidden bypass patterns, ignored paths
+  - The taxonomy definitions in the shared crate — layer definition for min/max lines, mandatory class toggle, exception lists
+  - The file reading utility in the shared crate — reads files with 2 MiB size limit
+  - The bypass detection utility in the shared crate — word-boundary matching, string/char position checks, cfg(test) skip logic
+  - The language mapping utility in the shared crate — detects source language from file extension
+  - The code duplication detection utility in the shared crate — window normalization, hash-based dedup
+  - The compliance score utility in the shared crate — compliance score calculation
 - **External**: None
 
 ## Non-functional Requirements (Detailed)
@@ -227,7 +228,7 @@ ViolationKind (enum) — BypassComment | UnwrapExpect | Panic | Todo | Unimpleme
 
 ## Assumptions & Constraints
 
-- Rules are configurable via YAML (ArchitectureConfig); default thresholds apply when config values are absent
+- Rules are configurable via YAML (the architecture configuration); default thresholds apply when config values are absent
 - File reading uses a 2 MiB size limit to prevent memory exhaustion
 - Duplicate detection uses hash-based window comparison (not AST-level)
 - Bypass detection is language-aware (Rust, Python, JavaScript, TypeScript each have language-specific patterns)

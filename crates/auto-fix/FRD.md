@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from `code-analysis`, filters violations by fixable error code, and writes corrected files back to disk. Only removal operations are automated — no code is added or modified. The crate follows the AES 7-layer architecture: `LintFixProcessor` (capabilities) implements `IFixProtocol`, `FixOrchestrator` (agent) delegates to the protocol, and `AutoFixContainer` (root) wires dependencies.
+The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from the analysis crate, filters violations by fixable error code, and writes corrected files back to disk. Only removal operations are automated — no code is added or modified. The crate follows the AES 7-layer architecture: the fix processor (capabilities) implements the fix protocol, the fix orchestrator (agent) delegates to the protocol, and the auto-fix container (root) wires dependencies.
 
 ## Functional Requirements
 
@@ -100,7 +100,7 @@ FixResult (output)
 
 FixApplied (event, emitted per fix)
   ├── path: FilePath
-  ├── adapter: AdapterName ("lint-fix-orchestrator")
+  ├── adapter: adapter name ("fix-orchestrator")
   ├── error_code: ErrorCode
   └── changes: Count
 ```
@@ -109,24 +109,24 @@ FixApplied (event, emitted per fix)
 
 | Function | Input | Output | Description |
 |----------|-------|--------|-------------|
-| `LintFixProcessor::execute(path)` | `&FilePath` | `FixResult` | Run linter, filter fixable violations, apply fixes, return summary |
-| `LintFixProcessor::fix_bypass_comments(file_path, line)` | `&str, LineNumber` | `bool` | Remove or replace bypass comment at specified line |
-| `LintFixProcessor::fix_unused_import(file_path, line)` | `&str, LineNumber` | `bool` | Remove unused import at specified line |
-| `LintFixProcessor::report_non_fixable(violations)` | `&[LintResult]` | `Vec<LintMessage>` | List violations requiring manual fix |
-| `FixOrchestrator::run_fix(path)` | `&FilePath` | `FixResult` | Delegate to IFixProtocol::execute |
-| `FixOrchestrator::manual_report(violations)` | `&[LintResult]` | `Vec<String>` | Delegate to report_non_fixable |
-| `FileAdapter::read_file(path)` | `&FilePath` | `Option<ContentString>` | Read file content |
-| `FileAdapter::write_file(path, content)` | `&FilePath, &ContentString` | `bool` | Write content to file |
-| `FileAdapter::path_exists(path)` | `&FilePath` | `bool` | Check if file exists |
-| `AutoFixContainer::orchestrator(dry_run)` | `bool` | `Arc<dyn LintFixOrchestratorAggregate>` | Wire and return orchestrator |
+| The fix processor's execute method | file path | fix result | Run linter, filter fixable violations, apply fixes, return summary |
+| The fix processor's bypass comment fix method | file path, line number | bool | Remove or replace bypass comment at specified line |
+| The fix processor's unused import fix method | file path, line number | bool | Remove unused import at specified line |
+| The fix processor's non-fixable reporting method | violation list | lint message list | List violations requiring manual fix |
+| The fix orchestrator's run fix method | file path | fix result | Delegate to the fix protocol's execute method |
+| The fix orchestrator's manual report method | violation list | string list | Delegate to non-fixable reporting |
+| The file adapter's read file method | file path | optional content | Read file content |
+| The file adapter's write file method | file path, content | bool | Write content to file |
+| The file adapter's path existence check | file path | bool | Check if file exists |
+| The auto-fix container's orchestrator factory | dry run flag | shared orchestrator reference | Wire and return orchestrator |
 
 ## Integration Points
 
 - **Internal**:
-  - `code-analysis` crate: consumed via `ICodeAnalysisAggregate` to run linting and obtain violations.
-  - `shared` crate: VOs (`FilePath`, `LintResult`, `FixResult`, `ErrorCode`, `Count`), contracts (`IFixProtocol`, `IFileAdapterProtocol`, `LintFixOrchestratorAggregate`), events (`FixApplied`), utilities (`utility_file_handler`, `utility_symbol_renamer`).
+  - The analysis crate: consumed via the analysis aggregate to run linting and obtain violations.
+  - The shared crate: VOs (`FilePath`, `LintResult`, `FixResult`, `ErrorCode`, `Count`), contracts (the fix protocol, the file adapter protocol, the fix orchestrator aggregate), events (fix applied events), utilities (the file handler utility, the symbol renaming utility).
 - **External**:
-  - Filesystem: reads and writes source files via `utility_file_handler`.
+  - Filesystem: reads and writes source files via the file handler utility.
 
 ## Non-functional Requirements (Detailed)
 
@@ -134,7 +134,7 @@ FixApplied (event, emitted per fix)
 - **Memory**: File content is loaded entirely into memory. Large files (>10MB) may cause high memory usage.
 - **Accuracy**: Fixes must never break code functionality. Only deterministic, safe removals are applied.
 - **Idempotency**: Running auto-fix repeatedly on the same file produces no further changes.
-- **Concurrency**: Processor uses `Arc` for shared linter reference; individual fix operations are not synchronized (single-threaded file access assumed).
+- **Concurrency**: The fix processor uses shared references for the linter; individual fix operations are not synchronized (single-threaded file access assumed).
 
 ## Test Scenarios / QA Checklist
 
@@ -154,7 +154,7 @@ FixApplied (event, emitted per fix)
 
 ## Assumptions & Constraints
 
-- The linter (`ICodeAnalysisAggregate`) correctly identifies AES203, AES304, and AES101 violations with accurate line numbers.
+- The linter (the analysis aggregate) correctly identifies AES203, AES304, and AES101 violations with accurate line numbers.
 - Source files are UTF-8 encoded.
 - Files are not modified concurrently by external processes during fix execution.
 - The `dry_run` flag is set at construction time and cannot be changed per invocation.
@@ -168,7 +168,7 @@ FixApplied (event, emitted per fix)
 - **AES304**: Bypass comment violation (`unwrap()`, `noqa`, `type: ignore`, `#[allow(...)]`, `panic!`).
 - **Dry-run**: A mode where the fix pipeline reports what would be fixed without modifying files.
 - **Fixable violation**: A violation that can be corrected mechanically without semantic analysis.
-- **IFixProtocol**: The capabilities-layer protocol for applying fixes.
+- **Fix protocol**: The capabilities-layer protocol for applying fixes.
 
 ## Reference
 

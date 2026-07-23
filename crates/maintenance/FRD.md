@@ -6,15 +6,15 @@ The maintenance crate provides operational health and upkeep commands for the li
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│            MaintenanceCommandsOrchestrator            │
+│           the maintenance orchestrator                │
 │  ┌────────────────┐     ┌─────────────────────────┐  │
-│  │  doctor()      │     │  MaintenanceChecker      │  │
-│  │  stats()       │     │  (toolchain diagnose,    │  │
-│  │  clean()       │     │   security scan,         │  │
-│  │  update()      │     │   dependency report)     │  │
+│  │  doctor        │     │  the maintenance checker │  │
+│  │  stats         │     │  (toolchain diagnose,    │  │
+│  │  clean         │     │   security scan,         │  │
+│  │  update        │     │   dependency report)     │  │
 │  └────────────────┘     └─────────────────────────┘  │
 │                          ┌─────────────────────────┐  │
-│                          │  ToolExecutorAdapter     │  │
+│                          │  the tool executor       │  │
 │                          │  (subprocess execution)  │  │
 │                          └─────────────────────────┘  │
 └──────────────────────────────────────────────────────┘
@@ -25,29 +25,29 @@ The maintenance crate provides operational health and upkeep commands for the li
 ### FR-001: Environment Health Check (doctor)
 - **Description**: Verify that required linter tools are installed and configuration files exist in the project root.
 - **Input**: None (operates on current working directory).
-- **Output**: `DoctorResultVO` containing `python_version`, `is_installed`, `config_found`, `adapter_statuses` (HashMap), `issues` (Vec<ErrorMessage>), `healthy` (ComplianceStatus).
+- **Output**: Doctor result containing python version, installation status, config presence, adapter statuses (map), issues list, and overall health status.
 - **Business Rules**:
   - Checks for config files: `.lint_arwaky.json`, `lint_arwaky.config.yaml`, `pyproject.toml`.
   - Checks adapter availability for: `ruff`, `mypy`, `bandit`, `radon` via `which` command.
-  - Checks `lint-arwaky` pip package installation via `pip show`.
+  - Checks lint-arwaky pip package installation via `pip show`.
   - If no config file found, adds "No configuration file found" issue.
   - If adapter not found, adds "Linter adapter '<name>' is not installed" issue.
-  - `healthy` is true only if `issues` is empty.
+  - Health is true only if issues list is empty.
 - **Edge Cases**:
-  - `pip show` command fails — `is_installed` set to false.
+  - `pip show` command fails — installation status set to false.
   - `which` command fails for adapter — status set to "MISSING".
   - Config files exist but are empty — still counted as found.
-- **Error Handling**: No error thrown; issues collected in `DoctorResultVO.issues`.
+- **Error Handling**: No error thrown; issues collected in the result's issues list.
 
 ### FR-002: Project Statistics (stats)
 - **Description**: Count Python files and test files in a project, compute test-to-file ratio.
-- **Input**: `FilePath` — project root path.
-- **Output**: `MaintenanceStatsVO` containing `project_path`, `total_files`, `test_files`, `test_ratio`, `python_files`.
+- **Input**: Project root path.
+- **Output**: Maintenance stats containing project path, total files, test files, test ratio, and python files.
 - **Business Rules**:
   - Recursively walks directory tree excluding: `target/`, `.git/`, `node_modules/`, `.venv/`.
   - Counts files with `.py` extension.
   - Test files are identified by filename prefix `test_`.
-  - `test_ratio = test_files / total_files` (0.0 if no files).
+  - Test ratio = test files / total files (0.0 if no files).
 - **Edge Cases**:
   - Empty project (no `.py` files) — all counts 0, ratio 0.0.
   - Symlinks — followed if they point to directories.
@@ -61,12 +61,12 @@ The maintenance crate provides operational health and upkeep commands for the li
 - **Business Rules**:
   - Targets: `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `__pycache__`, `.lint_arwaky_cache`.
   - Recursively searches from CWD, excluding `target/`, `.git/`, `node_modules/`.
-  - Uses `std::fs::remove_dir_all` for each found cache directory.
+  - Uses filesystem directory removal for each found cache directory.
 - **Edge Cases**:
   - Cache directory doesn't exist — no-op.
-  - Permission denied on cache directory — `remove_dir_all` returns Err, silently ignored.
+  - Permission denied on cache directory — removal fails, silently ignored.
   - CWD is inside `target/` — still searches recursively.
-- **Error Handling**: `remove_dir_all` failures are silently ignored (returns Ok(())).
+- **Error Handling**: Directory removal failures are silently ignored.
 
 ### FR-004: Tool Update (update)
 - **Description**: Upgrade Python linter tools via pip.
@@ -74,141 +74,141 @@ The maintenance crate provides operational health and upkeep commands for the li
 - **Output**: None (side effect: pip install --upgrade executed).
 - **Business Rules**:
   - Targets: `ruff`, `mypy`, `bandit`, `radon`.
-  - Each tool upgraded independently via `pip install --upgrade <tool>`.
+  - Each tool upgraded independently via pip install --upgrade command.
   - Failure of one tool does not prevent others from being upgraded.
 - **Edge Cases**:
-  - pip not installed — `Command::new("pip")` fails, silently ignored.
+  - pip not installed — command fails, silently ignored.
   - Tool already at latest version — pip exits successfully (no-op).
   - Network unavailable — pip fails, silently ignored.
-- **Error Handling**: All `Command::output()` failures silently ignored.
+- **Error Handling**: All subprocess output failures silently ignored.
 
 ### FR-005: Diagnose Toolchain
 - **Description**: Check installation status and version of Rust, Python, JavaScript, and VCS tools.
 - **Input**: None.
-- **Output**: `ToolchainDiagnostics` containing `rust_tools`, `python_tools`, `js_tools`, `vcs_tools` (each Vec<ToolStatus>), `binary_path` (String).
+- **Output**: Toolchain diagnostics containing rust tools, python tools, js tools, vcs tools (each a list of tool statuses), and binary path (string).
 - **Business Rules**:
-  - Rust tools: `cargo`, `clippy`, `rustfmt` — all required (`required: true`).
+  - Rust tools: `cargo`, `clippy`, `rustfmt` — all required.
   - Python tools: `python3`, `ruff`, `mypy`, `bandit` — all optional.
   - JS tools: `node`, `eslint`, `prettier`, `tsc` — all optional; local `node_modules/.bin/` preferred over global.
   - VCS tools: `git` (required), `jj` (optional).
   - Tool status: `OK` (found), `WARN` (optional, not found), `FAIL` (required, not found).
   - Version extracted from first line of stdout.
 - **Edge Cases**:
-  - Tool installed but `--version` produces no output — version set to empty string.
+  - Tool installed but version command produces no output — version set to empty string.
   - Local `node_modules/.bin/<tool>` exists — reported as "local" version.
   - Multiple versions installed — only the first found is reported.
 - **Error Handling**: Failed tool checks return status without crashing.
 
 ### FR-006: Security Scan
 - **Description**: Run dependency vulnerability scanning using cargo-audit (Rust) or bandit (Python).
-- **Input**: `FilePath` — project root path.
-- **Output**: `SecurityScanReport` containing `language`, `tool_name`, `findings` (Vec<SecurityFinding>), `tool_installed` (bool).
+- **Input**: Project root path.
+- **Output**: Security scan report containing language, tool name, findings list, and tool installed status.
 - **Business Rules**:
   - If `Cargo.lock` exists → run `cargo audit --json` (Rust project).
   - Otherwise → run `bandit -r --format json <root>` (Python project).
-  - Parse JSON output to extract findings with `severity`, `test_id`, `file`, `line`, `issue`.
-  - `tool_installed` is always `true` in current implementation.
+  - Parse JSON output to extract findings with severity, test id, file, line, and issue description.
+  - Tool installed status is always true in current implementation.
 - **Edge Cases**:
   - Neither `Cargo.lock` nor Python files exist — runs bandit on the directory (may find nothing).
   - cargo-audit not installed — command fails, returns empty findings.
   - JSON parse failure — returns empty findings list.
-  - Advisory without CVE ID — `test_id` set to "unknown".
+  - Advisory without CVE ID — test id set to "unknown".
 - **Error Handling**: Parse failures result in empty findings; no error propagated.
 
 ### FR-007: Dependency Report
 - **Description**: Parse project dependency files and list direct and transitive dependencies.
-- **Input**: `FilePath` — project root path.
-- **Output**: `Result<DependencyReport, String>` containing `language`, `dependencies` (Vec<DependencyInfo>).
+- **Input**: Project root path.
+- **Output**: Result containing language and dependencies list.
 - **Business Rules**:
   - Rust projects: parse `Cargo.lock` + `Cargo.toml` to classify deps as "direct" or "transitive".
   - Python projects: parse `pyproject.toml` or `requirements.txt` (fallback chain).
-  - Each dependency includes `name`, `version`, `dep_type`.
+  - Each dependency includes name, version, and dependency type.
 - **Edge Cases**:
-  - No dependency files found (no Cargo.lock, pyproject.toml, requirements.txt) → returns `Err("No dependency files found...")`.
+  - No dependency files found (no Cargo.lock, pyproject.toml, requirements.txt) → returns error.
   - Cargo.toml has no `[dependencies]` section — all Cargo.lock entries classified as transitive.
   - requirements.txt has unpinned versions — version set to empty string.
   - pyproject.toml has comments or section headers — skipped during parsing.
-- **Error Handling**: File read failures propagate as `Err(String)`.
+- **Error Handling**: File read failures propagate as error.
 
 ## Data Model / Entity Relationship
 
 ```
-DoctorResultVO
-├── python_version: DescriptionVO
-├── is_installed: ComplianceStatus
-├── config_found: FilePathList
-├── adapter_statuses: HashMap<AdapterName, String>
-├── issues: Vec<ErrorMessage>
-└── healthy: ComplianceStatus
+Doctor Result
+├── python_version: description
+├── is_installed: compliance status
+├── config_found: list of config file paths
+├── adapter_statuses: map of adapter name to status string
+├── issues: list of error messages
+└── healthy: compliance status
 
-MaintenanceStatsVO
-├── project_path: FilePath
-├── total_files: Count
-├── test_files: Count
-├── test_ratio: Score
-└── python_files: Count
+Maintenance Stats
+├── project_path: file path
+├── total_files: count
+├── test_files: count
+├── test_ratio: score
+└── python_files: count
 
-ToolchainDiagnostics
-├── rust_tools: Vec<ToolStatus>
-├── python_tools: Vec<ToolStatus>
-├── js_tools: Vec<ToolStatus>
-├── vcs_tools: Vec<ToolStatus>
-└── binary_path: String
+Toolchain Diagnostics
+├── rust_tools: list of tool statuses
+├── python_tools: list of tool statuses
+├── js_tools: list of tool statuses
+├── vcs_tools: list of tool statuses
+└── binary_path: string
 
-ToolStatus
-├── name: String
-├── status: String ("OK" | "WARN" | "FAIL")
-└── version: String
+Tool Status
+├── name: string
+├── status: string ("OK" | "WARN" | "FAIL")
+└── version: string
 
-SecurityScanReport
-├── language: String
-├── tool_name: String
-├── findings: Vec<SecurityFinding>
-└── tool_installed: bool
+Security Scan Report
+├── language: string
+├── tool_name: string
+├── findings: list of security findings
+└── tool_installed: boolean
 
-SecurityFinding
-├── severity: String
-├── test_id: String
-├── file: String
+Security Finding
+├── severity: string
+├── test_id: string
+├── file: string
 ├── line: u64
-└── issue: String
+└── issue: string
 
-DependencyReport
-├── language: String
-└── dependencies: Vec<DependencyInfo>
+Dependency Report
+├── language: string
+└── dependencies: list of dependency info
 
-DependencyInfo
-├── name: String
-├── version: String
-└── dep_type: String
+Dependency Info
+├── name: string
+├── version: string
+└── dep_type: string
 ```
 
 ## API Contract
 
 | Function | Input | Output | Description |
 |----------|-------|--------|-------------|
-| `MaintenanceCommandsOrchestrator::doctor()` | — | `DoctorResultVO` | Check environment health: tool installations, config presence. |
-| `MaintenanceCommandsOrchestrator::stats()` | `&FilePath` | `MaintenanceStatsVO` | Count Python files and test files, compute ratio. |
-| `MaintenanceCommandsOrchestrator::clean()` | — | `()` | Remove cache directories from project tree. |
-| `MaintenanceCommandsOrchestrator::update()` | — | `()` | Upgrade Python linter tools via pip. |
-| `MaintenanceCommandsOrchestrator::diagnose_toolchain()` | — | `ToolchainDiagnostics` | Check Rust/Python/JS/VCS tool installations. |
-| `MaintenanceCommandsOrchestrator::run_security_scan()` | `&FilePath` | `SecurityScanReport` | Run cargo-audit or bandit for vulnerability scanning. |
-| `MaintenanceCommandsOrchestrator::run_dependency_report()` | `&FilePath` | `Result<DependencyReport, String>` | Parse and list project dependencies. |
-| `MaintenanceCommandsOrchestrator::cancel()` | `JobId` | `()` | Cancel a running operation (currently no-op). |
-| `MaintenanceChecker::diagnose_toolchain()` | — | `ToolchainDiagnostics` | Business logic for toolchain diagnostics. |
-| `MaintenanceChecker::run_security_scan()` | `&FilePath` | `SecurityScanReport` | Business logic for security scanning. |
-| `MaintenanceChecker::run_dependency_report()` | `&FilePath` | `Result<DependencyReport, String>` | Business logic for dependency reporting. |
-| `ToolExecutorAdapter::run_tool()` | `&str`, `&[&str]` | `ToolOutput` | Run an external tool as subprocess. |
-| `ToolExecutorAdapter::tool_exists()` | `&str` | `bool` | Check if a tool is available via `which`. |
+| the maintenance orchestrator doctor | — | doctor result | Check environment health: tool installations, config presence. |
+| the maintenance orchestrator stats | project path | maintenance stats | Count Python files and test files, compute ratio. |
+| the maintenance orchestrator clean | — | () | Remove cache directories from project tree. |
+| the maintenance orchestrator update | — | () | Upgrade Python linter tools via pip. |
+| the maintenance orchestrator diagnose toolchain | — | toolchain diagnostics | Check Rust/Python/JS/VCS tool installations. |
+| the maintenance orchestrator run security scan | project path | security scan report | Run cargo-audit or bandit for vulnerability scanning. |
+| the maintenance orchestrator run dependency report | project path | result | Parse and list project dependencies. |
+| the maintenance orchestrator cancel | job id | () | Cancel a running operation (currently no-op). |
+| the maintenance checker diagnose toolchain | — | toolchain diagnostics | Business logic for toolchain diagnostics. |
+| the maintenance checker run security scan | project path | security scan report | Business logic for security scanning. |
+| the maintenance checker run dependency report | project path | result | Business logic for dependency reporting. |
+| the tool executor run tool | tool name, args | tool output | Run an external tool as subprocess. |
+| the tool executor tool exists | tool name | boolean | Check if a tool is available via `which`. |
 
 ## Integration Points
 
 - **Internal**:
-  - `shared::project_setup::MaintenanceCommandsAggregate` — aggregate trait the orchestrator implements.
-  - `shared::project_setup::IMaintenanceCheckerProtocol` — protocol interface for checker capabilities.
-  - `shared::project_setup::IToolExecutorProtocol` — protocol interface for subprocess execution.
-  - `shared::common::utility_command_runner` — shared command execution utilities.
-  - `shared::maintenance::utility_dependency_io` — shared dependency file I/O utilities.
+  - The maintenance commands aggregate in the shared crate — aggregate trait the orchestrator implements.
+  - The maintenance checker protocol in the shared crate — protocol interface for checker capabilities.
+  - The tool executor protocol in the shared crate — protocol interface for subprocess execution.
+  - The command runner utility in the shared crate — shared command execution utilities.
+  - The dependency I/O utility in the shared crate — shared dependency file I/O utilities.
 - **External**:
   - `cargo audit --json` — Rust dependency vulnerability scanning.
   - `bandit -r --format json` — Python security vulnerability scanning.
@@ -224,22 +224,22 @@ DependencyInfo
 
 ## Test Scenarios / QA Checklist
 
-- [ ] `doctor()` with all tools installed — returns `healthy: true`, all statuses "OK".
-- [ ] `doctor()` with missing ruff — returns issue "Linter adapter 'ruff' is not installed".
-- [ ] `doctor()` with no config file — returns issue "No configuration file found".
-- [ ] `stats()` on Python project — correct file count and test ratio.
-- [ ] `stats()` on empty directory — returns all zeros.
-- [ ] `clean()` removes `.pytest_cache` directories from project.
-- [ ] `clean()` skips `target/` and `.git/` directories.
-- [ ] `update()` upgrades ruff, mypy, bandit, radon independently.
-- [ ] `diagnose_toolchain()` with cargo installed — reports "OK".
-- [ ] `diagnose_toolchain()` with missing clippy — reports "FAIL" (required).
-- [ ] `run_security_scan()` on Rust project with Cargo.lock — runs cargo-audit.
-- [ ] `run_security_scan()` on Python project — runs bandit.
-- [ ] `run_dependency_report()` on Rust project — parses Cargo.lock + Cargo.toml.
-- [ ] `run_dependency_report()` with no dependency files — returns `Err`.
-- [ ] `run_dependency_report()` on Python project with pyproject.toml — parses dependencies.
-- [ ] `tool_exists()` returns true for `cargo`, false for nonexistent tool.
+- [ ] Doctor with all tools installed — returns healthy: true, all statuses "OK".
+- [ ] Doctor with missing ruff — returns issue "Linter adapter 'ruff' is not installed".
+- [ ] Doctor with no config file — returns issue "No configuration file found".
+- [ ] Stats on Python project — correct file count and test ratio.
+- [ ] Stats on empty directory — returns all zeros.
+- [ ] Clean removes `.pytest_cache` directories from project.
+- [ ] Clean skips `target/` and `.git/` directories.
+- [ ] Update upgrades ruff, mypy, bandit, radon independently.
+- [ ] Diagnose toolchain with cargo installed — reports "OK".
+- [ ] Diagnose toolchain with missing clippy — reports "FAIL" (required).
+- [ ] Security scan on Rust project with Cargo.lock — runs cargo-audit.
+- [ ] Security scan on Python project — runs bandit.
+- [ ] Dependency report on Rust project — parses Cargo.lock + Cargo.toml.
+- [ ] Dependency report with no dependency files — returns error.
+- [ ] Dependency report on Python project with pyproject.toml — parses dependencies.
+- [ ] Tool exists returns true for `cargo`, false for nonexistent tool.
 
 ## Assumptions & Constraints
 

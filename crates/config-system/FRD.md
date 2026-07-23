@@ -5,29 +5,29 @@
 ```
 ┌─────────────────────────────────────────┐
 │           Surface Layer                 │
-│  surface_config_command.rs              │
+│  config command surface handler         │
 ├─────────────────────────────────────────┤
 │           Agent Layer                   │
-│  agent_config_orchestrator.rs           │
+│  config agent orchestrator              │
 ├─────────────────────────────────────────┤
 │        Capabilities Layer               │
-│  capabilities_yaml_reader.rs            │
-│  capabilities_workspace_detector.rs     │
-│  capabilities_rules_validator.rs        │
-│  capabilities_parser_provider.rs        │
+│  YAML config reader                     │
+│  workspace detector                     │
+│  rules validator                        │
+│  parser provider                        │
 ├─────────────────────────────────────────┤
 │         Contract Layer                  │
-│  contract_*.rs (protocols + aggregate)  │
+│  protocol & aggregate interfaces        │
 ├─────────────────────────────────────────┤
 │         Taxonomy Layer                  │
-│  taxonomy_*.rs (VOs, errors)            │
+│  value objects, error types             │
 ├─────────────────────────────────────────┤
 │         Utility Layer                   │
-│  utility_config_*.rs                    │
+│  config utility functions               │
 └─────────────────────────────────────────┘
 ```
 
-The config-system crate manages lint-arwaky configuration: loading, parsing, validation, and workspace detection. It reads `lint_arwaky.config.*.yaml` files from multiple priority sources, merges them with embedded defaults, and provides a unified configuration facade for all other lint crates via `IConfigOrchestratorAggregate`.
+The config-system crate manages lint-arwaky configuration: loading, parsing, validation, and workspace detection. It reads config files from multiple priority sources, merges them with embedded defaults, and provides a unified configuration facade for all other lint crates via the config orchestrator aggregate.
 
 ## Functional Requirements
 
@@ -38,13 +38,13 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Business Rules**:
   - Priority order: (1) project-root YAML, (2) parent directory YAML (up to depth 3), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
   - First match wins — deeper/more specific configs take priority over shallower ones.
-  - Config files exceeding 1 MiB (`MAX_CONFIG_FILE_SIZE`) are rejected.
+  - Config files exceeding the maximum allowed size (1 MiB) are rejected.
   - Symlinks pointing outside the project root are rejected via canonical path resolution.
 - **Edge Cases**:
   - No config file exists at any level → returns `None`, caller falls back to embedded defaults.
-  - YAML parse failure → logs warning via `eprintln!`, continues searching next priority level.
+  - YAML parse failure → logs warning to stderr, continues searching next priority level.
   - Non-NotFound I/O error (e.g., permission denied) → logs warning, continues searching.
-  - Rules with empty `conditions: []` are preserved (not dropped).
+  - Rules with empty conditions are preserved (not dropped).
 - **Error Handling**:
   - `InvalidData` error when config file exceeds 1 MiB.
   - `PermissionDenied` error when symlink points outside project root.
@@ -85,14 +85,14 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Business Rules**:
   - Scans for subdirectories under `crates/`, `packages/`, `modules/`.
   - Uses async I/O (`tokio::fs`) for non-blocking filesystem operations.
-  - Concurrency bounded to 8 concurrent workspace loads via `buffered(8)`.
+  - Concurrency bounded to 8 concurrent workspace loads.
   - If root is itself a workspace directory (e.g., `crates/`), returns its direct subdirectories.
   - If root's parent is a workspace directory, returns root as a single-member workspace.
 - **Edge Cases**:
   - No workspace directories found → returns empty vec, prints warning to stderr.
   - Symlink targets outside workspace root → pruned during file collection.
   - I/O error reading a workspace directory → warning logged, skipped.
-- **Error Handling**: `eprintln!` warnings for directory read failures, graceful degradation.
+- **Error Handling**: Warnings for directory read failures, graceful degradation.
 
 ### FR-005: Config Merging and Default Injection
 - **Description**: Merge loaded config with embedded defaults using field-level merge rules.
@@ -100,7 +100,7 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Output**: `ConfigResult` (merged config + source info + warnings)
 - **Business Rules**:
   - **Layers** — concatenated; later definitions override earlier ones for the same layer name.
-  - **Rules** — concatenated; rules are deduplicated by `name` field.
+  - **Rules** — concatenated; rules are deduplicated by name field.
   - **Naming** — merged recursively; non-empty values override defaults.
   - **Ignored paths** — concatenated and deduplicated.
   - Empty arrays/objects in a child config do NOT override parent values.
@@ -132,11 +132,11 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Input**: `cache_key: String` (file path), `source: ConfigSource`
 - **Output**: `ArchitectureConfig` (cached or freshly parsed)
 - **Business Rules**:
-  - Cache is `Mutex<HashMap<String, Arc<ArchitectureConfig>>>` with pre-allocated capacity of 32.
-  - Uses `or_insert_with` to parse only on cache miss.
-  - Thread-safe via `Mutex` with `unwrap_or_else(|e| e.into_inner())` for poisoned lock recovery.
+  - Cache is a thread-safe map with pre-allocated capacity of 32.
+  - Parses only on cache miss.
+  - Thread-safe with poisoned lock recovery.
 - **Edge Cases**:
-  - Poisoned mutex lock → recovers via `into_inner()`.
+  - Poisoned mutex lock → recovers gracefully.
   - Same file path requested concurrently → only one parse occurs.
 - **Error Handling**: Mutex poisoning handled gracefully.
 
@@ -146,8 +146,8 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 - **Output**: `Vec<String>` of ignored path patterns
 - **Business Rules**:
   - Default ignored paths (hardcoded): `target`, `.mimocode`, `.agents`, `node_modules`, `build.rs`, `.git`, `dist`, `build`, `coverage`, `.venv`.
-  - Config-specified ignored paths appended with deduplication via `HashSet`.
-  - Path separators normalized to platform-specific `MAIN_SEPARATOR`.
+  - Config-specified ignored paths appended with deduplication.
+  - Path separators normalized to platform-specific separator.
   - Pre-allocated capacity: 10 defaults + config count.
 - **Edge Cases**:
   - Config specifies a path already in defaults → deduplicated, not added twice.
@@ -250,8 +250,8 @@ ConfigError
 ## Integration Points
 
 - **Internal**:
-  - `shared` crate — taxonomy VOs (`ConfigLanguage`, `ArchitectureConfig`, `ConfigSource`, `ConfigResult`, `WorkspaceInfo`, `ConfigError`), contracts (`IConfigOrchestratorAggregate`, `IConfigReaderProtocol`, `IConfigValidatorProtocol`, `IWorkspaceDetectorProtocol`, `IConfigParserProtocol`), utility functions (`parse_config_yaml`, `default_config_for_language`, `merge_config`).
-  - `config-system` root container (`root_config_system_container.rs`) — wires `ConfigOrchestrator`, `ConfigYamlReader`, `ConfigRulesValidator`, `ConfigParserProvider` via DI.
+  - `shared` crate — taxonomy VOs, contracts (protocol and aggregate interfaces), utility functions.
+  - Config system root container — wires the orchestrator, reader, validator, and parser via dependency injection.
 - **External**:
   - `dirs` crate — XDG config directory resolution.
   - `tokio::fs` — async filesystem I/O for workspace discovery.
@@ -296,13 +296,13 @@ ConfigError
 ## Assumptions & Constraints
 
 - `ConfigLanguage` enum restricts input to exactly Rust, Python, TypeScript — no arbitrary strings allowed.
-- Config file naming follows the `lint_arwaky.config.{lang}.yaml` convention strictly.
+- Config file naming follows a strict convention per language.
 - Workspace structure must follow `crates/`, `packages/`, `modules/` convention.
 - Maximum 8 XDG_CONFIG_DIRS entries; only absolute paths accepted.
 - Maximum config file size: 1 MiB.
 - Workspace discovery concurrency: 8 concurrent loads maximum.
-- YAML parsing uses `serde_yaml_ng` (YAML 1.2).
-- TOML parsing reads only `[tool]` section, not full TOML config.
+- YAML parsing uses a YAML 1.2 parser.
+- TOML parsing reads only the `[tool]` section, not full TOML config.
 
 ## Glossary
 

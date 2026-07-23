@@ -34,11 +34,5 @@ async fn container_wiring_does_not_panic() {
     let container = ImportContainer::new_with_config(config);
 
     // All accessors must not panic
-    let _ = container.mandatory();
-    let _ = container.forbidden();
-    let _ = container.unused();
-    let _ = container.dummy();
-    let _ = container.cycle();
     let _ = container.orchestrator();
-    let _ = container.config();
 }

@@ -5,30 +5,30 @@
 ```
 ┌──────────────────────────────────────────────────┐
 │              Surface Layer                        │
-│  surface_check_command.rs    (check/scan/ci)      │
-│  surface_fix_command.rs      (fix)                │
-│  surface_maintenance_command.rs (doctor/security) │
-│  surface_setup_command.rs    (init/install/mcp)   │
-│  surface_config_command.rs   (config-show)        │
-│  surface_plugin_command.rs   (adapters)           │
-│  surface_git_command.rs      (git-diff)           │
-│  surface_watch_command.rs    (watch)              │
-│  surface_common_command.rs   (CI, path utils)     │
+│  check/scan/ci command surface handler            │
+│  fix command surface handler                      │
+│  doctor/security command surface handler          │
+│  init/install/mcp command surface handler         │
+│  config-show command surface handler              │
+│  adapters command surface handler                 │
+│  git-diff command surface handler                 │
+│  watch command surface handler                    │
+│  CI & path utility handlers                       │
 ├──────────────────────────────────────────────────┤
 │              Agent Layer                          │
-│  agent_analysis_pipeline_orchestrator.rs          │
-│  (IAnalysisPipelineAggregate)                    │
+│  analysis pipeline orchestrator                   │
+│  (analysis pipeline aggregate interface)          │
 ├──────────────────────────────────────────────────┤
 │              Utility Layer                        │
-│  utility_format_output.rs (SARIF/JUnit helpers)   │
-│  utility_path_resolver.rs (workspace root, lang)  │
+│  output format helpers (SARIF/JUnit)              │
+│  path resolver (workspace root, language)         │
 ├──────────────────────────────────────────────────┤
 │              Root Container                       │
-│  root_cli_container.rs (DI wiring)                │
+│  CLI container (DI wiring)                        │
 └──────────────────────────────────────────────────┘
 ```
 
-The cli-commands crate provides the unified command-line interface that drives the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers that parse CLI args and delegate all business logic to agent/orchestration layers. Report formatting is delegated to the `report-formatter` crate via `IReportFormatterAggregate`.
+The cli-commands crate provides the unified command-line interface that drives the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers that parse CLI args and delegate all business logic to agent/orchestration layers. Report formatting is delegated to the report-formatter crate via the report formatter aggregate.
 
 ## Functional Requirements
 
@@ -39,7 +39,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Business Rules**:
   - Runs the complete 6-group analysis pipeline sequentially: code analysis (AES301-305), naming rules (AES101-102), import rules (AES201-205), external adapters (Clippy, Ruff, ESLint), role rules (AES401-406), orphan detection (AES501-506).
   - Results filtered to the target path using canonical path comparison.
-  - Supports `--git-diff` for staged-only scanning via `GitHooksAggregate`.
+  - Supports `--git-diff` for staged-only scanning via the git hooks aggregate.
   - Path validated before scanning — returns exit code 2 if path doesn't exist.
 - **Edge Cases**:
   - Path doesn't exist → error message + exit code 2.
@@ -53,7 +53,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`
 - **Output**: `ExitCode` (0 = clean, 1 = violations, 2 = error)
 - **Business Rules**:
-  - Auto-discovers workspace members via `IConfigOrchestratorAggregate::discover_workspaces()`.
+  - Auto-discovers workspace members via the config orchestrator aggregate.
   - Each workspace member gets isolated analysis with filtered results.
   - `--member <name>` targets a specific workspace member by directory name.
   - In multi-workspace text mode, prints per-member violation summaries with code breakdowns.
@@ -71,7 +71,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Input**: `code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>`, `path: Option<FilePath>`, `threshold: Threshold`
 - **Output**: `ExitCode` (0 = pass, 1 = fail)
 - **Business Rules**:
-  - Computes architecture compliance score via `calc_score()`.
+  - Computes architecture compliance score via the score calculation function.
   - Auto-fails on any CRITICAL violation regardless of score.
   - Compares score against threshold as float comparison (not truncated integer).
   - Prints severity breakdown: CRITICAL / HIGH / MEDIUM / LOW counts.
@@ -88,8 +88,8 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Business Rules**:
   - Runs lint → apply auto-fixes → re-lint to measure improvement.
   - Supports `--dry-run` for preview mode (no changes applied).
-  - Only auto-fixes safe, non-destructive rule violations (AES101 naming, AES203 unused imports, AES304 bypass).
-  - Factory pattern (`fix_orchestrator_factory`) allows DI container to control fix vs dry-run.
+  - Only auto-fixes safe, non-destructive rule violations (naming rules, unused imports, bypass comments).
+  - Factory pattern allows the DI container to control fix vs dry-run.
   - Reports fixed count = before - after.
 - **Edge Cases**:
   - Dry-run mode → skips second scan, prints preview.
@@ -240,9 +240,9 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Input**: `watch_aggregate: Arc<dyn IWatchAggregate>`, `path: Option<FilePath>`
 - **Output**: `ExitCode` (2 = error setting up handler)
 - **Business Rules**:
-  - Creates `WatchConfig` from the given path.
-  - Sets up Ctrl+C signal handler for graceful shutdown via atomic `running` flag.
-  - Delegates to `IWatchAggregate::run()` which blocks until interrupted.
+  - Creates a watch configuration from the given path.
+  - Sets up Ctrl+C signal handler for graceful shutdown via atomic running flag.
+  - Delegates to the watch aggregate run method which blocks until interrupted.
 - **Edge Cases**:
   - Ctrl+C handler setup fails → error message + exit code 2.
   - User presses Ctrl+C → prints "Stopping watcher...", graceful shutdown.
@@ -253,8 +253,8 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Input**: `ScanRequest` (target path, mode, filter, member, format)
 - **Output**: `Result<ScanReport, PipelineError>`
 - **Business Rules**:
-  - Runs linter groups in fixed order: (1) Code analysis, (2-5) Naming, Import, External, Role concurrently via `tokio::join!`, (6) Orphan detection.
-  - Each linter group produces `Vec<LintResult>` merged into single report.
+  - Runs linter groups in fixed order: (1) Code analysis, (2-5) Naming, Import, External, Role concurrently, (6) Orphan detection.
+  - Each linter group produces lint results merged into single report.
   - Pipeline diagnostics track per-group violation counts and failures.
   - Audit failures (naming, import) reported as warnings, not fatal.
   - Orphan detection uses workspace-wide import graph for reachability analysis.
@@ -264,8 +264,8 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Naming audit fails → warning diagnostic, continues with other groups.
   - Import audit fails → warning diagnostic, continues.
   - No workspace members → falls back to single-scan mode.
-  - Invalid target path → `PipelineError::InvalidPath`.
-- **Error Handling**: `PipelineError` variants: `InvalidPath`, linter-specific errors propagated.
+  - Invalid target path → pipeline error with invalid path variant.
+- **Error Handling**: Pipeline error variants include invalid path and linter-specific errors propagated.
 
 ## Data Model / Entity Relationship
 
@@ -333,14 +333,14 @@ ExitCode conventions
 ## Integration Points
 
 - **Internal**:
-  - `report-formatter` — `IReportFormatterAggregate` for text/JSON/SARIF/JUnit formatting.
+  - `report-formatter` — report formatter aggregate for text/JSON/SARIF/JUnit formatting.
   - `shared` — taxonomy VOs, contract traits, utility functions.
-  - `config-system` — `IConfigOrchestratorAggregate` for config loading and workspace discovery.
+  - `config-system` — config orchestrator aggregate for config loading and workspace discovery.
   - `code-analysis`, `naming-rules`, `import-rules`, `role-rules`, `orphan-detector`, `external-lint` — linter subsystem aggregates.
-  - `auto-fix` — `LintFixOrchestratorAggregate` for automatic fix application.
-  - `git-hooks` — `GitHooksAggregate` for git integration.
-  - `project-setup` — `MaintenanceCommandsAggregate`, `SetupManagementAggregate`.
-  - `file-watch` — `IWatchAggregate` for file monitoring.
+  - `auto-fix` — fix orchestrator aggregate for automatic fix application.
+  - `git-hooks` — git hooks aggregate for git integration.
+  - `project-setup` — maintenance commands aggregate, setup management aggregate.
+  - `file-watch` — watch aggregate for file monitoring.
 - **External**:
   - `tokio` — async runtime for concurrent linter execution.
   - `ctrlc` — signal handling for graceful watch shutdown.
@@ -349,10 +349,10 @@ ExitCode conventions
 ## Non-functional Requirements (Detailed)
 
 - **Cross-platform**: File walker uses canonical paths (not inodes), works on all platforms including Windows.
-- **Performance**: Ignore-aware scanning excludes `target/`, `node_modules/`, `.git/`, `dist/`, `build/`, `coverage/`, `.venv/`. Symlink targets outside workspace root are pruned.
-- **Concurrency**: Async linter groups run concurrently via `tokio::join!`. Deferred container construction for lightweight commands (version, adapters).
+- **Performance**: Ignore-aware scanning excludes common build/dependency directories. Symlink targets outside workspace root are pruned.
+- **Concurrency**: Async linter groups run concurrently. Deferred container construction for lightweight commands (version, adapters).
 - **Multi-workspace**: Scan auto-discovers workspace members and runs per-project analysis with isolated DI containers.
-- **Security**: MCP binary resolution fails closed (no bare PATH fallback). Config-show redacts AWS keys and base64 secrets. `LINT_ARWAKY_MCP_BIN` env var checked for file existence before use.
+- **Security**: MCP binary resolution fails closed (no bare PATH fallback). Config-show redacts AWS keys and base64 secrets. Environment variable for MCP binary path is checked for file existence before use.
 
 ## Test Scenarios / QA Checklist
 
@@ -388,7 +388,7 @@ ExitCode conventions
 ## Assumptions & Constraints
 
 - All surface handlers follow AES406: zero business logic, only dispatch.
-- Report formatting never happens in surface layer — always delegated to `IReportFormatterAggregate`.
+- Report formatting never happens in surface layer — always delegated to the report formatter aggregate.
 - Exit code conventions are standardized: 0=success, 1=violations, 2=error, 3=tool missing.
 - Workspace structure follows `crates/`, `packages/`, `modules/` convention.
 - MCP binary resolution uses fail-closed strategy (no PATH fallback).

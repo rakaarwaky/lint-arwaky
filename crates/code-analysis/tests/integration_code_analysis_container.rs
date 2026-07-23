@@ -4,6 +4,7 @@
 use std::sync::Arc;
 
 use code_analysis_lint_arwaky::{
+    agent_code_analysis_orchestrator::{CodeAnalysisDeps, CodeAnalysisOrchestrator},
     capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
     root_code_analysis_container::CodeAnalysisCheckerContainer,
 };
@@ -74,7 +75,7 @@ fn test_orchestrator_is_created_from_container() {
     let checker_container = Arc::new(CodeAnalysisCheckerContainer::new(config, layer_map));
 
     // Should create orchestrator without panicking
-    let _orchestrator = code_analysis_lint_arwaky::agent_code_analysis_orchestrator::CodeAnalysisOrchestrator::new_with_container(checker_container);
+    let _orchestrator = CodeAnalysisOrchestrator::new_with_container(checker_container);
 }
 
 /// Test that CodeAnalysisContainer can be created with default config

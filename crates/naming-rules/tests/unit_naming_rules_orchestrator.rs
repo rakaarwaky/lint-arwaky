@@ -2,7 +2,7 @@
 // Covers: flow control, filtering, error handling
 // Coverage target: Agent ≥ 60%
 
-use naming_rules_lint_arwaky::agent_naming_orchestrator::NamingOrchestrator;
+use naming_rules_lint_arwaky::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
@@ -19,7 +19,12 @@ use std::sync::Arc;
 fn build_orchestrator(config: ArchitectureConfig, layer_map: LayerMapVO) -> NamingOrchestrator {
     let conv: Arc<dyn INamingConventionChecker> = Arc::new(NamingConventionChecker::new());
     let suf: Arc<dyn ISuffixPrefixChecker> = Arc::new(SuffixPrefixChecker::new());
-    NamingOrchestrator::new(conv, suf, Arc::new(config), Arc::new(layer_map))
+    NamingOrchestrator::new(NamingOrchestratorDeps {
+        naming_convention_checker: conv,
+        suffix_prefix_checker: suf,
+        config: Arc::new(config),
+        layer_map: Arc::new(layer_map),
+    })
 }
 
 // ─── Name ─────────────────────────────────────────────────

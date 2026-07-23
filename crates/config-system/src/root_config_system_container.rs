@@ -1,3 +1,4 @@
+use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
@@ -25,11 +26,11 @@ impl ConfigContainer {
         let validator = Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new());
 
         Self {
-            orchestrator: Arc::new(crate::agent_config_orchestrator::ConfigOrchestrator::new(
+            orchestrator: Arc::new(ConfigOrchestrator::new(ConfigOrchestratorDeps {
                 workspace_detector,
-                yaml_reader.clone(),
-                validator.clone(),
-            )),
+                config_reader: yaml_reader.clone(),
+                validator: validator.clone(),
+            })),
             reader: yaml_reader,
             parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),
             validator,

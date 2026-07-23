@@ -6,11 +6,11 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                ExternalLintOrchestrator                      │
+│                the external lint orchestrator                │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │ Language      │  │ Adapter      │  │ Result           │  │
-│  │ Detection     │──▶ Selector    │──▶ Aggregation      │  │
-│  │ (FS scan)     │  │ (per lang)   │  │ (join_all)       │  │
+│  │  language     │  │  the adapter │  │  the result      │  │
+│  │  detection    │──▶  selector   │──▶  aggregation     │  │
+│  │  (FS scan)    │  │  (per lang)  │  │  (join_all)      │  │
 │  └──────────────┘  └──────────────┘  └──────────────────┘  │
 │                          │                                   │
 │         ┌────────────────┼────────────────┐                 │
@@ -26,7 +26,8 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 │         └────────────────┼────────────────┘                 │
 │                          ▼                                   │
 │                 ┌──────────────────┐                         │
-│                 │ ExternalLintExecutor│                       │
+│                 │ the external lint │                         │
+│                 │ executor          │                         │
 │                 │ (subprocess I/O)  │                        │
 │                 └──────────────────┘                         │
 └─────────────────────────────────────────────────────────────┘
@@ -36,8 +37,8 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ### FR-001: Detect Project Languages
 - **Description**: Recursively scan the target path to determine which languages (Rust, Python, JS/TS) are present.
-- **Input**: `FilePath` — target path (file or directory).
-- **Output**: Three booleans: `has_rs`, `has_py`, `has_js`.
+- **Input**: Target path (file or directory).
+- **Output**: Three booleans: has Rust, has Python, has JS.
 - **Business Rules**:
   - Single file: check extension directly (`.rs`, `.py`, `.js`, `.ts`, `.jsx`, `.tsx`).
   - Directory: recursively scan, skipping `node_modules/`, `target/`, `.git/`, `.jj/`.
@@ -51,40 +52,40 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ### FR-002: Select Adapters by Language
 - **Description**: Based on detected languages, select the appropriate set of linter adapters to run.
-- **Input**: Booleans `has_rs`, `has_py`, `has_js`.
-- **Output**: `AdapterNameList` — ordered list of adapter names.
+- **Input**: Booleans for has Rust, has Python, has JS.
+- **Output**: Adapter name list — ordered list of adapter names.
 - **Business Rules**:
   - Rust adapters: `clippy`, `rustfmt`, `cargo-audit`.
   - Python adapters: `ruff`, `mypy`, `bandit`.
   - JS/TS adapters: `eslint`, `prettier`, `tsc`.
   - Adapters are appended in language-group order (Rust → Python → JS).
-  - Missing adapters (not in HashMap) are silently skipped.
+  - Missing adapters (not in map) are silently skipped.
 - **Edge Cases**:
   - No languages detected — empty adapter list, no scans run.
   - All languages detected — all 9 adapters selected.
 - **Error Handling**: No error; empty list for no matches.
 
 ### FR-003: Execute Adapters Concurrently
-- **Description**: Run all selected adapters in parallel using `future::join_all`, collecting results.
-- **Input**: `FilePath` — target path to scan.
-- **Output**: `LintResultList` — aggregated results from all adapters.
+- **Description**: Run all selected adapters in parallel, collecting results.
+- **Input**: Target path to scan.
+- **Output**: Aggregated results from all adapters.
 - **Business Rules**:
   - All adapters run concurrently (up to 9 parallel futures).
   - Each adapter receives the same target path.
-  - Results are flattened into a single `LintResultList`.
-  - Total capacity pre-computed for Vec allocation.
+  - Results are flattened into a single result list.
+  - Total capacity pre-computed for list allocation.
 - **Edge Cases**:
-  - All adapters return empty results — returns empty `LintResultList`.
+  - All adapters return empty results — returns empty result list.
   - One adapter crashes — other results still collected.
   - Adapter binary not installed — warning printed, results for that adapter are empty.
 - **Error Handling**: Per-adapter errors are caught; "No such file or directory" or "os error 2" → warning about missing tool. Other errors → generic adapter failure warning.
 
 ### FR-004: Normalize External Tool Output
-- **Description**: Each adapter normalizes its external tool's stdout/JSON output into `LintResult` structs compatible with the unified lint-arwaky format.
+- **Description**: Each adapter normalizes its external tool's stdout/JSON output into lint result structs compatible with the unified lint-arwaky format.
 - **Input**: Raw output from external linter subprocess (JSON or text).
-- **Output**: `LintResultList` with normalized violations.
+- **Output**: Result list with normalized violations.
 - **Business Rules**:
-  - Each adapter (RuffAdapter, ESLintAdapter, etc.) implements `ILinterAdapterProtocol::scan()`.
+  - Each adapter implements the linter adapter protocol's scan method.
   - Severity levels are mapped from tool-specific to lint-arwaky severity (CRITICAL, HIGH, MEDIUM, LOW).
   - File paths are canonicalized to absolute paths.
   - Line numbers extracted from tool-specific JSON fields.
@@ -92,31 +93,31 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
   - Tool produces invalid JSON — adapter returns empty results with error logged.
   - Tool output contains zero violations — empty result list (not an error).
   - File path in tool output is relative — canonicalized to absolute path.
-- **Error Handling**: Parse failures return `Err(AdapterError)` or `Err(ScanError)`.
+- **Error Handling**: Parse failures return adapter error or scan error.
 
 ### FR-005: Execute Subprocess Commands
 - **Description**: Run external linter tools as subprocesses with timeout, stdout/stderr capture, and error mapping.
 - **Input**: Command args, working directory, timeout, adapter name.
-- **Output**: `Result<ResponseData, LinterOperationError>`.
+- **Output**: Result containing stdout, stderr, and return code, or an operation error.
 - **Business Rules**:
   - Default timeout: 60 seconds per adapter.
   - Working directory set to the project root for each adapter.
   - Timeout exceeded → process killed, error returned.
-  - Command not found → `ScanError` or `AdapterError` returned.
+  - Command not found → scan error or adapter error returned.
 - **Edge Cases**:
   - Subprocess hangs beyond timeout — process terminated by OS.
   - Working directory doesn't exist — command fails with OS error.
-  - Adapter name is `None` for scan operations — error message omits adapter name.
-- **Error Handling**: `LinterOperationError::Scan` for scan operations, `LinterOperationError::Adapter` for adapter-specific failures.
+  - Adapter name is None for scan operations — error message omits adapter name.
+- **Error Handling**: Scan error for scan operations, adapter error for adapter-specific failures.
 
 ### FR-006: Resolve JS Tool Paths
 - **Description**: For JS/TS tools, prefer local `node_modules/.bin/` binaries over global installations.
 - **Input**: Tool name, arguments, working directory.
-- **Output**: `PatternList` — resolved command with full path.
+- **Output**: Resolved command with full path.
 - **Business Rules**:
   - Check `node_modules/.bin/<tool>` in working directory first.
   - If local binary exists, use its absolute path.
-  - If not, check global PATH via `is_executable_in_path()`.
+  - If not, check global PATH via executable path check.
   - If neither found, use bare tool name (will fail at execution time).
   - Working directory resolved by walking up to 10 parent directories looking for config files (`.eslintrc`, `prettier.config`, `tsconfig.json`, etc.).
 - **Edge Cases**:
@@ -127,8 +128,8 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 
 ### FR-007: Resolve Cargo Working Directory
 - **Description**: For Rust tools (clippy, rustfmt, cargo-audit), find the directory containing `Cargo.toml` or `Cargo.lock`.
-- **Input**: `FilePath` — target path.
-- **Output**: `FilePath` — resolved working directory.
+- **Input**: Target path.
+- **Output**: Resolved working directory.
 - **Business Rules**:
   - Walk up directory tree looking for `Cargo.toml` (for clippy/rustfmt) or `Cargo.lock` (for audit).
   - If no `Cargo.toml/lock` found, return a nonexistent sentinel path.
@@ -141,65 +142,65 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 ## Data Model / Entity Relationship
 
 ```
-ExternalLintContainer (root layer)
-├── executor: StdioClient (ICommandExecutorProtocol)
-├── lint_executor: ExternalLintExecutor (IExternalLintExecutorProtocol)
-├── adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>
-│   ├── "clippy"      → RustLinterAdapter
-│   ├── "rustfmt"     → RustFmtAdapter
-│   ├── "cargo-audit" → CargoAuditAdapter
-│   ├── "ruff"        → RuffAdapter
-│   ├── "mypy"        → MyPyAdapter
-│   ├── "bandit"      → BanditAdapter
-│   ├── "eslint"      → ESLintAdapter
-│   ├── "prettier"    → PrettierAdapter
-│   └── "tsc"         → TSCAdapter
-└── aggregate: ExternalLintOrchestrator
+External Lint Container (root layer)
+├── executor: subprocess executor
+├── lint executor: the external lint executor
+├── adapters: map of adapter name to linter adapter
+│   ├── "clippy"      → Rust linter adapter
+│   ├── "rustfmt"     → Rust formatter adapter
+│   ├── "cargo-audit" → cargo audit adapter
+│   ├── "ruff"        → Ruff adapter
+│   ├── "mypy"        → Mypy adapter
+│   ├── "bandit"      → Bandit adapter
+│   ├── "eslint"      → ESLint adapter
+│   ├── "prettier"    → Prettier adapter
+│   └── "tsc"         → TypeScript compiler adapter
+└── aggregate: the external lint orchestrator
 
-LintResultList
-└── values: Vec<LintResult>
+Lint Result List
+└── values: list of lint results
 
-LintResult
-├── file: FilePath
-├── line: LineCount
-├── message: String
-├── code: String
-├── severity: String
-└── source: Option<String>
+Lint Result
+├── file: file path
+├── line: line count
+├── message: string
+├── code: string
+├── severity: string
+└── source: optional string
 
-ResponseData
-├── stdout: String
-├── stderr: String
-└── returncode: i32
+Response Data
+├── stdout: string
+├── stderr: string
+└── returncode: integer
 
-LinterOperationError
-├── Scan(ScanError)
-└── Adapter(AdapterError)
+Linter Operation Error
+├── Scan(scan error)
+└── Adapter(adapter error)
 ```
 
 ## API Contract
 
 | Function | Input | Output | Description |
 |----------|-------|--------|-------------|
-| `ExternalLintOrchestrator::scan_all()` | `&FilePath` | `LintResultList` | Detect languages, select adapters, run all concurrently, aggregate results. |
-| `ExternalLintOrchestrator::adapter_names()` | — | `Vec<String>` | List all registered adapter names. |
-| `ExternalLintExecutor::exec_cmd_scan()` | args, dir, timeout, adapter, path | `Result<ResponseData, LinterOperationError>` | Execute a scan subprocess with error mapping. |
-| `ExternalLintExecutor::exec_cmd_adapter()` | args, dir, timeout, adapter | `Result<ResponseData, LinterOperationError>` | Execute an adapter subprocess with error mapping. |
-| `ExternalLintExecutor::js_apply_fix()` | path, tool, fix_arg | `Result<ComplianceStatus, LinterOperationError>` | Run JS tool with fix flag. |
-| `CapabilitiesExternalLintSelector::select_adapters()` | has_rs, has_py, has_js | `AdapterNameList` | Select adapters based on detected languages. |
-| `ExternalLintUtilityAdapter::has_python_files()` | `&FilePath` | `bool` | Check if path contains Python files. |
-| `ExternalLintUtilityAdapter::resolve_js_cmd()` | executable, args, working_dir | `PatternList` | Resolve JS tool command with local/global fallback. |
-| `ExternalLintUtilityAdapter::resolve_js_working_dir()` | `&FilePath` | `FilePath` | Find nearest directory with JS config files. |
-| `ExternalLintUtilityAdapter::resolve_cargo_working_dir()` | `&FilePath` | `FilePath` | Find directory containing Cargo.toml. |
-| `ExternalLintContainer::aggregate()` | — | `Arc<dyn IExternalLintAggregate>` | Access the assembled orchestrator. |
+| the external lint orchestrator scan all | target path | lint result list | Detect languages, select adapters, run all concurrently, aggregate results. |
+| the external lint orchestrator adapter names | — | list of strings | List all registered adapter names. |
+| the external lint executor exec cmd scan | args, dir, timeout, adapter, path | result | Execute a scan subprocess with error mapping. |
+| the external lint executor exec cmd adapter | args, dir, timeout, adapter | result | Execute an adapter subprocess with error mapping. |
+| the external lint executor js apply fix | path, tool, fix arg | result | Run JS tool with fix flag. |
+| the external lint selector select adapters | has Rust, has Python, has JS | adapter name list | Select adapters based on detected languages. |
+| the external lint utility has python files | target path | boolean | Check if path contains Python files. |
+| the external lint utility resolve js cmd | executable, args, working dir | pattern list | Resolve JS tool command with local/global fallback. |
+| the external lint utility resolve js working dir | target path | file path | Find nearest directory with JS config files. |
+| the external lint utility resolve cargo working dir | target path | file path | Find directory containing Cargo.toml. |
+| the external lint container aggregate | — | the external lint aggregate | Access the assembled orchestrator. |
 
 ## Integration Points
 
 - **Internal**:
-  - `shared::code_analysis::ILinterAdapterProtocol` — protocol interface for all linter adapters.
-  - `shared::external_lint::IExternalLintAggregate` — aggregate trait for the orchestrator.
-  - `shared::common::ICommandExecutorProtocol` — protocol for subprocess execution (StdioClient).
-  - `shared::common::utility_file_handler` — file system utilities for language detection.
+  - The linter adapter protocol in the shared crate — protocol interface for all linter adapters.
+  - The external lint aggregate in the shared crate — aggregate trait for the orchestrator.
+  - The command executor protocol in the shared crate — protocol for subprocess execution.
+  - The file handler utility in the shared crate — file system utilities for language detection.
 - **External**:
   - `cargo clippy` — Rust idiom, performance, and style linting.
   - `rustfmt --check` — Rust formatting verification.
@@ -214,7 +215,7 @@ LinterOperationError
 ## Non-functional Requirements (Detailed)
 
 - **Performance**: All adapters run concurrently; total scan time is bounded by the slowest adapter (typically <30s for medium projects). Language detection scan is O(n) in file count.
-- **Memory**: Each adapter's results are collected in Vec with pre-computed capacity. JSON parsing loads full tool output into memory.
+- **Memory**: Each adapter's results are collected in list with pre-computed capacity. JSON parsing loads full tool output into memory.
 - **Accuracy**: Severity mapping is tool-specific; some tools may not have exact equivalents for lint-arwaky severity levels.
 
 ## Test Scenarios / QA Checklist
@@ -225,7 +226,7 @@ LinterOperationError
 - [ ] Scan multi-language project — all 9 adapters run.
 - [ ] Scan empty directory — no adapters run, empty result list.
 - [ ] Adapter binary not installed — warning printed, other adapters continue.
-- [ ] Adapter produces JSON output — correctly parsed into LintResult.
+- [ ] Adapter produces JSON output — correctly parsed into lint result.
 - [ ] Adapter produces empty output (no violations) — empty result list.
 - [ ] All adapters fail — returns empty result list with warnings.
 - [ ] Single file path (not directory) — extension checked, only relevant adapters run.

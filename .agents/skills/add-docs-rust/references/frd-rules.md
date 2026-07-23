@@ -35,6 +35,7 @@ FRD (Functional Requirements Document) describes **HOW** (functionally) for engi
 5. **Reference PRD** — link to root PRD.md
 6. **Include test scenarios** — QA can derive test cases
 7. **One FRD per feature** — don't create monolith documents
+8. **Timeless / Stateless** — FRD must NOT contain implementation details: class names, function names, file names, variable names, or module names. FRD describes WHAT the system does, not HOW it's implemented. This ensures FRD survives refactors without maintenance.
 
 ## Anti-Patterns
 
@@ -44,3 +45,4 @@ FRD (Functional Requirements Document) describes **HOW** (functionally) for engi
 - ❌ FRD without error handling → add failure scenarios
 - ❌ FRD in root workspace → move to feature crate
 - ❌ FRD without PRD reference → add link to root PRD
+- ❌ FRD with class/function/file names → replace with functional descriptions

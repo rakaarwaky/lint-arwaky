@@ -43,7 +43,7 @@ fn crate_boots_and_scans_without_panic() {
 fn orchestrator_boots_and_lint_path_works() {
     let start = Instant::now();
 
-    let orch = CodeAnalysisOrchestrator::new();
+    let orch = CodeAnalysisOrchestrator::new_with_defaults();
     let results = orch.run_self_lint(".");
 
     // Should return a Vec (possibly empty) without panicking

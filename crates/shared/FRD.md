@@ -42,15 +42,15 @@ shared (foundation — no feature crate dependencies)
 - **Error Handling**: Invalid VO construction returns `Err` with descriptive error type.
 
 ### FR-002: Lint Result VOs (cli-commands/)
-- **Description**: Provide the `LintResult` struct and related types that represent a single lint violation across all features.
+- **Description**: Provide the lint result struct and related types that represent a single lint violation across all features.
 - **Input**: Constructed by feature crates during analysis.
-- **Output**: `LintResult` serialized to JSON/SARIF/JUnit by CLI and MCP layers.
+- **Output**: Lint results serialized to JSON/SARIF/JUnit by CLI and MCP layers.
 - **Business Rules**:
-  - `LintResult` contains: `file`, `line`, `column`, `code` (ErrorCode), `message` (LintMessage), `source` (AdapterName), `severity`, `enclosing_scope` (ScopeRef), `related_locations` (LocationList).
+  - Lint result contains: file, line, column, code (ErrorCode), message (LintMessage), source (AdapterName), severity, enclosing scope (ScopeRef), related locations (LocationList).
   - `ScopeRef` holds function/class name, kind, file, and line range.
   - `Location` provides additional context for related code locations.
   - `ViolationConstraint` captures rule thresholds (min/max values).
-- **Edge Cases**: `LintResult` with `line: 0` represents file-level violations (no specific line). Empty `related_locations` is valid.
+- **Edge Cases**: Lint result with `line: 0` represents file-level violations (no specific line). Empty related locations is valid.
 - **Error Handling**: N/A — pure data structures.
 
 ### FR-003: Contract Traits and Aggregates
@@ -58,22 +58,22 @@ shared (foundation — no feature crate dependencies)
 - **Input**: N/A — trait definitions only.
 - **Output**: Trait objects used for dependency injection across the workspace.
 - **Business Rules**:
-  - **Orphan detector contracts** (`orphan-detector/`):
-    - `IOrphanAggregate` — aggregate trait for orphan detection.
-    - `ITaxonomyOrphanProtocol`, `IContractOrphanProtocol`, `ICapabilitiesOrphanProtocol`, `IUtilityOrphanProtocol`, `IAgentOrphanProtocol`, `ISurfacesOrphanProtocol` — layer-specific orphan indicator protocols.
-    - `IOrphanGraphResolverProtocol` — graph construction protocol.
-  - **Role rules contracts** (`role-rules/`):
-    - `IRoleRunnerAggregate` — aggregate trait for role enforcement.
-    - `ITaxonomyRoleChecker`, `IContractRoleChecker`, `ICapabilitiesRoleChecker`, `ISurfaceRoleChecker`, `IAgentRoleChecker`, `IUtilityRoleChecker` — layer-specific role checker protocols.
-  - **Import rules contracts** (`import-rules/`):
-    - `IImportRunnerAggregate` — aggregate trait for import rules.
-    - `ICycleImportProtocol`, `IDummyImportProtocol`, `IImportForbiddenProtocol`, `IImportMandatoryProtocol`, `IUnusedImportProtocol` — import rule protocols.
-  - **Code analysis contracts** (`code-analysis/`):
-    - `ICodeAnalysisAggregate` — aggregate trait for code analysis.
-    - `IAdapterProtocol`, `IBypassCheckerProtocol`, `IClassProtocol`, `ICodeMetricAnalyzerProtocol`, `IDeadInheritanceProtocol`, `ILineProtocol` — analysis protocols.
-  - **Config system contracts** (`config-system/`):
-    - `IConfigOrchestratorAggregate` — aggregate for config loading.
-    - `IParserProtocol`, `IReaderProtocol`, `IValidatorProtocol`, `IWorkspaceDetectorProtocol` — config protocols.
+  - **Orphan detector contracts** (orphan detection module):
+    - Orphan detection aggregate — aggregate trait for orphan detection.
+    - Layer-specific orphan indicator protocols — taxonomy, contract, capabilities, utility, agent, and surfaces orphan indicator protocols.
+    - Graph construction protocol — protocol for building the import graph.
+  - **Role rules contracts** (role enforcement module):
+    - Role enforcement aggregate — aggregate trait for role enforcement.
+    - Layer-specific role checker protocols — taxonomy, contract, capabilities, surface, agent, and utility role checker protocols.
+  - **Import rules contracts** (import rules module):
+    - Import rules aggregate — aggregate trait for import rules.
+    - Import rule protocols — cycle import, dummy import, forbidden import, mandatory import, and unused import protocols.
+  - **Code analysis contracts** (code analysis module):
+    - Code analysis aggregate — aggregate trait for code analysis.
+    - Analysis protocols — adapter, bypass checker, class, code metric analyzer, dead inheritance, and line protocols.
+  - **Config system contracts** (config system module):
+    - Config loading aggregate — aggregate for config loading.
+    - Config protocols — parser, reader, validator, and workspace detector protocols.
   - All protocol traits require `Send + Sync` for thread safety.
   - Aggregate traits define the public API surface; protocol traits define internal DI boundaries.
 - **Edge Cases**: A protocol with zero methods is valid (marker trait pattern). An aggregate with a single method is valid.
@@ -82,28 +82,28 @@ shared (foundation — no feature crate dependencies)
 ### FR-004: Graph Analysis VOs (code-analysis/)
 - **Description**: Provide value objects for import graph construction, reachability analysis, and orphan detection.
 - **Input**: Constructed during graph analysis.
-- **Output**: `GraphAnalysisContext`, `ImportGraph`, `InboundLinkMap`, `FileDefinitionMap`, `InheritanceMap`, `OrphanIndicatorResult`, `ReachabilityResult`.
+- **Output**: Graph analysis context, import graph, reverse link map, file definition map, inheritance map, orphan indicator result, and reachability result.
 - **Business Rules**:
-  - `ImportGraph` stores forward edges (`mapping: HashMap<String, Vec<String>>`).
-  - `InboundLinkMap` stores reverse edges for inbound import lookup.
-  - `FileDefinitionMap` stores trait/class definitions per file.
-  - `InheritanceMap` stores implementation relationships.
-  - `OrphanIndicatorResult` contains `is_orphan`, `reason`, `severity`.
-  - `ReachabilityResult` contains the set of reachable file paths.
-  - `GraphAnalysisContext` bundles all graph data into a single context object.
+  - Import graph stores forward edges.
+  - Inbound link map stores reverse edges for inbound import lookup.
+  - File definition map stores trait/class definitions per file.
+  - Inheritance map stores implementation relationships.
+  - Orphan indicator result contains is_orphan, reason, and severity.
+  - Reachability result contains the set of reachable file paths.
+  - Graph analysis context bundles all graph data into a single context object.
 - **Edge Cases**: Empty graph (zero files) produces empty maps. Graph with cycles is handled by BFS visited set.
 - **Error Handling**: N/A — pure data structures.
 
 ### FR-005: Configuration Value Objects (config-system/)
-- **Description**: Provide the `ArchitectureConfig` and related types that define rule configuration, layer definitions, and ignore paths.
+- **Description**: Provide the architecture configuration and related types that define rule configuration, layer definitions, and ignore paths.
 - **Input**: Parsed from YAML/JSON configuration files.
-- **Output**: `ArchitectureConfig` consumed by all feature crates.
+- **Output**: Architecture configuration consumed by all feature crates.
 - **Business Rules**:
-  - `ArchitectureConfig` contains: `enabled` (BooleanVO), `layers` (HashMap<LayerNameVO, LayerDefinition>), `rules` (Vec<ArchitectureRule>), `naming` (NamingConfig), `ignored_paths` (FilePathList), `mandatory_class_definition` (BooleanVO).
-  - `LayerDefinition` contains: `exceptions` (PatternList), `orphan` (OrphanRuleVO), `role` (RoleRuleVO), `naming` (NamingRuleVO).
-  - `OrphanRuleVO` has `check_orphan` (BooleanVO) and `orphan_entry_points` (PatternList).
-  - `RoleRuleVO` has flags for each role constraint (no_domain_logic, stateless_execution, etc.).
-  - `ArchitectureRule` bundles rule metadata with flattened naming/code_analysis/role/orphan configs.
+  - Architecture config contains: enabled (BooleanVO), layers (HashMap<LayerNameVO, LayerDefinition>), rules (Vec<ArchitectureRule>), naming (NamingConfig), ignored paths (FilePathList), mandatory class definition (BooleanVO).
+  - Layer definition contains: exceptions (PatternList), orphan (OrphanRuleVO), role (RoleRuleVO), naming (NamingRuleVO).
+  - Orphan rule VO has check_orphan (BooleanVO) and orphan_entry_points (PatternList).
+  - Role rule VO has flags for each role constraint (no_domain_logic, stateless_execution, etc.).
+  - Architecture rule bundles rule metadata with flattened naming/code_analysis/role/orphan configs.
   - Default config: enabled=true, empty layers, empty rules, max naming segments=3.
 - **Edge Cases**: Empty config is valid (all defaults). Config with `enabled: false` disables all checks.
 - **Error Handling**: Malformed config falls back to defaults per field.
@@ -113,34 +113,34 @@ shared (foundation — no feature crate dependencies)
 - **Input**: File paths, file content, configuration.
 - **Output**: Computed results used by feature crates.
 - **Business Rules**:
-  - `utility_layer_detector` — Detect AES layer from filename prefix (`taxonomy_*`, `contract_*`, etc.). Returns `Option<String>`.
-  - `utility_language_detector` — Detect programming language from file extension. Returns `LanguageVO`.
-  - `utility_path_normalization` — Normalize file paths for cross-platform consistency.
-  - `utility_signature_parser` — Extract method signatures from Rust/Python/TypeScript source code.
-  - `utility_scope_matcher` — Match code scopes for violation reporting.
-  - `utility_file_handler` — Read file contents with error recovery.
-  - `utility_command_runner` — Execute external commands (for external linter adapters).
-  - `utility_compliance_score` — Compute compliance scores from violation counts.
-  - `utility_orphan_io` — File I/O for orphan detection (read, scan, is_dir, scan_directory_recursive).
-  - `utility_orphan_filename` — Filename parsing (stem, suffix, basename).
-  - `utility_orphan_path` — Path resolution and ignore checking.
-  - `utility_import_resolver` — Resolve import paths across languages.
-  - `utility_import_symbol_extractor` — Extract imported symbols from import statements.
-  - `utility_cycle_detector` — Detect circular imports in the dependency graph.
-  - `utility_config_parser` — Parse YAML/JSON configuration files.
-  - `utility_config_merger` — Merge multiple config sources.
-  - `utility_config_defaults` — Provide default configuration values.
+  - Layer detection utility — Detect AES layer from filename prefix (`taxonomy_*`, `contract_*`, etc.). Returns `Option<String>`.
+  - Language detection utility — Detect programming language from file extension. Returns `LanguageVO`.
+  - Path normalization utility — Normalize file paths for cross-platform consistency.
+  - Signature parser utility — Extract method signatures from Rust/Python/TypeScript source code.
+  - Scope matcher utility — Match code scopes for violation reporting.
+  - File handler utility — Read file contents with error recovery.
+  - Command runner utility — Execute external commands (for external linter adapters).
+  - Compliance score utility — Compute compliance scores from violation counts.
+  - Orphan file I/O utility — File I/O for orphan detection (read, scan, is_dir, scan_directory_recursive).
+  - Orphan filename utility — Filename parsing (stem, suffix, basename).
+  - Orphan path utility — Path resolution and ignore checking.
+  - Import resolver utility — Resolve import paths across languages.
+  - Import symbol extractor utility — Extract imported symbols from import statements.
+  - Cycle detector utility — Detect circular imports in the dependency graph.
+  - Config parser utility — Parse YAML/JSON configuration files.
+  - Config merger utility — Merge multiple config sources.
+  - Config defaults utility — Provide default configuration values.
 - **Edge Cases**: Nonexistent file path returns error, not panic. Empty file content is valid input. Unsupported language returns `LanguageVO::Unknown`.
 - **Error Handling**: File I/O errors propagated as `Result`. Invalid paths return `Err`.
 
 ### FR-007: Layer Name Constants and VOs
 - **Description**: Provide canonical layer name constants and value objects used for layer identification across the workspace.
 - **Input**: N/A — constants and VOs.
-- **Output**: `LayerNameVO`, layer name constants (`LAYER_TAXONOMY`, `LAYER_CONTRACT`, etc.).
+- **Output**: `LayerNameVO`, layer name constants (taxonomy, contract, capabilities, utility, agent, surfaces).
 - **Business Rules**:
   - `LayerNameVO` wraps a layer name string with serialization support.
-  - Constants: `LAYER_TAXONOMY`, `LAYER_CONTRACT`, `LAYER_CAPABILITIES`, `LAYER_UTILITY`, `LAYER_AGENT`, `LAYER_SURFACES`.
-  - `LayerNames` provides helper functions: `layer_taxonomy()`, `layer_contract()`, `layer_capabilities()`, `layer_utility()`, `layer_agent()`, `layer_surfaces()`, `layer_root()`, `layer_global()`.
+  - Constants for all six architectural layers.
+  - Layer name helper functions for each layer plus root and global.
   - Used by orphan-detector and role-rules for layer classification.
 - **Edge Cases**: Case-insensitive comparison for layer name matching.
 - **Error Handling**: N/A — constants and thin wrappers.
@@ -148,22 +148,22 @@ shared (foundation — no feature crate dependencies)
 ## Data Model / Entity Relationship
 
 ```
-ArchitectureConfig
+Architecture Config
 ├── enabled: BooleanVO
 ├── layers: HashMap<LayerNameVO, LayerDefinition>
-│   └── LayerDefinition
+│   └── Layer Definition
 │       ├── exceptions: PatternList
-│       ├── orphan: OrphanRuleVO
+│       ├── orphan: Orphan Rule VO
 │       │   ├── check_orphan: BooleanVO
 │       │   └── orphan_entry_points: PatternList
-│       ├── role: RoleRuleVO
-│       └── naming: NamingRuleVO
+│       ├── role: Role Rule VO
+│       └── naming: Naming Rule VO
 ├── rules: Vec<ArchitectureRule>
 ├── naming: NamingConfig
 ├── ignored_paths: FilePathList
 └── mandatory_class_definition: BooleanVO
 
-LintResult
+Lint Result
 ├── file: FilePath
 ├── line: LineNumber
 ├── column: ColumnNumber
@@ -174,46 +174,46 @@ LintResult
 ├── enclosing_scope: Option<ScopeRef>
 └── related_locations: LocationList
 
-GraphAnalysisContext
-├── import_graph: ImportGraph
-├── inbound_links: InboundLinkMap
-├── file_definitions: FileDefinitionMap
-└── inheritance_map: InheritanceMap
+Graph Analysis Context
+├── import_graph: Import Graph
+├── inbound_links: Inbound Link Map
+├── file_definitions: File Definition Map
+└── inheritance_map: Inheritance Map
 ```
 
 ## API Contract
 
 | Module | Key Types / Functions | Description |
 |--------|----------------------|-------------|
-| `common::taxonomy_path_vo` | `FilePath` | Typed file path VO with validation |
-| `common::taxonomy_severity_vo` | `Severity` | HIGH / MEDIUM / LOW enum |
-| `common::taxonomy_error_vo` | `ErrorCode` | Lint rule code (e.g., "AES401") |
-| `common::taxonomy_lint_vo` | `LintResult`, `ScopeRef`, `Location`, `LocationList` | Violation output types |
-| `common::taxonomy_common_vo` | `BooleanVO`, `Score`, `PatternList`, `Count`, `LineNumber`, `ColumnNumber` | Primitive wrapper VOs |
-| `common::taxonomy_source_vo` | `SourceContentVO`, `ContentString` | File content with metadata |
-| `common::taxonomy_layer_vo` | `LayerNameVO`, `LineContentVO` | Layer identification |
-| `common::taxonomy_definition_vo` | `LayerDefinition`, `NamingConfig` | Layer configuration |
-| `common::utility_layer_detector` | `detect_layer_from_prefix()`, `extract_filename()` | Layer detection from filename |
-| `common::utility_language_detector` | `detect_language()` | Language detection from extension |
-| `common::utility_signature_parser` | `extract_trait_method_signatures()` | Method signature extraction |
-| `code_analysis::taxonomy_analysis_vo` | `GraphAnalysisContext`, `ImportGraph`, `OrphanIndicatorResult` | Graph analysis types |
-| `config_system::taxonomy_config_vo` | `ArchitectureConfig`, `ArchitectureRule`, `OrphanRuleVO` | Configuration types |
-| `config_system::contract_config_orchestrator_aggregate` | `IConfigOrchestratorAggregate` | Config loading contract |
-| `orphan_detector::contract_orphan_aggregate` | `IOrphanAggregate` | Orphan detection aggregate |
-| `orphan_detector::contract_orphan_protocol` | 6 `I*OrphanProtocol` traits | Layer-specific orphan protocols |
-| `role_rules::contract_role_runner_aggregate` | `IRoleRunnerAggregate` | Role enforcement aggregate |
-| `role_rules::contract_*_role_protocol` | 6 `I*RoleChecker` traits | Layer-specific role protocols |
-| `import_rules::contract_import_runner_aggregate` | `IImportRunnerAggregate` | Import rules aggregate |
+| common path value object | `FilePath` | Typed file path VO with validation |
+| common severity value object | `Severity` | HIGH / MEDIUM / LOW enum |
+| common error value object | `ErrorCode` | Lint rule code (e.g., "AES401") |
+| common lint value object | `LintResult`, `ScopeRef`, `Location`, `LocationList` | Violation output types |
+| common primitive value objects | `BooleanVO`, `Score`, `PatternList`, `Count`, `LineNumber`, `ColumnNumber` | Primitive wrapper VOs |
+| common source content value object | `SourceContentVO`, `ContentString` | File content with metadata |
+| common layer value object | `LayerNameVO`, `LineContentVO` | Layer identification |
+| common definition value object | `LayerDefinition`, `NamingConfig` | Layer configuration |
+| common layer detection utility | Layer detection from filename prefix | Layer detection from filename |
+| common language detection utility | Language detection from file extension | Language detection from extension |
+| common signature parser utility | Method signature extraction | Method signature extraction |
+| code analysis graph value objects | `GraphAnalysisContext`, `ImportGraph`, `OrphanIndicatorResult` | Graph analysis types |
+| config system configuration types | `ArchitectureConfig`, `ArchitectureRule`, `OrphanRuleVO` | Configuration types |
+| config system orchestrator aggregate | Config loading aggregate | Config loading contract |
+| orphan detection aggregate | Orphan detection aggregate | Orphan detection aggregate |
+| orphan detection protocols | Layer-specific orphan protocols | Layer-specific orphan protocols |
+| role enforcement aggregate | Role enforcement aggregate | Role enforcement aggregate |
+| role enforcement protocols | Layer-specific role protocols | Layer-specific role protocols |
+| import rules aggregate | Import rules aggregate | Import rules aggregate |
 
 ## Integration Points
 
 - **Internal**:
-  - `common/` is the most widely imported module — used by every feature crate via `shared::taxonomy_*` and `shared::common::*` re-exports.
-  - `config_system/` provides configuration to orphan-detector, role-rules, and import-rules via `IConfigOrchestratorAggregate`.
-  - `code_analysis/` provides graph analysis types consumed by orphan-detector.
-  - `orphan-detector/` contracts are implemented by the `orphan-detector` feature crate.
-  - `role-rules/` contracts are implemented by the `role-rules` feature crate.
-  - `import-rules/` contracts are implemented by the `import-rules` feature crate.
+  - The common module is the most widely imported module — used by every feature crate via shared taxonomy and common re-exports.
+  - The config system module provides configuration to orphan-detector, role-rules, and import-rules via the config loading aggregate.
+  - The code analysis module provides graph analysis types consumed by orphan-detector.
+  - The orphan detection contracts are implemented by the orphan-detector feature crate.
+  - The role enforcement contracts are implemented by the role-rules feature crate.
+  - The import rules contracts are implemented by the import-rules feature crate.
 - **External**: None — the shared crate has no external dependencies beyond standard Rust crates (serde, async-trait, chrono).
 
 ## Non-functional Requirements (Detailed)
@@ -233,13 +233,13 @@ GraphAnalysisContext
 - [ ] `Score::new(100.0).is_perfect()` returns true.
 - [ ] `Score::new(85.0).is_passing(&Score::new(80.0))` returns true.
 - [ ] `PatternList::new("*.rs")` creates list with one pattern.
-- [ ] `detect_layer_from_prefix("taxonomy_foo.rs")` returns `Some("taxonomy")`.
-- [ ] `detect_layer_from_prefix("main.rs")` returns `None`.
-- [ ] `detect_language("main.rs")` returns `LanguageVO::Rust`.
-- [ ] `detect_language("app.py")` returns `LanguageVO::Python`.
-- [ ] `ArchitectureConfig::default()` has `enabled: true`, empty layers, empty rules.
-- [ ] `LintResult` serializes to valid JSON with all required fields.
-- [ ] `GraphAnalysisContext` with empty maps represents a workspace with no imports.
+- [ ] Layer detection from prefix "taxonomy_foo.rs" returns `Some("taxonomy")`.
+- [ ] Layer detection from prefix "main.rs" returns `None`.
+- [ ] Language detection for "main.rs" returns Rust.
+- [ ] Language detection for "app.py" returns Python.
+- [ ] Architecture config default has enabled: true, empty layers, empty rules.
+- [ ] Lint result serializes to valid JSON with all required fields.
+- [ ] Graph analysis context with empty maps represents a workspace with no imports.
 - [ ] All protocol traits are object-safe (can be used as `Arc<dyn Trait>`).
 - [ ] No circular dependencies between shared sub-modules.
 
@@ -257,8 +257,8 @@ GraphAnalysisContext
 | Term | Definition |
 |------|------------|
 | **VO** | Value Object — a typed wrapper around a primitive or collection that enforces domain invariants |
-| **Aggregate** | A trait defining the public API surface of a feature crate (e.g., `IOrphanAggregate`) |
-| **Protocol** | A trait defining an internal DI boundary within a feature crate (e.g., `ITaxonomyOrphanProtocol`) |
+| **Aggregate** | A trait defining the public API surface of a feature crate |
+| **Protocol** | A trait defining an internal DI boundary within a feature crate |
 | **AES** | Architecture Enforcement Standard — the 7-layer coding convention |
 | **Contract** | Pure trait definitions in the shared crate that feature crates implement |
 | **Taxonomy** | The domain foundation layer — stable language of the domain, free from technical concerns |
