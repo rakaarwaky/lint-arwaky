@@ -49,9 +49,9 @@ shared (foundation — no feature crate dependencies)
 - **Output**: Lint results serialized to JSON/SARIF/JUnit by CLI and MCP layers.
 - **Business Rules**:
   - Lint result contains: file, line, column, code (ErrorCode), message (LintMessage), source (AdapterName), severity, enclosing scope (ScopeRef), related locations (LocationList).
-  - `ScopeRef` holds function/class name, kind, file, and line range.
+  - Scope reference holds function/class name, kind, file, and line range.
   - `Location` provides additional context for related code locations.
-  - `ViolationConstraint` captures rule thresholds (min/max values).
+  - Violation constraint captures rule thresholds (min/max values).
 - **Edge Cases**: Lint result with `line: 0` represents file-level violations (no specific line). Empty related locations is valid.
 - **Error Handling**: N/A — pure data structures.
 
@@ -120,7 +120,7 @@ shared (foundation — no feature crate dependencies)
 - **Output**: Computed results used by feature crates.
 - **Business Rules**:
   - Layer detection utility — Detect AES layer from filename prefix (`taxonomy_*`, `contract_*`, etc.). Returns optional layer name string.
-  - Language detection utility — Detect programming language from file extension. Returns `LanguageVO`.
+  - Language detection utility — Detect programming language from file extension. Returns language value object.
   - Path normalization utility — Normalize file paths for cross-platform consistency.
   - Signature parser utility — Extract method signatures from Rust/Python/TypeScript source code.
   - Scope matcher utility — Match code scopes for violation reporting.
@@ -136,7 +136,7 @@ shared (foundation — no feature crate dependencies)
   - Config parser utility — Parse YAML/JSON configuration files.
   - Config merger utility — Merge multiple config sources.
   - Config defaults utility — Provide default configuration values.
-- **Edge Cases**: Nonexistent file path returns error, not panic. Empty file content is valid input. Unsupported language returns `LanguageVO::Unknown`.
+- **Edge Cases**: Nonexistent file path returns error, not panic. Empty file content is valid input. Unsupported language returns unknown language value object.
 - **Error Handling**: File I/O errors propagated as `Result`. Invalid paths return `Err`.
 
 ### FR-007: Layer Name Constants and VOs
