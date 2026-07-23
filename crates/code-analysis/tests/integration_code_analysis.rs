@@ -101,7 +101,7 @@ fn container_duplication_checker_accessible() {
 
 #[test]
 fn orchestrator_default_constructs() {
-    let orch = CodeAnalysisOrchestrator::default();
+    let orch = CodeAnalysisOrchestrator::new_with_defaults();
     let results = orch.run_scan("/nonexistent");
     assert!(results.is_empty());
 }

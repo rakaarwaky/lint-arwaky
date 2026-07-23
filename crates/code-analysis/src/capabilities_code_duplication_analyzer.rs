@@ -170,7 +170,7 @@ impl CodeDuplicationAnalyzer {
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);
             }
-            file_unique_hashes[fi] = file_hashes.into_iter().collect();
+            file_unique_hashes.push(file_hashes.into_iter().collect());
         }
 
         // Identify keys that appear in 2+ different files (P2.3: use u64 hash)

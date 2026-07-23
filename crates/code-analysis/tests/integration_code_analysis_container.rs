@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use code_analysis_lint_arwaky::{
-    agent_code_analysis_orchestrator::{CodeAnalysisDeps, CodeAnalysisOrchestrator},
+    agent_code_analysis_orchestrator::CodeAnalysisOrchestrator,
     capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
     root_code_analysis_container::CodeAnalysisCheckerContainer,
 };
