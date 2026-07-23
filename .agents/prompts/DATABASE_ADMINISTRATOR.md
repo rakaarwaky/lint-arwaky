@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/todo/<nama-fitur>/DATABASE_ADMINISTRATOR.md
+.agents/report/<name-feature>/todo/DATABASE_ADMINISTRATOR.<TIMESTAMP>.md
 ```
 
 ### Report Structure

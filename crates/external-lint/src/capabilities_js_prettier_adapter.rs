@@ -80,16 +80,20 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                     continue;
                 }
                 let file_fp = FilePath::new(file_str.to_string()).unwrap_or_else(|_| path.clone());
-                let filename_vo = shared::common::utility_path_normalization::resolve_capabilities_path(
-                    file_fp,
-                    Some(path.clone()),
-                );
+                let filename_vo =
+                    shared::common::utility_path_normalization::resolve_capabilities_path(
+                        file_fp,
+                        Some(path.clone()),
+                    );
                 results.push(LintResult {
                     file: filename_vo,
                     line: LineNumber::new(1),
                     column: ColumnNumber::new(0),
                     code: ErrorCode::raw("formatting"),
-                    message: LintMessage::new(format!("Code style issue in {}. Run Prettier to fix.", file_str)),
+                    message: LintMessage::new(format!(
+                        "Code style issue in {}. Run Prettier to fix.",
+                        file_str
+                    )),
                     source: Some(self.name()),
                     severity: Severity::LOW,
                     enclosing_scope: Default::default(),

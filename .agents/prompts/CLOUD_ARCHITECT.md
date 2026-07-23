@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/todo/<nama-fitur>/CLOUD_ARCHITECT.md
+.agents/report/<name-feature>/todo/CLOUD_ARCHITECT.<TIMESTAMP>.md
 ```
 
 ### Report Structure
