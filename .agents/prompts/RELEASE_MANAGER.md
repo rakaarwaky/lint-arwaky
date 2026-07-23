@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/todo/<nama-fitur>/RELEASE_MANAGER.md
+.agents/report/<name-feature>/todo/RELEASE_MANAGER.<TIMESTAMP>.md
 ```
 
 ### Report Structure

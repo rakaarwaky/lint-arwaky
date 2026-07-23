@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/todo/<nama-fitur>/TECHNICAL_LEAD.md
+.agents/report/<name-feature>/todo/TECHNICAL_LEAD.<TIMESTAMP>.md
 ```
 
 ### Report Structure

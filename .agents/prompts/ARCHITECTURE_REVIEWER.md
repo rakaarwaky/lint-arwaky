@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/todo/<nama-fitur>/ARCHITECTURE_REVIEWER.md
+.agents/report/<name-feature>/todo/ARCHITECTURE_REVIEWER.<TIMESTAMP>.md
 ```
 
 ### Report Structure
