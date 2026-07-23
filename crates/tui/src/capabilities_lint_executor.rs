@@ -10,11 +10,11 @@ use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrches
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::taxonomy_doctor_vo::DependencyReport;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::maintenance::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
@@ -119,9 +119,8 @@ impl ILintExecutorProtocol for LintExecutor {
                 let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| path.to_string());
-                let root_fp =
-                    shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
-                        .unwrap_or_default();
+                let root_fp = shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
+                    .unwrap_or_default();
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
@@ -130,17 +129,18 @@ impl ILintExecutorProtocol for LintExecutor {
                     .as_ref()
                     .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
-                let source_files =
-                    match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
-                    {
-                        Ok(list) => list.values,
-                        Err(e) => {
-                            return LintExecutionResult::failure(format!(
-                                "Orphan detection for {}\nFailed to scan directory: {}",
-                                path, e
-                            ));
-                        }
-                    };
+                let source_files = match shared::common::utility_file_handler::scan_directory(
+                    &dir_path,
+                    ignored.values(),
+                ) {
+                    Ok(list) => list.values,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Orphan detection for {}\nFailed to scan directory: {}",
+                            path, e
+                        ));
+                    }
+                };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
@@ -151,7 +151,10 @@ impl ILintExecutorProtocol for LintExecutor {
                         0,
                     );
                 }
-                let files_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_strs.clone());
+                let files_vo =
+                    shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+                        file_strs.clone(),
+                    );
                 let results = orphan_agg.check_orphans(&files_vo, &root_fp);
                 let count = results.len();
                 let mut output = format!(
@@ -257,8 +260,8 @@ impl ILintExecutorProtocol for LintExecutor {
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
-        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
-            .unwrap_or_default();
+        let root_fp =
+            shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone()).unwrap_or_default();
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
         let ignored = self
@@ -267,7 +270,8 @@ impl ILintExecutorProtocol for LintExecutor {
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
         let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
+            {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
@@ -474,13 +478,13 @@ impl ILintExecutorProtocol for LintExecutor {
 
     fn install_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
-            Some(port) => {
+            Some(hook) => {
                 let exe_path_str = std::env::current_exe()
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|_| "lint-arwaky-cli".to_string());
                 let exe_path = shared::common::taxonomy_path_vo::FilePath::new(exe_path_str)
                     .unwrap_or_default();
-                match port.install_pre_commit(&exe_path) {
+                match hook.install_pre_commit(&exe_path) {
                     Ok(status) => {
                         if status.value {
                             LintExecutionResult::success("Git pre-commit hook installed successfully.".to_string(), 0)
@@ -497,7 +501,7 @@ impl ILintExecutorProtocol for LintExecutor {
 
     fn uninstall_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
-            Some(port) => match port.uninstall_pre_commit() {
+            Some(hook) => match hook.uninstall_pre_commit() {
                 Ok(status) => {
                     if status.value {
                         LintExecutionResult::success(
@@ -854,14 +858,19 @@ impl LintExecutor {
                 .as_ref()
                 .map(|o| o.ignored_paths(&root_fp))
                 .unwrap_or_default();
-            let source_files =
-                match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
-                    Ok(list) => list.values,
-                    Err(_) => Vec::new(),
-                };
+            let source_files = match shared::common::utility_file_handler::scan_directory(
+                &dir_path,
+                ignored.values(),
+            ) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
-                let files_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_strs);
+                let files_vo =
+                    shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
+                        file_strs,
+                    );
                 let orphan_results = orphan_agg.check_orphans(&files_vo, &root_fp);
                 all_results.extend(orphan_results);
             }

@@ -15,7 +15,7 @@
 - [ ] Passive surface does not contain domain computation.
 - [ ] Passive surface does not contain business rules.
 - [ ] Surface state fields use shared VOs.
-- [ ] Service dependencies use port interfaces via DI.
+- [ ] Service dependencies use protocol interfaces via DI.
 - [ ] No local domain data structures are defined.
 - [ ] Errors are handled explicitly.
 - [ ] No silent error swallowing.

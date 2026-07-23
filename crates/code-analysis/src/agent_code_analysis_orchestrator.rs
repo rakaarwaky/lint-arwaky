@@ -30,7 +30,10 @@ use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_compliance_score::compute_score;
-use shared::common::utility_layer_detector::{collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def, resolve_specialized_layer};
+use shared::common::utility_layer_detector::{
+    collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
+    resolve_specialized_layer,
+};
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
@@ -49,8 +52,7 @@ pub struct CodeAnalysisDeps {
 pub struct CodeAnalysisOrchestrator {
     deps: CodeAnalysisDeps,
     layer_map: LayerMapVO,
-    config: ArchitectureConfig
-
+    config: ArchitectureConfig,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -101,7 +103,11 @@ pub fn has_critical
 
 impl CodeAnalysisOrchestrator {
     pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
-        Self { deps, config, layer_map }
+        Self {
+            deps,
+            config,
+            layer_map,
+        }
     }
 
     /// Run AES analysis on the current project (self-lint).
@@ -130,9 +136,7 @@ impl CodeAnalysisOrchestrator {
             .map(|fp| fp.value.clone())
             .collect();
         let files = shared::code_analysis::utility_target_resolver::collect_source_files(
-            src_dir,
-            &dir_path,
-            &ignored,
+            src_dir, &dir_path, &ignored,
         );
         if files.is_empty() {
             return Vec::new();
@@ -146,11 +150,7 @@ impl CodeAnalysisOrchestrator {
     /// Only handles checks belonging to the code-analysis crate.
     /// Other crates (import-rules, naming-rules, role-rules, orphan-detector)
     /// have their own orchestrators called by the surface via contract aggregates.
-    pub fn run_all_checks(
-        &self,
-        files: &[String],
-        root_dir: &str,
-    ) -> Vec<LintResult> {
+    pub fn run_all_checks(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
@@ -247,17 +247,17 @@ impl CodeAnalysisOrchestrator {
             }
 
             // Layer-dependent checks (code-analysis only)
-            self.deps.line_checker.check_line_counts(
+            self.deps
+                .line_checker
+                .check_line_counts(file, Some(def), &c, &mut violations);
+
+            // Mandatory class definition check (AES303)
+            self.deps.class_checker.check_mandatory_class_definition(
                 file,
                 Some(def),
                 &c,
                 &mut violations,
             );
-
-            // Mandatory class definition check (AES303)
-            self.deps
-                .class_checker
-                .check_mandatory_class_definition(file, Some(def), &c, &mut violations);
         }
 
         // AES305: File-level similarity check — handled by capabilities_code_duplication_analyzer

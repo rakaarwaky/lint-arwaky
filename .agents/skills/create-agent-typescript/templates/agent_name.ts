@@ -4,7 +4,7 @@ import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
 // ─── Block 1: Class Definition & Constructor ──────────────
 export class Agent<Name> implements I<Name>Aggregate {
     constructor(/* DI params */) {
-        // DI fields use port interfaces
+        // DI fields use protocol interfaces
         // Value fields use shared VOs
     }
 

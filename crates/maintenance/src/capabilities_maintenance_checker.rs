@@ -19,13 +19,13 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 //   7. doctor: check tool installations and config presence.
 
 use shared::common::utility_command_runner as proc_io;
-use shared::maintenance::utility_dependency_io as dep_io;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,
 };
 use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::utility_dependency_io as dep_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

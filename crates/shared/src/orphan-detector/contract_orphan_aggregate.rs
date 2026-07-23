@@ -16,11 +16,7 @@ pub trait IOrphanAggregate: Send + Sync {
         root_dir: &FilePath,
     ) -> GraphAnalysisContext;
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO;
-    fn check_orphans(
-        &self,
-        files: &OrphanFileListVO,
-        root_dir: &FilePath,
-    ) -> Vec<LintResult>;
+    fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult>;
     /// Check orphans using a pre-built graph context (avoids rebuilding inbound_links per call)
     fn check_orphans_with_context(
         &self,

@@ -1,14 +1,14 @@
-use crate::contract::dummy_port::IDummyPort;
+use crate::contract::dummy_port::IDummyProtocol;
 use crate::taxonomy::order_entity::OrderEntity;
 
 export class DirectContractChecker {
-    private port: IDummyPort;
+    private protocol: IDummyProtocol;
 
-    constructor(port: IDummyPort) {
-        this.port = port;
+    constructor(protocol: IDummyProtocol) {
+        this.protocol = protocol;
     }
 
     check(order: OrderEntity): boolean {
-        return this.port.validate(order);
+        return this.protocol.validate(order);
     }
 }

@@ -7,7 +7,7 @@ use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_scan_report_vo::{PipelineError, ScanReport};
 use crate::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 
-/// IAnalysisPipelineAggregate — aggregate port for full analysis pipeline orchestration.
+/// IAnalysisPipelineAggregate — aggregate protocol for full analysis pipeline orchestration.
 ///
 /// Implemented by AnalysisPipelineOrchestrator (agent layer).
 /// Provides methods for running the complete lint pipeline on a target,

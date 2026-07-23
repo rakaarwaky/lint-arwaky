@@ -29,7 +29,6 @@ pub struct ImportOrchestratorDeps {
     pub unused: Arc<dyn IUnusedImportProtocol>,
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
-
 }
 
 pub struct ImportOrchestrator {
@@ -67,13 +66,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 let mut r = LintResultList::new(Vec::new());
                 self.deps
                     .mandatory
-                    .run_mandatory_imports(
-                        &self.config,
-                        &self.layer_map,
-                        &files,
-                        &root_dir,
-                        &mut r,
-                    )
+                    .run_mandatory_imports(&self.config, &self.layer_map, &files, &root_dir, &mut r)
                     .await;
                 r
             },
@@ -195,7 +188,8 @@ impl ImportOrchestrator {
         }
         let path_str = p.to_string_lossy();
         self.ignored_paths.iter().any(|ignored| {
-            path_str.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
+            path_str.contains(ignored.as_str())
+                || dir_name.contains(ignored.trim_start_matches('/'))
         })
     }
 

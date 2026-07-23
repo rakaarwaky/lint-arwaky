@@ -1,4 +1,4 @@
-// PURPOSE: Unit tests for ContractRoleChecker (AES402) — port/protocol primitive detection.
+// PURPOSE: Unit tests for ContractRoleChecker (AES402) — protocol primitive detection.
 // Layer: Capabilities (ContractRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;

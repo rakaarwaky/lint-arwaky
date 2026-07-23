@@ -1,7 +1,7 @@
 """
 dead_inherit.py — TEST PROJECT ONLY.
 Triggers:
-- AES016: dead-inheritance-bypass — empty class inheriting from contract port
+- AES016: dead-inheritance-bypass — empty class inheriting from contract protocol
 - AES007: contract-barrel-violation — import directly from contract sub-module file
 - AES003: single-word filename
 """
@@ -14,7 +14,7 @@ from contract.protocol_bad import useless              # AES007 violation
 
 
 class ILinterPort:
-    """Simulated contract port interface."""
+    """Simulated contract protocol interface."""
     def validate(self, code: str) -> bool:
         raise NotImplementedError
 
@@ -25,7 +25,7 @@ class ILinterPort:
 class EmptyLinterAdapter(ILinterPort):
     """
     AES016: Dead inheritance bypass.
-    Empty class inheriting from a contract port with no implementation.
+    Empty class inheriting from a contract protocol with no implementation.
     """
     pass
 
@@ -37,7 +37,7 @@ class DeadProtocolStub:
     pass
 
 
-# Also another dead inheritance — inherits contract port but has no body
+# Also another dead inheritance — inherits contract protocol but has no body
 class AnotherDeadAdapter(ILinterPort):
     ...
     # Ellipsis is also dead inheritance bypass

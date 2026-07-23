@@ -14,7 +14,7 @@ use shared::taxonomy_source_vo::SourceContentVO;
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
 //
 // ALGORITHM:
-//   check_contract_primitive (port/protocol dispatch) — Detects primitive type employment
+//   check_contract_primitive (protocol dispatch) — Detects primitive type employment
 //   in contract method signatures. Uses LanguageDetector to determine language, then
 //   delegates signature parsing to shared utility functions.
 

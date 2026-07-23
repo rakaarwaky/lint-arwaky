@@ -11,7 +11,7 @@ use crate::common::taxonomy_adapter_error::ScanError;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
-/// IImportRunnerAggregate — aggregate port for import-rules orchestration.
+/// IImportRunnerAggregate — aggregate protocol for import-rules orchestration.
 ///
 /// Implemented by ImportOrchestrator (agent layer).
 /// Called by surface layer (CLI, MCP, TUI) via Arc<dyn IImportRunnerAggregate>.

@@ -15,11 +15,11 @@ use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
 
@@ -186,7 +186,8 @@ impl AnalysisPipelineOrchestrator {
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
         let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
+            {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),
             };
@@ -206,11 +207,9 @@ impl AnalysisPipelineOrchestrator {
             .orphan_orchestrator
             .build_orphan_graph_context(&files_vo, &root_fp);
         let file_vo = OrphanFileListVO::new(file_strs.clone());
-        self.deps.orphan_orchestrator.check_orphans_with_context(
-            &file_vo,
-            &root_fp,
-            &context,
-        )
+        self.deps
+            .orphan_orchestrator
+            .check_orphans_with_context(&file_vo, &root_fp, &context)
     }
 
     /// Filter results to the target path and return formatted output string.
@@ -289,14 +288,17 @@ impl AnalysisPipelineOrchestrator {
         let scan_root = crate::surface_check_action::find_workspace_root(".")
             .unwrap_or(std::path::PathBuf::from("."));
         let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
-        let root_fp = FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
+        let root_fp =
+            FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let ignored = self
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
-        let dir_path = DirectoryPath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
+        let dir_path =
+            DirectoryPath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let all_source_files: Vec<String> = {
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values()) {
+            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
+            {
                 Ok(list) => list.values.iter().map(|f| f.value.clone()).collect(),
                 Err(_) => Vec::new(),
             }
@@ -439,16 +441,20 @@ impl AnalysisPipelineOrchestrator {
             None => std::path::PathBuf::from("."),
         };
         let language = detect_language_from_path(scan_root.to_str().unwrap_or("."));
-        let root_fp = FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
+        let root_fp =
+            FilePath::new(scan_root.to_str().unwrap_or(".").to_string()).unwrap_or_default();
         let ignored = self
             .deps
             .config_orchestrator
             .ignored_paths_for_language(&root_fp, language);
         let all_files: Vec<String> =
-            shared::common::utility_file_handler::collect_all_source_files(&scan_root, ignored.values())
-                .iter()
-                .map(|f| f.value.clone())
-                .collect();
+            shared::common::utility_file_handler::collect_all_source_files(
+                &scan_root,
+                ignored.values(),
+            )
+            .iter()
+            .map(|f| f.value.clone())
+            .collect();
 
         // Normalize the target file path
         let target_path = if path_obj.is_absolute() {
@@ -464,11 +470,10 @@ impl AnalysisPipelineOrchestrator {
             .deps
             .orphan_orchestrator
             .build_orphan_graph_context(&files_vo, &root_fp);
-        let all_results = self.deps.orphan_orchestrator.check_orphans_with_context(
-            &files_vo,
-            &root_fp,
-            &context,
-        );
+        let all_results = self
+            .deps
+            .orphan_orchestrator
+            .check_orphans_with_context(&files_vo, &root_fp, &context);
 
         // Filter results for the specific file — canonicalize for robust comparison
         let target_canonical = std::path::Path::new(&target_path).canonicalize().ok();

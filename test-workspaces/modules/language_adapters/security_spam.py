@@ -79,7 +79,7 @@ def create_flask_app():
 def start_dev_server():
     from flask import Flask
     app = Flask('myapp')
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', db_port=5000, debug=True)
 
 # =============================================================================
 # B304: Using weak cipher (DES)

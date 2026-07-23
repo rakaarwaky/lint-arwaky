@@ -153,7 +153,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
     }
 
     fn adapter_names(&self) -> AdapterNameList {
-        AdapterNameList::new(self.deps.adapters.keys().map(|k| AdapterName::raw(k.clone())).collect())
+        AdapterNameList::new(
+            self.deps
+                .adapters
+                .keys()
+                .map(|k| AdapterName::raw(k.clone()))
+                .collect(),
+        )
     }
 }
 

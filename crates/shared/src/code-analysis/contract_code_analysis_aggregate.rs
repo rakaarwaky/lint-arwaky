@@ -14,7 +14,7 @@ use crate::common::taxonomy_common_vo::{BooleanVO, Score};
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_path_vo::FilePath;
 
-/// ICodeAnalysisAggregate — aggregate port for code-analysis orchestration.
+/// ICodeAnalysisAggregate — aggregate protocol for code-analysis orchestration.
 ///
 /// Implemented by CodeAnalysisOrchestrator (agent layer).
 /// Provides methods for:

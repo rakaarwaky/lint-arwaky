@@ -15,9 +15,9 @@ use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggreg
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 

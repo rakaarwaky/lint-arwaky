@@ -15,7 +15,7 @@
 - [ ] One file contains exactly one implementation class.
 - [ ] No domain data structures are defined locally.
 - [ ] All domain data structures are imported from shared/taxonomy.
-- [ ] Service dependencies use port interfaces via DI.
+- [ ] Service dependencies use protocol interfaces via DI.
 - [ ] Value/configuration fields use shared VOs.
 - [ ] Aggregate signatures use shared VOs for domain data.
 - [ ] Agent contains zero I/O.
