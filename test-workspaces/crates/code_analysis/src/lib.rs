@@ -13,3 +13,6 @@ pub mod capabilities_unmatched_struct_processor;
 pub mod capabilities_unused_protocol_processor;
 pub mod capabilities_wrong_suffix_use;
 pub mod badname;
+pub mod capabilities_no_struct_processor;
+pub mod capabilities_short_processor;
+pub mod capabilities_bypass_processor;

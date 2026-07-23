@@ -3,7 +3,6 @@ use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisV
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
@@ -29,10 +28,17 @@ pub struct CodeDuplicationAnalyzer {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation> {
-        let root = shared::code_analysis::utility_target::resolve_target(path);
-        let src =
-            shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
+    fn handle_duplicates(
+        &self,
+        path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
+    ) -> Vec<AesCodeAnalysisViolation> {
+        let root = match &path {
+            Some(p) => p.value.clone(),
+            None => ".".to_string(),
+        };
+        let src = shared::code_analysis::utility_target_resolver::detect_source_dir(
+            std::path::Path::new(&root),
+        );
         // P1.6 fix: use injected config (self.config) instead of default_aes_config()
         let config = self.config.as_ref();
         let ignored_vec: Vec<String> = config
@@ -61,7 +67,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let source_files = shared::code_analysis::utility_target::collect_source_files(
+        let source_files = shared::code_analysis::utility_target_resolver::collect_source_files(
             &src,
             &dir_path,
             &ignored_vec,
@@ -104,13 +110,15 @@ impl CodeDuplicationAnalyzer {
         files: &[String],
         min_dup_lines: usize,
     ) -> Vec<AesCodeAnalysisViolation> {
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(files);
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
-        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(
-            entries,
-            min_dup_lines,
-        );
-        shared::code_analysis::utility_duplication::build_violations(
+        let blocks =
+            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+                entries,
+                min_dup_lines,
+            );
+        shared::code_analysis::utility_code_duplication_detector::build_violations(
             &blocks,
             total_loc,
             min_dup_lines,
@@ -139,8 +147,8 @@ impl CodeDuplicationAnalyzer {
 
         fn hash_key(key: &str) -> u64 {
             let mut hasher = DefaultHasher::new();
-            key.hash(&mut hasher);
-            hasher.finish()
+            std::hash::Hash::hash(key, &mut hasher);
+            std::hash::Hasher::finish(&hasher)
         }
 
         // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
@@ -156,7 +164,8 @@ impl CodeDuplicationAnalyzer {
             let mut file_hashes: HashSet<u64> = HashSet::new();
             for w in lines.windows(min_dup_lines) {
                 // P2.1: normalize once — cache hash for second pass
-                let key = shared::code_analysis::utility_duplication::normalize_window(w);
+                let key =
+                    shared::code_analysis::utility_code_duplication_detector::normalize_window(w);
                 let id = hash_key(&key);
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);
@@ -255,7 +264,8 @@ impl CodeDuplicationAnalyzer {
         min_dup_lines: usize,
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(files);
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
         self.check_file_similarity_entries(
             &entries
                 .iter()

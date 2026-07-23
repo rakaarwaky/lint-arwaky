@@ -4,7 +4,6 @@ use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::config_system::utility_config_io as config_io;
 use shared::taxonomy_common_error::ErrorMessage;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -17,7 +16,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match config_io::read_file_sync(p) {
+        let content = match shared::common::utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {
@@ -40,7 +39,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match config_io::read_file_sync(p) {
+        let content = match shared::common::utility_file_handler::read_file_generic(p) {
             Ok(c) => c,
             Err(e) => {
                 return Err(ConfigError {

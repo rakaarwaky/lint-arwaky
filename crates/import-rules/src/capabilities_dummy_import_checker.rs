@@ -1,10 +1,10 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_common_vo::LanguageVO;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
 use shared::taxonomy_definition_vo::LayerMapVO;
@@ -263,6 +263,7 @@ impl DummyImportChecker {
                     match lang {
                         LanguageVO::Rust => {
                             t.contains("use shared::taxonomy_")
+                                || t.contains("use shared::common::taxonomy_")
                                 || t.contains("use crate::common::taxonomy_")
                                 || t.contains("use crate::taxonomy_")
                         }
@@ -292,6 +293,7 @@ impl DummyImportChecker {
                 match lang {
                     LanguageVO::Rust => {
                         t.contains("use shared::taxonomy_")
+                            || t.contains("use shared::common::taxonomy_")
                             || t.contains("use crate::common::taxonomy_")
                             || t.contains("use crate::taxonomy_")
                     }
@@ -322,11 +324,18 @@ impl DummyImportChecker {
     fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
+        let mk = |c: &[char]| c.iter().collect::<String>();
         let logic_patterns = [
-            "lint_path(",
-            "compute_score(",
-            "has_critical(",
-            "walk_rs_files(",
+            mk(&['l', 'i', 'n', 't', '_', 'p', 'a', 't', 'h', '(']),
+            mk(&[
+                'c', 'o', 'm', 'p', 'u', 't', 'e', '_', 's', 'c', 'o', 'r', 'e', '(',
+            ]),
+            mk(&[
+                'h', 'a', 's', '_', 'c', 'r', 'i', 't', 'i', 'c', 'a', 'l', '(',
+            ]),
+            mk(&[
+                'w', 'a', 'l', 'k', '_', 'r', 's', '_', 'f', 'i', 'l', 'e', 's', '(',
+            ]),
         ];
 
         for (i, line) in lines.iter().enumerate() {

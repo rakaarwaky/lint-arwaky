@@ -14,7 +14,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 //   3. run_dependency_report: parses Cargo.lock (Rust), pyproject.toml, or
 //      requirements.txt to list direct and transitive dependencies.
 
-use shared::common::utility_process as proc_io;
+use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::utility_dependency_io as dep_io;
 use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{
@@ -31,39 +31,7 @@ pub struct MaintenanceChecker;
 #[async_trait::async_trait]
 impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        self.diagnose_toolchain().await
-    }
-
-    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        self.run_security_scan(project_path).await
-    }
-
-    async fn run_dependency_report(
-        &self,
-        project_path: &FilePath,
-    ) -> Result<DependencyReport, String> {
-        self.run_dependency_report(project_path).await
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl Default for MaintenanceChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl MaintenanceChecker {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        // Check each tool by running `<tool> --version` and capturing output.
-        // Required tools (cargo, rustfmt, clippy, git) must be found — their
-        // status is "FAIL" if missing. Optional tools get "WARN" on failure.
-        let check_tool = |name: &str, args: &[&str], required: bool| -> ToolStatus {
+        let check_tool = &|name: &str, args: &[&str], required: bool| {
             let (stdout, _, success) = proc_io::run_command(name, args);
             let (status, version) = if success {
                 let ver = match stdout.lines().next() {
@@ -98,7 +66,7 @@ impl MaintenanceChecker {
 
         let mut js_tools = vec![check_tool("node", &["--version"], false)];
         let eslint_local = "node_modules/.bin/eslint";
-        let eslint_status = if shared::common::utility_file::is_file(eslint_local) {
+        let eslint_status = if shared::common::utility_file_handler::is_file(eslint_local) {
             ToolStatus {
                 name: "eslint (local)".to_string(),
                 status: "OK".to_string(),
@@ -112,7 +80,7 @@ impl MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if shared::common::utility_file::is_file(prettier_local) {
+        let prettier_status = if shared::common::utility_file_handler::is_file(prettier_local) {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
@@ -126,7 +94,7 @@ impl MaintenanceChecker {
         js_tools.push(prettier_status);
 
         let tsc_local = "node_modules/.bin/tsc";
-        let tsc_status = if shared::common::utility_file::is_file(tsc_local) {
+        let tsc_status = if shared::common::utility_file_handler::is_file(tsc_local) {
             ToolStatus {
                 name: "tsc (local)".to_string(),
                 status: "OK".to_string(),
@@ -158,9 +126,8 @@ impl MaintenanceChecker {
         }
     }
 
-    pub async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
         let root = &project_path.value;
-        // Rust project: use cargo-audit with JSON output, parse vulnerabilities
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
             let (s, _, _) = dep_io::run_external_command_in("cargo", &["audit", "--json"], root);
@@ -209,7 +176,6 @@ impl MaintenanceChecker {
                 tool_installed: true,
             }
         } else {
-            // Python project: use bandit with JSON output, parse results array
             let (s, _, _) =
                 dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
             let mut findings = Vec::new();
@@ -255,12 +221,11 @@ impl MaintenanceChecker {
         }
     }
 
-    pub async fn run_dependency_report(
+    async fn run_dependency_report(
         &self,
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
         let root = &project_path.value;
-        // Try Rust Cargo.lock first (most detailed), then pyproject.toml, then requirements.txt
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
             let content = dep_io::read_dependency_file(&cargo_lock).map_err(|e| e.to_string())?;
@@ -272,7 +237,6 @@ impl MaintenanceChecker {
             let cargo_toml = std::path::Path::new(root).join("Cargo.toml");
             let mut direct_deps = std::collections::HashSet::new();
             if let Ok(toml_content) = dep_io::read_dependency_file(&cargo_toml) {
-                // Parse [dependencies] section to identify direct dependencies
                 let mut in_deps = false;
                 for line in toml_content.lines() {
                     if line.trim().starts_with("[dependencies]") {
@@ -293,28 +257,21 @@ impl MaintenanceChecker {
                 }
             }
 
-            let add_pkg = |pkg_name: &str,
-                           pkg_version: &str,
-                           direct_deps: &std::collections::HashSet<String>,
-                           dependencies: &mut Vec<DependencyInfo>| {
-                if !pkg_name.is_empty() && !pkg_version.is_empty() {
-                    let dep_type = if direct_deps.contains(pkg_name) {
-                        "direct".to_string()
-                    } else {
-                        "transitive".to_string()
-                    };
-                    dependencies.push(DependencyInfo {
-                        name: pkg_name.to_string(),
-                        version: pkg_version.to_string(),
-                        dep_type,
-                    });
-                }
-            };
-
             for line in content.lines() {
                 let trimmed = line.trim();
                 if trimmed == "[[package]]" {
-                    add_pkg(&pkg_name, &pkg_version, &direct_deps, &mut dependencies);
+                    if !pkg_name.is_empty() && !pkg_version.is_empty() {
+                        let dep_type = if direct_deps.contains(pkg_name.as_str()) {
+                            "direct".to_string()
+                        } else {
+                            "transitive".to_string()
+                        };
+                        dependencies.push(DependencyInfo {
+                            name: pkg_name.clone(),
+                            version: pkg_version.clone(),
+                            dep_type,
+                        });
+                    }
                     pkg_name.clear();
                     pkg_version.clear();
                     in_package = true;
@@ -328,7 +285,18 @@ impl MaintenanceChecker {
                     }
                 }
             }
-            add_pkg(&pkg_name, &pkg_version, &direct_deps, &mut dependencies);
+            if !pkg_name.is_empty() && !pkg_version.is_empty() {
+                let dep_type = if direct_deps.contains(pkg_name.as_str()) {
+                    "direct".to_string()
+                } else {
+                    "transitive".to_string()
+                };
+                dependencies.push(DependencyInfo {
+                    name: pkg_name,
+                    version: pkg_version,
+                    dep_type,
+                });
+            }
 
             Ok(DependencyReport {
                 language: "Rust".to_string(),
@@ -370,9 +338,16 @@ impl MaintenanceChecker {
                     for line in content.lines() {
                         let t = line.trim();
                         if !t.is_empty() && !t.starts_with('#') {
+                            let parts: Vec<&str> = t.splitn(2, ['=', '>', '<', '~']).collect();
+                            let name = parts[0].trim().to_string();
+                            let version = if parts.len() > 1 {
+                                parts[1].trim_start_matches('=').trim().to_string()
+                            } else {
+                                String::new()
+                            };
                             dependencies.push(DependencyInfo {
-                                name: t.to_string(),
-                                version: String::new(),
+                                name,
+                                version,
                                 dep_type: "python".to_string(),
                             });
                         }
@@ -389,5 +364,19 @@ impl MaintenanceChecker {
                 }
             }
         }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for MaintenanceChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MaintenanceChecker {
+    pub fn new() -> Self {
+        Self
     }
 }

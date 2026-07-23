@@ -2,28 +2,21 @@
 use async_trait::async_trait;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
-    ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
-    SNAKE_CASE_SEPARATOR,
+    LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
 };
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
-use shared::naming_rules::utility_naming::get_stem;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
+use shared::naming_rules::utility_naming_checker::get_stem;
+use shared::naming_rules::utility_naming_checker::string_filename_result;
 use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -61,7 +54,6 @@ impl INamingConventionChecker for NamingConventionChecker {
                 filename,
                 &layer_name,
                 def,
-                config,
                 min_words,
                 &mut results.values,
             );
@@ -100,7 +92,7 @@ impl NamingConventionChecker {
         };
         re_lock
             .get_or_init(|| {
-                let pattern = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$", min_words - 1);
+                let pattern = format!(r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$", min_words - 1);
                 Regex::new(&pattern).ok()
             })
             .as_ref()
@@ -112,36 +104,13 @@ impl NamingConventionChecker {
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
     }
 
-    fn _make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
-        let file_path = FilePath::new(file).unwrap_or_default();
-        LintResult {
-            file: file_path,
-            line: LineNumber::new(1),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw(ADAPTER_NAME)),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: DescriptionVO::new(String::new()),
-                kind: DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
-    }
-
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
-    #[allow(clippy::too_many_arguments)]
     fn _check_file_naming(
         &self,
         file: &str,
         filename: &str,
         layer_name: &Option<LayerNameVO>,
         definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
-        _config: &ArchitectureConfig,
         min_words: usize,
         violations: &mut Vec<LintResult>,
     ) {
@@ -161,7 +130,7 @@ impl NamingConventionChecker {
                     .iter()
                     .map(|p| p.trim_end_matches('_').to_string())
                     .collect();
-                violations.push(Self::_make_result(
+                violations.push(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::UnknownPrefix {
@@ -181,7 +150,7 @@ impl NamingConventionChecker {
             }
 
             let stem = get_stem(filename).unwrap_or_default();
-            violations.push(Self::_make_result(
+            violations.push(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
@@ -209,7 +178,7 @@ impl NamingConventionChecker {
         let stem = get_stem(filename).unwrap_or_default();
 
         if Self::naming_regex(min_words).is_none_or(|re| !re.is_match(stem)) {
-            violations.push(Self::_make_result(
+            violations.push(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {

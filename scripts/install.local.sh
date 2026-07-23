@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.local.sh — release build + XDG-aware install + checksums
+# install.local.sh — release build + local user installation (XDG user layout)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -8,19 +8,22 @@ CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
 RELEASE_DIR="$PROJECT_ROOT/target/release"
 DIST_DIR="$PROJECT_ROOT/dist"
 
-if [ "$(id -u)" -eq 0 ]; then
-    INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-/usr/local/bin}"
-    CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-/etc/lint-arwaky}"
-    REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-/var/lib/lint-arwaky/reports}"
-else
-    INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
-    CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
-    REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
-fi
+INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
+CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
+REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
-# 1. Instal XDG layout sebelum build
+# 1. Pembersihan & Install XDG layout sebelum build
+if [ -d "$CONFIG_DIR" ]; then
+    echo "Cleaning existing XDG config dir: $CONFIG_DIR"
+    rm -rf "$CONFIG_DIR"
+fi
+if [ -d "$REPORT_DIR" ]; then
+    echo "Cleaning existing XDG report dir: $REPORT_DIR"
+    rm -rf "$REPORT_DIR"
+fi
+
 mkdir -p "$CONFIG_DIR/rules" "$REPORT_DIR" "$DIST_DIR" "$INSTALL_BIN"
 
 # 2. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
@@ -93,5 +96,8 @@ if [ -d "$AGENTS_SRC" ]; then
     done
 fi
 
-CURRENT_VERSION=$(grep '^version' "$CARGO_TOML" | head -1 | sed 's/version = "\(.*\)"/\1/' | tr -d '\r')
-echo "Done: $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"
+CURRENT_VERSION=$(cargo metadata --no-deps --format-version 1 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1 || true)
+if [ -z "$CURRENT_VERSION" ]; then
+    CURRENT_VERSION=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$CARGO_TOML" | head -1)
+fi
+echo "Done (Local): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"

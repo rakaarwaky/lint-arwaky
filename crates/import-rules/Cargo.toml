@@ -1,5 +1,5 @@
 [package]
-name = "import_rules-lint-arwaky"
+name = "import-rules-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Import-compliance checks covering AES201–AES205: dummy/unused/forbidden/mandatory imports, layer detection, and cross-layer cycle detection."
@@ -20,3 +20,10 @@ shared.workspace = true
 tokio.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+
+[[bench]]
+name = "bench_import_rules_throughput"
+path = "benches/bench_import_rules_throughput.rs"
+harness = false

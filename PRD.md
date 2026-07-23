@@ -1,249 +1,78 @@
-# Product Requirements Document (PRD)
+# PRD — Lint Arwaky
 
-## Lint Arwaky — SIGNED OFF
+## Problem Statement
 
----
+Software projects accumulate quality debt silently. Developers lack a single tool that audits Rust + Python + JavaScript/TypeScript together, enforces architectural rules, and works for both human developers (CLI) and AI agents (MCP tools).
 
-## 1. Product Overview
+## Goals & Success Metrics
 
-**Name**: Lint Arwaky
-**Type**: CLI tool + MCP server
-**Version**: 1.10.72
-**License**: MIT
-**Language**: Rust (2021 edition)
+- Goal 1: Multi-language linting in a single pass (Rust, Python, JS/TS)
+- Goal 2: 24 AES rules enforced across 5 groups (Naming, Import, Quality, Role, Orphan)
+- Goal 3: MCP server with 5 tools for autonomous AI-agent integration
+- Goal 4: Zero bypass tolerance (`noqa`, `type: ignore`, `#[allow(...)]` flagged)
+- Goal 5: Self-auditing — project lints itself under its own rule engine
 
-Lint Arwaky is an autonomous multi-language linting, type-checking, and architectural rule auditing tool. It runs as a CLI binary (`lint-arwaky-cli`) and an MCP server (`lint-arwaky-mcp`) that exposes 5 tools over JSON-RPC 2.0.
+## User Personas
 
-The project audits itself: `lint-arwaky-cli check .` runs the same AES rule engine against its own codebase that it runs against third-party code.
+- **AI Agent**: Autonomous linting, self-healing, code review via MCP tools
+- **Developer**: Lint codebases, enforce architecture during local development
+- **DevOps / CI**: Quality gates, trend reports, dependency scans
+- **Contributor**: Extend adapters, add CLI commands
+- **Reviewer**: Architecture audit, code quality analysis
 
----
+## Scope
 
-## 2. Problem Statement
+- In scope:
+  - CLI binary (`lint-arwaky-cli`) for human developers
+  - MCP server (`lint-arwaky-mcp`) for AI agents
+  - TUI file browser (`lint-arwaky-tui`)
+  - 24 AES rules across 5 groups
+  - External linter adapters (Clippy, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
+  - SARIF 2.1.0, JUnit XML, JSON reports
+  - Git hooks integration
+  - Auto-fix capabilities
 
-Software projects accumulate quality debt silently. Developers lack:
+- Out of scope:
+  - IDE plugins (VS Code, IntelliJ)
+  - Web dashboard
+  - Cloud-hosted SaaS
+  - Non-Rust implementation
 
-- A single tool that audits Rust + Python + JavaScript/TypeScript together
-- Architectural enforcement that prevents cross-layer violations in multi-domain codebases
-- A unified interface for both human developers (CLI) and AI agents (MCP tools)
-- A self-auditing tool whose own codebase passes the rules it enforces
-- Static analysis with zero bypass tolerance (`noqa`, `type: ignore`, `#[allow(...)]` are flagged)
+## Feature Requirements (Prioritized)
 
----
+### P0 — Must Have
 
-## 3. AI Agent Value
+- [ ] Multi-language scanning (Rust, Python, JS/TS)
+- [ ] 24 AES rules enforcement
+- [ ] CLI with `check`, `scan`, `fix`, `ci` commands
+- [ ] MCP server with 5 tools
+- [ ] Self-auditing capability
 
-| Value Driver             | Description                                                             |
-| ------------------------ | ----------------------------------------------------------------------- |
-| **Agent Autonomy** | Agents operate via MCP tools without human oversight                    |
-| **Self-Healing**   | The`fix` command applies safe auto-fixes                              |
-| **24/7 Quality**   | The`watch` command polls and re-lints continuously during development |
+### P1 — Should Have
 
----
+- [ ] External linter adapters (Clippy, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
+- [ ] SARIF 2.1.0, JUnit XML, JSON reports
+- [ ] Git hooks integration
+- [ ] Auto-fix capabilities
+- [ ] Watch mode for continuous linting
 
-## 4. Target Users
+### P2 — Nice to Have
 
-| User                             | Interface        | Use Case                                                 |
-| -------------------------------- | ---------------- | -------------------------------------------------------- |
-| **AI Agents**              | MCP tools (5)    | Automated code review, pre-commit checks, CI integration |
-| **Developers**             | CLI + MCP        | Local development, watch mode, git hooks                 |
-| **Architecture Engineers** | AES rules        | Layer boundary enforcement, clean code                   |
-| **CI/CD Pipelines**        | CLI + exit codes | Quality gates with exit codes                            |
+- [ ] TUI file browser
+- [ ] Orphan code detection
+- [ ] Duplicate code detection
+- [ ] Dependency vulnerability scanning
 
----
+## Non-functional Requirements (High-level)
 
-## 5. Feature Requirements
+- Performance: Scan 1000 files in < 5 seconds
+- Security: No network calls required for core functionality
+- Scalability: Handle monorepos with 10,000+ files
+- Platform: Linux (primary), macOS (secondary)
+- Binary: Static release via `cargo build --release`
 
-**Vertical Slicing & Layer Boundary Rules:**
+## Open Questions / Risks
 
-### 5.1 `shared` —
-
-Taxonomy types and contract traits. Zero dependency on other workspace crates.
-
-| ID     | Requirement                                                                |
-| ------ | -------------------------------------------------------------------------- |
-| FR-001 | All`taxonomy_*` VOs, entities, events, errors, constants across features |
-| FR-002 | All`contract_*` protocols and aggregates across features                 |
-
-### 5.2 `shared` (common) — Source Code Parsing 
-
-| ID     | Requirement                                                                                    |
-| ------ | ---------------------------------------------------------------------------------------------- |
-| FR-003 | Multi-Language Scanners — regex-based scanners for Rust, Python, JavaScript/TypeScript        |
-| FR-004 | Import & Export Extraction — extract import statements and resolve symbol exports             |
-| FR-007 | Symbol & Definition Mapping — index raw symbols, class/struct definitions, functions, methods |
-| FR-129 | Path Normalization — normalize file paths and relative imports                                |
-
-### 5.3 `shared` (common) — File System Abstraction 
-
-| ID     | Requirement                                                                 |
-| ------ | --------------------------------------------------------------------------- |
-| FR-028 | Directory Recursive Walking — walk directories filtering out ignored files |
-| FR-029 | Glob Pattern Matching — locate files matching a search pattern             |
-| FR-125 | File Read/Write Operations                                                  |
-| FR-126 | Path Existence and Type Checks                                              |
-
-### 5.4 `file-watch` — File Watching
-
-| ID      | Requirement                                                                                  |
-| ------- | -------------------------------------------------------------------------------------------- |
-| FR-113a | Directory Snapshotting — snapshot project files and modification timestamps                 |
-| FR-113b | File Modification Detection — detect new or modified files                                  |
-| FR-113c | Ignore Patterns Filtering — filter`.git`, `node_modules`, `__pycache__` from watching |
-| FR-113d | Event Trigger Dispatching — expose changed files for incremental linting                    |
-
-### 5.5 `code-analysis` — Code Quality
-
-| ID      | Requirement                                                                            | AES Code |
-| ------- | -------------------------------------------------------------------------------------- | -------- |
-| FR-025a | Maximum File Line Count Validation                                                     | AES301   |
-| FR-025b | Minimum File Line Count Validation                                                     | AES302   |
-| FR-030a | Attribute Bypass Detection —`#[allow(...)]`                                         | AES304   |
-| FR-030b | Fatal Panic and Unwrap Detection —`panic!`, `unwrap()`, `expect()`              | AES304   |
-| FR-030c | Comment-Based Linter Bypass Detection —`noqa`, `type: ignore`, `eslint-disable` | AES304   |
-| FR-031a | Mandatory Definition Check — file must have a struct/enum/trait/class definition      | AES303   |
-| FR-032a | Empty Struct and Trait Check — dead inheritance (empty impl blocks)                   | AES303   |
-| FR-306  | Duplicate Code Detection                                                               | AES305   |
-
-### 5.7 `import-rules` — Import Compliance
-
-| ID      | Requirement                                                            | AES Code |
-| ------- | ---------------------------------------------------------------------- | -------- |
-| FR-010a | Layer Dependency Violation Scan — enforce unidirectional import flows | AES201   |
-| FR-011a | Mandatory Imports Verification — check required imports per layer     | AES202   |
-| FR-023  | Unused Import Check — symbol imported but never used                  | AES203   |
-| FR-024  | Dummy Import Check — import matches forbidden dummy pattern           | AES204   |
-| FR-050  | Circular dependency cycle analyzer — detect circular imports          | AES205   |
-
-### 5.8 `config-system` — Config Loading
-
-| ID     | Requirement                                                        |
-| ------ | ------------------------------------------------------------------ |
-| FR-002 | Multi-config YAML support, language detection, config-driven rules |
-
-### 5.9 `naming-rules` — Naming Convention
-
-| ID     | Requirement                                                                 | AES Code |
-| ------ | --------------------------------------------------------------------------- | -------- |
-| FR-020 | Naming convention checker — snake_case, lowercase, underscore, min 3 words | AES101   |
-| FR-022 | Suffix/Prefix rules — suffix must match layer definition                   | AES102   |
-
-### 5.10 `role-rules` — Role Violations
-
-| ID     | Requirement                                                                       | AES Code |
-| ------ | --------------------------------------------------------------------------------- | -------- |
-| FR-034 | Taxonomy constant purity —`_constant` files: only `pub const`/`pub static` | AES401   |
-| FR-027 | Primitive usage — no raw primitives in taxonomy domain types                     | AES401   |
-| FR-035 | Contract primitive checker — contract uses VO/constants, not primitives          | AES402   |
-| FR-037 | Capability role — capability must implement a protocol                           | AES403   |
-| FR-404 | Utility layer — stateless standalone functions                                   | AES404   |
-| FR-038 | Agent role — no`any` type in orchestrators                                     | AES405   |
-| FR-039 | Surface role — passive surface must not contain business logic                   | AES406   |
-
-### 5.11 `git-hooks` — Git Hooks
-
-| ID     | Requirement                                                |
-| ------ | ---------------------------------------------------------- |
-| FR-114 | Git pre-commit hook (`install-hook`, `uninstall-hook`) |
-
-### 5.12 `auto-fix` — Auto-Fix Processor
-
-| ID     | Requirement                                   |
-| ------ | --------------------------------------------- |
-| FR-005 | Apply safe auto-fixes (Rust + Python + JS/TS) |
-
-### 5.13 `external-lint` — External Linter Adapters
-
-| ID     | Requirement                                  |
-| ------ | -------------------------------------------- |
-| FR-070 | Run Clippy linting on Rust files             |
-| FR-071 | Run rustfmt formatting check on Rust files   |
-| FR-072 | Run cargo-audit dependency scan on Rust      |
-| FR-073 | Run Ruff linting on Python files             |
-| FR-074 | Run MyPy type checking on Python files       |
-| FR-075 | Run Bandit security scanning on Python files |
-| FR-078 | Run ESLint on JavaScript/TypeScript files    |
-| FR-079 | Run Prettier formatting on JS/TS files       |
-| FR-080 | Run TSC type checking on TypeScript files    |
-
-### 5.14 `orphan-detector` — Orphan Code Detection
-
-| ID     | Requirement                                         | AES Code    |
-| ------ | --------------------------------------------------- | ----------- |
-| FR-033 | Orphan code detector — unreachable/dead components | AES501–506 |
-
-### 5.15 `project-setup` — Setup
-
-| ID     | Requirement                                              |
-| ------ | -------------------------------------------------------- |
-| FR-060 | Environment diagnostics (`maintenance doctor`)         |
-| FR-061 | Create default config (`setup init`)                   |
-| FR-062 | MCP client config (`setup mcp-config --client <name>`) |
-
-### 5.16 `cli-commands` — CLI Surface
-
-| ID     | Requirement                                              |
-| ------ | -------------------------------------------------------- |
-| FR-055 | Full architecture compliance analysis (`check [path]`) |
-| FR-056 | External project scan (`scan [path]`)                  |
-| FR-057 | Apply safe fixes (`fix [path] [--dry-run]`)            |
-| FR-059 | CI mode with exit codes (`ci [path] --threshold <N>`)  |
-| FR-060 | Environment diagnostics (`doctor`)                      |
-| FR-063 | Scan for security vulnerabilities (`security [path]`)  |
-| FR-064 | List adapters (`adapters`)                             |
-| FR-065 | Show config (`config show`)                            |
-| FR-066 | Display version (`version`)                            |
-| FR-067 | Detect code duplication (`duplicates [path]`)          |
-| FR-068 | Scan for library vulnerabilities (`dependencies [path]`) |
-| FR-092 | Orphan file check (`orphan <path>`)                    |
-| FR-093 | Watch and lint on changes (`watch [path]`)             |
-| FR-094 | Install git pre-commit hook (`install-hook`)          |
-| FR-095 | Uninstall git pre-commit hook (`uninstall-hook`)      |
-| FR-096 | Create default config (`init`)                         |
-| FR-097 | Install default configs (`install`)                    |
-| FR-098 | Print MCP server config (`mcp-config --client <name>`) |
-| FR-115 | CLI via`clap` 4.6 subcommand groups                    |
-
-### 5.17 `mcp-server` — MCP Server
-
-| ID     | Requirement                                        |
-| ------ | -------------------------------------------------- |
-| FR-100 | MCP server via JSON-RPC 2.0 (`rmcp` crate)       |
-| FR-101 | MCP tool:`execute_command(action, args)`         |
-| FR-102 | MCP tool:`list_commands(domain)`                 |
-| FR-104 | MCP tool:`read_skill(section)`                   |
-| FR-105 | MCP tool:`health_check()`                        |
-
-### 5.18 `maintenance` — Maintenance
-
-| ID     | Requirement          |
-| ------ | -------------------- |
-| FR-130 | Python cache cleanup |
-
----
-
-## 6. Architecture — AES Layered
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification, dependency rules, and naming conventions.
-
-## 7. AES Rules
-
-See [RULES_AES.md](.agents/rules/RULES_AES.md) for the complete rule catalog.
-
-## 8. CLI Interface
-
-See [SKILL.md](SKILL.md) for the complete command catalog.
-
-## 9. MCP Interface
-
-See [SKILL.md](SKILL.md) for the MCP tool reference and [DEPLOY.md](DEPLOY.md) for client setup.
-
----
-
-## 10. Constraints
-
-- Pure-Rust implementation (no embedded Python or Node.js runtime)
-- No database required
-- Static binary release via `cargo build --release`
-- Platform: Linux
-
-See [README.md](README.md) for usage and [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules.
+- Windows support timeline
+- Performance optimization for very large codebases
+- Integration with CI/CD platforms (GitHub Actions, GitLab CI)

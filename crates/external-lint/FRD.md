@@ -1,9 +1,11 @@
 # FRD — external-lint
 
 ## Feature Goal
+
 The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Ruff, Mypy, ESLint, Prettier, and others on Rust, Python, and JS/TS files, normalizes their stdout/JSON reports, and integrates them into the Lint Arwaky compliance report.
 
 ## Requirements & Scope
+
 - Supported Linters & Tools
   - Rust Ecosystem
     - `cargo clippy`: Catches idioms, performance bugs, and style issues.
@@ -26,6 +28,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
   - Safely ignore or warn about missing tools without crashing the run process.
 
 ## Success Indicators
+
 - [ ] Tool discovery and fallback — missing tools are safely ignored or warned about without crashing the run.
 - [ ] Seamless report unification — AES and external violations combined in a single unified report or MCP response.
 - [ ] Error level translation — tool severities are correctly mapped to Lint Arwaky Severity.

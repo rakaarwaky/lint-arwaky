@@ -15,12 +15,44 @@ pub fn os_str_to_str(opt: Option<&std::ffi::OsStr>) -> &str {
 }
 
 /// Parse import lines from file content.
+/// Handles: use, pub use, pub(crate) use, import, from, extern crate.
+/// Skips: #[cfg(...)] conditional blocks (test, feature, etc.).
+/// Handles multi-line use statements with braces and trailing commas.
 pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> {
     let mut result = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
     let mut i = 0;
+    let mut in_cfg_block = false;
+    let mut cfg_brace_depth = 0;
     while i < lines.len() {
         let trimmed = lines[i].trim();
+
+        // Skip #[cfg(...)] attribute lines and their associated blocks
+        if trimmed.starts_with("#[cfg(") {
+            in_cfg_block = true;
+            cfg_brace_depth = 0;
+            i += 1;
+            continue;
+        }
+        if in_cfg_block {
+            // Count braces to find the end of the cfg block
+            for ch in trimmed.chars() {
+                match ch {
+                    '{' => cfg_brace_depth += 1,
+                    '}' => {
+                        cfg_brace_depth -= 1;
+                        if cfg_brace_depth <= 0 {
+                            in_cfg_block = false;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            i += 1;
+            continue;
+        }
+
         if trimmed.starts_with("import ")
             || trimmed.starts_with("from ")
             || trimmed.starts_with("extern crate ")
@@ -48,7 +80,9 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
                     }
                     i += 1;
                 }
+                // Normalize whitespace and clean trailing commas before closing brace
                 combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                combined = clean_trailing_commas(&combined);
                 result.push((
                     LineNumber::new((start + 1) as i64),
                     LineContentVO::new(combined),
@@ -59,6 +93,7 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
                     if next.starts_with("use ")
                         || next.starts_with("pub use ")
                         || next.starts_with("pub(crate) use ")
+                        || next.starts_with("#[cfg(")
                         || next.is_empty()
                     {
                         break;
@@ -71,6 +106,7 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
                     i += 1;
                 }
                 combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
+                combined = clean_trailing_commas(&combined);
                 result.push((
                     LineNumber::new((i + 1) as i64),
                     LineContentVO::new(combined),
@@ -85,6 +121,30 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
         i += 1;
     }
     result
+}
+
+/// Clean trailing commas before closing braces in use statements.
+/// e.g., `use foo::{A, B,}` → `use foo::{A, B}`
+fn clean_trailing_commas(s: &str) -> String {
+    if let Some(brace_pos) = s.rfind('{') {
+        let after_brace = &s[brace_pos..];
+        if after_brace.ends_with("}") || after_brace.ends_with("};") {
+            // Find the last non-whitespace char before }
+            let bytes = after_brace.as_bytes();
+            let mut end = bytes.len();
+            // Skip trailing } and ;
+            while end > 0 && (bytes[end - 1] == b'}' || bytes[end - 1] == b';') {
+                end -= 1;
+            }
+            let inner = &after_brace[..end];
+            if let Some(trimmed_inner) = inner.strip_suffix(',') {
+                let before = &s[..brace_pos];
+                let after = &after_brace[end..];
+                return format!("{before}{trimmed_inner}{after}");
+            }
+        }
+    }
+    s.to_string()
 }
 
 /// Parse a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")

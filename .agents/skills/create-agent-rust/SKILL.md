@@ -1,40 +1,33 @@
 ---
 name: create-agent-rust
 description: "Create and validate Rust agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one impl struct per file, aggregate contracts, DI for service dependencies, and shared VOs for domain data."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    agent,
-    aggregate,
-    structure,
-    3-block-structure,
-    di,
-    orchestration,
-    vo,
-    error-handling,
-    magic-constant,
-    imports,
-  ]
-triggers:
-  - "create agent rust"
-  - "add agent rust"
-  - "fix agent structure rust"
-  - "create aggregate rust"
-  - "agent missing aggregate rust"
-  - "validate agent logic rust"
-  - "check agent rust"
-  - "audit agent rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-taxonomy-rust
-  - enforce-1-struct-per-file-rust
-  - trait-consolidation-rust
-  - module_logic_validator-rust
-  - fix-agent-di
+metadata:
+  tags:
+    [
+      rust,
+      aes,
+      agent,
+      aggregate,
+      structure,
+      3-block-structure,
+      di,
+      orchestration,
+      vo,
+    ]
+  triggers:
+    - "create agent rust"
+    - "add agent rust"
+    - "fix agent structure rust"
+    - "create aggregate rust"
+    - "agent missing aggregate rust"
+    - "validate agent logic rust"
+    - "check agent rust"
+    - "audit agent rust"
+  dependencies: []
+  related:
+    - create-capabilities-rust
+    - create-taxonomy-rust
+    - create-contract-rust
 ---
 
 # create-agent-rust
@@ -66,25 +59,25 @@ Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be compl
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies |
-| `references/3-block-structure.md` | Block 1/2/3 definitions, trait placement rules |
-| `references/helper-vs-utility.md` | Helper vs utility decision, I/O Blocker, decision tree |
+| File                                  | Content                                                 |
+| ------------------------------------- | ------------------------------------------------------- |
+| `references/layer-boundaries.md`      | Allowed/Forbidden imports and dependencies              |
+| `references/3-block-structure.md`     | Block 1/2/3 definitions, trait placement rules          |
+| `references/helper-vs-utility.md`     | Helper vs utility decision, I/O Blocker, decision tree  |
 | `references/computation-detection.md` | Computation detection rules, forbidden/allowed patterns |
-| `references/error-handling.md` | Error handling rules |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| `references/error-handling.md`        | Error handling rules                                    |
+| `references/primitive-vo-policy.md`   | Primitive policy table, VO rules                        |
+| `references/examples.md`              | All BAD/GOOD code examples                              |
+| `references/commands.md`              | Quick heuristic check commands                          |
+| `references/checklist.md`             | Verification checklist                                  |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/agent_name.rs` | New agent implementation file |
+| File                                   | Purpose                        |
+| -------------------------------------- | ------------------------------ |
+| `templates/agent_name.rs`              | New agent implementation file  |
 | `templates/contract_name_aggregate.rs` | New aggregate trait definition |
-| `templates/mod.rs` | Module registration |
+| `templates/mod.rs`                     | Module registration            |
 
 ## Workflow
 

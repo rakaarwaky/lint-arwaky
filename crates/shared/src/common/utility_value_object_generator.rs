@@ -234,3 +234,7 @@ macro_rules! primitive_value_object {
         }
     };
 }
+
+pub fn is_generator_enabled() -> bool {
+    true
+}

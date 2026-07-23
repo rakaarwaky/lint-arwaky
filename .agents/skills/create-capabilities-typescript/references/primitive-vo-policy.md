@@ -26,11 +26,11 @@ interface <ResultVO> {
 
 ## Primitive Policy
 
-| Primitive  | Rule                                                                                |
-| ---------- | ----------------------------------------------------------------------------------- |
-| `string`   | Forbidden for domain fields and contract return values. Use VO.                     |
-| `number`   | Forbidden. Use domain VO.                                                           |
-| `boolean`  | Allowed for semantic toggles when no richer VO is needed.                           |
+| Primitive | Rule                                                            |
+| --------- | --------------------------------------------------------------- |
+| `string`  | Forbidden for domain fields and contract return values. Use VO. |
+| `number`  | Forbidden. Use domain VO.                                       |
+| `boolean` | Allowed for semantic toggles when no richer VO is needed.       |
 
 Prefer VOs for:
 

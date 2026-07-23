@@ -1,10 +1,10 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::code_analysis::utility_bypass::skip_cfg_test_block;
-use shared::code_analysis::utility_mandatory::rust_declares_type;
+use shared::code_analysis::utility_bypass_detector::skip_cfg_test_block;
+use shared::code_analysis::utility_mandatory_checker::rust_declares_type;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
@@ -49,7 +49,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
                     let next_t = lines[next_idx].trim();
-                    if next_t.is_empty() || next_t.starts_with('#') {
+                    if next_t.is_empty() || next_t.starts_with('#') || next_t.starts_with("//") {
                         next_idx += 1;
                     } else {
                         break;

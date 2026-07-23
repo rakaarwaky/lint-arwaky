@@ -4,12 +4,11 @@
 //   - doctor:     toolchain diagnostics (cargo, python3, node, git, etc.)
 //   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
 //   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
+
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use std::process::ExitCode;
 use std::sync::Arc;
-
-pub struct MaintenanceCommandsSurface;
 
 pub async fn handle_doctor(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
@@ -93,8 +92,9 @@ pub async fn handle_security(
     println!("Tool: {}", report.tool_name);
 
     if !report.tool_installed {
-        println!("{} not available. Please install it.", report.tool_name);
-        return ExitCode::SUCCESS;
+        eprintln!("Error: {} is not installed.", report.tool_name);
+        // P5.1: return exit code 3 (tool missing) instead of success
+        return ExitCode::from(3);
     }
 
     println!("Findings: {}", report.findings.len());
@@ -142,6 +142,7 @@ pub async fn handle_dependencies(
         }
         Err(e) => {
             println!("{e}");
+            return ExitCode::from(2);
         }
     }
 

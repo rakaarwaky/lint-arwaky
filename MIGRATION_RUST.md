@@ -48,6 +48,7 @@ project-root/
 ```
 
 **Key rules:**
+
 - All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `crates/shared/<feature>/`. Orchestration, capabilities, and surfaces live in the feature crate.
 - Entry points (`root_*_entry.rs`) are files inside `crates/`, not separate directories.
 - `crates/shared/src/common/` holds types shared across ALL features (path VOs, common errors, etc.).
@@ -444,15 +445,15 @@ cargo fmt --all && cargo clippy --all-targets -- -D warnings
 
 ## File Naming Reference
 
-| Layer        | Pattern                              | Example                         |
-| ------------ | ------------------------------------ | ------------------------------- |
-| taxonomy     | `taxonomy_<concept>_<suffix>.rs`     | `taxonomy_user_vo.rs`           |
-| contract     | `contract_<concept>_<suffix>.rs`     | `contract_user_protocol.rs`     |
-| utility      | `utility_<concept>_<suffix>.rs`      | `utility_user_hasher.rs`        |
-| capabilities | `capabilities_<concept>_<suffix>.rs` | `capabilities_user_checker.rs`  |
-| agent        | `agent_<concept>_orchestrator.rs`    | `agent_user_orchestrator.rs`    |
-| surface      | `surface_<concept>_<suffix>.rs`      | `surface_user_command.rs`       |
-| root         | `root_<concept>_<suffix>.rs`         | `root_user_container.rs`        |
+| Layer        | Pattern                              | Example                        |
+| ------------ | ------------------------------------ | ------------------------------ |
+| taxonomy     | `taxonomy_<concept>_<suffix>.rs`     | `taxonomy_user_vo.rs`          |
+| contract     | `contract_<concept>_<suffix>.rs`     | `contract_user_protocol.rs`    |
+| utility      | `utility_<concept>_<suffix>.rs`      | `utility_user_hasher.rs`       |
+| capabilities | `capabilities_<concept>_<suffix>.rs` | `capabilities_user_checker.rs` |
+| agent        | `agent_<concept>_orchestrator.rs`    | `agent_user_orchestrator.rs`   |
+| surface      | `surface_<concept>_<suffix>.rs`      | `surface_user_command.rs`      |
+| root         | `root_<concept>_<suffix>.rs`         | `root_user_container.rs`       |
 
 ---
 
@@ -474,16 +475,16 @@ root_         → ALL layers
 
 ## Troubleshooting
 
-| Violation  | Fix                                                     |
-| ---------- | ------------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                        |
-| AES102     | Change suffix to match layer's allowed list             |
-| AES201     | Remove forbidden import, use contract interface         |
-| AES202     | Add missing import per layer requirements               |
-| AES303     | Add struct/enum/trait definition                        |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`                 |
-| AES401     | Move primitives to VO, constants to `_constant`         |
-| AES402     | Replace primitive types with VO types in contract       |
-| AES403     | Implement protocol trait in capability                  |
-| AES404     | Move stateless helper functions to Utility              |
-| AES501-506 | Wire in container or remove dead code                   |
+| Violation  | Fix                                               |
+| ---------- | ------------------------------------------------- |
+| AES101     | Rename to `layer_concept_suffix`                  |
+| AES102     | Change suffix to match layer's allowed list       |
+| AES201     | Remove forbidden import, use contract interface   |
+| AES202     | Add missing import per layer requirements         |
+| AES303     | Add struct/enum/trait definition                  |
+| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
+| AES401     | Move primitives to VO, constants to `_constant`   |
+| AES402     | Replace primitive types with VO types in contract |
+| AES403     | Implement protocol trait in capability            |
+| AES404     | Move stateless helper functions to Utility        |
+| AES501-506 | Wire in container or remove dead code             |

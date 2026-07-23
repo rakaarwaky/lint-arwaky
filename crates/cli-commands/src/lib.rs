@@ -1,17 +1,27 @@
 // PURPOSE: Module declarations for cli-commands (surfaces, transport, container)
-pub use shared::cli_commands::taxonomy_catalog_constant::COMMAND_CATALOG;
 pub use shared::cli_commands::taxonomy_cli_vo::{get_cli, Cli, Commands};
+pub use shared::cli_commands::taxonomy_command_catalog_vo::CommandMetadataVO;
+pub use shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
 pub use shared::cli_commands::taxonomy_command_catalog_vo::{command_catalog, CommandCatalogVO};
-pub use shared::cli_commands::taxonomy_metadata_vo::CommandMetadataVO;
+pub mod agent_analysis_pipeline_orchestrator;
+pub use agent_analysis_pipeline_orchestrator::AnalysisPipelineOrchestrator;
+pub mod utility_format_output;
+pub mod utility_path_resolver;
+// Re-export report-formatter capabilities for backward compatibility
+pub use report_formatter::agent_report_formatter_orchestrator;
+pub use report_formatter::capabilities_json_formatter;
+pub use report_formatter::capabilities_junit_formatter;
+pub use report_formatter::capabilities_sarif_formatter;
+pub use report_formatter::capabilities_text_formatter;
+pub use report_formatter::ReportFormatterOrchestrator;
 pub mod surface_check_command;
 pub use surface_check_command::CheckCommandsSurface;
 pub mod surface_check_action;
 pub mod surface_common_command;
 pub mod surface_fix_command;
 pub use surface_fix_command::FixCommandsSurface;
-pub mod surface_maintenance_command;
-pub use surface_maintenance_command::MaintenanceCommandsSurface;
 pub mod surface_git_command;
+pub mod surface_maintenance_command;
 pub mod surface_plugin_command;
 pub mod surface_setup_command;
 pub mod surface_watch_command;

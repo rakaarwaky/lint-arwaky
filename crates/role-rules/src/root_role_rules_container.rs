@@ -1,5 +1,6 @@
 // PURPOSE: RoleContainer — wiring for role-rules feature (root layer, wiring only)
 use crate::agent_role_orchestrator::RoleOrchestrator;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -9,6 +10,7 @@ use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
 
 use crate::agent_role_orchestrator::RoleAggregateImpl;
 
@@ -18,10 +20,6 @@ pub struct RoleContainer {
 }
 
 impl RoleContainer {
-    pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::utility_config_defaults::default_aes_config())
-    }
-
     pub fn new_with_config(
         config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ) -> Self {
@@ -31,8 +29,18 @@ impl RoleContainer {
             Arc::new(CapabilitiesRoleChecker::new()),
             Arc::new(SurfaceRoleChecker::new()),
             Arc::new(AgentRoleChecker::new()),
+            Arc::new(UtilityRoleChecker::new()),
         ));
         Self { aggregate, config }
+    }
+
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
     }
 
     pub fn aggregate(&self) -> Arc<dyn IRoleAggregate> {
@@ -41,11 +49,5 @@ impl RoleContainer {
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         Arc::new(RoleOrchestrator::new(self.aggregate.clone(), &self.config))
-    }
-}
-
-impl Default for RoleContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "project_setup-lint-arwaky"
+name = "project-setup-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Project scaffolding and doctor checks: initialises a project with AES-compliant directory layout, MCP config, and CI templates."
@@ -17,3 +17,13 @@ async-trait.workspace = true
 tokio.workspace = true
 shared.workspace = true
 dirs.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+tokio.workspace = true
+
+[[bench]]
+name = "bench_project_setup_throughput"
+path = "benches/bench_project_setup_throughput.rs"
+harness = false

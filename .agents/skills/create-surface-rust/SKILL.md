@@ -1,44 +1,38 @@
 ---
 name: create-surface-rust
 description: "Create and validate Rust surface layer files following AES406: smart/utility/passive surfaces, strict import rules, delegate to aggregates, zero direct lower-layer imports, zero business logic, VO-based state, and explicit error handling."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    surface,
-    command,
-    controller,
-    component,
-    hook,
-    store,
-    action,
-    view,
-    entry,
-    structure,
-    aes406,
-    vo,
-    di,
-  ]
-triggers:
-  - "create surface rust"
-  - "add surface rust"
-  - "fix surface rust"
-  - "create command rust"
-  - "create component rust"
-  - "create hook rust"
-  - "create store rust"
-  - "surface role violation rust"
-  - "audit surface rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-agent-rust
-  - create-contract-rust
-  - create-taxonomy-rust
-  - enforce-1-struct-per-file-rust
-  - module_logic_validator-rust
+metadata:
+  tags:
+    [
+      rust,
+      aes,
+      surface,
+      command,
+      controller,
+      component,
+      hook,
+      store,
+      action,
+      view,
+      aes406,
+      vo,
+    ]
+  triggers:
+    - "create surface rust"
+    - "add surface rust"
+    - "fix surface rust"
+    - "create command rust"
+    - "create component rust"
+    - "create hook rust"
+    - "create store rust"
+    - "surface role violation rust"
+    - "audit surface rust"
+  dependencies: []
+  related:
+    - create-capabilities-rust
+    - create-agent-rust
+    - create-contract-rust
+    - create-taxonomy-rust
 ---
 
 # create-surface-rust
@@ -82,21 +76,21 @@ The surface layer MUST NOT:
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/layer-boundaries.md` | Allowed/Forbidden imports for each surface type |
-| `references/surface-types.md` | Smart/Utility/Passive surface definitions |
-| `references/helper-vs-utility.md` | Helper vs utility decision |
-| `references/error-handling.md` | Error handling rules |
-| `references/primitive-vo-policy.md` | Primitive policy table |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | 20-item verification checklist |
+| File                                | Content                                         |
+| ----------------------------------- | ----------------------------------------------- |
+| `references/layer-boundaries.md`    | Allowed/Forbidden imports for each surface type |
+| `references/surface-types.md`       | Smart/Utility/Passive surface definitions       |
+| `references/helper-vs-utility.md`   | Helper vs utility decision                      |
+| `references/error-handling.md`      | Error handling rules                            |
+| `references/primitive-vo-policy.md` | Primitive policy table                          |
+| `references/examples.md`            | All BAD/GOOD code examples                      |
+| `references/commands.md`            | Quick heuristic check commands                  |
+| `references/checklist.md`           | 20-item verification checklist                  |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
+| File                        | Purpose                         |
+| --------------------------- | ------------------------------- |
 | `templates/surface_name.rs` | New surface implementation file |
 
 ## Workflow
@@ -105,11 +99,11 @@ The surface layer MUST NOT:
 
 Ask: **"What role does this surface serve?"**
 
-| Role | Suffixes |
-|------|----------|
+| Role                               | Suffixes                                     |
+| ---------------------------------- | -------------------------------------------- |
 | Entry point / command / controller | `_command`, `_controller`, `_page`, `_entry` |
-| Event/action/store/screen adapter | `_hook`, `_store`, `_action`, `_screen` |
-| Rendering component/view/layout | `_component`, `_view`, `_layout` |
+| Event/action/store/screen adapter  | `_hook`, `_store`, `_action`, `_screen`      |
+| Rendering component/view/layout    | `_component`, `_view`, `_layout`             |
 
 ### Step 2: Check Import Rules
 

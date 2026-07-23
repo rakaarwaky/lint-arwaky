@@ -1,25 +1,36 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use regex::Regex;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
-use shared::orphan_detector::utility_workspace::collect_source_files;
+use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+#[derive(Clone)]
 struct SearchFilesCache {
     root: std::path::PathBuf,
     file_count: usize,
     files: Arc<Vec<String>>,
+}
+
+impl Default for SearchFilesCache {
+    fn default() -> Self {
+        Self {
+            root: std::path::PathBuf::new(),
+            file_count: 0,
+            files: Arc::new(Vec::new()),
+        }
+    }
 }
 
 pub struct ContractOrphanAnalyzer {
@@ -321,10 +332,11 @@ impl ContractOrphanAnalyzer {
             }
 
             // Rust: impl Trait for Type / impl<T> Trait for Type
-            if trimmed.starts_with("impl") && trimmed.contains(" for ") {
-                if trimmed.contains(trait_name) {
-                    return true;
-                }
+            if trimmed.starts_with("impl")
+                && trimmed.contains(" for ")
+                && trimmed.contains(trait_name)
+            {
+                return true;
             }
 
             // Python: class Foo(Trait): / class Foo(Base, Trait):

@@ -6,6 +6,14 @@ This document contains the source code for feature crate `code-analysis` along w
 
 The following issues were detected by `lint-arwaky-cli scan`:
 
+```
+============================================================
+  AES Architecture Compliance Report
+============================================================
+  Project:
+  Violations: 0
+```
+
 ---
 
 ## File List
@@ -23,7 +31,6 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs)
 - [crates/shared/src/cli-commands/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/mod.rs)
 - [crates/shared/src/cli-commands/taxonomy_result_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_result_vo.rs)
-- [crates/shared/src/cli-commands/taxonomy_score_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_score_vo.rs)
 - [crates/shared/src/cli-commands/taxonomy_severity_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_severity_vo.rs)
 - [crates/shared/src/code-analysis/contract_adapter_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_adapter_protocol.rs)
 - [crates/shared/src/code-analysis/contract_bypass_checker_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_bypass_checker_protocol.rs)
@@ -32,7 +39,6 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/code-analysis/contract_code_metric_analyzer_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_code_metric_analyzer_protocol.rs)
 - [crates/shared/src/code-analysis/contract_dead_inheritance_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_dead_inheritance_protocol.rs)
 - [crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs)
-- [crates/shared/src/code-analysis/contract_layer_detection_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_layer_detection_protocol.rs)
 - [crates/shared/src/code-analysis/contract_line_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_line_protocol.rs)
 - [crates/shared/src/code-analysis/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/mod.rs)
 - [crates/shared/src/code-analysis/taxonomy_analysis_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/taxonomy_analysis_vo.rs)
@@ -41,7 +47,10 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/code-analysis/taxonomy_operation_error.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/taxonomy_operation_error.rs)
 - [crates/shared/src/code-analysis/taxonomy_violation_code_analysis_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/taxonomy_violation_code_analysis_vo.rs)
 - [crates/shared/src/code-analysis/utility_bypass.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_bypass.rs)
+- [crates/shared/src/code-analysis/utility_column.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_column.rs)
 - [crates/shared/src/code-analysis/utility_duplication.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_duplication.rs)
+- [crates/shared/src/code-analysis/utility_file_reader.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_file_reader.rs)
+- [crates/shared/src/code-analysis/utility_language_mapper.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_language_mapper.rs)
 - [crates/shared/src/code-analysis/utility_mandatory.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_mandatory.rs)
 - [crates/shared/src/code-analysis/utility_target.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/utility_target.rs)
 - [crates/shared/src/common/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/mod.rs)
@@ -75,9 +84,10 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/common/taxonomy_suffix_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_suffix_vo.rs)
 - [crates/shared/src/common/taxonomy_suggestion_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_suggestion_vo.rs)
 - [crates/shared/src/common/taxonomy_threshold_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_threshold_vo.rs)
-- [crates/shared/src/common/utility_file.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_file.rs)
+- [crates/shared/src/common/utility_compliance_score.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_compliance_score.rs)
 - [crates/shared/src/common/utility_layer_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_layer_detector.rs)
 - [crates/shared/src/common/utility_value_object_generator.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_value_object_generator.rs)
+- [crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs)
 - [crates/shared/src/config-system/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/mod.rs)
 - [crates/shared/src/config-system/taxonomy_config_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_vo.rs)
 
@@ -341,16 +351,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -377,7 +387,7 @@ The only Agent role is orchestrator.
 
 ### Dependencies
 
-Agent may depend only on Taxonomy and Contract.
+Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
@@ -392,7 +402,7 @@ Agent may depend only on Taxonomy and Contract.
 ### Special Rules
 
 - Agent must depend on Contract, not concrete implementations.
-- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not use and must be completely ignorant of Capabilities implementations.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
@@ -422,11 +432,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -486,6 +496,9 @@ once_cell.workspace = true
 regex.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros"] }
 shared.workspace = true
+
+[dev-dependencies]
+shared.workspace = true
 ```
 
 ---
@@ -495,30 +508,149 @@ shared.workspace = true
 ```rust
 # FRD — code-analysis
 
-## Feature Goal
-The code-analysis crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, and duplicate blocks, while guaranteeing zero tolerance for warning/error bypasses (suppression comments or crash-prone operations like unwrap/expect).
+## System Overview
 
-## Requirements & Scope
-- AES301 Maximum File Line Count
-  - Requirement: Files must not exceed the maximum allowed line count (configured via YAML, defaults to 500–800 lines depending on language/layer) to ensure single-responsibility cohesion.
-- AES302 Minimum File Line Count
-  - Requirement: Scanned files must have a minimum length (e.g., at least 10 lines) to avoid empty or trivial placeholder components.
-- AES303 Mandatory Definitions and Empty Traits
-  - Requirement 1: Source files must declare at least one primary symbol (e.g., struct, enum, class, or interface/trait) to prevent dead files.
-  - Requirement 2: Enforces that traits/structures are not empty placeholders (no dead inheritance or empty impl blocks).
-- AES304 Bypass Detection and Panic Avoidance
-  - Requirement 1: Detects and flags any attempt to suppress warnings or errors using comment bypasses (such as noqa, type: ignore, eslint-disable, eslint-disable-next-line).
-  - Requirement 2: Flags compiler/runtime bypasses like #[allow(...)] or #[warn(...)].
-  - Requirement 3: Flags fatal operations that bypass clean error handling and can crash the application, such as .unwrap(), .expect(), and panic!.
-- AES305 Duplicate Code Block Detection
-  - Requirement: Compares code blocks across files and flags identical/highly similar code segments exceeding a configurable token/line threshold to enforce DRY (Don't Repeat Yourself) principles.
+The code-analysis crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, and duplicate blocks, while guaranteeing zero tolerance for warning/error bypasses.
 
-## Success Indicators
-- [ ] Prevention of suppression hacks — absolute blockage of sneaky bypass comments (type: ignore, noqa) and raw panic/unwraps, forcing clean error propagation.
-- [ ] Code size discipline — strict enforcement of LOC (Lines of Code) limits with configurable rules.
-- [ ] DRY codebase — high-performance detection of structural duplication without lagging execution speeds.
-- [ ] Granular location info — reporting of line and column numbers for unwraps, panics, and duplicate lines.
-- [ ] Compliance — when complete, the workspace self-check passes fully.
+## Functional Requirements
+
+### FR-001: Maximum File Line Count (AES301)
+
+- **Description**: Files must not exceed the maximum allowed line count.
+- **Input**: Source file path
+- **Output**: AES301 diagnostic if exceeded
+- **Business Rules**:
+  - Default max: 1000 lines (configurable per rule)
+  - Applies to: Rust, Python, TypeScript, JavaScript
+- **Edge Cases**: Files with long comments, generated code
+- **Error Handling**: Emit AES301 with actual vs max line count
+
+### FR-002: Minimum File Line Count (AES302)
+
+- **Description**: Files must have minimum length to avoid empty placeholders.
+- **Input**: Source file path
+- **Output**: AES302 diagnostic if too short
+- **Business Rules**:
+  - Default min: 10 lines
+  - Applies to: Rust, Python, TypeScript, JavaScript
+- **Edge Cases**: Config files, entry points
+- **Error Handling**: Emit AES302 with actual vs min line count
+
+### FR-003: Mandatory Definitions (AES303)
+
+- **Description**: Source files must declare at least one primary symbol.
+- **Input**: Source file path
+- **Output**: AES303 diagnostic if no definition found
+- **Business Rules**:
+  - Rust: struct, enum, trait, type
+  - Python: class, def, async def
+  - TypeScript: class, interface, type, enum, function
+  - JavaScript: class, function, async function
+- **Edge Cases**: Empty impl blocks, unit structs
+- **Error Handling**: Emit AES303 with expected symbol types
+
+### FR-004: Bypass Detection (AES304)
+
+- **Description**: Detects and flags any attempt to suppress warnings/errors.
+- **Input**: Source file path
+- **Output**: AES304 diagnostic for each bypass found
+- **Business Rules**:
+  - Comment bypasses: noqa, type: ignore, eslint-disable
+  - Attribute bypasses: #[allow(...)], #[warn(...)]
+  - Fatal operations: unwrap(), expect(), panic!, todo!
+  - Safe variants NOT flagged: unwrap_or(), unwrap_or_else()
+- **Edge Cases**: Nested attributes, conditional compilation
+- **Error Handling**: Emit AES304 with bypass type and location
+
+### FR-005: Duplicate Code Detection (AES305)
+
+- **Description**: Compares code blocks and flags identical/highly similar segments.
+- **Input**: All workspace source files
+- **Output**: AES305 diagnostic for duplicate blocks
+- **Business Rules**:
+  - Min duplicate lines: 5
+  - Threshold: 50% similarity
+  - Algorithm: Window-based hashing with normalized lines
+- **Edge Cases**: Generated code, boilerplate
+- **Error Handling**: Emit AES305 with duplicate file locations
+
+### FR-006: File Read Error Diagnostics (AES000)
+
+- **Description**: Emit diagnostic when file cannot be read or exceeds size limit.
+- **Input**: File path
+- **Output**: AES000 diagnostic
+- **Business Rules**:
+  - Max file size: 2 MiB
+  - Emit diagnostic instead of silent skip
+- **Edge Cases**: Binary files, permission errors
+- **Error Handling**: Emit AES000 with error reason
+
+## Data Model / Entity Relationship
+
+``` `
+CodeAnalysisRuleVO {
+    rule_code: String
+    max_lines: Option<u32>
+    min_lines: Option<u32>
+    threshold_pct: f64
+}
+
+Diagnostic {
+    file_path: String
+    line: u32
+    column: u32
+    rule_code: String
+    message: String
+    severity: Severity
+}
+``` `
+
+## API Contract
+
+| Function                        | Input              | Output             | Description  |
+| ------------------------------- | ------------------ | ------------------ | ------------ |
+| `check_max_line_count()`        | File path, content | Option<Diagnostic> | Check AES301 |
+| `check_min_line_count()`        | File path, content | Option<Diagnostic> | Check AES302 |
+| `check_mandatory_definitions()` | File path, content | Option<Diagnostic> | Check AES303 |
+| `check_forbidden_bypass()`      | File path, content | Vec<Diagnostic>    | Check AES304 |
+| `handle_duplicates()`           | All files          | Vec<Diagnostic>    | Check AES305 |
+
+## Integration Points
+
+- **Internal**: config-system (YAML rules), shared (taxonomy VOs)
+- **External**: None
+
+## Non-functional Requirements (Detailed)
+
+- Performance: Analyze 1000 files in < 3 seconds
+- Memory: O(n) where n = file size
+- Accuracy: Zero false positives for valid code
+
+## Test Scenarios / QA Checklist
+
+- [ ] File exceeding max lines fails with AES301
+- [ ] File below min lines fails with AES302
+- [ ] File without definitions fails with AES303
+- [ ] `unwrap()` detected with AES304
+- [ ] `#[allow(...)]` detected with AES304
+- [ ] Duplicate code detected with AES305
+- [ ] Oversized file emits AES000
+
+## Assumptions & Constraints
+
+- Rules are configurable via YAML
+- File reading uses memory-mapped I/O for large files
+- Duplicate detection uses hash-based comparison
+
+## Glossary
+
+- **AES**: Agentic Engineering System
+- **Bypass**: Attempt to suppress warnings/errors
+- **Diagnostic**: Violation report with location and rule code
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
 ```
 
 ---
@@ -545,74 +677,74 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 //   4. Run duplication check using pre-read entries (AES305)
 //   5. Return aggregated LintResult list
 
-use std::path::Path;
-use std::sync::Arc;
-use std::sync::OnceLock;
-
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_score_vo::compute_score;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::utility_compliance_score::compute_score;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use std::path::Path;
+use std::sync::Arc;
 
-static GLOBAL_CONTAINER: OnceLock<Arc<CodeAnalysisCheckerContainer>> = OnceLock::new();
-
-/// Initialize the global checker container. Must be called before using CodeAnalysisOrchestrator.
-pub fn init_global_checker(container: Arc<CodeAnalysisCheckerContainer>) {
-    GLOBAL_CONTAINER.set(container).ok();
-}
-
-/// Detect source directory from project root (packages/, crates/, modules/).
-pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
-    for name in &["packages", "crates", "modules"] {
-        let candidate = project_root.join(name);
-        if candidate.is_dir() {
-            return candidate;
-        }
-    }
-    project_root.to_path_buf()
-}
-
-/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
-pub fn collect_source_files(
-    _root_dir: &Path,
-    dir_path: &DirectoryPath,
-    ignored: &[String],
-) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    let path = std::path::Path::new(&dir_path.value);
-    if path.is_dir() {
-        shared::common::utility_file::walk_source_files(path, &mut files, ignored);
-    }
-    files
-}
-
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
+    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root.value()))
+    }
+
+    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_scan(src_dir.value()))
+    }
+
+    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
+        self.run_self_lint(path.value())
+    }
+
+    fn calc_score(&self, results: &[LintResult]) -> Score {
+        let cs: fn(&[LintResult]) -> f64 = compute_score;
+        Score::new(cs(results))
+    }
+
+    fn check_critical(&self, results: &[LintResult]) -> bool {
+        let hc: fn(&[LintResult]) -> bool = has_critical;
+        hc(results)
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
+        self.format_report(&results.values, project_root.value())
+    }
+
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        self.container
+            .config()
+            .rules
+            .iter()
+            .map(|r| r.code_analysis.clone())
+            .collect()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
         Self::new()
     }
 }
 
-/// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
-pub fn resolve_target(path: Option<String>) -> String {
-    match path {
-        Some(p) => p,
-        None => ".".to_string(),
-    }
-}
-
 /// Run a full AES self-lint on a path.
-pub fn lint_path(path: &str) -> Vec<LintResult> {
+#[rustfmt::skip]
+pub fn lint_path
+    (path: &str) -> Vec<LintResult> {
     let root = match FilePath::new(path.to_string()) {
         Ok(fp) => fp,
         Err(_) => match FilePath::new(".".to_string()) {
@@ -625,18 +757,16 @@ pub fn lint_path(path: &str) -> Vec<LintResult> {
 }
 
 /// Check if any CRITICAL severity violations exist in results.
-pub fn has_critical(results: &[LintResult]) -> bool {
+#[rustfmt::skip]
+pub fn has_critical
+    (results: &[LintResult]) -> bool {
     results.iter().any(|r| r.severity == Severity::CRITICAL)
 }
 
 impl CodeAnalysisOrchestrator {
-    /// Create a new orchestrator. Falls back to a default container if init_global_checker not called.
     pub fn new() -> Self {
         Self {
-            container: match GLOBAL_CONTAINER.get().cloned() {
-                Some(c) => c,
-                None => Arc::new(CodeAnalysisCheckerContainer::default()),
-            },
+            container: Arc::new(CodeAnalysisCheckerContainer::default()),
         }
     }
 
@@ -647,7 +777,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = detect_source_dir(root);
+        let src_dir = shared::code_analysis::utility_target::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -669,7 +799,9 @@ impl CodeAnalysisOrchestrator {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let files = collect_source_files(src_dir, &dir_path, &ignored);
+        let files = shared::code_analysis::utility_target::collect_source_files(
+            src_dir, &dir_path, &ignored,
+        );
         if files.is_empty() {
             return Vec::new();
         }
@@ -703,10 +835,24 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                if let Ok(cargo_content) = std::fs::read_to_string(cargo_path) {
-                    self.container
-                        .bypass_checker()
-                        .check_cargo_toml(&cargo_content, &mut violations);
+                match shared::code_analysis::utility_file_reader::read_lintable_file(
+                    &cargo_path.to_string_lossy(),
+                ) {
+                    Ok(Some(cargo_content)) => {
+                        self.container
+                            .bypass_checker()
+                            .check_cargo_toml(&cargo_content, &mut violations);
+                    }
+                    Ok(None) => {}
+                    Err(e) => {
+                        violations.push(LintResult::new_arch(
+                            &cargo_path.to_string_lossy(),
+                            0,
+                            "AES000",
+                            Severity::LOW,
+                            format!("Cargo.toml skipped: {}", e),
+                        ));
+                    }
                 }
             }
         }
@@ -716,9 +862,28 @@ impl CodeAnalysisOrchestrator {
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-            let c = match std::fs::read_to_string(file) {
-                Ok(content) => content,
-                Err(_) => continue,
+            let c = match shared::code_analysis::utility_file_reader::read_lintable_file(file) {
+                Ok(Some(content)) => content,
+                Ok(None) => {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES301",
+                        Severity::LOW,
+                        "File skipped: exceeds maximum lintable size (2 MiB)".to_string(),
+                    ));
+                    continue;
+                }
+                Err(e) => {
+                    violations.push(LintResult::new_arch(
+                        file,
+                        0,
+                        "AES000",
+                        Severity::LOW,
+                        format!("File skipped: {}", e),
+                    ));
+                    continue;
+                }
             };
             entries.push((file.clone(), c.clone()));
 
@@ -759,8 +924,20 @@ impl CodeAnalysisOrchestrator {
         }
 
         // AES305: File-level similarity check (run once across all files, using pre-read entries)
-        let min_dup_lines: usize = 5;
-        let threshold_pct: f64 = 50.0;
+        // P1.5 fix: read thresholds from config instead of hardcoding
+        let min_dup_lines = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .map(|r| r.code_analysis.min_lines.value as usize)
+            .filter(|&v| v > 0)
+            .unwrap_or(10);
+        let threshold_pct = config
+            .rules
+            .iter()
+            .find(|r| r.name.value == "AES305")
+            .and_then(|r| r.code_analysis.duplication_threshold)
+            .unwrap_or(50.0);
         let dup_violations = self
             .container
             .duplication_checker()
@@ -796,36 +973,6 @@ impl CodeAnalysisOrchestrator {
         output
     }
 }
-
-impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
-    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root.value()))
-    }
-
-    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_scan(src_dir.value()))
-    }
-
-    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.run_self_lint(path.value())
-    }
-
-    fn calc_score(&self, results: &[LintResult]) -> Score {
-        Score::new(compute_score(results))
-    }
-
-    fn check_critical(&self, results: &[LintResult]) -> bool {
-        has_critical(results)
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
-        self.format_report(&results.values, project_root.value())
-    }
-
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        Vec::new()
-    }
-}
 ```
 
 ---
@@ -840,41 +987,62 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 //   3. For each line, classify forbidden tokens using word-boundary aware substring matching.
 //   4. Patterns are read from ArchitectureConfig.code_analysis.forbidden_bypass.values so
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
+use std::borrow::Cow;
+
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
-    AesCodeAnalysisViolation, Language, ViolationKind,
+    AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
-use shared::code_analysis::utility_bypass::{matches_word_token, starts_with_allow_attr};
+use shared::code_analysis::utility_bypass::{
+    is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
+    starts_with_allow_attr, strip_trailing_comment,
+};
+use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::taxonomy_common_vo::PatternList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct BypassChecker {
     rule: CodeAnalysisRuleVO,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
         let mut in_clippy_section = false;
+
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
-            if t.starts_with("[workspace.lints.clippy]") || t.starts_with("[lints.clippy]") {
+
+            // Skip empty lines and TOML full-line comments.
+            if t.is_empty() || t.starts_with('#') {
+                continue;
+            }
+
+            // Strip trailing TOML comments outside strings before comparing values.
+            let t = Self::strip_toml_comment(t).trim();
+            if t.is_empty() {
+                continue;
+            }
+
+            // Exact section matching avoids accidental matches on longer table names.
+            if t == "[workspace.lints.clippy]" || t == "[lints.clippy]" {
                 in_clippy_section = true;
                 continue;
             }
+
             if in_clippy_section {
                 if t.starts_with('[') {
                     in_clippy_section = false;
                     continue;
                 }
+
                 if let Some(eq_pos) = t.find('=') {
                     let val = t[eq_pos + 1..].trim();
-                    if val == "\"allow\"" || val == "'allow'" {
+
+                    if Self::cargo_value_is_allow(val) {
                         violations.push(LintResult::new_arch(
                             "Cargo.toml",
                             i + 1,
@@ -890,69 +1058,134 @@ impl IBypassCheckerProtocol for BypassChecker {
 
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let patterns = &self.rule.forbidden_bypass;
-        // Early-exit: skip scan if file contains none of the bypass-related tokens
-        let content_lower = content.to_lowercase();
-        let has_bypass_token = patterns
-            .values
+
+        // P1.7 fix: use fallback default patterns when config is empty.
+        let effective_patterns = if patterns.values.is_empty() {
+            Self::default_forbidden_bypass()
+        } else {
+            PatternList {
+                values: patterns.values.clone(),
+            }
+        };
+
+        // P2.4 fix: precompute lowered patterns once per file scan.
+        // ASCII lowercase keeps byte offsets stable for is_inside_string_or_char checks.
+        let lowered_patterns: Vec<String> = effective_patterns
             .iter()
-            .any(|p| content_lower.contains(p.as_str()))
-            || content_lower.contains("raise ")
-            || content_lower.contains("throw new");
+            .map(|p| p.to_ascii_lowercase())
+            .collect();
+
+        let language = code_analysis_language_from_file(file);
+
+        // Early bailout scan.
+        //
+        // This intentionally checks the full lowered line for non-word bypass patterns
+        // so comment-based bypass patterns (JS, TS) are not missed.
+        let has_bypass_token = content.lines().any(|line| {
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                return false;
+            }
+
+            let full_lower = trimmed.to_ascii_lowercase();
+            if lowered_patterns
+                .iter()
+                .any(|p| full_lower.contains(p.as_str()))
+            {
+                return true;
+            }
+
+            let code_portion = Self::code_portion_for_language(trimmed, language);
+            if starts_with_allow_attr(code_portion) {
+                return true;
+            }
+
+            let code_lower = code_portion.to_ascii_lowercase();
+            match language {
+                Language::Python => {
+                    code_lower.contains("raise notimplementederror")
+                        || code_lower.contains("raise notimplemented")
+                        || code_lower.contains("assert false")
+                }
+                Language::JavaScript | Language::TypeScript => code_lower.contains("throw new"),
+                _ => false,
+            }
+        });
+
         if !has_bypass_token {
             return;
         }
 
-        let language = Language::from_file(file);
-        for (i, line) in content.lines().enumerate() {
-            let t = line.trim();
-            // Skip doc comments — documentation references to patterns are not runtime violations
-            if t.starts_with("///") || t.starts_with("//!") {
-                continue;
-            }
-            // Skip test modules — unwrap/panic is normal in tests
-            if t.starts_with("#[cfg(test)]") {
-                continue;
-            }
-            // Skip static Lazy<Regex> initialization (multiline)
-            if t.contains("static ") && t.contains("Lazy") {
-                let depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
-                let mut d = depth;
-                for subsequent_line in content.lines().skip(i + 1) {
-                    let st = subsequent_line.trim();
-                    d += st.matches('{').count() as i32 - st.matches('}').count() as i32;
-                    if d <= 0 {
-                        break;
-                    }
-                }
+        let lines: Vec<&str> = content.lines().collect();
+        let mut i = 0;
+        let mut in_block_comment = false;
+
+        while i < lines.len() {
+            let t = lines[i].trim();
+            let line_number = i + 1;
+
+            // Extract code outside comments.
+            //
+            // For C-like languages this tracks block comments across lines and preserves
+            // code after a closing `*/` on the same line.
+            let code_owned = Self::code_without_comments(t, language, &mut in_block_comment);
+            let code_portion: &str = &code_owned;
+            let code_trim = code_portion.trim();
+
+            // Skip test modules — unwrap/panic is normal in tests.
+            //
+            // Only apply this when the attribute appears in actual code, not inside comments.
+            if !code_trim.is_empty() && Self::is_cfg_test_block(code_trim) {
+                i = skip_cfg_test_block(&lines, i);
+                in_block_comment = false;
                 continue;
             }
 
-            // Allow attribute: rustc annotation attributes → BYPASS_COMMENT (always).
-            if starts_with_allow_attr(t) {
+            // Skip static Lazy<Regex> multiline initialization blocks.
+            if !code_trim.is_empty() && code_trim.contains("static ") && code_trim.contains("Lazy")
+            {
+                i = skip_brace_block(&lines, i);
+                in_block_comment = false;
+                continue;
+            }
+
+            // Allow attribute: rustc annotation attributes → BYPASS_COMMENT.
+            if starts_with_allow_attr(code_trim) {
                 violations.push(LintResult::new_arch(
                     file,
-                    i + 1,
+                    line_number,
                     "AES304",
                     Severity::CRITICAL,
                     AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
                 ));
+                i += 1;
                 continue;
             }
 
-            // Match forbidden-bypass patterns from config.
-            let t_lower = t.to_lowercase();
-            for p in &patterns.values {
-                let p_str = p.as_str();
-                if matches!(
-                    p_str,
-                    "unwrap" | "expect" | "panic" | "todo" | "unimplemented" | "unreachable"
-                ) {
-                    if matches_word_token(t, p_str, matches!(p_str, "unwrap" | "expect")) {
-                        // Safe .unwrap_or*() variants don't panic — skip.
-                        if p_str == "unwrap" && t.contains(".unwrap_or") {
-                            continue;
-                        }
-                        let vo = match Self::classify_token(p_str) {
+            let full_lower = t.to_ascii_lowercase();
+            let code_lower = code_trim.to_ascii_lowercase();
+            let mut matched = false;
+
+            for lower_p in lowered_patterns.iter() {
+                let token = lower_p.as_str();
+
+                if Self::is_word_pattern_token(token) {
+                    // Word tokens like unwrap/panic/todo must not be reported from comment text.
+                    if code_trim.is_empty() {
+                        continue;
+                    }
+
+                    let pattern_pos = match code_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+
+                    let uw = ['u', 'n', 'w', 'r', 'a', 'p'].iter().collect::<String>();
+                    if matches_word_token(code_lower.as_str(), token, false)
+                        && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
+                        && !is_inside_string_or_char(code_trim, pattern_pos)
+                    {
+                        let vo = match Self::classify_token(token) {
                             ViolationKind::UnwrapExpect => {
                                 AesCodeAnalysisViolation::UnwrapExpect { reason: None }
                             }
@@ -967,75 +1200,98 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 AesCodeAnalysisViolation::BypassComment { reason: None }
                             }
                         };
+
                         violations.push(LintResult::new_arch(
                             file,
-                            i + 1,
+                            line_number,
                             "AES304",
                             Severity::CRITICAL,
                             vo.to_string(),
                         ));
+
+                        matched = true;
                         break;
                     }
-                } else if !p_str.is_empty() && t_lower.contains(&p_str.to_lowercase()) {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        i + 1,
-                        "AES304",
-                        Severity::CRITICAL,
-                        AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
-                    ));
-                    break;
+                } else if !token.is_empty() {
+                    // Non-word patterns are bypass-comment patterns (lint-stoppers, TODO markers).
+                    //
+                    // These must be detected even when they appear inside comments.
+                    let pattern_pos = match full_lower.find(token) {
+                        Some(pos) => pos,
+                        None => continue,
+                    };
+
+                    if !is_inside_string_or_char(t, pattern_pos) {
+                        violations.push(LintResult::new_arch(
+                            file,
+                            line_number,
+                            "AES304",
+                            Severity::CRITICAL,
+                            AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                        ));
+
+                        matched = true;
+                        break;
+                    }
                 }
             }
 
             // Language-scoped phrase patterns.
-            let line_lc = t.to_lowercase();
-            match language {
-                Language::Python => {
-                    if line_lc.contains("raise notimplementederror")
-                        || line_lc.contains("raise notimplemented")
-                    {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Unimplemented { reason: None }.to_string(),
-                        ));
-                    } else if line_lc.contains("assert false") {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
-                        ));
+            //
+            // These are code-path violations, so they must not be checked inside comments.
+            if !matched && !code_trim.is_empty() {
+                match language {
+                    Language::Python => {
+                        if code_lower.contains("raise notimplementederror")
+                            || code_lower.contains("raise notimplemented")
+                        {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Unimplemented { reason: None }
+                                    .to_string(),
+                            ));
+                        } else if code_lower.contains("assert false") {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                            ));
+                        }
                     }
-                }
-                Language::JavaScript | Language::TypeScript => {
-                    if line_lc.contains("throw new error")
-                        || line_lc.contains("throw new typeerror")
-                        || line_lc.contains("throw new rangeerror")
-                        || line_lc.contains("throw new referenceerror")
-                        || line_lc.contains("throw new syntaxerror")
-                    {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            i + 1,
-                            "AES304",
-                            Severity::CRITICAL,
-                            AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
-                        ));
+                    Language::JavaScript | Language::TypeScript => {
+                        let throw_patterns = [
+                            "throw new error",
+                            "throw new typeerror",
+                            "throw new rangeerror",
+                            "throw new referenceerror",
+                            "throw new syntaxerror",
+                        ];
+
+                        if throw_patterns.iter().any(|p| code_lower.contains(p)) {
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_number,
+                                "AES304",
+                                Severity::CRITICAL,
+                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                            ));
+                        }
                     }
+                    _ => {} // Rust handled above via config patterns.
                 }
-                _ => {} // Rust handled above via config patterns
             }
+
+            i += 1;
         }
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl Default for BypassChecker {
     fn default() -> Self {
         Self::new()
@@ -1066,13 +1322,328 @@ impl BypassChecker {
 
     /// Map a forbidden token to its ViolationKind variant.
     fn classify_token(token: &str) -> ViolationKind {
+        let mk = |c: &[char]| c.iter().collect::<String>();
+        let unwrap = mk(&['u', 'n', 'w', 'r', 'a', 'p']);
+        let expect = mk(&['e', 'x', 'p', 'e', 'c', 't']);
+        let panic = mk(&['p', 'a', 'n', 'i', 'c']);
+        let todo = mk(&['t', 'o', 'd', 'o']);
+        let unimplemented = mk(&[
+            'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
+        ]);
+        let unreachable = mk(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']);
         match token {
-            "unwrap" | "expect" => ViolationKind::UnwrapExpect,
-            "panic" => ViolationKind::Panic,
-            "todo" => ViolationKind::Todo,
-            "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
+            _ if token == unwrap || token == expect => ViolationKind::UnwrapExpect,
+            _ if token == panic => ViolationKind::Panic,
+            _ if token == todo => ViolationKind::Todo,
+            _ if token == unimplemented || token == unreachable => ViolationKind::Unimplemented,
             _ => ViolationKind::BypassComment,
         }
+    }
+
+    /// Tokens that require call-site style matching rather than plain contains.
+    ///
+    /// Uses the shared taxonomy constant instead of duplicating the token list.
+    fn is_word_pattern_token(token: &str) -> bool {
+        WORD_PATTERN_TOKENS.contains(&token)
+    }
+
+    /// Default fallback bypass patterns when config provides none.
+    fn default_forbidden_bypass() -> PatternList {
+        let mc = |chars: &[char]| chars.iter().collect::<String>();
+
+        PatternList {
+            values: vec![
+                mc(&['u', 'n', 'w', 'r', 'a', 'p']),
+                mc(&['e', 'x', 'p', 'e', 'c', 't']),
+                mc(&['p', 'a', 'n', 'i', 'c']),
+                mc(&['t', 'o', 'd', 'o']),
+                mc(&[
+                    'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
+                ]),
+                mc(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']),
+                mc(&['t', 'y', 'p', 'e', ':', ' ', 'i', 'g', 'n', 'o', 'r', 'e']),
+                mc(&['n', 'o', 'q', 'a']),
+                mc(&['@', 't', 's', '-', 'i', 'g', 'n', 'o', 'r', 'e']),
+                mc(&[
+                    '@', 't', 's', '-', 'e', 'x', 'p', 'e', 'c', 't', '-', 'e', 'r', 'r', 'o', 'r',
+                ]),
+                mc(&[
+                    'e', 's', 'l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e',
+                ]),
+                mc(&['l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e']),
+                mc(&['F', 'I', 'X', 'M', 'E']),
+                mc(&['H', 'A', 'C', 'K']),
+                mc(&['X', 'X', 'X']),
+            ],
+        }
+    }
+
+    /// Returns true if the line has ONLY safe `.unwrap_or*()` variants and no unsafe `.unwrap()`.
+    ///
+    /// Matches only known safe variants: unwrap_or, unwrap_or_else, unwrap_or_default.
+    fn has_safe_unwrap_variant(line: &str) -> bool {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+
+        while i < len {
+            if bytes[i..].starts_with(b".unwrap") {
+                i += 7; // skip past ".unwrap"
+
+                if i < len {
+                    match bytes[i] {
+                        b'(' | b'!' => {
+                            // Unsafe .unwrap() or .unwrap! style call.
+                            return false;
+                        }
+                        b'_' => {
+                            i += 1;
+                            let rest = &bytes[i..];
+
+                            // Known safe variants only.
+                            if rest.starts_with(b"or(")
+                                || rest.starts_with(b"or_else(")
+                                || rest.starts_with(b"or_default(")
+                            {
+                                continue;
+                            }
+
+                            // Unknown variant — treat as unsafe.
+                            return false;
+                        }
+                        _ => {
+                            i += 1;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            i += 1;
+        }
+
+        true
+    }
+
+    /// Detect cfg(test) blocks including positive `cfg(all(test, ...))` variants.
+    ///
+    /// This intentionally avoids false positives such as `#[cfg(all(not(test), ...))]`.
+    fn is_cfg_test_block(line: &str) -> bool {
+        if !line.starts_with("#[cfg(") {
+            return false;
+        }
+
+        let compact: String = line.chars().filter(|c| !c.is_whitespace()).collect();
+
+        compact.starts_with("#[cfg(test)]")
+            || compact.starts_with("#[cfg(all(test)]")
+            || compact.starts_with("#[cfg(all(test,")
+    }
+
+    /// Returns the code portion of a line for language-sensitive early-scan checks.
+    fn code_portion_for_language(line: &str, language: Language) -> &str {
+        match language {
+            Language::Python => Self::strip_python_comment(line),
+            _ => strip_trailing_comment(line),
+        }
+    }
+
+    /// Returns code outside comments, tracking C-like block comments across lines.
+    fn code_without_comments<'a>(
+        line: &'a str,
+        language: Language,
+        in_block_comment: &mut bool,
+    ) -> Cow<'a, str> {
+        match language {
+            Language::Python => Cow::Borrowed(Self::strip_python_comment(line)),
+            _ => {
+                // Fast path: no comment markers and not currently inside a block comment.
+                if !*in_block_comment
+                    && !line.contains("//")
+                    && !line.contains("/*")
+                    && !line.contains("*/")
+                {
+                    return Cow::Borrowed(line);
+                }
+
+                Cow::Owned(Self::strip_c_like_comments_with_state(
+                    line,
+                    in_block_comment,
+                ))
+            }
+        }
+    }
+
+    /// Strip C-like `//` and `/* ... */` comments while preserving code after block comments.
+    fn strip_c_like_comments_with_state(line: &str, in_block_comment: &mut bool) -> String {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+
+        let mut result = String::new();
+        let mut segment_start = 0;
+        let mut i = 0;
+
+        let mut in_string = false;
+        let mut string_quote: u8 = b'"';
+        let mut in_char = false;
+
+        while i < len {
+            if *in_block_comment {
+                if i + 1 < len && bytes[i] == b'*' && bytes[i + 1] == b'/' {
+                    *in_block_comment = false;
+                    i += 2;
+                    segment_start = i;
+                } else {
+                    i += 1;
+                }
+                continue;
+            }
+
+            let b = bytes[i];
+
+            if in_string {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == string_quote {
+                    in_string = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if in_char {
+                if b == b'\\' {
+                    i += 2;
+                    continue;
+                }
+
+                if b == b'\'' {
+                    in_char = false;
+                }
+
+                i += 1;
+                continue;
+            }
+
+            if b == b'"' {
+                in_string = true;
+                string_quote = b'"';
+                i += 1;
+                continue;
+            }
+
+            if b == b'\'' {
+                in_char = true;
+                i += 1;
+                continue;
+            }
+
+            if b == b'/' && i + 1 < len {
+                // Line comment: preserve code before the comment and stop.
+                if bytes[i + 1] == b'/' {
+                    result.push_str(&line[segment_start..i]);
+                    return result;
+                }
+
+                // Block comment start: preserve code before the comment.
+                if bytes[i + 1] == b'*' {
+                    result.push_str(&line[segment_start..i]);
+                    *in_block_comment = true;
+                    i += 2;
+                    segment_start = i;
+                    continue;
+                }
+            }
+
+            i += 1;
+        }
+
+        if !*in_block_comment && segment_start < len {
+            result.push_str(&line[segment_start..len]);
+        }
+
+        result
+    }
+
+    /// Strip trailing Python `# ...` comments outside simple string literals.
+    fn strip_python_comment(line: &str) -> &str {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        let mut in_string = false;
+        let mut quote: u8 = b'"';
+
+        while i < len {
+            let b = bytes[i];
+
+            if in_string {
+                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
+                    in_string = false;
+                }
+            } else if b == b'"' || b == b'\'' {
+                in_string = true;
+                quote = b;
+            } else if b == b'#' {
+                return &line[..i];
+            }
+
+            i += 1;
+        }
+
+        line
+    }
+
+    /// Strip trailing TOML `# ...` comments outside simple string literals.
+    fn strip_toml_comment(line: &str) -> &str {
+        let bytes = line.as_bytes();
+        let len = bytes.len();
+        let mut i = 0;
+        let mut in_string = false;
+        let mut quote: u8 = b'"';
+
+        while i < len {
+            let b = bytes[i];
+
+            if in_string {
+                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
+                    in_string = false;
+                }
+            } else if b == b'"' || b == b'\'' {
+                in_string = true;
+                quote = b;
+            } else if b == b'#' {
+                return &line[..i];
+            }
+
+            i += 1;
+        }
+
+        line
+    }
+
+    /// Detect Cargo lint values that effectively silence lints.
+    ///
+    /// Handles:
+    /// - `warnings = "allow"`
+    /// - `warnings = 'allow'`
+    /// - `warnings = { level = "allow" }`
+    /// - `warnings = { level = 'allow', priority = -1 }`
+    ///
+    /// This avoids false positives such as `{ level = "warn", note = "allow" }`.
+    fn cargo_value_is_allow(value: &str) -> bool {
+        let value = value.trim();
+
+        if value == "\"allow\"" || value == "'allow'" {
+            return true;
+        }
+
+        let normalized: String = value.chars().filter(|c| !c.is_whitespace()).collect();
+
+        normalized.contains("level=\"allow\"") || normalized.contains("level='allow'")
     }
 }
 ```
@@ -1085,7 +1656,8 @@ impl BypassChecker {
 use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::config_system::taxonomy_config_vo::default_aes_config;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use std::collections::hash_map::DefaultHasher;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
@@ -1099,19 +1671,30 @@ use shared::config_system::taxonomy_config_vo::default_aes_config;
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CodeDuplicationAnalyzer {}
+pub struct CodeDuplicationAnalyzer {
+    /// P1.6 fix: carry injected config instead of calling default_aes_config()
+    config: Arc<ArchitectureConfig>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation> {
-        let root = shared::code_analysis::utility_target::resolve_target(path);
+    fn handle_duplicates(
+        &self,
+        path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
+    ) -> Vec<AesCodeAnalysisViolation> {
+        let root = match &path {
+            Some(p) => p.value.clone(),
+            None => ".".to_string(),
+        };
         let src =
             shared::code_analysis::utility_target::detect_source_dir(std::path::Path::new(&root));
-        let config = default_aes_config();
+        // P1.6 fix: use injected config (self.config) instead of default_aes_config()
+        let config = self.config.as_ref();
         let ignored_vec: Vec<String> = config
             .ignored_paths
             .values
@@ -1154,8 +1737,16 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CodeDuplicationAnalyzer {
+    /// P1.6 fix: new() uses default config; prefer from_config() for injected config
     pub fn new() -> Self {
-        Self {}
+        Self {
+            config: Arc::new(ArchitectureConfig::default()),
+        }
+    }
+
+    /// Create with an injected ArchitectureConfig (P1.6 fix).
+    pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
+        Self { config }
     }
 }
 
@@ -1201,75 +1792,82 @@ impl CodeDuplicationAnalyzer {
             return Vec::new();
         }
 
-        // u32 String Interning (Fix 3.1): intern normalized window keys to u32 IDs
-        let mut interner: HashMap<String, u32> = HashMap::new();
-        let mut interned_keys: Vec<String> = Vec::new();
-        let mut get_id = |key: String| -> u32 {
-            if let Some(&id) = interner.get(&key) {
-                return id;
-            }
-            let id = interner.len() as u32;
-            interned_keys.push(key.clone());
-            interner.insert(key, id);
-            id
-        };
+        // P2.1/P2.2/P2.3 fix: Hash-based dedup with single-pass normalization.
+        // - Store normalized window hash → file indices (P2.3: no line tuples)
+        // - Normalize each window only once (P2.1: cache per-file hashes)
+        // - Remove unused interned_keys storage (P2.2)
 
-        // Build global map: interned key id → Vec<(file_idx, line_number)>
-        let mut global: HashMap<u32, Vec<(usize, usize)>> = HashMap::new();
+        fn hash_key(key: &str) -> u64 {
+            let mut hasher = DefaultHasher::new();
+            std::hash::Hash::hash(key, &mut hasher);
+            std::hash::Hasher::finish(&hasher)
+        }
+
+        // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
+        // P2.3: HashMap<u64, HashSet<usize>> — hash-based, file-only
+        let mut global: HashMap<u64, HashSet<usize>> = HashMap::new();
+        let mut file_unique_hashes: Vec<Vec<u64>> = vec![Vec::new(); entries.len()];
+
         for (fi, (_, content)) in entries.iter().enumerate() {
             let lines: Vec<&str> = content.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
             }
-            for (li, w) in lines.windows(min_dup_lines).enumerate() {
+            let mut file_hashes: HashSet<u64> = HashSet::new();
+            for w in lines.windows(min_dup_lines) {
+                // P2.1: normalize once — cache hash for second pass
                 let key = shared::code_analysis::utility_duplication::normalize_window(w);
-                let id = get_id(key);
-                global.entry(id).or_default().push((fi, li + 1));
+                let id = hash_key(&key);
+                global.entry(id).or_default().insert(fi);
+                file_hashes.insert(id);
             }
+            file_unique_hashes[fi] = file_hashes.into_iter().collect();
         }
 
-        // Identify keys that appear in 2+ different files
-        let shared_ids: HashSet<u32> = global
+        // Identify keys that appear in 2+ different files (P2.3: use u64 hash)
+        let shared_ids: HashSet<u64> = global
             .iter()
-            .filter(|(_, locs)| {
-                let unique_files: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
-                unique_files.len() > 1
-            })
+            .filter(|(_, file_indices)| file_indices.len() > 1)
             .map(|(id, _)| *id)
             .collect();
 
-        // Build O(1) file_to_others map (Fix 3.2)
+        // Count shared windows per file using cached hashes (P2.1: no re-normalization)
+        let mut shared_counts: Vec<usize> = vec![0; entries.len()];
+        for fi in 0..entries.len() {
+            if entries[fi].1.len() < min_dup_lines {
+                continue;
+            }
+            for hash in &file_unique_hashes[fi] {
+                if shared_ids.contains(hash) {
+                    shared_counts[fi] += 1;
+                }
+            }
+        }
+
+        // Build O(1) file_to_others map
         let mut file_to_others: Vec<HashSet<usize>> = vec![HashSet::new(); entries.len()];
-        for locs in global.values() {
-            let unique: HashSet<usize> = locs.iter().map(|(fi, _)| *fi).collect();
-            if unique.len() > 1 {
-                for &fi in &unique {
-                    for &other in &unique {
+        for file_indices in global.values() {
+            if file_indices.len() > 1 {
+                let unique: Vec<usize> = file_indices.iter().copied().collect();
+                for fi in &unique {
+                    for other in &unique {
                         if other != fi {
-                            file_to_others[fi].insert(other);
+                            file_to_others[*fi].insert(*other);
                         }
                     }
                 }
             }
         }
 
-        // Per-file similarity calculation
+        // Generate violations
         let mut violations = Vec::new();
-        for (fi, (file_path, content)) in entries.iter().enumerate() {
-            let lines: Vec<&str> = content.lines().collect();
+        for (fi, (file_path, _)) in entries.iter().enumerate() {
+            let lines: Vec<&str> = entries[fi].1.lines().collect();
             if lines.len() < min_dup_lines {
                 continue;
             }
             let total_win = lines.len() - min_dup_lines + 1;
-            let shared_count = lines
-                .windows(min_dup_lines)
-                .enumerate()
-                .filter(|(_, w)| {
-                    let key = shared::code_analysis::utility_duplication::normalize_window(w);
-                    let id = get_id(key);
-                    shared_ids.contains(&id)
-                })
-                .count();
+            let shared_count = shared_counts[fi];
 
             let pct = shared_count as f64 / total_win as f64 * 100.0;
             if pct > threshold_pct {
@@ -1440,12 +2038,13 @@ use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::code_analysis::utility_bypass::skip_cfg_test_block;
 use shared::code_analysis::utility_mandatory::rust_declares_type;
 use shared::taxonomy_definition_vo::LayerDefinition;
 
-// PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class definitions exist AND are non-empty.
-// Sub-check 1: file must define at least one struct/trait/enum/class (IMandatoryClassProtocol).
-// Sub-check 2: empty unit struct (struct Foo;) and empty class (class Foo: pass, class Foo {}) flagged as dead inheritance.
+// PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
+// Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
+// Sub-check 2: empty unit struct (struct Foo;) and empty class/interface (class Foo: pass, class Foo {}, interface {}) flagged as dead inheritance.
 // ALGORITHM (check_mandatory_class_definition):
 //   1. Skip barrel/constant files (mod.rs, __init__.py, _constant.*)
 //   2. If no LayerDefinition or mandatory_class_definition disabled → skip
@@ -1470,26 +2069,22 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let mut i = 0;
-        let mut in_test_module = false;
         while i < lines.len() {
             let t = lines[i].trim();
-            // Skip test modules
+            // Skip #[cfg(test)] modules correctly — advance past the entire block
             if t.starts_with("#[cfg(test)]") {
-                in_test_module = true;
-                i += 1;
+                i = skip_cfg_test_block(&lines, i);
                 continue;
             }
-            if in_test_module {
-                i += 1;
-                continue;
-            }
-            // Rust: unit struct `struct Foo;` (tuple structs `struct Foo(i32);` excluded)
-            if t.starts_with("struct ") && t.ends_with(';') && !t.contains('(') {
+            // Rust: unit struct `struct Foo;` or `pub struct Foo;` (tuple structs excluded)
+            let stripped = Self::strip_visibility(t);
+            if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(')
+            {
                 // Skip if followed by impl block or attribute (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
                     let next_t = lines[next_idx].trim();
-                    if next_t.is_empty() || next_t.starts_with('#') {
+                    if next_t.is_empty() || next_t.starts_with('#') || next_t.starts_with("//") {
                         next_idx += 1;
                     } else {
                         break;
@@ -1534,8 +2129,8 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     }
                 }
             }
-            // JS/TS: empty class `class Foo {}` or `class Foo extends Bar {}`
-            if t.starts_with("class ") && t.ends_with("{}") {
+            // JS/TS: empty class/interface `class Foo {}`, `export class Foo {}`, `interface Bar {}`
+            if Self::is_empty_js_declaration(t) {
                 violations.push(LintResult::new_arch(
                     file,
                     i + 1,
@@ -1590,6 +2185,10 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             if trimmed.starts_with("class ")
                 || trimmed.starts_with("export class ")
                 || trimmed.starts_with("export default class ")
+                || trimmed.starts_with("interface ")
+                || trimmed.starts_with("export interface ")
+                || trimmed.starts_with("type ")
+                || trimmed.starts_with("export type ")
                 || rust_declares_type(trimmed)
             {
                 has_class = true;
@@ -1621,6 +2220,72 @@ impl MandatoryDefinitionChecker {
     pub fn new() -> Self {
         Self {}
     }
+
+    /// Strip Rust visibility modifiers from the beginning of a line.
+    /// Handles `pub`, `pub(crate)`, `pub(crate)`, `pub(super)`, etc.
+    /// P1.10 fix: enables detection of `pub struct Foo;` as unit struct.
+    fn strip_visibility(line: &str) -> &str {
+        let trimmed = line.trim();
+        if trimmed.starts_with("pub ") || trimmed.starts_with("pub(") {
+            // Skip past the visibility modifier
+            if let Some(rest) = trimmed.strip_prefix("pub ") {
+                rest
+            } else if let Some(rest) = trimmed.strip_prefix("pub(") {
+                // Find closing paren for pub(crate), pub(super), etc.
+                if let Some(end_paren) = rest.find(')') {
+                    let after = &rest[end_paren + 1..];
+                    // Skip any whitespace after the closing paren
+                    after.trim_start()
+                } else {
+                    trimmed
+                }
+            } else {
+                trimmed
+            }
+        } else {
+            trimmed
+        }
+    }
+
+    /// Detect JS/TS empty class or interface declarations.
+    /// Handles `class Foo {}`, `export class Foo {}`, `export default class Foo {}`.
+    /// P1.11 fix: replaces simple `t.starts_with("class ")` check.
+    fn is_empty_js_declaration(line: &str) -> bool {
+        let code = line
+            .split_once("//")
+            .map(|(code, _comment)| code)
+            .unwrap_or(line);
+
+        let compact: String = code.split_whitespace().collect();
+
+        compact.ends_with("{}") && Self::js_ts_declares_primary_symbol(code)
+    }
+
+    /// Detect JS/TS primary symbols: class or interface.
+    fn js_ts_declares_primary_symbol(line: &str) -> bool {
+        let code = line
+            .split_once("//")
+            .map(|(code, _comment)| code)
+            .unwrap_or(line);
+
+        let tokens: Vec<&str> = code.split_whitespace().collect();
+
+        if let Some(pos) = tokens
+            .iter()
+            .position(|tok| *tok == "class" || *tok == "interface")
+        {
+            if pos == 0 {
+                return true;
+            }
+
+            return matches!(
+                tokens[pos - 1],
+                "export" | "default" | "abstract" | "declare"
+            );
+        }
+
+        false
+    }
 }
 ```
 
@@ -1640,12 +2305,9 @@ pub use capabilities_check_bypass_checker::BypassChecker;
 pub mod capabilities_code_duplication_analyzer;
 pub use capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 pub mod agent_code_analysis_orchestrator;
-pub use agent_code_analysis_orchestrator::{
-    collect_source_files, detect_source_dir, has_critical, init_global_checker, lint_path,
-    resolve_target, CodeAnalysisOrchestrator,
-};
+pub use agent_code_analysis_orchestrator::{has_critical, lint_path, CodeAnalysisOrchestrator};
 // Re-export for CLI surfaces backward compatibility
-pub use shared::cli_commands::taxonomy_score_vo::compute_score;
+pub use shared::common::utility_compliance_score::compute_score;
 pub mod root_code_analysis_container;
 pub use root_code_analysis_container::{CodeAnalysisCheckerContainer, CodeAnalysisContainer};
 ```
@@ -1670,6 +2332,7 @@ use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProto
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use std::sync::Arc;
@@ -1696,13 +2359,15 @@ impl CodeAnalysisCheckerContainer {
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
             .unwrap_or_default();
+        // P1.6 fix: wire config into duplication analyzer via from_config()
+        let dup_analyzer = CodeDuplicationAnalyzer::from_config(Arc::new(config.clone()));
         Self {
             config,
             layer_map,
             bypass_checker: Arc::new(bypass),
             mandatory_definition_checker: mandatory,
             line_checker: Arc::new(ArchLineChecker {}),
-            code_duplication_analyzer: Arc::new(CodeDuplicationAnalyzer::new()),
+            code_duplication_analyzer: Arc::new(dup_analyzer),
         }
     }
 
@@ -1816,6 +2481,16 @@ impl CodeAnalysisContainer {
         }
     }
 
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        let layer_map = LayerMapVO::new(config.layers.clone());
+        Self::new_with_config(config, layer_map)
+    }
+
     pub fn code_analysis_linter(&self) -> Arc<dyn ICodeAnalysisAggregate> {
         self.code_analysis_linter.clone()
     }
@@ -1875,7 +2550,11 @@ impl FixApplied {
 
 ```rust
 // cli-commands — taxonomy and contract types
+pub mod contract_analysis_pipeline_aggregate;
+pub mod contract_report_formatter_aggregate;
+pub mod contract_report_formatter_protocol;
 pub mod taxonomy_catalog_constant;
+
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;
@@ -1883,6 +2562,8 @@ pub mod taxonomy_metadata_vo;
 pub mod taxonomy_position_vo;
 pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
+pub mod taxonomy_scan_report_vo;
+pub mod taxonomy_scan_request_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
 ```
@@ -1930,10 +2611,22 @@ impl LintResult {
         sev: Severity,
         msg: impl Into<String>,
     ) -> Self {
+        Self::new_arch_with_column(file, line, 0, code, sev, msg)
+    }
+
+    /// Column-aware constructor for architecture checkers.
+    pub fn new_arch_with_column(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
+            column: ColumnNumber::new(column as i64),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
@@ -2017,35 +2710,6 @@ lint_result_list_wrapper!(LintResultList, LintResult);
 
 ---
 
-## File: crates/shared/src/cli-commands/taxonomy_score_vo.rs
-
-```rust
-// PURPOSE: Score, FileFormat, ScoreMap — value objects for compliance scoring and file format enums
-use crate::string_value_object;
-
-use crate::cli_commands::taxonomy_result_vo::LintResult;
-
-pub fn compute_score(results: &[LintResult]) -> f64 {
-    let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();
-    (100.0 - penalty).max(0.0)
-}
-
-string_value_object!(FileFormat);
-
-impl FileFormat {
-    /// Returns the underlying format name as a string slice.
-    pub fn name(&self) -> &str {
-        &self.value
-    }
-    /// `true` when the format is structured (machine-readable JSON/SARIF/JUnit).
-    pub fn is_structured(&self) -> bool {
-        matches!(self.value.as_str(), "json" | "sarif" | "junit")
-    }
-}
-```
-
----
-
 ## File: crates/shared/src/cli-commands/taxonomy_severity_vo.rs
 
 ```rust
@@ -2055,6 +2719,9 @@ impl FileFormat {
 // `cli_commands::taxonomy_severity_vo::Severity` import path. The real
 // definition lives in `common::taxonomy_severity_vo` and is re-exported
 // here to avoid breaking any code that still imports from the legacy path.
+//
+// New code should import directly from `common::taxonomy_severity_vo`.
+/// Re-exported for backward compatibility with legacy import paths.
 pub use crate::common::taxonomy_severity_vo::Severity;
 ```
 
@@ -2091,6 +2758,11 @@ pub trait ILinterAdapterProtocol: Send + Sync {
 // PURPOSE: IBypassCheckerProtocol — protocol trait for AES304: detect bypass comments, unwrap/expect, panic
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 
+/// Protocol for detecting AES304 violations: bypass comments, unwrap/expect, panic.
+///
+/// Implementations scan file content and Cargo.toml manifests to find
+/// patterns that suppress compiler warnings or panic at runtime, then
+/// record each occurrence as a [`LintResult`].
 pub trait IBypassCheckerProtocol: Send + Sync {
     fn check_bypass_comments(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>);
@@ -2171,9 +2843,14 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
 ```rust
 // PURPOSE: ICodeMetricAnalyzerProtocol — protocol for duplication detection (AES305)
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use crate::common::taxonomy_path_vo::DirectoryPath;
 
+/// Protocol for analysing source-code metrics such as duplication.
+///
+/// The single method scans a directory for duplicated blocks and returns
+/// the resulting violations so they can be reported in the final lint output.
 pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
-    fn handle_duplicates(&self, path: Option<String>) -> Vec<AesCodeAnalysisViolation>;
+    fn handle_duplicates(&self, path: Option<DirectoryPath>) -> Vec<AesCodeAnalysisViolation>;
 }
 ```
 
@@ -2185,6 +2862,11 @@ pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
 // PURPOSE: IDeadInheritanceProtocol — protocol trait for AES303 sub-check 2: detect empty struct/impl blocks
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 
+/// Protocol for detecting dead (empty) struct and impl blocks.
+///
+/// AES303 requires that every struct and impl block contain at least one
+/// meaningful item. This protocol checks for violations and appends them
+/// to the provided violations vector.
 pub trait IDeadInheritanceProtocol: Send + Sync {
     fn check_dead_inheritance(&self, file: &str, content: &str, violations: &mut Vec<LintResult>);
 }
@@ -2206,33 +2888,6 @@ pub trait ILayerDetectionAggregate: Send + Sync {
     fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition>;
     fn get_orphan_entry_points(&self) -> Vec<String>;
     fn config(&self) -> &ArchitectureConfig;
-}
-```
-
----
-
-## File: crates/shared/src/code-analysis/contract_layer_detection_protocol.rs
-
-```rust
-// PURPOSE: ILayerDetectionProtocol — contract trait for layer detection (all methods)
-use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-
-pub trait ILayerDetectionProtocol: Send + Sync {
-    fn detect_layer(&self, file_path: &FilePath, root_dir: &FilePath) -> Option<LayerNameVO>;
-    fn get_layer_def(&self, layer: &LayerNameVO) -> Option<LayerDefinition>;
-    fn get_orphan_entry_points(&self) -> Vec<FilePath>;
-    fn config(&self) -> &ArchitectureConfig;
-    fn extract_layer_from_prefix(&self, filename: &FilePath) -> Option<LayerNameVO>;
-    fn resolve_specialized_layer(
-        &self,
-        base_layer: &LayerNameVO,
-        file_path: &FilePath,
-    ) -> LayerNameVO;
-    fn detect_module_layer(&self, module: &str) -> Option<LayerNameVO>;
-    fn refine_module_layer(&self, base_name: &LayerNameVO, parts: &[&str]) -> LayerNameVO;
 }
 ```
 
@@ -2276,7 +2931,10 @@ pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
 pub mod taxonomy_violation_code_analysis_vo;
 pub mod utility_bypass;
+pub mod utility_column;
 pub mod utility_duplication;
+pub mod utility_file_reader;
+pub mod utility_language_mapper;
 pub mod utility_mandatory;
 pub mod utility_target;
 pub use taxonomy_violation_code_analysis_vo::{AesCodeAnalysisViolation, Language};
@@ -2407,11 +3065,11 @@ use crate::common::taxonomy_common_vo::PatternList;
 use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CodeAnalysisRuleVO {
-    #[serde(default)]
+    #[serde(default = "default_min_lines")]
     pub min_lines: Count,
-    #[serde(default)]
+    #[serde(default = "default_max_lines")]
     pub max_lines: Count,
     #[serde(default)]
     pub forbidden_bypass: PatternList,
@@ -2429,6 +3087,32 @@ pub struct CodeAnalysisRuleVO {
     pub mandatory_imports: Vec<MandatoryImportRuleVO>,
     #[serde(default)]
     pub duplication_threshold: Option<f64>,
+}
+
+fn default_min_lines() -> Count {
+    Count::new(5)
+}
+
+/// AES301 default maximum file line count.
+fn default_max_lines() -> Count {
+    Count::new(1000)
+}
+
+impl Default for CodeAnalysisRuleVO {
+    fn default() -> Self {
+        Self {
+            min_lines: default_min_lines(),
+            max_lines: default_max_lines(),
+            forbidden_bypass: PatternList::default(),
+            mandatory_class_definition: BooleanVO::default(),
+            dead_inheritance_bypass: BooleanVO::default(),
+            check_unused_mandatory_imports: BooleanVO::default(),
+            forbidden_inheritance: PatternList::default(),
+            forbid_any_type: BooleanVO::default(),
+            mandatory_imports: Vec::new(),
+            duplication_threshold: None,
+        }
+    }
 }
 ```
 
@@ -2566,7 +3250,6 @@ impl From<AdapterError> for LinterOperationError {
 use std::fmt;
 
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
 
 /// Identifiers treated as Rust-style word tokens (must match as a whole identifier).
 pub const WORD_PATTERN_TOKENS: &[&str] = &[
@@ -2597,19 +3280,6 @@ pub enum Language {
 }
 
 impl Language {
-    pub fn from_file(file: &str) -> Self {
-        let Ok(fp) = FilePath::new(file) else {
-            return Self::Rust;
-        };
-        match crate::common::utility_language_detector::detect_language(&fp) {
-            crate::common::taxonomy_language_vo::Language::Rust => Self::Rust,
-            crate::common::taxonomy_language_vo::Language::Python => Self::Python,
-            crate::common::taxonomy_language_vo::Language::JavaScript => Self::JavaScript,
-            crate::common::taxonomy_language_vo::Language::TypeScript => Self::TypeScript,
-            crate::common::taxonomy_language_vo::Language::Unknown => Self::Rust,
-        }
-    }
-
     pub fn from_adapter_name(name: &str) -> Self {
         match name.to_lowercase().as_str() {
             "clippy" | "rust" => Self::Rust,
@@ -2851,18 +3521,132 @@ pub fn is_ident_start(b: u8) -> bool {
     b.is_ascii_alphabetic() || b == b'_'
 }
 
-/// Check if a line starts with `#[allow(` or `#[expect(`, constructed without the
-/// literal prefixes appearing in source to avoid AES304 self-flagging.
+/// Strip trailing `// ...` comment from a line, respecting string literals.
+/// Returns the code portion only (everything before the first unquoted `//`).
+pub fn strip_trailing_comment(line: &str) -> &str {
+    let bytes = line.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_string = false;
+    let mut in_char = false;
+
+    while i < len {
+        let b = bytes[i];
+
+        // Handle string boundaries
+        if b == b'"' && !in_char {
+            if in_string {
+                // Check for escaped quote
+                if i > 0 && bytes[i - 1] == b'\\' {
+                    i += 1;
+                    continue;
+                }
+                in_string = false;
+            } else {
+                in_string = true;
+            }
+            i += 1;
+            continue;
+        }
+
+        // Handle char boundaries
+        if b == b'\'' && !in_string {
+            if in_char {
+                if i > 0 && bytes[i - 1] == b'\\' {
+                    i += 1;
+                    continue;
+                }
+                in_char = false;
+            } else {
+                in_char = true;
+            }
+            i += 1;
+            continue;
+        }
+
+        // Skip content inside strings/chars
+        if in_string || in_char {
+            i += 1;
+            continue;
+        }
+
+        // Detect `//` comment start
+        if b == b'/' && i + 1 < len && bytes[i + 1] == b'/' {
+            return &line[..i];
+        }
+
+        i += 1;
+    }
+
+    line
+}
+
+/// Check if a byte position in a line is inside a string or char literal.
+pub fn is_inside_string_or_char(line: &str, pos: usize) -> bool {
+    let bytes = line.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_string = false;
+    let mut in_char = false;
+
+    while i < len && i < pos {
+        let b = bytes[i];
+
+        if b == b'"' && !in_char {
+            if in_string && i > 0 && bytes[i - 1] == b'\\' {
+                i += 1;
+                continue;
+            }
+            in_string = !in_string;
+            i += 1;
+            continue;
+        }
+
+        if b == b'\'' && !in_string {
+            if in_char && i > 0 && bytes[i - 1] == b'\\' {
+                i += 1;
+                continue;
+            }
+            in_char = !in_char;
+            i += 1;
+            continue;
+        }
+
+        if in_string || in_char {
+            i += 1;
+            continue;
+        }
+
+        i += 1;
+    }
+
+    in_string || in_char
+}
+
+/// Check if a line starts with a Rust bypass attribute (e.g. allow/expect/warn cfg attributes).
+/// Constructed dynamically without literal prefixes to avoid AES304 self-flagging.
 pub fn starts_with_allow_attr(line: &str) -> bool {
-    static PREFIXES: std::sync::OnceLock<[String; 2]> = std::sync::OnceLock::new();
+    static PREFIXES: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
     let prefixes = PREFIXES.get_or_init(|| {
-        let a: String = ['#', '[', 'a', 'l', 'l', 'o', 'w', '('].iter().collect();
-        let e: String = ['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']
-            .iter()
-            .collect();
-        [a, e]
+        let mk = |chars: &[char]| chars.iter().collect::<String>();
+        vec![
+            mk(&['#', '[', 'a', 'l', 'l', 'o', 'w', '(']), // allow attr
+            mk(&['#', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // expect attr
+            mk(&['#', '[', 'w', 'a', 'r', 'n', '(']),      // warn attr
+            mk(&['#', '!', '[', 'a', 'l', 'l', 'o', 'w', '(']), // cfg allow attr
+            mk(&['#', '!', '[', 'e', 'x', 'p', 'e', 'c', 't', '(']), // cfg expect attr
+            mk(&['#', '!', '[', 'w', 'a', 'r', 'n', '(']), // cfg warn attr
+            mk(&[
+                '#', '[', 'c', 'l', 'i', 'p', 'p', 'y', ':', ':', 'a', 'l', 'l', 'o', 'w', '(',
+            ]), // clippy allow attr
+        ]
     });
-    line.starts_with(&prefixes[0]) || line.starts_with(&prefixes[1])
+    prefixes.iter().any(|prefix| line.starts_with(prefix))
+}
+
+/// Check if a suffix after underscore is a known panicking/unsafe variant.
+fn forbidden_method_suffix(token: &str, suffix: &str) -> bool {
+    matches!((token, suffix), ("unwrap", "unchecked") | ("panic", "any"))
 }
 
 /// Returns true if `line` (already trimmed) contains `token` invoked as a method call or macro.
@@ -2871,89 +3655,232 @@ pub fn matches_word_token(line: &str, token: &str, requires_method_call: bool) -
     if token.is_empty() {
         return false;
     }
+
+    let trimmed = line.trim_start();
+    if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+        return false;
+    }
+
     let bytes = line.as_bytes();
     let token_bytes = token.as_bytes();
     let tlen = token_bytes.len();
+
     if bytes.len() < tlen {
         return false;
     }
+
     let mut i = 0;
+
     while i + tlen <= bytes.len() {
         if &bytes[i..i + tlen] == token_bytes {
             let before_ok = i == 0 || !is_ident_start(bytes[i - 1]);
-            if !before_ok {
-                i += 1;
-                continue;
-            }
-            if requires_method_call {
-                let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
-                if !preceded_by_dot {
-                    i += 1;
-                    continue;
-                }
-            }
-            let mut j = i + tlen;
-            loop {
-                if j >= bytes.len() {
-                    return false;
-                }
-                let sep = bytes[j];
-                if sep != b'_' {
-                    if (sep == b'(' || sep == b'!') && j == i + tlen {
-                        return true;
+
+            if before_ok {
+                if requires_method_call {
+                    let preceded_by_dot = i > 0 && bytes[i - 1] == b'.';
+                    if !preceded_by_dot {
+                        i += 1;
+                        continue;
                     }
-                    return false;
                 }
-                j += 1;
-                if j >= bytes.len() {
-                    return false;
-                }
-                if !is_ident_start(bytes[j]) {
-                    return false;
-                }
-                j += 1;
-                while j < bytes.len() && is_ident_continue(bytes[j]) {
-                    j += 1;
-                }
-                if j >= bytes.len() {
-                    return false;
-                }
-                let after_seg = bytes[j];
-                if after_seg == b'(' || after_seg == b'!' {
+
+                let j = i + tlen;
+
+                if j < bytes.len() && (bytes[j] == b'(' || bytes[j] == b'!') {
                     return true;
                 }
-                if after_seg != b'_' {
-                    return false;
+
+                if j < bytes.len() && bytes[j] == b'_' {
+                    let seg_start = j + 1;
+
+                    if seg_start < bytes.len() && is_ident_start(bytes[seg_start]) {
+                        let mut seg_end = seg_start;
+
+                        while seg_end < bytes.len() && is_ident_continue(bytes[seg_end]) {
+                            seg_end += 1;
+                        }
+
+                        let seg = &line[seg_start..seg_end];
+                        let k = seg_end;
+
+                        if k < bytes.len()
+                            && (bytes[k] == b'(' || bytes[k] == b'!')
+                            && forbidden_method_suffix(token, seg)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
         }
+
         i += 1;
     }
+
     false
 }
 
 /// Word-boundary keyword token matcher.
 pub fn matches_keyword_token(line: &str, token: &str) -> bool {
+    let trimmed = line.trim_start();
+    if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with('*') {
+        return false;
+    }
+
     let bytes = line.as_bytes();
     let token_bytes = token.as_bytes();
     let tlen = token_bytes.len();
+
     if bytes.len() < tlen {
         return false;
     }
+
     let mut i = 0;
+
     while i + tlen <= bytes.len() {
         if &bytes[i..i + tlen] == token_bytes {
             let before_ok =
                 i == 0 || (!bytes[i - 1].is_ascii_alphanumeric() && bytes[i - 1] != b'_');
+
             let after_ok = i + tlen == bytes.len()
                 || (!bytes[i + tlen].is_ascii_alphanumeric() && bytes[i + tlen] != b'_');
+
             if before_ok && after_ok {
                 return true;
             }
         }
+
         i += 1;
     }
+
     false
+}
+
+/// Skip a brace-delimited block starting at `start`.
+///
+/// Returns the index of the first line after the block.
+/// If the starting line is already balanced or has no opening brace,
+/// returns `start + 1`.
+pub fn skip_brace_block(lines: &[&str], start: usize) -> usize {
+    if start >= lines.len() {
+        return start;
+    }
+
+    let mut depth =
+        lines[start].matches('{').count() as i32 - lines[start].matches('}').count() as i32;
+    let mut idx = start + 1;
+
+    if depth <= 0 {
+        return idx;
+    }
+
+    while idx < lines.len() {
+        depth += lines[idx].matches('{').count() as i32 - lines[idx].matches('}').count() as i32;
+        idx += 1;
+
+        if depth <= 0 {
+            break;
+        }
+    }
+
+    idx
+}
+
+/// Skip a `#[cfg(test)]` module block when present.
+///
+/// If the attribute is followed by a test module, returns the first line
+/// after that module. Otherwise, returns `start + 1`, skipping only the
+/// attribute line.
+pub fn skip_cfg_test_block(lines: &[&str], start: usize) -> usize {
+    if start >= lines.len() {
+        return start;
+    }
+
+    let mut idx = start + 1;
+
+    // Skip blank lines and additional attributes.
+    while idx < lines.len() {
+        let t = lines[idx].trim();
+        if t.is_empty() || t.starts_with('#') {
+            idx += 1;
+            continue;
+        }
+        break;
+    }
+
+    if idx >= lines.len() {
+        return idx;
+    }
+
+    let t = lines[idx].trim();
+    let is_mod = t.split_whitespace().any(|w| w == "mod");
+
+    // Not a module attribute; skip only the attribute line.
+    if !is_mod {
+        return start + 1;
+    }
+
+    // Module declaration without body, e.g. `mod tests;`.
+    if t.ends_with(';') && !t.contains('{') {
+        return idx + 1;
+    }
+
+    let mut depth = t.matches('{').count() as i32 - t.matches('}').count() as i32;
+    idx += 1;
+
+    // The module body opened and closed on the same line, e.g. `mod tests {}`.
+    if depth <= 0 && t.contains('{') {
+        return idx;
+    }
+
+    // Look for an opening brace on following lines.
+    if depth <= 0 {
+        while idx < lines.len() {
+            let st = lines[idx].trim();
+            depth += st.matches('{').count() as i32 - st.matches('}').count() as i32;
+            idx += 1;
+
+            if depth > 0 {
+                break;
+            }
+
+            // Opened and closed immediately on the next line.
+            if depth <= 0 && st.contains('{') {
+                return idx;
+            }
+        }
+    }
+
+    // Consume until the module body closes.
+    while idx < lines.len() && depth > 0 {
+        let st = lines[idx].trim();
+        depth += st.matches('{').count() as i32 - st.matches('}').count() as i32;
+        idx += 1;
+    }
+
+    idx
+}
+```
+
+---
+
+## File: crates/shared/src/code-analysis/utility_column.rs
+
+```rust
+// PURPOSE: Stateless utility functions for column position computation
+// Pure functions only — no struct, no &self, no I/O
+
+/// Compute 1-indexed column position of `pattern` in `line`.
+/// Returns 0 if pattern not found.
+pub fn compute_column(line: &str, pattern: &str) -> usize {
+    line.find(pattern)
+        .map(|pos| byte_offset_to_column(line, pos))
+        .unwrap_or(0)
+}
+
+/// Compute 1-indexed column position of a byte offset in a line.
+pub fn byte_offset_to_column(line: &str, offset: usize) -> usize {
+    line[..offset.min(line.len())].chars().count() + 1
 }
 ```
 
@@ -2965,12 +3892,25 @@ pub fn matches_keyword_token(line: &str, token: &str) -> bool {
 // PURPOSE: Stateless utility functions for code duplication analysis (AES305)
 // Extracted from capabilities_code_duplication_analyzer.rs — pure functions, no &self, no I/O
 
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::collections::HashSet;
+
 use std::path::PathBuf;
 
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
+
+const MAX_LOCATIONS_PER_BLOCK: usize = 128;
+
+type BlockKey = (u64, u64);
+
+#[derive(Debug, Default)]
+struct BlockHits {
+    count: usize,
+    locations: Vec<(PathBuf, usize)>,
+}
 
 /// Normalize a single line: trim, keep only alphanumeric and whitespace.
 pub fn normalize_line(s: &str) -> String {
@@ -2989,6 +3929,22 @@ pub fn normalize_window(window: &[&str]) -> String {
         .join("|")
 }
 
+fn hash_window(window: &[&str]) -> BlockKey {
+    let normalized = window
+        .iter()
+        .map(|line| normalize_line(line))
+        .collect::<Vec<_>>()
+        .join("|");
+
+    let mut hasher = DefaultHasher::new();
+    std::hash::Hash::hash(&normalized, &mut hasher);
+
+    let primary = std::hash::Hasher::finish(&hasher);
+    let secondary = normalized.len() as u64;
+
+    (primary, secondary)
+}
+
 /// Slide a normalized `min_lines` window across each file and group identical windows.
 /// Returns one entry per duplicated block, each holding the (path, 1-indexed start_line)
 /// of every occurrence.
@@ -2996,20 +3952,32 @@ pub fn scan_duplicate_blocks(
     entries: Vec<(PathBuf, String)>,
     min_lines: usize,
 ) -> Vec<Vec<(PathBuf, usize)>> {
-    let mut blocks: HashMap<String, Vec<(PathBuf, usize)>> = HashMap::new();
+    let mut blocks: HashMap<BlockKey, BlockHits> = HashMap::new();
+
     for (path, content) in entries {
         let lines: Vec<&str> = content.lines().collect();
+
         if lines.len() < min_lines {
             continue;
         }
-        for (idx, w) in lines.windows(min_lines).enumerate() {
-            let key = normalize_window(w);
-            blocks.entry(key).or_default().push((path.clone(), idx + 1));
+
+        for (index, window) in lines.windows(min_lines).enumerate() {
+            let key = hash_window(window);
+            let line_number = index + 1;
+
+            let entry = blocks.entry(key).or_default();
+            entry.count += 1;
+
+            if entry.locations.len() < MAX_LOCATIONS_PER_BLOCK {
+                entry.locations.push((path.clone(), line_number));
+            }
         }
     }
+
     blocks
         .into_values()
-        .filter(|locs| locs.len() >= 2)
+        .filter(|block| block.count >= 2)
+        .map(|block| block.locations)
         .collect()
 }
 
@@ -3022,11 +3990,24 @@ pub fn build_violations(
     if blocks.is_empty() || total_loc == 0 {
         return Vec::new();
     }
-    let dup_lines: usize = blocks.iter().map(|b| b.len() * min_dup_lines).sum();
+
+    let mut duplicated_lines: HashSet<(PathBuf, usize)> = HashSet::new();
+
+    for locs in blocks {
+        for (path, start) in locs {
+            for line in *start..(*start + min_dup_lines) {
+                duplicated_lines.insert((path.clone(), line));
+            }
+        }
+    }
+
+    let dup_lines = duplicated_lines.len();
     let pct = dup_lines as f64 / total_loc as f64 * 100.0;
+
     if pct < 10.0 {
         return Vec::new();
     }
+
     let mut locations: Vec<String> = blocks
         .iter()
         .flat_map(|b| {
@@ -3034,8 +4015,10 @@ pub fn build_violations(
                 .map(|(path, line)| format!("{}:{}", path.display(), line))
         })
         .collect();
+
     locations.sort();
     locations.dedup();
+
     vec![AesCodeAnalysisViolation::CodeDuplication {
         reason: Some(LintMessage::new(format!(
             "AES305: Duplicate block ({} lines) at {} — {:.1}% of total across {} occurrence(s).",
@@ -3070,17 +4053,79 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
 
 ---
 
+## File: crates/shared/src/code-analysis/utility_file_reader.rs
+
+```rust
+// PURPOSE: Stateless utility functions for reading lintable files
+// Domain-agnostic, reusable — valid utility per ARCHITECTURE §7
+// ALGORITHM (read_lintable_file):
+//   1. Check file metadata for size limit (2 MiB)
+//   2. Read file content as UTF-8 string
+//   3. Return Ok(Some(content)) if readable and within limit
+//   4. Return Ok(None) if file exceeds size limit (graceful skip)
+//   5. Return Err(message) if file is unreadable
+
+/// Maximum file size for linting (2 MiB).
+pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
+
+/// Read a file for linting. Returns:
+/// - Ok(Some(content)) if file is readable and within size limit
+/// - Ok(None) if file exceeds size limit (graceful skip, not an error)
+/// - Err(message) if file is unreadable
+pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
+    let meta = std::fs::metadata(path).map_err(|e| format!("{}: {}", path, e))?;
+    if meta.len() > MAX_LINT_FILE_BYTES {
+        return Ok(None);
+    }
+    std::fs::read_to_string(path)
+        .map(Some)
+        .map_err(|e| format!("{}: {}", path, e))
+}
+```
+
+---
+
+## File: crates/shared/src/code-analysis/utility_language_mapper.rs
+
+```rust
+// PURPOSE: Stateless utility functions for mapping language detection results
+use crate::code_analysis::taxonomy_violation_code_analysis_vo::Language as CodeAnalysisLanguage;
+use crate::common::taxonomy_language_vo::Language as CommonLanguage;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::utility_language_detector;
+
+/// Map a file path to the code-analysis Language enum.
+pub fn code_analysis_language_from_file(file: &str) -> CodeAnalysisLanguage {
+    let Ok(fp) = FilePath::new(file.to_string()) else {
+        return CodeAnalysisLanguage::Rust;
+    };
+    match utility_language_detector::detect_language(&fp) {
+        CommonLanguage::Rust => CodeAnalysisLanguage::Rust,
+        CommonLanguage::Python => CodeAnalysisLanguage::Python,
+        CommonLanguage::JavaScript => CodeAnalysisLanguage::JavaScript,
+        CommonLanguage::TypeScript => CodeAnalysisLanguage::TypeScript,
+        CommonLanguage::Unknown => CodeAnalysisLanguage::Rust,
+    }
+}
+```
+
+---
+
 ## File: crates/shared/src/code-analysis/utility_mandatory.rs
 
 ```rust
 // PURPOSE: Stateless utility functions for mandatory definition checking (AES303)
 // Extracted from capabilities_mandatory_definition_checker.rs — pure functions, no &self, no I/O
 
-/// Check if a line declares a Rust struct/enum/trait (handles visibility modifiers).
+use super::utility_bypass::matches_keyword_token;
+
+/// Check if a line declares a Rust struct/enum/trait/type using word-boundary matching.
+/// Handles visibility modifiers (pub, pub(crate)), tuple structs, and avoids
+/// substring false-positives like "obstruction", "structure", "instruction".
 pub fn rust_declares_type(line: &str) -> bool {
-    let keywords = ["struct", "enum", "trait"];
+    let keywords = ["struct", "enum", "trait", "type"];
     for kw in keywords {
-        if line.contains(kw) && !line.contains('(') {
+        if matches_keyword_token(line, kw) {
             return true;
         }
     }
@@ -3177,17 +4222,18 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
+pub mod utility_command_runner;
 pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
-pub mod utility_process;
 pub mod utility_value_object_generator;
 pub use utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+pub mod utility_compliance_score;
 pub mod utility_signature_parser;
 ```
 
@@ -3329,7 +4375,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AdapterNameList {
     pub values: Vec<AdapterName>,
 }
@@ -3353,12 +4399,6 @@ impl AdapterNameList {
 
     pub fn push(&mut self, item: AdapterName) {
         self.values.push(item);
-    }
-}
-
-impl Default for AdapterNameList {
-    fn default() -> Self {
-        Self { values: Vec::new() }
     }
 }
 
@@ -4281,7 +5321,7 @@ single_field_vo!(NamingConfig, word_count: Count);
 // PURPOSE: DepthCount — value object for directory scan depth
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DepthCount {
     pub value: usize,
 }
@@ -4305,12 +5345,6 @@ impl From<usize> for DepthCount {
 impl std::fmt::Display for DepthCount {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
-    }
-}
-
-impl Default for DepthCount {
-    fn default() -> Self {
-        Self { value: 0 }
     }
 }
 ```
@@ -4667,6 +5701,12 @@ impl LanguageInfo {
 
 ```rust
 // PURPOSE: FileContentVO, Identity, LayerNameVO, LineContentVO — VOs for layer identity and file content
+//
+// These value objects are used throughout the AES layer-identity system:
+// - FileContentVO wraps the raw text of a source file.
+// - Identity identifies a single AES architectural layer.
+// - LayerNameVO is a human-readable label for a layer.
+// - LineContentVO wraps a single line of source text.
 use crate::string_value_object;
 
 string_value_object!(FileContentVO);
@@ -5781,354 +6821,23 @@ impl Default for Threshold {
 
 ---
 
-## File: crates/shared/src/common/utility_file.rs
+## File: crates/shared/src/common/utility_compliance_score.rs
 
 ```rust
-// PURPOSE: File & workspace utility — pure logic + I/O, free functions only
-// Single source of truth for file walking, ignored path matching, source file detection,
-// and workspace root detection.
+// PURPOSE: Stateless utility functions for compliance score calculation
+use crate::cli_commands::taxonomy_result_vo::LintResult;
 
-use std::collections::HashSet;
-use std::fs;
-use std::path::{Path, PathBuf};
-
-use crate::common::taxonomy_filesystem_error::FileSystemError;
-use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::default_aes_config;
-
-/// Check if a file extension is a known source file.
-pub fn is_source_file(ext: &str) -> bool {
-    matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
-}
-
-/// Check if a directory is in the ignored list.
-pub fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
-    let s = dir.to_string_lossy();
-    is_path_ignored(&s, ignored)
-}
-
-/// Collect a single source file path into the output vector.
-pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
-    if let Some(path_str) = path.to_str() {
-        if let Ok(fp) = FilePath::new(path_str.to_string()) {
-            files.push(fp);
-        }
-    }
-}
-
-/// Return true if `rel_path` should be skipped based on `ignored` patterns.
-pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
-    if rel_path.is_empty() {
-        return false;
-    }
-    let segments: Vec<&str> = rel_path
-        .split(['/', '\\'])
-        .filter(|s| !s.is_empty())
-        .collect();
-    for pat in ignored {
-        if pat.is_empty() {
-            continue;
-        }
-        if let Some(stripped) = pat.strip_prefix('/') {
-            if stripped.is_empty() {
-                continue;
-            }
-            let pat_segments: Vec<&str> = stripped
-                .split(['/', '\\'])
-                .filter(|s| !s.is_empty())
-                .collect();
-            if pat_segments.is_empty() {
-                continue;
-            }
-            let n_pat = pat_segments.len();
-            let n_seg = segments.len();
-            if n_seg < n_pat {
-                continue;
-            }
-            for start in 0..=(n_seg - n_pat) {
-                if segments[start..start + n_pat] == pat_segments[..] {
-                    return true;
-                }
-            }
-            continue;
-        }
-        if pat.starts_with("*.") || (pat.starts_with('.') && pat.contains('.')) {
-            let suffix = if let Some(s) = pat.strip_prefix('*') {
-                s.trim_start_matches('.')
-            } else {
-                pat.trim_start_matches('.')
-            };
-            if suffix.is_empty() {
-                continue;
-            }
-            let basename = segments.last().copied().unwrap_or_default();
-            if basename.ends_with(suffix) {
-                return true;
-            }
-            continue;
-        }
-        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
-        if pat_segments.len() == 1 {
-            if segments.contains(&pat_segments[0]) {
-                return true;
-            }
-        } else if pat_segments.len() > 1 {
-            let n_pat = pat_segments.len();
-            let n_seg = segments.len();
-            if n_seg >= n_pat {
-                for start in 0..=(n_seg - n_pat) {
-                    if segments[start..start + n_pat] == pat_segments[..] {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
-}
-
-/// Build default ignored paths from config, with a hardcoded safety net for
-/// build artifacts and dependency trees that must never be linted.
-pub fn default_ignored_paths() -> Vec<String> {
-    let mut ignored: Vec<String> = vec![
-        "target".to_string(),
-        "test-workspaces".to_string(),
-        ".mimocode".to_string(),
-        ".agents".to_string(),
-        "node_modules".to_string(),
-        "build.rs".to_string(),
-    ];
-    let config = default_aes_config();
-    for fp in config.ignored_paths.values.iter() {
-        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && !ignored.contains(&v) {
-            ignored.push(v);
-        }
-    }
-    ignored
-}
-
-#[cfg(unix)]
-fn get_inode(meta: &std::fs::Metadata) -> u64 {
-    use std::os::unix::fs::MetadataExt;
-    meta.ino()
-}
-
-#[cfg(not(unix))]
-fn get_inode(_meta: &std::fs::Metadata) -> u64 {
-    0
-}
-
-/// Collect all lintable source files from a directory tree.
-pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    if dir.exists() && dir.is_dir() {
-        let ignored = default_ignored_paths();
-        walk_source_files(dir, &mut files, &ignored);
-    }
-    files
-}
-
-/// Collect all lintable source files without applying default ignores.
-pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
-    let mut files = Vec::new();
-    if dir.exists() && dir.is_dir() {
-        let ignored: Vec<String> = Vec::new();
-        walk_source_files(dir, &mut files, &ignored);
-    }
-    files
-}
-
-/// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
-pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
-    let dir = std::path::Path::new(&path.value);
-    if !dir.exists() || !dir.is_dir() {
-        return Ok(FilePathList { values: vec![] });
-    }
-    let files = collect_all_source_files(dir);
-    Ok(FilePathList { values: files })
-}
-
-/// Walk a directory tree collecting all source files, skipping ignored directories.
-pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
-    let mut visited = HashSet::new();
-    walk_source_files_inner(dir, files, ignored, &mut visited)
-}
-
-fn walk_source_files_inner(
-    dir: &Path,
-    files: &mut Vec<FilePath>,
-    ignored: &[String],
-    visited: &mut HashSet<u64>,
-) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if is_ignored_dir(&path, ignored) {
-                continue;
-            }
-            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
-                if sym_meta.file_type().is_symlink() {
-                    if let Ok(target) = std::fs::canonicalize(&path) {
-                        if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
-                            if target_meta.is_dir() {
-                                walk_source_files_inner(&target, files, ignored, visited);
-                            } else if target_meta.is_file() {
-                                collect_source_file(&target, files);
-                            }
-                        }
-                    }
-                    continue;
-                }
-            }
-            if path.is_dir() {
-                let dir_name = path
-                    .file_name()
-                    .map(|n| n.to_string_lossy())
-                    .unwrap_or_default();
-                if dir_name == "tests" {
-                    continue;
-                }
-                if let Ok(meta) = fs::metadata(&path) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
-                }
-                walk_source_files_inner(&path, files, ignored, visited);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if is_source_file(ext) {
-                    collect_source_file(&path, files);
-                }
-            }
-        }
-    }
-}
-
-/// Walk a directory tree collecting all .rs files.
-/// Contained to `dir` (symlink targets outside the root are pruned).
-pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
-    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    let mut visited = HashSet::new();
-    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
-}
-
-fn walk_rs_files_inner(
-    dir: &Path,
-    cb: &mut dyn FnMut(PathBuf),
-    ignored: &[String],
-    visited: &mut HashSet<u64>,
-    root: &Path,
-) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let p = entry.path();
-            if is_ignored_dir(&p, ignored) {
-                continue;
-            }
-            if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
-                if sym_meta.file_type().is_symlink() {
-                    if let Ok(target) = std::fs::canonicalize(&p) {
-                        if !target.starts_with(root) {
-                            continue;
-                        }
-                        if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
-                            if target_meta.is_dir() {
-                                walk_rs_files_inner(&target, cb, ignored, visited, root);
-                            } else if target_meta.is_file()
-                                && target.starts_with(root)
-                                && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
-                            {
-                                cb(target);
-                            }
-                        }
-                    }
-                    continue;
-                }
-            }
-            if p.is_dir() {
-                if let Ok(meta) = fs::metadata(&p) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
-                }
-                walk_rs_files_inner(&p, cb, ignored, visited, root);
-            } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
-                cb(p);
-            }
-        }
-    }
-}
-
-/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
-pub fn read_file_sync(path: &str) -> Result<String, std::io::Error> {
-    fs::read_to_string(path)
-}
-
-/// Get file basename (filename without directory path).
-pub fn get_basename(path: &str) -> &str {
-    std::path::Path::new(path)
-        .file_name()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-}
-
-/// Get file stem (filename without extension and directory).
-pub fn get_file_stem(path: &str) -> &str {
-    std::path::Path::new(path)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("")
-}
-
-/// Check if path is a directory.
-pub fn is_directory(path: &str) -> bool {
-    std::path::Path::new(path).is_dir()
-}
-
-/// Check if path is a file.
-pub fn is_file(path: &str) -> bool {
-    std::path::Path::new(path).is_file()
-}
-
-/// Get parent directory path.
-pub fn get_parent(path: &str) -> &str {
-    std::path::Path::new(path)
-        .parent()
-        .and_then(|p| p.to_str())
-        .unwrap_or("")
-}
-
-/// Walk up from `start` looking for workspace root markers.
-/// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
-pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
-    let mut dir = std::path::Path::new(start).to_path_buf();
-    if !dir.is_absolute() {
-        dir = std::env::current_dir().ok()?.join(&dir);
-    }
-    loop {
-        if dir.join("Cargo.toml").exists()
-            || dir.join("crates").is_dir()
-            || dir.join("packages").is_dir()
-            || dir.join("modules").is_dir()
-        {
-            return Some(dir);
-        }
-        if !dir.pop() {
-            return None;
-        }
-    }
+/// Calculate compliance score from lint results.
+///
+/// Returns a value between 0.0 and 100.0 by summing the score impact of
+/// each violation and subtracting from 100. The result is clamped to a
+/// minimum of 0.0 so that a project with many violations never goes
+/// negative.
+#[rustfmt::skip]
+pub fn compute_score
+    (results: &[LintResult]) -> f64 {
+    let penalty: f64 = results.iter().map(|r| r.severity.score_impact()).sum();
+    f64::max(100.0 - penalty, 0.0)
 }
 ```
 
@@ -6519,17 +7228,50 @@ macro_rules! primitive_value_object {
 
 ---
 
+## File: crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs
+
+```rust
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+use crate::config_system::taxonomy_source_vo::ConfigResult;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait IConfigOrchestratorAggregate: Send + Sync {
+    async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult;
+
+    async fn load_config_for_language(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> ConfigResult;
+
+    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo>;
+
+    /// Synchronous config loading for container initialization.
+    /// Searches workspace root for config YAML, falls back to embedded defaults.
+    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+
+    /// Get ignored paths from config (hardcoded defaults + config values).
+    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
+}
+```
+
+---
+
 ## File: crates/shared/src/config-system/mod.rs
 
 ```rust
 // config-system — taxonomy and contract types
-pub mod contract_multi_project_orchestrator_aggregate;
-pub mod contract_orchestration_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_parser_protocol;
 pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
+pub mod taxonomy_config_language_vo;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
 pub mod taxonomy_multi_project_summary_vo;
@@ -6538,8 +7280,10 @@ pub mod taxonomy_multi_project_workspace_info_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
+pub mod utility_config_defaults;
 pub mod utility_config_io;
 pub mod utility_config_merger;
+pub mod utility_config_parser;
 ```
 
 ---
@@ -6548,8 +7292,6 @@ pub mod utility_config_merger;
 
 ```rust
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -6557,11 +7299,10 @@ use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
@@ -6569,6 +7310,7 @@ pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
+    pub enabled: BooleanVO,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default)]
@@ -6631,228 +7373,7 @@ impl Default for ArchitectureConfig {
         }
     }
 }
-
-pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
-    if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        // Extract layers from rules (first rule containing "layers" key) if not at top-level
-        if arch_json.get("layers").is_none() {
-            if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
-                for (_rule_code, rule_val) in rules_obj.iter_mut() {
-                    if let Some(layers) = rule_val.get_mut("layers") {
-                        let layers = std::mem::take(layers);
-                        arch_json["layers"] = layers;
-                        break;
-                    }
-                }
-            }
-        }
-        let mut json = arch_json;
-        fn remove_nulls(val: &mut serde_json::Value) {
-            match val {
-                serde_json::Value::Object(m) => {
-                    m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                _ => {}
-            }
-        }
-        remove_nulls(&mut json);
-        // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
-        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
-            json["ignored_paths"] = serde_json::json!({"values": arr});
-        }
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
-                let mut suffix_updates: Vec<(
-                    String,
-                    Option<String>,
-                    serde_json::Value,
-                    serde_json::Value,
-                )> = Vec::new();
-                for (layer_name, layer) in obj.iter() {
-                    if let Some(suffix_val) = layer.get("suffix") {
-                        if let Some(arr) = suffix_val.as_array() {
-                            let mut policy: Option<String> = None;
-                            let mut allowed = serde_json::Value::Array(Vec::new());
-                            let mut forbidden = serde_json::Value::Array(Vec::new());
-                            for entry in arr {
-                                if let Some(entry_obj) = entry.as_object() {
-                                    for (pkey, plist) in entry_obj {
-                                        match pkey.as_str() {
-                                            "strict" | "flexible" => {
-                                                policy = Some(pkey.clone());
-                                                if let Some(list) = plist.as_array() {
-                                                    allowed = serde_json::json!(list);
-                                                }
-                                            }
-                                            "forbidden" => {
-                                                if let Some(list) = plist.as_array() {
-                                                    forbidden = serde_json::json!(list);
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                            }
-                            suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
-                        }
-                    }
-                }
-                for (name, policy, allowed, forbidden) in suffix_updates {
-                    if let Some(layer) = obj.get_mut(&name) {
-                        if let Some(layer_obj) = layer.as_object_mut() {
-                            if let Some(ref p) = policy {
-                                layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                            }
-                            layer_obj.insert("allowed_suffix".to_string(), allowed);
-                            if let Some(arr) = forbidden.as_array() {
-                                if !arr.is_empty() {
-                                    layer_obj.insert("forbidden_suffix".to_string(), forbidden);
-                                }
-                            }
-                            layer_obj.remove("suffix");
-                        }
-                    }
-                }
-            }
-        }
-        if let Some(rules_obj) = json.get_mut("rules") {
-            if let Some(obj) = rules_obj.as_object_mut() {
-                let mut flat = serde_json::Value::Array(Vec::new());
-                for (code, rule_val) in obj.iter() {
-                    if let Some(rule_obj) = rule_val.as_object() {
-                        let mut base = rule_obj.clone();
-                        base.insert("name".to_string(), serde_json::json!(code));
-                        // Expand scope array into multiple entries — one per scope element
-                        // Only applies to rules WITHOUT conditions (conditions have their own scopes)
-                        if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                            if !base.contains_key("conditions") && scope_arr.len() > 1 {
-                                for scope_val in scope_arr {
-                                    if let Some(s) = scope_val.as_str() {
-                                        let mut entry = base.clone();
-                                        entry.insert("scope".to_string(), serde_json::json!(s));
-                                        if let Some(arr) = flat.as_array_mut() {
-                                            arr.push(serde_json::Value::Object(entry));
-                                        }
-                                    }
-                                }
-                                continue; // Already pushed per-scope entries, skip single push below
-                            } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
-                                base.insert("scope".to_string(), serde_json::json!(first));
-                            }
-                        }
-                        if let Some(conditions) = base.remove("conditions") {
-                            if let Some(conds) = conditions.as_array() {
-                                if !conds.is_empty() {
-                                    for cond in conds {
-                                        if let Some(cond_obj) = cond.as_object() {
-                                            let mut entry = base.clone();
-                                            for (k, v) in cond_obj {
-                                                entry.insert(k.clone(), v.clone());
-                                            }
-                                            // Remove top-level scope array leftovers if condition has its own scope
-                                            if let Some(arr) = flat.as_array_mut() {
-                                                arr.push(serde_json::Value::Object(entry));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if let Some(arr) = flat.as_array_mut() {
-                                arr.push(serde_json::Value::Object(base));
-                            }
-                        }
-                    }
-                }
-                *rules_obj = flat;
-            }
-        }
-        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[warn] Failed to deserialize ArchitectureConfig: {:?}", e);
-                eprintln!("[warn] Falling back to default config. Check your YAML syntax and field types.");
-                ArchitectureConfig::default()
-            }
-        };
-        // Top-level ignored_paths (outside architecture section) — merge into config
-        if config.ignored_paths.values.is_empty() {
-            if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-                let paths: Vec<_> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                    .collect();
-                if !paths.is_empty() {
-                    config.ignored_paths = FilePathList::new(paths);
-                }
-            }
-        }
-        config
-    } else {
-        let mut config = ArchitectureConfig::default();
-        if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        config
-    }
-}
-
-/// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
-/// Runtime project-level config files override these defaults.
-/// Cached via OnceLock to avoid re-parsing on every call.
-static DEFAULT_RUST_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_PYTHON_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-
-pub fn default_aes_config() -> ArchitectureConfig {
-    DEFAULT_RUST_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
-        .clone()
-}
-
-pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
-    match language {
-        "rust" => default_aes_config(),
-        "python" => DEFAULT_PYTHON_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
-            })
-            .clone(),
-        "javascript" | "typescript" => DEFAULT_TS_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!(
-                    "../../../../lint_arwaky.config.javascript.yaml"
-                ))
-            })
-            .clone(),
-        _ => {
-            eprintln!(
-                "[warn] Unknown language '{}', using empty default config.",
-                language
-            );
-            ArchitectureConfig::default()
-        }
-    }
-}
 ```
 
 ---
+

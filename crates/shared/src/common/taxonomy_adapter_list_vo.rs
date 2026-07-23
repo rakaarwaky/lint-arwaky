@@ -30,7 +30,6 @@ impl AdapterNameList {
     }
 }
 
-
 impl std::ops::Deref for AdapterNameList {
     type Target = Vec<AdapterName>;
     fn deref(&self) -> &Self::Target {

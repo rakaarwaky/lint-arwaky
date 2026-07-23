@@ -26,16 +26,16 @@ pub struct <ResultVO> {
 
 ## Primitive Policy
 
-| Primitive            | Rule                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `String`           | Forbidden for domain fields and public contract return values. Use VO.              |
+| Primitive        | Rule                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `String`         | Forbidden for domain fields and public contract return values. Use VO.              |
 | `i32`, `i64`     | Forbidden. Use domain VO.                                                           |
 | `u32`, `u64`     | Forbidden. Use domain VO.                                                           |
 | `usize`, `isize` | Forbidden for domain values. Use domain VO.                                         |
 | `f32`, `f64`     | Forbidden. Use domain VO.                                                           |
-| `char`             | Forbidden for domain values. Use domain VO.                                         |
-| `bool`             | Allowed for semantic toggles when no richer VO is needed.                           |
-| `&str`             | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
+| `char`           | Forbidden for domain values. Use domain VO.                                         |
+| `bool`           | Allowed for semantic toggles when no richer VO is needed.                           |
+| `&str`           | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
 
 Prefer VOs for: file paths, symbol names, messages, line numbers, column numbers, severity, durations, counts, thresholds, identifiers.
 

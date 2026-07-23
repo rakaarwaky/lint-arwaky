@@ -20,15 +20,15 @@ pub trait I<NameOrchestrator>Aggregate {
 
 ## Primitive Policy
 
-| Primitive            | Rule                                                                                |
-| -------------------- | ----------------------------------------------------------------------------------- |
-| `String`           | Forbidden for domain fields and public contract values. Use VO.                     |
+| Primitive        | Rule                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `String`         | Forbidden for domain fields and public contract values. Use VO.                     |
 | `i32`, `i64`     | Forbidden for domain values. Use VO.                                                |
 | `u32`, `u64`     | Forbidden for domain values. Use VO.                                                |
 | `usize`, `isize` | Forbidden for domain values. Use VO.                                                |
 | `f32`, `f64`     | Forbidden for domain values. Use VO.                                                |
-| `char`             | Forbidden for domain values. Use VO.                                                |
-| `bool`             | Allowed for semantic toggles when no richer VO is needed.                           |
-| `&str`             | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
+| `char`           | Forbidden for domain values. Use VO.                                                |
+| `bool`           | Allowed for semantic toggles when no richer VO is needed.                           |
+| `&str`           | May be allowed for borrowed low-level input, but domain identifiers should use VOs. |
 
 Prefer VOs for: requests, reports, file paths, identifiers, execution results, results, policies, thresholds.

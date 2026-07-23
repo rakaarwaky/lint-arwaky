@@ -5,7 +5,7 @@
 Forbidden:
 
 ```typescript
-const result = checker.check() ?? '';
+const result = checker.check() ?? "";
 ```
 
 ## Rule 2: Agent may return `<ResultVO>[]` for analysis orchestration
@@ -37,9 +37,9 @@ Bad:
 
 ```typescript
 try {
-    const content = fs.readFileSync(path.value());
+  const content = fs.readFileSync(path.value());
 } catch {
-    const content = '';
+  const content = "";
 }
 ```
 

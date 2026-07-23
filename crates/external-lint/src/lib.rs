@@ -2,8 +2,13 @@
 pub use shared::common::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 
 pub mod agent_external_lint_orchestrator;
+pub mod capabilities_external_lint_adapter;
+pub mod capabilities_external_lint_selector;
+pub mod capabilities_language_detector_adapter;
 pub mod capabilities_stdio_client;
 pub use capabilities_stdio_client::StdioClient;
+pub mod capabilities_external_lint_executor;
+pub use capabilities_external_lint_executor::ExternalLintExecutor;
 pub mod capabilities_js_eslint_adapter;
 pub use capabilities_js_eslint_adapter::ESLintAdapter;
 pub mod capabilities_js_prettier_adapter;

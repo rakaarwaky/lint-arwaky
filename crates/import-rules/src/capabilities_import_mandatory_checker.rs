@@ -1,12 +1,13 @@
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_file_read, utility_import_resolver};
+use shared::import_rules::utility_import_resolver;
 use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
@@ -14,7 +15,6 @@ use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -36,6 +36,9 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         _root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
+        // Pre-compute layer_keys once per audit run (was previously per-file)
+        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+
         for f in &files.values {
             let f_str = f.to_string();
             let basename = f.basename();
@@ -51,7 +54,6 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                 continue;
             }
 
-            let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
             let filename = utility_layer_detector::extract_filename(&f_str);
             if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename) {
                 let specialized = utility_layer_detector::resolve_specialized_layer(
@@ -103,7 +105,7 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -160,13 +162,8 @@ impl ArchImportMandatoryChecker {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
-        let stem = basename
-            .rsplit('.')
-            .next_back()
-            .map_or(basename.as_str(), |s| s);
-        let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -177,18 +174,16 @@ impl ArchImportMandatoryChecker {
                 continue;
             }
             let scope_identity = Identity::new(&rule.scope.value);
-            let (rule_layer, rule_suffixes) =
-                utility_import_resolver::resolve_scope(&scope_identity);
-            let rule_layer_str = rule_layer.value();
-            if !stem.starts_with(&format!("{}_", rule_layer_str)) {
+            // Use shared utility to check if file belongs to scope
+            let Some((rule_layer_str, _rule_suffixes)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename.as_str(),
+                    &scope_identity,
+                )
+            else {
                 continue;
-            }
-            if !rule_suffixes.is_empty() {
-                let suffix_match = rule_suffixes.iter().any(|s| s.value() == suffix);
-                if !suffix_match {
-                    continue;
-                }
-            }
+            };
+
             for required in &rule.mandatory.values {
                 let required_identity = Identity::new(required);
                 let (req_layer, req_suffixes) =
@@ -210,7 +205,7 @@ impl ArchImportMandatoryChecker {
                         "AES202",
                         Severity::HIGH,
                         AesImportViolation::MissingImport {
-                            source_layer: rule_layer.clone(),
+                            source_layer: LayerNameVO::new(rule_layer_str.clone()),
                             required: SymbolName::new(required.clone()),
                             reason: None,
                         }

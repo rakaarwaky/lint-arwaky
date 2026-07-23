@@ -17,4 +17,11 @@ async-trait.workspace = true
 shared.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
 tokio.workspace = true
+
+[[bench]]
+name = "bench_maintenance_throughput"
+path = "benches/bench_maintenance_throughput.rs"
+harness = false

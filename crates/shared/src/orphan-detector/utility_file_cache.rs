@@ -1,24 +1,32 @@
-// PURPOSE: Orphan file cache utility — stateless interface to thread-local file cache
+// PURPOSE: Orphan file cache utility — stateless interface to bounded file cache
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
+use std::sync::{Mutex, OnceLock};
 
-thread_local! {
-    static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+const MAX_CACHE_ENTRIES: usize = 20_000;
+
+static FILE_CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+
+fn cache() -> &'static Mutex<HashMap<String, String>> {
+    FILE_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub fn read_cached(path: &FilePath) -> ContentString {
-    FILE_CACHE.with(|cache| -> ContentString {
-        let mut cache = cache.borrow_mut();
-        if let Some(content) = cache.get(path.value()) {
-            return ContentString::new(content.clone());
-        }
-        let content = fs::read_to_string(path.value()).unwrap_or_default();
+    let mut cache = cache().lock().unwrap_or_else(|e| e.into_inner());
+
+    if let Some(content) = cache.get(path.value()) {
+        return ContentString::new(content.clone());
+    }
+
+    let content = fs::read_to_string(path.value()).unwrap_or_default();
+
+    if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
-        ContentString::new(content)
-    })
+    }
+
+    ContentString::new(content)
 }
 
 pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
@@ -35,10 +43,6 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     entries
 }
 
-pub fn path_exists(path: &FilePath) -> bool {
-    std::path::Path::new(path.value()).exists()
-}
-
 pub fn is_symlink(path: &FilePath) -> bool {
     std::fs::symlink_metadata(path.value())
         .map(|m| m.file_type().is_symlink())
@@ -46,5 +50,6 @@ pub fn is_symlink(path: &FilePath) -> bool {
 }
 
 pub fn clear_cache() {
-    FILE_CACHE.with(|c| c.borrow_mut().clear());
+    let mut cache = cache().lock().unwrap_or_else(|e| e.into_inner());
+    cache.clear();
 }

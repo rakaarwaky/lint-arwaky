@@ -1,36 +1,21 @@
 ---
 name: create-contract-python
 description: "Create and validate Python contract layer files in shared domain: pure ABC definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    contract,
-    protocol,
-    aggregate,
-    abc,
-    shared,
-    aes201,
-    di,
-    vo,
-  ]
-triggers:
-  - "create contract python"
-  - "add contract python"
-  - "create protocol python"
-  - "create aggregate python"
-  - "fix contract python"
-  - "check contract python"
-  - "audit contract python"
-dependencies: []
-related:
-  - create-taxonomy-python
-  - create-capabilities-python
-  - create-agent-python
-  - trait-consolidation-python
-  - fix-primitive-to-vo
+metadata:
+  tags: [python, aes, contract, protocol, aggregate, abc, shared, di, vo]
+  triggers:
+    - "create contract python"
+    - "add contract python"
+    - "create protocol python"
+    - "create aggregate python"
+    - "fix contract python"
+    - "check contract python"
+    - "audit contract python"
+  dependencies: []
+  related:
+    - create-taxonomy-python
+    - create-capabilities-python
+    - create-agent-python
 ---
 
 # create-contract-python
@@ -65,21 +50,21 @@ Two contract suffixes serve different roles:
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/contract-roles.md` | Two suffix types and naming convention |
-| `references/purity-imports.md` | AES201 import restrictions |
-| `references/abc-structure-rules.md` | 7 ABC structure rules |
-| `references/primitive-vo-policy.md` | Primitive policy table |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                | Content                                |
+| ----------------------------------- | -------------------------------------- |
+| `references/contract-roles.md`      | Two suffix types and naming convention |
+| `references/purity-imports.md`      | AES201 import restrictions             |
+| `references/abc-structure-rules.md` | 7 ABC structure rules                  |
+| `references/primitive-vo-policy.md` | Primitive policy table                 |
+| `references/examples.md`            | All BAD/GOOD code examples             |
+| `references/commands.md`            | Quick heuristic check commands         |
+| `references/checklist.md`           | Verification checklist                 |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/contract_name_protocol.py` | New protocol ABC definition |
+| File                                   | Purpose                      |
+| -------------------------------------- | ---------------------------- |
+| `templates/contract_name_protocol.py`  | New protocol ABC definition  |
 | `templates/contract_name_aggregate.py` | New aggregate ABC definition |
 
 ## Workflow
@@ -88,10 +73,10 @@ Two contract suffixes serve different roles:
 
 Ask: **"Which layer will implement this interface?"**
 
-| Implemented By | Suffix |
-|----------------|--------|
-| Capabilities | `_protocol` |
-| Agent | `_aggregate` |
+| Implemented By | Suffix       |
+| -------------- | ------------ |
+| Capabilities   | `_protocol`  |
+| Agent          | `_aggregate` |
 
 ### Step 2: Identify Public Methods
 

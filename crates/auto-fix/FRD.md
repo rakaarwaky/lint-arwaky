@@ -1,9 +1,11 @@
 # FRD — auto-fix
 
 ## Feature Goal
+
 The auto-fix crate provides an automatic correction mechanism for AES rule violations that can be fixed mechanically. It consumes linting results and applies deterministic corrections to affected source files, reducing the manual workload for developers when fixing errors that can be detected and corrected deterministically.
 
 ## Requirements & Scope
+
 - AES Fix: Unused Import Correction
   - Requirement: Automatically remove import lines that are not referenced in the file.
   - Scope: Rust, Python, JavaScript, and TypeScript.
@@ -19,6 +21,7 @@ The auto-fix crate provides an automatic correction mechanism for AES rule viola
 - Fixes must be idempotent and deterministic, and must not break code functionality.
 
 ## Success Indicators
+
 - [ ] Fix accuracy — applied fixes never break code functionality.
 - [ ] Coverage — the target percentage of automatically fixable violations is reached.
 - [ ] Idempotency — running auto-fix repeatedly on the same file produces no further changes.

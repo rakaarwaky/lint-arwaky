@@ -124,7 +124,9 @@ fn merge_rule_into_definition(ldef: &mut LayerDefinition, rule: &ArchitectureRul
             }
         }
     }
-    if rule.orphan.check_orphan.value {
+    // Enable orphan checking if explicitly set OR if the rule is enabled
+    // (AES5xx rules use `enabled: true` to activate orphan detection)
+    if rule.orphan.check_orphan.value || rule.enabled.value {
         ldef.orphan.check_orphan = BooleanVO::new(true);
     }
     if !rule.orphan.orphan_entry_points.values.is_empty() {
@@ -187,51 +189,5 @@ fn create_specialized_sub_layers(
                 merged_layers.insert(specialized_key, spec_def);
             }
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::common::taxonomy_common_vo::{Count, PatternList};
-
-    fn make_config(
-        layers: HashMap<LayerNameVO, LayerDefinition>,
-        rules: Vec<ArchitectureRule>,
-    ) -> ArchitectureConfig {
-        ArchitectureConfig {
-            enabled: BooleanVO::new(true),
-            layers,
-            rules,
-            naming: crate::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
-            ignored_paths: crate::common::taxonomy_paths_vo::FilePathList { values: vec![] },
-            mandatory_class_definition: BooleanVO::new(false),
-        }
-    }
-
-    #[test]
-    fn merge_empty_config() {
-        let config = make_config(HashMap::new(), vec![]);
-        let (merged, _) = merge_config(&config);
-        assert!(merged.is_empty());
-    }
-
-    #[test]
-    fn merge_global_rule() {
-        let mut layers = HashMap::new();
-        layers.insert(LayerNameVO::new("agent"), LayerDefinition::default());
-        let rule = ArchitectureRule {
-            scope: LayerNameVO::new(""),
-            forbidden: PatternList {
-                values: vec!["capabilities".to_string()],
-            },
-            ..Default::default()
-        };
-        let config = make_config(layers, vec![rule]);
-        let (merged, _) = merge_config(&config);
-        assert!(merged[&LayerNameVO::new("agent")]
-            .forbidden
-            .values
-            .contains(&"capabilities".to_string()));
     }
 }

@@ -41,7 +41,7 @@ pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<File
         r.store(false, Ordering::SeqCst);
     }) {
         eprintln!("[error] failed to set Ctrl+C handler: {}", e);
-        return ExitCode::FAILURE;
+        return ExitCode::from(2);
     }
 
     watch_aggregate.run(config, running)

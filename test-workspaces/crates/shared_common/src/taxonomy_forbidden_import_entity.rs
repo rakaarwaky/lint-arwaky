@@ -1,6 +1,11 @@
-// taxonomy_forbidden_import_entity.rs — contains an unused import to trigger AES203
-use std::collections::HashMap;
+use crate::agent::agent_large_orchestrator::LargeOrchestrator;
 
 pub struct ForbiddenImportEntity {
     pub name: String,
+}
+
+impl ForbiddenImportEntity {
+    pub fn new(name: &str) -> Self {
+        Self { name: name.to_string() }
+    }
 }

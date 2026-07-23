@@ -1,14 +1,16 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_file_cache;
-use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
+use shared::orphan_detector::utility_orphan_detector::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_workspace::{check_wired_in_container, find_workspace_root};
+use shared::orphan_detector::utility_workspace_scanner::{
+    check_wired_in_container, find_workspace_root,
+};
 use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -40,8 +42,8 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let content = utility_file_cache::read_cached(&path);
             let mut identifiers: Vec<String> = Vec::new();
             let content_ref = content.value();
-            identifiers.extend(extract_struct_names(&content_ref));
-            identifiers.extend(extract_trait_names(&content_ref));
+            identifiers.extend(extract_struct_names(content_ref));
+            identifiers.extend(extract_trait_names(content_ref));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem
@@ -100,7 +102,7 @@ impl CapabilitiesOrphanAnalyzer {
         workspace_root: &std::path::Path,
     ) -> Option<Vec<std::path::PathBuf>> {
         if let Ok(mut guard) = self.container_cache.lock() {
-            if let Some((ref cached_root, ref cached_files)) = *guard {
+            if let Some((cached_root, cached_files)) = &*guard {
                 if cached_root == workspace_root {
                     return Some(cached_files.clone());
                 }

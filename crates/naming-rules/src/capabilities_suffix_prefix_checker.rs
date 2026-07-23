@@ -1,28 +1,21 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict)
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
 use shared::naming_rules::taxonomy_naming_constant::{
-    ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
+    RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
 };
 use shared::naming_rules::taxonomy_naming_violation_vo::NamingViolation;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
+use shared::naming_rules::utility_naming_checker::string_filename_result;
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
-
-use shared::naming_rules::utility_naming::{get_stem, get_suffix};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -72,27 +65,6 @@ impl SuffixPrefixChecker {
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
     }
 
-    fn _make_result(file: &str, code: &str, msg: impl Into<String>, sev: Severity) -> LintResult {
-        let file_path = FilePath::new(file).unwrap_or_default();
-        LintResult {
-            file: file_path,
-            line: LineNumber::new(1),
-            column: ColumnNumber::new(0),
-            code: ErrorCode::raw(code),
-            message: LintMessage::new(msg),
-            source: Some(AdapterName::raw(ADAPTER_NAME)),
-            severity: sev,
-            enclosing_scope: Some(ScopeRef {
-                name: DescriptionVO::new(String::new()),
-                kind: DescriptionVO::new(String::new()),
-                file: None,
-                start_line: None,
-                end_line: None,
-            }),
-            related_locations: LocationList::new(),
-        }
-    }
-
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules).
     fn _check_domain_suffixes(
         &self,
@@ -129,7 +101,7 @@ impl SuffixPrefixChecker {
                     .as_ref()
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
-                violations.push(Self::_make_result(
+                violations.push(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixForbidden {
@@ -161,7 +133,7 @@ impl SuffixPrefixChecker {
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
                 let suffix_display = suffix.unwrap_or("(none)");
-                violations.push(Self::_make_result(
+                violations.push(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixMismatch {

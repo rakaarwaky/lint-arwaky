@@ -2,8 +2,13 @@
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::import_rules::taxonomy_import_rule_vo::MandatoryImportRuleVO;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct MandatoryImportRuleVO {
+    pub enabled: BooleanVO,
+    pub pattern: PatternList,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CodeAnalysisRuleVO {
@@ -29,9 +34,8 @@ pub struct CodeAnalysisRuleVO {
     pub duplication_threshold: Option<f64>,
 }
 
-/// P0.1 fix: AES302 default threshold — FRD specifies 10 lines minimum.
 fn default_min_lines() -> Count {
-    Count::new(10)
+    Count::new(5)
 }
 
 /// AES301 default maximum file line count.

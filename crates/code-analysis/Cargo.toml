@@ -1,5 +1,5 @@
 [package]
-name = "code_analysis-lint-arwaky"
+name = "code-analysis-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Code-quality analyzers (file-size limits, code duplication detection, bypass checks, mandatory definition enforcement) covering AES301–AES305."
@@ -18,3 +18,13 @@ once_cell.workspace = true
 regex.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros"] }
 shared.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+shared.workspace = true
+tempfile = "3"
+
+[[bench]]
+name = "bench_code_analysis_throughput"
+path = "benches/bench_code_analysis_throughput.rs"
+harness = false

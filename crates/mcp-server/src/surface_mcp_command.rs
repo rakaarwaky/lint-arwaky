@@ -49,26 +49,26 @@ impl ServerHandler for LintArwakyMcpServer {
 #[tool_router]
 impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
-    async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
+    pub async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
         self.agent.execute_command(args).await
     }
 
     #[tool(
         description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\")."
     )]
-    async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
+    pub async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
         self.agent.list_commands(args).await
     }
 
     #[tool(
         description = "Read SKILL.md documentation by section. Searches several candidate locations."
     )]
-    async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
+    pub async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
         self.agent.read_skill(args).await
     }
 
     #[tool(description = "Check system health: adapters and system state.")]
-    async fn health_check(&self) -> String {
+    pub async fn health_check(&self) -> String {
         let mut adapters = Vec::new();
         for (name, lang) in &[
             ("ruff", "python"),

@@ -1,5 +1,5 @@
 [package]
-name = "config_system-lint-arwaky"
+name = "config-system-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Configuration loading, parsing, validation, and workspace detection. Resolves `lint_arwaky.config.*.yaml` and merges it with project-level overrides."
@@ -23,4 +23,11 @@ tokio = { workspace = true, features = ["rt", "macros", "fs"] }
 futures = "0.3"
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
 tokio.workspace = true
+
+[[bench]]
+name = "bench_config_system"
+path = "benches/bench_config_system.rs"
+harness = false

@@ -6,9 +6,9 @@
 //   - run_ci_analysis: CI pipeline that runs code analysis, computes score, compares
 //     against threshold, and returns pass/fail exit code. Detects CRITICAL violations
 //     as auto-fail regardless of score.
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -18,7 +18,7 @@ pub fn create_runtime() -> Result<tokio::runtime::Runtime, ExitCode> {
         Ok(r) => Ok(r),
         Err(_) => {
             eprintln!("[error] failed to create tokio runtime");
-            Err(ExitCode::FAILURE)
+            Err(ExitCode::from(2))
         }
     }
 }
@@ -31,7 +31,7 @@ pub fn create_current_thread_runtime() -> Result<tokio::runtime::Runtime, ExitCo
         Ok(r) => Ok(r),
         Err(_) => {
             eprintln!("[error] failed to create tokio runtime");
-            Err(ExitCode::FAILURE)
+            Err(ExitCode::from(2))
         }
     }
 }
@@ -66,7 +66,8 @@ pub fn run_ci_analysis(
     let results = code_analysis_linter.run_code_analysis_path(&root);
     let score = code_analysis_linter.calc_score(&results);
     let has_crit = code_analysis_linter.check_critical(&results);
-    let below_threshold = (score.value() as u32) < threshold.value();
+    // P2.7: compare as floats, not truncated u32
+    let below_threshold = score.value() < threshold.value() as f64;
 
     println!("Architecture Compliance CI");
     println!("Score: {:.1} / 100", score.value());

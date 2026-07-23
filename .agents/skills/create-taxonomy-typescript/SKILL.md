@@ -1,39 +1,34 @@
 ---
 name: create-taxonomy-typescript
 description: "Create and validate TypeScript taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    taxonomy,
-    shared,
-    vo,
-    entity,
-    error,
-    event,
-    constant,
-    aes201,
-    primitive-to-vo,
-  ]
-triggers:
-  - "create taxonomy typescript"
-  - "add taxonomy typescript"
-  - "move dataclass to taxonomy typescript"
-  - "create vo typescript"
-  - "create error taxonomy typescript"
-  - "create constant taxonomy typescript"
-  - "check taxonomy typescript"
-  - "audit taxonomy typescript"
-dependencies: []
-related:
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - enforce-1-class-per-file-typescript
-  - interface-consolidation-typescript
-  - fix-primitive-to-vo
-  - fix-magic-constant
+metadata:
+  tags:
+    [
+      typescript,
+      aes,
+      taxonomy,
+      shared,
+      vo,
+      entity,
+      error,
+      event,
+      constant,
+      primitive-to-vo,
+    ]
+  triggers:
+    - "create taxonomy typescript"
+    - "add taxonomy typescript"
+    - "move dataclass to taxonomy typescript"
+    - "create vo typescript"
+    - "create error taxonomy typescript"
+    - "create constant taxonomy typescript"
+    - "check taxonomy typescript"
+    - "audit taxonomy typescript"
+  dependencies: []
+  related:
+    - create-capabilities-typescript
+    - create-agent-typescript
+    - create-contract-typescript
 ---
 
 # create-taxonomy-typescript
@@ -64,22 +59,22 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/purity-imports.md` | AES201 import restrictions, allowed/forbidden dependencies |
-| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns |
-| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                               | Content                                                    |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `references/purity-imports.md`     | AES201 import restrictions, allowed/forbidden dependencies |
+| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns          |
+| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules              |
+| `references/examples.md`           | All BAD/GOOD code examples                                 |
+| `references/commands.md`           | Quick heuristic check commands                             |
+| `references/checklist.md`          | Verification checklist                                     |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/taxonomy_name_vo.ts` | New value object file |
-| `templates/taxonomy_name_error.ts` | New error type file |
-| `templates/taxonomy_name_constant.ts` | New constants file |
+| File                                  | Purpose               |
+| ------------------------------------- | --------------------- |
+| `templates/taxonomy_name_vo.ts`       | New value object file |
+| `templates/taxonomy_name_error.ts`    | New error type file   |
+| `templates/taxonomy_name_constant.ts` | New constants file    |
 
 ## Workflow
 

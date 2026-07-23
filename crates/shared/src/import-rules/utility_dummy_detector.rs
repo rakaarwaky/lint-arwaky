@@ -1,7 +1,7 @@
-// PURPOSE: taxonomy_dummy_helper — pure utility functions for dummy function, block, and trait detection
+// PURPOSE: utility_dummy_helper — pure utility functions for dummy function, block, and trait detection
+use crate::common::taxonomy_common_vo::LanguageVO;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_name_vo::SymbolName;
-use crate::import_rules::taxonomy_language_vo::LanguageVO;
 
 pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> {
     match lang {
@@ -59,7 +59,6 @@ pub fn symbol_used_real(
         && symbol.len() > 1
         && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))
         || symbol.ends_with("Protocol")
-        || symbol.ends_with("Port")
         || symbol.ends_with("Trait")
         || symbol.ends_with("Aggregate")
         || symbol.ends_with("Ext")
@@ -126,7 +125,12 @@ pub fn symbol_used_real(
             continue;
         }
 
-        if !trimmed.contains(symbol) {
+        if !contains_ident(trimmed, symbol) {
+            continue;
+        }
+
+        // If the symbol only appears inside string literals, it's not real usage
+        if is_symbol_only_in_strings(trimmed, symbol) {
             continue;
         }
 
@@ -145,6 +149,148 @@ pub fn symbol_used_real(
 }
 
 // ─── Private Helpers ───
+
+/// Check if `haystack` contains `needle` as a whole identifier (not a substring).
+pub fn contains_ident(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return false;
+    }
+
+    let mut start = 0usize;
+
+    while let Some(pos) = haystack[start..].find(needle) {
+        let abs = start + pos;
+        let end = abs + needle.len();
+
+        let before_ok = abs == 0 || {
+            let before_char = haystack[..abs].chars().next_back().unwrap_or(' ');
+            !before_char.is_alphanumeric() && before_char != '_'
+        };
+
+        let after_ok = end == haystack.len() || {
+            let after_char = haystack[end..].chars().next().unwrap_or(' ');
+            !after_char.is_alphanumeric() && after_char != '_'
+        };
+
+        if before_ok && after_ok {
+            return true;
+        }
+
+        start = abs + needle.len();
+    }
+
+    false
+}
+
+/// Check if all occurrences of `needle` in `haystack` appear strictly inside
+/// double-quoted string literals. Returns true when the symbol is never used
+/// as a code identifier (only inside strings, comments, or doc lines).
+pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() || !haystack.contains(needle) {
+        return false;
+    }
+
+    let mut start = 0usize;
+    let mut found_anywhere = false;
+
+    while let Some(pos) = haystack[start..].find(needle) {
+        let abs = start + pos;
+
+        // Determine which string literal (if any) this occurrence falls inside.
+        // We scan backwards from `abs` to find the opening quote that is not
+        // escaped and not inside a comment.
+        let opening_quote = match find_enclosing_string_start(haystack, abs) {
+            Some(q) => q,
+            None => return false, // not inside a string — real usage
+        };
+
+        // Verify the quote is an actual string delimiter (not escaped)
+        let before_quote = &haystack[..opening_quote];
+        let backslash_count = before_quote
+            .chars()
+            .rev()
+            .take_while(|c| *c == '\\')
+            .count();
+        if backslash_count % 2 != 0 {
+            // Quote is escaped — treat as real usage
+            return false;
+        }
+
+        // Check if this is a comment line (starts with //, #, or /*)
+        let line_start = find_line_start(haystack, abs);
+        let line_prefix = &haystack[line_start..abs];
+        if line_prefix.trim().starts_with("//")
+            || line_prefix.trim().starts_with("///")
+            || line_prefix.trim().starts_with("#")
+            || line_prefix.trim().ends_with("/*")
+        {
+            // Inside a comment — skip, not real usage
+            start = abs + needle.len();
+            found_anywhere = true;
+            continue;
+        }
+
+        // It's inside a string literal — skip, not real usage
+        start = abs + needle.len();
+        found_anywhere = true;
+    }
+
+    // If we never found the symbol outside strings/comments, return true
+    found_anywhere
+}
+
+/// Find the position of the opening double-quote that encloses the character
+/// at `pos`. Returns None if `pos` is not inside a string literal.
+fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut in_string = false;
+    let mut string_start = 0usize;
+    let mut i = 0usize;
+
+    while i <= pos {
+        if i >= haystack.len() {
+            break;
+        }
+        let ch = haystack[i..].chars().next()?;
+        let ch_len = ch.len_utf8();
+
+        if in_string {
+            if ch == '"' && i > string_start {
+                // Check not escaped
+                let before = &haystack[..i];
+                let bs = before.chars().rev().take_while(|c| *c == '\\').count();
+                if bs % 2 == 0 {
+                    depth = depth.saturating_sub(1);
+                    if depth == 0 {
+                        in_string = false;
+                    }
+                }
+            }
+        } else if ch == '"' {
+            // Check not escaped
+            let before = &haystack[..i];
+            let bs = before.chars().rev().take_while(|c| *c == '\\').count();
+            if bs % 2 == 0 {
+                in_string = true;
+                string_start = i;
+                depth += 1;
+            }
+        }
+
+        if in_string && i == pos {
+            return Some(string_start);
+        }
+
+        i += ch_len;
+    }
+
+    None
+}
+
+/// Find the start of the line containing position `pos`.
+fn find_line_start(haystack: &str, pos: usize) -> usize {
+    haystack[..pos].rfind('\n').map(|n| n + 1).unwrap_or(0)
+}
 
 /// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function
 /// definitions and `body_extent(start, lines)` to compute the body end line
@@ -303,36 +449,49 @@ fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
     Some(name.to_string())
 }
 
-fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("from ") && trimmed.contains(" import ") {
-            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
-                for name in import_part.split(',') {
-                    let name: &str = name.split_whitespace().next().unwrap_or_default();
-                    if !name.is_empty() && name != "*" {
-                        symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
-                    }
+        if let Some(import_part) = trimmed
+            .strip_prefix("from ")
+            .and_then(|s| s.split_once(" import ").map(|(_, p)| p))
+        {
+            for name in import_part.split(',') {
+                let name = name.trim();
+                if name.is_empty() || name == "*" {
+                    continue;
+                }
+
+                let used_name = match name.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => name.split_whitespace().next().unwrap_or_default(),
+                };
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
                 }
             }
             continue;
         }
 
-        if trimmed.starts_with("import ") {
-            let module: &str = trimmed
-                .trim_start_matches("import ")
-                .split_whitespace()
-                .next()
-                .unwrap_or_default();
-            if !module.is_empty() {
-                let name: &str = match module.rsplit('.').next() {
-                    Some(n) => n,
-                    None => module,
+        if let Some(rest) = trimmed.strip_prefix("import ") {
+            for module in rest.split(',') {
+                let module = module.trim();
+                if module.is_empty() {
+                    continue;
+                }
+
+                let used_name = match module.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => module.rsplit('.').next().unwrap_or(module).trim(),
                 };
-                symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
+                }
             }
         }
     }
@@ -340,7 +499,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     symbols
 }
 
-fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
@@ -351,7 +510,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name: &str = part.split_whitespace().next().unwrap_or_default();
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(" as ") {
+                            Some((_, alias)) => alias.trim(),
+                            None => part.split_whitespace().next().unwrap_or_default(),
+                        };
+
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -363,11 +531,17 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = import_part
+                let before_from = import_part
                     .split_once(" from ")
                     .map(|(n, _)| n)
-                    .unwrap_or_default();
-                let name = name.trim();
+                    .unwrap_or_default()
+                    .trim();
+
+                let name = match before_from.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => before_from,
+                };
+
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                 }
@@ -380,10 +554,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = match part.trim().split(':').next() {
-                            Some(n) => n.trim(),
-                            None => "",
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(':') {
+                            Some((_, alias)) => alias.trim(),
+                            None => part,
                         };
+
                         if !name.is_empty() {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -513,7 +693,7 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
     false
 }
 
-fn is_short_marker(inner: &str) -> bool {
+pub fn is_short_marker(inner: &str) -> bool {
     inner.starts_with("todo!(")
         || inner.starts_with("unimplemented!(")
         || inner.starts_with("panic!(")

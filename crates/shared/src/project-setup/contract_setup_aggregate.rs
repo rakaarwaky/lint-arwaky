@@ -1,10 +1,10 @@
 // PURPOSE: SetupAggregate — aggregate trait for project setup orchestration
 use crate::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
+use crate::common::taxonomy_job_vo::EnvContentVO;
+use crate::common::taxonomy_job_vo::McpConfigVO;
+use crate::common::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::mcp_server::taxonomy_job_vo::EnvContentVO;
-use crate::mcp_server::taxonomy_job_vo::McpConfigVO;
-use crate::mcp_server::taxonomy_job_vo::SuccessStatus;
 use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, ProjectLanguageVO, ProjectLanguagesVO, WriteConfigResult,

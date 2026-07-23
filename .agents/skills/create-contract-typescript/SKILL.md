@@ -1,36 +1,22 @@
 ---
 name: create-contract-typescript
 description: "Create and validate TypeScript contract layer files in shared domain: pure interface definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    typescript,
-    aes,
-    contract,
-    protocol,
-    aggregate,
-    interface,
-    shared,
-    aes201,
-    di,
-    vo,
-  ]
-triggers:
-  - "create contract typescript"
-  - "add contract typescript"
-  - "create protocol typescript"
-  - "create aggregate typescript"
-  - "fix contract typescript"
-  - "check contract typescript"
-  - "audit contract typescript"
-dependencies: []
-related:
-  - create-taxonomy-typescript
-  - create-capabilities-typescript
-  - create-agent-typescript
-  - interface-consolidation-typescript
-  - fix-primitive-to-vo
+metadata:
+  tags:
+    [typescript, aes, contract, protocol, aggregate, interface, shared, di, vo]
+  triggers:
+    - "create contract typescript"
+    - "add contract typescript"
+    - "create protocol typescript"
+    - "create aggregate typescript"
+    - "fix contract typescript"
+    - "check contract typescript"
+    - "audit contract typescript"
+  dependencies: []
+  related:
+    - create-taxonomy-typescript
+    - create-capabilities-typescript
+    - create-agent-typescript
 ---
 
 # create-contract-typescript
@@ -64,21 +50,21 @@ Two contract suffixes serve different roles:
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/contract-roles.md` | Two suffix types and naming convention |
-| `references/purity-imports.md` | AES201 import restrictions |
-| `references/interface-structure-rules.md` | 7 interface structure rules |
-| `references/primitive-vo-policy.md` | Primitive policy table |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                                      | Content                                |
+| ----------------------------------------- | -------------------------------------- |
+| `references/contract-roles.md`            | Two suffix types and naming convention |
+| `references/purity-imports.md`            | AES201 import restrictions             |
+| `references/interface-structure-rules.md` | 7 interface structure rules            |
+| `references/primitive-vo-policy.md`       | Primitive policy table                 |
+| `references/examples.md`                  | All BAD/GOOD code examples             |
+| `references/commands.md`                  | Quick heuristic check commands         |
+| `references/checklist.md`                 | Verification checklist                 |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/contract_name_protocol.ts` | New protocol interface definition |
+| File                                   | Purpose                            |
+| -------------------------------------- | ---------------------------------- |
+| `templates/contract_name_protocol.ts`  | New protocol interface definition  |
 | `templates/contract_name_aggregate.ts` | New aggregate interface definition |
 
 ## Workflow
@@ -87,10 +73,10 @@ Two contract suffixes serve different roles:
 
 Ask: **"Which layer will implement this interface?"**
 
-| Implemented By | Suffix |
-|----------------|--------|
-| Capabilities | `_protocol` |
-| Agent | `_aggregate` |
+| Implemented By | Suffix       |
+| -------------- | ------------ |
+| Capabilities   | `_protocol`  |
+| Agent          | `_aggregate` |
 
 ### Step 2: Identify Public Methods
 

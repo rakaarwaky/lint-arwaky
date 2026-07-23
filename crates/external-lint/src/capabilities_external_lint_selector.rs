@@ -1,50 +1,40 @@
+use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
-// PURPOSE: CapabilitiesExternalLintSelector — selects adapters based on detected languages
-//
-// Pure business logic: maps language flags to adapter name lists.
-// No I/O, no external dependencies.
-
-use shared::common::taxonomy_common_vo::bool;
-
-// ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct CapabilitiesExternalLintSelector {
-    rust_adapters: Vec<String>,
-    python_adapters: Vec<String>,
-    js_adapters: Vec<String>,
+    rust_adapters: Vec<AdapterName>,
+    python_adapters: Vec<AdapterName>,
+    js_adapters: Vec<AdapterName>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
-    fn select_adapters(
-        &self,
-        has_rs: bool,
-        has_py: bool,
-        has_js: bool,
-    ) -> Vec<String> {
+    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> AdapterNameList {
         let mut adapter_names = Vec::new();
-        if has_rs.value() {
-            adapter_names.extend(self.rust_adapters.iter().cloned());
+        if has_rs {
+            for name in self.rust_adapters.iter() {
+                adapter_names.push(name.clone());
+            }
         }
-        if has_py.value() {
-            adapter_names.extend(self.python_adapters.iter().cloned());
+        if has_py {
+            for name in self.python_adapters.iter() {
+                adapter_names.push(name.clone());
+            }
         }
-        if has_js.value() {
-            adapter_names.extend(self.js_adapters.iter().cloned());
+        if has_js {
+            for name in self.js_adapters.iter() {
+                adapter_names.push(name.clone());
+            }
         }
-        adapter_names
+        AdapterNameList::new(adapter_names)
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl CapabilitiesExternalLintSelector {
     pub fn new(
-        rust_adapters: Vec<String>,
-        python_adapters: Vec<String>,
-        js_adapters: Vec<String>,
+        rust_adapters: Vec<AdapterName>,
+        python_adapters: Vec<AdapterName>,
+        js_adapters: Vec<AdapterName>,
     ) -> Self {
         Self {
             rust_adapters,
@@ -56,17 +46,20 @@ impl CapabilitiesExternalLintSelector {
     pub fn with_defaults() -> Self {
         Self::new(
             vec![
-                "clippy".to_string(),
-                "rustfmt".to_string(),
-                "cargo-audit".to_string(),
+                AdapterName::raw("clippy"),
+                AdapterName::raw("rustfmt"),
+                AdapterName::raw("cargo-audit"),
             ],
-            vec!["ruff".to_string(), "mypy".to_string(), "bandit".to_string()],
             vec![
-                "eslint".to_string(),
-                "prettier".to_string(),
-                "tsc".to_string(),
+                AdapterName::raw("ruff"),
+                AdapterName::raw("mypy"),
+                AdapterName::raw("bandit"),
+            ],
+            vec![
+                AdapterName::raw("eslint"),
+                AdapterName::raw("prettier"),
+                AdapterName::raw("tsc"),
             ],
         )
     }
 }
-

@@ -1,5 +1,5 @@
 [package]
-name = "mcp_server-lint-arwaky"
+name = "mcp-server-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Model Context Protocol (MCP) server surfaces exposing the lint pipeline as tools/resources to AI agents."
@@ -33,3 +33,15 @@ dirs.workspace = true
 maintenance.workspace = true
 git_hooks.workspace = true
 auto_fix.workspace = true
+cli_commands.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tempfile = "3"
+tokio = { workspace = true, features = ["full", "test-util"] }
+serde_json.workspace = true
+
+[[bench]]
+name = "bench_mcp_server"
+path = "benches/bench_mcp_server.rs"
+harness = false

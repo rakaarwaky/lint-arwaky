@@ -41,11 +41,28 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
         Ok(p) => p,
         Err(_) => root_dir.trim_end_matches('/').replace('\\', "/"),
     };
-    if normalized_file.starts_with(&normalized_root) {
-        normalized_file[normalized_root.len()..]
-            .trim_start_matches('/')
-            .to_string()
-    } else {
-        normalized_file
+
+    let file_path = Path::new(&normalized_file);
+    let root_path = Path::new(&normalized_root);
+
+    match file_path.strip_prefix(root_path) {
+        Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
+        Err(_) => {
+            // Fallback: try string-based prefix removal
+            // Ensure root ends with / for proper prefix matching
+            let root_prefix = if normalized_root.ends_with('/') {
+                normalized_root.clone()
+            } else {
+                format!("{}/", normalized_root)
+            };
+
+            if normalized_file.starts_with(&root_prefix) {
+                normalized_file[root_prefix.len()..].to_string()
+            } else if normalized_file == normalized_root {
+                String::new()
+            } else {
+                normalized_file
+            }
+        }
     }
 }

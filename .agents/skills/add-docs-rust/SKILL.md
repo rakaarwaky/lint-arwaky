@@ -1,28 +1,26 @@
 ---
 name: add-docs-rust
 description: "Add proper doc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to Rust crates following project conventions."
-version: 1.3.0
-category: documentation
-tags: [rust, docs, doc-comments, prd, frd, readme]
-triggers:
-  - "add docs rust"
-  - "add crate readme rust"
-  - "add prd rust"
-  - "add frd rust"
-  - "add doc comments rust"
-  - "document public api rust"
-dependencies: []
-related:
-  - lint-arwaky-cli
-  - fix-naming
+metadata:
+  tags: [rust, docs, doc-comments, prd, frd, readme]
+  triggers:
+    - "add docs rust"
+    - "add crate readme rust"
+    - "add prd rust"
+    - "add frd rust"
+    - "add doc comments rust"
+    - "document public api rust"
+  dependencies: []
+  related:
+    - lint-arwaky-rust
+    - cleanup-files-rust
 ---
 
 # add-docs-rust
 
 ## Rules
 
-- **PRD.md** and **README.md** live in the ROOT workspace only (project-level docs).
-- **FRD.md** lives in each feature crate directory (feature-level specs).
+- Every crate directory MUST contain THREE crate-level docs: `PRD.md`, `FRD.md`, and `README.md`.
 - **PRD.md** = Product Requirements Document — describes **WHAT** and **WHY** for stakeholders, PM, Design, and Eng alignment.
 - **FRD.md** = Functional Requirements Document — describes **HOW** (functionally) for engineers, QA, and Tech Lead.
 - **README.md** = Developer onboarding — describes **HOW TO USE/RUN** for developers.
@@ -33,18 +31,16 @@ related:
 
 ## Purpose
 
-Add documentation at correct locations:
-- Root workspace:
-  - `PRD.md` — stakeholder alignment (Problem Statement / Goals & Success Metrics / User Personas / Scope / Feature Requirements / Non-functional Requirements).
-  - `README.md` — developer onboarding (Quick Start / Architecture / Project Structure / Available Commands / Configuration / Testing / Contributing).
-- Each feature crate:
-  - `FRD.md` — engineering specs (Functional Requirements with IDs / Data Model / API Contract / Integration Points / Test Scenarios).
+Add crate-level documentation and `///` doc comments:
+
+- `PRD.md` — stakeholder alignment (Problem Statement / Goals & Success Metrics / User Personas / Scope / Feature Requirements / Non-functional Requirements).
+- `FRD.md` — engineering specs (Functional Requirements with IDs / Data Model / API Contract / Integration Points / Test Scenarios).
+- `README.md` — developer onboarding (Quick Start / Architecture / Project Structure / Available Commands / Configuration / Testing / Contributing).
 - `///` doc comments on all public items for `cargo doc` visibility.
 
 ## When to Use
 
-- Root workspace has no `PRD.md` or `README.md`.
-- Feature crate has no `FRD.md`.
+- New crate has no `PRD.md`, `FRD.md`, or `README.md`.
 - Documents are conflated (wrong audience for wrong doc) — split them.
 - Public structs/methods lack `///` doc comments.
 - `cargo doc` output is incomplete or missing.
@@ -52,54 +48,39 @@ Add documentation at correct locations:
 
 ## The Fundamental Question
 
-> **"Can a stakeholder understand this project's purpose in 30 seconds?"**
+> **"Can a stakeholder understand this crate's purpose in 30 seconds?"**
 
-If no -> **Add PRD.md at root (what/why).**
+If no -> **Add PRD.md (what/why).**
 
-> **"Can an engineer implement this feature from the spec?"**
+> **"Can an engineer implement this from the spec?"**
 
-If no -> **Add FRD.md in feature crate (how).**
+If no -> **Add FRD.md (how).**
 
 > **"Can a developer clone → build → run in < 10 minutes?"**
 
-If no -> **Add README.md at root (how to use).**
+If no -> **Add README.md (how to use).**
 
-## Document Location Matrix
+## Document Audience Matrix
 
-| Document | Location | Audience | Focus |
-|----------|----------|----------|-------|
-| PRD.md | Root workspace | Stakeholder, PM, Design, Eng | *What* & *Why* |
-| README.md | Root workspace | Developer (new/existing) | *How to use/run* |
-| FRD.md | Each feature crate | Engineer, QA, Tech Lead | *How* (functionally) |
+| Document  | Audience                     | Focus                | Length    |
+| --------- | ---------------------------- | -------------------- | --------- |
+| PRD.md    | Stakeholder, PM, Design, Eng | _What_ & _Why_       | 1-2 pages |
+| FRD.md    | Engineer, QA, Tech Lead      | _How_ (functionally) | 2-5 pages |
+| README.md | Developer (new/existing)     | _How to use/run_     | 1-2 pages |
 
 ## Detection Patterns
 
-### Missing PRD.md / README.md (Create at Root)
+### Missing PRD.md / FRD.md / README.md (Create)
 
 ```
-<workspace-root>/
-├── crates/
-│   ├── feature-a/
-│   │   ├── src/
-│   │   ├── tests/
-│   │   └── FRD.md        # feature-level engineering specs
-│   └── feature-b/
-│       ├── src/
-│       ├── tests/
-│       └── FRD.md        # feature-level engineering specs
-├── PRD.md                # project-level stakeholder alignment
-└── README.md             # project-level developer onboarding
-```
-
-### Missing FRD.md (Create in Feature Crate)
-
-```
-crates/<feature-name>/
+crates/<name-folder>/
 ├── src/
 │   ├── lib.rs
 │   └── ...
 ├── tests/
-└── FRD.md                # feature-level engineering specs
+├── PRD.md        # stakeholder alignment (what/why)
+├── FRD.md        # engineering specs (how)
+└── README.md     # developer onboarding (how to use)
 ```
 
 ### Missing Doc Comments (Add)
@@ -123,63 +104,78 @@ pub struct ImportOrchestrator {
 }
 ```
 
-## PRD.md Template (ROOT — stakeholder alignment)
+## PRD.md Template (STAKEHOLDER ALIGNMENT — what/why)
 
 ```markdown
-# PRD — <project-name>
+# PRD — <crate-name>
 
-> Product Requirements Document. Describes WHAT this project does and WHY.
+> Product Requirements Document. Describes WHAT this crate does and WHY.
 > Audience: Stakeholders, PM, Design, Engineering leads.
 
 ## Problem Statement
-<One paragraph: what problem does this project solve?>
+
+<One paragraph: what problem does this crate solve?>
 
 ## Goals & Success Metrics
+
 - Goal 1: <measurable outcome>
 - Goal 2: <measurable outcome>
 
 ## User Personas
+
 - **Persona 1**: <who they are, what they need>
 - **Persona 2**: <...>
 
 ## Scope
+
 - In scope: <...>
 - Out of scope: <...>
 
 ## Feature Requirements (Prioritized)
+
 ### P0 — Must Have
+
 - [ ] <feature with acceptance criteria>
+
 ### P1 — Should Have
+
 - [ ] <feature with acceptance criteria>
+
 ### P2 — Nice to Have
+
 - [ ] <feature with acceptance criteria>
 
 ## Non-functional Requirements (High-level)
+
 - Performance: <...>
 - Security: <...>
 - Scalability: <...>
 
 ## Open Questions / Risks
+
 - <question or risk>
 ```
 
-## FRD.md Template (FEATURE CRATE — engineering specs)
+## FRD.md Template (ENGINEERING SPECS — how)
 
 ```markdown
-# FRD — <feature-name>
+# FRD — <crate-name>
 
-> Functional Requirements Document. Describes HOW this feature works functionally.
+> Functional Requirements Document. Describes HOW this crate works functionally.
 > Audience: Engineers, QA, Tech Lead.
 
 ## Reference
-- PRD: <link to root PRD.md>
+
+- PRD: <link to PRD.md>
 
 ## System Overview
+
 <Architecture diagram or high-level description>
 
 ## Functional Requirements
 
 ### FR-001: <Feature Name>
+
 - **Description**: <what it does>
 - **Input**: <input data>
 - **Output**: <output data>
@@ -188,100 +184,116 @@ pub struct ImportOrchestrator {
 - **Error Handling**: <error scenarios>
 
 ### FR-002: <Feature Name>
+
 - ...
 
 ## Data Model / Entity Relationship
+
 <Entity diagram or data structure definitions>
 
 ## API Contract
+
 | Endpoint | Method | Payload | Response |
-|----------|--------|---------|----------|
-| `/path` | GET | - | `{...}` |
+| -------- | ------ | ------- | -------- |
+| `/path`  | GET    | -       | `{...}`  |
 
 ## Integration Points
+
 - **3rd Party**: <service name, purpose>
 - **Internal**: <service name, purpose>
 
 ## Non-functional Requirements (Detailed)
+
 - Performance: <response time, throughput>
 - Security: <auth, encryption, compliance>
 - SLA: <availability, uptime>
 
 ## Test Scenarios / QA Checklist
+
 - [ ] <test scenario with expected result>
 
 ## Assumptions & Constraints
+
 - <assumption or constraint>
 
 ## Glossary
+
 - **Term**: <definition>
 ```
 
-## README.md Template (ROOT — developer onboarding)
+## README.md Template (DEVELOPER ONBOARDING — how to use)
 
-```markdown
-# <project-name>
+````markdown
+# <crate-name>
 
-> One-liner: what this project does and who it's for.
+> One-liner: what this crate does and who it's for.
 
 ## Prerequisites
+
 - Rust 1.70+
 - <other dependencies>
 
 ## Quick Start
+
 ```bash
 git clone ...
-cd <project>
+cd crates/<name>
 cargo build
 cargo run
 ```
+````
 
 ## Architecture
+
 <High-level diagram or link to full docs>
 
 ## Project Structure
+
 ```
-crates/
-├── feature-a/
-│   └── FRD.md        # feature specs
-├── feature-b/
-│   └── FRD.md        # feature specs
+src/
+├── lib.rs
+├── modules/
 └── ...
 ```
 
 ## Available Commands
-| Command | Description |
-|---------|-------------|
-| `cargo build` | Build the project |
-| `cargo test` | Run tests |
-| `cargo run` | Run the binary |
+
+| Command       | Description     |
+| ------------- | --------------- |
+| `cargo build` | Build the crate |
+| `cargo test`  | Run tests       |
+| `cargo run`   | Run the binary  |
 
 ## Configuration
+
 <Environment variables, config files>
 
 ## Testing
+
 ```bash
 cargo test
 ```
 
 ## Contributing
+
 <Branching strategy, PR conventions>
 
 ## License
+
 <License type>
 ```
 
 ## Workflow
 
-### Step 1: Analyze Project
+### Step 1: Analyze Crate
 
-- List feature crates in `crates/`
+- List files in `crates/<name>/src/`
 - Identify public structs and methods
-- Check existing docs (PRD.md / README.md / FRD.md / `///` comments)
+- Check existing docs (PRD.md / FRD.md / README.md / `///` comments)
 
-### Step 2: Create / Fix PRD.md (root workspace)
+### Step 2: Create / Fix PRD.md (stakeholder alignment)
 
-Write root-level PRD.md following the PRD template. It MUST contain:
+Write crate-level PRD.md following the PRD template. It MUST contain:
 
 1. Problem Statement
 2. Goals & Success Metrics
@@ -292,11 +304,11 @@ Write root-level PRD.md following the PRD template. It MUST contain:
 
 Write for non-engineers. Avoid technical jargon. Use acceptance criteria.
 
-### Step 3: Create / Fix FRD.md (each feature crate)
+### Step 3: Create / Fix FRD.md (engineering specs)
 
-For each feature crate, write FRD.md following the FRD template. It MUST contain:
+Write crate-level FRD.md following the FRD template. It MUST contain:
 
-1. Reference to root PRD
+1. Reference to PRD
 2. System Overview
 3. Functional Requirements (with unique IDs: FR-001, FR-002)
 4. Data Model
@@ -306,13 +318,13 @@ For each feature crate, write FRD.md following the FRD template. It MUST contain
 
 Use precise, unambiguous language. Include edge cases and error handling.
 
-### Step 4: Create / Update README.md (root workspace)
+### Step 4: Create / Update README.md (developer onboarding)
 
-Write root-level README.md following the README template. It MUST contain:
+Write README.md following the README template. It MUST contain:
 
 1. Quick Start (clone → build → run in < 10 minutes)
 2. Architecture (high-level)
-3. Project Structure (show FRD.md locations)
+3. Project Structure
 4. Available Commands
 5. Configuration
 6. Testing
@@ -329,7 +341,7 @@ For each public struct and method:
 3. Add explanation if >10 lines of logic
 4. Add `# Example` block if applicable
 
-```rust
+````rust
 /// Taxonomy value objects for import rules.
 
 /// Value object representing an import rule with pattern and message.
@@ -361,7 +373,7 @@ pub struct ImportRuleVO {
 pub fn check(&self, path: &str) -> Result<bool, Error> {
     // ...
 }
-```
+````
 
 ### Step 6: Add Type Annotations
 
@@ -377,9 +389,9 @@ pub fn validate(&self, data: &HashMap<String, Value>) -> Result<(bool, String), 
 
 ## Verification Checklist
 
-- [ ] PRD.md exists at root with Problem Statement, Goals, Personas, Scope, Features
-- [ ] README.md exists at root with Quick Start, Architecture, Commands, Testing
-- [ ] FRD.md exists in each feature crate with Functional Requirements (FR-001 IDs)
+- [ ] PRD.md exists with Problem Statement, Goals, Personas, Scope, Features
+- [ ] FRD.md exists with Functional Requirements (FR-001 IDs), Data Model, API Contract
+- [ ] README.md exists with Quick Start, Architecture, Commands, Testing
 - [ ] Documents serve correct audience (PRD=stakeholders, FRD=engineers, README=developers)
 - [ ] All public structs have `///` doc comments
 - [ ] All public methods have `///` doc comments with Args/Returns/Errors
@@ -405,7 +417,6 @@ cargo doc --open
 - ❌ **README = essay 10 pages** — keep concise, link to other docs
 - ❌ **One document for all audiences** — split by audience
 - ❌ **Documents "write & forget"** — review each sprint/release
-- ❌ **FRD in root instead of feature crate** — FRD belongs with the feature code
 - ❌ **Missing doc comments**: Every public item needs `///` doc comment
 - ❌ **Using `//` instead of `///`**: Use `///` for cargo doc visibility
 - ❌ **Incomplete parameter documentation**: All parameters must be documented

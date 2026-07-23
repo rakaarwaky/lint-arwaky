@@ -1,6 +1,20 @@
 # Crate: orphan-detector (v1.10.106)
 
-This document contains the source code for feature crate `orphan-detector` along with its corresponding and imported definitions from the `shared` crate.---
+This document contains the source code for feature crate `orphan-detector` along with its corresponding and imported definitions from the `shared` crate.
+
+## Problem Statement
+
+The following issues were detected by `lint-arwaky-cli scan`:
+
+```
+============================================================
+  AES Architecture Compliance Report
+============================================================
+  Project:
+  Violations: 0
+```
+
+---
 
 ## File List
 
@@ -20,7 +34,6 @@ This document contains the source code for feature crate `orphan-detector` along
 - [crates/shared/src/cli-commands/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/mod.rs)
 - [crates/shared/src/cli-commands/taxonomy_result_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_result_vo.rs)
 - [crates/shared/src/cli-commands/taxonomy_severity_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_severity_vo.rs)
-- [crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs)
 - [crates/shared/src/code-analysis/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/mod.rs)
 - [crates/shared/src/code-analysis/taxonomy_analysis_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/taxonomy_analysis_vo.rs)
 - [crates/shared/src/code-analysis/taxonomy_import_source_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/code-analysis/taxonomy_import_source_vo.rs)
@@ -55,7 +68,10 @@ This document contains the source code for feature crate `orphan-detector` along
 - [crates/shared/src/common/taxonomy_suffix_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_suffix_vo.rs)
 - [crates/shared/src/common/taxonomy_suggestion_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_suggestion_vo.rs)
 - [crates/shared/src/common/taxonomy_threshold_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_threshold_vo.rs)
+- [crates/shared/src/common/utility_file.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_file.rs)
+- [crates/shared/src/common/utility_layer_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_layer_detector.rs)
 - [crates/shared/src/common/utility_value_object_generator.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_value_object_generator.rs)
+- [crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs)
 - [crates/shared/src/config-system/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/mod.rs)
 - [crates/shared/src/config-system/taxonomy_config_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_vo.rs)
 - [crates/shared/src/orphan-detector/contract_orphan_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/contract_orphan_aggregate.rs)
@@ -69,6 +85,7 @@ This document contains the source code for feature crate `orphan-detector` along
 - [crates/shared/src/orphan-detector/utility_orphan.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/utility_orphan.rs)
 - [crates/shared/src/orphan-detector/utility_orphan_filename.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/utility_orphan_filename.rs)
 - [crates/shared/src/orphan-detector/utility_orphan_io.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/utility_orphan_io.rs)
+- [crates/shared/src/orphan-detector/utility_orphan_path.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/utility_orphan_path.rs)
 - [crates/shared/src/orphan-detector/utility_workspace.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/orphan-detector/utility_workspace.rs)
 - [crates/shared/src/role-rules/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/mod.rs)
 - [crates/shared/src/role-rules/taxonomy_layer_names_constant.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/taxonomy_layer_names_constant.rs)
@@ -333,16 +350,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -369,7 +386,7 @@ The only Agent role is orchestrator.
 
 ### Dependencies
 
-Agent may depend only on Taxonomy and Contract.
+Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
@@ -384,7 +401,7 @@ Agent may depend only on Taxonomy and Contract.
 ### Special Rules
 
 - Agent must depend on Contract, not concrete implementations.
-- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not use and must be completely ignorant of Capabilities implementations.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
@@ -414,11 +431,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -490,9 +507,11 @@ tokio.workspace = true
 # FRD — orphan-detector
 
 ## Feature Goal
+
 The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer architecture. By building an import reachability graph starting from valid entry points (containers, binary entries, main files), it flags any architecture component that has been orphaned, preventing codebase bloat and keeping the system maintainable.
 
 ## Requirements & Scope
+
 - AES501 Taxonomy Orphan Checker
   - Requirement: Taxonomy layer files (e.g. taxonomy_) must be reachable from contracts, capabilities, or orchestrators.
 - AES502 Contract Orphan Checker
@@ -508,6 +527,7 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 - Configurable exceptions and ignored path patterns.
 
 ## Success Indicators
+
 - [ ] Dead code identification — 100% detection of unused or unreachable architectural files.
 - [ ] Zero false warnings on valid code — valid components transitively reachable from entry points must never be flagged as orphans.
 - [ ] Configuration flexibility — correctly respects rule-specific exceptions and ignored path patterns.
@@ -520,43 +540,16 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 ## File: crates/orphan-detector/src/agent_orphan_orchestrator.rs
 
 ```rust
-// PURPOSE: ArchOrphanAnalyzer — aggregate implementing all 6 orphan detection protocols (AES501-506)
-//
-// Orphan detection works by building a full import dependency graph across
-// all source files, then tracing reachability from known entry points
-// (_container.rs, main.rs, lib.rs, index.ts, etc.). Files that are not
-// reachable are flagged as orphans.
-//
-// Each AES layer has its own orphan protocol (ITaxonomyOrphanProtocol for
-// AES501, IContractOrphanProtocol for AES502, etc.) because different
-// layers have different definition/reachability criteria:
-//   - Taxonomy:  checked via inbound links (imports from other files)
-//   - Contract:  checked via file definitions + inheritance map
-//   - Capabilities: checked via alive set (reachability) + container wiring
-//   - Agent:     checked via cross-file references
-//   - Surfaces:  checked via alive set + optional entry detection
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
-use std::collections::HashSet;
-use std::sync::Arc;
-
+use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::contract_orphan_protocol::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
@@ -564,8 +557,32 @@ use shared::orphan_detector::contract_orphan_protocol::{
 use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
+use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::taxonomy_common_vo::ColumnNumber;
+use shared::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_error_vo::ErrorCode;
+use shared::taxonomy_layer_vo::LayerNameVO;
+use shared::taxonomy_lint_vo::LocationList;
+use shared::taxonomy_lint_vo::ScopeRef;
+use shared::taxonomy_message_vo::LintMessage;
+use shared::taxonomy_suggestion_vo::DescriptionVO;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::Arc;
 
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+// ─── Block 1: Struct Definition ───────────────────────────
+
+/// Dependencies for ArchOrphanAnalyzer to avoid too_many_arguments.
+pub struct ArchOrphanDeps {
+    pub resolver: Arc<dyn IOrphanGraphResolverProtocol>,
+    pub taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
+    pub contract_analyzer: Arc<dyn IContractOrphanProtocol>,
+    pub capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
+    pub utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
+    pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
+    pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    pub config: ArchitectureConfig,
+}
 
 pub struct ArchOrphanAnalyzer {
     resolver: Arc<dyn IOrphanGraphResolverProtocol>,
@@ -575,34 +592,12 @@ pub struct ArchOrphanAnalyzer {
     utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
     agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    config: ArchitectureConfig,
 }
 
-impl ArchOrphanAnalyzer {
-    pub fn new(
-        resolver: Arc<dyn IOrphanGraphResolverProtocol>,
-        taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
-        contract_analyzer: Arc<dyn IContractOrphanProtocol>,
-        capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
-        utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
-        agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
-        surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
-    ) -> Self {
-        Self {
-            resolver,
-            taxonomy_analyzer,
-            contract_analyzer,
-            capabilities_analyzer,
-            utility_analyzer,
-            agent_analyzer,
-            surfaces_analyzer,
-        }
-    }
-}
-
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
-        // Bridge the raw &[String] parameter from IOrphanAggregate into the
-        // VO-typed contract surface of IOrphanGraphResolverProtocol.
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
         self.resolver.build_graph_context(&[file_vo], root_dir)
     }
@@ -616,37 +611,32 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .collect()
     }
 
-    /// Check orphans for all files in the given list via the checker aggregate for layer detection.
-    ///
-    /// This is the main orphan detection pipeline:
-    ///   1. Build the import graph context (all imports between files)
-    ///   2. Identify entry points (containers, main files, index files)
-    ///   3. Trace reachability from entry points via BFS on the import graph
-    ///   4. For each file not in the reachable set:
-    ///      a. Detect its AES layer from filename prefix
-    ///      b. Dispatch to layer-specific orphan protocol
-    ///      c. If the protocol confirms it's orphan, add violation with appropriate AES code
-    fn check_orphans(
-        &self,
-        layer_detector: &dyn ILayerDetectionAggregate,
-        files: &[String],
-        root_dir: &str,
-    ) -> Vec<LintResult> {
-        // Global gate: skip all orphan checks if architecture checker is disabled
-        let config = layer_detector.config();
-        if !config.enabled.value {
+    fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
+        if !self.config.enabled.value {
             return Vec::new();
         }
 
+        let ignored: Vec<String> = self
+            .config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|p| p.value().to_string())
+            .collect();
+        let filtered_files: Vec<String> = files
+            .iter()
+            .filter(|f| !shared::orphan_detector::utility_orphan_path::is_path_ignored(f, &ignored))
+            .cloned()
+            .collect();
+        let files = filtered_files.as_slice();
+
         let mut results: Vec<LintResult> = Vec::new();
-        // Build comprehensive context — bridge &[String] -> &[OrphanFileListVO].
         let file_vo = shared::orphan_detector::OrphanFileListVO::new(files.to_vec());
         let context: GraphAnalysisContext = self
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir);
 
-        // Trace reachability: BFS from all entry points through the import graph
-        let configured = layer_detector.get_orphan_entry_points();
+        let configured = self.get_orphan_entry_points();
         let configured_vo = shared::orphan_detector::OrphanEntryPatternListVO::new(configured);
         let entry_points = self
             .resolver
@@ -654,29 +644,42 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let alive_files_set: Vec<String> =
             self._trace_reachability(&entry_points.values, &context.import_graph);
 
-        // Evaluate each file: alive (reachable) vs orphan (unreachable)
         for f in files {
             let file_fp = match FilePath::new(f.clone()) {
                 Ok(fp) => fp,
                 Err(_) => continue,
             };
-            let layer_str = match layer_detector.detect_layer(f, root_dir) {
-                Some(l) => l,
+
+            let filename =
+                shared::common::utility_layer_detector::extract_filename(file_fp.value());
+            let base_layer =
+                match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
+                    Some(l) => l,
+                    None => continue,
+                };
+            let layer_keys: Vec<String> = self
+                .config
+                .layers
+                .keys()
+                .map(|k| k.value.to_string())
+                .collect();
+            let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
+                &base_layer,
+                file_fp.value(),
+                &layer_keys,
+            );
+            let definition = match shared::common::utility_layer_detector::get_layer_def(
+                &layer_str,
+                &self.config.layers,
+            ) {
+                Some(d) => d.clone(),
                 None => continue,
             };
 
-            let definition = match layer_detector.get_layer_def(&layer_str) {
-                Some(d) => d,
-                None => continue,
-            };
-
-            // Skip files in the layer's exception list (e.g., mod.rs, __init__.py)
             let basename = file_fp.basename();
             if definition.exceptions.values.contains(&basename) {
                 continue;
             }
-
-            // Skip if orphan checking is disabled for this layer
             if !definition.orphan.check_orphan.value {
                 continue;
             }
@@ -684,8 +687,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             let layer_vo = LayerNameVO::new(&layer_str);
             let res =
                 self._evaluate_layer(f, &context, &alive_files_set, &layer_vo, files, root_dir);
-
-            // If the layer-specific protocol confirms orphan status, emit the appropriate AES code
             if res.is_orphan {
                 let code = match layer_str.to_lowercase() {
                     s if s.contains(LAYER_TAXONOMY) => "AES501",
@@ -704,8 +705,21 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ArchOrphanAnalyzer {
-    /// Build a LintResult from orphan analysis output.
+    pub fn new(deps: ArchOrphanDeps) -> Self {
+        Self {
+            resolver: deps.resolver,
+            taxonomy_analyzer: deps.taxonomy_analyzer,
+            contract_analyzer: deps.contract_analyzer,
+            capabilities_analyzer: deps.capabilities_analyzer,
+            utility_analyzer: deps.utility_analyzer,
+            agent_analyzer: deps.agent_analyzer,
+            surfaces_analyzer: deps.surfaces_analyzer,
+            config: deps.config,
+        }
+    }
+
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
         LintResult {
             file: FilePath {
@@ -728,11 +742,7 @@ impl ArchOrphanAnalyzer {
         }
     }
 
-    /// BFS traversal of the import graph to find all reachable (alive) files.
-    /// Starting from entry points, follows imports to find all transitive dependencies.
     fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> Vec<String> {
-        use std::collections::VecDeque;
-
         let mut reachable: std::collections::HashSet<String> =
             entry_points.iter().cloned().collect();
         let mut queue: VecDeque<String> = entry_points.iter().cloned().collect();
@@ -811,9 +821,12 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_UTILITY) {
-            return self
-                .utility_analyzer
-                .is_utility_orphan(&fp, &root, all_files);
+            return self.utility_analyzer.is_utility_orphan(
+                &fp,
+                &root,
+                all_files,
+                &context.inbound_links,
+            );
         }
 
         if layer_str.contains(LAYER_AGENT) {
@@ -823,77 +836,37 @@ impl ArchOrphanAnalyzer {
         if layer_str.contains(LAYER_SURFACES) {
             return self
                 .surfaces_analyzer
-                .is_surface_orphan(&fp, &alive_set, None);
+                .is_surface_orphan(&fp, &root, &alive_set, None);
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
-}
-
-impl ILayerDetectionAggregate for ArchOrphanAnalyzer {
-    fn config(&self) -> &shared::config_system::taxonomy_config_vo::ArchitectureConfig {
-        // ArchOrphanAnalyzer does not own the config; return default (enabled=true)
-        // The real config check happens at the caller (ImportOrchestrator / CLI surface).
-        static EMPTY: std::sync::OnceLock<
-            shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        > = std::sync::OnceLock::new();
-        EMPTY.get_or_init(shared::config_system::taxonomy_config_vo::ArchitectureConfig::default)
-    }
-    fn detect_layer(&self, file_path: &str, _root_dir: &str) -> Option<String> {
-        let path = std::path::Path::new(file_path);
-        let filename = path.file_name()?.to_str()?;
-        let stem = std::path::Path::new(filename).file_stem()?.to_str()?;
-
-        const PREFIX_MAP: &[(&str, &str)] = &[
-            ("taxonomy_", "taxonomy"),
-            ("contract_", "contract"),
-            ("utility_", "utility"),
-            ("capabilities_", "capabilities"),
-            ("agent_", "agent"),
-            ("surface_", "surfaces"),
-            ("root_", "root"),
-        ];
-
-        for (prefix, layer) in PREFIX_MAP {
-            if stem.starts_with(prefix) {
-                return Some(layer.to_string());
-            }
-        }
-
-        None
-    }
-
-    fn get_layer_def(&self, _layer: &str) -> Option<LayerDefinition> {
-        let mut def = LayerDefinition::default();
-        def.orphan.check_orphan = shared::common::taxonomy_common_vo::BooleanVO::new(true);
-        def.exceptions.values = vec![
-            "mod.rs".to_string(),
-            "__init__.py".to_string(),
-            "index.ts".to_string(),
-            "index.js".to_string(),
-            "py.typed".to_string(),
-        ];
-        Some(def)
-    }
 
     fn get_orphan_entry_points(&self) -> Vec<String> {
-        vec![
-            "_container.rs".to_string(),
-            "_container.py".to_string(),
-            "_container.ts".to_string(),
-            "_container.js".to_string(),
-            "_entry.rs".to_string(),
-            "_entry.py".to_string(),
-            "_entry.ts".to_string(),
-            "_entry.js".to_string(),
-            "main.rs".to_string(),
-            "lib.rs".to_string(),
-            "main.py".to_string(),
-            "main.ts".to_string(),
-            "main.js".to_string(),
-            "index.ts".to_string(),
-            "index.js".to_string(),
-        ]
+        let mut entry_points = vec![
+            "_container.rs".into(),
+            "_container.py".into(),
+            "_container.ts".into(),
+            "_container.js".into(),
+            "_entry.rs".into(),
+            "_entry.py".into(),
+            "_entry.ts".into(),
+            "_entry.js".into(),
+            "main.rs".into(),
+            "lib.rs".into(),
+            "main.py".into(),
+            "__main__.py".into(),
+            "main.ts".into(),
+            "main.js".into(),
+            "index.ts".into(),
+            "index.js".into(),
+        ];
+        for layer_def in self.config.layers.values() {
+            entry_points.extend(layer_def.orphan.orphan_entry_points.values.iter().cloned());
+        }
+        entry_points.sort();
+        entry_points.dedup();
+        entry_points
     }
 }
 ```
@@ -953,8 +926,23 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                     || cb.ends_with("_container.py")
                     || cb.ends_with("_container.ts")
                     || cb.ends_with("_container.js");
+                let is_entry = cb.ends_with("_entry.rs")
+                    || cb.ends_with("_entry.py")
+                    || cb.ends_with("_entry.ts")
+                    || cb.ends_with("_entry.js");
+                let is_main = matches!(
+                    cb,
+                    "main.rs"
+                        | "lib.rs"
+                        | "main.py"
+                        | "__main__.py"
+                        | "main.ts"
+                        | "main.js"
+                        | "index.ts"
+                        | "index.js"
+                );
 
-                if !is_surface && !is_container {
+                if !is_surface && !is_container && !is_entry && !is_main {
                     continue;
                 }
                 let c = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
@@ -1098,10 +1086,13 @@ use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_workspace::{check_wired_in_container, find_workspace_root};
+use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CapabilitiesOrphanAnalyzer {}
+pub struct CapabilitiesOrphanAnalyzer {
+    container_cache: Mutex<Option<(std::path::PathBuf, Vec<std::path::PathBuf>)>>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -1125,8 +1116,9 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let path = FilePath::new(fp).unwrap_or_default();
             let content = utility_file_cache::read_cached(&path);
             let mut identifiers: Vec<String> = Vec::new();
-            identifiers.extend(extract_struct_names(&content.value()));
-            identifiers.extend(extract_trait_names(&content.value()));
+            let content_ref = content.value();
+            identifiers.extend(extract_struct_names(content_ref));
+            identifiers.extend(extract_trait_names(content_ref));
             identifiers.push(stem.clone());
 
             let pascal_stem: String = stem
@@ -1142,9 +1134,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 .collect();
             identifiers.push(pascal_stem);
 
-            // Search for container files in workspace root
+            // Search for container files in workspace root (cached)
             let root = std::path::Path::new(root_dir.value());
             if let Ok(workspace_root) = find_workspace_root(root) {
+                let _container_files = self.cached_container_files(&workspace_root);
                 let wired = check_wired_in_container(&workspace_root, &identifiers);
                 if wired {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
@@ -1174,7 +1167,49 @@ impl Default for CapabilitiesOrphanAnalyzer {
 
 impl CapabilitiesOrphanAnalyzer {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            container_cache: Mutex::new(None),
+        }
+    }
+
+    fn cached_container_files(
+        &self,
+        workspace_root: &std::path::Path,
+    ) -> Option<Vec<std::path::PathBuf>> {
+        if let Ok(mut guard) = self.container_cache.lock() {
+            if let Some((cached_root, cached_files)) = &*guard {
+                if cached_root == workspace_root {
+                    return Some(cached_files.clone());
+                }
+            }
+            // Cache miss: find container files
+            let mut container_files = Vec::new();
+            for dir_name in &["crates", "packages", "modules"] {
+                let dir = workspace_root.join(dir_name);
+                if dir.is_dir() {
+                    let files =
+                        shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
+                    for file_path in &files {
+                        if let Some(name) = std::path::Path::new(file_path)
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                        {
+                            if name.ends_with("_container.rs")
+                                || name.ends_with("_container.py")
+                                || name.ends_with("_container.ts")
+                                || name.ends_with("_container.js")
+                            {
+                                container_files.push(std::path::PathBuf::from(file_path));
+                            }
+                        }
+                    }
+                }
+            }
+            *guard = Some((workspace_root.to_path_buf(), container_files.clone()));
+            Some(container_files)
+        } else {
+            None
+        }
     }
 }
 ```
@@ -1196,11 +1231,32 @@ use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace::collect_source_files;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ContractOrphanAnalyzer {}
+#[derive(Clone)]
+struct SearchFilesCache {
+    root: std::path::PathBuf,
+    file_count: usize,
+    files: Arc<Vec<String>>,
+}
+
+impl Default for SearchFilesCache {
+    fn default() -> Self {
+        Self {
+            root: std::path::PathBuf::new(),
+            file_count: 0,
+            files: Arc::new(Vec::new()),
+        }
+    }
+}
+
+pub struct ContractOrphanAnalyzer {
+    search_cache: Mutex<Option<SearchFilesCache>>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -1221,101 +1277,67 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        let trait_name = Self::extract_contract_trait_name(&content);
-        let trait_name = match trait_name {
-            Some(t) => t,
-            None => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
-        };
-
-        // Build search_files: combine scan-directory files with all workspace .rs files
-        let mut search_files: Vec<String> = all_files.to_vec();
-        let root_path = std::path::Path::new(root_dir.value());
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = root_path.join(ws_dir);
-            if ws_path.exists() {
-                collect_source_files(&ws_path, &mut search_files);
-            }
+        // Extract ALL trait/interface names from the contract file.
+        let trait_names = Self::extract_contract_trait_names(&content);
+        if trait_names.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // Check 1: contract not implemented by expected layer
-        let target_prefix = match suffix.as_str() {
-            "port" | "protocol" => "capabilities",
-            "aggregate" => "agent",
-            _ => return OrphanIndicatorResult::new(false, String::new(), Severity::LOW),
-        };
+        // Build search_files: combine scan-directory files with all workspace .rs files (cached).
+        let search_files = self.cached_search_files(root_dir, all_files);
 
-        let mut has_impl = false;
-        for cf in &search_files {
-            let cb = file_basename(cf);
-            // Check target layer files (capabilities_ for ports/protocols, agent_ for aggregates)
-            // Also check root_*_container files (DI wiring often implements traits there)
-            let is_target_layer = cb.starts_with(target_prefix);
-            let is_container_impl = cb.starts_with("root_") && cb.ends_with("_container.rs");
-            if !is_target_layer && !is_container_impl {
-                continue;
-            }
-            let c = orphan_io::read_file_safe(cf);
-            if c.contains(&format!("impl {} for", trait_name))
-                || c.lines().any(|ln| {
-                    let t = ln.trim();
-                    t.starts_with("impl") && t.contains(&trait_name) && t.contains(" for")
-                })
-                || c.contains(&format!("class {}(\\(", trait_name))
-                || c.contains(&format!("class {} ", trait_name))
-                || c.contains(&format!("class {}:", trait_name))
-            {
-                has_impl = true;
-                break;
-            }
-        }
-
-        if !has_impl {
+        // Check 1: contracts not implemented by expected layer.
+        // For each trait, check if it's implemented by the target layer.
+        let unimplemented = Self::find_unimplemented_traits(&trait_names, search_files.as_slice());
+        if !unimplemented.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
                 AesOrphanViolation::ContractOrphan {
                     suffix: suffix.clone(),
-                    trait_name: trait_name.clone(),
-                    target_layer: target_prefix,
+                    trait_name: unimplemented.join(", "),
+                    target_layer: "expected",
                     reason: Some(
                         format!(
-                            "Contract {} '{}' not implemented by any {} file.",
-                            suffix, trait_name, target_prefix
+                            "Contract {} '{}' not implemented by any expected layer file.",
+                            suffix,
+                            unimplemented.join(", ")
                         )
                         .into(),
                     ),
                 }
                 .to_string(),
-                Severity::LOW,
+                Severity::MEDIUM,
             );
         }
 
-        // Check 2: port/protocol not called by any orchestrator, container, capabilities, or surface
+        // Check 2: port/protocol not called by any orchestrator, container, capabilities, or surface.
         if suffix == "port" || suffix == "protocol" {
             let mut called_by_impl_or_user = false;
-            for cf in &search_files {
+            for cf in search_files.as_ref() {
                 let cb = file_basename(cf);
-                // Check orchestrator files
                 let is_orchestrator = cb.starts_with("agent_")
                     && (cb.ends_with("_orchestrator.rs")
                         || cb.ends_with("_orchestrator.py")
                         || cb.ends_with("_orchestrator.ts")
                         || cb.ends_with("_orchestrator.js"));
-                // Check container files (DI wiring)
                 let is_container = cb.ends_with("_container.rs")
                     || cb.ends_with("_container.py")
                     || cb.ends_with("_container.ts")
                     || cb.ends_with("_container.js");
-                // Check capabilities files (trait implementations)
                 let is_capabilities = cb.starts_with("capabilities_");
-                // Check surface files (trait usage)
                 let is_surface = cb.starts_with("surface_");
 
                 if !is_orchestrator && !is_container && !is_capabilities && !is_surface {
                     continue;
                 }
                 let c = orphan_io::read_file_safe(cf);
-                if c.contains(&trait_name) {
-                    called_by_impl_or_user = true;
+                for trait_name in &trait_names {
+                    if c.contains(trait_name.as_str()) {
+                        called_by_impl_or_user = true;
+                        break;
+                    }
+                }
+                if called_by_impl_or_user {
                     break;
                 }
             }
@@ -1324,30 +1346,29 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     true,
                     AesOrphanViolation::ContractOrphan {
                         suffix: suffix.clone(),
-                        trait_name: trait_name.clone(),
-                        target_layer: target_prefix,
+                        trait_name: trait_names.join(", "),
+                        target_layer: "orchestrator/container",
                         reason: Some(
                             format!(
                                 "Contract {} '{}' not called by any orchestrator or container.",
-                                suffix, trait_name
+                                suffix,
+                                trait_names.join(", ")
                             )
                             .into(),
                         ),
                     }
                     .to_string(),
-                    Severity::LOW,
+                    Severity::MEDIUM,
                 );
             }
         }
 
-        // Check 3: aggregate not called by any surface OR container
+        // Check 3: aggregate not called by any surface OR container.
         if suffix == "aggregate" {
             let mut called_by_surface_or_container = false;
-            for cf in &search_files {
+            for cf in search_files.as_ref() {
                 let cb = file_basename(cf);
-                // Check surface files
                 let is_surface = cb.starts_with("surface_");
-                // Check container files (DI wiring)
                 let is_container = cb.ends_with("_container.rs")
                     || cb.ends_with("_container.py")
                     || cb.ends_with("_container.ts")
@@ -1357,8 +1378,13 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     continue;
                 }
                 let c = orphan_io::read_file_safe(cf);
-                if c.contains(&trait_name) {
-                    called_by_surface_or_container = true;
+                for trait_name in &trait_names {
+                    if c.contains(trait_name.as_str()) {
+                        called_by_surface_or_container = true;
+                        break;
+                    }
+                }
+                if called_by_surface_or_container {
                     break;
                 }
             }
@@ -1367,18 +1393,18 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     true,
                     AesOrphanViolation::ContractOrphan {
                         suffix: suffix.clone(),
-                        trait_name: trait_name.clone(),
-                        target_layer: target_prefix,
+                        trait_name: trait_names.join(", "),
+                        target_layer: "surface/container",
                         reason: Some(
                             format!(
                                 "Contract aggregate '{}' not called by any surface or container.",
-                                trait_name
+                                trait_names.join(", ")
                             )
                             .into(),
                         ),
                     }
                     .to_string(),
-                    Severity::LOW,
+                    Severity::MEDIUM,
                 );
             }
         }
@@ -1397,7 +1423,36 @@ impl Default for ContractOrphanAnalyzer {
 
 impl ContractOrphanAnalyzer {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            search_cache: Mutex::new(None),
+        }
+    }
+
+    fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
+        let root = std::path::Path::new(root_dir.value()).to_path_buf();
+        if let Ok(mut guard) = self.search_cache.lock() {
+            if let Some(cache) = guard.as_ref() {
+                if cache.root == root && cache.file_count == all_files.len() {
+                    return cache.files.clone();
+                }
+            }
+            let mut search_files: Vec<String> = all_files.to_vec();
+            for ws_dir in &["crates", "packages", "modules"] {
+                let ws_path = root.join(ws_dir);
+                if ws_path.exists() {
+                    collect_source_files(&ws_path, &mut search_files);
+                }
+            }
+            let files = Arc::new(search_files);
+            *guard = Some(SearchFilesCache {
+                root,
+                file_count: all_files.len(),
+                files: files.clone(),
+            });
+            files
+        } else {
+            Arc::new(all_files.to_vec())
+        }
     }
 
     fn re_contract_rust() -> Option<&'static Regex> {
@@ -1424,8 +1479,9 @@ impl ContractOrphanAnalyzer {
             .as_ref()
     }
 
-    fn extract_contract_trait_name(content: &str) -> Option<String> {
-        // Skip comment lines to avoid matching "trait for" in comments
+    /// Extract ALL trait/interface names from contract file content.
+    /// Uses captures_iter to find multiple matches instead of just the first.
+    fn extract_contract_trait_names(content: &str) -> Vec<String> {
         let code_lines: String = content
             .lines()
             .filter(|l| {
@@ -1435,24 +1491,103 @@ impl ContractOrphanAnalyzer {
             .collect::<Vec<_>>()
             .join("\n");
 
+        let mut traits = Vec::new();
+
         if let Some(re) = Self::re_contract_rust() {
-            if let Some(caps) = re.captures(&code_lines) {
-                return Some(caps[1].to_string());
+            for caps in re.captures_iter(&code_lines) {
+                traits.push(caps[1].to_string());
             }
         }
         if let Some(re) = Self::re_ts_interface_export() {
-            if let Some(caps) = re.captures(&code_lines) {
-                return Some(caps[1].to_string());
+            for caps in re.captures_iter(&code_lines) {
+                traits.push(caps[1].to_string());
             }
         }
         if let Some(re) = Self::re_interface() {
-            if let Some(caps) = re.captures(&code_lines) {
-                return Some(caps[1].to_string());
+            for caps in re.captures_iter(&code_lines) {
+                traits.push(caps[1].to_string());
             }
         }
-        Self::re_contract_py()
-            .and_then(|re| re.captures(&code_lines))
-            .map(|caps| caps[1].to_string())
+        if let Some(re) = Self::re_contract_py() {
+            for caps in re.captures_iter(&code_lines) {
+                traits.push(caps[1].to_string());
+            }
+        }
+
+        traits.sort();
+        traits.dedup();
+        traits
+    }
+
+    /// Check which traits are NOT implemented by any expected layer file.
+    fn find_unimplemented_traits(trait_names: &[String], search_files: &[String]) -> Vec<String> {
+        trait_names
+            .iter()
+            .filter(|trait_name| !Self::has_trait_implementation(search_files, trait_name))
+            .cloned()
+            .collect()
+    }
+
+    /// Check if any file in the search list implements the given trait.
+    fn has_trait_implementation(search_files: &[String], trait_name: &str) -> bool {
+        for cf in search_files {
+            let c = orphan_io::read_file_safe(cf);
+            if Self::check_trait_impl(&c, trait_name) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Check if content contains an implementation of the given trait.
+    fn check_trait_impl(content: &str, trait_name: &str) -> bool {
+        for line in content.lines() {
+            let trimmed = line.trim();
+            // Skip comment lines
+            if trimmed.starts_with("//")
+                || trimmed.starts_with("/*")
+                || trimmed.starts_with('*')
+                || trimmed.starts_with("#")
+            {
+                continue;
+            }
+
+            // Rust: impl Trait for Type / impl<T> Trait for Type
+            if trimmed.starts_with("impl")
+                && trimmed.contains(" for ")
+                && trimmed.contains(trait_name)
+            {
+                return true;
+            }
+
+            // Python: class Foo(Trait): / class Foo(Base, Trait):
+            if let Some(class_pos) = trimmed.find("class ") {
+                let after_class = &trimmed[class_pos + 6..];
+                if let Some(paren_pos) = after_class.find('(') {
+                    let bases = &after_class[paren_pos + 1..];
+                    if let Some(paren_end) = bases.find(')') {
+                        let base_list = &bases[..paren_end];
+                        for base in base_list.split(',') {
+                            let cleaned = base.trim();
+                            if cleaned == trait_name {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // TS: class Foo implements Trait
+            if let Some(impl_pos) = trimmed.find(" implements ") {
+                let after_impl = &trimmed[impl_pos + 12..];
+                for implemented in after_impl.split(',').map(|s| s.trim()) {
+                    if implemented == trait_name {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
     }
 }
 ```
@@ -1521,7 +1656,11 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                 .iter()
                 .filter(|f| {
                     let basename = f.rsplit('/').next().unwrap_or(f);
-                    basename.ends_with("_entry.rs")
+                    basename.ends_with("_container.rs")
+                        || basename.ends_with("_container.py")
+                        || basename.ends_with("_container.ts")
+                        || basename.ends_with("_container.js")
+                        || basename.ends_with("_entry.rs")
                         || basename.ends_with("_entry.py")
                         || basename.ends_with("_entry.ts")
                         || basename.ends_with("_entry.js")
@@ -1530,6 +1669,8 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                         || basename == "lib.rs"
                         || basename == "main.py"
                         || basename == "__main__.py"
+                        || basename == "main.ts"
+                        || basename == "main.js"
                         || basename == "index.ts"
                         || basename == "index.js"
                 })
@@ -1600,7 +1741,7 @@ impl OrphanGraphResolver {
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
 
-        // Build a lookup: module_name -> file_path for crate:: resolution
+                    // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
         for f in files {
             let stem = file_stem(f);
@@ -1658,6 +1799,9 @@ impl OrphanGraphResolver {
             }
         }
 
+        // Build crate module index for hyphen-aware resolution
+        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
+
         // Perf 8: Single-pass file reading
         for f in files {
             import_graph.entry(f.clone()).or_default();
@@ -1675,14 +1819,18 @@ impl OrphanGraphResolver {
                 for cap in re.captures_iter(&content) {
                     let mod_path = cap[1].to_string();
                     let base_dir = match std::path::Path::new(f).parent() {
-                        Some(p) => p.to_string_lossy().to_string(),
-                        None => String::from("."),
+                        Some(p) => p.to_path_buf(),
+                        None => continue,
                     };
-                    let resolved = if mod_path.starts_with('/') {
-                        mod_path.clone()
-                    } else {
-                        format!("{}/{}", base_dir, mod_path)
+                    let root_path = std::path::Path::new(root_dir);
+                    let Some(resolved_path) =
+                        shared::orphan_detector::utility_orphan_path::resolve_module_path(
+                            root_path, &base_dir, &mod_path,
+                        )
+                    else {
+                        continue;
                     };
+                    let resolved = resolved_path.to_string_lossy().to_string();
                     if shared::orphan_detector::utility_orphan_io::is_file(
                         &std::path::PathBuf::from(&resolved),
                     ) && resolved != *f
@@ -1734,6 +1882,9 @@ impl OrphanGraphResolver {
             };
             for cap in import_re.captures_iter(&content) {
                 let full_import = cap[1].to_string();
+                if f.contains("cycle_import_analyzer") {
+                    eprintln!("[debug] FILE cycle_import_analyzer: full_import='{}'", full_import);
+                }
 
                 // Handle crate:: and lint_arwaky:: imports
                 let normalized = if let Some(stripped) = full_import.strip_prefix("lint_arwaky::") {
@@ -1878,10 +2029,36 @@ impl OrphanGraphResolver {
                 if let Some(colon_idx) = full_import.find("::") {
                     let crate_name = &full_import[..colon_idx];
                     let rest = &full_import[colon_idx + 2..];
-                    let segments: Vec<&str> = rest.split("::").collect();
-                    if !segments.is_empty() {
+                    eprintln!("[debug] workspace import: crate='{}' rest='{}' file='{}'", crate_name, rest, f);
+                    let import_list: Vec<String> = if let Some(open_brace) = rest.find('{') {
+                        let prefix = &rest[..open_brace];
+                        let inner = &rest[open_brace + 1..];
+                        let close_brace = inner.rfind('}').unwrap_or(inner.len());
+                        let items = inner[..close_brace].split(',').map(|s| s.trim()).filter(|s| !s.is_empty());
+                        let result: Vec<String> = items.map(|item| format!("{}{}", prefix, item)).collect();
+                        eprintln!("[debug] brace import: prefix='{}' items='{:?}' result='{:?}'", prefix, &inner[..close_brace], result);
+                        result
+                    } else {
+                        vec![rest.to_string()]
+                    };
+                    for import_path in &import_list {
+                        let segments: Vec<&str> = import_path.split("::").collect();
+                        if segments.is_empty() {
+                            continue;
+                        }
                         let module_name = segments[0];
-                        // Bug 3: no ./ prefix — store resolved paths verbatim
+                        if let Some(resolved) = Self::resolve_workspace_module(
+                            &crate_module_index,
+                            crate_name,
+                            &segments,
+                            f,
+                        ) {
+                            eprintln!("[debug] resolved '{}' -> '{}'", import_path, resolved);
+                            Self::add_edge(&mut import_graph, &mut inbound_links, f, &resolved);
+                            continue;
+                        } else {
+                            eprintln!("[debug] FAILED to resolve '{}'", import_path);
+                        }
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
                             let entries =
                                 shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
@@ -1891,7 +2068,11 @@ impl OrphanGraphResolver {
                                     .file_stem()
                                     .and_then(|s| s.to_str())
                                     .unwrap_or_default();
-                                if stem == module_name && path_str != *f {
+                                let normalized_stem =
+                                    shared::orphan_detector::utility_orphan::normalize_module_component(stem);
+                                if (stem == module_name || normalized_stem == module_name)
+                                    && path_str != *f
+                                {
                                     import_graph
                                         .entry(f.clone())
                                         .or_default()
@@ -1903,8 +2084,8 @@ impl OrphanGraphResolver {
                                 }
                             }
                         }
-                        continue;
                     }
+                    continue;
                 }
 
                 // Python/JS relative imports
@@ -1930,6 +2111,116 @@ impl OrphanGraphResolver {
             InheritanceMap::new(inheritance_map),
             FileDefinitionMap::new(file_definitions),
         )
+    }
+
+    fn build_crate_module_index(
+        crate_src_dirs: &HashMap<String, std::path::PathBuf>,
+    ) -> HashMap<String, HashMap<String, String>> {
+        let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
+        for (crate_name, src_dir) in crate_src_dirs {
+            let mut module_map: HashMap<String, String> = HashMap::new();
+            let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
+            let all_files =
+                shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&canonical_src);
+            for path_str in all_files {
+                if !path_str.ends_with(".rs")
+                    && !path_str.ends_with(".py")
+                    && !path_str.ends_with(".ts")
+                    && !path_str.ends_with(".js")
+                {
+                    continue;
+                }
+                let canonical_path = match std::fs::canonicalize(&path_str) {
+                    Ok(p) => p,
+                    Err(_) => std::path::PathBuf::from(&path_str),
+                };
+                let stem = canonical_path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                if stem.is_empty() {
+                    continue;
+                }
+                let canon_str = canonical_path.to_string_lossy().to_string();
+                let rel_path = canonical_path
+                    .strip_prefix(&canonical_src)
+                    .unwrap_or(&canonical_path);
+                let rel_str = rel_path
+                    .with_extension("")
+                    .to_string_lossy()
+                    .to_string();
+                let normalized_rel = shared::orphan_detector::utility_orphan::normalize_module_path(
+                    &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
+                );
+                module_map.insert(normalized_rel, canon_str.clone());
+                module_map.insert(stem.clone(), canon_str.clone());
+                module_map.insert(
+                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem),
+                    canon_str.clone(),
+                );
+                if stem == "mod" || stem == "__init__" || stem == "index" {
+                    if let Some(parent_dir) = canonical_path.parent().and_then(|p| p.file_name()) {
+                        let parent = parent_dir.to_string_lossy().to_string();
+                        module_map.insert(parent.clone(), canon_str.clone());
+                        module_map.insert(
+                            shared::orphan_detector::utility_orphan::normalize_module_component(
+                                &parent,
+                            ),
+                            canon_str.clone(),
+                        );
+                    }
+                }
+            }
+            let normalized_name =
+                shared::orphan_detector::utility_orphan::normalize_module_component(crate_name);
+            index.insert(crate_name.clone(), module_map.clone());
+            index.insert(normalized_name, module_map);
+        }
+        index
+    }
+
+    fn resolve_workspace_module(
+        index: &HashMap<String, HashMap<String, String>>,
+        crate_name: &str,
+        segments: &[&str],
+        current_file: &str,
+    ) -> Option<String> {
+        let map = index.get(crate_name)?;
+        let seg_str = segments.join("/");
+        let normalized = shared::orphan_detector::utility_orphan::normalize_module_path(&seg_str);
+        if let Some(path) = map.get(&normalized) {
+            if path != current_file {
+                return Some(path.clone());
+            }
+        }
+        for i in (1..segments.len()).rev() {
+            let candidate = segments[..i].join("/");
+            let normalized =
+                shared::orphan_detector::utility_orphan::normalize_module_path(&candidate);
+            if let Some(path) = map.get(&normalized) {
+                if path != current_file {
+                    return Some(path.clone());
+                }
+            }
+        }
+        None
+    }
+
+    fn add_edge(
+        import_graph: &mut HashMap<String, Vec<String>>,
+        inbound_links: &mut HashMap<String, Vec<String>>,
+        source: &str,
+        target: &str,
+    ) {
+        import_graph
+            .entry(source.to_string())
+            .or_default()
+            .push(target.to_string());
+        inbound_links
+            .entry(target.to_string())
+            .or_default()
+            .push(source.to_string());
     }
 }
 ```
@@ -1959,15 +2250,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
     fn is_surface_orphan(
         &self,
         f: &FilePath,
+        root_dir: &FilePath,
         alive_files: &ReachabilityResult,
         _definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
-        let alive: Vec<String> = alive_files
-            .paths
-            .iter()
-            .map(|fp| fp.value().to_string())
-            .collect();
-        let is_reachable = alive.contains(&f.value().to_string());
+        let is_reachable = alive_files.paths.contains(f);
         if is_reachable {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -1980,7 +2267,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let content = shared::orphan_detector::utility_orphan_io::read_file_safe(fp_val);
         if !content.is_empty() {
             // Check if this surface is imported by any entry or router file
-            let root = std::path::Path::new(".");
+            let root = std::path::Path::new(root_dir.value());
             if let Ok(workspace_root) =
                 shared::orphan_detector::utility_workspace::find_workspace_root(root)
             {
@@ -1999,15 +2286,15 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                     // Extract pub struct names
                     if trimmed.starts_with("pub struct ") {
                         if let Some(name) = trimmed.strip_prefix("pub struct ") {
-                            if let Some(name) = name.split('{').next() {
-                                identifiers.push(name.trim().to_string());
-                            }
+                            let name = name.split('{').next().unwrap_or(name);
+                            let name = name.split(';').next().unwrap_or(name);
+                            identifiers.push(name.trim().to_string());
                         }
                     }
                 }
 
                 for id in &identifiers {
-                    if Self::is_identifier_imported(&workspace_root, id) {
+                    if Self::is_identifier_imported(&workspace_root, id, fp_val) {
                         return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
                     }
                 }
@@ -2042,14 +2329,21 @@ impl SurfacesOrphanAnalyzer {
         Self {}
     }
 
-    /// Check if identifier is imported by any entry or router file.
-    fn is_identifier_imported(workspace_root: &std::path::Path, id: &str) -> bool {
+    /// Check if identifier is imported by any entry or router file (excluding the source file itself).
+    fn is_identifier_imported(
+        workspace_root: &std::path::Path,
+        id: &str,
+        source_file: &str,
+    ) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
             if shared::orphan_detector::utility_orphan_io::is_dir(&dir) {
                 let files =
                     shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
                 for file_path in &files {
+                    if file_path == source_file {
+                        continue;
+                    }
                     if let Some(name) = std::path::Path::new(file_path)
                         .file_name()
                         .and_then(|n| n.to_str())
@@ -2057,8 +2351,21 @@ impl SurfacesOrphanAnalyzer {
                         let is_entry_or_router = name.starts_with("root_")
                             || name.starts_with("cli_")
                             || name.starts_with("mcp_")
+                            || name.starts_with("surface_")
                             || name.contains("_entry")
-                            || name.contains("_router");
+                            || name.contains("_router")
+                            || name.contains("_container")
+                            || matches!(
+                                name,
+                                "main.rs"
+                                    | "lib.rs"
+                                    | "main.py"
+                                    | "__main__.py"
+                                    | "main.ts"
+                                    | "main.js"
+                                    | "index.ts"
+                                    | "index.js"
+                            );
                         if is_entry_or_router
                             && (name.ends_with(".rs")
                                 || name.ends_with(".py")
@@ -2199,16 +2506,26 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             "taxonomy"
         };
 
-        OrphanIndicatorResult::new(
-            is_orphan,
-            AesOrphanViolation::TaxonomyOrphan {
-                stem,
-                category,
-                reason: None,
-            }
-            .to_string(),
-            Severity::LOW,
-        )
+        if is_orphan {
+            OrphanIndicatorResult::new(
+                true,
+                AesOrphanViolation::TaxonomyOrphan {
+                    stem: stem.clone(),
+                    category,
+                    reason: Some(
+                        format!(
+                            "Taxonomy '{}' is not imported by any file outside taxonomy.",
+                            stem
+                        )
+                        .into(),
+                    ),
+                }
+                .to_string(),
+                Severity::LOW,
+            )
+        } else {
+            OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        }
     }
 }
 
@@ -2262,48 +2579,32 @@ impl TaxonomyOrphanAnalyzer {
 ## File: crates/orphan-detector/src/capabilities_orphan_utility_analyzer.rs
 
 ```rust
-// PURPOSE: UtilityOrphanAnalyzer — IUtilityOrphanProtocol for detecting orphan utility files
-//
-// Utility files contain stateless standalone functions that provide low-level
-// technical mechanics. A utility file is orphaned if no other file imports it.
-//
-// ALGORITHM:
-//   1. Read the utility file content.
-//   2. Extract the module path that other files would use to import it.
-//   3. Scan all other files for import statements referencing this module.
-//   4. If no file imports it, mark as orphan.
-
 use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
+use shared::common::utility_layer_detector;
 use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+// Layers that are valid consumers of utility files
+const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityOrphanAnalyzer {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     fn is_utility_orphan(
         &self,
         f: &FilePath,
         _root_dir: &FilePath,
         all_files: &[String],
+        inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
-        let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
-            c if c.is_empty() => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
-            }
-            c => c,
-        };
 
-        // Extract the module identifier that other files would use to import this utility.
-        // For Rust: the module name (e.g., "utility_file" from "utility_file.rs")
-        // For Python: the module name from the filename
-        // For JS/TS: the module name from the filename
         let module_name = match std::path::Path::new(fp)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -2314,54 +2615,147 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         };
 
-        // Check if any other file imports this utility module
-        let mut imported = false;
+        // Phase 1: Check import graph for consumer-layer importers
+        if let Some(importers) = inbound_links.mapping.get(fp) {
+            let external_importers: Vec<&String> = importers
+                .iter()
+                .filter(|importer| *importer != fp)
+                .collect();
+
+            if !external_importers.is_empty() {
+                // Check if any importer is from a consumer layer (capability, agent, surface, root)
+                let has_consumer = external_importers.iter().any(|importer| {
+                    let filename = utility_layer_detector::extract_filename(importer);
+                    utility_layer_detector::detect_layer_from_prefix(filename)
+                        .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                        .unwrap_or(false)
+                });
+
+                if has_consumer {
+                    // Utility is used by a consumer layer — not dead
+                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                }
+
+                // Utility is only imported by other utilities — dead code
+                let importer_names: Vec<String> = external_importers
+                    .iter()
+                    .filter_map(|i| {
+                        std::path::Path::new(i)
+                            .file_stem()
+                            .and_then(|s| s.to_str())
+                            .map(|s| s.to_string())
+                    })
+                    .collect();
+
+                return OrphanIndicatorResult::new(
+                    true,
+                    AesOrphanViolation::UtilityDeadCode {
+                        stem: module_name.clone(),
+                        imported_by: importer_names,
+                        reason: Some(
+                            format!(
+                                "Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.",
+                                module_name
+                            )
+                            .into(),
+                        ),
+                    }
+                    .to_string(),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        // Phase 2: Fallback — token-based matching across all files
+        let tokens = shared::orphan_detector::utility_orphan::import_tokens(fp);
+        let mut consumer_importers: Vec<String> = Vec::new();
+        let mut utility_importers: Vec<String> = Vec::new();
+
         for other_file in all_files {
-            // Skip the file itself
             if other_file == fp {
                 continue;
             }
 
-            let other_content =
-                shared::orphan_detector::utility_orphan_io::read_file_safe(other_file);
+            let other_content = utility_file::read_file_safe(other_file);
             if other_content.is_empty() {
                 continue;
             }
 
-            // Check for various import patterns:
-            // Rust: use crate::...::module_name, use shared::...::module_name
-            // Python: from module_name import, import module_name
-            // JS/TS: import { ... } from '...module_name', require('...module_name')
-            if self.check_import_pattern(&other_content, &module_name) {
-                imported = true;
-                break;
+            let is_consumer = {
+                let filename = utility_layer_detector::extract_filename(other_file);
+                utility_layer_detector::detect_layer_from_prefix(filename)
+                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                    .unwrap_or(false)
+            };
+
+            let imported = self.check_import_pattern(&other_content, &module_name)
+                || tokens.iter().any(|token| {
+                    shared::orphan_detector::utility_orphan::contains_delimited(
+                        &other_content,
+                        token,
+                    )
+                });
+
+            if imported {
+                let stem = std::path::Path::new(other_file)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                if is_consumer {
+                    consumer_importers.push(stem);
+                } else {
+                    utility_importers.push(stem);
+                }
             }
         }
 
-        if !imported {
+        // If imported by consumer layers — not dead
+        if !consumer_importers.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // If only imported by other utilities — dead code
+        if !utility_importers.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::UtilityOrphan {
+                AesOrphanViolation::UtilityDeadCode {
                     stem: module_name.clone(),
+                    imported_by: utility_importers,
                     reason: Some(
                         format!(
-                            "Utility file '{}' is not imported by any other file.",
+                            "Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.",
                             module_name
                         )
                         .into(),
                     ),
                 }
                 .to_string(),
-                Severity::HIGH,
+                Severity::MEDIUM,
             );
         }
 
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        // Not imported by anyone — orphan
+        OrphanIndicatorResult::new(
+            true,
+            AesOrphanViolation::UtilityOrphan {
+                stem: module_name.clone(),
+                reason: Some(
+                    format!(
+                        "Utility file '{}' is not imported by any other file.",
+                        module_name
+                    )
+                    .into(),
+                ),
+            }
+            .to_string(),
+            Severity::MEDIUM,
+        )
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
         Self::new()
@@ -2373,25 +2767,25 @@ impl UtilityOrphanAnalyzer {
         Self {}
     }
 
-    /// Check if the content contains an import of the given module name.
     fn check_import_pattern(&self, content: &str, module_name: &str) -> bool {
-        // Rust patterns: use ...::module_name, use ...::module_name::
         if content.contains(&format!("use {}", module_name))
             || content.contains(&format!("use {}::", module_name))
             || content.contains(&format!("use crate::{}", module_name))
             || content.contains(&format!("use shared::{}", module_name))
+            || content.contains(&format!("::{{{}}}", module_name))
+            || content.contains(&format!("::{{{},", module_name))
+            || content.contains(&format!(", {}::", module_name))
+            || content.contains(&format!(", {}}}", module_name))
         {
             return true;
         }
 
-        // Python patterns: import module_name, from module_name import
         if content.contains(&format!("import {}", module_name))
             || content.contains(&format!("from {} import", module_name))
         {
             return true;
         }
 
-        // JS/TS patterns: import ... from '...module_name', require('...module_name')
         if content.contains(&format!("from '{}'", module_name))
             || content.contains(&format!("from \"{}\"", module_name))
             || content.contains(&format!("require('{}')", module_name))
@@ -2427,52 +2821,79 @@ pub mod root_orphan_detector_container;
 ## File: crates/orphan-detector/src/root_orphan_detector_container.rs
 
 ```rust
-// PURPOSE: OrphanContainer — wiring for orphan-detector feature (root layer, wiring only)
-use crate::agent_orphan_orchestrator::ArchOrphanAnalyzer;
+use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
-use shared::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use std::sync::Arc;
 
 pub struct OrphanContainer {
     analyzer: Arc<dyn IOrphanAggregate>,
-    layer_detector: Arc<dyn ILayerDetectionAggregate>,
 }
 
 impl OrphanContainer {
     pub fn new() -> Self {
-        Self::new_with_ignored(Vec::new())
+        Self::new_with_config(ArchitectureConfig::default())
     }
 
-    pub fn new_with_ignored(_ignored_paths: Vec<String>) -> Self {
+    pub fn new_with_ignored(ignored_paths: Vec<String>) -> Self {
+        let config = ArchitectureConfig {
+            ignored_paths: shared::common::taxonomy_paths_vo::FilePathList::new(
+                ignored_paths
+                    .into_iter()
+                    .filter_map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).ok())
+                    .collect(),
+            ),
+            ..Default::default()
+        };
+        Self::new_with_config(config)
+    }
+
+    pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
-        let arch = Arc::new(ArchOrphanAnalyzer::new(
+        let arch = Arc::new(ArchOrphanAnalyzer::new(ArchOrphanDeps {
             resolver,
-            Arc::new(crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new()),
-            Arc::new(
+            taxonomy_analyzer: Arc::new(
+                crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(),
+            ),
+            contract_analyzer: Arc::new(
+                crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(),
+            ),
+            capabilities_analyzer: Arc::new(
                 crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(),
             ),
-            Arc::new(crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new()),
-            Arc::new(crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new()),
-        ));
-        let layer: Arc<dyn ILayerDetectionAggregate> = arch.clone();
+            utility_analyzer: Arc::new(
+                crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new(),
+            ),
+            agent_analyzer: Arc::new(
+                crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(),
+            ),
+            surfaces_analyzer: Arc::new(
+                crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),
+            ),
+            config,
+        }));
         Self {
             analyzer: arch.clone() as Arc<dyn IOrphanAggregate>,
-            layer_detector: layer,
         }
+    }
+
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
     }
 
     pub fn analyzer(&self) -> Arc<dyn IOrphanAggregate> {
         self.analyzer.clone()
     }
-
-    pub fn layer_detector(&self) -> Arc<dyn ILayerDetectionAggregate> {
-        self.layer_detector.clone()
-    }
 }
+
 impl Default for OrphanContainer {
     fn default() -> Self {
         Self::new()
@@ -2486,7 +2907,11 @@ impl Default for OrphanContainer {
 
 ```rust
 // cli-commands — taxonomy and contract types
+pub mod contract_analysis_pipeline_aggregate;
+pub mod contract_report_formatter_aggregate;
+pub mod contract_report_formatter_protocol;
 pub mod taxonomy_catalog_constant;
+
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;
@@ -2494,6 +2919,8 @@ pub mod taxonomy_metadata_vo;
 pub mod taxonomy_position_vo;
 pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
+pub mod taxonomy_scan_report_vo;
+pub mod taxonomy_scan_request_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
 ```
@@ -2541,10 +2968,22 @@ impl LintResult {
         sev: Severity,
         msg: impl Into<String>,
     ) -> Self {
+        Self::new_arch_with_column(file, line, 0, code, sev, msg)
+    }
+
+    /// Column-aware constructor for architecture checkers.
+    pub fn new_arch_with_column(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
+            column: ColumnNumber::new(column as i64),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
@@ -2637,26 +3076,10 @@ lint_result_list_wrapper!(LintResultList, LintResult);
 // `cli_commands::taxonomy_severity_vo::Severity` import path. The real
 // definition lives in `common::taxonomy_severity_vo` and is re-exported
 // here to avoid breaking any code that still imports from the legacy path.
+//
+// New code should import directly from `common::taxonomy_severity_vo`.
+/// Re-exported for backward compatibility with legacy import paths.
 pub use crate::common::taxonomy_severity_vo::Severity;
-```
-
----
-
-## File: crates/shared/src/code-analysis/contract_layer_detection_aggregate.rs
-
-```rust
-// PURPOSE: ILayerDetectionAggregate — contract trait for layer detection (detect_layer + get_layer_def)
-use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-
-/// Slim aggregate for layer detection — used by orphan detector and orchestrator.
-/// Container implements this; orchestrator calls individual checker protocols directly.
-pub trait ILayerDetectionAggregate: Send + Sync {
-    fn detect_layer(&self, file_path: &str, root_dir: &str) -> Option<String>;
-    fn get_layer_def(&self, layer: &str) -> Option<LayerDefinition>;
-    fn get_orphan_entry_points(&self) -> Vec<String>;
-    fn config(&self) -> &ArchitectureConfig;
-}
 ```
 
 ---
@@ -2679,7 +3102,10 @@ pub mod taxonomy_import_source_vo;
 pub mod taxonomy_operation_error;
 pub mod taxonomy_violation_code_analysis_vo;
 pub mod utility_bypass;
+pub mod utility_column;
 pub mod utility_duplication;
+pub mod utility_file_reader;
+pub mod utility_language_mapper;
 pub mod utility_mandatory;
 pub mod utility_target;
 pub use taxonomy_violation_code_analysis_vo::{AesCodeAnalysisViolation, Language};
@@ -2926,17 +3352,18 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
+pub mod utility_command_runner;
 pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
-pub mod utility_process;
 pub mod utility_value_object_generator;
 pub use utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+pub mod utility_compliance_score;
 pub mod utility_signature_parser;
 ```
 
@@ -3078,7 +3505,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct AdapterNameList {
     pub values: Vec<AdapterName>,
 }
@@ -3102,12 +3529,6 @@ impl AdapterNameList {
 
     pub fn push(&mut self, item: AdapterName) {
         self.values.push(item);
-    }
-}
-
-impl Default for AdapterNameList {
-    fn default() -> Self {
-        Self { values: Vec::new() }
     }
 }
 
@@ -4030,7 +4451,7 @@ single_field_vo!(NamingConfig, word_count: Count);
 // PURPOSE: DepthCount — value object for directory scan depth
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DepthCount {
     pub value: usize,
 }
@@ -4054,12 +4475,6 @@ impl From<usize> for DepthCount {
 impl std::fmt::Display for DepthCount {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value)
-    }
-}
-
-impl Default for DepthCount {
-    fn default() -> Self {
-        Self { value: 0 }
     }
 }
 ```
@@ -4416,6 +4831,12 @@ impl LanguageInfo {
 
 ```rust
 // PURPOSE: FileContentVO, Identity, LayerNameVO, LineContentVO — VOs for layer identity and file content
+//
+// These value objects are used throughout the AES layer-identity system:
+// - FileContentVO wraps the raw text of a source file.
+// - Identity identifies a single AES architectural layer.
+// - LayerNameVO is a human-readable label for a layer.
+// - LineContentVO wraps a single line of source text.
 use crate::string_value_object;
 
 string_value_object!(FileContentVO);
@@ -5530,6 +5951,558 @@ impl Default for Threshold {
 
 ---
 
+## File: crates/shared/src/common/utility_file.rs
+
+```rust
+// PURPOSE: File & workspace utility — pure logic + I/O, free functions only
+// Single source of truth for file walking, ignored path matching, source file detection,
+// and workspace root detection.
+
+use std::collections::HashSet;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use crate::common::taxonomy_filesystem_error::FileSystemError;
+use crate::common::taxonomy_path_vo::DirectoryPath;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
+
+/// Check if a file extension is a known source file.
+pub fn is_source_file(ext: &str) -> bool {
+    matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+}
+
+/// Check if a directory is in the ignored list.
+pub fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
+    let s = dir.to_string_lossy();
+    is_path_ignored(&s, ignored)
+}
+
+/// Collect a single source file path into the output vector.
+pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
+    if let Some(path_str) = path.to_str() {
+        if let Ok(fp) = FilePath::new(path_str.to_string()) {
+            files.push(fp);
+        }
+    }
+}
+
+/// Return true if `rel_path` should be skipped based on `ignored` patterns.
+pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
+    if rel_path.is_empty() {
+        return false;
+    }
+    let segments: Vec<&str> = rel_path
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
+    for pat in ignored {
+        if pat.is_empty() {
+            continue;
+        }
+        if let Some(stripped) = pat.strip_prefix('/') {
+            if stripped.is_empty() {
+                continue;
+            }
+            let pat_segments: Vec<&str> = stripped
+                .split(['/', '\\'])
+                .filter(|s| !s.is_empty())
+                .collect();
+            if pat_segments.is_empty() {
+                continue;
+            }
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg < n_pat {
+                continue;
+            }
+            for start in 0..=(n_seg - n_pat) {
+                if segments[start..start + n_pat] == pat_segments[..] {
+                    return true;
+                }
+            }
+            continue;
+        }
+
+        // Handle **/*.rs patterns (recursive glob)
+        if pat.starts_with("**/") {
+            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
+            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
+                let ext = ext_pattern.trim_start_matches('.');
+                if !ext.is_empty() {
+                    let basename = segments.last().copied().unwrap_or_default();
+                    if basename.ends_with(&format!(".{ext}")) {
+                        return true;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Handle target/* patterns (prefix with wildcard)
+        if let Some(prefix) = pat.strip_suffix("/*") {
+            if !prefix.is_empty() && segments.first() == Some(&prefix) {
+                return true;
+            }
+            continue;
+        }
+
+        if let Some(suffix) = pat.strip_prefix("*.") {
+            let suffix = suffix.trim_start_matches('.');
+            if suffix.is_empty() {
+                continue;
+            }
+            let basename = segments.last().copied().unwrap_or_default();
+            if basename.ends_with(&format!(".{suffix}")) {
+                return true;
+            }
+            continue;
+        }
+
+        if pat.starts_with('.') {
+            if segments.iter().any(|seg| *seg == pat) {
+                return true;
+            }
+            continue;
+        }
+        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+        if pat_segments.len() == 1 {
+            if segments.contains(&pat_segments[0]) {
+                return true;
+            }
+        } else if pat_segments.len() > 1 {
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg >= n_pat {
+                for start in 0..=(n_seg - n_pat) {
+                    if segments[start..start + n_pat] == pat_segments[..] {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Collect all lintable source files from a directory tree.
+pub fn collect_all_source_files(dir: &Path, ignored_paths: &[String]) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        walk_source_files(dir, &mut files, ignored_paths);
+    }
+    files
+}
+
+/// Collect all lintable source files without applying default ignores.
+pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        let ignored: Vec<String> = Vec::new();
+        walk_source_files(dir, &mut files, &ignored);
+    }
+    files
+}
+
+/// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
+pub fn scan_directory(
+    path: &DirectoryPath,
+    ignored_paths: &[String],
+) -> Result<FilePathList, FileSystemError> {
+    let dir = std::path::Path::new(&path.value);
+    if !dir.exists() || !dir.is_dir() {
+        return Ok(FilePathList { values: vec![] });
+    }
+    let files = collect_all_source_files(dir, ignored_paths);
+    Ok(FilePathList { values: files })
+}
+
+/// Walk a directory tree collecting all source files, skipping ignored directories.
+/// Symlink targets outside the root directory are pruned to prevent path traversal.
+/// Uses canonical-path-based visited set (works on all platforms).
+pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::<PathBuf>::new();
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root)
+}
+
+fn walk_source_files_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
+) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if is_ignored_dir(&path, ignored) {
+                continue;
+            }
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&path) {
+                        // P4.1 fix: prevent symlink escape — skip targets outside root
+                        if !target.starts_with(root) {
+                            continue;
+                        }
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
+                        if let Ok(target_meta) = target.metadata() {
+                            if target_meta.is_dir() {
+                                walk_source_files_inner(&target, files, ignored, visited, root);
+                            } else if target_meta.is_file() {
+                                collect_source_file(&target, files);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+            if path.is_dir() {
+                let dir_name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
+                if dir_name == "tests" {
+                    continue;
+                }
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
+                }
+                walk_source_files_inner(&path, files, ignored, visited, root);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if is_source_file(ext) {
+                    collect_source_file(&path, files);
+                }
+            }
+        }
+    }
+}
+
+/// Walk a directory tree collecting all .rs files.
+/// Contained to `dir` (symlink targets outside the root are pruned).
+/// Uses canonical-path-based visited set (works on all platforms).
+#[rustfmt::skip]
+pub fn walk_rs_files
+    (dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::<PathBuf>::new();
+    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
+}
+
+fn walk_rs_files_inner(
+    dir: &Path,
+    cb: &mut dyn FnMut(PathBuf),
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
+) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if is_ignored_dir(&p, ignored) {
+                continue;
+            }
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&p) {
+                        if !target.starts_with(root) {
+                            continue;
+                        }
+                        // Use canonical path instead of inode (P2.1)
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
+                        if let Ok(target_meta) = target.metadata() {
+                            if target_meta.is_dir() {
+                                walk_rs_files_inner(&target, cb, ignored, visited, root);
+                            } else if target_meta.is_file()
+                                && target.starts_with(root)
+                                && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
+                            {
+                                cb(target);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+            if p.is_dir() {
+                // Use canonical path instead of inode (P2.1)
+                let canonical = std::fs::canonicalize(&p).unwrap_or_else(|_| p.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
+                }
+                walk_rs_files_inner(&p, cb, ignored, visited, root);
+            } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
+                cb(p);
+            }
+        }
+    }
+}
+
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file_sync(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Get file basename (filename without directory path).
+pub fn get_basename(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Get file stem (filename without extension and directory).
+pub fn get_file_stem(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Check if path is a directory.
+pub fn is_directory(path: &str) -> bool {
+    std::path::Path::new(path).is_dir()
+}
+
+/// Check if path is a file.
+pub fn is_file(path: &str) -> bool {
+    std::path::Path::new(path).is_file()
+}
+
+/// Get parent directory path.
+pub fn get_parent(path: &str) -> &str {
+    std::path::Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .unwrap_or("")
+}
+
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Read file content, returning empty string on error.
+pub fn read_file_safe(path: &str) -> String {
+    fs::read_to_string(path).unwrap_or_default()
+}
+
+/// Read file content with generic path.
+pub fn read_file_generic<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Check if path exists.
+pub fn path_exists<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().exists()
+}
+
+/// Write content to file.
+pub fn write_file<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(
+    path: P,
+    contents: C,
+) -> std::io::Result<()> {
+    fs::write(path, contents)
+}
+
+/// Check if path is a directory (generic).
+pub fn is_dir<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_dir()
+}
+
+/// Check if path is a file (generic).
+pub fn is_file_generic<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
+/// Walk up from `start` looking for workspace root markers.
+/// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
+pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(start).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    loop {
+        // Priority 1: workspace root markers (crates/, packages/, modules/)
+        if dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        // Priority 2: Cargo.toml (only if not inside a workspace member)
+        if dir.join("Cargo.toml").exists() {
+            // Check if parent has workspace markers — if so, keep walking up
+            if let Some(parent) = dir.parent() {
+                if parent.join("crates").is_dir()
+                    || parent.join("packages").is_dir()
+                    || parent.join("modules").is_dir()
+                {
+                    // Don't return yet — parent is the real workspace root
+                } else {
+                    return Some(dir);
+                }
+            } else {
+                return Some(dir);
+            }
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+```
+
+---
+
+## File: crates/shared/src/common/utility_layer_detector.rs
+
+```rust
+// PURPOSE: Layer detection utility — pure function, simple prefix check
+use std::collections::HashMap;
+use std::path::Path;
+
+use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use crate::taxonomy_layer_vo::LayerNameVO;
+
+/// Detect architectural layer from filename prefix.
+///
+/// Returns the layer name if the filename starts with a valid prefix, otherwise None.
+///
+/// # Examples
+/// - "taxonomy_foo.rs" → Some("taxonomy")
+/// - "contract_bar.rs" → Some("contract")
+/// - "foo.rs" → None
+pub fn detect_layer_from_prefix(filename: &str) -> Option<String> {
+    let stem = Path::new(filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or_default();
+
+    const PREFIX_MAP: &[(&str, &str)] = &[
+        ("taxonomy_", "taxonomy"),
+        ("contract_", "contract"),
+        ("capabilities_", "capabilities"),
+        ("utility_", "utility"),
+        ("agent_", "agent"),
+        ("surface_", "surface"),
+        ("root_", "root"),
+    ];
+
+    for &(prefix, layer) in PREFIX_MAP {
+        if stem.starts_with(prefix) {
+            return Some(layer.to_string());
+        }
+    }
+
+    None
+}
+
+/// Resolve specialised sub-layer from file suffix.
+///
+/// E.g., "capabilities_command" with base_layer="capabilities":
+///   → suffix = "command"
+///   → checks if "capabilities(command)" exists in config
+///   → returns "capabilities(command)" if found, else "capabilities"
+pub fn resolve_specialized_layer(
+    base_layer: &str,
+    file_path: &str,
+    layer_keys: &[String],
+) -> String {
+    let basename = Path::new(file_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+
+    if let Some(underscore_pos) = basename.rfind('_') {
+        let suffix = &basename[underscore_pos + 1..];
+        if !suffix.is_empty() {
+            let specialized = format!("{}({})", base_layer, suffix);
+            if layer_keys.contains(&specialized) {
+                return specialized;
+            }
+        }
+    }
+
+    base_layer.to_string()
+}
+
+/// Detect layer from module path (from import statement).
+///
+/// Tries 3 strategies:
+/// 1. Direct segment match (e.g., "shared::taxonomy::..." → "taxonomy")
+/// 2. Prefix-based match (e.g., "taxonomy_definition_vo" → "taxonomy")
+pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<String> {
+    let meaningful_parts: Vec<&str> = module
+        .split([':', '.', '/', '\\'])
+        .filter(|p| !p.is_empty())
+        .collect();
+
+    if meaningful_parts.is_empty() {
+        return None;
+    }
+
+    // Strategy 1: Direct match with layer names
+    for name in layer_names {
+        let base_name = match name.split('(').next() {
+            Some(s) => s,
+            None => name,
+        };
+        if meaningful_parts.contains(&base_name) {
+            return Some(base_name.to_string());
+        }
+    }
+
+    // Strategy 2: Prefix-based match
+    for part in &meaningful_parts {
+        if let Some(layer) = detect_layer_from_prefix(part) {
+            return Some(layer);
+        }
+    }
+
+    None
+}
+
+/// Extract filename from file path.
+///
+/// Returns the filename (last component) as a string slice, or empty string if extraction fails.
+pub fn extract_filename(file_path: &str) -> &str {
+    Path::new(file_path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Collect layer keys as strings from a LayerMapVO.
+pub fn collect_layer_keys(layer_map: &LayerMapVO) -> Vec<String> {
+    layer_map.values.keys().map(|k| k.to_string()).collect()
+}
+
+/// Look up a LayerDefinition by layer name string.
+///
+/// Tries direct lookup first, then falls back to base name (before parenthesis).
+pub fn get_layer_def<'a>(
+    layer: &str,
+    layers: &'a HashMap<LayerNameVO, LayerDefinition>,
+) -> Option<&'a LayerDefinition> {
+    layers.get(&LayerNameVO::new(layer)).or_else(|| {
+        let base = match layer.split('(').next() {
+            Some(s) => s,
+            None => layer,
+        };
+        layers.get(&LayerNameVO::new(base))
+    })
+}
+```
+
+---
+
 ## File: crates/shared/src/common/utility_value_object_generator.rs
 
 ```rust
@@ -5773,17 +6746,50 @@ macro_rules! primitive_value_object {
 
 ---
 
+## File: crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs
+
+```rust
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+use crate::config_system::taxonomy_source_vo::ConfigResult;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait IConfigOrchestratorAggregate: Send + Sync {
+    async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult;
+
+    async fn load_config_for_language(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> ConfigResult;
+
+    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo>;
+
+    /// Synchronous config loading for container initialization.
+    /// Searches workspace root for config YAML, falls back to embedded defaults.
+    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+
+    /// Get ignored paths from config (hardcoded defaults + config values).
+    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
+}
+```
+
+---
+
 ## File: crates/shared/src/config-system/mod.rs
 
 ```rust
 // config-system — taxonomy and contract types
-pub mod contract_multi_project_orchestrator_aggregate;
-pub mod contract_orchestration_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_parser_protocol;
 pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
+pub mod taxonomy_config_language_vo;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
 pub mod taxonomy_multi_project_summary_vo;
@@ -5792,8 +6798,10 @@ pub mod taxonomy_multi_project_workspace_info_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
+pub mod utility_config_defaults;
 pub mod utility_config_io;
 pub mod utility_config_merger;
+pub mod utility_config_parser;
 ```
 
 ---
@@ -5802,8 +6810,6 @@ pub mod utility_config_merger;
 
 ```rust
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -5811,11 +6817,10 @@ use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
@@ -5823,6 +6828,7 @@ pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
+    pub enabled: BooleanVO,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default)]
@@ -5885,228 +6891,6 @@ impl Default for ArchitectureConfig {
         }
     }
 }
-
-pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
-    if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        // Extract layers from rules (first rule containing "layers" key) if not at top-level
-        if arch_json.get("layers").is_none() {
-            if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
-                for (_rule_code, rule_val) in rules_obj.iter_mut() {
-                    if let Some(layers) = rule_val.get_mut("layers") {
-                        let layers = std::mem::take(layers);
-                        arch_json["layers"] = layers;
-                        break;
-                    }
-                }
-            }
-        }
-        let mut json = arch_json;
-        fn remove_nulls(val: &mut serde_json::Value) {
-            match val {
-                serde_json::Value::Object(m) => {
-                    m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                _ => {}
-            }
-        }
-        remove_nulls(&mut json);
-        // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
-        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
-            json["ignored_paths"] = serde_json::json!({"values": arr});
-        }
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
-                let mut suffix_updates: Vec<(
-                    String,
-                    Option<String>,
-                    serde_json::Value,
-                    serde_json::Value,
-                )> = Vec::new();
-                for (layer_name, layer) in obj.iter() {
-                    if let Some(suffix_val) = layer.get("suffix") {
-                        if let Some(arr) = suffix_val.as_array() {
-                            let mut policy: Option<String> = None;
-                            let mut allowed = serde_json::Value::Array(Vec::new());
-                            let mut forbidden = serde_json::Value::Array(Vec::new());
-                            for entry in arr {
-                                if let Some(entry_obj) = entry.as_object() {
-                                    for (pkey, plist) in entry_obj {
-                                        match pkey.as_str() {
-                                            "strict" | "flexible" => {
-                                                policy = Some(pkey.clone());
-                                                if let Some(list) = plist.as_array() {
-                                                    allowed = serde_json::json!(list);
-                                                }
-                                            }
-                                            "forbidden" => {
-                                                if let Some(list) = plist.as_array() {
-                                                    forbidden = serde_json::json!(list);
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                            }
-                            suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
-                        }
-                    }
-                }
-                for (name, policy, allowed, forbidden) in suffix_updates {
-                    if let Some(layer) = obj.get_mut(&name) {
-                        if let Some(layer_obj) = layer.as_object_mut() {
-                            if let Some(ref p) = policy {
-                                layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                            }
-                            layer_obj.insert("allowed_suffix".to_string(), allowed);
-                            if let Some(arr) = forbidden.as_array() {
-                                if !arr.is_empty() {
-                                    layer_obj.insert("forbidden_suffix".to_string(), forbidden);
-                                }
-                            }
-                            layer_obj.remove("suffix");
-                        }
-                    }
-                }
-            }
-        }
-        if let Some(rules_obj) = json.get_mut("rules") {
-            if let Some(obj) = rules_obj.as_object_mut() {
-                let mut flat = serde_json::Value::Array(Vec::new());
-                for (code, rule_val) in obj.iter() {
-                    if let Some(rule_obj) = rule_val.as_object() {
-                        let mut base = rule_obj.clone();
-                        base.insert("name".to_string(), serde_json::json!(code));
-                        // Expand scope array into multiple entries — one per scope element
-                        // Only applies to rules WITHOUT conditions (conditions have their own scopes)
-                        if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                            if !base.contains_key("conditions") && scope_arr.len() > 1 {
-                                for scope_val in scope_arr {
-                                    if let Some(s) = scope_val.as_str() {
-                                        let mut entry = base.clone();
-                                        entry.insert("scope".to_string(), serde_json::json!(s));
-                                        if let Some(arr) = flat.as_array_mut() {
-                                            arr.push(serde_json::Value::Object(entry));
-                                        }
-                                    }
-                                }
-                                continue; // Already pushed per-scope entries, skip single push below
-                            } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
-                                base.insert("scope".to_string(), serde_json::json!(first));
-                            }
-                        }
-                        if let Some(conditions) = base.remove("conditions") {
-                            if let Some(conds) = conditions.as_array() {
-                                if !conds.is_empty() {
-                                    for cond in conds {
-                                        if let Some(cond_obj) = cond.as_object() {
-                                            let mut entry = base.clone();
-                                            for (k, v) in cond_obj {
-                                                entry.insert(k.clone(), v.clone());
-                                            }
-                                            // Remove top-level scope array leftovers if condition has its own scope
-                                            if let Some(arr) = flat.as_array_mut() {
-                                                arr.push(serde_json::Value::Object(entry));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if let Some(arr) = flat.as_array_mut() {
-                                arr.push(serde_json::Value::Object(base));
-                            }
-                        }
-                    }
-                }
-                *rules_obj = flat;
-            }
-        }
-        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[warn] Failed to deserialize ArchitectureConfig: {:?}", e);
-                eprintln!("[warn] Falling back to default config. Check your YAML syntax and field types.");
-                ArchitectureConfig::default()
-            }
-        };
-        // Top-level ignored_paths (outside architecture section) — merge into config
-        if config.ignored_paths.values.is_empty() {
-            if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-                let paths: Vec<_> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                    .collect();
-                if !paths.is_empty() {
-                    config.ignored_paths = FilePathList::new(paths);
-                }
-            }
-        }
-        config
-    } else {
-        let mut config = ArchitectureConfig::default();
-        if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        config
-    }
-}
-
-/// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
-/// Runtime project-level config files override these defaults.
-/// Cached via OnceLock to avoid re-parsing on every call.
-static DEFAULT_RUST_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_PYTHON_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-
-pub fn default_aes_config() -> ArchitectureConfig {
-    DEFAULT_RUST_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
-        .clone()
-}
-
-pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
-    match language {
-        "rust" => default_aes_config(),
-        "python" => DEFAULT_PYTHON_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
-            })
-            .clone(),
-        "javascript" | "typescript" => DEFAULT_TS_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!(
-                    "../../../../lint_arwaky.config.javascript.yaml"
-                ))
-            })
-            .clone(),
-        _ => {
-            eprintln!(
-                "[warn] Unknown language '{}', using empty default config.",
-                language
-            );
-            ArchitectureConfig::default()
-        }
-    }
-}
 ```
 
 ---
@@ -6114,21 +6898,20 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
 ## File: crates/shared/src/orphan-detector/contract_orphan_aggregate.rs
 
 ```rust
-// PURPOSE: IOrphanAggregate — aggregate trait bundling all orphan detection protocols
+// PURPOSE: IOrphanAggregate — aggregate trait for orphan detection (AES308)
 use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::code_analysis::contract_layer_detection_aggregate::ILayerDetectionAggregate;
 use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
 use std::collections::HashSet;
 
+/// Aggregate that detects orphan (unreferenced) files in a project.
+///
+/// AES308 requires that every source file be reachable from at least one
+/// entry point. This aggregate builds a dependency graph, identifies
+/// orphan entry points, and reports violations.
 pub trait IOrphanAggregate: Send + Sync {
     fn build_orphan_graph_context(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext;
     fn identify_orphan_entry_points(&self, files: &[String]) -> HashSet<String>;
-    fn check_orphans(
-        &self,
-        layer_detector: &dyn ILayerDetectionAggregate,
-        files: &[String],
-        root_dir: &str,
-    ) -> Vec<LintResult>;
+    fn check_orphans(&self, files: &[String], root_dir: &str) -> Vec<LintResult>;
 }
 ```
 
@@ -6232,6 +7015,7 @@ pub trait IUtilityOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         all_files: &[String],
+        inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult;
 }
 
@@ -6248,6 +7032,7 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
     fn is_surface_orphan(
         &self,
         f: &FilePath,
+        root_dir: &FilePath,
         alive_files: &ReachabilityResult,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult;
@@ -6269,6 +7054,7 @@ pub mod utility_file_cache;
 pub mod utility_orphan;
 pub mod utility_orphan_filename;
 pub mod utility_orphan_io;
+pub mod utility_orphan_path;
 pub mod utility_workspace;
 pub use taxonomy_orphan_contract_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
 pub use taxonomy_violation_orphan_vo::AesOrphanViolation;
@@ -6406,6 +7192,11 @@ pub enum AesOrphanViolation {
         stem: String,
         reason: Option<LintMessage>,
     },
+    UtilityDeadCode {
+        stem: String,
+        imported_by: Vec<String>,
+        reason: Option<LintMessage>,
+    },
     AgentOrphan {
         agg_name: String,
         reason: Option<LintMessage>,
@@ -6481,6 +7272,23 @@ impl fmt::Display for AesOrphanViolation {
                 };
                 write!(f, "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality. Utility files must be consumed by other layers. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem)
             }
+            AesOrphanViolation::UtilityDeadCode {
+                stem,
+                imported_by,
+                reason,
+            } => {
+                let why = match reason.as_ref() {
+                    Some(r) => r.to_string(),
+                    None => {
+                        let importers = imported_by.join(", ");
+                        format!(
+                            "Utility file '{}' is only imported by other utility files ({}), not by capability, agent, or surfaces layers.",
+                            stem, importers
+                        )
+                    }
+                };
+                write!(f, "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality, or delete it if unused. Utility files must be consumed by higher layers, not just other utilities.", stem, why, stem)
+            }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = match reason.as_ref() {
                     Some(r) => r.to_string(),
@@ -6527,27 +7335,35 @@ impl From<AesOrphanViolation> for String {
 ## File: crates/shared/src/orphan-detector/utility_file_cache.rs
 
 ```rust
-// PURPOSE: Orphan file cache utility — stateless interface to thread-local file cache
+// PURPOSE: Orphan file cache utility — stateless interface to bounded file cache
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
+use std::sync::{Mutex, OnceLock};
 
-thread_local! {
-    static FILE_CACHE: RefCell<HashMap<String, String>> = RefCell::new(HashMap::new());
+const MAX_CACHE_ENTRIES: usize = 20_000;
+
+static FILE_CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+
+fn cache() -> &'static Mutex<HashMap<String, String>> {
+    FILE_CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub fn read_cached(path: &FilePath) -> ContentString {
-    FILE_CACHE.with(|cache| -> ContentString {
-        let mut cache = cache.borrow_mut();
-        if let Some(content) = cache.get(path.value()) {
-            return ContentString::new(content.clone());
-        }
-        let content = fs::read_to_string(path.value()).unwrap_or_default();
+    let mut cache = cache().lock().unwrap_or_else(|e| e.into_inner());
+
+    if let Some(content) = cache.get(path.value()) {
+        return ContentString::new(content.clone());
+    }
+
+    let content = fs::read_to_string(path.value()).unwrap_or_default();
+
+    if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
-        ContentString::new(content)
-    })
+    }
+
+    ContentString::new(content)
 }
 
 pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
@@ -6564,10 +7380,6 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     entries
 }
 
-pub fn path_exists(path: &FilePath) -> bool {
-    std::path::Path::new(path.value()).exists()
-}
-
 pub fn is_symlink(path: &FilePath) -> bool {
     std::fs::symlink_metadata(path.value())
         .map(|m| m.file_type().is_symlink())
@@ -6575,7 +7387,8 @@ pub fn is_symlink(path: &FilePath) -> bool {
 }
 
 pub fn clear_cache() {
-    FILE_CACHE.with(|c| c.borrow_mut().clear());
+    let mut cache = cache().lock().unwrap_or_else(|e| e.into_inner());
+    cache.clear();
 }
 ```
 
@@ -6624,6 +7437,207 @@ pub fn extract_trait_names(content: &str) -> Vec<String> {
     }
     names
 }
+
+pub fn normalize_module_component(value: &str) -> String {
+    value.replace(['-', '.'], "_")
+}
+
+pub fn normalize_module_path(value: &str) -> String {
+    value
+        .split('/')
+        .map(normalize_module_component)
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+pub fn contains_delimited(content: &str, token: &str) -> bool {
+    if !content.contains(token) {
+        return false;
+    }
+
+    let delimiters: &[char] = &[
+        ' ', '\t', '\n', '\r', ';', ',', '(', ')', '{', '}', '"', '\'',
+    ];
+
+    for (idx, _) in content.char_indices() {
+        // Only check at character boundaries (skip multi-byte sequences)
+        if idx > 0 && !is_char_boundary(content, idx) {
+            continue;
+        }
+
+        let remaining = &content[idx..];
+        if !remaining.starts_with(token) {
+            continue;
+        }
+
+        let before = if idx == 0 {
+            ' '
+        } else {
+            // Safe: char_indices guarantees idx is at a valid char boundary
+            content[..idx].chars().next_back().unwrap_or(' ')
+        };
+
+        let after_pos = idx + token.chars().map(|c| c.len_utf8()).sum::<usize>();
+        let after = content[after_pos..].chars().next().unwrap_or(' ');
+
+        let boundary_before = before.is_whitespace() || delimiters.contains(&before);
+        let boundary_after =
+            after.is_whitespace() || delimiters.contains(&after) || after == '\n' || after == '\r';
+
+        if boundary_before && boundary_after {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn is_char_boundary(s: &str, pos: usize) -> bool {
+    if pos >= s.len() {
+        return true;
+    }
+    let bytes = s.as_bytes();
+    (bytes[pos] & 0xC0) != 0x80
+}
+
+pub fn import_tokens(path: &str) -> Vec<String> {
+    let mut tokens = Vec::new();
+    let path = path.replace('\\', "/");
+    let path = path.trim_start_matches('/');
+
+    let stem = std::path::Path::new(&path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+        .to_string();
+    if stem.is_empty() {
+        return tokens;
+    }
+
+    tokens.push(stem.clone());
+
+    let normalized_stem = normalize_module_component(&stem);
+    if normalized_stem != stem {
+        tokens.push(normalized_stem);
+    }
+
+    let parts: Vec<&str> = path.split('/').collect();
+    if parts.len() >= 2 {
+        let parent = parts[parts.len() - 2];
+        let partial = format!("{}/{}", parent, stem);
+        tokens.push(partial.clone());
+        tokens.push(partial.replace('/', "::"));
+
+        let normalized_partial = normalize_module_path(&partial);
+        if normalized_partial != partial {
+            tokens.push(normalized_partial.clone());
+            tokens.push(normalized_partial.replace('/', "::"));
+        }
+    }
+
+    for i in 2..parts.len() {
+        let partial = parts[parts.len() - i..].join("/");
+        tokens.push(partial);
+    }
+
+    let source_prefixes = ["crate::", "shared::", "self::", "super::"];
+    let existing: Vec<String> = tokens.clone();
+    for prefix in &source_prefixes {
+        for tok in &existing {
+            tokens.push(format!("{prefix}{tok}"));
+        }
+    }
+
+    tokens.sort();
+    tokens.dedup();
+    tokens
+}
+
+/// Strip leading generic parameter lists (e.g., `<T>`, `<T: Clone>`) from a string.
+fn strip_leading_generics(s: &str) -> &str {
+    let mut s = s.trim();
+
+    while let Some(rest) = s.strip_prefix('<') {
+        let mut depth = 1usize;
+        let mut end = None;
+
+        for (idx, ch) in rest.char_indices() {
+            match ch {
+                '<' => depth += 1,
+                '>' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        end = Some(idx);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        match end {
+            Some(pos) => s = rest[pos + 1..].trim(),
+            None => break,
+        }
+    }
+
+    s
+}
+
+pub fn has_trait_implementation(content: &str, trait_name: &str) -> bool {
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("//")
+            || trimmed.starts_with("/*")
+            || trimmed.starts_with('*')
+            || trimmed.starts_with('#')
+        {
+            continue;
+        }
+        if trimmed.starts_with("impl") && trimmed.contains(" for ") {
+            let after_impl = trimmed[4..].trim();
+
+            let trait_part = match after_impl.find(" for ") {
+                Some(pos) => after_impl[..pos].trim(),
+                None => continue,
+            };
+
+            let trait_part = strip_leading_generics(trait_part);
+            let trait_base = trait_part.split('<').next().unwrap_or(trait_part).trim();
+            let trait_last = trait_base.split("::").last().unwrap_or(trait_base);
+
+            if trait_last == trait_name
+                || trait_last.ends_with(trait_name)
+                || trait_name.ends_with(trait_last)
+            {
+                return true;
+            }
+        }
+        if let Some(class_pos) = trimmed.find("class ") {
+            let after_class = &trimmed[class_pos + 6..];
+            if let Some(paren_pos) = after_class.find('(') {
+                let bases = &after_class[paren_pos + 1..];
+                if let Some(close_paren) = bases.find(')') {
+                    for base in bases[..close_paren].split(',') {
+                        if base.trim() == trait_name {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(impl_pos) = trimmed.find(" implements ") {
+            let after_impl = &trimmed[impl_pos + 13..];
+            for iface in after_impl.split(',') {
+                let iface = iface.trim().trim_end_matches('{').trim();
+                if iface == trait_name {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
 ```
 
 ---
@@ -6668,13 +7682,28 @@ pub fn file_suffix(path: &str) -> String {
 
 ```rust
 // PURPOSE: utility_orphan_io — stateless I/O utilities for orphan detection graph building
+use crate::common::utility_file;
 use std::path::Path;
 
-/// Read file contents, returning empty string on error.
+/// Outcome of reading a file — either content or diagnostic info.
+pub enum FileReadOutcome {
+    Content(String),
+    Unreadable { path: String, reason: String },
+}
+
+/// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
+    utility_file::read_file_safe(path)
+}
+
+/// Read file with diagnostic info — returns content or error details.
+pub fn read_file_with_diagnostic(path: &str) -> FileReadOutcome {
     match std::fs::read_to_string(path) {
-        Ok(c) => c,
-        Err(_) => String::new(),
+        Ok(content) => FileReadOutcome::Content(content),
+        Err(err) => FileReadOutcome::Unreadable {
+            path: path.to_string(),
+            reason: err.to_string(),
+        },
     }
 }
 
@@ -6689,7 +7718,7 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
                     continue;
                 }
                 let path = dir_entry.path();
-                let is_dir = path.is_dir();
+                let is_dir = utility_file::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -6699,12 +7728,12 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
 
 /// Check if a path exists and is a file.
 pub fn is_file(path: &Path) -> bool {
-    path.is_file()
+    utility_file::is_file_generic(path)
 }
 
 /// Check if a path exists and is a directory.
 pub fn is_dir(path: &Path) -> bool {
-    path.is_dir()
+    utility_file::is_dir(path)
 }
 
 /// Scan directory entries, returning vector of (file_name, file_path, is_dir) tuples.
@@ -6715,7 +7744,7 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
         for dir_entry in read_dir.flatten() {
             if let Some(name) = dir_entry.file_name().to_str() {
                 let path = dir_entry.path();
-                let is_dir = path.is_dir();
+                let is_dir = utility_file::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -6724,27 +7753,117 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
 }
 
 /// Recursively scan directory for files, returning vector of file paths.
-/// Skips hidden directories (starting with '.').
+/// Skips hidden directories and common heavy dependency/build directories.
 pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
     let mut files = Vec::new();
+
     if let Ok(entries) = dir_path.read_dir() {
         for dir_entry in entries.flatten() {
             if let Some(name) = dir_entry.file_name().to_str() {
                 if name.starts_with('.') {
                     continue;
                 }
+
                 let path = dir_entry.path();
-                if path.is_dir() {
-                    files.extend(scan_directory_recursive(&path));
-                } else {
-                    if let Some(path_str) = path.to_str() {
-                        files.push(path_str.to_string());
+
+                if utility_file::is_dir(&path) {
+                    if matches!(
+                        name,
+                        "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                    ) {
+                        continue;
                     }
+
+                    files.extend(scan_directory_recursive(&path));
+                } else if let Some(path_str) = path.to_str() {
+                    files.push(path_str.to_string());
                 }
             }
         }
     }
+
     files
+}
+```
+
+---
+
+## File: crates/shared/src/orphan-detector/utility_orphan_path.rs
+
+```rust
+use std::fs;
+use std::path::{Component, Path, PathBuf};
+
+pub fn normalize_lexical(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => {
+                normalized.pop();
+            }
+            other => normalized.push(other.as_os_str()),
+        }
+    }
+    normalized
+}
+
+pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
+    let canonical_root = fs::canonicalize(root).ok()?;
+
+    let absolute = if candidate.is_absolute() {
+        candidate.to_path_buf()
+    } else {
+        canonical_root.join(candidate)
+    };
+
+    // If the candidate exists, canonicalize it directly.
+    if let Ok(canonical_candidate) = fs::canonicalize(&absolute) {
+        return canonical_candidate
+            .starts_with(&canonical_root)
+            .then_some(canonical_candidate);
+    }
+
+    // If the candidate does not exist yet, canonicalize the parent
+    // and reattach the final component.
+    let parent = absolute.parent()?;
+    let file_name = absolute.file_name()?;
+
+    let canonical_parent = fs::canonicalize(parent).ok()?;
+    let canonical_candidate = canonical_parent.join(file_name);
+
+    canonical_candidate
+        .starts_with(&canonical_root)
+        .then_some(canonical_candidate)
+}
+
+pub fn resolve_module_path(root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf> {
+    let candidate = if Path::new(module_path).is_absolute() {
+        PathBuf::from(module_path)
+    } else {
+        base_dir.join(module_path)
+    };
+    confine_under_root(root, &candidate)
+}
+
+pub fn is_path_ignored(file: &str, patterns: &[String]) -> bool {
+    let file = file.replace('\\', "/");
+    patterns.iter().any(|pattern| {
+        let raw = pattern.replace('\\', "/");
+        if raw.is_empty() {
+            return false;
+        }
+        if file == raw || file.ends_with(&raw) {
+            return true;
+        }
+        let normalized = raw.trim_start_matches('/');
+        if normalized.is_empty() {
+            return false;
+        }
+        file.starts_with(&format!("{normalized}/"))
+            || file.contains(&format!("/{normalized}/"))
+            || file.contains(&format!("/{normalized}"))
+    })
 }
 ```
 
@@ -6800,6 +7919,15 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
         for entry_path in &entries {
             let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+                if matches!(
+                    name,
+                    "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                ) {
+                    continue;
+                }
+
                 if check_dir_containers(path, identifiers) {
                     return true;
                 }
@@ -6864,11 +7992,11 @@ pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
 pub mod contract_surface_role_protocol;
 pub mod contract_taxonomy_role_protocol;
+pub mod contract_utility_role_protocol;
 pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_layer_names_vo;
 pub mod taxonomy_role_rule_vo;
 pub mod taxonomy_violation_role_vo;
-pub mod utility_role_io;
 pub use taxonomy_violation_role_vo::AesRoleViolation;
 ```
 
@@ -6883,10 +8011,11 @@ pub const LAYER_AGENT: &str = "agent";
 pub const LAYER_CAPABILITIES: &str = "capabilities";
 pub const LAYER_CONTRACT: &str = "contract";
 pub const LAYER_UTILITY: &str = "utility";
-pub const LAYER_SURFACES: &str = "surfaces";
+pub const LAYER_SURFACES: &str = "surface";
 pub const LAYER_TAXONOMY: &str = "taxonomy";
 pub const LAYER_ROOT: &str = "root";
 pub const LAYER_GLOBAL: &str = "global";
 ```
 
 ---
+

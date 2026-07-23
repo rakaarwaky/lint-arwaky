@@ -40,7 +40,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -62,7 +62,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -183,7 +183,7 @@ architecture:
         agent:
           suffix:
             - strict: ["orchestrator"]
-        surfaces:
+        surface:
           suffix:
             - strict:
                 [
@@ -213,7 +213,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -250,7 +250,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -263,7 +263,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -276,7 +276,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -289,7 +289,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "capabilities",
               "contract(aggregate)",
               "root",
@@ -298,14 +298,14 @@ architecture:
         - scope: "contract(aggregate)"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
-          forbidden: ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+          forbidden: ["agent", "infrastructure", "surface", "capabilities", "root"]
           forbidden_inheritance: ["contract(port)", "contract(protocol)"]
 
         - scope: "capabilities"
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+            ["infrastructure", "surface", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -318,7 +318,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
           forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -336,7 +336,7 @@ architecture:
               "contract(protocol)",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surface", "infrastructure", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -347,7 +347,7 @@ architecture:
             - layer: "contract(protocol)"
               purpose: "call"
 
-        - scope: "surfaces(command|controller|page)"
+        - scope: "surface(command|controller|page)"
           allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: null
           forbidden:
@@ -365,7 +365,7 @@ architecture:
             - layer: "contract(aggregate)"
               purpose: "call"
 
-        - scope: "surfaces(hook|store|action|screen|router)"
+        - scope: "surface(hook|store|action|screen|router)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -375,14 +375,14 @@ architecture:
               "capabilities",
               "contract(port)",
               "contract(protocol)",
-              "surfaces(command|controller|page|entry)",
+              "surface(command|controller|page|entry)",
               "root",
             ]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
 
-        - scope: "surfaces(component|view|layout)"
+        - scope: "surface(component|view|layout)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -391,7 +391,7 @@ architecture:
               "contract",
               "infrastructure",
               "capabilities",
-              "surfaces(command|controller|page|entry|hook|store|action|screen|router)",
+              "surface(command|controller|page|entry|hook|store|action|screen|router)",
               "root",
             ]
           allowed_imports:
@@ -406,7 +406,7 @@ architecture:
               "capabilities",
               "infrastructure",
               "agent",
-              "surfaces",
+              "surface",
             ]
           mandatory: ["taxonomy", "contract(aggregate)"]
           forbidden: []
@@ -421,7 +421,7 @@ architecture:
               purpose: "implement"
             - layer: "agent"
               purpose: "implement"
-            - layer: "surfaces"
+            - layer: "surface"
               purpose: "implement"
 
     AES202:
@@ -433,7 +433,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -471,7 +471,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -487,7 +487,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -503,7 +503,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "contract",
               "capabilities",
               "root",
@@ -519,7 +519,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "capabilities",
               "contract(aggregate)",
               "root",
@@ -535,7 +535,7 @@ architecture:
             [
               "agent",
               "infrastructure",
-              "surfaces",
+              "surface",
               "capabilities",
               "contract(aggregate)",
               "root",
@@ -548,7 +548,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy"]
           forbidden:
-            ["agent", "infrastructure", "surfaces", "capabilities", "root"]
+            ["agent", "infrastructure", "surface", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -557,7 +557,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(port)"]
           forbidden:
-            ["surfaces", "capabilities", "agent", "infrastructure", "root"]
+            ["surface", "capabilities", "agent", "infrastructure", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -568,7 +568,7 @@ architecture:
           allowed: ["taxonomy", "contract"]
           mandatory: ["taxonomy", "contract(protocol)"]
           forbidden:
-            ["infrastructure", "surfaces", "agent", "capabilities", "root"]
+            ["infrastructure", "surface", "agent", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
@@ -578,14 +578,14 @@ architecture:
         - scope: "agent"
           allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: ["taxonomy"]
-          forbidden: ["surfaces", "infrastructure", "capabilities", "root"]
+          forbidden: ["surface", "infrastructure", "capabilities", "root"]
           allowed_imports:
             - layer: "taxonomy"
               purpose: "implement"
             - layer: "contract(aggregate)"
               purpose: "implement"
 
-        - scope: "surfaces"
+        - scope: "surface"
           allowed: ["taxonomy", "contract(aggregate)"]
           mandatory: null
           forbidden:
@@ -611,7 +611,7 @@ architecture:
               "capabilities",
               "infrastructure",
               "agent",
-              "surfaces",
+              "surface",
             ]
           mandatory: ["taxonomy"]
           forbidden: []
@@ -626,7 +626,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions:
         [
@@ -647,7 +647,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
@@ -661,7 +661,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
         ]
 
     # ─── AES300: Code Quality ───
@@ -674,7 +674,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
@@ -690,7 +690,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
@@ -704,7 +704,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -726,7 +726,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -750,7 +750,7 @@ architecture:
           "capabilities",
           "infrastructure",
           "agent",
-          "surfaces",
+          "surface",
           "root",
         ]
       exceptions:
@@ -838,7 +838,7 @@ architecture:
     AES406:
       enabled: true
       scope:
-        ["surfaces"]
+        ["surface"]
       exceptions:
         [
           "main.rs",
@@ -883,5 +883,5 @@ architecture:
     AES506:
       enabled: true
       scope:
-        ["surfaces"]
+        ["surface"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]

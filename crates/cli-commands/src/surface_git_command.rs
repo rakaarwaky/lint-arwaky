@@ -29,20 +29,27 @@ pub async fn handle_git_diff(
     git_aggregate: Arc<dyn GitHooksAggregate>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     base: GitBranchName,
+    project_path: Option<&str>,
+    filter: Option<&str>,
 ) -> ExitCode {
     println!("Lint Arwaky v{} (Git-Diff Mode)", env!("CARGO_PKG_VERSION"));
 
-    let project_path = FilePath::new(".".to_string()).unwrap_or_default();
+    // P2.5: use user-provided path instead of hardcoded "."
+    let project_path = FilePath::new(project_path.unwrap_or(".").to_string()).unwrap_or_default();
 
     let changed_files = git_aggregate
         .diff_protocol()
         .get_changed_files(&project_path, &base)
         .await;
 
+    // P2.5: apply filter to changed files
     let files: Vec<&shared::common::taxonomy_path_vo::FilePath> = changed_files
         .values
         .iter()
-        .filter(|fp| shared::common::utility_language_detector::is_lintable(fp))
+        .filter(|fp| {
+            shared::common::utility_language_detector::is_lintable(fp)
+                && filter.map(|f| fp.value.contains(f)).unwrap_or(true)
+        })
         .collect();
 
     println!("Base: {} (changed files)", base.value());

@@ -8,20 +8,21 @@ members = ["crates/*"]
 [workspace.dependencies]
 # Workspace member crates (version required for crates.io publish)
 shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.10.106" }
-naming_rules = { package = "naming_rules-lint-arwaky", path = "crates/naming-rules", version = "1.10.106" }
-import_rules = { package = "import_rules-lint-arwaky", path = "crates/import-rules", version = "1.10.106" }
-code_analysis = { package = "code_analysis-lint-arwaky", path = "crates/code-analysis", version = "1.10.106" }
-auto_fix = { package = "auto_fix-lint-arwaky", path = "crates/auto-fix", version = "1.10.106" }
-cli_commands = { package = "cli_commands-lint-arwaky", path = "crates/cli-commands", version = "1.10.106" }
-config_system = { package = "config_system-lint-arwaky", path = "crates/config-system", version = "1.10.106" }
-file_watch = { package = "file_watch-lint-arwaky", path = "crates/file-watch", version = "1.10.106" }
-git_hooks = { package = "git_hooks-lint-arwaky", path = "crates/git-hooks", version = "1.10.106" }
-external_lint = { package = "external_lint-lint-arwaky", path = "crates/external-lint", version = "1.10.106" }
-mcp_server = { package = "mcp_server-lint-arwaky", path = "crates/mcp-server", version = "1.10.106" }
-orphan_detector = { package = "orphan_detector-lint-arwaky", path = "crates/orphan-detector", version = "1.10.106" }
-project_setup = { package = "project_setup-lint-arwaky", path = "crates/project-setup", version = "1.10.106" }
+naming_rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "1.10.106" }
+import_rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "1.10.106" }
+code_analysis = { package = "code-analysis-lint-arwaky", path = "crates/code-analysis", version = "1.10.106" }
+auto_fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "1.10.106" }
+cli_commands = { package = "cli-commands-lint-arwaky", path = "crates/cli-commands", version = "1.10.106" }
+config_system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "1.10.106" }
+file_watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "1.10.106" }
+git_hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "1.10.106" }
+external_lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "1.10.106" }
+mcp_server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.10.106" }
+orphan_detector = { package = "orphan-detector-lint-arwaky", path = "crates/orphan-detector", version = "1.10.106" }
+project_setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.10.106" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.10.106" }
-role_rules = { package = "role_rules-lint-arwaky", path = "crates/role-rules", version = "1.10.106" }
+role_rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "1.10.106" }
+report_formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.10.106" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0", features = ["derive"] }
@@ -58,7 +59,7 @@ tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.10.106" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.111"
+version = "1.10.113"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"
@@ -99,6 +100,7 @@ orphan_detector.workspace = true
 project_setup.workspace = true
 maintenance.workspace = true
 role_rules.workspace = true
+report_formatter.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
@@ -125,13 +127,12 @@ ctrlc.workspace = true
 futures.workspace = true
 
 # Production release profile: small binary, fast startup, predictable runtime.
-# LTO is `thin` (not `fat`) because `fat LTO + codegen-units=1 + strip` triggers
-# intermittent SIGSEGV in `rustc`/`lld` on large dep trees in constrained environments.
-# `thin` LTO is ~95% of `fat`'s gains and never segfaults in our CI.
+# `codegen-units=16` avoids intermittent SIGSEGV triggered by `codegen-units=1`
+# combined with `opt-level=z` + `panic=abort` on large dep trees.
 [profile.release]
 opt-level = "z"
 lto = false
-codegen-units = 1
+codegen-units = 16
 strip = "symbols"
 panic = "abort"
 debug = false
@@ -143,11 +144,21 @@ opt-level = 0
 [profile.release.package.regex-syntax]
 opt-level = 0
 
-# Dev profile keeps good debug info but enables test-only optimizations.
+# Dev profile: fast incremental builds for development.
 [profile.dev]
 opt-level = 0
-debug = true
+debug = 1          # line tables only (faster than full debug info)
 incremental = true
+codegen-units = 16
+
+# Test profile: prevent rust-lld memory allocation issues from bloated DWARF symbols
+[profile.test]
+opt-level = 0
+debug = 0
+codegen-units = 16
+
+
+
 
 # Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.
 # The gate is: `cargo clippy --workspace --all-targets -- -D warnings`

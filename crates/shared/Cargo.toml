@@ -28,4 +28,4 @@ schemars.workspace = true
 
 [dev-dependencies]
 tempfile = "3.27.0"
-code_analysis.workspace = true
+

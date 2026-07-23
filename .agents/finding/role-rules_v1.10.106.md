@@ -2,6 +2,20 @@
 
 This document contains the source code for feature crate `role-rules` along with its corresponding and imported definitions from the `shared` crate.
 
+## Problem Statement
+
+The following issues were detected by `lint-arwaky-cli scan`:
+
+```
+============================================================
+  AES Architecture Compliance Report
+============================================================
+  Project:
+  Violations: 0
+```
+
+---
+
 ## File List
 
 - [ARCHITECTURE.md](file:///home/raka/mcp-arwaky/lint-arwaky/ARCHITECTURE.md)
@@ -13,6 +27,7 @@ This document contains the source code for feature crate `role-rules` along with
 - [crates/role-rules/src/capabilities_contract_role_auditor.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/capabilities_contract_role_auditor.rs)
 - [crates/role-rules/src/capabilities_surface_role_auditor.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/capabilities_surface_role_auditor.rs)
 - [crates/role-rules/src/capabilities_taxonomy_role_auditor.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/capabilities_taxonomy_role_auditor.rs)
+- [crates/role-rules/src/capabilities_utility_role_auditor.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/capabilities_utility_role_auditor.rs)
 - [crates/role-rules/src/lib.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/lib.rs)
 - [crates/role-rules/src/root_role_rules_container.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/role-rules/src/root_role_rules_container.rs)
 - [crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs)
@@ -33,9 +48,11 @@ This document contains the source code for feature crate `role-rules` along with
 - [crates/shared/src/common/taxonomy_paths_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_paths_vo.rs)
 - [crates/shared/src/common/taxonomy_severity_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_severity_vo.rs)
 - [crates/shared/src/common/taxonomy_source_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_source_vo.rs)
+- [crates/shared/src/common/utility_file.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_file.rs)
 - [crates/shared/src/common/utility_language_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_language_detector.rs)
 - [crates/shared/src/common/utility_layer_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_layer_detector.rs)
 - [crates/shared/src/common/utility_signature_parser.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_signature_parser.rs)
+- [crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs)
 - [crates/shared/src/config-system/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/mod.rs)
 - [crates/shared/src/config-system/taxonomy_config_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_vo.rs)
 - [crates/shared/src/role-rules/contract_agent_role_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_agent_role_protocol.rs)
@@ -45,12 +62,12 @@ This document contains the source code for feature crate `role-rules` along with
 - [crates/shared/src/role-rules/contract_role_runner_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_role_runner_aggregate.rs)
 - [crates/shared/src/role-rules/contract_surface_role_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_surface_role_protocol.rs)
 - [crates/shared/src/role-rules/contract_taxonomy_role_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_taxonomy_role_protocol.rs)
+- [crates/shared/src/role-rules/contract_utility_role_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/contract_utility_role_protocol.rs)
 - [crates/shared/src/role-rules/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/mod.rs)
 - [crates/shared/src/role-rules/taxonomy_layer_names_constant.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/taxonomy_layer_names_constant.rs)
 - [crates/shared/src/role-rules/taxonomy_layer_names_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/taxonomy_layer_names_vo.rs)
 - [crates/shared/src/role-rules/taxonomy_role_rule_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/taxonomy_role_rule_vo.rs)
 - [crates/shared/src/role-rules/taxonomy_violation_role_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/taxonomy_violation_role_vo.rs)
-- [crates/shared/src/role-rules/utility_role_io.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/role-rules/utility_role_io.rs)
 
 ---
 
@@ -312,16 +329,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -348,7 +365,7 @@ The only Agent role is orchestrator.
 
 ### Dependencies
 
-Agent may depend only on Taxonomy and Contract.
+Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
@@ -363,7 +380,7 @@ Agent may depend only on Taxonomy and Contract.
 ### Special Rules
 
 - Agent must depend on Contract, not concrete implementations.
-- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not use and must be completely ignorant of Capabilities implementations.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
@@ -393,11 +410,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -466,9 +483,11 @@ shared.workspace = true
 # FRD — role-rules
 
 ## Feature Goal
+
 The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Utility, Capabilities, Agent, Surface, Root) as defined by the 7-layer architecture standard. It ensures components behave exactly according to their architectural roles (contracts define protocols, utility provides stateless technical functions, capabilities implement protocols, agents coordinate, taxonomy stays pure).
 
 ## Requirements & Scope
+
 - AES401 Taxonomy Purity and Primitives
   - Requirement 1: Taxonomy _constant files must only contain pure constant declarations (pub const, pub static in Rust, or global constants in Python/JS). No logic or variables allowed.
   - Requirement 2: Taxonomy types (Value Objects, entities) must not expose raw primitive types (e.g., raw String, i32, bool) in their public interfaces; they must encapsulate them using strongly-typed domain primitives.
@@ -484,6 +503,7 @@ The role-rules crate enforces architectural boundaries and responsibility rules 
   - Requirement: Surface components (e.g. _command, _controller, _view) must remain passive. They are strictly dispatchers/presenters and must not contain core business logic, validation rules, or state mutation logic.
 
 ## Success Indicators
+
 - [ ] Strict role compliance — all structural rules (AES401–406) are audited at compile/scan time with high precision.
 - [ ] Architecture purity — developers are alerted immediately when a contract violates the primitive restriction or a capability lacks a protocol.
 - [ ] Precision reporting — reports violations pointing to the exact line and column numbers of the offending syntax.
@@ -529,13 +549,32 @@ use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleCh
 use shared::role_rules::contract_role_protocol::IContractRoleChecker;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleOrchestrator {
     aggregate: Arc<dyn IRoleAggregate>,
     config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ignored_paths: Vec<String>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+#[async_trait]
+impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
+    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        let files = self.collect_files(target);
+        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
+        self.run_all_role_checks(&file_strings, 500, &mut results);
+        results
+    }
+
+    fn name(&self) -> &str {
+        "role-rules"
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl RoleOrchestrator {
     pub fn new(
         aggregate: Arc<dyn IRoleAggregate>,
@@ -659,8 +698,8 @@ impl RoleOrchestrator {
                     checker.check_capability_routing(&source_vo, "capabilities", violations);
                 }
                 "utility" => {
-                    // Utility layer: stateless standalone functions, no role checks needed
-                    // Utility files are validated by naming convention only
+                    let checker = self.aggregate.utility();
+                    checker.check_utility_convention(&source_vo, violations);
                 }
                 "taxonomy" => {
                     let checker = self.aggregate.taxonomy();
@@ -713,47 +752,17 @@ impl RoleOrchestrator {
     }
 }
 
-#[async_trait]
-impl shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate for RoleOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
-        let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, 500, &mut results);
-        results
-    }
-
-    fn name(&self) -> &str {
-        "role-rules"
-    }
-}
-
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct RoleAggregateImpl {
     taxonomy: Arc<dyn ITaxonomyRoleChecker>,
     contract: Arc<dyn IContractRoleChecker>,
     capabilities: Arc<dyn ICapabilitiesRoleChecker>,
     surface: Arc<dyn ISurfaceRoleChecker>,
     agent: Arc<dyn IAgentRoleChecker>,
+    utility: Arc<dyn IUtilityRoleChecker>,
 }
 
-impl RoleAggregateImpl {
-    pub fn new(
-        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
-        contract: Arc<dyn IContractRoleChecker>,
-        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
-        surface: Arc<dyn ISurfaceRoleChecker>,
-        agent: Arc<dyn IAgentRoleChecker>,
-    ) -> Self {
-        Self {
-            taxonomy,
-            contract,
-            capabilities,
-            surface,
-            agent,
-        }
-    }
-}
-
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IRoleAggregate for RoleAggregateImpl {
     fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker {
         self.taxonomy.as_ref()
@@ -769,6 +778,30 @@ impl IRoleAggregate for RoleAggregateImpl {
     }
     fn agent(&self) -> &dyn IAgentRoleChecker {
         self.agent.as_ref()
+    }
+    fn utility(&self) -> &dyn IUtilityRoleChecker {
+        self.utility.as_ref()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl RoleAggregateImpl {
+    pub fn new(
+        taxonomy: Arc<dyn ITaxonomyRoleChecker>,
+        contract: Arc<dyn IContractRoleChecker>,
+        capabilities: Arc<dyn ICapabilitiesRoleChecker>,
+        surface: Arc<dyn ISurfaceRoleChecker>,
+        agent: Arc<dyn IAgentRoleChecker>,
+        utility: Arc<dyn IUtilityRoleChecker>,
+    ) -> Self {
+        Self {
+            taxonomy,
+            contract,
+            capabilities,
+            surface,
+            agent,
+            utility,
+        }
     }
 }
 ```
@@ -1420,13 +1453,13 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::common::utility_language_detector::{
     detect_language_info, detect_language_info_from_source,
 };
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::role_rules::utility_role_io as role_io;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -1639,7 +1672,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match role_io::read_file(&f.value) {
+        let content = match utility_file::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -1712,7 +1745,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match role_io::read_file(&f.to_string()) {
+        let content = match utility_file::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -2377,6 +2410,51 @@ impl TaxonomyRoleChecker {
 
 ---
 
+## File: crates/role-rules/src/capabilities_utility_role_auditor.rs
+
+```rust
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
+use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
+use shared::taxonomy_source_vo::SourceContentVO;
+
+pub struct UtilityRoleChecker {}
+
+impl IUtilityRoleChecker for UtilityRoleChecker {
+    fn check_utility_convention(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
+        let content = source.content.value();
+        let file = source.file_path.value();
+        if content.contains("pub struct ") || content.contains("pub enum ") {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES404",
+                Severity::MEDIUM,
+                AesRoleViolation::UtilityRole {
+                    reason: Some("Utility files must not define structs or enums.".into()),
+                }
+                .to_string(),
+            ));
+        }
+    }
+}
+
+impl Default for UtilityRoleChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UtilityRoleChecker {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+```
+
+---
+
 ## File: crates/role-rules/src/lib.rs
 
 ```rust
@@ -2403,6 +2481,8 @@ pub mod capabilities_capabilities_role_auditor;
 pub use capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 pub mod capabilities_surface_role_auditor;
 pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
+pub mod capabilities_utility_role_auditor;
+pub use capabilities_utility_role_auditor::UtilityRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;
 pub use agent_role_orchestrator::RoleAggregateImpl;
 pub use capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
@@ -2416,6 +2496,7 @@ pub mod root_role_rules_container;
 ```rust
 // PURPOSE: RoleContainer — wiring for role-rules feature (root layer, wiring only)
 use crate::agent_role_orchestrator::RoleOrchestrator;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::role_rules::contract_role_aggregate::IRoleAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -2425,6 +2506,7 @@ use crate::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
 
 use crate::agent_role_orchestrator::RoleAggregateImpl;
 
@@ -2434,10 +2516,6 @@ pub struct RoleContainer {
 }
 
 impl RoleContainer {
-    pub fn new() -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
-    }
-
     pub fn new_with_config(
         config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
     ) -> Self {
@@ -2447,8 +2525,18 @@ impl RoleContainer {
             Arc::new(CapabilitiesRoleChecker::new()),
             Arc::new(SurfaceRoleChecker::new()),
             Arc::new(AgentRoleChecker::new()),
+            Arc::new(UtilityRoleChecker::new()),
         ));
         Self { aggregate, config }
+    }
+
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
     }
 
     pub fn aggregate(&self) -> Arc<dyn IRoleAggregate> {
@@ -2457,12 +2545,6 @@ impl RoleContainer {
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         Arc::new(RoleOrchestrator::new(self.aggregate.clone(), &self.config))
-    }
-}
-
-impl Default for RoleContainer {
-    fn default() -> Self {
-        Self::new()
     }
 }
 ```
@@ -2514,7 +2596,11 @@ impl FixApplied {
 
 ```rust
 // cli-commands — taxonomy and contract types
+pub mod contract_analysis_pipeline_aggregate;
+pub mod contract_report_formatter_aggregate;
+pub mod contract_report_formatter_protocol;
 pub mod taxonomy_catalog_constant;
+
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;
@@ -2522,6 +2608,8 @@ pub mod taxonomy_metadata_vo;
 pub mod taxonomy_position_vo;
 pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
+pub mod taxonomy_scan_report_vo;
+pub mod taxonomy_scan_request_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
 ```
@@ -2569,10 +2657,22 @@ impl LintResult {
         sev: Severity,
         msg: impl Into<String>,
     ) -> Self {
+        Self::new_arch_with_column(file, line, 0, code, sev, msg)
+    }
+
+    /// Column-aware constructor for architecture checkers.
+    pub fn new_arch_with_column(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
+            column: ColumnNumber::new(column as i64),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
@@ -2665,6 +2765,9 @@ lint_result_list_wrapper!(LintResultList, LintResult);
 // `cli_commands::taxonomy_severity_vo::Severity` import path. The real
 // definition lives in `common::taxonomy_severity_vo` and is re-exported
 // here to avoid breaking any code that still imports from the legacy path.
+//
+// New code should import directly from `common::taxonomy_severity_vo`.
+/// Re-exported for backward compatibility with legacy import paths.
 pub use crate::common::taxonomy_severity_vo::Severity;
 ```
 
@@ -2714,17 +2817,18 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
+pub mod utility_command_runner;
 pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
-pub mod utility_process;
 pub mod utility_value_object_generator;
 pub use utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+pub mod utility_compliance_score;
 pub mod utility_signature_parser;
 ```
 
@@ -3687,6 +3791,12 @@ impl std::fmt::Display for Language {
 
 ```rust
 // PURPOSE: FileContentVO, Identity, LayerNameVO, LineContentVO — VOs for layer identity and file content
+//
+// These value objects are used throughout the AES layer-identity system:
+// - FileContentVO wraps the raw text of a source file.
+// - Identity identifies a single AES architectural layer.
+// - LayerNameVO is a human-readable label for a layer.
+// - LineContentVO wraps a single line of source text.
 use crate::string_value_object;
 
 string_value_object!(FileContentVO);
@@ -4361,6 +4471,416 @@ impl SourceContentVO {
 
 ---
 
+## File: crates/shared/src/common/utility_file.rs
+
+```rust
+// PURPOSE: File & workspace utility — pure logic + I/O, free functions only
+// Single source of truth for file walking, ignored path matching, source file detection,
+// and workspace root detection.
+
+use std::collections::HashSet;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+use crate::common::taxonomy_filesystem_error::FileSystemError;
+use crate::common::taxonomy_path_vo::DirectoryPath;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
+
+/// Check if a file extension is a known source file.
+pub fn is_source_file(ext: &str) -> bool {
+    matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+}
+
+/// Check if a directory is in the ignored list.
+pub fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
+    let s = dir.to_string_lossy();
+    is_path_ignored(&s, ignored)
+}
+
+/// Collect a single source file path into the output vector.
+pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
+    if let Some(path_str) = path.to_str() {
+        if let Ok(fp) = FilePath::new(path_str.to_string()) {
+            files.push(fp);
+        }
+    }
+}
+
+/// Return true if `rel_path` should be skipped based on `ignored` patterns.
+pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
+    if rel_path.is_empty() {
+        return false;
+    }
+    let segments: Vec<&str> = rel_path
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
+    for pat in ignored {
+        if pat.is_empty() {
+            continue;
+        }
+        if let Some(stripped) = pat.strip_prefix('/') {
+            if stripped.is_empty() {
+                continue;
+            }
+            let pat_segments: Vec<&str> = stripped
+                .split(['/', '\\'])
+                .filter(|s| !s.is_empty())
+                .collect();
+            if pat_segments.is_empty() {
+                continue;
+            }
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg < n_pat {
+                continue;
+            }
+            for start in 0..=(n_seg - n_pat) {
+                if segments[start..start + n_pat] == pat_segments[..] {
+                    return true;
+                }
+            }
+            continue;
+        }
+
+        // Handle **/*.rs patterns (recursive glob)
+        if pat.starts_with("**/") {
+            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
+            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
+                let ext = ext_pattern.trim_start_matches('.');
+                if !ext.is_empty() {
+                    let basename = segments.last().copied().unwrap_or_default();
+                    if basename.ends_with(&format!(".{ext}")) {
+                        return true;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Handle target/* patterns (prefix with wildcard)
+        if let Some(prefix) = pat.strip_suffix("/*") {
+            if !prefix.is_empty() && segments.first() == Some(&prefix) {
+                return true;
+            }
+            continue;
+        }
+
+        if let Some(suffix) = pat.strip_prefix("*.") {
+            let suffix = suffix.trim_start_matches('.');
+            if suffix.is_empty() {
+                continue;
+            }
+            let basename = segments.last().copied().unwrap_or_default();
+            if basename.ends_with(&format!(".{suffix}")) {
+                return true;
+            }
+            continue;
+        }
+
+        if pat.starts_with('.') {
+            if segments.iter().any(|seg| *seg == pat) {
+                return true;
+            }
+            continue;
+        }
+        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+        if pat_segments.len() == 1 {
+            if segments.contains(&pat_segments[0]) {
+                return true;
+            }
+        } else if pat_segments.len() > 1 {
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg >= n_pat {
+                for start in 0..=(n_seg - n_pat) {
+                    if segments[start..start + n_pat] == pat_segments[..] {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
+/// Collect all lintable source files from a directory tree.
+pub fn collect_all_source_files(dir: &Path, ignored_paths: &[String]) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        walk_source_files(dir, &mut files, ignored_paths);
+    }
+    files
+}
+
+/// Collect all lintable source files without applying default ignores.
+pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if dir.exists() && dir.is_dir() {
+        let ignored: Vec<String> = Vec::new();
+        walk_source_files(dir, &mut files, &ignored);
+    }
+    files
+}
+
+/// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
+pub fn scan_directory(
+    path: &DirectoryPath,
+    ignored_paths: &[String],
+) -> Result<FilePathList, FileSystemError> {
+    let dir = std::path::Path::new(&path.value);
+    if !dir.exists() || !dir.is_dir() {
+        return Ok(FilePathList { values: vec![] });
+    }
+    let files = collect_all_source_files(dir, ignored_paths);
+    Ok(FilePathList { values: files })
+}
+
+/// Walk a directory tree collecting all source files, skipping ignored directories.
+/// Symlink targets outside the root directory are pruned to prevent path traversal.
+/// Uses canonical-path-based visited set (works on all platforms).
+pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::<PathBuf>::new();
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root)
+}
+
+fn walk_source_files_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
+) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if is_ignored_dir(&path, ignored) {
+                continue;
+            }
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&path) {
+                        // P4.1 fix: prevent symlink escape — skip targets outside root
+                        if !target.starts_with(root) {
+                            continue;
+                        }
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
+                        if let Ok(target_meta) = target.metadata() {
+                            if target_meta.is_dir() {
+                                walk_source_files_inner(&target, files, ignored, visited, root);
+                            } else if target_meta.is_file() {
+                                collect_source_file(&target, files);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+            if path.is_dir() {
+                let dir_name = path
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
+                if dir_name == "tests" {
+                    continue;
+                }
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
+                }
+                walk_source_files_inner(&path, files, ignored, visited, root);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                if is_source_file(ext) {
+                    collect_source_file(&path, files);
+                }
+            }
+        }
+    }
+}
+
+/// Walk a directory tree collecting all .rs files.
+/// Contained to `dir` (symlink targets outside the root are pruned).
+/// Uses canonical-path-based visited set (works on all platforms).
+#[rustfmt::skip]
+pub fn walk_rs_files
+    (dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::<PathBuf>::new();
+    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
+}
+
+fn walk_rs_files_inner(
+    dir: &Path,
+    cb: &mut dyn FnMut(PathBuf),
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
+) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if is_ignored_dir(&p, ignored) {
+                continue;
+            }
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
+                if sym_meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&p) {
+                        if !target.starts_with(root) {
+                            continue;
+                        }
+                        // Use canonical path instead of inode (P2.1)
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
+                        if let Ok(target_meta) = target.metadata() {
+                            if target_meta.is_dir() {
+                                walk_rs_files_inner(&target, cb, ignored, visited, root);
+                            } else if target_meta.is_file()
+                                && target.starts_with(root)
+                                && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
+                            {
+                                cb(target);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+            if p.is_dir() {
+                // Use canonical path instead of inode (P2.1)
+                let canonical = std::fs::canonicalize(&p).unwrap_or_else(|_| p.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
+                }
+                walk_rs_files_inner(&p, cb, ignored, visited, root);
+            } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
+                cb(p);
+            }
+        }
+    }
+}
+
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file_sync(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Get file basename (filename without directory path).
+pub fn get_basename(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Get file stem (filename without extension and directory).
+pub fn get_file_stem(path: &str) -> &str {
+    std::path::Path::new(path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("")
+}
+
+/// Check if path is a directory.
+pub fn is_directory(path: &str) -> bool {
+    std::path::Path::new(path).is_dir()
+}
+
+/// Check if path is a file.
+pub fn is_file(path: &str) -> bool {
+    std::path::Path::new(path).is_file()
+}
+
+/// Get parent directory path.
+pub fn get_parent(path: &str) -> &str {
+    std::path::Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .unwrap_or("")
+}
+
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Read file content, returning empty string on error.
+pub fn read_file_safe(path: &str) -> String {
+    fs::read_to_string(path).unwrap_or_default()
+}
+
+/// Read file content with generic path.
+pub fn read_file_generic<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Check if path exists.
+pub fn path_exists<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().exists()
+}
+
+/// Write content to file.
+pub fn write_file<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(
+    path: P,
+    contents: C,
+) -> std::io::Result<()> {
+    fs::write(path, contents)
+}
+
+/// Check if path is a directory (generic).
+pub fn is_dir<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_dir()
+}
+
+/// Check if path is a file (generic).
+pub fn is_file_generic<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
+/// Walk up from `start` looking for workspace root markers.
+/// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
+pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
+    let mut dir = std::path::Path::new(start).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    loop {
+        // Priority 1: workspace root markers (crates/, packages/, modules/)
+        if dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        // Priority 2: Cargo.toml (only if not inside a workspace member)
+        if dir.join("Cargo.toml").exists() {
+            // Check if parent has workspace markers — if so, keep walking up
+            if let Some(parent) = dir.parent() {
+                if parent.join("crates").is_dir()
+                    || parent.join("packages").is_dir()
+                    || parent.join("modules").is_dir()
+                {
+                    // Don't return yet — parent is the real workspace root
+                } else {
+                    return Some(dir);
+                }
+            } else {
+                return Some(dir);
+            }
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+```
+
+---
+
 ## File: crates/shared/src/common/utility_language_detector.rs
 
 ```rust
@@ -4912,17 +5432,50 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
 
 ---
 
+## File: crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs
+
+```rust
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+use crate::config_system::taxonomy_source_vo::ConfigResult;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait IConfigOrchestratorAggregate: Send + Sync {
+    async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult;
+
+    async fn load_config_for_language(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> ConfigResult;
+
+    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo>;
+
+    /// Synchronous config loading for container initialization.
+    /// Searches workspace root for config YAML, falls back to embedded defaults.
+    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+
+    /// Get ignored paths from config (hardcoded defaults + config values).
+    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
+}
+```
+
+---
+
 ## File: crates/shared/src/config-system/mod.rs
 
 ```rust
 // config-system — taxonomy and contract types
-pub mod contract_multi_project_orchestrator_aggregate;
-pub mod contract_orchestration_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_parser_protocol;
 pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
+pub mod taxonomy_config_language_vo;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
 pub mod taxonomy_multi_project_summary_vo;
@@ -4931,8 +5484,10 @@ pub mod taxonomy_multi_project_workspace_info_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
+pub mod utility_config_defaults;
 pub mod utility_config_io;
 pub mod utility_config_merger;
+pub mod utility_config_parser;
 ```
 
 ---
@@ -4941,8 +5496,6 @@ pub mod utility_config_merger;
 
 ```rust
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -4950,11 +5503,10 @@ use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
@@ -4962,6 +5514,7 @@ pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
+    pub enabled: BooleanVO,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default)]
@@ -5024,228 +5577,6 @@ impl Default for ArchitectureConfig {
         }
     }
 }
-
-pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
-    if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        // Extract layers from rules (first rule containing "layers" key) if not at top-level
-        if arch_json.get("layers").is_none() {
-            if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
-                for (_rule_code, rule_val) in rules_obj.iter_mut() {
-                    if let Some(layers) = rule_val.get_mut("layers") {
-                        let layers = std::mem::take(layers);
-                        arch_json["layers"] = layers;
-                        break;
-                    }
-                }
-            }
-        }
-        let mut json = arch_json;
-        fn remove_nulls(val: &mut serde_json::Value) {
-            match val {
-                serde_json::Value::Object(m) => {
-                    m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                _ => {}
-            }
-        }
-        remove_nulls(&mut json);
-        // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
-        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
-            json["ignored_paths"] = serde_json::json!({"values": arr});
-        }
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
-                let mut suffix_updates: Vec<(
-                    String,
-                    Option<String>,
-                    serde_json::Value,
-                    serde_json::Value,
-                )> = Vec::new();
-                for (layer_name, layer) in obj.iter() {
-                    if let Some(suffix_val) = layer.get("suffix") {
-                        if let Some(arr) = suffix_val.as_array() {
-                            let mut policy: Option<String> = None;
-                            let mut allowed = serde_json::Value::Array(Vec::new());
-                            let mut forbidden = serde_json::Value::Array(Vec::new());
-                            for entry in arr {
-                                if let Some(entry_obj) = entry.as_object() {
-                                    for (pkey, plist) in entry_obj {
-                                        match pkey.as_str() {
-                                            "strict" | "flexible" => {
-                                                policy = Some(pkey.clone());
-                                                if let Some(list) = plist.as_array() {
-                                                    allowed = serde_json::json!(list);
-                                                }
-                                            }
-                                            "forbidden" => {
-                                                if let Some(list) = plist.as_array() {
-                                                    forbidden = serde_json::json!(list);
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                            }
-                            suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
-                        }
-                    }
-                }
-                for (name, policy, allowed, forbidden) in suffix_updates {
-                    if let Some(layer) = obj.get_mut(&name) {
-                        if let Some(layer_obj) = layer.as_object_mut() {
-                            if let Some(ref p) = policy {
-                                layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                            }
-                            layer_obj.insert("allowed_suffix".to_string(), allowed);
-                            if let Some(arr) = forbidden.as_array() {
-                                if !arr.is_empty() {
-                                    layer_obj.insert("forbidden_suffix".to_string(), forbidden);
-                                }
-                            }
-                            layer_obj.remove("suffix");
-                        }
-                    }
-                }
-            }
-        }
-        if let Some(rules_obj) = json.get_mut("rules") {
-            if let Some(obj) = rules_obj.as_object_mut() {
-                let mut flat = serde_json::Value::Array(Vec::new());
-                for (code, rule_val) in obj.iter() {
-                    if let Some(rule_obj) = rule_val.as_object() {
-                        let mut base = rule_obj.clone();
-                        base.insert("name".to_string(), serde_json::json!(code));
-                        // Expand scope array into multiple entries — one per scope element
-                        // Only applies to rules WITHOUT conditions (conditions have their own scopes)
-                        if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                            if !base.contains_key("conditions") && scope_arr.len() > 1 {
-                                for scope_val in scope_arr {
-                                    if let Some(s) = scope_val.as_str() {
-                                        let mut entry = base.clone();
-                                        entry.insert("scope".to_string(), serde_json::json!(s));
-                                        if let Some(arr) = flat.as_array_mut() {
-                                            arr.push(serde_json::Value::Object(entry));
-                                        }
-                                    }
-                                }
-                                continue; // Already pushed per-scope entries, skip single push below
-                            } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
-                                base.insert("scope".to_string(), serde_json::json!(first));
-                            }
-                        }
-                        if let Some(conditions) = base.remove("conditions") {
-                            if let Some(conds) = conditions.as_array() {
-                                if !conds.is_empty() {
-                                    for cond in conds {
-                                        if let Some(cond_obj) = cond.as_object() {
-                                            let mut entry = base.clone();
-                                            for (k, v) in cond_obj {
-                                                entry.insert(k.clone(), v.clone());
-                                            }
-                                            // Remove top-level scope array leftovers if condition has its own scope
-                                            if let Some(arr) = flat.as_array_mut() {
-                                                arr.push(serde_json::Value::Object(entry));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if let Some(arr) = flat.as_array_mut() {
-                                arr.push(serde_json::Value::Object(base));
-                            }
-                        }
-                    }
-                }
-                *rules_obj = flat;
-            }
-        }
-        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[warn] Failed to deserialize ArchitectureConfig: {:?}", e);
-                eprintln!("[warn] Falling back to default config. Check your YAML syntax and field types.");
-                ArchitectureConfig::default()
-            }
-        };
-        // Top-level ignored_paths (outside architecture section) — merge into config
-        if config.ignored_paths.values.is_empty() {
-            if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-                let paths: Vec<_> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                    .collect();
-                if !paths.is_empty() {
-                    config.ignored_paths = FilePathList::new(paths);
-                }
-            }
-        }
-        config
-    } else {
-        let mut config = ArchitectureConfig::default();
-        if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        config
-    }
-}
-
-/// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
-/// Runtime project-level config files override these defaults.
-/// Cached via OnceLock to avoid re-parsing on every call.
-static DEFAULT_RUST_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_PYTHON_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-
-pub fn default_aes_config() -> ArchitectureConfig {
-    DEFAULT_RUST_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
-        .clone()
-}
-
-pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
-    match language {
-        "rust" => default_aes_config(),
-        "python" => DEFAULT_PYTHON_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
-            })
-            .clone(),
-        "javascript" | "typescript" => DEFAULT_TS_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!(
-                    "../../../../lint_arwaky.config.javascript.yaml"
-                ))
-            })
-            .clone(),
-        _ => {
-            eprintln!(
-                "[warn] Unknown language '{}', using empty default config.",
-                language
-            );
-            ArchitectureConfig::default()
-        }
-    }
-}
 ```
 
 ---
@@ -5295,12 +5626,12 @@ pub trait ICapabilitiesRoleChecker: Send + Sync {
 ## File: crates/shared/src/role-rules/contract_role_aggregate.rs
 
 ```rust
-// PURPOSE: IRoleAggregate — aggregate trait bundling taxonomy, contract, capabilities, surface, and agent role checkers
 use crate::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 use crate::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use crate::role_rules::contract_role_protocol::IContractRoleChecker;
 use crate::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use crate::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use crate::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
 
 pub trait IRoleAggregate: Send + Sync {
     fn taxonomy(&self) -> &dyn ITaxonomyRoleChecker;
@@ -5308,6 +5639,7 @@ pub trait IRoleAggregate: Send + Sync {
     fn capabilities(&self) -> &dyn ICapabilitiesRoleChecker;
     fn surface(&self) -> &dyn ISurfaceRoleChecker;
     fn agent(&self) -> &dyn IAgentRoleChecker;
+    fn utility(&self) -> &dyn IUtilityRoleChecker;
 }
 ```
 
@@ -5399,6 +5731,19 @@ pub trait ITaxonomyRoleChecker: Send + Sync {
 
 ---
 
+## File: crates/shared/src/role-rules/contract_utility_role_protocol.rs
+
+```rust
+use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::taxonomy_source_vo::SourceContentVO;
+
+pub trait IUtilityRoleChecker: Send + Sync {
+    fn check_utility_convention(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
+}
+```
+
+---
+
 ## File: crates/shared/src/role-rules/mod.rs
 
 ```rust
@@ -5410,11 +5755,11 @@ pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
 pub mod contract_surface_role_protocol;
 pub mod contract_taxonomy_role_protocol;
+pub mod contract_utility_role_protocol;
 pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_layer_names_vo;
 pub mod taxonomy_role_rule_vo;
 pub mod taxonomy_violation_role_vo;
-pub mod utility_role_io;
 pub use taxonomy_violation_role_vo::AesRoleViolation;
 ```
 
@@ -5429,7 +5774,7 @@ pub const LAYER_AGENT: &str = "agent";
 pub const LAYER_CAPABILITIES: &str = "capabilities";
 pub const LAYER_CONTRACT: &str = "contract";
 pub const LAYER_UTILITY: &str = "utility";
-pub const LAYER_SURFACES: &str = "surfaces";
+pub const LAYER_SURFACES: &str = "surface";
 pub const LAYER_TAXONOMY: &str = "taxonomy";
 pub const LAYER_ROOT: &str = "root";
 pub const LAYER_GLOBAL: &str = "global";
@@ -5917,17 +6262,3 @@ impl From<AesRoleViolation> for String {
 
 ---
 
-## File: crates/shared/src/role-rules/utility_role_io.rs
-
-```rust
-// PURPOSE: Role I/O utility — stateless file reading helpers for role auditing
-
-use std::fs;
-
-/// Read a file's content. Returns Ok(content) or Err(io::Error).
-pub fn read_file(path: &str) -> Result<String, std::io::Error> {
-    fs::read_to_string(path)
-}
-```
-
----

@@ -2,8 +2,8 @@
 
 ## Allowed Imports
 
-| Contract File               | May Import From                                                                |
-| --------------------------- | ------------------------------------------------------------------------------ |
+| Contract File             | May Import From                                                                |
+| ------------------------- | ------------------------------------------------------------------------------ |
 | `contract_*_protocol.rs`  | taxonomy types, other contract types, std marker traits, async_trait if needed |
 | `contract_*_aggregate.rs` | taxonomy types, other contract types, std marker traits, async_trait if needed |
 

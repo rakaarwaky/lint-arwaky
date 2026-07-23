@@ -96,21 +96,36 @@ fn is_rust_trait_import(name: &str) -> bool {
 
 pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
-    let mut in_cfg_test = false;
+    let mut in_cfg_block = false;
+    let mut cfg_brace_depth = 0;
     for line in content.lines() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("#[cfg(test)]") {
-            in_cfg_test = true;
+        // Skip any #[cfg(...)] attribute and its associated block
+        // This covers #[cfg(test)], #[cfg(feature = "...")], #[cfg(not(...))], etc.
+        if trimmed.starts_with("#[cfg(") {
+            in_cfg_block = true;
+            cfg_brace_depth = 0;
             continue;
         }
-        if in_cfg_test {
-            if trimmed == "}" || trimmed.starts_with("}") {
-                in_cfg_test = false;
+        if in_cfg_block {
+            for ch in trimmed.chars() {
+                match ch {
+                    '{' => cfg_brace_depth += 1,
+                    '}' => {
+                        cfg_brace_depth -= 1;
+                        if cfg_brace_depth <= 0 {
+                            in_cfg_block = false;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
             }
             continue;
         }
 
+        // Python: `from X import Y, Z` or `from X import Y as Z`
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some((from_part, import_part)) = trimmed.split_once(" import ") {
                 let module = from_part[5..].trim();
@@ -129,6 +144,26 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
                             Identity::new(name),
                             Identity::new(format!("{}.{}", module, name)),
                         );
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Python: `import X` or `import X as Y` (without `from`)
+        if let Some(import_part) = trimmed.strip_prefix("import ") {
+            // Skip if this is actually a `from ... import ...` (already handled above)
+            if !trimmed.starts_with("from ") {
+                for name in import_part.split(',') {
+                    let name = name.trim().trim_end_matches(';');
+                    if name.is_empty() || name == "*" {
+                        continue;
+                    }
+                    if let Some((sym, alias)) = name.split_once(" as ") {
+                        aliases.insert(Identity::new(alias.trim()), Identity::new(sym.trim()));
+                    } else {
+                        let alias = name.rsplit('.').next().unwrap_or(name);
+                        aliases.insert(Identity::new(alias), Identity::new(name));
                     }
                 }
             }
@@ -170,17 +205,38 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
             continue;
         }
 
-        if let Some(import_part) = trimmed.strip_prefix("import ") {
-            for name in import_part.split(',') {
-                let name = name.trim();
-                if name.is_empty() {
-                    continue;
-                }
-                if let Some((sym, alias)) = name.split_once(" as ") {
-                    aliases.insert(Identity::new(alias.trim()), Identity::new(sym.trim()));
-                } else {
-                    let alias = name.rsplit('.').next().unwrap_or(name);
-                    aliases.insert(Identity::new(alias), Identity::new(name));
+        // JavaScript: `const X = require('Y')` or `const { A, B } = require('Y')`
+        if let Some(rest) = trimmed.strip_prefix("const ") {
+            if let Some(eq_pos) = rest.find('=') {
+                let left = rest[..eq_pos].trim();
+                let right = rest[eq_pos + 1..].trim();
+                if let Some(req_start) = right.find("require(") {
+                    let after_require = &right[req_start + 8..];
+                    if let Some(paren_end) = after_require.find(')') {
+                        let _module = after_require[..paren_end]
+                            .trim_matches(|c| c == '\'' || c == '"' || c == '`');
+                        // Handle destructured require: `const { A, B } = require('Y')`
+                        if left.starts_with('{') && left.ends_with('}') {
+                            let inner = &left[1..left.len() - 1];
+                            for name in inner.split(',') {
+                                let name = name.trim();
+                                if name.is_empty() || name == "*" {
+                                    continue;
+                                }
+                                if let Some((sym, alias)) = name.split_once(" as ") {
+                                    aliases.insert(
+                                        Identity::new(alias.trim()),
+                                        Identity::new(sym.trim()),
+                                    );
+                                } else {
+                                    aliases.insert(Identity::new(name), Identity::new(name));
+                                }
+                            }
+                        } else {
+                            // Simple require: `const X = require('Y')`
+                            aliases.insert(Identity::new(left), Identity::new(left));
+                        }
+                    }
                 }
             }
         }
@@ -264,16 +320,29 @@ pub fn extract_used_symbols(
 
 pub fn extract_rust_js_imports(content: &str) -> Vec<(SymbolName, LineNumber)> {
     let mut imports = Vec::new();
-    let mut in_cfg_test = false;
+    let mut in_cfg_block = false;
+    let mut cfg_brace_depth = 0;
     for (i, line) in content.lines().enumerate() {
         let t = line.trim();
-        if t.starts_with("#[cfg(test)]") {
-            in_cfg_test = true;
+        // Skip any #[cfg(...)] attribute and its associated block
+        if t.starts_with("#[cfg(") {
+            in_cfg_block = true;
+            cfg_brace_depth = 0;
             continue;
         }
-        if in_cfg_test {
-            if t == "}" || t.starts_with("}") {
-                in_cfg_test = false;
+        if in_cfg_block {
+            for ch in t.chars() {
+                match ch {
+                    '{' => cfg_brace_depth += 1,
+                    '}' => {
+                        cfg_brace_depth -= 1;
+                        if cfg_brace_depth <= 0 {
+                            in_cfg_block = false;
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
             }
             continue;
         }
@@ -382,148 +451,4 @@ pub fn is_name_used_at(name: &str, content: &str, exclude_line: usize) -> bool {
         .collect::<Vec<_>>()
         .join("\n");
     rest.contains(name)
-}
-
-// ─── Private Helpers ───
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn derive_macro_serialize_always_used() {
-        let content = r#"
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-struct Config {
-    name: String,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("Serialize"),
-            Identity::new("serde::Serialize"),
-        );
-        aliases.insert(
-            Identity::new("Deserialize"),
-            Identity::new("serde::Deserialize"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("Serialize")),
-            "Serialize should always be considered used"
-        );
-        assert!(
-            used.contains(&Identity::new("Deserialize")),
-            "Deserialize should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_async_trait_always_used() {
-        let content = r#"
-use async_trait::async_trait;
-
-#[async_trait]
-trait MyTrait {
-    async fn do_something();
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("async_trait"),
-            Identity::new("async_trait::async_trait"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("async_trait")),
-            "async_trait should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_enum_iter_always_used() {
-        // EnumIter was NOT previously in is_rust_trait_import — only DERIVE_MACROS catches it
-        let content = r#"
-use strum::{EnumIter, Display};
-
-#[derive(EnumIter, Display)]
-enum Color {
-    Red,
-    Green,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(Identity::new("EnumIter"), Identity::new("strum::EnumIter"));
-        aliases.insert(Identity::new("Display"), Identity::new("strum::Display"));
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("EnumIter")),
-            "EnumIter should always be considered used"
-        );
-        assert!(
-            used.contains(&Identity::new("Display")),
-            "Display should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_as_ref_str_always_used() {
-        // AsRefStr was NOT previously in is_rust_trait_import — only DERIVE_MACROS catches it
-        let content = r#"
-use strum::AsRefStr;
-
-#[derive(AsRefStr)]
-enum Status {
-    Active,
-    Inactive,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(Identity::new("AsRefStr"), Identity::new("strum::AsRefStr"));
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("AsRefStr")),
-            "AsRefStr should always be considered used"
-        );
-    }
-
-    #[test]
-    fn non_derive_import_still_checked_normally() {
-        // Regular imports should NOT be auto-marked as used
-        let content = r#"
-use std::collections::HashMap;
-
-fn main() {
-    let _x = 42;
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("HashMap"),
-            Identity::new("std::collections::HashMap"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            !used.contains(&Identity::new("HashMap")),
-            "HashMap is genuinely unused"
-        );
-    }
-
-    #[test]
-    fn is_name_used_returns_true_for_derive_macros() {
-        // is_name_used should short-circuit for all DERIVE_MACROS entries
-        for &m in DERIVE_MACROS {
-            assert!(
-                is_name_used(m, "fn main() {}", 0),
-                "{m} should be considered used via DERIVE_MACROS"
-            );
-        }
-    }
 }

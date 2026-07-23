@@ -3,15 +3,21 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR not set");
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
+    let out_dir = match std::env::var("OUT_DIR") {
+        Ok(v) => v,
+        Err(e) => panic!("OUT_DIR not set: {e}"),
+    };
+    let manifest_dir = match std::env::var("CARGO_MANIFEST_DIR") {
+        Ok(v) => v,
+        Err(e) => panic!("CARGO_MANIFEST_DIR not set: {e}"),
+    };
 
     // CARGO_MANIFEST_DIR = .../lint-arwaky/crates/shared
     // Workspace root = 2 parent levels up (shared → crates → lint-arwaky)
-    let workspace_root = Path::new(&manifest_dir)
-        .ancestors()
-        .nth(2)
-        .expect("cannot reach workspace root from manifest dir");
+    let workspace_root = match Path::new(&manifest_dir).ancestors().nth(2) {
+        Some(p) => p,
+        None => panic!("cannot reach workspace root from manifest dir"),
+    };
 
     for name in &[
         "lint_arwaky.config.rust.yaml",
@@ -28,7 +34,9 @@ fn main() {
             );
         }
 
-        fs::copy(&src, &dst).expect("Failed to copy config file");
+        if let Err(e) = fs::copy(&src, &dst) {
+            panic!("Failed to copy config file {name}: {e}");
+        }
     }
 
     // Re-run on config changes

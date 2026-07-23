@@ -8,3 +8,4 @@ node_modules/
 .mimocode/
 packages/vscode-extension/media/cytoscape.min.js
 mimocode.jsonc
+.agents/

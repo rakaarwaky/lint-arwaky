@@ -1,39 +1,34 @@
 ---
 name: create-taxonomy-python
 description: "Create and validate Python taxonomy layer files in shared taxonomy: VOs, entities, errors, events, and constants. Taxonomy is the domain foundation layer — stable language of the domain, free from technical or behavioral concerns."
-version: 1.3.0
-category: refactoring
-tags:
-  [
-    python,
-    aes,
-    taxonomy,
-    shared,
-    vo,
-    entity,
-    error,
-    event,
-    constant,
-    aes201,
-    primitive-to-vo,
-  ]
-triggers:
-  - "create taxonomy python"
-  - "add taxonomy python"
-  - "move dataclass to taxonomy python"
-  - "create vo python"
-  - "create error taxonomy python"
-  - "create constant taxonomy python"
-  - "check taxonomy python"
-  - "audit taxonomy python"
-dependencies: []
-related:
-  - create-capabilities-python
-  - create-agent-python
-  - enforce-1-class-per-file-python
-  - trait-consolidation-python
-  - fix-primitive-to-vo
-  - fix-magic-constant
+metadata:
+  tags:
+    [
+      python,
+      aes,
+      taxonomy,
+      shared,
+      vo,
+      entity,
+      error,
+      event,
+      constant,
+      primitive-to-vo,
+    ]
+  triggers:
+    - "create taxonomy python"
+    - "add taxonomy python"
+    - "move dataclass to taxonomy python"
+    - "create vo python"
+    - "create error taxonomy python"
+    - "create constant taxonomy python"
+    - "check taxonomy python"
+    - "audit taxonomy python"
+  dependencies: []
+  related:
+    - create-capabilities-python
+    - create-agent-python
+    - create-contract-python
 ---
 
 # create-taxonomy-python
@@ -64,22 +59,22 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## References
 
-| File | Content |
-|------|---------|
-| `references/purity-imports.md` | AES201 import restrictions, allowed/forbidden dependencies |
-| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns |
-| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules |
-| `references/examples.md` | All BAD/GOOD code examples |
-| `references/commands.md` | Quick heuristic check commands |
-| `references/checklist.md` | Verification checklist |
+| File                               | Content                                                    |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `references/purity-imports.md`     | AES201 import restrictions, allowed/forbidden dependencies |
+| `references/dataclass-patterns.md` | VOs, entities, errors, events, constants patterns          |
+| `references/primitive-vo-rules.md` | Primitive policy table, VO construction rules              |
+| `references/examples.md`           | All BAD/GOOD code examples                                 |
+| `references/commands.md`           | Quick heuristic check commands                             |
+| `references/checklist.md`          | Verification checklist                                     |
 
 ## Templates
 
-| File | Purpose |
-|------|---------|
-| `templates/taxonomy_name_vo.py` | New value object file |
-| `templates/taxonomy_name_error.py` | New error type file |
-| `templates/taxonomy_name_constant.py` | New constants file |
+| File                                  | Purpose               |
+| ------------------------------------- | --------------------- |
+| `templates/taxonomy_name_vo.py`       | New value object file |
+| `templates/taxonomy_name_error.py`    | New error type file   |
+| `templates/taxonomy_name_constant.py` | New constants file    |
 
 ## Workflow
 

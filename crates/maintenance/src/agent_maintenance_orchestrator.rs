@@ -10,10 +10,11 @@
 //   - diagnose_toolchain: check Rust/Python/Node.js toolchain versions
 //
 // This is the least "lint-like" crate — it handles ops, not code quality.
+use shared::common::taxonomy_action_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::mcp_server::taxonomy_action_vo::JobId;
 use shared::project_setup::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::project_setup::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::project_setup::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
@@ -27,10 +28,12 @@ use shared::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct MaintenanceCommandsOrchestrator {}
 
 use async_trait::async_trait;
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
     /// Count Python files and test files in the project, compute test ratio.
@@ -217,6 +220,7 @@ fn find_cache_dirs(dir: &Path, cache_names: &[&str], found_dirs: &mut Vec<PathBu
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for MaintenanceCommandsOrchestrator {
     fn default() -> Self {
         Self::new()

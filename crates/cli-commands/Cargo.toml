@@ -1,5 +1,5 @@
 [package]
-name = "cli_commands-lint-arwaky"
+name = "cli-commands-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "CLI command surfaces (`check`, `scan`, `fix`, `git`, `config`, `setup`, `tui`, `watch`) composing the agent orchestrators into the user-facing CLI."
@@ -38,3 +38,16 @@ git_hooks.workspace = true
 file_watch.workspace = true
 project_setup.workspace = true
 maintenance.workspace = true
+report_formatter.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+shared.workspace = true
+tokio.workspace = true
+
+[[bench]]
+name = "bench_cli_commands_formatting"
+path = "benches/bench_cli_commands_formatting.rs"
+harness = false

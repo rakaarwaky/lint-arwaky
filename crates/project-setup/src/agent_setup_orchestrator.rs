@@ -11,10 +11,10 @@
 //   - Config file writing and XDG config dir creation
 use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
+use shared::common::taxonomy_job_vo::EnvContentVO;
+use shared::common::taxonomy_job_vo::McpConfigVO;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::mcp_server::taxonomy_job_vo::EnvContentVO;
-use shared::mcp_server::taxonomy_job_vo::McpConfigVO;
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO;
 use std::collections::HashMap;
@@ -24,10 +24,12 @@ use async_trait::async_trait;
 use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct SetupManagementOrchestrator {
     protocol: Arc<dyn ISetupManagementProtocol>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait]
 impl SetupManagementAggregate for SetupManagementOrchestrator {
     fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
@@ -104,11 +106,13 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
         &self,
         filename: &str,
         content: &str,
-    ) -> shared::project_setup::WriteConfigResult {
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::WriteConfigResult {
         self.protocol.write_config_file(filename, content)
     }
 
-    fn create_global_config_dir(&self) -> shared::project_setup::CreateConfigDirResult {
+    fn create_global_config_dir(
+        &self,
+    ) -> shared::project_setup::taxonomy_setup_contract_vo::CreateConfigDirResult {
         self.protocol.create_global_config_dir()
     }
 
@@ -117,6 +121,7 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
     }
 }
 
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl SetupManagementOrchestrator {
     pub fn new(protocol: Arc<dyn ISetupManagementProtocol>) -> Self {
         Self { protocol }

@@ -1,4 +1,3 @@
-use shared::auto_fix::utility_auto_fix_io as af_io;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 
@@ -13,18 +12,20 @@ pub struct FileAdapter;
 
 impl IFileAdapterProtocol for FileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
-        if !af_io::path_exists(&path.value) {
+        if !shared::common::utility_file_handler::path_exists(&path.value) {
             return None;
         }
-        af_io::read_file(&path.value).map(ContentString::new)
+        shared::common::utility_file_handler::read_file_generic(&path.value)
+            .ok()
+            .map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
-        af_io::write_file(&path.value, &content.value)
+        shared::common::utility_file_handler::write_file(&path.value, &content.value).is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {
-        af_io::path_exists(&path.value)
+        shared::common::utility_file_handler::path_exists(&path.value)
     }
 }
 
@@ -41,4 +42,3 @@ impl FileAdapter {
         Self
     }
 }
-

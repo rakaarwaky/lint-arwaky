@@ -1,7 +1,7 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_language_vo::Language;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;

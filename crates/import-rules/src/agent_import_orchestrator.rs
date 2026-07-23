@@ -11,9 +11,7 @@ use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_source_vo::ContentString;
-use shared::common::utility_file;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::utility_config_merger::merge_config;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
@@ -33,7 +31,6 @@ pub struct ImportOrchestrator {
     dummy: Arc<dyn IDummyImportCheckerProtocol>,
     config: ArchitectureConfig,
     layer_map: LayerMapVO,
-    ignored_paths: Vec<String>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -55,7 +52,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
 
-        let root_dir = utility_file::find_workspace_root(target.value())
+        let root_dir = shared::common::utility_file_handler::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
@@ -162,14 +159,7 @@ impl ImportOrchestrator {
         dummy: Arc<dyn IDummyImportCheckerProtocol>,
         config: ArchitectureConfig,
     ) -> Self {
-        let (merged_layers, _) = merge_config(&config);
-        let layer_map = LayerMapVO::new(merged_layers);
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
+        let layer_map = LayerMapVO::new(config.layers.clone());
         Self {
             mandatory,
             forbidden,
@@ -178,26 +168,15 @@ impl ImportOrchestrator {
             dummy,
             config,
             layer_map,
-            ignored_paths,
         }
     }
 
     fn is_ignored(&self, p: &Path) -> bool {
-        let s = p.to_string_lossy();
-        if utility_file::is_path_ignored(&s, &self.ignored_paths) {
-            return true;
-        }
         let dir_name = p
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or_default();
-        if DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) {
-            return true;
-        }
-        if let Some(stripped) = dir_name.strip_prefix('.') {
-            return self.ignored_paths.iter().any(|i| i.contains(stripped));
-        }
-        false
+        DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) || dir_name.starts_with('.')
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {

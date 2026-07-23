@@ -11,6 +11,7 @@
 //
 // The orchestrator itself contains no git logic — it's pure composition.
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -18,29 +19,16 @@ use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct GitHooksOrchestrator {
     diff_protocol: Arc<dyn IDiffProtocol>,
     hook_protocol: Arc<dyn IHookProtocol>,
     hook_manager: Arc<dyn IHookManagerProtocol>,
 }
 
-impl GitHooksOrchestrator {
-    pub fn new(
-        diff_protocol: Arc<dyn IDiffProtocol>,
-        hook_protocol: Arc<dyn IHookProtocol>,
-        hook_manager: Arc<dyn IHookManagerProtocol>,
-    ) -> Self {
-        Self {
-            diff_protocol,
-            hook_protocol,
-            hook_manager,
-        }
-    }
-}
-
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 #[async_trait::async_trait]
 impl GitHooksAggregate for GitHooksOrchestrator {
     fn diff_protocol(&self) -> &dyn IDiffProtocol {
@@ -66,6 +54,21 @@ impl GitHooksAggregate for GitHooksOrchestrator {
 
     async fn uninstall_hook(&self) -> Result<SuccessStatus, GitHookError> {
         self.hook_protocol().uninstall_pre_commit().await
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl GitHooksOrchestrator {
+    pub fn new(
+        diff_protocol: Arc<dyn IDiffProtocol>,
+        hook_protocol: Arc<dyn IHookProtocol>,
+        hook_manager: Arc<dyn IHookManagerProtocol>,
+    ) -> Self {
+        Self {
+            diff_protocol,
+            hook_protocol,
+            hook_manager,
+        }
     }
 }
 

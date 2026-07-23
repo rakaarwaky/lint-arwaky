@@ -1,9 +1,9 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::ColumnNumber;
 use shared::taxonomy_common_vo::LineNumber;
@@ -13,9 +13,9 @@ use shared::taxonomy_message_vo::LintMessage;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::external_lint::taxonomy_external_lint_helper::{
-    canonicalize_path, exec_cmd_scan, js_apply_fix, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
+use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::external_lint::utility_external_lint::{
+    canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
 };
 
 // (No protocol implementation found in this file)
@@ -32,12 +32,10 @@ use shared::external_lint::taxonomy_external_lint_helper::{
 //   - Detects warnings by checking for "[warn]" in combined stdout+stderr
 //   - Reports a single LintResult per file (not per-difference)
 
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct PrettierAdapter {
-    executor: Arc<dyn ICommandExecutorProtocol>,
+    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -50,7 +48,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if shared::external_lint::utility_external_lint_io::is_file(Path::new(path_str))
+        if shared::common::utility_file_handler::is_file_generic(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
@@ -64,15 +62,10 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
         let cmd = resolve_js_cmd("prettier", vec!["--check".to_string(), abs_path], &wd.value);
 
-        let response = exec_cmd_scan(
-            self.executor.as_ref(),
-            cmd,
-            wd.clone(),
-            60.0,
-            Some(self.name()),
-            path,
-        )
-        .await?;
+        let response = self
+            .lint_executor
+            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
+            .await?;
 
         let mut results = Vec::new();
         let combined_output = format!("{}{}", response.stdout, response.stderr);
@@ -99,7 +92,9 @@ impl ILinterAdapterProtocol for PrettierAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        js_apply_fix(self.executor.as_ref(), path, "prettier", "--write").await
+        self.lint_executor
+            .js_apply_fix(path, "prettier", "--write")
+            .await
     }
 }
 
@@ -110,7 +105,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 // (No protocol implementation found in this file)
 
 impl PrettierAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
-        Self { executor }
+    pub fn new(lint_executor: Arc<dyn IExternalLintExecutorProtocol>) -> Self {
+        Self { lint_executor }
     }
 }

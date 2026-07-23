@@ -1,91 +1,215 @@
 ---
 name: lint-arwaky-typescript
 description: "Run lint-arwaky CLI scanner and MCP server for TypeScript projects — validate AES compliance, check layer violations, and fix architecture issues."
-version: 1.0.0
-category: tooling
-tags: [typescript, lint, aes, compliance, scanning, mcp]
-triggers:
-  - "lint arwaky typescript"
-  - "scan typescript project"
-  - "verify aes compliance typescript"
-dependencies: []
-related:
-  - module_logic_validator-typescript
-  - fix-cross-import-typescript
+metadata:
+  tags: [typescript, lint, aes, compliance, scanning, mcp]
+  triggers:
+    - "lint arwaky typescript"
+    - "scan typescript project"
+    - "verify aes compliance typescript"
+  dependencies: []
+  related:
+    - cleanup-files-typescript
+    - create-capabilities-typescript
 ---
 
-# lint-arwaky-typescript
+# lint-arwaky-typescript — Complete Command & Argument Reference
 
-## Purpose
+Run `lint-arwaky-cli` scanner and MCP server for TypeScript projects. Validates AES (Architecture Error Standards) compliance, checks layer violations, and helps fix architecture issues.
 
-Run lint-arwaky CLI scanner and MCP server for TypeScript projects. Validates AES (Architecture Error Standards) compliance, checks layer violations, and helps fix architecture issues.
+---
 
-## When to Use
+## 1. Global CLI Options
 
-- Before committing changes
-- After refactoring modules
-- When verifying AES compliance
-- When user asks to scan TypeScript project
+These options apply globally across all `lint-arwaky-cli` subcommands:
 
-## The Fundamental Question
+| Option | Long Flag | Description |
+| :--- | :--- | :--- |
+| `-v` | `--verbose` | Enable debug logging and detailed diagnostic traces. |
+| `-q` | `--quiet` | Minimize console output (suppress non-error messages). |
+| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration). |
+| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
+| `-h` | `--help` | Print help information for the CLI or specific subcommand. |
+| `-V` | `--version` | Print CLI binary version. |
 
-> **"Is this TypeScript project AES compliant?"**
+---
 
-If no → **Run lint-arwaky scanner and fix violations**
+## 2. Complete Commands & Subcommands Reference
 
-## Workflow
-
-### Step 1: Run CLI Scanner
-
-```bash
-# Scan TypeScript project for AES violations
-cargo run --bin lint-arwaky-cli -- scan <project-path> for typescript
-
-# Scan specific package
-cargo run --bin lint-arwaky-cli -- scan packages/animator for typescript
-
-# Check specific rule
-cargo run --bin lint-arwaky-cli -- check aes201 --language typescript
-```
-
-### Step 2: Review Violations
-
-Analyze scan results for:
-
-- AES201 import violations (cross-layer imports)
-- AES403 missing interface inheritance
-- AES404 mixed layer responsibilities
-- AES405 magic constants
-- AES406 surface role violations
-
-### Step 3: Fix Violations
-
-Use appropriate skills to fix violations:
+### `scan` / `check`
+Scans target TypeScript workspace, discovers packages, and runs all linters.
 
 ```bash
-# For import violations
-cargo run --bin lint-arwaky-cli -- fix cross-import packages/
+# Basic scan (defaults to text format)
+lint-arwaky-cli scan test-workspaces/packages
 
-# For missing interfaces
-cargo run --bin lint-arwaky-cli -- fix protocol packages/
+# Scan with specific output format (text | json | sarif | junit)
+lint-arwaky-cli scan test-workspaces/packages --format json
 
-# For layer violations
-cargo run --bin lint-arwaky-cli -- fix layer packages/
+# Scan specific package member
+lint-arwaky-cli scan test-workspaces/packages --member animator
+
+# Filter scan results by rule code (e.g. AES201, AES401)
+lint-arwaky-cli scan test-workspaces/packages --filter AES201
+
+# Save reports to custom directory
+lint-arwaky-cli scan test-workspaces/packages --format json --output-dir ~/.local/share/lint-arwaky/reports
 ```
 
-### Step 4: Verify Fixes
+**Arguments & Flags**:
+* `[PATH]`: Target path to scan (defaults to current directory `.`).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+* `--member <NAME>`: Target single workspace member by package name.
+* `--filter <CODE>`: Filter violations by AES rule ID.
+* `-o, --output-dir <DIR>`: Output directory path to save report files.
 
-Run scanner again to confirm violations resolved:
+---
+
+### `fix`
+Applies safe automatic fixes to compliance violations across the codebase.
 
 ```bash
-# Re-scan after fixes
-cargo run --bin lint-arwaky-cli -- scan <project-path> for typescript
+# Apply automatic fixes
+lint-arwaky-cli fix packages/
 
-# Verify specific rule
-cargo run --bin lint-arwaky-cli -- check aes201 --language typescript
+# Preview changes without modifying files (Dry Run)
+lint-arwaky-cli fix packages/ --dry-run
+
+# Preview fixes for specific rule code
+lint-arwaky-cli fix packages/ --dry-run --filter AES101
 ```
 
-## AES Rules for TypeScript
+**Arguments & Flags**:
+* `[PATH]`: Target path to fix (defaults to `.`).
+* `--dry-run`: Perform a dry run showing diffs without modifying files.
+* `--filter <CODE>`: Apply fixes only for a specific AES rule ID.
+
+---
+
+### `ci`
+Continuous Integration quality gate mode. Evaluates compliance score against a threshold.
+
+```bash
+# CI mode with default threshold
+lint-arwaky-cli ci packages/
+
+# CI mode with custom score threshold (exits with status 1 if score < 80)
+lint-arwaky-cli ci packages/ --threshold 80 --format junit
+```
+
+**Arguments & Flags**:
+* `[PATH]`: Target path (defaults to `.`).
+* `--threshold <SCORE>`: Minimum acceptable quality score (0–100, default: 80).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+
+---
+
+### `orphan`
+Checks if a target TypeScript source file is an orphan (AES501–AES506) unreachable from entry points.
+
+```bash
+# Check single file for orphan status
+lint-arwaky-cli orphan packages/animator/src/utility_helper.ts
+```
+
+**Arguments & Flags**:
+* `<FILE_PATH>`: Relative or absolute path to the target source file.
+
+---
+
+### `security` & `dependencies`
+Scans for security vulnerabilities and library dependency CVEs.
+
+```bash
+# Scan code for security issues (ESLint Security, Bandit, Cargo Audit)
+lint-arwaky-cli security packages/
+
+# Scan TypeScript library dependencies for vulnerabilities
+lint-arwaky-cli dependencies packages/
+```
+
+---
+
+### `watch`
+Monitors file system changes and re-runs linting automatically upon file save.
+
+```bash
+# Watch directory and re-lint on changes
+lint-arwaky-cli watch packages/
+```
+
+---
+
+### `install-hook` & `uninstall-hook`
+Manages Git pre-commit hook integration.
+
+```bash
+# Install git pre-commit hook
+lint-arwaky-cli install-hook
+
+# Uninstall git pre-commit hook
+lint-arwaky-cli uninstall-hook
+```
+
+---
+
+### `init` & `install`
+Initializes workspace configuration and installs linter adapter dependencies.
+
+```bash
+# Create default lint_arwaky.config.yaml in workspace
+lint-arwaky-cli init
+
+# Install required external linter tools (eslint, tsc, etc.)
+lint-arwaky-cli install
+```
+
+---
+
+### `config-show`, `adapters`, & `mcp-config`
+Displays workspace configuration and active integrations.
+
+```bash
+# Show active configuration tokens and rules
+lint-arwaky-cli config-show
+
+# List all active linter adapters (ESLint, TSC, etc.)
+lint-arwaky-cli adapters
+
+# Print MCP server configuration JSON for AI client integration
+lint-arwaky-cli mcp-config
+```
+
+---
+
+### `doctor` & `version`
+Environment diagnostic tools.
+
+```bash
+# Health check for TypeScript tooling and environment
+lint-arwaky-cli doctor
+
+# Display binary version information
+lint-arwaky-cli version
+```
+
+---
+
+## 3. Report Redirection & XDG Storage
+
+Output can be saved directly to the XDG `reports` directory (`~/.local/share/lint-arwaky/reports/`):
+
+```bash
+# Save JSON report
+lint-arwaky-cli scan packages/ --format json > ~/.local/share/lint-arwaky/reports/scan_ts.json
+
+# Save SARIF report for GitHub Code Scanning
+lint-arwaky-cli scan packages/ --format sarif > ~/.local/share/lint-arwaky/reports/scan_ts.sarif
+```
+
+---
+
+## 4. AES Rules for TypeScript
 
 ### Layer Import Rules (AES201)
 
@@ -102,29 +226,15 @@ FORBIDDEN:  capabilities_*, infrastructure_*, agent_* (peer layers)
 
 ### Layer Boundaries (AES404)
 
-| Layer          | Can Contain                  | Cannot Contain              |
-| -------------- | ---------------------------- | --------------------------- |
-| capabilities   | Pure computation, validation | I/O, network, database      |
-| infrastructure | I/O, network, database       | Business logic, computation |
-| agent          | Orchestration flow           | Computation, I/O, business  |
+| Layer | Can Contain | Cannot Contain |
+| :--- | :--- | :--- |
+| capabilities | Pure computation, validation | I/O, network, database |
+| infrastructure | I/O, network, database | Business logic, computation |
+| agent | Orchestration flow | Computation, I/O, business |
 
-## Quick Commands
+---
 
-```bash
-# Scan entire project
-cargo run --bin lint-arwaky-cli -- scan packages/ for typescript
-
-# Check specific rule
-cargo run --bin lint-arwaky-cli -- check aes201 --language typescript
-
-# Fix violations automatically
-cargo run --bin lint-arwaky-cli -- fix all packages/ --language typescript
-
-# Run MCP server for IDE integration
-cargo run --bin lint-arwaky-mcp
-```
-
-## Verification Checklist
+## 5. Verification Checklist
 
 - [ ] All layer imports follow AES201 rules
 - [ ] All classes implement appropriate protocol interfaces (AES403)
@@ -132,12 +242,14 @@ cargo run --bin lint-arwaky-mcp
 - [ ] No magic constants in layers (AES405)
 - [ ] Surface files follow role-based imports (AES406)
 
-## Common Issues (FIX)
+---
 
-| Issue                          | Fix Strategy                        |
-| ------------------------------ | ----------------------------------- |
-| Cross-layer imports            | Use contract layer interfaces via DI |
-| Missing interface inheritance  | Create protocol interface and implement |
-| Mixed layer responsibilities   | Move code to appropriate layer      |
-| Magic constants                | Extract to taxonomy constants       |
-| Surface importing capabilities | Use aggregate interfaces instead    |
+## 6. Common Issues & Fix Strategies
+
+| Issue | Fix Strategy |
+| :--- | :--- |
+| Cross-layer imports | Use contract layer interfaces via DI |
+| Missing interface inheritance | Create protocol interface and implement |
+| Mixed layer responsibilities | Move code to appropriate layer |
+| Magic constants | Extract to taxonomy constants |
+| Surface importing capabilities | Use aggregate interfaces instead |

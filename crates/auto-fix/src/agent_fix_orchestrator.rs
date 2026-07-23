@@ -20,12 +20,24 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 /// FixOrchestrator — pure delegation to IFixProtocol.
 ///
 /// No business logic — just wires the aggregate contract to the fix processor.
 pub struct FixOrchestrator {
     fix_protocol: Arc<dyn IFixProtocol>,
 }
+
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+
+impl LintFixOrchestratorAggregate for FixOrchestrator {
+    fn execute(&self, path: &FilePath) -> FixResult {
+        self.fix_protocol.execute(path)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl FixOrchestrator {
     pub fn new(fix_protocol: Arc<dyn IFixProtocol>) -> Self {
@@ -44,11 +56,5 @@ impl FixOrchestrator {
             .iter()
             .map(|m| m.to_string())
             .collect()
-    }
-}
-
-impl LintFixOrchestratorAggregate for FixOrchestrator {
-    fn execute(&self, path: &FilePath) -> FixResult {
-        self.fix_protocol.execute(path)
     }
 }

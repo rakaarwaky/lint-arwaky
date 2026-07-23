@@ -1,10 +1,29 @@
 // PURPOSE: BooleanVO, ColumnNumber, Count, DataFlowList, LineContentList, LineNumber, PatternList, Score, Timestamp — common VOs
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_job_id_vo::JobId;
 use crate::common::taxonomy_layer_vo::LineContentVO;
 use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum LanguageVO {
+    Rust,
+    Python,
+    JavaScript,
+    Unknown,
+}
+
+impl LanguageVO {
+    pub fn from_path(path: &str) -> Self {
+        let ext = path.rsplit('.').next().unwrap_or("");
+        match ext {
+            "rs" => LanguageVO::Rust,
+            "py" => LanguageVO::Python,
+            "js" | "ts" | "jsx" | "tsx" => LanguageVO::JavaScript,
+            _ => LanguageVO::Unknown,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(transparent)]
@@ -669,4 +688,21 @@ impl From<String> for ErrorMessage {
     fn from(s: String) -> Self {
         Self { value: s }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(transparent)]
+pub struct SuffixPolicyVO {
+    pub value: String,
+}
+
+impl SuffixPolicyVO {
+    pub fn new(value: String) -> Self {
+        Self { value }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct SuffixVO {
+    pub values: PatternList,
 }

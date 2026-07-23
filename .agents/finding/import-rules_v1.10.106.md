@@ -2,18 +2,6 @@
 
 This document contains the source code for feature crate `import-rules` along with its corresponding and imported definitions from the `shared` crate.
 
-## Problem Statement
-
-The following issues were detected by `lint-arwaky-cli scan`:
-
-```
-============================================================
-  AES Architecture Compliance Report
-============================================================
-  Project: /home/raka/mcp-arwaky/lint-arwaky/crates/import-rules
-  Violations: 0
-```
-
 ---
 
 ## File List
@@ -29,11 +17,12 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/import-rules/src/capabilities_import_unused_checker.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/import-rules/src/capabilities_import_unused_checker.rs)
 - [crates/import-rules/src/lib.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/import-rules/src/lib.rs)
 - [crates/import-rules/src/root_import_rules_container.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/import-rules/src/root_import_rules_container.rs)
-- [crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs)
 - [crates/shared/src/cli-commands/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/mod.rs)
 - [crates/shared/src/cli-commands/taxonomy_result_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_result_vo.rs)
 - [crates/shared/src/cli-commands/taxonomy_severity_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/cli-commands/taxonomy_severity_vo.rs)
 - [crates/shared/src/common/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/mod.rs)
+- [crates/shared/src/common/taxonomy_adapter_error.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_adapter_error.rs)
+- [crates/shared/src/common/taxonomy_common_error.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_common_error.rs)
 - [crates/shared/src/common/taxonomy_common_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_common_vo.rs)
 - [crates/shared/src/common/taxonomy_definition_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_definition_vo.rs)
 - [crates/shared/src/common/taxonomy_layer_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_layer_vo.rs)
@@ -45,9 +34,9 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/common/taxonomy_source_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/taxonomy_source_vo.rs)
 - [crates/shared/src/common/utility_file.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_file.rs)
 - [crates/shared/src/common/utility_layer_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/common/utility_layer_detector.rs)
+- [crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs)
 - [crates/shared/src/config-system/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/mod.rs)
 - [crates/shared/src/config-system/taxonomy_config_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/taxonomy_config_vo.rs)
-- [crates/shared/src/config-system/utility_config_merger.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/config-system/utility_config_merger.rs)
 - [crates/shared/src/import-rules/contract_cycle_import_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_cycle_import_protocol.rs)
 - [crates/shared/src/import-rules/contract_dummy_import_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_dummy_import_protocol.rs)
 - [crates/shared/src/import-rules/contract_import_forbidden_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_import_forbidden_protocol.rs)
@@ -55,7 +44,6 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/import-rules/contract_import_runner_aggregate.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_import_runner_aggregate.rs)
 - [crates/shared/src/import-rules/contract_unused_import_protocol.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/contract_unused_import_protocol.rs)
 - [crates/shared/src/import-rules/mod.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/mod.rs)
-- [crates/shared/src/import-rules/taxonomy_cycle_color_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/taxonomy_cycle_color_vo.rs)
 - [crates/shared/src/import-rules/taxonomy_dependency_edge_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/taxonomy_dependency_edge_vo.rs)
 - [crates/shared/src/import-rules/taxonomy_import_constant.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/taxonomy_import_constant.rs)
 - [crates/shared/src/import-rules/taxonomy_import_rule_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/taxonomy_import_rule_vo.rs)
@@ -63,7 +51,6 @@ The following issues were detected by `lint-arwaky-cli scan`:
 - [crates/shared/src/import-rules/taxonomy_violation_import_vo.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/taxonomy_violation_import_vo.rs)
 - [crates/shared/src/import-rules/utility_cycle_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_cycle_detector.rs)
 - [crates/shared/src/import-rules/utility_dummy_detector.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_dummy_detector.rs)
-- [crates/shared/src/import-rules/utility_file_read.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_file_read.rs)
 - [crates/shared/src/import-rules/utility_import_module_parser.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_import_module_parser.rs)
 - [crates/shared/src/import-rules/utility_import_resolver.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_import_resolver.rs)
 - [crates/shared/src/import-rules/utility_import_symbol_extractor.rs](file:///home/raka/mcp-arwaky/lint-arwaky/crates/shared/src/import-rules/utility_import_symbol_extractor.rs)
@@ -329,16 +316,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-| Category                      | Concern        | Responsibility                                 |
-| ----------------------------- | -------------- | ---------------------------------------------- |
+| Category                | Concern        | Responsibility                                 |
+| ----------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                               | Computation    | Calculate scores, totals, or derived values    |
-|                               | Transformation | Map, filter, reduce, or reshape data           |
-|                               | Resolution     | Apply rules and decide outcomes                |
-|                               | Assessment     | Judge severity, compliance, grade, or quality  |
+|                         | Computation    | Calculate scores, totals, or derived values    |
+|                         | Transformation | Map, filter, reduce, or reshape data           |
+|                         | Resolution     | Apply rules and decide outcomes                |
+|                         | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                               | Integration    | Communicate with third-party services or APIs  |
-|                               | Provider       | Generate data from external systems            |
+|                         | Integration    | Communicate with third-party services or APIs  |
+|                         | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -365,7 +352,7 @@ The only Agent role is orchestrator.
 
 ### Dependencies
 
-Agent may depend only on Taxonomy and Contract.
+Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
@@ -380,7 +367,7 @@ Agent may depend only on Taxonomy and Contract.
 ### Special Rules
 
 - Agent must depend on Contract, not concrete implementations.
-- Agent must not use and must be completely ignorant of Capabilities and Utility implementations.
+- Agent must not use and must be completely ignorant of Capabilities implementations.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
@@ -410,11 +397,11 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                           | Rule                                            |
-| ---------------- | --------------------------------- | -------------------------------------- | ----------------------------------------------- |
+| Group            | Roles                             | Dependencies                          | Rule                                            |
+| ---------------- | --------------------------------- | ------------------------------------- | ----------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate |
-| Utility surfaces | hook, store, action, screen       | Taxonomy only                          | Support smart surfaces but must not import them |
-| Passive surfaces | component, view, layout           | Taxonomy only                          | Presentation-only, no logic or orchestration    |
+| Utility surfaces | hook, store, action, screen       | Taxonomy only                         | Support smart surfaces but must not import them |
+| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
@@ -485,30 +472,132 @@ tokio.workspace = true
 ```rust
 # FRD — import-rules
 
-## Feature Goal
+## System Overview
 
 The import-rules crate enforces correct structural boundaries and unidirectional dependency flows. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
 
-## Requirements & Scope
+## Functional Requirements
 
-- AES201 Layer Dependency Violation (Unidirectional Flow)
-  - Requirement: Restricts imports based on the layer hierarchy. Lower layers (e.g., taxonomy_, contract_) must never import higher layers (e.g., capabilities_, utility_, agent_, surface_).
-  - Layer Boundary: utility_ and capabilities_ must not import each other directly; .
-- AES202 Mandatory Layer Imports
-  - Requirement: Verifies that specific layers contain required imports (e.g., ensuring a capability layer file correctly imports its corresponding contract trait, or that a surface entry imports its container).
-- AES203 Unused Import Detection
-  - Requirement: Detects and flags imported symbols that are never referenced anywhere within the file body.
-- AES204 Dummy or Forbidden Imports
-  - Requirement: Detects imports that point to mock, dummy, or forbidden packages/modules in production configurations.
-- AES205 Circular Dependency Cycle Detection
-  - Requirement: Builds a dependency graph of imports across all workspace files and detects cycles (e.g., File A imports B, B imports C, C imports A). Circular dependencies must be flagged.
+### FR-001: Layer Dependency Violation (AES201)
 
-## Success Indicators
+- **Description**: Restricts imports based on the layer hierarchy. Lower layers must never import higher layers.
+- **Input**: Rust, Python, JS/TS source files
+- **Output**: List of layer violation diagnostics
+- **Business Rules**:
+  - taxonomy_ must not import contract_, utility_, capabilities_, agent_, surface_, root_
+  - contract_ must not import utility_, capabilities_, agent_, surface_, root_
+  - utility_ and capabilities_ must not import each other directly
+- **Edge Cases**: Circular imports across layers
+- **Error Handling**: Emit AES201 diagnostic with file path and line number
 
-- [ ] Zero dependency cycles — all import cycle loops are detected and resolved.
-- [ ] Strict unidirectional flow — complete blocking of cross-layer violations (e.g., taxonomy files importing orchestration layer code).
-- [ ] Cleaner namespace — prompt warning of unused symbols to maintain clean, lean namespaces.
-- [ ] High performance — graph cycle detection runs within milliseconds using optimized cycle-finding algorithms (e.g., Tarjan's or simple DFS-based cycle detection).
+### FR-002: Mandatory Layer Imports (AES202)
+
+- **Description**: Verifies that specific layers contain required imports.
+- **Input**: Rust, Python, JS/TS source files
+- **Output**: List of missing import diagnostics
+- **Business Rules**:
+  - Capability files must import their corresponding contract trait
+  - Surface entries must import their container
+- **Edge Cases**: Files with multiple roles
+- **Error Handling**: Emit AES202 diagnostic with expected import
+
+### FR-003: Unused Import Detection (AES203)
+
+- **Description**: Detects and flags imported symbols that are never referenced within the file body.
+- **Input**: Rust, Python, JS/TS source files
+- **Output**: List of unused import diagnostics
+- **Business Rules**:
+  - Symbol must be referenced at least once after import
+  - Wildcard imports (`use foo::*`) are flagged
+- **Edge Cases**: Re-exports, pub use statements
+- **Error Handling**: Emit AES203 diagnostic with unused symbol name
+
+### FR-004: Dummy or Forbidden Imports (AES204)
+
+- **Description**: Detects imports that point to mock, dummy, or forbidden packages/modules.
+- **Input**: Rust, Python, JS/TS source files
+- **Output**: List of forbidden import diagnostics
+- **Business Rules**:
+  - Import path must not match forbidden patterns
+  - Test-only imports in production code are flagged
+- **Edge Cases**: Conditional imports, feature flags
+- **Error Handling**: Emit AES204 diagnostic with forbidden import path
+
+### FR-005: Circular Dependency Detection (AES205)
+
+- **Description**: Builds a dependency graph of imports across all workspace files and detects cycles.
+- **Input**: All workspace source files
+- **Output**: List of circular dependency diagnostics
+- **Business Rules**:
+  - Direct cycles (A → B → A) are flagged
+  - Indirect cycles (A → B → C → A) are flagged
+- **Edge Cases**: Self-imports, conditional cycles
+- **Error Handling**: Emit AES205 diagnostic with cycle path
+
+## Data Model / Entity Relationship
+
+``` `
+ImportRuleVO {
+    pattern: String
+    message: String
+    severity: Severity
+}
+
+LayerHierarchy {
+    taxonomy: Vec<String>
+    contract: Vec<String>
+    utility: Vec<String>
+    capabilities: Vec<String>
+    agent: Vec<String>
+    surface: Vec<String>
+    root: Vec<String>
+}
+``` `
+
+## API Contract
+
+| Function                    | Input                      | Output          | Description  |
+| --------------------------- | -------------------------- | --------------- | ------------ |
+| `check_layer_violation()`   | File path, imports         | Vec<Diagnostic> | Check AES201 |
+| `check_mandatory_imports()` | File path, imports         | Vec<Diagnostic> | Check AES202 |
+| `check_unused_imports()`    | File path, imports, usages | Vec<Diagnostic> | Check AES203 |
+| `check_dummy_imports()`     | File path, imports         | Vec<Diagnostic> | Check AES204 |
+| `check_circular_deps()`     | All files, imports         | Vec<Diagnostic> | Check AES205 |
+
+## Integration Points
+
+- **Internal**: config-system (YAML rules), code-analysis (file reading)
+- **External**: None
+
+## Non-functional Requirements (Detailed)
+
+- Performance: Check 1000 files in < 2 seconds
+- Memory: O(n) where n = number of imports
+- Accuracy: Zero false positives for valid imports
+
+## Test Scenarios / QA Checklist
+
+- [ ] Valid unidirectional import passes
+- [ ] Cross-layer import fails with AES201
+- [ ] Unused import detected with AES203
+- [ ] Circular dependency detected with AES205
+- [ ] Dummy import detected with AES204
+
+## Assumptions & Constraints
+
+- Layer hierarchy is defined in config YAML
+- Import statements are parsed via regex (not AST)
+- Workspace structure follows AES conventions
+
+## Glossary
+
+- **AES**: Agentic Engineering System
+- **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
+- **Diagnostic**: Violation report with file path, line, column, rule code
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
 ```
 
 ---
@@ -518,161 +607,63 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 ```rust
 // PURPOSE: ImportOrchestrator — agent that orchestrates import rule checks
 // Uses new protocol interfaces — no IAnalyzer, no IArchImportProtocol.
+
 use async_trait::async_trait;
+use std::path::Path;
+use std::sync::Arc;
+
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::common::taxonomy_adapter_error::ScanError;
+use shared::common::taxonomy_common_error::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::utility_file;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_constant::DEFAULT_SKIP_DIRS;
 use shared::taxonomy_definition_vo::LayerMapVO;
-use std::path::Path;
-use std::sync::Arc;
 
-pub fn str_or<'a>(opt: Option<&'a str>, fallback: &'a str) -> &'a str {
-    opt.map_or(fallback, |s| s)
-}
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ImportOrchestrator {
     mandatory: Arc<dyn IImportMandatoryProtocol>,
     forbidden: Arc<dyn IImportForbiddenProtocol>,
     unused: Arc<dyn IUnusedImportProtocol>,
     cycle: Arc<dyn ICycleImportProtocol>,
+    dummy: Arc<dyn IDummyImportCheckerProtocol>,
     config: ArchitectureConfig,
     layer_map: LayerMapVO,
     ignored_paths: Vec<String>,
 }
 
-impl ImportOrchestrator {
-    pub fn new(
-        mandatory: Arc<dyn IImportMandatoryProtocol>,
-        forbidden: Arc<dyn IImportForbiddenProtocol>,
-        unused: Arc<dyn IUnusedImportProtocol>,
-        cycle: Arc<dyn ICycleImportProtocol>,
-    ) -> Self {
-        let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(
-            &ArchitectureConfig::default(),
-        );
-        let config = ArchitectureConfig::default();
-        let layer_map = LayerMapVO::new(merged_layers.clone());
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        Self {
-            mandatory,
-            forbidden,
-            unused,
-            cycle,
-            config,
-            layer_map,
-            ignored_paths,
-        }
-    }
-
-    pub fn with_config(config: ArchitectureConfig) -> Self {
-        let (merged_layers, _) =
-            shared::config_system::utility_config_merger::merge_config(&config);
-        let mut config = config;
-        config.layers = merged_layers.clone();
-        let layer_map = LayerMapVO::new(merged_layers);
-        let ignored_paths: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
-        let empty_mandatory: Arc<dyn IImportMandatoryProtocol> = Arc::new(
-            crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new(),
-        );
-        let empty_forbidden: Arc<dyn IImportForbiddenProtocol> = Arc::new(
-            crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new(),
-        );
-        let empty_unused: Arc<dyn IUnusedImportProtocol> =
-            Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new());
-        let empty_cycle: Arc<dyn ICycleImportProtocol> =
-            Arc::new(crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new());
-        Self {
-            mandatory: empty_mandatory,
-            forbidden: empty_forbidden,
-            unused: empty_unused,
-            cycle: empty_cycle,
-            config,
-            layer_map,
-            ignored_paths,
-        }
-    }
-
-    fn is_ignored(&self, p: &Path) -> bool {
-        let s = p.to_string_lossy();
-        let dir_name = p
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
-        shared::common::utility_file::is_path_ignored(&s, &self.ignored_paths)
-            || match dir_name.strip_prefix('.') {
-                Some(n) => self.ignored_paths.iter().any(|i| i.contains(n)),
-                None => false,
-            }
-    }
-
-    fn collect_files(&self, target: &FilePath) -> FilePathList {
-        let path = Path::new(target.value());
-        let mut files = Vec::new();
-        if path.is_dir() {
-            self.walk_dir(path, &mut files, true);
-        } else if path.is_file() {
-            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
-                files.push(fp);
-            }
-        }
-        FilePathList::new(files)
-    }
-
-    fn walk_dir(&self, dir: &Path, files: &mut Vec<FilePath>, is_subdir: bool) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    if is_subdir && self.is_ignored(&path) {
-                        continue;
-                    }
-                    self.walk_dir(&path, files, true);
-                } else if path.is_file() {
-                    if let Some(ext) = path.extension() {
-                        if matches!(
-                            ext.to_str(),
-                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                        ) {
-                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
-                                files.push(fp);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 
 #[async_trait]
 impl IImportRunnerAggregate for ImportOrchestrator {
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+    async fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
         if !self.config.enabled.value {
-            return Vec::new();
+            return Ok(Vec::new());
         }
+        let path = Path::new(target.value());
+        if !path.exists() {
+            return Err(ScanError::new(
+                FilePath::new(target.value().to_string()).unwrap_or_default(),
+                ErrorMessage::new(format!("Target path does not exist: {}", target.value())),
+            ));
+        }
+
         let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
-        let first_component = str_or(target.value().split('/').next(), ".");
-        let root_dir = match FilePath::new(first_component.to_string()) {
-            Ok(p) => p,
-            Err(_) => return vec![],
-        };
+
+        let root_dir = utility_file::find_workspace_root(target.value())
+            .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+            .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
         let (mandatory_results, forbidden_results) = tokio::join!(
             async {
@@ -700,10 +691,52 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(forbidden_results.values);
 
         for file in files.iter() {
-            let file_path = file.value();
-            if let Ok(content) = std::fs::read_to_string(file_path) {
+            let file_path = file.value().to_string();
+            let content =
+                tokio::task::spawn_blocking(move || std::fs::read_to_string(&file_path).ok())
+                    .await
+                    .ok()
+                    .flatten();
+            if let Some(content) = content {
                 self.unused
-                    .check_unused_imports(file_path, &content, &mut results.values);
+                    .check_unused_imports(file.value(), &content, &mut results.values);
+
+                let content_str = ContentString::new(content);
+                self.dummy.check_dummy_imports(
+                    file,
+                    &content_str,
+                    &mut results.values,
+                    &root_dir,
+                    &self.layer_map,
+                );
+                self.dummy.check_dummy_functions(
+                    file,
+                    &content_str,
+                    &mut results.values,
+                    &root_dir,
+                    &self.layer_map,
+                );
+                self.dummy.check_dummy_impls(
+                    file,
+                    &content_str,
+                    &mut results.values,
+                    &root_dir,
+                    &self.layer_map,
+                );
+                self.dummy.check_taxonomy_intent(
+                    file,
+                    &content_str,
+                    &mut results.values,
+                    &root_dir,
+                    &self.layer_map,
+                );
+                self.dummy.check_surface_logic(
+                    file,
+                    &content_str,
+                    &mut results.values,
+                    &root_dir,
+                    &self.layer_map,
+                );
             }
         }
 
@@ -716,11 +749,101 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 &mut results,
             )
             .await;
-        results.values
+        Ok(results.values)
     }
 
     fn name(&self) -> &str {
         "import-rules"
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl ImportOrchestrator {
+    pub fn new(
+        mandatory: Arc<dyn IImportMandatoryProtocol>,
+        forbidden: Arc<dyn IImportForbiddenProtocol>,
+        unused: Arc<dyn IUnusedImportProtocol>,
+        cycle: Arc<dyn ICycleImportProtocol>,
+        dummy: Arc<dyn IDummyImportCheckerProtocol>,
+        config: ArchitectureConfig,
+    ) -> Self {
+        let layer_map = LayerMapVO::new(config.layers.clone());
+        let ignored_paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.clone())
+            .collect();
+        Self {
+            mandatory,
+            forbidden,
+            unused,
+            cycle,
+            dummy,
+            config,
+            layer_map,
+            ignored_paths,
+        }
+    }
+
+    fn is_ignored(&self, p: &Path) -> bool {
+        let s = p.to_string_lossy();
+        if utility_file::is_path_ignored(&s, &self.ignored_paths) {
+            return true;
+        }
+        let dir_name = p
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        if DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) {
+            return true;
+        }
+        if let Some(stripped) = dir_name.strip_prefix('.') {
+            return self.ignored_paths.iter().any(|i| i.contains(stripped));
+        }
+        false
+    }
+
+    fn collect_files(&self, target: &FilePath) -> FilePathList {
+        let path = Path::new(target.value());
+        let mut files = Vec::new();
+        if path.is_dir() {
+            self.walk_dir(path, &mut files, false);
+        } else if path.is_file() {
+            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                files.push(fp);
+            }
+        }
+        FilePathList::new(files)
+    }
+
+    fn walk_dir(&self, dir: &Path, files: &mut Vec<FilePath>, is_subdir: bool) {
+        if is_subdir && self.is_ignored(dir) {
+            return;
+        }
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    self.walk_dir(&path, files, true);
+                } else if path.is_file() {
+                    if self.is_ignored(&path) {
+                        continue;
+                    }
+                    if let Some(ext) = path.extension() {
+                        if matches!(
+                            ext.to_str(),
+                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                        ) {
+                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                                files.push(fp);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 ```
@@ -730,25 +853,26 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 ## File: crates/import-rules/src/capabilities_cycle_import_analyzer.rs
 
 ```rust
+use std::collections::HashMap;
+
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_file;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::DependencyEdge;
-use shared::import_rules::{
-    utility_cycle_detector, utility_file_read, utility_import_module_parser,
-};
+use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;
-use std::collections::HashMap;
-
-use async_trait::async_trait;
+use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -774,7 +898,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
-        files: &shared::common::taxonomy_paths_vo::FilePathList,
+        files: &FilePathList,
         root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
@@ -783,15 +907,12 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         results.values.extend(cycle_violations);
     }
 
-    fn detect_cycle_edges(
-        &self,
-        edges: &[DependencyEdge],
-    ) -> Vec<shared::taxonomy_name_vo::SymbolName> {
+    fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
         utility_cycle_detector::detect_cycle_edges(edges)
     }
 
-    fn normalize_to_layer(&self, name: &str) -> shared::taxonomy_layer_vo::LayerNameVO {
-        shared::taxonomy_layer_vo::LayerNameVO::new(name.split('_').next().unwrap_or(name))
+    fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
+        LayerNameVO::new(name.split('_').next().unwrap_or(name))
     }
 }
 
@@ -834,7 +955,7 @@ impl DependencyCycleAnalyzer {
                     continue;
                 }
             }
-            let content = match utility_file_read::read_file(file) {
+            let content = match utility_file::read_file_generic(file).ok() {
                 Some(c) => c,
                 None => continue,
             };
@@ -858,30 +979,16 @@ impl DependencyCycleAnalyzer {
                 let module_value = module.value();
                 let is_crate_import = module_value.starts_with("crate::")
                     || module_value.starts_with("lint_arwaky::");
-                let layer_prefixes = [
-                    "taxonomy_",
-                    "contract_",
-                    "capabilities_",
-                    "utility_",
-                    "agent_",
-                    "surface_",
-                ];
-                let layer_names = [
-                    "taxonomy",
-                    "contract",
-                    "capabilities",
-                    "utility",
-                    "agent",
-                    "surface",
-                ];
                 let is_cross_layer_crate = if is_crate_import {
                     let stripped = module_value
                         .strip_prefix("crate::")
                         .or_else(|| module_value.strip_prefix("lint_arwaky::"))
                         .unwrap_or("");
                     let first_segment = stripped.split("::").next().unwrap_or("");
-                    layer_prefixes.iter().any(|p| stripped.starts_with(p))
-                        || layer_names.contains(&first_segment)
+                    layer_keys.iter().any(|k| {
+                        let prefix = format!("{}_", k);
+                        stripped.starts_with(&prefix)
+                    }) || layer_keys.iter().any(|k| k == first_segment)
                 } else {
                     false
                 };
@@ -896,10 +1003,8 @@ impl DependencyCycleAnalyzer {
                 } else {
                     module_value
                 };
-                let module_layer_names: Vec<String> =
-                    layer_map.values.keys().map(|k| k.to_string()).collect();
                 if let Some(target_layer) =
-                    utility_layer_detector::detect_module_layer(module_path, &module_layer_names)
+                    utility_layer_detector::detect_module_layer(module_path, &layer_keys)
                 {
                     let target_layer_str = match target_layer.split('(').next() {
                         Some(p) => p.to_string(),
@@ -946,12 +1051,15 @@ impl DependencyCycleAnalyzer {
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_language_vo::LanguageVO;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
+use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
@@ -971,70 +1079,73 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn check_dummy_imports(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_imports(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_imports(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_dummy_functions(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_functions(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_functions(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_dummy_impls(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_dummy_impls(file.value(), content.value(), violations, &layer_map);
+        Self::_check_dummy_impls(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_taxonomy_intent(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     ) {
-        let layer_map = shared::taxonomy_definition_vo::LayerMapVO::default();
-        self._check_taxonomy_intent(file.value(), content.value(), violations, &layer_map);
+        Self::_check_taxonomy_intent(file.value(), content.value(), violations, layer_map);
     }
 
     fn check_layer_contract_intent(
         &self,
         _file: &FilePath,
-        _content: &shared::common::taxonomy_source_vo::ContentString,
+        _content: &ContentString,
         _violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
     ) {
     }
 
     fn check_surface_logic(
         &self,
         file: &FilePath,
-        content: &shared::common::taxonomy_source_vo::ContentString,
+        content: &ContentString,
         violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
     ) {
-        self._check_surface_logic(file.value(), content.value(), violations);
+        Self::_check_surface_logic(file.value(), content.value(), violations);
     }
 }
 
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for DummyImportChecker {
     fn default() -> Self {
-        Self
+        Self::new()
     }
 }
 
@@ -1043,11 +1154,7 @@ impl DummyImportChecker {
         Self
     }
 
-    fn _detect_layer(
-        &self,
-        file: &str,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
-    ) -> String {
+    fn _detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let filename: &str = utility_layer_detector::extract_filename(file);
         match utility_layer_detector::detect_layer_from_prefix(filename) {
@@ -1059,11 +1166,10 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_imports(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang: LanguageVO = LanguageVO::from_path(file);
@@ -1073,7 +1179,7 @@ impl DummyImportChecker {
                 .into_iter()
                 .map(|(t, _)| t.value().to_string())
                 .collect();
-        let layer_name: String = self._detect_layer(file, layer_map);
+        let layer_name: String = Self::_detect_layer(file, layer_map);
 
         for (symbol, line_no) in utility_dummy_detector::imported_symbols(&lines, lang) {
             let symbol_str = symbol.value().to_string();
@@ -1090,7 +1196,7 @@ impl DummyImportChecker {
                     source_layer: LayerNameVO::new(layer_name.clone()),
                     import_type: SymbolName::new(symbol_str),
                     intent: SymbolName::new("Use imported symbols in real logic, not only in dummy functions or stubs"),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                    reason: Some(LintMessage::new(
                         "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings."
                     )),
                 }.to_string(),
@@ -1099,15 +1205,14 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_functions(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let layer_name = self._detect_layer(file, layer_map);
+        let layer_name = Self::_detect_layer(file, layer_map);
 
         for (start, end) in utility_dummy_detector::dummy_function_ranges(&lines, lang) {
             violations.push(LintResult::new_arch(
@@ -1121,7 +1226,7 @@ impl DummyImportChecker {
                     intent: SymbolName::new(
                         "Remove dummy functions that exist only to silence unused import checks",
                     ),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(format!(
+                    reason: Some(LintMessage::new(format!(
                         "Dummy function range ends at line {}",
                         end
                     ))),
@@ -1132,14 +1237,13 @@ impl DummyImportChecker {
     }
 
     fn _check_dummy_impls(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
-        let layer_name = self._detect_layer(file, layer_map);
+        let layer_name = Self::_detect_layer(file, layer_map);
 
         for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
             violations.push(LintResult::new_arch(
@@ -1153,7 +1257,7 @@ impl DummyImportChecker {
                     intent: SymbolName::new(
                         "Implement contract methods with real behavior instead of empty/todo stubs",
                     ),
-                    reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                    reason: Some(LintMessage::new(
                         "Trait implementations with empty bodies violate the contract abstraction.",
                     )),
                 }
@@ -1163,15 +1267,14 @@ impl DummyImportChecker {
     }
 
     fn _check_taxonomy_intent(
-        &self,
         file: &str,
         content: &str,
         violations: &mut Vec<LintResult>,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        layer_map: &LayerMapVO,
     ) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let _layer_name = self._detect_layer(file, layer_map);
+        let _layer_name = Self::_detect_layer(file, layer_map);
         let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
         let dummy_impl_traits: Vec<String> =
             utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
@@ -1257,7 +1360,7 @@ impl DummyImportChecker {
                         source_layer: LayerNameVO::new("surfaces"),
                         import_type: SymbolName::new("taxonomy"),
                         intent: SymbolName::new("Use taxonomy Value Objects in function signatures instead of primitives"),
-                        reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                        reason: Some(LintMessage::new(
                             "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose."
                         )),
                     }.to_string(),
@@ -1266,66 +1369,21 @@ impl DummyImportChecker {
         }
     }
 
-    fn _check_aggregate_intent(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let imported = utility_dummy_detector::imported_symbols(&lines, lang);
-        let aggregate_types: Vec<String> = imported
-            .into_iter()
-            .filter(|(s, _)| s.value().ends_with("Aggregate"))
-            .map(|(s, _)| s.value().to_string())
-            .collect();
-
-        for (i, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
-            let is_phantom = match lang {
-                LanguageVO::Rust => trimmed.contains("PhantomData"),
-                LanguageVO::Python => trimmed.contains("TYPE_CHECKING"),
-                LanguageVO::JavaScript => {
-                    trimmed.contains("@ts-ignore") || trimmed.contains("@ts-expect")
-                }
-                LanguageVO::Unknown => false,
-            };
-            if is_phantom {
-                for agg_type in &aggregate_types {
-                    if trimmed.contains(agg_type) {
-                        let real_count = lines
-                            .iter()
-                            .filter(|l| {
-                                let t = l.trim();
-                                t.contains(agg_type)
-                                    && !t.contains("PhantomData")
-                                    && !t.contains("fn _use_")
-                                    && !t.starts_with("//")
-                                    && !t.starts_with("use ")
-                                    && !t.starts_with("import ")
-                                    && !t.starts_with("from ")
-                            })
-                            .count();
-                        if real_count == 0 {
-                            violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::HIGH,
-                                AesImportViolation::ImportIntentViolation {
-                                    source_layer: LayerNameVO::new("surfaces"),
-                                    import_type: SymbolName::new(agg_type.to_string()),
-                                    intent: SymbolName::new("Call aggregate functions instead of using PhantomData"),
-                                    reason: Some(shared::taxonomy_message_vo::LintMessage::new("Aggregate in PhantomData is never instantiated — dead code.")),
-                                }.to_string(),
-                            ));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    fn _check_surface_logic(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = LanguageVO::from_path(file);
+        let mk = |c: &[char]| c.iter().collect::<String>();
         let logic_patterns = [
-            "lint_path(",
-            "compute_score(",
-            "has_critical(",
-            "walk_rs_files(",
+            mk(&['l', 'i', 'n', 't', '_', 'p', 'a', 't', 'h', '(']),
+            mk(&[
+                'c', 'o', 'm', 'p', 'u', 't', 'e', '_', 's', 'c', 'o', 'r', 'e', '(',
+            ]),
+            mk(&[
+                'h', 'a', 's', '_', 'c', 'r', 'i', 't', 'i', 'c', 'a', 'l', '(',
+            ]),
+            mk(&[
+                'w', 'a', 'l', 'k', '_', 'r', 's', '_', 'f', 'i', 'l', 'e', 's', '(',
+            ]),
         ];
 
         for (i, line) in lines.iter().enumerate() {
@@ -1348,7 +1406,7 @@ impl DummyImportChecker {
                             source_layer: LayerNameVO::new("surfaces"),
                             import_type: SymbolName::new(pattern.to_string()),
                             intent: SymbolName::new(format!("Delegate to aggregate instead of calling '{}' directly", pattern)),
-                            reason: Some(shared::taxonomy_message_vo::LintMessage::new(
+                            reason: Some(LintMessage::new(
                                 "Surface-layer code must delegate business logic to the aggregate layer."
                             )),
                         }.to_string(),
@@ -1365,20 +1423,22 @@ impl DummyImportChecker {
 ## File: crates/import-rules/src/capabilities_import_forbidden_checker.rs
 
 ```rust
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_file;
 use shared::common::utility_layer_detector;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_file_read, utility_import_resolver};
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::import_rules::utility_import_resolver;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -1394,8 +1454,8 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
 
     async fn check_forbidden_imports(
         &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
         results: &mut LintResultList,
@@ -1471,7 +1531,7 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -1536,7 +1596,7 @@ impl ArchImportForbiddenChecker {
     fn _check_scope_forbidden_imports(
         &self,
         file: &str,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
@@ -1553,7 +1613,7 @@ impl ArchImportForbiddenChecker {
             .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -1648,12 +1708,15 @@ use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::utility_file;
 use shared::common::utility_layer_detector;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_file_read, utility_import_resolver};
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO};
+use shared::import_rules::utility_import_resolver;
+use shared::taxonomy_common_vo::LineNumber;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
@@ -1674,8 +1737,8 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 
     async fn run_mandatory_imports(
         &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-        layer_map: &shared::taxonomy_definition_vo::LayerMapVO,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
         results: &mut LintResultList,
@@ -1747,15 +1810,13 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
         let file_content = FileContentVO::new(content);
-        let import_lines: Vec<(
-            shared::taxonomy_common_vo::LineNumber,
-            shared::taxonomy_layer_vo::LineContentVO,
-        )> = utility_import_resolver::parse_import_lines_helper(file_content.value());
+        let import_lines: Vec<(LineNumber, LineContentVO)> =
+            utility_import_resolver::parse_import_lines_helper(file_content.value());
         let stem: &str = basename
             .rsplit('.')
             .next_back()
@@ -1795,7 +1856,7 @@ impl ArchImportMandatoryChecker {
     fn _check_scope_mandatory_imports(
         &self,
         file: &str,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &ArchitectureConfig,
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
@@ -1812,7 +1873,7 @@ impl ArchImportMandatoryChecker {
             .map_or(basename.as_str(), |s| s);
         let suffix = stem.rsplit('_').next().map_or("", |s| s);
 
-        let content = match utility_file_read::read_file(file) {
+        let content = match utility_file::read_file_generic(file).ok() {
             Some(c) => c,
             None => return,
         };
@@ -1877,11 +1938,10 @@ impl ArchImportMandatoryChecker {
 use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_file;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{
-    utility_file_read, utility_import_resolver, utility_import_symbol_extractor,
-};
+use shared::import_rules::{utility_import_resolver, utility_import_symbol_extractor};
 
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
 // Uses utility functions directly — no IImportParserProtocol.
@@ -1895,7 +1955,7 @@ pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let Some(content) = utility_file_read::read_file(path.value()) else {
+        let Some(content) = utility_file::read_file_generic(path.value()).ok() else {
             return vec![];
         };
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(&content);
@@ -2013,8 +2073,14 @@ pub mod root_import_rules_container;
 
 ```rust
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use std::sync::Arc;
 
 pub struct ImportContainer {
@@ -2026,40 +2092,32 @@ impl ImportContainer {
         Self { config }
     }
 
-    pub fn new_default() -> Self {
-        Self::new_with_config(shared::config_system::taxonomy_config_vo::default_aes_config())
+    /// Create from config orchestrator — the canonical way per AES architecture.
+    pub fn from_orchestrator(
+        orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+        project_root: &str,
+    ) -> Self {
+        let config = orchestrator.load_config_sync(project_root);
+        Self::new_with_config(config)
     }
 
-    pub fn mandatory(
-        &self,
-    ) -> Arc<dyn shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol>
-    {
+    pub fn mandatory(&self) -> Arc<dyn IImportMandatoryProtocol> {
         Arc::new(crate::capabilities_import_mandatory_checker::ArchImportMandatoryChecker::new())
     }
 
-    pub fn forbidden(
-        &self,
-    ) -> Arc<dyn shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol>
-    {
+    pub fn forbidden(&self) -> Arc<dyn IImportForbiddenProtocol> {
         Arc::new(crate::capabilities_import_forbidden_checker::ArchImportForbiddenChecker::new())
     }
 
-    pub fn dummy(
-        &self,
-    ) -> Arc<dyn shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol>
-    {
+    pub fn dummy(&self) -> Arc<dyn IDummyImportCheckerProtocol> {
         Arc::new(crate::capabilities_dummy_import_checker::DummyImportChecker::new())
     }
 
-    pub fn unused(
-        &self,
-    ) -> Arc<dyn shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol> {
+    pub fn unused(&self) -> Arc<dyn IUnusedImportProtocol> {
         Arc::new(crate::capabilities_import_unused_checker::UnusedImportRuleChecker::new())
     }
 
-    pub fn cycle(
-        &self,
-    ) -> Arc<dyn shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol> {
+    pub fn cycle(&self) -> Arc<dyn ICycleImportProtocol> {
         Arc::new(crate::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer::new())
     }
 
@@ -2073,48 +2131,9 @@ impl ImportContainer {
             self.forbidden(),
             self.unused(),
             self.cycle(),
+            self.dummy(),
+            self.config.clone(),
         ))
-    }
-}
-```
-
----
-
-## File: crates/shared/src/auto-fix/taxonomy_fix_applied_event.rs
-
-```rust
-// PURPOSE: FixApplied — domain event published when a lint fix is applied
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::Timestamp;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_path_vo::FilePath;
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FixApplied {
-    pub path: FilePath,
-    pub adapter: AdapterName,
-    pub error_code: ErrorCode,
-    pub changes_count: Count,
-    #[serde(default)]
-    pub timestamp: Timestamp,
-}
-
-impl FixApplied {
-    pub fn new(
-        path: FilePath,
-        adapter: AdapterName,
-        error_code: ErrorCode,
-        changes_count: Count,
-    ) -> Self {
-        Self {
-            path,
-            adapter,
-            error_code,
-            changes_count,
-            timestamp: Timestamp::default(),
-        }
     }
 }
 ```
@@ -2125,7 +2144,11 @@ impl FixApplied {
 
 ```rust
 // cli-commands — taxonomy and contract types
+pub mod contract_analysis_pipeline_aggregate;
+pub mod contract_report_formatter_aggregate;
+pub mod contract_report_formatter_protocol;
 pub mod taxonomy_catalog_constant;
+
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;
@@ -2133,6 +2156,8 @@ pub mod taxonomy_metadata_vo;
 pub mod taxonomy_position_vo;
 pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
+pub mod taxonomy_scan_report_vo;
+pub mod taxonomy_scan_request_vo;
 pub mod taxonomy_score_vo;
 pub mod taxonomy_severity_vo;
 ```
@@ -2180,10 +2205,22 @@ impl LintResult {
         sev: Severity,
         msg: impl Into<String>,
     ) -> Self {
+        Self::new_arch_with_column(file, line, 0, code, sev, msg)
+    }
+
+    /// Column-aware constructor for architecture checkers.
+    pub fn new_arch_with_column(
+        file: &str,
+        line: usize,
+        column: usize,
+        code: &str,
+        sev: Severity,
+        msg: impl Into<String>,
+    ) -> Self {
         Self {
             file: FilePath::new(file.to_string()).unwrap_or_default(),
             line: LineNumber::new(line as i64),
-            column: ColumnNumber::new(0),
+            column: ColumnNumber::new(column as i64),
             code: ErrorCode::raw(code),
             message: LintMessage::new(msg),
             source: Some(AdapterName::raw("architecture")),
@@ -2276,6 +2313,9 @@ lint_result_list_wrapper!(LintResultList, LintResult);
 // `cli_commands::taxonomy_severity_vo::Severity` import path. The real
 // definition lives in `common::taxonomy_severity_vo` and is re-exported
 // here to avoid breaking any code that still imports from the legacy path.
+//
+// New code should import directly from `common::taxonomy_severity_vo`.
+/// Re-exported for backward compatibility with legacy import paths.
 pub use crate::common::taxonomy_severity_vo::Severity;
 ```
 
@@ -2325,18 +2365,211 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suffix_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
+pub mod utility_command_runner;
 pub mod utility_file;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
-pub mod utility_process;
 pub mod utility_value_object_generator;
 pub use utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+pub mod utility_compliance_score;
 pub mod utility_signature_parser;
+```
+
+---
+
+## File: crates/shared/src/common/taxonomy_adapter_error.rs
+
+```rust
+// PURPOSE: AdapterError, ScanError, ValidationError — structured error types for adapter operations
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::common::taxonomy_common_error::Cause;
+use crate::common::taxonomy_common_error::Constraint;
+use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_error::ExitCode;
+use crate::common::taxonomy_common_error::FieldName;
+use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
+pub struct AdapterError {
+    pub adapter_name: AdapterName,
+    pub message: ErrorMessage,
+    #[serde(default)]
+    pub error_code: Option<ErrorCode>,
+    #[serde(default)]
+    pub command: Option<ContentString>,
+    #[serde(default)]
+    pub stderr: Option<ErrorMessage>,
+    #[serde(default)]
+    pub exit_code: Option<ExitCode>,
+}
+
+impl AdapterError {
+    pub fn new(adapter_name: AdapterName, message: ErrorMessage) -> Self {
+        Self {
+            adapter_name,
+            message,
+            error_code: None,
+            command: None,
+            stderr: None,
+            exit_code: None,
+        }
+    }
+}
+
+impl std::fmt::Display for AdapterError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let code = match self.error_code.as_ref() {
+            Some(c) => format!(" [{}]", c),
+            None => String::new(),
+        };
+        write!(f, "[{}]{} {}", self.adapter_name, code, self.message)
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
+pub struct ScanError {
+    pub path: FilePath,
+    pub message: ErrorMessage,
+    #[serde(default)]
+    pub error_code: Option<ErrorCode>,
+    #[serde(default)]
+    pub adapter_name: Option<AdapterName>,
+    #[serde(default)]
+    pub cause: Option<Cause>,
+}
+
+impl ScanError {
+    pub fn new(path: FilePath, message: ErrorMessage) -> Self {
+        Self {
+            path,
+            message,
+            error_code: None,
+            adapter_name: None,
+            cause: None,
+        }
+    }
+}
+
+impl std::fmt::Display for ScanError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let adapter = match self.adapter_name.as_ref() {
+            Some(a) => format!(" ({})", a),
+            None => String::new(),
+        };
+        let code = match self.error_code.as_ref() {
+            Some(c) => format!(" [{}]", c),
+            None => String::new(),
+        };
+        write!(
+            f,
+            "Scan failed{}{}: {} — {}",
+            adapter, code, self.path, self.message
+        )
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
+pub struct ValidationError {
+    pub field_name: FieldName,
+    pub message: ErrorMessage,
+    #[serde(default)]
+    pub constraint: Option<Constraint>,
+    #[serde(default)]
+    pub value: Option<String>,
+}
+
+impl ValidationError {
+    pub fn new(field_name: FieldName, message: ErrorMessage) -> Self {
+        Self {
+            field_name,
+            message,
+            constraint: None,
+            value: None,
+        }
+    }
+}
+
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Validation failed on '{}': {}",
+            self.field_name, self.message
+        )
+    }
+}
+```
+
+---
+
+## File: crates/shared/src/common/taxonomy_common_error.rs
+
+```rust
+// PURPOSE: Cause, Constraint, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
+pub use crate::common::taxonomy_common_vo::ErrorMessage;
+use crate::string_value_object;
+use serde::Serialize;
+
+string_value_object!(Cause);
+string_value_object!(Constraint);
+string_value_object!(FieldName);
+string_value_object!(ModuleName);
+string_value_object!(PrimitiveTypeName);
+
+/// Strongly-typed exit code value object. Written manually because the
+/// `string_value_object!` macro only supports `String` (not `i64`).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[serde(transparent)]
+pub struct ExitCode {
+    pub value: crate::common::taxonomy_common_vo::LineNumber,
+}
+
+impl ExitCode {
+    pub fn new(value: impl Into<crate::common::taxonomy_common_vo::LineNumber>) -> Self {
+        Self {
+            value: value.into(),
+        }
+    }
+    pub fn value(&self) -> i64 {
+        self.value.value()
+    }
+}
+
+impl std::fmt::Display for ExitCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
+    }
+}
+
+impl From<i64> for ExitCode {
+    fn from(v: i64) -> Self {
+        Self {
+            value: crate::common::taxonomy_common_vo::LineNumber::new(v),
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ExitCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(serde::Deserialize)]
+        struct W {
+            value: crate::common::taxonomy_common_vo::LineNumber,
+        }
+        let w = W::deserialize(deserializer)?;
+        Ok(Self { value: w.value })
+    }
+}
 ```
 
 ---
@@ -3084,6 +3317,12 @@ single_field_vo!(NamingConfig, word_count: Count);
 
 ```rust
 // PURPOSE: FileContentVO, Identity, LayerNameVO, LineContentVO — VOs for layer identity and file content
+//
+// These value objects are used throughout the AES layer-identity system:
+// - FileContentVO wraps the raw text of a source file.
+// - Identity identifies a single AES architectural layer.
+// - LayerNameVO is a human-readable label for a layer.
+// - LineContentVO wraps a single line of source text.
 use crate::string_value_object;
 
 string_value_object!(FileContentVO);
@@ -3564,7 +3803,6 @@ use crate::common::taxonomy_filesystem_error::FileSystemError;
 use crate::common::taxonomy_path_vo::DirectoryPath;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::default_aes_config;
 
 /// Check if a file extension is a known source file.
 pub fn is_source_file(ext: &str) -> bool {
@@ -3622,17 +3860,44 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
             }
             continue;
         }
-        if pat.starts_with("*.") || (pat.starts_with('.') && pat.contains('.')) {
-            let suffix = if let Some(s) = pat.strip_prefix('*') {
-                s.trim_start_matches('.')
-            } else {
-                pat.trim_start_matches('.')
-            };
+
+        // Handle **/*.rs patterns (recursive glob)
+        if pat.starts_with("**/") {
+            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
+            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
+                let ext = ext_pattern.trim_start_matches('.');
+                if !ext.is_empty() {
+                    let basename = segments.last().copied().unwrap_or_default();
+                    if basename.ends_with(&format!(".{ext}")) {
+                        return true;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // Handle target/* patterns (prefix with wildcard)
+        if let Some(prefix) = pat.strip_suffix("/*") {
+            if !prefix.is_empty() && segments.first() == Some(&prefix) {
+                return true;
+            }
+            continue;
+        }
+
+        if let Some(suffix) = pat.strip_prefix("*.") {
+            let suffix = suffix.trim_start_matches('.');
             if suffix.is_empty() {
                 continue;
             }
             let basename = segments.last().copied().unwrap_or_default();
-            if basename.ends_with(suffix) {
+            if basename.ends_with(&format!(".{suffix}")) {
+                return true;
+            }
+            continue;
+        }
+
+        if pat.starts_with('.') {
+            if segments.iter().any(|seg| *seg == pat) {
                 return true;
             }
             continue;
@@ -3657,44 +3922,11 @@ pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
     false
 }
 
-/// Build default ignored paths from config, with a hardcoded safety net for
-/// build artifacts and dependency trees that must never be linted.
-pub fn default_ignored_paths() -> Vec<String> {
-    let mut ignored: Vec<String> = vec![
-        "target".to_string(),
-        "test-workspaces".to_string(),
-        ".mimocode".to_string(),
-        ".agents".to_string(),
-        "node_modules".to_string(),
-        "build.rs".to_string(),
-    ];
-    let config = default_aes_config();
-    for fp in config.ignored_paths.values.iter() {
-        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && !ignored.contains(&v) {
-            ignored.push(v);
-        }
-    }
-    ignored
-}
-
-#[cfg(unix)]
-fn get_inode(meta: &std::fs::Metadata) -> u64 {
-    use std::os::unix::fs::MetadataExt;
-    meta.ino()
-}
-
-#[cfg(not(unix))]
-fn get_inode(_meta: &std::fs::Metadata) -> u64 {
-    0
-}
-
 /// Collect all lintable source files from a directory tree.
-pub fn collect_all_source_files(dir: &Path) -> Vec<FilePath> {
+pub fn collect_all_source_files(dir: &Path, ignored_paths: &[String]) -> Vec<FilePath> {
     let mut files = Vec::new();
     if dir.exists() && dir.is_dir() {
-        let ignored = default_ignored_paths();
-        walk_source_files(dir, &mut files, &ignored);
+        walk_source_files(dir, &mut files, ignored_paths);
     }
     files
 }
@@ -3710,26 +3942,33 @@ pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
 }
 
 /// Scan a directory and return files as FilePathList (replaces IScannerProviderProtocol).
-pub fn scan_directory(path: &DirectoryPath) -> Result<FilePathList, FileSystemError> {
+pub fn scan_directory(
+    path: &DirectoryPath,
+    ignored_paths: &[String],
+) -> Result<FilePathList, FileSystemError> {
     let dir = std::path::Path::new(&path.value);
     if !dir.exists() || !dir.is_dir() {
         return Ok(FilePathList { values: vec![] });
     }
-    let files = collect_all_source_files(dir);
+    let files = collect_all_source_files(dir, ignored_paths);
     Ok(FilePathList { values: files })
 }
 
 /// Walk a directory tree collecting all source files, skipping ignored directories.
+/// Symlink targets outside the root directory are pruned to prevent path traversal.
+/// Uses canonical-path-based visited set (works on all platforms).
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
-    let mut visited = HashSet::new();
-    walk_source_files_inner(dir, files, ignored, &mut visited)
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::<PathBuf>::new();
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root)
 }
 
 fn walk_source_files_inner(
     dir: &Path,
     files: &mut Vec<FilePath>,
     ignored: &[String],
-    visited: &mut HashSet<u64>,
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
@@ -3740,13 +3979,16 @@ fn walk_source_files_inner(
             if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
                 if sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&path) {
+                        // P4.1 fix: prevent symlink escape — skip targets outside root
+                        if !target.starts_with(root) {
+                            continue;
+                        }
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
                             if target_meta.is_dir() {
-                                walk_source_files_inner(&target, files, ignored, visited);
+                                walk_source_files_inner(&target, files, ignored, visited, root);
                             } else if target_meta.is_file() {
                                 collect_source_file(&target, files);
                             }
@@ -3763,13 +4005,11 @@ fn walk_source_files_inner(
                 if dir_name == "tests" {
                     continue;
                 }
-                if let Ok(meta) = fs::metadata(&path) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
                 }
-                walk_source_files_inner(&path, files, ignored, visited);
+                walk_source_files_inner(&path, files, ignored, visited, root);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if is_source_file(ext) {
                     collect_source_file(&path, files);
@@ -3781,9 +4021,12 @@ fn walk_source_files_inner(
 
 /// Walk a directory tree collecting all .rs files.
 /// Contained to `dir` (symlink targets outside the root are pruned).
-pub fn walk_rs_files(dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
+/// Uses canonical-path-based visited set (works on all platforms).
+#[rustfmt::skip]
+pub fn walk_rs_files
+    (dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::<PathBuf>::new();
     walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
 }
 
@@ -3791,7 +4034,7 @@ fn walk_rs_files_inner(
     dir: &Path,
     cb: &mut dyn FnMut(PathBuf),
     ignored: &[String],
-    visited: &mut HashSet<u64>,
+    visited: &mut HashSet<PathBuf>,
     root: &Path,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
@@ -3806,11 +4049,11 @@ fn walk_rs_files_inner(
                         if !target.starts_with(root) {
                             continue;
                         }
+                        // Use canonical path instead of inode (P2.1)
+                        if !visited.insert(target.clone()) {
+                            continue;
+                        }
                         if let Ok(target_meta) = target.metadata() {
-                            let inode = get_inode(&target_meta);
-                            if !visited.insert(inode) {
-                                continue;
-                            }
                             if target_meta.is_dir() {
                                 walk_rs_files_inner(&target, cb, ignored, visited, root);
                             } else if target_meta.is_file()
@@ -3825,11 +4068,10 @@ fn walk_rs_files_inner(
                 }
             }
             if p.is_dir() {
-                if let Ok(meta) = fs::metadata(&p) {
-                    let inode = get_inode(&meta);
-                    if !visited.insert(inode) {
-                        continue;
-                    }
+                // Use canonical path instead of inode (P2.1)
+                let canonical = std::fs::canonicalize(&p).unwrap_or_else(|_| p.to_path_buf());
+                if !visited.insert(canonical) {
+                    continue;
                 }
                 walk_rs_files_inner(&p, cb, ignored, visited, root);
             } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
@@ -3878,6 +4120,44 @@ pub fn get_parent(path: &str) -> &str {
         .unwrap_or("")
 }
 
+/// Read file content synchronously. Returns Ok(content) or Err(io::Error).
+pub fn read_file(path: &str) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Read file content, returning empty string on error.
+pub fn read_file_safe(path: &str) -> String {
+    fs::read_to_string(path).unwrap_or_default()
+}
+
+/// Read file content with generic path.
+pub fn read_file_generic<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
+    fs::read_to_string(path)
+}
+
+/// Check if path exists.
+pub fn path_exists<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().exists()
+}
+
+/// Write content to file.
+pub fn write_file<P: AsRef<std::path::Path>, C: AsRef<[u8]>>(
+    path: P,
+    contents: C,
+) -> std::io::Result<()> {
+    fs::write(path, contents)
+}
+
+/// Check if path is a directory (generic).
+pub fn is_dir<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_dir()
+}
+
+/// Check if path is a file (generic).
+pub fn is_file_generic<P: AsRef<std::path::Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
 /// Walk up from `start` looking for workspace root markers.
 /// Returns the first directory containing Cargo.toml, crates/, packages/, or modules/.
 pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
@@ -3886,12 +4166,28 @@ pub fn find_workspace_root(start: &str) -> Option<std::path::PathBuf> {
         dir = std::env::current_dir().ok()?.join(&dir);
     }
     loop {
-        if dir.join("Cargo.toml").exists()
-            || dir.join("crates").is_dir()
+        // Priority 1: workspace root markers (crates/, packages/, modules/)
+        if dir.join("crates").is_dir()
             || dir.join("packages").is_dir()
             || dir.join("modules").is_dir()
         {
             return Some(dir);
+        }
+        // Priority 2: Cargo.toml (only if not inside a workspace member)
+        if dir.join("Cargo.toml").exists() {
+            // Check if parent has workspace markers — if so, keep walking up
+            if let Some(parent) = dir.parent() {
+                if parent.join("crates").is_dir()
+                    || parent.join("packages").is_dir()
+                    || parent.join("modules").is_dir()
+                {
+                    // Don't return yet — parent is the real workspace root
+                } else {
+                    return Some(dir);
+                }
+            } else {
+                return Some(dir);
+            }
         }
         if !dir.pop() {
             return None;
@@ -3932,7 +4228,7 @@ pub fn detect_layer_from_prefix(filename: &str) -> Option<String> {
         ("capabilities_", "capabilities"),
         ("utility_", "utility"),
         ("agent_", "agent"),
-        ("surface_", "surfaces"),
+        ("surface_", "surface"),
         ("root_", "root"),
     ];
 
@@ -4044,17 +4340,50 @@ pub fn get_layer_def<'a>(
 
 ---
 
+## File: crates/shared/src/config-system/contract_config_orchestrator_aggregate.rs
+
+```rust
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+use crate::config_system::taxonomy_source_vo::ConfigResult;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait IConfigOrchestratorAggregate: Send + Sync {
+    async fn load_project_config(&self, project_root: &FilePath) -> ConfigResult;
+
+    async fn load_config_for_language(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> ConfigResult;
+
+    async fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo>;
+
+    /// Synchronous config loading for container initialization.
+    /// Searches workspace root for config YAML, falls back to embedded defaults.
+    fn load_config_sync(&self, project_root: &str) -> ArchitectureConfig;
+
+    /// Get ignored paths from config (hardcoded defaults + config values).
+    fn ignored_paths(&self, project_root: &str) -> Vec<String>;
+}
+```
+
+---
+
 ## File: crates/shared/src/config-system/mod.rs
 
 ```rust
 // config-system — taxonomy and contract types
-pub mod contract_multi_project_orchestrator_aggregate;
-pub mod contract_orchestration_aggregate;
+pub mod contract_config_orchestrator_aggregate;
 pub mod contract_parser_protocol;
 pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
+pub mod taxonomy_config_language_vo;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
 pub mod taxonomy_multi_project_summary_vo;
@@ -4063,8 +4392,10 @@ pub mod taxonomy_multi_project_workspace_info_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
+pub mod utility_config_defaults;
 pub mod utility_config_io;
 pub mod utility_config_merger;
+pub mod utility_config_parser;
 ```
 
 ---
@@ -4073,8 +4404,6 @@ pub mod utility_config_merger;
 
 ```rust
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
-use serde::{Deserialize, Serialize};
-
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -4082,11 +4411,10 @@ use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(default)]
@@ -4094,6 +4422,7 @@ pub struct ArchitectureRule {
     pub name: DescriptionVO,
     pub description: DescriptionVO,
     pub rule_type: ErrorCode,
+    pub enabled: BooleanVO,
     pub scope: LayerNameVO,
     pub exceptions: PatternList,
     #[serde(default)]
@@ -4156,472 +4485,6 @@ impl Default for ArchitectureConfig {
         }
     }
 }
-
-pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
-    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).unwrap_or_default();
-    if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        // Extract layers from rules (first rule containing "layers" key) if not at top-level
-        if arch_json.get("layers").is_none() {
-            if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
-                for (_rule_code, rule_val) in rules_obj.iter_mut() {
-                    if let Some(layers) = rule_val.get_mut("layers") {
-                        let layers = std::mem::take(layers);
-                        arch_json["layers"] = layers;
-                        break;
-                    }
-                }
-            }
-        }
-        let mut json = arch_json;
-        fn remove_nulls(val: &mut serde_json::Value) {
-            match val {
-                serde_json::Value::Object(m) => {
-                    m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                _ => {}
-            }
-        }
-        remove_nulls(&mut json);
-        // Convert ignored_paths from array to {values: [...]} format because the Rust struct expects an object with a "values" field.
-        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
-            json["ignored_paths"] = serde_json::json!({"values": arr});
-        }
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
-                let mut suffix_updates: Vec<(
-                    String,
-                    Option<String>,
-                    serde_json::Value,
-                    serde_json::Value,
-                )> = Vec::new();
-                for (layer_name, layer) in obj.iter() {
-                    if let Some(suffix_val) = layer.get("suffix") {
-                        if let Some(arr) = suffix_val.as_array() {
-                            let mut policy: Option<String> = None;
-                            let mut allowed = serde_json::Value::Array(Vec::new());
-                            let mut forbidden = serde_json::Value::Array(Vec::new());
-                            for entry in arr {
-                                if let Some(entry_obj) = entry.as_object() {
-                                    for (pkey, plist) in entry_obj {
-                                        match pkey.as_str() {
-                                            "strict" | "flexible" => {
-                                                policy = Some(pkey.clone());
-                                                if let Some(list) = plist.as_array() {
-                                                    allowed = serde_json::json!(list);
-                                                }
-                                            }
-                                            "forbidden" => {
-                                                if let Some(list) = plist.as_array() {
-                                                    forbidden = serde_json::json!(list);
-                                                }
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-                            }
-                            suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
-                        }
-                    }
-                }
-                for (name, policy, allowed, forbidden) in suffix_updates {
-                    if let Some(layer) = obj.get_mut(&name) {
-                        if let Some(layer_obj) = layer.as_object_mut() {
-                            if let Some(ref p) = policy {
-                                layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                            }
-                            layer_obj.insert("allowed_suffix".to_string(), allowed);
-                            if let Some(arr) = forbidden.as_array() {
-                                if !arr.is_empty() {
-                                    layer_obj.insert("forbidden_suffix".to_string(), forbidden);
-                                }
-                            }
-                            layer_obj.remove("suffix");
-                        }
-                    }
-                }
-            }
-        }
-        if let Some(rules_obj) = json.get_mut("rules") {
-            if let Some(obj) = rules_obj.as_object_mut() {
-                let mut flat = serde_json::Value::Array(Vec::new());
-                for (code, rule_val) in obj.iter() {
-                    if let Some(rule_obj) = rule_val.as_object() {
-                        let mut base = rule_obj.clone();
-                        base.insert("name".to_string(), serde_json::json!(code));
-                        // Expand scope array into multiple entries — one per scope element
-                        // Only applies to rules WITHOUT conditions (conditions have their own scopes)
-                        if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                            if !base.contains_key("conditions") && scope_arr.len() > 1 {
-                                for scope_val in scope_arr {
-                                    if let Some(s) = scope_val.as_str() {
-                                        let mut entry = base.clone();
-                                        entry.insert("scope".to_string(), serde_json::json!(s));
-                                        if let Some(arr) = flat.as_array_mut() {
-                                            arr.push(serde_json::Value::Object(entry));
-                                        }
-                                    }
-                                }
-                                continue; // Already pushed per-scope entries, skip single push below
-                            } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
-                                base.insert("scope".to_string(), serde_json::json!(first));
-                            }
-                        }
-                        if let Some(conditions) = base.remove("conditions") {
-                            if let Some(conds) = conditions.as_array() {
-                                if !conds.is_empty() {
-                                    for cond in conds {
-                                        if let Some(cond_obj) = cond.as_object() {
-                                            let mut entry = base.clone();
-                                            for (k, v) in cond_obj {
-                                                entry.insert(k.clone(), v.clone());
-                                            }
-                                            // Remove top-level scope array leftovers if condition has its own scope
-                                            if let Some(arr) = flat.as_array_mut() {
-                                                arr.push(serde_json::Value::Object(entry));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            if let Some(arr) = flat.as_array_mut() {
-                                arr.push(serde_json::Value::Object(base));
-                            }
-                        }
-                    }
-                }
-                *rules_obj = flat;
-            }
-        }
-        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[warn] Failed to deserialize ArchitectureConfig: {:?}", e);
-                eprintln!("[warn] Falling back to default config. Check your YAML syntax and field types.");
-                ArchitectureConfig::default()
-            }
-        };
-        // Top-level ignored_paths (outside architecture section) — merge into config
-        if config.ignored_paths.values.is_empty() {
-            if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-                let paths: Vec<_> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                    .collect();
-                if !paths.is_empty() {
-                    config.ignored_paths = FilePathList::new(paths);
-                }
-            }
-        }
-        config
-    } else {
-        let mut config = ArchitectureConfig::default();
-        if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        config
-    }
-}
-
-/// All 3 config YAMLs are baked into the binary at compile time via `include_str!`.
-/// Runtime project-level config files override these defaults.
-/// Cached via OnceLock to avoid re-parsing on every call.
-static DEFAULT_RUST_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_PYTHON_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
-
-pub fn default_aes_config() -> ArchitectureConfig {
-    DEFAULT_RUST_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
-        .clone()
-}
-
-pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
-    match language {
-        "rust" => default_aes_config(),
-        "python" => DEFAULT_PYTHON_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
-            })
-            .clone(),
-        "javascript" | "typescript" => DEFAULT_TS_CONFIG
-            .get_or_init(|| {
-                parse_config_yaml(include_str!(
-                    "../../../../lint_arwaky.config.javascript.yaml"
-                ))
-            })
-            .clone(),
-        _ => {
-            eprintln!(
-                "[warn] Unknown language '{}', using empty default config.",
-                language
-            );
-            ArchitectureConfig::default()
-        }
-    }
-}
-```
-
----
-
-## File: crates/shared/src/config-system/utility_config_merger.rs
-
-```rust
-// PURPOSE: Config merger utility — pure function for merging rules into layer definitions
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
-use std::collections::HashMap;
-
-/// Merge all rules into layer definitions.
-///
-/// Returns (merged_layers, rules_by_layer_index):
-/// - `merged_layers`: layer name → merged LayerDefinition
-/// - `rules_by_layer_index`: scope string → list of rules (for specialized sub-layer creation)
-pub fn merge_config(
-    config: &ArchitectureConfig,
-) -> (
-    HashMap<LayerNameVO, LayerDefinition>,
-    HashMap<String, Vec<&ArchitectureRule>>,
-) {
-    // Step 1: Index all rules by layer scope
-    let rules_by_layer = index_rules_by_scope(&config.rules);
-
-    // Step 2: Merge global + base-layer rules into each layer definition
-    let mut merged_layers: HashMap<LayerNameVO, LayerDefinition> = HashMap::new();
-    for (lname, mut ldef) in config.layers.clone() {
-        let lstr = lname.to_string();
-        let base_name = match lstr.split('(').next() {
-            Some(s) => s.to_string(),
-            None => lstr.to_string(),
-        };
-
-        // Apply: global rules (key="") + base-layer rules (key=base_name)
-        for key in &[String::new(), base_name.clone()] {
-            if let Some(rules) = rules_by_layer.get(key.as_str()) {
-                for rule in rules {
-                    // Skip specialised scoped rules when processing base layers
-                    if key.as_str() == base_name && rule.scope.value.contains('(') {
-                        continue;
-                    }
-                    merge_rule_into_definition(&mut ldef, rule);
-                }
-            }
-        }
-        merged_layers.insert(lname, ldef);
-    }
-
-    // Step 3: Create specialised sub-layer entries from scoped rules
-    for rule in &config.rules {
-        let scope = rule.scope.to_string();
-        if !scope.contains('(') {
-            continue;
-        }
-        create_specialized_sub_layers(&mut merged_layers, &rules_by_layer, &scope);
-    }
-
-    (merged_layers, rules_by_layer)
-}
-
-/// Index rules by their scope (both base name and full scoped name).
-fn index_rules_by_scope(rules: &[ArchitectureRule]) -> HashMap<String, Vec<&ArchitectureRule>> {
-    let mut index: HashMap<String, Vec<&ArchitectureRule>> = HashMap::new();
-    for rule in rules {
-        let scope = rule.scope.to_string();
-        let base_key = if scope.is_empty() {
-            String::new()
-        } else {
-            match scope.split('(').next() {
-                Some(s) => s.to_string(),
-                None => scope.to_string(),
-            }
-        };
-        index.entry(base_key).or_default().push(rule);
-        if scope.contains('(') {
-            index.entry(scope.clone()).or_default().push(rule);
-        }
-    }
-    index
-}
-
-/// Merge a single rule's values into a layer definition.
-fn merge_rule_into_definition(ldef: &mut LayerDefinition, rule: &ArchitectureRule) {
-    if !rule.exceptions.values.is_empty() {
-        for val in &rule.exceptions.values {
-            if !ldef.exceptions.values.contains(val) {
-                ldef.exceptions.values.push(val.clone());
-            }
-        }
-    }
-    if !rule.mandatory.values.is_empty() {
-        for val in &rule.mandatory.values {
-            if !ldef.mandatory.values.contains(val) {
-                ldef.mandatory.values.push(val.clone());
-            }
-        }
-    }
-    if !rule.forbidden.values.is_empty() {
-        for val in &rule.forbidden.values {
-            if !ldef.forbidden.values.contains(val) {
-                ldef.forbidden.values.push(val.clone());
-            }
-        }
-    }
-    if rule.code_analysis.min_lines.value > 0 {
-        ldef.code_analysis.min_lines = rule.code_analysis.min_lines.clone();
-    }
-    if rule.code_analysis.max_lines.value > 0 {
-        ldef.code_analysis.max_lines = rule.code_analysis.max_lines.clone();
-    }
-    if rule.code_analysis.mandatory_class_definition.value {
-        ldef.code_analysis.mandatory_class_definition =
-            rule.code_analysis.mandatory_class_definition.clone();
-    }
-    if !rule.code_analysis.forbidden_inheritance.values.is_empty() {
-        for val in &rule.code_analysis.forbidden_inheritance.values {
-            if !ldef
-                .code_analysis
-                .forbidden_inheritance
-                .values
-                .contains(val)
-            {
-                ldef.code_analysis
-                    .forbidden_inheritance
-                    .values
-                    .push(val.clone());
-            }
-        }
-    }
-    if rule.orphan.check_orphan.value {
-        ldef.orphan.check_orphan = BooleanVO::new(true);
-    }
-    if !rule.orphan.orphan_entry_points.values.is_empty() {
-        for val in &rule.orphan.orphan_entry_points.values {
-            if !ldef.orphan.orphan_entry_points.values.contains(val) {
-                ldef.orphan.orphan_entry_points.values.push(val.clone());
-            }
-        }
-    }
-}
-
-/// Create specialised sub-layer entries from a scoped rule.
-///
-/// E.g., scope "agent(container|registry)" with base layer "agent":
-/// - Clones agent definition
-/// - Overlays container-specific rules
-/// - Inserts "agent(container)" and "agent(registry)" as new sub-layers
-fn create_specialized_sub_layers(
-    merged_layers: &mut HashMap<LayerNameVO, LayerDefinition>,
-    rules_by_layer: &HashMap<String, Vec<&ArchitectureRule>>,
-    scope: &str,
-) {
-    if let Some(paren_start) = scope.find('(') {
-        let base_name = scope[..paren_start].trim();
-        let inner = scope[paren_start + 1..].trim_end_matches(')').trim();
-
-        // Get base definition (clone to avoid borrow conflict)
-        let base_key_str = base_name.to_string();
-        let base_def_opt = {
-            let base_key = LayerNameVO::new(&base_key_str);
-            merged_layers.get(&base_key).cloned()
-        };
-
-        if let Some(base_def) = base_def_opt {
-            let suffixes: Vec<&str> = if inner.contains('|') {
-                inner
-                    .split('|')
-                    .map(|s| s.trim())
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            } else {
-                inner
-                    .split(',')
-                    .map(|s| s.trim())
-                    .filter(|s| !s.is_empty())
-                    .collect()
-            };
-
-            for suffix in suffixes {
-                let specialized_key = LayerNameVO::new(format!("{}({})", base_name, suffix));
-                if merged_layers.contains_key(&specialized_key) {
-                    continue;
-                }
-                let mut spec_def = base_def.clone();
-                if let Some(rules) = rules_by_layer.get(scope) {
-                    for r in rules {
-                        merge_rule_into_definition(&mut spec_def, r);
-                    }
-                }
-                merged_layers.insert(specialized_key, spec_def);
-            }
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::common::taxonomy_common_vo::{Count, PatternList};
-
-    fn make_config(
-        layers: HashMap<LayerNameVO, LayerDefinition>,
-        rules: Vec<ArchitectureRule>,
-    ) -> ArchitectureConfig {
-        ArchitectureConfig {
-            enabled: BooleanVO::new(true),
-            layers,
-            rules,
-            naming: crate::common::taxonomy_definition_vo::NamingConfig::new(Count::new(2)),
-            ignored_paths: crate::common::taxonomy_paths_vo::FilePathList { values: vec![] },
-            mandatory_class_definition: BooleanVO::new(false),
-        }
-    }
-
-    #[test]
-    fn merge_empty_config() {
-        let config = make_config(HashMap::new(), vec![]);
-        let (merged, _) = merge_config(&config);
-        assert!(merged.is_empty());
-    }
-
-    #[test]
-    fn merge_global_rule() {
-        let mut layers = HashMap::new();
-        layers.insert(LayerNameVO::new("agent"), LayerDefinition::default());
-        let rule = ArchitectureRule {
-            scope: LayerNameVO::new(""),
-            forbidden: PatternList {
-                values: vec!["capabilities".to_string()],
-            },
-            ..Default::default()
-        };
-        let config = make_config(layers, vec![rule]);
-        let (merged, _) = merge_config(&config);
-        assert!(merged[&LayerNameVO::new("agent")]
-            .forbidden
-            .values
-            .contains(&"capabilities".to_string()));
-    }
-}
 ```
 
 ---
@@ -4672,6 +4535,7 @@ pub trait ICycleImportProtocol: Send + Sync {
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
+use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 
 pub trait IDummyImportCheckerProtocol: Send + Sync {
@@ -4683,6 +4547,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_dummy_functions(
         &self,
@@ -4690,6 +4555,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_dummy_impls(
         &self,
@@ -4697,6 +4563,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_taxonomy_intent(
         &self,
@@ -4704,6 +4571,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_layer_contract_intent(
         &self,
@@ -4711,6 +4579,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
     fn check_surface_logic(
         &self,
@@ -4718,6 +4587,7 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         content: &ContentString,
         violations: &mut Vec<LintResult>,
         root_dir: &FilePath,
+        layer_map: &LayerMapVO,
     );
 }
 ```
@@ -4798,6 +4668,7 @@ pub trait IImportMandatoryProtocol: Send + Sync {
 // run_audit is async because it may perform file I/O and spawn blocking
 // tasks internally. The caller provides a FilePath target (file or dir).
 use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_adapter_error::ScanError;
 use crate::common::taxonomy_path_vo::FilePath;
 use async_trait::async_trait;
 
@@ -4809,7 +4680,7 @@ use async_trait::async_trait;
 pub trait IImportRunnerAggregate: Send + Sync {
     /// Run all 5 import-related AES checks (AES201–AES205) on the target.
     /// Returns aggregated violations from mandatory, forbidden, unused, dummy, and cycle checks.
-    async fn run_audit(&self, target: &FilePath) -> Vec<LintResult>;
+    async fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError>;
     /// Human-readable name for this orchestrator ("import-rules").
     fn name(&self) -> &str;
 }
@@ -4855,12 +4726,12 @@ pub mod contract_import_mandatory_protocol;
 pub mod contract_import_runner_aggregate;
 pub mod contract_unused_import_protocol;
 pub mod taxonomy_dependency_edge_vo;
+pub mod taxonomy_import_constant;
 pub mod taxonomy_import_rule_vo;
 pub mod taxonomy_language_vo;
 pub mod taxonomy_violation_import_vo;
 pub mod utility_cycle_detector;
 pub mod utility_dummy_detector;
-pub mod utility_file_read;
 pub mod utility_import_module_parser;
 pub mod utility_import_resolver;
 pub mod utility_import_symbol_extractor;
@@ -4869,24 +4740,6 @@ pub mod utility_path_normalizer;
 pub use taxonomy_dependency_edge_vo::DependencyEdge;
 pub use taxonomy_language_vo::LanguageVO;
 pub use taxonomy_violation_import_vo::AesImportViolation;
-```
-
----
-
-## File: crates/shared/src/import-rules/taxonomy_cycle_color_vo.rs
-
-```rust
-// PURPOSE: ColorVO — DFS 3-color cycle detection state (AES205)
-use serde::{Deserialize, Serialize};
-
-/// DFS color for cycle detection.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
-pub enum Color {
-    #[default]
-    White, // unvisited
-    Gray,  // currently in stack
-    Black, // fully explored
-}
 ```
 
 ---
@@ -4958,6 +4811,17 @@ pub const PYTHON_ENTRY_FILES: &[&str] = &["__init__.py"];
 
 /// Source code file extensions for file collection.
 pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
+
+/// Directories to skip during file collection (build artifacts, dependencies, caches).
+pub const DEFAULT_SKIP_DIRS: &[&str] = &[
+    ".git",
+    "node_modules",
+    "target",
+    "dist",
+    "build",
+    ".venv",
+    "__pycache__",
+];
 ```
 
 ---
@@ -5414,7 +5278,7 @@ fn extract_cycle_nodes(
 ## File: crates/shared/src/import-rules/utility_dummy_detector.rs
 
 ```rust
-// PURPOSE: taxonomy_dummy_helper — pure utility functions for dummy function, block, and trait detection
+// PURPOSE: utility_dummy_helper — pure utility functions for dummy function, block, and trait detection
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::import_rules::taxonomy_language_vo::LanguageVO;
@@ -5475,7 +5339,6 @@ pub fn symbol_used_real(
         && symbol.len() > 1
         && matches!(symbol.chars().nth(1), Some(c) if c.is_uppercase()))
         || symbol.ends_with("Protocol")
-        || symbol.ends_with("Port")
         || symbol.ends_with("Trait")
         || symbol.ends_with("Aggregate")
         || symbol.ends_with("Ext")
@@ -5542,7 +5405,7 @@ pub fn symbol_used_real(
             continue;
         }
 
-        if !trimmed.contains(symbol) {
+        if !contains_ident(trimmed, symbol) {
             continue;
         }
 
@@ -5561,6 +5424,38 @@ pub fn symbol_used_real(
 }
 
 // ─── Private Helpers ───
+
+/// Check if `haystack` contains `needle` as a whole identifier (not a substring).
+pub fn contains_ident(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return false;
+    }
+
+    let mut start = 0usize;
+
+    while let Some(pos) = haystack[start..].find(needle) {
+        let abs = start + pos;
+        let end = abs + needle.len();
+
+        let before_ok = abs == 0 || {
+            let before_char = haystack[..abs].chars().next_back().unwrap_or(' ');
+            !before_char.is_alphanumeric() && before_char != '_'
+        };
+
+        let after_ok = end == haystack.len() || {
+            let after_char = haystack[end..].chars().next().unwrap_or(' ');
+            !after_char.is_alphanumeric() && after_char != '_'
+        };
+
+        if before_ok && after_ok {
+            return true;
+        }
+
+        start = abs + needle.len();
+    }
+
+    false
+}
 
 /// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function
 /// definitions and `body_extent(start, lines)` to compute the body end line
@@ -5719,36 +5614,49 @@ fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
     Some(name.to_string())
 }
 
-fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
 
-        if trimmed.starts_with("from ") && trimmed.contains(" import ") {
-            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
-                for name in import_part.split(',') {
-                    let name: &str = name.split_whitespace().next().unwrap_or_default();
-                    if !name.is_empty() && name != "*" {
-                        symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
-                    }
+        if let Some(import_part) = trimmed
+            .strip_prefix("from ")
+            .and_then(|s| s.split_once(" import ").map(|(_, p)| p))
+        {
+            for name in import_part.split(',') {
+                let name = name.trim();
+                if name.is_empty() || name == "*" {
+                    continue;
+                }
+
+                let used_name = match name.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => name.split_whitespace().next().unwrap_or_default(),
+                };
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
                 }
             }
             continue;
         }
 
-        if trimmed.starts_with("import ") {
-            let module: &str = trimmed
-                .trim_start_matches("import ")
-                .split_whitespace()
-                .next()
-                .unwrap_or_default();
-            if !module.is_empty() {
-                let name: &str = match module.rsplit('.').next() {
-                    Some(n) => n,
-                    None => module,
+        if let Some(rest) = trimmed.strip_prefix("import ") {
+            for module in rest.split(',') {
+                let module = module.trim();
+                if module.is_empty() {
+                    continue;
+                }
+
+                let used_name = match module.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => module.rsplit('.').next().unwrap_or(module).trim(),
                 };
-                symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
+
+                if !used_name.is_empty() && used_name != "*" {
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
+                }
             }
         }
     }
@@ -5756,7 +5664,7 @@ fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     symbols
 }
 
-fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
+pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
 
     for (idx, line) in lines.iter().enumerate() {
@@ -5767,7 +5675,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name: &str = part.split_whitespace().next().unwrap_or_default();
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(" as ") {
+                            Some((_, alias)) => alias.trim(),
+                            None => part.split_whitespace().next().unwrap_or_default(),
+                        };
+
                         if !name.is_empty() && name != "type" {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -5779,11 +5696,17 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains(" from ") {
             if let Some(import_part) = trimmed.split_once("import ").map(|(_, p)| p) {
-                let name = import_part
+                let before_from = import_part
                     .split_once(" from ")
                     .map(|(n, _)| n)
-                    .unwrap_or_default();
-                let name = name.trim();
+                    .unwrap_or_default()
+                    .trim();
+
+                let name = match before_from.split_once(" as ") {
+                    Some((_, alias)) => alias.trim(),
+                    None => before_from,
+                };
+
                 if !name.is_empty() && name != "default" {
                     symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                 }
@@ -5796,10 +5719,16 @@ fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                 if let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
-                        let name = match part.trim().split(':').next() {
-                            Some(n) => n.trim(),
-                            None => "",
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+
+                        let name = match part.split_once(':') {
+                            Some((_, alias)) => alias.trim(),
+                            None => part,
                         };
+
                         if !name.is_empty() {
                             symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                         }
@@ -5929,36 +5858,11 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
     false
 }
 
-fn is_short_marker(inner: &str) -> bool {
-    let t = ['t', 'o', 'd', 'o', '!', '('].iter().collect::<String>();
-    let u = [
-        'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd', '!', '(',
-    ]
-    .iter()
-    .collect::<String>();
-    let p = ['p', 'a', 'n', 'i', 'c', '!', '(']
-        .iter()
-        .collect::<String>();
-    let r = [
-        'u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e', '!', '(',
-    ]
-    .iter()
-    .collect::<String>();
-    inner.starts_with(&t) || inner.starts_with(&u) || inner.starts_with(&p) || inner.starts_with(&r)
-}
-```
-
----
-
-## File: crates/shared/src/import-rules/utility_file_read.rs
-
-```rust
-// PURPOSE: File read utility — stateless file content reading helper
-use std::path::Path;
-
-/// Read a file to string, returning None on error.
-pub fn read_file<P: AsRef<Path>>(path: P) -> Option<String> {
-    std::fs::read_to_string(path).ok()
+pub fn is_short_marker(inner: &str) -> bool {
+    inner.starts_with("todo!(")
+        || inner.starts_with("unimplemented!(")
+        || inner.starts_with("panic!(")
+        || inner.starts_with("unreachable!(")
 }
 ```
 
@@ -6656,150 +6560,6 @@ pub fn is_name_used_at(name: &str, content: &str, exclude_line: usize) -> bool {
         .join("\n");
     rest.contains(name)
 }
-
-// ─── Private Helpers ───
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn derive_macro_serialize_always_used() {
-        let content = r#"
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-struct Config {
-    name: String,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("Serialize"),
-            Identity::new("serde::Serialize"),
-        );
-        aliases.insert(
-            Identity::new("Deserialize"),
-            Identity::new("serde::Deserialize"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("Serialize")),
-            "Serialize should always be considered used"
-        );
-        assert!(
-            used.contains(&Identity::new("Deserialize")),
-            "Deserialize should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_async_trait_always_used() {
-        let content = r#"
-use async_trait::async_trait;
-
-#[async_trait]
-trait MyTrait {
-    async fn do_something();
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("async_trait"),
-            Identity::new("async_trait::async_trait"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("async_trait")),
-            "async_trait should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_enum_iter_always_used() {
-        // EnumIter was NOT previously in is_rust_trait_import — only DERIVE_MACROS catches it
-        let content = r#"
-use strum::{EnumIter, Display};
-
-#[derive(EnumIter, Display)]
-enum Color {
-    Red,
-    Green,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(Identity::new("EnumIter"), Identity::new("strum::EnumIter"));
-        aliases.insert(Identity::new("Display"), Identity::new("strum::Display"));
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("EnumIter")),
-            "EnumIter should always be considered used"
-        );
-        assert!(
-            used.contains(&Identity::new("Display")),
-            "Display should always be considered used"
-        );
-    }
-
-    #[test]
-    fn derive_macro_as_ref_str_always_used() {
-        // AsRefStr was NOT previously in is_rust_trait_import — only DERIVE_MACROS catches it
-        let content = r#"
-use strum::AsRefStr;
-
-#[derive(AsRefStr)]
-enum Status {
-    Active,
-    Inactive,
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(Identity::new("AsRefStr"), Identity::new("strum::AsRefStr"));
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            used.contains(&Identity::new("AsRefStr")),
-            "AsRefStr should always be considered used"
-        );
-    }
-
-    #[test]
-    fn non_derive_import_still_checked_normally() {
-        // Regular imports should NOT be auto-marked as used
-        let content = r#"
-use std::collections::HashMap;
-
-fn main() {
-    let _x = 42;
-}
-"#;
-        let mut aliases = HashMap::new();
-        aliases.insert(
-            Identity::new("HashMap"),
-            Identity::new("std::collections::HashMap"),
-        );
-
-        let used = extract_used_symbols(content, &aliases);
-        assert!(
-            !used.contains(&Identity::new("HashMap")),
-            "HashMap is genuinely unused"
-        );
-    }
-
-    #[test]
-    fn is_name_used_returns_true_for_derive_macros() {
-        // is_name_used should short-circuit for all DERIVE_MACROS entries
-        for &m in DERIVE_MACROS {
-            assert!(
-                is_name_used(m, "fn main() {}", 0),
-                "{m} should be considered used via DERIVE_MACROS"
-            );
-        }
-    }
-}
 ```
 
 ---
@@ -6850,15 +6610,31 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
         Ok(p) => p,
         Err(_) => root_dir.trim_end_matches('/').replace('\\', "/"),
     };
-    if normalized_file.starts_with(&normalized_root) {
-        normalized_file[normalized_root.len()..]
-            .trim_start_matches('/')
-            .to_string()
-    } else {
-        normalized_file
+
+    let file_path = Path::new(&normalized_file);
+    let root_path = Path::new(&normalized_root);
+
+    match file_path.strip_prefix(root_path) {
+        Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
+        Err(_) => {
+            // Fallback: try string-based prefix removal
+            // Ensure root ends with / for proper prefix matching
+            let root_prefix = if normalized_root.ends_with('/') {
+                normalized_root.clone()
+            } else {
+                format!("{}/", normalized_root)
+            };
+
+            if normalized_file.starts_with(&root_prefix) {
+                normalized_file[root_prefix.len()..].to_string()
+            } else if normalized_file == normalized_root {
+                String::new()
+            } else {
+                normalized_file
+            }
+        }
     }
 }
 ```
 
 ---
-

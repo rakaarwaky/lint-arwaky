@@ -1,28 +1,133 @@
+use std::collections::{HashMap, HashSet};
+
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::import_rules::contract_cycle_import_protocol::DependencyEdge;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::DependencyEdge;
-use shared::import_rules::{
-    utility_cycle_detector, utility_file_read, utility_import_module_parser,
-};
+use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::LayerNameVO;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_name_vo::SymbolName;
-use std::collections::HashMap;
-
-use async_trait::async_trait;
 
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DependencyCycleAnalyzer;
+#[derive(Default)]
+pub struct DependencyCycleAnalyzer {}
+
+// ─── Cycle Detection Helper Types ─────────────────────────
+
+#[derive(Clone, Copy, PartialEq)]
+enum Color {
+    White,
+    Gray,
+    Black,
+}
+
+fn detect_cycle_edges(edges: &[DependencyEdge]) -> Vec<SymbolName> {
+    let normalized_edges: Vec<DependencyEdge> = edges
+        .iter()
+        .map(|e| {
+            DependencyEdge::new(
+                utility_cycle_detector::normalize_to_layer(&e.source),
+                utility_cycle_detector::normalize_to_layer(&e.target),
+            )
+        })
+        .collect();
+
+    let mut graph: HashMap<String, Vec<String>> = HashMap::new();
+    for e in &normalized_edges {
+        graph
+            .entry(e.source.clone())
+            .or_default()
+            .push(e.target.clone());
+        graph.entry(e.target.clone()).or_default();
+    }
+
+    let mut color: HashMap<String, Color> = HashMap::new();
+    let mut parent: HashMap<String, String> = HashMap::new();
+    let mut cycle_edges_set: HashSet<(String, String)> = HashSet::new();
+
+    for node in graph.keys() {
+        color.entry(node.clone()).or_insert(Color::White);
+    }
+
+    for node in graph.keys().cloned().collect::<Vec<_>>() {
+        if color[&node] == Color::White {
+            dfs_3color(&node, &graph, &mut color, &mut parent, &mut cycle_edges_set);
+        }
+    }
+
+    let mut unique_cycles: Vec<String> = Vec::new();
+    let mut reported: HashSet<String> = HashSet::new();
+
+    for (src, tgt) in &cycle_edges_set {
+        let cycle_nodes = extract_cycle_nodes(src, tgt, &parent);
+        if let Some(cycle) = cycle_nodes {
+            let mut sorted_cycle = cycle.clone();
+            sorted_cycle.sort();
+            let dedup_key = sorted_cycle.join("->");
+            if reported.insert(dedup_key) {
+                for i in 0..cycle.len() {
+                    let next = cycle[(i + 1) % cycle.len()].clone();
+                    unique_cycles.push(format!("{}->{}", cycle[i], next));
+                }
+            }
+        }
+    }
+
+    unique_cycles.into_iter().map(SymbolName::new).collect()
+}
+
+fn dfs_3color(
+    node: &str,
+    graph: &HashMap<String, Vec<String>>,
+    color: &mut HashMap<String, Color>,
+    parent: &mut HashMap<String, String>,
+    cycle_edges: &mut HashSet<(String, String)>,
+) {
+    color.insert(node.to_string(), Color::Gray);
+
+    if let Some(neighbors) = graph.get(node) {
+        for neighbor in neighbors {
+            if *color.get(neighbor).unwrap_or(&Color::White) == Color::Gray {
+                cycle_edges.insert((node.to_string(), neighbor.clone()));
+            } else if *color.get(neighbor).unwrap_or(&Color::White) == Color::White {
+                parent.insert(neighbor.clone(), node.to_string());
+                dfs_3color(neighbor, graph, color, parent, cycle_edges);
+            }
+        }
+    }
+
+    color.insert(node.to_string(), Color::Black);
+}
+
+fn extract_cycle_nodes(
+    src: &str,
+    tgt: &str,
+    parent: &HashMap<String, String>,
+) -> Option<Vec<String>> {
+    let mut path = Vec::new();
+    let mut cur = src;
+    path.push(cur.to_string());
+
+    while cur != tgt {
+        let p = parent.get(cur)?;
+        cur = p;
+        path.push(cur.to_string());
+    }
+
+    path.reverse();
+    Some(path)
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -54,7 +159,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
-        utility_cycle_detector::detect_cycle_edges(edges)
+        detect_cycle_edges(edges)
     }
 
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
@@ -64,15 +169,9 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for DependencyCycleAnalyzer {
-    fn default() -> Self {
-        Self
-    }
-}
-
 impl DependencyCycleAnalyzer {
     pub fn new() -> Self {
-        Self
+        Self {}
     }
 
     fn _scan(
@@ -101,7 +200,7 @@ impl DependencyCycleAnalyzer {
                     continue;
                 }
             }
-            let content = match utility_file_read::read_file(file) {
+            let content = match shared::common::utility_file_handler::read_file_generic(file).ok() {
                 Some(c) => c,
                 None => continue,
             };
@@ -169,7 +268,7 @@ impl DependencyCycleAnalyzer {
             }
         }
 
-        let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
+        let cycle_edge_results = detect_cycle_edges(&edges);
         cycle_edge_results.into_iter().map(|sn| {
             let edge_key = sn.value;
             let parts: Vec<&str> = edge_key.split("->").collect();

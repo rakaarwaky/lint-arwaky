@@ -1,5 +1,5 @@
 [package]
-name = "external_lint-lint-arwaky"
+name = "external-lint-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Adapters for external linters — Rust (clippy, rustfmt, cargo-audit), Python (ruff, mypy, bandit), JavaScript/TypeScript (eslint, prettier, tsc). Invoked via stdio."
@@ -25,4 +25,11 @@ shared.workspace = true
 toml.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
 tokio.workspace = true
+
+[[bench]]
+name = "bench_external_lint_selector"
+path = "benches/bench_external_lint_selector.rs"
+harness = false

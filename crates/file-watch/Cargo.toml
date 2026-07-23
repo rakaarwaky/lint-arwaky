@@ -1,5 +1,5 @@
 [package]
-name = "file_watch-lint-arwaky"
+name = "file-watch-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Filesystem watcher built on `notify` + debouncer; re-runs the lint pipeline on Rust/JS/Python file mutations."
@@ -18,6 +18,16 @@ shared.workspace = true
 notify.workspace = true
 notify-debouncer-mini.workspace = true
 tokio.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+tokio.workspace = true
+
+[[bench]]
+name = "bench_file_watch_change_analyzer"
+path = "benches/bench_file_watch_change_analyzer.rs"
+harness = false
 
 [features]
 watch = []

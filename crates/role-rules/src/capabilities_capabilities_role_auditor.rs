@@ -1,4 +1,4 @@
-use shared::cli_commands::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;

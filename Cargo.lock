@@ -33,6 +33,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anes"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
+
+[[package]]
 name = "anstream"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -68,7 +74,7 @@ version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -79,7 +85,7 @@ checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -153,12 +159,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
-name = "auto_fix-lint-arwaky"
+name = "auto-fix-lint-arwaky"
 version = "1.10.106"
 dependencies = [
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
@@ -301,6 +310,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
 
 [[package]]
+name = "cast"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
 name = "castaway"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -359,6 +374,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
+dependencies = [
+ "ciborium-io",
+ "half",
+]
+
+[[package]]
 name = "clap"
 version = "4.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -399,33 +441,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
-name = "cli_commands-lint-arwaky"
+name = "cli-commands-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
- "auto_fix-lint-arwaky",
+ "auto-fix-lint-arwaky",
  "clap",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
+ "code-analysis-lint-arwaky",
+ "config-system-lint-arwaky",
  "console",
+ "criterion",
  "ctrlc",
  "dialoguer",
  "dirs",
- "external_lint-lint-arwaky",
- "file_watch-lint-arwaky",
+ "external-lint-lint-arwaky",
+ "file-watch-lint-arwaky",
  "futures",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
+ "git-hooks-lint-arwaky",
+ "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
- "naming_rules-lint-arwaky",
- "orphan_detector-lint-arwaky",
- "project_setup-lint-arwaky",
- "role_rules-lint-arwaky",
+ "naming-rules-lint-arwaky",
+ "orphan-detector-lint-arwaky",
+ "project-setup-lint-arwaky",
+ "regex",
+ "report-formatter-lint-arwaky",
+ "role-rules-lint-arwaky",
  "serde",
  "serde_json",
  "serde_yaml_ng",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -459,15 +505,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "code_analysis-lint-arwaky"
+name = "code-analysis-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -519,16 +567,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc14f565cf027a105f7a44ccf9e5b424348421a1d8952a8fc9d499d313107789"
 
 [[package]]
-name = "config_system-lint-arwaky"
+name = "config-system-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "dirs",
  "futures",
  "serde",
  "serde_json",
  "serde_yaml_ng",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
 ]
@@ -597,6 +647,44 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9481c1c90cbf2ac953f07c8d4a58aa3945c425b7185c9154d67a65e4230da511"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "criterion"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2b12d017a929603d80db1831cd3a24082f8137ce19c69e6447f54f5fc8d692f"
+dependencies = [
+ "anes",
+ "cast",
+ "ciborium",
+ "clap",
+ "criterion-plot",
+ "futures",
+ "is-terminal",
+ "itertools 0.10.5",
+ "num-traits",
+ "once_cell",
+ "oorandom",
+ "plotters",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "tinytemplate",
+ "tokio",
+ "walkdir",
+]
+
+[[package]]
+name = "criterion-plot"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b50826342786a51a89e2da3a28f1c32b06e387201bc2d19791f622c673706b1"
+dependencies = [
+ "cast",
+ "itertools 0.10.5",
 ]
 
 [[package]]
@@ -810,7 +898,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -882,7 +970,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -892,11 +980,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dea2df4cf52843e0452895c455a1a2cfbb842a1e7329671acf418fdc53ed4c59"
 
 [[package]]
-name = "external_lint-lint-arwaky"
+name = "external-lint-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
+ "criterion",
  "dirs",
  "futures",
  "regex",
@@ -904,6 +993,7 @@ dependencies = [
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "toml 1.1.2+spec-1.1.0",
  "tracing",
@@ -941,15 +1031,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "file_watch-lint-arwaky"
+name = "file-watch-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "notify",
  "notify-debouncer-mini",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -1178,14 +1270,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "git_hooks-lint-arwaky"
+name = "git-hooks-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
- "code_analysis-lint-arwaky",
+ "code-analysis-lint-arwaky",
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -2061,6 +2155,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hermit-abi"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
+
+[[package]]
 name = "home"
 version = "0.5.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2317,15 +2417,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "import_rules-lint-arwaky"
+name = "import-rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -2398,10 +2500,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d98f6fed1fde3f8c21bc40a1abb88dd75e67924f9cffc3ef95607bad8017f8e2"
 
 [[package]]
+name = "is-terminal"
+version = "0.4.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
+dependencies = [
+ "hermit-abi",
+ "libc",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
+
+[[package]]
+name = "itertools"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
 
 [[package]]
 name = "itertools"
@@ -2586,32 +2708,33 @@ version = "1.10.111"
 dependencies = [
  "anyhow",
  "async-trait",
- "auto_fix-lint-arwaky",
+ "auto-fix-lint-arwaky",
  "chrono",
  "clap",
- "cli_commands-lint-arwaky",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
+ "cli-commands-lint-arwaky",
+ "code-analysis-lint-arwaky",
+ "config-system-lint-arwaky",
  "console",
  "ctrlc",
  "dialoguer",
  "dirs",
- "external_lint-lint-arwaky",
- "file_watch-lint-arwaky",
+ "external-lint-lint-arwaky",
+ "file-watch-lint-arwaky",
  "futures",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
+ "git-hooks-lint-arwaky",
+ "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
- "mcp_server-lint-arwaky",
- "naming_rules-lint-arwaky",
+ "mcp-server-lint-arwaky",
+ "naming-rules-lint-arwaky",
  "once_cell",
- "orphan_detector-lint-arwaky",
- "project_setup-lint-arwaky",
+ "orphan-detector-lint-arwaky",
+ "project-setup-lint-arwaky",
  "rand 0.10.1",
  "regex",
+ "report-formatter-lint-arwaky",
  "reqwest",
  "rmcp",
- "role_rules-lint-arwaky",
+ "role-rules-lint-arwaky",
  "rustsec",
  "serde",
  "serde_json",
@@ -2678,9 +2801,11 @@ name = "maintenance-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -2705,29 +2830,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcp_server-lint-arwaky"
+name = "mcp-server-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "anyhow",
  "async-trait",
- "auto_fix-lint-arwaky",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
+ "auto-fix-lint-arwaky",
+ "cli-commands-lint-arwaky",
+ "code-analysis-lint-arwaky",
+ "config-system-lint-arwaky",
+ "criterion",
  "dirs",
- "external_lint-lint-arwaky",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
+ "external-lint-lint-arwaky",
+ "git-hooks-lint-arwaky",
+ "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
- "naming_rules-lint-arwaky",
+ "naming-rules-lint-arwaky",
  "once_cell",
- "orphan_detector-lint-arwaky",
+ "orphan-detector-lint-arwaky",
  "regex",
  "rmcp",
- "role_rules-lint-arwaky",
+ "role-rules-lint-arwaky",
  "schemars",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
 ]
@@ -2798,13 +2926,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "naming_rules-lint-arwaky"
+name = "naming-rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
@@ -2861,7 +2992,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2965,6 +3096,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
+name = "oorandom"
+version = "11.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
+
+[[package]]
 name = "openssl-probe"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2977,14 +3114,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
-name = "orphan_detector-lint-arwaky"
+name = "orphan-detector-lint-arwaky"
 version = "1.10.106"
 dependencies = [
+ "criterion",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -3042,6 +3181,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9245c6e7c5a6bcdd7977fdf6d1e1c67f4cc2d0d58c041df0ea5940953033e6ca"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "plotters"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5aeb6f403d7a4911efb1e33402027fc44f29b5bf6def3effcc22d7bb75f2b747"
+dependencies = [
+ "num-traits",
+ "plotters-backend",
+ "plotters-svg",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "plotters-backend"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df42e13c12958a16b3f7f4386b9ab1f3e7933914ecea48da7139435263a4172a"
+
+[[package]]
+name = "plotters-svg"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51bae2ac328883f7acdfea3d66a7c35751187f870bc81f94563733a154d7a670"
+dependencies = [
+ "plotters-backend",
 ]
 
 [[package]]
@@ -3137,14 +3304,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "project_setup-lint-arwaky"
+name = "project-setup-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "dirs",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -3295,7 +3464,7 @@ dependencies = [
  "crossterm",
  "indoc",
  "instability",
- "itertools",
+ "itertools 0.13.0",
  "lru",
  "paste",
  "strum",
@@ -3394,6 +3563,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
+name = "report-formatter-lint-arwaky"
+version = "1.10.106"
+dependencies = [
+ "async-trait",
+ "code-analysis-lint-arwaky",
+ "criterion",
+ "serde",
+ "serde_json",
+ "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
+]
+
+[[package]]
 name = "reqwest"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3483,15 +3666,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "role_rules-lint-arwaky"
+name = "role-rules-lint-arwaky"
 version = "1.10.106"
 dependencies = [
  "async-trait",
+ "criterion",
  "once_cell",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
+ "tokio",
 ]
 
 [[package]]
@@ -3538,7 +3724,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3595,7 +3781,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3847,7 +4033,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
- "code_analysis-lint-arwaky",
  "once_cell",
  "regex",
  "rmcp",
@@ -3954,7 +4139,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4095,7 +4280,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.4",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4199,6 +4384,16 @@ checksum = "c8323304221c2a851516f22236c5722a72eaa19749016521d6dff0824447d96d"
 dependencies = [
  "displaydoc",
  "zerovec",
+]
+
+[[package]]
+name = "tinytemplate"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -4476,22 +4671,25 @@ dependencies = [
  "anyhow",
  "arboard",
  "async-trait",
- "auto_fix-lint-arwaky",
- "code_analysis-lint-arwaky",
- "config_system-lint-arwaky",
+ "auto-fix-lint-arwaky",
+ "cli-commands-lint-arwaky",
+ "code-analysis-lint-arwaky",
+ "config-system-lint-arwaky",
+ "criterion",
  "crossterm",
- "external_lint-lint-arwaky",
- "file_watch-lint-arwaky",
- "git_hooks-lint-arwaky",
- "import_rules-lint-arwaky",
+ "external-lint-lint-arwaky",
+ "file-watch-lint-arwaky",
+ "git-hooks-lint-arwaky",
+ "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
- "naming_rules-lint-arwaky",
- "orphan_detector-lint-arwaky",
- "project_setup-lint-arwaky",
+ "naming-rules-lint-arwaky",
+ "orphan-detector-lint-arwaky",
+ "project-setup-lint-arwaky",
  "ratatui",
- "role_rules-lint-arwaky",
+ "role-rules-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-appender",
@@ -4552,7 +4750,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3644627a5af5fa321c95b9b235a72fd24cd29c648c2c379431e6628655627bf"
 dependencies = [
- "itertools",
+ "itertools 0.13.0",
  "unicode-segmentation",
  "unicode-width 0.1.14",
 ]
@@ -4764,7 +4962,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

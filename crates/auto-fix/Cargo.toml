@@ -1,5 +1,5 @@
 [package]
-name = "auto_fix-lint-arwaky"
+name = "auto-fix-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Auto-fix processor that applies mechanical corrections for AES rule violations surfaced by the linter family."
@@ -14,3 +14,13 @@ workspace = true
 serde.workspace = true
 serde_json.workspace = true
 shared.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+tokio.workspace = true
+
+[[bench]]
+name = "bench_auto_fix_throughput"
+path = "benches/bench_auto_fix_throughput.rs"
+harness = false

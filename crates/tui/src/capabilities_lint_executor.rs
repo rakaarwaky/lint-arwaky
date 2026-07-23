@@ -1,6 +1,10 @@
-use crate::capabilities_report_formatter::ReportFormatterHelper;
+use crate::utility_report_formatter::{
+    format_config_result, format_dependency_report, format_doctor_report, format_results,
+};
 use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
+use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
@@ -13,7 +17,6 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::taxonomy_doctor_vo::DependencyReport;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::tui::taxonomy_action_flags_vo::ActionFlags;
 use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
 use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
@@ -40,6 +43,7 @@ pub struct LintExecutor {
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
+    analysis_pipeline: Option<Arc<dyn IAnalysisPipelineAggregate>>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -49,8 +53,7 @@ impl ILintExecutorProtocol for LintExecutor {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
-        let formatter = ReportFormatterHelper::new();
-        let output = formatter.format_results(&results).to_string();
+        let output = format_results(&results).to_string();
         LintExecutionResult {
             output,
             violation_count: count,
@@ -113,21 +116,28 @@ impl ILintExecutorProtocol for LintExecutor {
         match &self.orphan_aggregate {
             Some(orphan_agg) => {
                 // Resolve workspace root like CLI does
-                let scan_root = shared::common::find_workspace_root(path)
+                let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| path.to_string());
                 let dir_path =
                     shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
                         .unwrap_or_default();
-                let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
-                    Ok(list) => list.values,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Orphan detection for {}\nFailed to scan directory: {}",
-                            path, e
-                        ));
-                    }
-                };
+                let ignored = self
+                    .config_orchestrator
+                    .as_ref()
+                    .map(|o| o.ignored_paths(&scan_root))
+                    .unwrap_or_default();
+                let source_files =
+                    match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored)
+                    {
+                        Ok(list) => list.values,
+                        Err(e) => {
+                            return LintExecutionResult::failure(format!(
+                                "Orphan detection for {}\nFailed to scan directory: {}",
+                                path, e
+                            ));
+                        }
+                    };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
@@ -239,21 +249,33 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let scan_root = shared::common::find_workspace_root(path)
+        let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
         let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(scan_root.clone())
             .unwrap_or_default();
-        let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
-            Ok(list) => list.values,
-            Err(_) => Vec::new(),
-        };
+        let ignored = self
+            .config_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(&scan_root))
+            .unwrap_or_default();
+        let source_files =
+            match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                Ok(list) => list.values,
+                Err(_) => Vec::new(),
+            };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
-        let entries = shared::code_analysis::utility_duplication::collect_file_entries(&file_strs);
-        let blocks = shared::code_analysis::utility_duplication::scan_duplicate_blocks(entries, 10);
-        let violations = shared::code_analysis::utility_duplication::build_violations(
+        let entries =
+            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
+                &file_strs,
+            );
+        let blocks =
+            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+                entries, 10,
+            );
+        let violations = shared::code_analysis::utility_code_duplication_detector::build_violations(
             &blocks,
             file_strs.len() * 100,
             10,
@@ -537,6 +559,7 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
+            analysis_pipeline: None,
         }
     }
 
@@ -610,16 +633,22 @@ impl LintExecutor {
         self
     }
 
+    pub fn with_analysis_pipeline(
+        mut self,
+        analysis_pipeline: Arc<dyn IAnalysisPipelineAggregate>,
+    ) -> Self {
+        self.analysis_pipeline = Some(analysis_pipeline);
+        self
+    }
+
     pub fn format_results(&self, results: &LintResultList) -> String {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_results(results).to_string()
+        format_results(results).to_string()
     }
 
     fn format_doctor_report(
         diagnostics: &shared::project_setup::taxonomy_doctor_vo::ToolchainDiagnostics,
     ) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_doctor_report(diagnostics)
+        format_doctor_report(diagnostics)
     }
 
     fn run_init(&self) -> LintExecutionResult {
@@ -670,15 +699,13 @@ impl LintExecutor {
     }
 
     fn format_dependency_report(path: &str, report: &DependencyReport) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_dependency_report(path, report)
+        format_dependency_report(path, report)
     }
 
     fn format_config_result(
         result: &shared::config_system::taxonomy_source_vo::ConfigResult,
     ) -> LintExecutionResult {
-        let formatter = ReportFormatterHelper::new();
-        formatter.format_config_result(result)
+        format_config_result(result)
     }
 
     /// Check if a binary is available in the system PATH.
@@ -722,116 +749,47 @@ impl LintExecutor {
 
 impl LintExecutor {
     fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
-        // If we have config_orchestrator, we check for workspace members.
-        if let Some(ref multi_project) = self.config_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let rt = match tokio::runtime::Runtime::new() {
-                Ok(rt) => rt,
-                Err(e) => {
-                    return LintExecutionResult::failure(format!(
-                        "Failed to create runtime: {}",
-                        e
-                    ));
-                }
-            };
-            let workspaces = rt.block_on(multi_project.discover_workspaces(&path_obj));
-            if !workspaces.is_empty() {
-                let mut all_results = Vec::new();
-
-                // Collect ALL source files from workspace root for cross-workspace orphan detection
-                let scan_root = shared::common::find_workspace_root(path)
-                    .unwrap_or_else(|| std::path::PathBuf::from(path));
-                let all_source_files: Vec<String> =
-                    shared::common::collect_all_source_files(&scan_root)
-                        .iter()
-                        .map(|f| f.value.clone())
-                        .collect();
-
-                for ws in &workspaces {
-                    // Dynamically build the orchestrators/linters using ws.config!
-                    let import_container =
-                        import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let naming_container =
-                        naming_rules::root_naming_rules_container::NamingContainer::default();
-                    let role_container =
-                        role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                            ws.config.clone(),
-                        );
-                    let code_analysis_linter =
-                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::new()
-                            .code_analysis_linter();
-
-                    let mut ws_results = Vec::new();
-
-                    // 1. AES code analysis
-                    let aes_fp =
-                        shared::common::taxonomy_path_vo::FilePath::new(ws.path.value.clone())
-                            .unwrap_or_default();
-                    let aes_results = code_analysis_linter.run_code_analysis(&aes_fp);
-                    ws_results.extend(aes_results.values);
-
-                    // 2. Naming rules audit (AES101-102)
-                    let naming_results = rt
-                        .block_on(naming_container.orchestrator().run_audit(&ws.path))
-                        .unwrap_or_default();
-                    ws_results.extend(naming_results);
-
-                    // 3. Import rules audit (AES201-205, cycles)
-                    let import_results = rt
-                        .block_on(import_container.orchestrator().run_audit(&ws.path))
-                        .unwrap_or_default();
-                    ws_results.extend(import_results);
-
-                    // 4. External linter adapters
-                    if let Some(ref external_lint) = self.external_lint {
-                        let ext_results = rt.block_on(external_lint.scan_all(&ws.path));
-                        ws_results.extend(ext_results.values);
+        // Delegate to AnalysisPipelineOrchestrator — centralizes all 6-linter pipeline logic.
+        match &self.analysis_pipeline {
+            Some(pipeline) => {
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(rt) => rt,
+                    Err(e) => {
+                        return LintExecutionResult::failure(format!(
+                            "Failed to create runtime: {}",
+                            e
+                        ));
                     }
+                };
 
-                    // 5. Role rules audit (AES401-406)
-                    let role_results =
-                        rt.block_on(role_container.orchestrator().run_audit(&ws.path));
-                    ws_results.extend(role_results);
+                // Use run_with_discovery for multi-workspace support.
+                // Falls back to single-scan mode if no workspaces found.
+                let request = ScanRequest::new(
+                    shared::cli_commands::taxonomy_scan_request_vo::ScanTarget::new(
+                        path.to_string(),
+                    ),
+                    shared::cli_commands::taxonomy_scan_request_vo::ScanMode::Scan,
+                );
 
-                    // 6. Orphan detection (AES501-506)
-                    if let Some(ref orphan_agg) = &self.orphan_aggregate {
-                        if !all_source_files.is_empty() {
-                            let orphan_results = orphan_agg
-                                .check_orphans(&all_source_files, &scan_root.to_string_lossy());
-                            ws_results.extend(orphan_results);
-                        }
+                match rt.block_on(pipeline.run(request)) {
+                    Ok(report) => {
+                        let count = report.results.len();
+                        let results = LintResultList::new(report.results);
+                        let output = self.format_results(&results);
+                        LintExecutionResult::success(output, count)
                     }
-
-                    // Filter results to only those in this workspace member's path
-                    let ws_canonical = std::path::Path::new(&ws.path.value).canonicalize().ok();
-                    let cwd_for_ws = match std::env::current_dir() {
-                        Ok(d) => d,
-                        Err(_) => std::path::PathBuf::new(),
-                    };
-                    let filtered_results: Vec<_> = ws_results
-                        .into_iter()
-                        .filter(|r| {
-                            let abs_path = cwd_for_ws.join(&r.file.value);
-                            ws_canonical
-                                .as_ref()
-                                .map(|c| abs_path.starts_with(c))
-                                .unwrap_or(true)
-                        })
-                        .collect();
-
-                    all_results.extend(filtered_results);
+                    Err(e) => LintExecutionResult::failure(format!("Pipeline error: {}", e)),
                 }
-
-                let count = all_results.len();
-                let results = LintResultList::new(all_results);
-                let output = self.format_results(&results);
-                return LintExecutionResult::success(output, count);
+            }
+            None => {
+                // Fallback: legacy inline pipeline (should never happen in production).
+                self.run_legacy_scan(path)
             }
         }
+    }
 
+    /// Legacy inline pipeline — kept as fallback only. All callers should use analysis_pipeline.
+    fn run_legacy_scan(&self, path: &str) -> LintExecutionResult {
         let mut all_results = Vec::new();
 
         // 1. AES code analysis
@@ -883,10 +841,16 @@ impl LintExecutor {
         if let Some(ref orphan_agg) = self.orphan_aggregate {
             let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
                 .unwrap_or_default();
-            let source_files = match shared::common::utility_file::scan_directory(&dir_path) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
+            let ignored = self
+                .config_orchestrator
+                .as_ref()
+                .map(|o| o.ignored_paths(path))
+                .unwrap_or_default();
+            let source_files =
+                match shared::common::utility_file_handler::scan_directory(&dir_path, &ignored) {
+                    Ok(list) => list.values,
+                    Err(_) => Vec::new(),
+                };
             let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
             if !file_strs.is_empty() {
                 let orphan_results = orphan_agg.check_orphans(&file_strs, path);

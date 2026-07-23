@@ -22,6 +22,11 @@ pub enum AesOrphanViolation {
         stem: String,
         reason: Option<LintMessage>,
     },
+    UtilityDeadCode {
+        stem: String,
+        imported_by: Vec<String>,
+        reason: Option<LintMessage>,
+    },
     AgentOrphan {
         agg_name: String,
         reason: Option<LintMessage>,
@@ -96,6 +101,23 @@ impl fmt::Display for AesOrphanViolation {
                     ),
                 };
                 write!(f, "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality. Utility files must be consumed by other layers. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem)
+            }
+            AesOrphanViolation::UtilityDeadCode {
+                stem,
+                imported_by,
+                reason,
+            } => {
+                let why = match reason.as_ref() {
+                    Some(r) => r.to_string(),
+                    None => {
+                        let importers = imported_by.join(", ");
+                        format!(
+                            "Utility file '{}' is only imported by other utility files ({}), not by capability, agent, or surfaces layers.",
+                            stem, importers
+                        )
+                    }
+                };
+                write!(f, "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality, or delete it if unused. Utility files must be consumed by higher layers, not just other utilities.", stem, why, stem)
             }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = match reason.as_ref() {

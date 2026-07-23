@@ -3,7 +3,7 @@ use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_git_vo::GitBranchName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
+use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
 use async_trait::async_trait;
 
 #[async_trait]

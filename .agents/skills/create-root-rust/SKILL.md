@@ -1,33 +1,22 @@
 ---
 name: create-root-rust
 description: "Create and validate Rust root layer files: composition root that wires Capabilities to Contract traits/aggregates and bootstraps the application. Container connects implementations, Entry starts the system."
-version: 2.0.0
-category: refactoring
-tags:
-  [
-    rust,
-    aes,
-    root,
-    container,
-    entry,
-    composition,
-    di,
-    wiring,
-  ]
-triggers:
-  - "create root rust"
-  - "add root rust"
-  - "create container rust"
-  - "create entry rust"
-  - "wire dependencies rust"
-  - "check root rust"
-  - "audit root rust"
-dependencies: []
-related:
-  - create-capabilities-rust
-  - create-agent-rust
-  - create-contract-rust
-  - create-taxonomy-rust
+metadata:
+  tags: [rust, aes, root, container, entry, composition, di, wiring]
+  triggers:
+    - "create root rust"
+    - "add root rust"
+    - "create container rust"
+    - "create entry rust"
+    - "wire dependencies rust"
+    - "check root rust"
+    - "audit root rust"
+  dependencies: []
+  related:
+    - create-capabilities-rust
+    - create-agent-rust
+    - create-contract-rust
+    - create-taxonomy-rust
 ---
 
 # create-root-rust
@@ -60,10 +49,10 @@ Two root roles exist:
 
 Ask: **"What does this file do?"**
 
-| Role | Suffix | Responsibility |
-|------|--------|----------------|
-| Container | `_container` | Wire one feature's Capabilities to Contracts |
-| Entry | `_entry` | Bootstrap application, compose feature containers |
+| Role      | Suffix       | Responsibility                                    |
+| --------- | ------------ | ------------------------------------------------- |
+| Container | `_container` | Wire one feature's Capabilities to Contracts      |
+| Entry     | `_entry`     | Bootstrap application, compose feature containers |
 
 ### Step 2: Create Root File
 

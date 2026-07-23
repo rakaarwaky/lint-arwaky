@@ -20,21 +20,61 @@
 use crate::CodeAnalysisCheckerContainer;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_score_vo::compute_score;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::Score;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::utility_compliance_score::compute_score;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::path::Path;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 /// Code-analysis orchestrator — collects files, runs Code Quality checks (AES301–AES305), formats reports.
 pub struct CodeAnalysisOrchestrator {
     container: Arc<CodeAnalysisCheckerContainer>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
+    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_self_lint(project_root.value()))
+    }
+
+    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
+        LintResultList::new(self.run_scan(src_dir.value()))
+    }
+
+    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
+        self.run_self_lint(path.value())
+    }
+
+    fn calc_score(&self, results: &[LintResult]) -> Score {
+        let cs: fn(&[LintResult]) -> f64 = compute_score;
+        Score::new(cs(results))
+    }
+
+    fn check_critical(&self, results: &[LintResult]) -> bool {
+        let hc: fn(&[LintResult]) -> bool = has_critical;
+        hc(results)
+    }
+
+    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
+        self.format_report(&results.values, project_root.value())
+    }
+
+    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        self.container
+            .config()
+            .rules
+            .iter()
+            .map(|r| r.code_analysis.clone())
+            .collect()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl Default for CodeAnalysisOrchestrator {
     fn default() -> Self {
         Self::new()
@@ -42,7 +82,9 @@ impl Default for CodeAnalysisOrchestrator {
 }
 
 /// Run a full AES self-lint on a path.
-pub fn lint_path(path: &str) -> Vec<LintResult> {
+#[rustfmt::skip]
+pub fn lint_path
+    (path: &str) -> Vec<LintResult> {
     let root = match FilePath::new(path.to_string()) {
         Ok(fp) => fp,
         Err(_) => match FilePath::new(".".to_string()) {
@@ -55,7 +97,9 @@ pub fn lint_path(path: &str) -> Vec<LintResult> {
 }
 
 /// Check if any CRITICAL severity violations exist in results.
-pub fn has_critical(results: &[LintResult]) -> bool {
+#[rustfmt::skip]
+pub fn has_critical
+    (results: &[LintResult]) -> bool {
     results.iter().any(|r| r.severity == Severity::CRITICAL)
 }
 
@@ -73,7 +117,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = shared::code_analysis::utility_target::detect_source_dir(root);
+        let src_dir = shared::code_analysis::utility_target_resolver::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -85,18 +129,14 @@ impl CodeAnalysisOrchestrator {
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
         let config = self.container.config();
-        let ignored: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
         let dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let files = shared::code_analysis::utility_target::collect_source_files(
-            src_dir, &dir_path, &ignored,
+        let files = shared::code_analysis::utility_target_resolver::collect_source_files(
+            src_dir,
+            &dir_path,
+            &[],
         );
         if files.is_empty() {
             return Vec::new();
@@ -267,40 +307,5 @@ impl CodeAnalysisOrchestrator {
             ));
         }
         output
-    }
-}
-
-impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
-    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root.value()))
-    }
-
-    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_scan(src_dir.value()))
-    }
-
-    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.run_self_lint(path.value())
-    }
-
-    fn calc_score(&self, results: &[LintResult]) -> Score {
-        Score::new(compute_score(results))
-    }
-
-    fn check_critical(&self, results: &[LintResult]) -> bool {
-        has_critical(results)
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> String {
-        self.format_report(&results.values, project_root.value())
-    }
-
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        self.container
-            .config()
-            .rules
-            .iter()
-            .map(|r| r.code_analysis.clone())
-            .collect()
     }
 }

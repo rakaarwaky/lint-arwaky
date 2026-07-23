@@ -1,22 +1,7 @@
-// PURPOSE: Config I/O utility — file read and path existence helpers
+// PURPOSE: Config I/O utility — async file read and path confinement helpers
 use std::path::Path;
 
 pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20; // 1 MiB
-
-/// Check if a path exists (blocking).
-pub fn path_exists<P: AsRef<Path>>(path: P) -> bool {
-    Path::new(path.as_ref()).exists()
-}
-
-/// Check if a path is a file (blocking).
-pub fn is_file<P: AsRef<Path>>(path: P) -> bool {
-    Path::new(path.as_ref()).is_file()
-}
-
-/// Sync read file to string.
-pub fn read_file_sync<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {
-    std::fs::read_to_string(path)
-}
 
 /// Async read file to string.
 pub async fn read_file_async<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {
@@ -37,7 +22,7 @@ pub async fn read_text_within_canonical_root<P: AsRef<Path>>(
         ));
     }
     let meta = tokio::fs::metadata(&canonical_path).await?;
-    if !meta.is_file() {
+    if !crate::common::utility_file_handler::is_file_generic(&canonical_path) {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             "config path is not a regular file",

@@ -46,25 +46,31 @@ Before releasing the binary to a production environment or deploying it to a cli
 The base codebase must be clean of any internal architecture rule violations.
 
 - [ ] Run self-lint audit:
+
   ```bash
   cargo run --bin lint-arwaky-cli -- check .
   ```
+
 - [ ] _Criteria:_ Output must show **`Total violations: 0`**.
 - [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](file:///home/raka/mcp-arwaky/lint-arwaky/lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
 
   #### B. Cross-Language Functional Verification (Scan Test Projects)
 
 - [ ] Build a clean release and copy the binary:
+
   ```bash
   bash scripts/install.local.sh
   ```
+
 - [ ] Run scan on the test-workspaces folder:
+
   ```bash
   cd test-workspaces
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
   ```
+
 - [ ] _Criteria:_ Findings count matches target baselines (mandatory 24 unique AES violation codes detected)
 
 #### C. System & MCP Protocol Verification
@@ -78,7 +84,7 @@ The base codebase must be clean of any internal architecture rule violations.
 - [ ] Run binary health diagnostics:
 
   ```bash
-  lint-arwaky-cli maintenance doctor
+  lint-arwaky-cli doctor
   ```
 
 - [ ] Run JSON-RPC MCP protocol smoke-test:

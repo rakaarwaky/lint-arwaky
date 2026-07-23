@@ -47,6 +47,7 @@ project-root/
 ```
 
 **Key rules:**
+
 - All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `packages/shared/src/<feature>/`. Orchestration, capabilities, and surfaces live in the feature package.
 - Entry points (`root_*_entry.ts`) live at workspace root or `src/`.
 - Shared types go in `packages/shared/`.
@@ -269,9 +270,15 @@ Orchestrates sequential execution, branching, looping, and error handling. Ignor
 
 import { v4 as uuidv4 } from "uuid";
 import type { IUserAggregate } from "shared/user/contract_user_aggregate";
-import type { IUserProtocol, IUserRepositoryProtocol } from "shared/user/contract_user_protocol";
+import type {
+  IUserProtocol,
+  IUserRepositoryProtocol,
+} from "shared/user/contract_user_protocol";
 import type { UserVO } from "shared/user/taxonomy_user_vo";
-import { InvalidEmailError, UserNotFoundError } from "shared/user/taxonomy_user_error";
+import {
+  InvalidEmailError,
+  UserNotFoundError,
+} from "shared/user/taxonomy_user_error";
 
 export class UserOrchestrator implements IUserAggregate {
   constructor(
@@ -413,15 +420,15 @@ npm run lint && npm run format
 
 ## File Naming Reference
 
-| Layer        | Pattern                              | Example                         |
-| ------------ | ------------------------------------ | ------------------------------- |
-| taxonomy     | `taxonomy_<concept>_<suffix>.ts`     | `taxonomy_user_vo.ts`           |
-| contract     | `contract_<concept>_<suffix>.ts`     | `contract_user_protocol.ts`     |
-| utility      | `utility_<concept>_<suffix>.ts`      | `utility_user_hasher.ts`        |
-| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.ts`  |
-| agent        | `agent_<concept>_orchestrator.ts`    | `agent_user_orchestrator.ts`    |
-| surface      | `surface_<concept>_<suffix>.ts`      | `surface_user_command.ts`       |
-| root         | `root_<concept>_<suffix>.ts`         | `root_user_container.ts`        |
+| Layer        | Pattern                              | Example                        |
+| ------------ | ------------------------------------ | ------------------------------ |
+| taxonomy     | `taxonomy_<concept>_<suffix>.ts`     | `taxonomy_user_vo.ts`          |
+| contract     | `contract_<concept>_<suffix>.ts`     | `contract_user_protocol.ts`    |
+| utility      | `utility_<concept>_<suffix>.ts`      | `utility_user_hasher.ts`       |
+| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.ts` |
+| agent        | `agent_<concept>_orchestrator.ts`    | `agent_user_orchestrator.ts`   |
+| surface      | `surface_<concept>_<suffix>.ts`      | `surface_user_command.ts`      |
+| root         | `root_<concept>_<suffix>.ts`         | `root_user_container.ts`       |
 
 ---
 
@@ -443,16 +450,16 @@ root_         → ALL layers
 
 ## Troubleshooting
 
-| Violation  | Fix                                                     |
-| ---------- | ------------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                        |
-| AES102     | Change suffix to match layer's allowed list             |
-| AES201     | Remove forbidden import, use contract interface         |
-| AES202     | Add missing import per layer requirements               |
-| AES303     | Add struct/enum/trait definition                        |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`                 |
-| AES401     | Move primitives to VO, constants to `_constant`         |
-| AES402     | Replace primitive types with VO types in contract       |
-| AES403     | Implement protocol trait in capability                  |
-| AES404     | Move stateless helper functions to Utility              |
-| AES501-506 | Wire in container or remove dead code                   |
+| Violation  | Fix                                               |
+| ---------- | ------------------------------------------------- |
+| AES101     | Rename to `layer_concept_suffix`                  |
+| AES102     | Change suffix to match layer's allowed list       |
+| AES201     | Remove forbidden import, use contract interface   |
+| AES202     | Add missing import per layer requirements         |
+| AES303     | Add struct/enum/trait definition                  |
+| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
+| AES401     | Move primitives to VO, constants to `_constant`   |
+| AES402     | Replace primitive types with VO types in contract |
+| AES403     | Implement protocol trait in capability            |
+| AES404     | Move stateless helper functions to Utility        |
+| AES501-506 | Wire in container or remove dead code             |

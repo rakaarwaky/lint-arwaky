@@ -13,6 +13,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+// ─── Block 1: Struct Definition ───────────────────────────
+
 use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -24,11 +26,7 @@ pub struct ExternalLintOrchestrator {
     adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
 }
 
-impl ExternalLintOrchestrator {
-    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
-        Self { adapters }
-    }
-}
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 
 #[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
@@ -141,5 +139,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 
     fn adapter_names(&self) -> Vec<String> {
         self.adapters.keys().cloned().collect()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ExternalLintOrchestrator {
+    pub fn new(adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>) -> Self {
+        Self { adapters }
     }
 }

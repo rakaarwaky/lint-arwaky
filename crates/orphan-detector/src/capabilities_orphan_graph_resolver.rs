@@ -126,8 +126,10 @@ impl OrphanGraphResolver {
 
     fn import_re() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*)").ok())
-            .as_ref()
+        RE.get_or_init(|| {
+            Regex::new(r"(?:use|import|from)\s+([a-zA-Z_][a-zA-Z0-9_\.:]*(?:\{[^}]*\})?)").ok()
+        })
+        .as_ref()
     }
 
     fn inh_re() -> Option<&'static Regex> {
@@ -136,11 +138,110 @@ impl OrphanGraphResolver {
             .as_ref()
     }
 
+    /// Regex for TypeScript/JavaScript relative imports: `import { X } from './path'` or `from './path'`
+    /// Captures the quoted module path (single quotes, double quotes, or backticks).
+    fn ts_import_path_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r#"(?:from|import)\s+.*?(['\"`])([^'\"`]+)\1"#).ok())
+            .as_ref()
+    }
+
+    /// Regex for CommonJS require: `require('./path')`
+    fn ts_require_path_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r#"require\((['\"`])([^'\"`]+)\1\)"#).ok())
+            .as_ref()
+    }
+
+    /// Regex for `pub use crate::module;` module re-exports (not type re-exports like `::Type`)
+    fn pub_use_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| {
+            // Match `pub use crate::module;` but NOT `pub use crate::module::Type;`
+            Regex::new(r"pub\s+use\s+(?:crate|super|self)::([a-zA-Z_][a-zA-Z0-9_]*)\s*;").ok()
+        })
+        .as_ref()
+    }
+
+    /// Regex for `pub use module::name;` relative re-exports (no prefix)
+    fn pub_use_relative_re() -> Option<&'static Regex> {
+        static RE: OnceLock<Option<Regex>> = OnceLock::new();
+        RE.get_or_init(|| Regex::new(r"pub\s+use\s+([a-zA-Z_][a-zA-Z0-9_:]*)\s*;").ok())
+            .as_ref()
+    }
+
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
         let mut inheritance_map: HashMap<String, Vec<String>> = HashMap::new();
         let file_definitions: HashMap<String, Vec<String>> = HashMap::new();
+
+        // Detect workspace root by walking up from root_dir until we find a directory with Cargo.toml
+        let workspace_root = Self::find_workspace_root(root_dir);
+
+        // Build set of known workspace crate dirs for external dep detection
+        let mut workspace_modules: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+        // Perf 10: Pre-compute crate_name -> src_dir map
+        let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
+        let root_path = std::path::Path::new(&workspace_root);
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = root_path.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, path_str, is_dir_entry) in entries {
+                    if !is_dir_entry {
+                        continue;
+                    }
+                    workspace_modules.insert(name.clone());
+                    workspace_modules.insert(name.replace('-', "_"));
+                    let src_dir = std::path::PathBuf::from(&path_str).join("src");
+                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                        crate_src_dirs.insert(name.clone(), src_dir.clone());
+                        crate_src_dirs.insert(name.replace('-', "_"), src_dir);
+                    }
+                }
+            }
+        }
+
+        // Build crate module index for hyphen-aware resolution
+        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
+
+        // Expand files to include all workspace source files for cross-crate import resolution
+        // This ensures that when scanning a subfolder, imports from other crates are visible
+        let mut all_workspace_files: Vec<String> = files.to_vec();
+        for src_dir in crate_src_dirs.values() {
+            let workspace_files =
+                shared::orphan_detector::utility_orphan_io::scan_directory_recursive(src_dir);
+            for f in workspace_files {
+                if !all_workspace_files.contains(&f) {
+                    all_workspace_files.push(f);
+                }
+            }
+        }
+        // Also scan root_*.rs files directly in crates/ directory (not in src/)
+        for ws_dir in &["crates", "packages", "modules"] {
+            let ws_path = root_path.join(ws_dir);
+            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
+                for (name, path_str, is_dir_entry) in entries {
+                    if is_dir_entry {
+                        continue; // Skip directories, we already scanned their src/
+                    }
+                    // Include root_*.rs files directly in crates/
+                    if name.starts_with("root_")
+                        && (name.ends_with(".rs")
+                            || name.ends_with(".py")
+                            || name.ends_with(".ts")
+                            || name.ends_with(".js"))
+                        && !all_workspace_files.contains(&path_str)
+                    {
+                        all_workspace_files.push(path_str);
+                    }
+                }
+            }
+        }
+        let files = &all_workspace_files;
 
         // Build a lookup: module_name -> file_path for crate:: resolution
         let mut module_to_file: HashMap<String, String> = HashMap::new();
@@ -174,34 +275,6 @@ impl OrphanGraphResolver {
                 }
             }
         }
-
-        // Build set of known workspace crate dirs for external dep detection
-        let mut workspace_modules: std::collections::HashSet<String> =
-            std::collections::HashSet::new();
-        // Perf 10: Pre-compute crate_name -> src_dir map
-        let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
-        let root_path = std::path::Path::new(root_dir);
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = root_path.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
-                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
-                for (name, path_str, is_dir_entry) in entries {
-                    if !is_dir_entry {
-                        continue;
-                    }
-                    workspace_modules.insert(name.clone());
-                    workspace_modules.insert(name.replace('-', "_"));
-                    let src_dir = std::path::PathBuf::from(&path_str).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        crate_src_dirs.insert(name.clone(), src_dir.clone());
-                        crate_src_dirs.insert(name.replace('-', "_"), src_dir);
-                    }
-                }
-            }
-        }
-
-        // Build crate module index for hyphen-aware resolution
-        let crate_module_index = Self::build_crate_module_index(&crate_src_dirs);
 
         // Perf 8: Single-pass file reading
         for f in files {
@@ -427,10 +500,24 @@ impl OrphanGraphResolver {
                 if let Some(colon_idx) = full_import.find("::") {
                     let crate_name = &full_import[..colon_idx];
                     let rest = &full_import[colon_idx + 2..];
-                    let segments: Vec<&str> = rest.split("::").collect();
-                    if !segments.is_empty() {
+                    let import_list: Vec<String> = if let Some(open_brace) = rest.find('{') {
+                        let prefix = &rest[..open_brace];
+                        let inner = &rest[open_brace + 1..];
+                        let close_brace = inner.rfind('}').unwrap_or(inner.len());
+                        let items = inner[..close_brace]
+                            .split(',')
+                            .map(|s| s.trim())
+                            .filter(|s| !s.is_empty());
+                        items.map(|item| format!("{}{}", prefix, item)).collect()
+                    } else {
+                        vec![rest.to_string()]
+                    };
+                    for import_path in &import_list {
+                        let segments: Vec<&str> = import_path.split("::").collect();
+                        if segments.is_empty() {
+                            continue;
+                        }
                         let module_name = segments[0];
-                        // Use crate module index for hyphen-aware resolution
                         if let Some(resolved) = Self::resolve_workspace_module(
                             &crate_module_index,
                             crate_name,
@@ -440,7 +527,6 @@ impl OrphanGraphResolver {
                             Self::add_edge(&mut import_graph, &mut inbound_links, f, &resolved);
                             continue;
                         }
-                        // Fallback: scan directory (original approach)
                         if let Some(src_dir) = crate_src_dirs.get(crate_name) {
                             let entries =
                                 shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
@@ -451,7 +537,7 @@ impl OrphanGraphResolver {
                                     .and_then(|s| s.to_str())
                                     .unwrap_or_default();
                                 let normalized_stem =
-                                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem);
+                                    shared::orphan_detector::utility_orphan_detector::normalize_module_component(stem);
                                 if (stem == module_name || normalized_stem == module_name)
                                     && path_str != *f
                                 {
@@ -466,8 +552,8 @@ impl OrphanGraphResolver {
                                 }
                             }
                         }
-                        continue;
                     }
+                    continue;
                 }
 
                 // Python/JS relative imports
@@ -486,6 +572,50 @@ impl OrphanGraphResolver {
                     }
                 }
             }
+
+            // Pass 5: pub use re-exports (e.g. `pub use crate::common::taxonomy_action_vo;`)
+            if let Some(re) = Self::pub_use_re() {
+                for cap in re.captures_iter(&content) {
+                    let path = &cap[1]; // e.g. common::taxonomy_action_vo
+                    let segments: Vec<&str> = path.split("::").collect();
+
+                    // Try to resolve the re-exported module to a file
+                    // First try the last segment (file stem)
+                    if let Some(seg) = segments.last() {
+                        if let Some(file_path) = module_to_file.get(*seg) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
+                    }
+                    // Also try composite path with / separator
+                    if segments.len() >= 2 {
+                        let composite = segments.join("/");
+                        if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Pass 5b: pub use relative re-exports (e.g. `pub use taxonomy_language_vo::LanguageVO;`)
+            if let Some(re) = Self::pub_use_relative_re() {
+                for cap in re.captures_iter(&content) {
+                    let path = &cap[1]; // e.g. taxonomy_language_vo::LanguageVO
+                    let segments: Vec<&str> = path.split("::").collect();
+
+                    // Try to resolve the re-exported module to a file
+                    if let Some(seg) = segments.first() {
+                        if let Some(file_path) = module_to_file.get(*seg) {
+                            if file_path != f {
+                                Self::add_edge(&mut import_graph, &mut inbound_links, f, file_path);
+                            }
+                        }
+                    }
+                }
+            }
         }
         GraphAnalysisContext::new(
             ImportGraph::new(import_graph),
@@ -501,8 +631,11 @@ impl OrphanGraphResolver {
         let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
         for (crate_name, src_dir) in crate_src_dirs {
             let mut module_map: HashMap<String, String> = HashMap::new();
-            let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
-            for (_name, path_str, _is_dir) in entries {
+            let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
+            let all_files = shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
+                &canonical_src,
+            );
+            for path_str in all_files {
                 if !path_str.ends_with(".rs")
                     && !path_str.ends_with(".py")
                     && !path_str.ends_with(".ts")
@@ -510,8 +643,11 @@ impl OrphanGraphResolver {
                 {
                     continue;
                 }
-                let path = std::path::PathBuf::from(&path_str);
-                let stem = path
+                let canonical_path = match std::fs::canonicalize(&path_str) {
+                    Ok(p) => p,
+                    Err(_) => std::path::PathBuf::from(&path_str),
+                };
+                let stem = canonical_path
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or_default()
@@ -519,27 +655,40 @@ impl OrphanGraphResolver {
                 if stem.is_empty() {
                     continue;
                 }
-                module_map.insert(stem.clone(), path_str.clone());
+                let canon_str = canonical_path.to_string_lossy().to_string();
+                let rel_path = canonical_path
+                    .strip_prefix(&canonical_src)
+                    .unwrap_or(&canonical_path);
+                let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
+                let normalized_rel =
+                    shared::orphan_detector::utility_orphan_detector::normalize_module_path(
+                        &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
+                    );
+                module_map.insert(normalized_rel, canon_str.clone());
+                module_map.insert(stem.clone(), canon_str.clone());
                 module_map.insert(
-                    shared::orphan_detector::utility_orphan::normalize_module_component(&stem),
-                    path_str.clone(),
+                    shared::orphan_detector::utility_orphan_detector::normalize_module_component(
+                        &stem,
+                    ),
+                    canon_str.clone(),
                 );
-                // For mod.rs / __init__.py / index.ts: map by parent dir name
                 if stem == "mod" || stem == "__init__" || stem == "index" {
-                    if let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
+                    if let Some(parent_dir) = canonical_path.parent().and_then(|p| p.file_name()) {
                         let parent = parent_dir.to_string_lossy().to_string();
-                        module_map.insert(parent.clone(), path_str.clone());
+                        module_map.insert(parent.clone(), canon_str.clone());
                         module_map.insert(
-                            shared::orphan_detector::utility_orphan::normalize_module_component(
+                            shared::orphan_detector::utility_orphan_detector::normalize_module_component(
                                 &parent,
                             ),
-                            path_str.clone(),
+                            canon_str.clone(),
                         );
                     }
                 }
             }
             let normalized_name =
-                shared::orphan_detector::utility_orphan::normalize_module_component(crate_name);
+                shared::orphan_detector::utility_orphan_detector::normalize_module_component(
+                    crate_name,
+                );
             index.insert(crate_name.clone(), module_map.clone());
             index.insert(normalized_name, module_map);
         }
@@ -554,7 +703,8 @@ impl OrphanGraphResolver {
     ) -> Option<String> {
         let map = index.get(crate_name)?;
         let seg_str = segments.join("/");
-        let normalized = shared::orphan_detector::utility_orphan::normalize_module_path(&seg_str);
+        let normalized =
+            shared::orphan_detector::utility_orphan_detector::normalize_module_path(&seg_str);
         if let Some(path) = map.get(&normalized) {
             if path != current_file {
                 return Some(path.clone());
@@ -563,7 +713,7 @@ impl OrphanGraphResolver {
         for i in (1..segments.len()).rev() {
             let candidate = segments[..i].join("/");
             let normalized =
-                shared::orphan_detector::utility_orphan::normalize_module_path(&candidate);
+                shared::orphan_detector::utility_orphan_detector::normalize_module_path(&candidate);
             if let Some(path) = map.get(&normalized) {
                 if path != current_file {
                     return Some(path.clone());
@@ -587,5 +737,27 @@ impl OrphanGraphResolver {
             .entry(target.to_string())
             .or_default()
             .push(source.to_string());
+    }
+
+    /// Find workspace root by walking up from start_dir until we find a directory with Cargo.toml
+    fn find_workspace_root(start_dir: &str) -> String {
+        let mut current = std::path::PathBuf::from(start_dir);
+        loop {
+            // Check if current directory has Cargo.toml (workspace root indicator)
+            if current.join("Cargo.toml").exists() {
+                // Verify it's a workspace root by checking for crates/packages/modules dirs
+                if current.join("crates").exists()
+                    || current.join("packages").exists()
+                    || current.join("modules").exists()
+                {
+                    return current.to_string_lossy().to_string();
+                }
+            }
+            // Move up one directory
+            if !current.pop() {
+                // Reached filesystem root without finding workspace root
+                return start_dir.to_string();
+            }
+        }
     }
 }

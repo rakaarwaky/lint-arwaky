@@ -1,14 +1,15 @@
+use std::collections::HashSet;
+
+use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_paths_vo::RenamedFileList;
+use shared::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
-use shared::git_hooks::taxonomy_diff_result_vo::GitDiffResultVO;
 use shared::git_hooks::utility_git_io as git_io;
-use std::collections::HashSet;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -27,15 +28,36 @@ impl IDiffProtocol for DiffChecker {
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
         let default_branch = self.get_default_branch(path);
         let changed_files = self.collect_changed_files(path, &default_branch);
-        let filtered = changed_files.clone();
+        let lintable_vec: Vec<FilePath> = changed_files
+            .values
+            .iter()
+            .filter(|f| {
+                let ext = f.extension();
+                matches!(
+                    ext.as_str(),
+                    "rs" | "py"
+                        | "ts"
+                        | "js"
+                        | "jsx"
+                        | "tsx"
+                        | "md"
+                        | "toml"
+                        | "json"
+                        | "yaml"
+                        | "yml"
+                )
+            })
+            .cloned()
+            .collect();
+        let lintable_files = FilePathList::new(lintable_vec);
         GitDiffResultVO {
             added: FilePathList::new(Vec::new()),
-            modified: filtered.clone(),
+            modified: changed_files.clone(),
             deleted: FilePathList::new(Vec::new()),
             renamed: RenamedFileList::new(vec![]),
-            lintable_files: changed_files.clone(),
-            all_files: changed_files,
-            total_changed: shared::taxonomy_common_vo::Count::new(filtered.values.len() as i64),
+            lintable_files,
+            all_files: changed_files.clone(),
+            total_changed: shared::taxonomy_common_vo::Count::new(changed_files.values.len() as i64),
         }
     }
 

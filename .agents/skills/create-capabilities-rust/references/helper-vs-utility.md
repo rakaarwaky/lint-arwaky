@@ -53,7 +53,7 @@ pub fn match_whole_token(haystack: &str, needle: &str) -> bool {
 
 ## I/O Rule
 
-A function with I/O can be a  utility if it is stateless, domain-agnostic, and reusable.
+A function with I/O can be a utility if it is stateless, domain-agnostic, and reusable.
 
 ```rust
 // OK in taxonomy utility — stateless, domain-agnostic, reusable

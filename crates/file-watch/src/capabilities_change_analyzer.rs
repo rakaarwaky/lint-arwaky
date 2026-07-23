@@ -1,8 +1,9 @@
-use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 use std::collections::HashMap;
 
-// PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
+
+// PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -11,7 +11,7 @@ use std::sync::Arc;
 // Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
-use super::utility_file_system;
+use crate::utility_file_system;
 use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::tui::utility_tui_io;
 

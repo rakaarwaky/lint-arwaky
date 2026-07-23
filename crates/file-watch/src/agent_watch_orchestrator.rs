@@ -23,11 +23,27 @@ use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 
+// ─── Block 1: Struct Definition ───────────────────────────
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderProtocol>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+impl IWatchAggregate for WatchOrchestrator {
+    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+        let rt = match tokio::runtime::Runtime::new() {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("Failed to create tokio runtime: {}", e);
+                std::process::exit(1);
+            }
+        };
+        rt.block_on(self.run_async(config, running))
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderProtocol>,
@@ -79,18 +95,5 @@ impl WatchOrchestrator {
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
         ExitCode::SUCCESS
-    }
-}
-
-impl IWatchAggregate for WatchOrchestrator {
-    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(r) => r,
-            Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
-                std::process::exit(1);
-            }
-        };
-        rt.block_on(self.run_async(config, running))
     }
 }

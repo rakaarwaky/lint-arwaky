@@ -26,12 +26,12 @@ class <ResultVO>:
 
 ## Primitive Policy
 
-| Primitive | Rule                                                                                |
-| --------- | ----------------------------------------------------------------------------------- |
-| `str`     | Forbidden for domain fields and public contract return values. Use VO.              |
-| `int`     | Forbidden. Use domain VO.                                                           |
-| `float`   | Forbidden. Use domain VO.                                                           |
-| `bool`    | Allowed for semantic toggles when no richer VO is needed.                           |
+| Primitive | Rule                                                                   |
+| --------- | ---------------------------------------------------------------------- |
+| `str`     | Forbidden for domain fields and public contract return values. Use VO. |
+| `int`     | Forbidden. Use domain VO.                                              |
+| `float`   | Forbidden. Use domain VO.                                              |
+| `bool`    | Allowed for semantic toggles when no richer VO is needed.              |
 
 Prefer VOs for: file paths, symbol names, messages, line numbers, column numbers, severity, durations, counts, thresholds, identifiers.
 

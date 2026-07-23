@@ -9,26 +9,31 @@ The config-system crate manages lint-arwaky configuration: loading, parsing, val
 ## User Stories
 
 ### US-1: Project Config Discovery
+
 > **As a** developer running `lint-arwaky check`,
 > I need the system to find my project's config file automatically,
 > **so that** linting uses my project-specific AES rules without manual setup.
 
 ### US-2: Multi-Language Support
+
 > **As a** polyglot developer,
 > I need the system to detect whether my workspace is Rust, Python, or TypeScript and load the correct config,
 > **so that** language-appropriate architecture rules are applied.
 
 ### US-3: Config Fallback Safety
+
 > **As a** developer without a config file,
 > I need sensible defaults so that linting works out of the box,
 > **so that** I can start using lint-arwaky immediately.
 
 ### US-4: Multi-Workspace Analysis
+
 > **As a** monorepo maintainer,
 > I need the system to discover and load configs for all workspace members (crates/, packages/, modules/),
 > **so that** each module gets its own ruleset.
 
 ### US-5: Config Security
+
 > **As a** security-conscious developer,
 > I need config file reads to be confined within the project root and reject symlinks pointing outside,
 > **so that** malicious config files cannot read arbitrary files from my system.
@@ -49,10 +54,10 @@ The config resolution follows this exact priority order (first match wins):
 
 ### AC-2: Language-Aware Config Files
 
-| Language | Config File(s) |
-|----------|---------------|
-| Rust | `lint_arwaky.config.rust.yaml` |
-| Python | `lint_arwaky.config.python.yaml` |
+| Language   | Config File(s)                                                                        |
+| ---------- | ------------------------------------------------------------------------------------- |
+| Rust       | `lint_arwaky.config.rust.yaml`                                                        |
+| Python     | `lint_arwaky.config.python.yaml`                                                      |
 | TypeScript | `lint_arwaky.config.typescript.yaml`, `lint_arwaky.config.javascript.yaml` (fallback) |
 
 TypeScript and JavaScript share the same config file priority. When looking for TypeScript, the system first tries `.typescript.yaml`, then falls back to `.javascript.yaml`.
@@ -111,25 +116,25 @@ TypeScript and JavaScript share the same config file priority. When looking for 
 
 ### Key Contracts
 
-| Contract | Purpose |
-|----------|---------|
-| `IConfigReaderProtocol` | Read config from filesystem (Result-based error handling) |
-| `IConfigParserProtocol` | Parse YAML/TOML project configs |
-| `IConfigValidatorProtocol` | Validate loaded rules against schema |
-| `IWorkspaceDetectorProtocol` | Detect workspace type and discover members |
-| `IConfigOrchestratorAggregate` | High-level facade for config loading |
+| Contract                       | Purpose                                                   |
+| ------------------------------ | --------------------------------------------------------- |
+| `IConfigReaderProtocol`        | Read config from filesystem (Result-based error handling) |
+| `IConfigParserProtocol`        | Parse YAML/TOML project configs                           |
+| `IConfigValidatorProtocol`     | Validate loaded rules against schema                      |
+| `IWorkspaceDetectorProtocol`   | Detect workspace type and discover members                |
+| `IConfigOrchestratorAggregate` | High-level facade for config loading                      |
 
 ### Key Value Objects
 
-| VO | Purpose |
-|----|---------|
-| `ArchitectureConfig` | Parsed AES architecture rules |
-| `ArchitectureRule` | Individual rule definition |
-| `ConfigSource` | Config file with language, path, and raw content |
-| `ConfigResult` | Parsed config + source info + warnings |
-| `ConfigError` | Structured error for config operations |
-| `ConfigLanguage` | Typed enum (Rust/Python/TypeScript) — prevents path injection |
-| `WorkspaceInfo` | Workspace member with language and config |
+| VO                   | Purpose                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `ArchitectureConfig` | Parsed AES architecture rules                                 |
+| `ArchitectureRule`   | Individual rule definition                                    |
+| `ConfigSource`       | Config file with language, path, and raw content              |
+| `ConfigResult`       | Parsed config + source info + warnings                        |
+| `ConfigError`        | Structured error for config operations                        |
+| `ConfigLanguage`     | Typed enum (Rust/Python/TypeScript) — prevents path injection |
+| `WorkspaceInfo`      | Workspace member with language and config                     |
 
 ---
 
@@ -152,26 +157,26 @@ TypeScript and JavaScript share the same config file priority. When looking for 
 
 ## Non-Functional Requirements
 
-| ID | Requirement | Target |
-|----|-------------|--------|
-| NFR-1 | Config read from project root | < 50ms (local filesystem) |
-| NFR-2 | Config read from XDG paths | < 100ms (filesystem + env parsing) |
+| ID    | Requirement                        | Target                                |
+| ----- | ---------------------------------- | ------------------------------------- |
+| NFR-1 | Config read from project root      | < 50ms (local filesystem)             |
+| NFR-2 | Config read from XDG paths         | < 100ms (filesystem + env parsing)    |
 | NFR-3 | Workspace discovery for 10 members | < 500ms (with concurrency bound of 8) |
-| NFR-4 | Memory overhead per parsed config | < 10 KB (cached) |
-| NFR-5 | Symlink attack detection | O(1) path canonicalization check |
+| NFR-4 | Memory overhead per parsed config  | < 10 KB (cached)                      |
+| NFR-5 | Symlink attack detection           | O(1) path canonicalization check      |
 
 ---
 
 ## Error/Warning Taxonomy
 
-| Level | Condition | Behavior |
-|-------|-----------|----------|
-| ERROR | Config file exceeds 1 MiB | Reject with `InvalidData` error |
-| ERROR | Symlink points outside root | Reject with `PermissionDenied` error |
-| ERROR | Invalid path canonicalization | Reject with IO error |
-| WARNING | YAML parse failure | Use defaults, log warning |
-| WARNING | Non-NotFound I/O error | Log via `eprintln!`, continue searching |
-| WARNING | Config has no layers | Inject defaults, log warning |
+| Level   | Condition                     | Behavior                                |
+| ------- | ----------------------------- | --------------------------------------- |
+| ERROR   | Config file exceeds 1 MiB     | Reject with `InvalidData` error         |
+| ERROR   | Symlink points outside root   | Reject with `PermissionDenied` error    |
+| ERROR   | Invalid path canonicalization | Reject with IO error                    |
+| WARNING | YAML parse failure            | Use defaults, log warning               |
+| WARNING | Non-NotFound I/O error        | Log via `eprintln!`, continue searching |
+| WARNING | Config has no layers          | Inject defaults, log warning            |
 
 ---
 
@@ -194,15 +199,17 @@ Unbounded `join_all()` spawns one future per workspace member. For large monorep
 ## Files Summary
 
 ### New files (added in fix plan)
+
 - `taxonomy_config_language_vo.rs` — ConfigLanguage typed enum (P2.2)
 - `utility_config_io.rs` — path confinement helper `read_text_within_canonical_root` (P2.1)
 
 ### Modified files
+
 - `contract_reader_protocol.rs` — Result-based signatures, ConfigLanguage (P3.1)
 - `contract_config_orchestrator_aggregate.rs` — removed accessor methods (P5.1)
 - `contract_workspace_detector_protocol.rs` — added `discover_workspace_members` (P1.2)
 - `capabilities_yaml_reader.rs` — depth 3, aliases, local-only listing, XDG hardening (P2.3/P4.x)
-- `capabilities_workspace_detector_provider.rs` — async I/O, discover_workspace_members (P1.2/P6.1)
+- `capabilities_workspace_detector.rs` — async I/O, discover_workspace_members (P1.2/P6.1)
 - `agent_config_orchestrator.rs` — uses contracts, bounded concurrency, caching (P1.3/P6.2/P6.3)
 - `root_config_system_container.rs` — exposes reader via `reader()` method
 - `mod.rs` (shared) — registers new modules

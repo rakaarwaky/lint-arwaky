@@ -1,5 +1,5 @@
 [package]
-name = "git_hooks-lint-arwaky"
+name = "git-hooks-lint-arwaky"
 version = "1.10.106"
 edition = "2021"
 description = "Git hook installation and diff-based pre-commit lint enforcement, integrated with the agent orchestrator."
@@ -18,4 +18,11 @@ shared.workspace = true
 code_analysis.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
 tokio = { workspace = true, features = ["rt", "macros"] }
+
+[[bench]]
+name = "bench_git_hooks_diff"
+path = "benches/bench_git_hooks_diff.rs"
+harness = false

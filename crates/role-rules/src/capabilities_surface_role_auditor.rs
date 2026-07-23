@@ -1,16 +1,15 @@
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::cli_commands::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_language_vo::Language as DetLang;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::{
     detect_language_info, detect_language_info_from_source,
 };
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
 use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::role_rules::utility_role_io as role_io;
 use shared::taxonomy_adapter_name_vo::AdapterName;
 use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
 use shared::taxonomy_definition_vo::LayerDefinition;
@@ -223,7 +222,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match role_io::read_file(&f.value) {
+        let content = match shared::common::utility_file_handler::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -296,7 +295,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match role_io::read_file(&f.to_string()) {
+        let content = match shared::common::utility_file_handler::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -645,8 +644,8 @@ impl SurfaceRoleChecker {
             code: ErrorCode::raw("AES406"),
             message: LintMessage::new(format!(
                 "AES406 SURFACE_ROLE: Surface file '{}' contains active domain logic:\n{}\nWHY? Surfaces must be passive I/O boundaries.\nFIX: Move logic to capabilities/agent layers.",
-                &f.to_string(),
-                &detail
+                f,
+                detail
             )),
             source: Some(AdapterName::raw("surface_hierarchy")),
             severity: Severity::HIGH,

@@ -1,3 +1,4 @@
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
@@ -6,8 +7,6 @@ use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::git_hooks::utility_git_io as git_io;
-use shared::mcp_server::taxonomy_job_vo::SuccessStatus;
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
@@ -40,14 +39,14 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if git_io::path_exists(&config_file) {
+        if shared::common::utility_file_handler::path_exists(&config_file) {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
     }
 
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
-        if !git_io::path_exists(&request.config_path) {
+        if !shared::common::utility_file_handler::path_exists(&request.config_path) {
             return DescriptionVO::new(format!("Config file not found: {}", request.config_path));
         }
         let verb = if request.remove { "Removed" } else { "Added" };
@@ -55,11 +54,13 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let both_exist = git_io::path_exists(path1) && git_io::path_exists(path2);
-        let both_files = git_io::is_file(path1) && git_io::is_file(path2);
+        let both_exist = shared::common::utility_file_handler::path_exists(path1)
+            && shared::common::utility_file_handler::path_exists(path2);
+        let both_files = shared::common::utility_file_handler::is_file(path1)
+            && shared::common::utility_file_handler::is_file(path2);
         let status = match (both_exist, both_files) {
             (false, _) => {
-                if !git_io::path_exists(path1) {
+                if !shared::common::utility_file_handler::path_exists(path1) {
                     GitDiffStatus::MissingFirst
                 } else {
                     GitDiffStatus::MissingSecond
