@@ -50,6 +50,7 @@ impl IAgentRoleChecker for AgentRoleChecker {
         _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
     ) {
     }
+
     fn check_any_type_annotation(
         &self,
         source: &SourceContentVO,
