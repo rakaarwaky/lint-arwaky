@@ -33,37 +33,42 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         };
 
+        let mut consumer_importers: Vec<String> = Vec::new();
+        let mut utility_importers: Vec<String> = Vec::new();
+
         // Phase 1: Check import graph for consumer-layer importers
-        if let Some(importers) = inbound_links.mapping.get(fp) {
+        if let Some(importers) = inbound_links.get_importers(fp) {
             let external_importers: Vec<&String> = importers
                 .iter()
                 .filter(|importer| *importer != fp)
                 .collect();
 
-            if !external_importers.is_empty() {
-                // Check if any importer is from a consumer layer (capability, agent, surface, root)
-                let has_consumer = external_importers.iter().any(|importer| {
-                    let filename = utility_layer_detector::extract_filename(importer);
-                    utility_layer_detector::detect_layer_from_prefix(filename)
-                        .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
-                        .unwrap_or(false)
-                });
+            for importer in external_importers {
+                let filename = utility_layer_detector::extract_filename(importer);
+                let is_consumer = utility_layer_detector::detect_layer_from_prefix(filename)
+                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                    .unwrap_or(false);
 
-                if has_consumer {
-                    // Utility is used by a consumer layer — not dead
-                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+                let stem = std::path::Path::new(importer)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                if is_consumer {
+                    consumer_importers.push(stem);
+                } else {
+                    utility_importers.push(stem);
                 }
+            }
 
-                // Don't return early here — fall through to Phase 2 which does
-                // token-based matching that can detect cross-crate imports
-                // (e.g. `use shared::common::utility_foo::...` from another crate)
+            if !consumer_importers.is_empty() {
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
         }
 
         // Phase 2: Fallback — token-based matching across all files
         let tokens = shared::orphan_detector::utility_orphan_detector::import_tokens(fp);
-        let mut consumer_importers: Vec<String> = Vec::new();
-        let mut utility_importers: Vec<String> = Vec::new();
 
         for other_file in all_files {
             if other_file == fp {
@@ -235,8 +240,10 @@ impl UtilityOrphanAnalyzer {
             path
         };
 
-        // Split by :: and check if any segment matches the module name
+        // Split by :: and check if any segment matches the module name or prefix
         let segments: Vec<&str> = path.split("::").collect();
-        segments.contains(&module_name)
+        segments
+            .iter()
+            .any(|seg| *seg == module_name || seg.starts_with(&format!("{}_", module_name)))
     }
 }
