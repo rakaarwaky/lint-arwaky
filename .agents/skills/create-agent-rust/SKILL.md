@@ -1,6 +1,6 @@
 ---
 name: create-agent-rust
-description: "Create and validate Rust agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one impl struct per file, aggregate contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate Rust agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, max 3 types per file, aggregate contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
   tags:
     [
@@ -46,15 +46,15 @@ Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be compl
 
 ## Definition of Done
 
-1. ONE implementation struct per file.
-2. Struct implements ONE domain aggregate trait in Block 2.
-3. Block 2 contains ONLY the aggregate trait implementation.
-4. Constructors, std trait impls, private helpers in Block 3.
-5. Zero I/O, zero business logic, zero domain computation.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via `Arc<dyn Trait>`.
-8. Value/configuration fields use shared VOs.
-9. Aggregate signatures use shared VOs for domain data.
+1. At least one struct implements an aggregate trait in Block 2 (AES405 Rule 2).
+2. Block 2 contains ONLY the aggregate trait implementation.
+3. Constructors, std trait impls, private helpers in Block 3.
+4. Zero I/O, zero business logic, zero domain computation.
+5. No locally defined domain data structures.
+6. Service dependencies use DI via `Arc<dyn Trait>`.
+7. Value/configuration fields use shared VOs.
+8. Aggregate signatures use shared VOs for domain data.
+9. Total struct + enum ≤ 3 (AES405 Rule 3).
 10. `cargo check -p <crate-name>` passes.
 
 ## References
@@ -99,9 +99,9 @@ Create `contract_<name>_aggregate.rs` in the appropriate shared domain folder.
 
 Reorganize: struct definition → aggregate trait impl → constructors/std traits/helpers.
 
-### Step 5: Verify Struct Discipline
+### Step 5: Verify Type Discipline
 
-One struct, no local data structs, DI via `Arc<dyn Trait>`, shared VOs.
+At least one struct implements an aggregate trait, max 3 total types (struct + enum), DI via `Arc<dyn Trait>`, shared VOs.
 
 ### Step 6: Verify Helper vs Utility Boundary
 

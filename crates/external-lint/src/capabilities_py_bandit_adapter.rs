@@ -1,6 +1,18 @@
+// PURPOSE: PyBanditAdapter — ILinterAdapterProtocol implementation for Bandit security scanner integration
+//
+// Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
+// security vulnerabilities. Parses JSON output to extract findings (filename,
+// line_range, test_id, issue_text, severity).
+//
+// Key details:
+//   - `--exit-zero` ensures bandit always exits 0 regardless of findings
+//   - JSON output avoids fragile regex parsing
+//   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
+//   - apply_fix always returns false (Bandit is a scanner, not a fixer)
+
 use serde_json::Value;
 use std::sync::Arc;
-
+use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
@@ -20,19 +32,7 @@ use shared::external_lint::utility_external_lint::{
     default_working_dir, has_python_files, noop_apply_fix,
 };
 
-// PURPOSE: PyBanditAdapter — ILinterAdapterProtocol implementation for Bandit security scanner integration
-//
-// Runs `bandit -r <path> --format json --exit-zero` to scan Python files for
-// security vulnerabilities. Parses JSON output to extract findings (filename,
-// line_range, test_id, issue_text, severity).
-//
-// Key details:
-//   - `--exit-zero` ensures bandit always exits 0 regardless of findings
-//   - JSON output avoids fragile regex parsing
-//   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
-//   - apply_fix always returns false (Bandit is a scanner, not a fixer)
 
-use async_trait::async_trait;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

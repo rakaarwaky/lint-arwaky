@@ -1,16 +1,17 @@
-// PURPOSE: IAgentRoleChecker — protocol trait for AES405: agent role audits (container, orchestrator, lifecycle, file size, any type)
+// PURPOSE: IAgentRoleChecker — contract trait for AES405: agent type composition
+//          and any-type annotation checks.
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_source_vo::SourceContentVO;
 
 pub trait IAgentRoleChecker: Send + Sync {
-    fn check_container(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_orchestrator(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_lifecycle(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
-    fn check_file_size_limit(
+    /// AES405: enforce agent type composition.
+    /// Rule 1 — internal helper types allowed.
+    /// Rule 2 — ≥ 1 struct must implement an aggregate trait.
+    /// Rule 3 — max 3 types (struct + enum).
+    fn check_agent_routing(
         &self,
         source: &SourceContentVO,
-        max_lines: usize,
+        layer: &str,
         violations: &mut Vec<LintResult>,
     );
-    fn check_any_type_annotation(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>);
 }

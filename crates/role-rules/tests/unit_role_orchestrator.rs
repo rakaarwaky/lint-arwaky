@@ -1,47 +1,28 @@
 // PURPOSE: Unit tests for RoleOrchestrator — dispatch logic and enabled gate.
 // Layer: Agent (RoleOrchestrator)
 
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
-use shared::role_rules::contract_role_aggregate::IRoleAggregate;
+use role_rules_lint_arwaky::agent_role_orchestrator::{RoleCheckerDeps, RoleOrchestrator};
+use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
+use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
+use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
+use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
+use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
+use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use std::sync::Arc;
 
-// ─── Mock Aggregate ──────────────────────────────────
-
-struct StubAggregate;
-
-impl IRoleAggregate for StubAggregate {
-    fn taxonomy(
-        &self,
-    ) -> &dyn shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker {
-        panic!("not implemented")
-    }
-    fn contract(&self) -> &dyn shared::role_rules::contract_role_protocol::IContractRoleChecker {
-        panic!("not implemented")
-    }
-    fn capabilities(
-        &self,
-    ) -> &dyn shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker
-    {
-        panic!("not implemented")
-    }
-    fn surface(
-        &self,
-    ) -> &dyn shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker {
-        panic!("not implemented")
-    }
-    fn agent(&self) -> &dyn shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker {
-        panic!("not implemented")
-    }
-    fn utility(
-        &self,
-    ) -> &dyn shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker {
-        panic!("not implemented")
-    }
-}
+// ─── Helper: build a minimal orchestrator with real checkers ─
 
 fn build_orchestrator() -> RoleOrchestrator {
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    RoleOrchestrator::new(Arc::new(StubAggregate), &config)
+    let deps = RoleCheckerDeps {
+        taxonomy: Arc::new(TaxonomyRoleChecker::new()),
+        contract: Arc::new(ContractRoleChecker::new()),
+        capabilities: Arc::new(CapabilitiesRoleChecker::new()),
+        surface: Arc::new(SurfaceRoleChecker::new()),
+        agent: Arc::new(AgentRoleChecker::new()),
+        utility: Arc::new(UtilityRoleChecker::new()),
+    };
+    RoleOrchestrator::new(deps, &config)
 }
 
 // ─── name — accessed via trait object ────────────────
@@ -51,7 +32,6 @@ fn orchestrator_name_via_trait() {
     use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
     let orch = build_orchestrator();
     let name: &dyn IRoleRunnerAggregate = &orch;
-    // name() is accessible via the trait
     assert_eq!(name.name(), "role-rules");
 }
 
@@ -63,7 +43,15 @@ fn disabled_config_skips_all_checks() {
         enabled: shared::common::taxonomy_common_vo::BooleanVO::new(false),
         ..Default::default()
     };
-    let orch = RoleOrchestrator::new(Arc::new(StubAggregate), &config);
+    let deps = RoleCheckerDeps {
+        taxonomy: Arc::new(TaxonomyRoleChecker::new()),
+        contract: Arc::new(ContractRoleChecker::new()),
+        capabilities: Arc::new(CapabilitiesRoleChecker::new()),
+        surface: Arc::new(SurfaceRoleChecker::new()),
+        agent: Arc::new(AgentRoleChecker::new()),
+        utility: Arc::new(UtilityRoleChecker::new()),
+    };
+    let orch = RoleOrchestrator::new(deps, &config);
 
     let files: Vec<String> = vec![
         "taxonomy_foo_vo.rs".to_string(),
@@ -71,11 +59,11 @@ fn disabled_config_skips_all_checks() {
         "capabilities_baz_checker.rs".to_string(),
     ];
     let mut violations = Vec::new();
-    orch.run_all_role_checks(&files, 500, &mut violations);
+    orch.run_all_role_checks(&files, &mut violations);
     assert!(violations.is_empty());
 }
 
-// ─── Default trait ──────────────────────────────────
+// ─── Send + Sync ──────────────────────────────────
 
 #[test]
 fn orchestrator_is_send_sync() {

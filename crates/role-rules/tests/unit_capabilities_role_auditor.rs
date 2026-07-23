@@ -37,7 +37,7 @@ impl IAgentRoleChecker for MyChecker {
 #[test]
 fn rust_capabilities_with_port_import_passes() {
     let content = r#"
-use shared::role_rules::contract_role_protocol::IContractRoleChecker;
+use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
 
 pub struct MyChecker;
 
@@ -137,7 +137,7 @@ export class MyChecker {
 
 #[test]
 fn rust_internal_struct_allowed_without_trait_impl() {
-    // 1 implementor + 1 internal helper = total 2, lolos (Rule 1)
+    // 1 implementor + 1 internal helper = total 2, passed (Rule 1)
     let content = r#"
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 

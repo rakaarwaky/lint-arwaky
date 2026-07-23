@@ -1,5 +1,5 @@
 use std::sync::Arc;
-
+use tracing::debug;
 use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -19,8 +19,6 @@ use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use tracing::debug;
-
 use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
 
 // ─── Block 1: Struct Definition ───────────────────────────

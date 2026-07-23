@@ -1,6 +1,6 @@
 ---
 name: create-agent-python
-description: "Create and validate Python agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one class per file, aggregate ABC contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate Python agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, max 3 types per file, aggregate ABC contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
   tags:
     [
@@ -46,15 +46,15 @@ Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be compl
 
 ## Definition of Done
 
-1. ONE implementation class per file.
-2. Class inherits ONE domain aggregate ABC.
-3. Block 2 contains ONLY aggregate ABC method implementations.
-4. Dunder methods, factory classmethods, private helpers in Block 3.
-5. Zero I/O, zero business logic, zero domain computation.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via aggregate/protocol interfaces.
-8. Value/configuration fields use shared VOs.
-9. Aggregate signatures use shared VOs for domain data.
+1. At least one class inherits an aggregate ABC in Block 2 (AES405 Rule 2).
+2. Block 2 contains ONLY aggregate ABC method implementations.
+3. Dunder methods, factory classmethods, private helpers in Block 3.
+4. Zero I/O, zero business logic, zero domain computation.
+5. No locally defined domain data structures.
+6. Service dependencies use DI via aggregate/protocol interfaces.
+7. Value/configuration fields use shared VOs.
+8. Aggregate signatures use shared VOs for domain data.
+9. Total class count ≤ 3 (AES405 Rule 3).
 10. `python -c "import <module>"` passes.
 
 ## References
@@ -98,9 +98,9 @@ Create `contract_<name>_aggregate.py` in the appropriate shared domain folder.
 
 Reorganize: class definition + `__init__` → aggregate methods → dunders/factories/helpers.
 
-### Step 5: Verify Class Discipline
+### Step 5: Verify Type Discipline
 
-One class, no local data classes, DI via protocol interfaces, shared VOs.
+At least one class inherits an aggregate ABC, max 3 total classes, DI via protocol interfaces, shared VOs.
 
 ### Step 6: Verify Helper vs Utility Boundary
 

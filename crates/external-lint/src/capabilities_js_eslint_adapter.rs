@@ -1,3 +1,19 @@
+// PURPOSE: ESLintAdapter — ILinterAdapterProtocol implementation for ESLint integration
+//
+// Executes `npx eslint --format=json` as a subprocess and parses the
+// JSON output. ESLint outputs a JSON array of per-file results, each
+// containing an array of messages with rule IDs, severity, and location.
+//
+// Key handling:
+//   - Resolves the correct working directory (package.json parent)
+//   - Uses npx to find eslint (works for both local and global installs)
+//   - Mirrors Ruff adapter's path-fallback logic for consistency
+//   - Returns empty results for non-JS/TS files (no error)
+//   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
+
+use serde_json::Value;
+use std::path::Path;
+use std::sync::Arc;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
@@ -13,29 +29,9 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_error_vo::ErrorCode;
 use shared::taxonomy_message_vo::ComplianceStatus;
 use shared::taxonomy_message_vo::LintMessage;
-use std::path::Path;
-use std::sync::Arc;
-
 use shared::external_lint::utility_external_lint::{
     canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
 };
-
-// (No protocol implementation found in this file)
-
-// PURPOSE: ESLintAdapter — ILinterAdapterProtocol implementation for ESLint integration
-//
-// Executes `npx eslint --format=json` as a subprocess and parses the
-// JSON output. ESLint outputs a JSON array of per-file results, each
-// containing an array of messages with rule IDs, severity, and location.
-//
-// Key handling:
-//   - Resolves the correct working directory (package.json parent)
-//   - Uses npx to find eslint (works for both local and global installs)
-//   - Mirrors Ruff adapter's path-fallback logic for consistency
-//   - Returns empty results for non-JS/TS files (no error)
-//   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
-
-use serde_json::Value;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

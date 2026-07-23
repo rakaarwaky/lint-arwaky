@@ -14,12 +14,3 @@ fn checker() -> TaxonomyRoleChecker {
 fn default_creates_valid_instance() {
     let _ = TaxonomyRoleChecker::default();
 }
-
-// ─── check_vo: Returns empty Vec via trait ──
-
-#[test]
-fn check_vo_returns_empty() {
-    let checker: &dyn ITaxonomyRoleChecker = &checker();
-    let violations = checker.check_vo();
-    assert!(violations.is_empty());
-}

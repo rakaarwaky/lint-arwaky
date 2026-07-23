@@ -1,6 +1,6 @@
 ---
 name: create-agent-typescript
-description: "Create and validate TypeScript agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, one class per file, aggregate interface contracts, DI for service dependencies, and shared VOs for domain data."
+description: "Create and validate TypeScript agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, max 3 types per file, aggregate interface contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
   tags:
     [
@@ -46,15 +46,15 @@ Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be compl
 
 ## Definition of Done
 
-1. ONE implementation class per file.
-2. Class implements ONE domain aggregate interface.
-3. Block 2 contains ONLY aggregate interface method implementations.
-4. Utility methods, static factories, private helpers in Block 3.
-5. Zero I/O, zero business logic, zero domain computation.
-6. No locally defined domain data structures.
-7. Service dependencies use DI via aggregate/protocol interfaces.
-8. Value/configuration fields use shared VOs.
-9. Aggregate signatures use shared VOs for domain data.
+1. At least one class implements an aggregate interface in Block 2 (AES405 Rule 2).
+2. Block 2 contains ONLY aggregate interface method implementations.
+3. Utility methods, static factories, private helpers in Block 3.
+4. Zero I/O, zero business logic, zero domain computation.
+5. No locally defined domain data structures.
+6. Service dependencies use DI via aggregate/protocol interfaces.
+7. Value/configuration fields use shared VOs.
+8. Aggregate signatures use shared VOs for domain data.
+9. Total type count ≤ 3 (class + interface + enum, not counting `type` aliases) (AES405 Rule 3).
 10. `npx tsc --noEmit` passes.
 
 ## References
@@ -98,9 +98,9 @@ Create `contract_<name>_aggregate.ts` in the appropriate shared domain folder.
 
 Reorganize: class definition + `constructor` → aggregate methods → utility/factories/helpers.
 
-### Step 5: Verify Class Discipline
+### Step 5: Verify Type Discipline
 
-One class, no local data interfaces, DI via port interfaces, shared VOs.
+At least one class implements an aggregate interface, max 3 total types (class + interface + enum), DI via protocol interfaces, shared VOs.
 
 ### Step 6: Verify Helper vs Utility Boundary
 
