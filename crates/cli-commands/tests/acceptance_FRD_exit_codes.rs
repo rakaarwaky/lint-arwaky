@@ -26,10 +26,10 @@ fn frd_exit_01_success_no_violations() {
     let tmp = std::env::temp_dir().join(format!("acc_exit_01_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .output()
-        .expect("failed to run check");
+        .expect("failed to run scan");
     assert_eq!(output.status.code(), Some(0), "clean dir should exit 0");
     fs::remove_dir_all(&tmp).ok();
 }
@@ -37,10 +37,10 @@ fn frd_exit_01_success_no_violations() {
 #[test]
 fn frd_exit_02_system_error_nonexistent_path() {
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg("/nonexistent/path/xyz")
         .output()
-        .expect("failed to run check");
+        .expect("failed to run scan");
     assert_eq!(
         output.status.code(),
         Some(2),

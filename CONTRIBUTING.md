@@ -61,14 +61,14 @@ cargo build --release
 # Expected: "Listening on stdin/stdout (JSON-RPC 2.0)"
 
 # Self-lint the project
-./target/release/lint-arwaky-cli check .
+./target/release/lint-arwaky-cli scan .
 # Scans `crates/` under the same AES rules the project enforces.
 ```
 
 For development without the release profile:
 
 ```bash
-cargo run --bin lint-arwaky-cli -- check .
+cargo run --bin lint-arwaky-cli -- scan .
 cargo run --bin lint-arwaky-mcp
 ```
 
@@ -111,7 +111,7 @@ How was it tested? What test cases were added?
 ## Checklist
 
 - [ ] `cargo test --workspace` passes
-- [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
+- [ ] `cargo run --bin lint-arwaky-cli -- scan .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` clean
 - [ ] `cargo clippy --all-targets -- -D warnings` clean
 - [ ] Docs updated if needed

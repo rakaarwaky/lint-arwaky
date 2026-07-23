@@ -59,7 +59,7 @@ project-root/
 ```bash
 npm install -g lint-arwaky-cli
 lint-arwaky-cli version
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 ```
 
 ---
@@ -67,7 +67,7 @@ lint-arwaky-cli check your-project/
 ## Phase 0: Audit
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 find your-project/packages -name "*.ts" | wc -l
 ```
 
@@ -411,7 +411,7 @@ main();
 ## Phase 8: Verify
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 vitest run
 npm run lint && npm run format
 ```

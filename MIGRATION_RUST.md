@@ -60,7 +60,7 @@ project-root/
 ```bash
 cargo install lint-arwaky-cli
 lint-arwaky-cli version
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 ```
 
 ---
@@ -68,7 +68,7 @@ lint-arwaky-cli check your-project/
 ## Phase 0: Audit
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 find your-project/crates -name "*.rs" | wc -l
 ```
 
@@ -436,7 +436,7 @@ fn main() {
 ## Phase 8: Verify
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 cargo test --workspace
 cargo fmt --all && cargo clippy --all-targets -- -D warnings
 ```

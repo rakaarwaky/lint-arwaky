@@ -10,3 +10,4 @@ pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
 pub mod taxonomy_scan_report_vo;
 pub mod taxonomy_scan_request_vo;
+pub mod utility_path_resolver;

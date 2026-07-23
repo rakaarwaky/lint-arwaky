@@ -26,7 +26,7 @@ fn frd_fmt_01_text_format() {
     let tmp = std::env::temp_dir().join(format!("acc_fmt_01_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .arg("--format")
         .arg("text")
@@ -41,7 +41,7 @@ fn frd_fmt_02_json_format_valid() {
     let tmp = std::env::temp_dir().join(format!("acc_fmt_02_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .arg("--format")
         .arg("json")
@@ -60,7 +60,7 @@ fn frd_fmt_03_sarif_format_valid() {
     let tmp = std::env::temp_dir().join(format!("acc_fmt_03_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .arg("--format")
         .arg("sarif")
@@ -81,7 +81,7 @@ fn frd_fmt_04_junit_format_valid() {
     let tmp = std::env::temp_dir().join(format!("acc_fmt_04_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .arg("--format")
         .arg("junit")
@@ -100,7 +100,7 @@ fn frd_fmt_04_junit_format_valid() {
 #[test]
 fn frd_fmt_05_invalid_format_rejected() {
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(".")
         .arg("--format")
         .arg("invalid_format")

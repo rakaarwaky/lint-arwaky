@@ -4,7 +4,6 @@
 // and produces a unified ScanReport. It depends only on contracts (traits),
 // never on concrete implementations.
 use crate::utility_format_output::{format_junit_output, format_sarif_output};
-use crate::utility_path_resolver::detect_language_from_path;
 use shared::cli_commands::contract_analysis_pipeline_aggregate::IAnalysisPipelineAggregate;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
@@ -12,6 +11,7 @@ use shared::cli_commands::taxonomy_scan_report_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
 };
 use shared::cli_commands::taxonomy_scan_request_vo::ScanRequest;
+use shared::cli_commands::utility_path_resolver::detect_language_from_path;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
@@ -176,7 +176,7 @@ impl AnalysisPipelineOrchestrator {
 
     /// Run orphan detection pass — scans workspace for cross-folder import graph.
     async fn run_orphan_detection(&self, path: &str) -> Vec<LintResult> {
-        let scan_root = crate::utility_path_resolver::find_workspace_root(path);
+        let scan_root = shared::cli_commands::utility_path_resolver::find_workspace_root(path);
         let orphan_scan_root = scan_root.as_ref().and_then(|r| r.to_str()).unwrap_or(".");
         let root_fp = FilePath::new(orphan_scan_root.to_string()).unwrap_or_default();
         let language = detect_language_from_path(orphan_scan_root);

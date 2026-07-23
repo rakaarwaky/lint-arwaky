@@ -84,7 +84,7 @@ fn install_pre_commit_with_empty_executable_uses_default_name() {
 
     let hook_path = tmp_dir.join(".git").join("hooks").join("pre-commit");
     let content = std::fs::read_to_string(&hook_path).unwrap_or_default();
-    assert!(content.contains("lint-arwaky check ."));
+    assert!(content.contains("lint-arwaky scan ."));
 
     let _ = std::fs::remove_dir_all(&tmp_dir);
 }

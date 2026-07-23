@@ -1,7 +1,6 @@
-// PURPOSE: Check/scan/CI entry points — thin wrappers around CheckCommandsSurface
+// PURPOSE: Scan/CI entry points — thin wrappers around CheckCommandsSurface
 //
-// Three commands, distinguished by scope:
-//   - check:  self-lint the lint-arwaky project itself (uses CheckCommandsSurface.scan)
+// Two commands, distinguished by scope:
 //   - scan:   full analysis on external project + external adapters (uses scan_with_discovery)
 //   - ci:     CI-mode with threshold comparison and critical-violation auto-fail
 //
@@ -18,41 +17,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_threshold_vo::Threshold;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 
 /// Walk up from `path` to find the workspace root (parent of `crates/`, `packages/`, or `modules/`).
 pub fn find_workspace_root(path: &str) -> Option<std::path::PathBuf> {
-    crate::utility_path_resolver::find_workspace_root(path)
-}
-
-pub struct CheckOptions {
-    pub path: Option<FilePath>,
-    pub git_diff: bool,
-    pub pipeline: Arc<dyn IAnalysisPipelineAggregate>,
-    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
-    pub filter: Option<String>,
-    pub git_aggregate: Option<Arc<dyn GitHooksAggregate>>,
-    pub config: ArchitectureConfig,
-    pub format: Format,
-}
-
-/// check = self-lint (AES analysis on current project, same algorithm as scan)
-pub fn handle_check(opts: CheckOptions) -> ExitCode {
-    let root = match &opts.path {
-        Some(p) => p.value().to_string(),
-        None => ".".to_string(),
-    };
-    if !std::path::Path::new(&root).exists() {
-        eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
-    }
-    let surface = crate::surface_check_command::CheckCommandsSurface::new(
-        opts.pipeline,
-        opts.report_formatter,
-        None,
-    );
-    surface.scan(&root, opts.filter.as_deref(), opts.format)
+    shared::cli_commands::utility_path_resolver::find_workspace_root(path)
 }
 
 pub struct ScanOptions {

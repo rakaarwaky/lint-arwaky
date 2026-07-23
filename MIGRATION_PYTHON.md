@@ -58,7 +58,7 @@ project-root/
 ```bash
 pip install lint-arwaky-cli
 lint-arwaky-cli version
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 ```
 
 ---
@@ -66,7 +66,7 @@ lint-arwaky-cli check your-project/
 ## Phase 0: Audit
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 find your-project/modules -name "*.py" | wc -l
 ```
 
@@ -405,7 +405,7 @@ if __name__ == "__main__":
 ## Phase 8: Verify
 
 ```bash
-lint-arwaky-cli check your-project/
+lint-arwaky-cli scan your-project/
 pytest
 black --check . && flake8 .
 ```

@@ -26,7 +26,7 @@ fn e2e_check_clean_directory_exit_0() {
     let tmp = std::env::temp_dir().join(format!("e2e_clean_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg(tmp.to_str().unwrap())
         .output()
         .expect("failed to run check");
@@ -37,7 +37,7 @@ fn e2e_check_clean_directory_exit_0() {
 #[test]
 fn e2e_check_nonexistent_path_exit_2() {
     let output = cli_bin()
-        .arg("check")
+        .arg("scan")
         .arg("/nonexistent/path/xyz123")
         .output()
         .expect("failed to run check");

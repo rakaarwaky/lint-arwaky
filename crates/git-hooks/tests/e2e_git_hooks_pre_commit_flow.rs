@@ -44,8 +44,8 @@ async fn full_pre_commit_hook_lifecycle() {
         "Hook must have bash shebang"
     );
     assert!(
-        content.contains("lint-arwaky check ."),
-        "Hook must invoke lint-arwaky check"
+        content.contains("lint-arwaky scan ."),
+        "Hook must invoke lint-arwaky scan"
     );
     assert!(
         content.contains("exit 1"),

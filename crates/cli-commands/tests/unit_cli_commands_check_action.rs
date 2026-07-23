@@ -1,6 +1,6 @@
-//! Unit tests for surface_check_action — find_workspace_root, handle_check, handle_default_check.
+//! Unit tests for surface_check_action — find_workspace_root, handle_default_check.
 
-use cli_commands_lint_arwaky::utility_path_resolver::find_workspace_root;
+use shared::cli_commands::utility_path_resolver::find_workspace_root;
 
 // ─── find_workspace_root ─────────────────────────────────────────────────────
 
@@ -62,16 +62,4 @@ fn find_workspace_root_walks_up_from_child() {
     assert_eq!(result.unwrap(), tmp);
 
     std::fs::remove_dir_all(&tmp).ok();
-}
-
-// ─── handle_check with nonexistent path ──────────────────────────────────────
-
-#[test]
-fn handle_check_nonexistent_path_returns_exit_code_2() {
-    // We need a mock pipeline — but handle_check checks path existence first
-    // With a nonexistent path, it should return ExitCode 2 before touching pipeline
-    // However, CheckOptions requires Arc<dyn IAnalysisPipelineAggregate> which we can't easily mock
-    // This test validates the path-existence guard conceptually
-    let path = "/nonexistent/path/that/does/not/exist";
-    assert!(!std::path::Path::new(path).exists());
 }
