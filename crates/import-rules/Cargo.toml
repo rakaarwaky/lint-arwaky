@@ -18,6 +18,7 @@ once_cell.workspace = true
 regex.workspace = true
 shared.workspace = true
 tokio.workspace = true
+rayon.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }

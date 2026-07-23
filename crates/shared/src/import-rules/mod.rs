@@ -5,6 +5,7 @@ pub mod contract_import_forbidden_protocol;
 pub mod contract_import_mandatory_protocol;
 pub mod contract_import_runner_aggregate;
 pub mod contract_unused_import_protocol;
+pub mod taxonomy_graph_color_vo;
 pub mod taxonomy_import_constant;
 pub mod taxonomy_violation_import_vo;
 pub mod utility_cycle_detector;
