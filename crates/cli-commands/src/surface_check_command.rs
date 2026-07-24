@@ -136,24 +136,22 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
 
     let mut all: Vec<ViolationItem> = Vec::new();
     let target_canonical = std::fs::canonicalize(path).ok();
-    for res in [res_quality, res_role, res_import, res_naming, res_orphan, res_external] {
-        if let Ok(out) = res {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
-                // Handle both formats:
-                // 1. {"members": [...], "results": [...]} — structured JSON output
-                // 2. [item, item, ...] — flat array (fallback)
-                if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
-                    for item in results {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+    for out in [res_quality, res_role, res_import, res_naming, res_orphan, res_external]
+        .into_iter()
+        .flatten()
+    {
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+            if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
+                for item in results {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
-                } else if let Some(items) = val.as_array() {
-                    for item in items {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+                }
+            } else if let Some(items) = val.as_array() {
+                for item in items {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
                 }
             }
