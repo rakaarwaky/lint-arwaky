@@ -105,7 +105,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return DomainExitCode::RUNTIME_ERROR,
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
                 orchestrator,
