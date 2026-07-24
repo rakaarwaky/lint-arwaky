@@ -93,12 +93,12 @@ pub fn handle_ci(
 
     if reasons.is_empty() {
         println!("Result: PASS (exit code 0)");
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
         for r in &reasons {
             println!("  {}", r);
         }
         println!("Result: FAIL (exit code 1)");
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
