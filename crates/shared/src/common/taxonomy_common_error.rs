@@ -11,6 +11,12 @@ string_value_object!(PrimitiveTypeName);
 
 /// Strongly-typed exit code value object. Written manually because the
 /// `string_value_object!` macro only supports `String` (not `i64`).
+///
+/// Workspace Exit Code Contract (root PRD):
+///   0 = Ok / clean / diagnostic completed
+///   1 = Policy fail (violations, CI fail, vulns found, remaining after fix)
+///   2 = Runtime error (bad path, pipeline crash, invalid state)
+///   3 = Prerequisite missing (required external tool not installed)
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct ExitCode {
@@ -25,6 +31,29 @@ impl ExitCode {
     }
     pub fn value(&self) -> i64 {
         self.value.value()
+    }
+
+    // ── Named constants (workspace exit-code contract) ──────────────
+    /// Exit 0 — Ok / clean / diagnostic completed.
+    pub const OK: Self = Self {
+        value: crate::common::taxonomy_common_vo::LineNumber { value: 0 },
+    };
+    /// Exit 1 — Policy fail (violations, CI fail, vulns found, remaining after fix).
+    pub const POLICY_FAIL: Self = Self {
+        value: crate::common::taxonomy_common_vo::LineNumber { value: 1 },
+    };
+    /// Exit 2 — Runtime error (bad path, pipeline crash, invalid state).
+    pub const RUNTIME_ERROR: Self = Self {
+        value: crate::common::taxonomy_common_vo::LineNumber { value: 2 },
+    };
+    /// Exit 3 — Prerequisite missing (required external tool not installed).
+    pub const PREREQUISITE_MISSING: Self = Self {
+        value: crate::common::taxonomy_common_vo::LineNumber { value: 3 },
+    };
+
+    /// Convert to `std::process::ExitCode` for CLI surface return values.
+    pub fn to_process_exit_code(&self) -> std::process::ExitCode {
+        std::process::ExitCode::from(self.value.value() as u8)
     }
 }
 
