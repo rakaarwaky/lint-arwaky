@@ -148,7 +148,8 @@ opt-level = 0
 # Dev profile: fast incremental builds for development.
 [profile.dev]
 opt-level = 0
-debug = 1          # line tables only (faster than full debug info)
+debug = 1
+strip = "debuginfo"
 incremental = true
 codegen-units = 16
 
@@ -156,6 +157,7 @@ codegen-units = 16
 [profile.test]
 opt-level = 0
 debug = 0
+strip = "debuginfo"
 codegen-units = 16
 
 
