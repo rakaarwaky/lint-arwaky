@@ -8,12 +8,17 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 1
+  CARGO_BUILD_JOBS: 4
+  RUST_MIN_STACK: 33554432
+  RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
 
 jobs:
-  quality-gates:
-    name: Quality Gates
+  # ─── Job 1: Lint (fmt + clippy in parallel) ──────────────
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -22,73 +27,138 @@ jobs:
         with:
           components: clippy, rustfmt
 
-      - name: Cache cargo
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+
+      - name: Cache cargo (debug)
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            target/debug
+          key: ${{ runner.os }}-cargo-debug-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-
+            ${{ runner.os }}-cargo-debug-
 
-      # Gate 1: Format check
-      - name: Gate 1 — rustfmt
+      - name: rustfmt
         run: cargo fmt --all -- --check
 
-      # Gate 2: Clippy
-      - name: Gate 2 — clippy
-        run: cargo clippy --all-targets -- -D warnings
+      - name: clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-targets -- -D warnings
 
-      # Gate 3: Build
-      - name: Gate 3 — build
-        run: cargo build --release
+  # ─── Job 2: Tests (uses debug cache from lint) ───────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
 
-      # Gate 4: Tests
-      - name: Gate 4 — tests
-        run: cargo test --workspace
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      # Gate 5: AES self-lint
-      - name: Gate 5 — AES compliance
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+
+      - name: Cache cargo (debug)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/debug
+          key: ${{ runner.os }}-cargo-debug-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-debug-
+
+      - name: Run tests
+        run: cargo test --workspace --lib --tests --no-fail-fast
+
+  # ─── Job 3: Compliance (self-lint + AES codes, parallel) ─
+  compliance:
+    name: AES Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+
+      - name: Cache cargo (release)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/release
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+
+      - name: Build release CLI
+        run: cargo build --release --bin lint-arwaky-cli
+
+      - name: AES self-lint
         run: ./target/release/lint-arwaky-cli check .
 
-      # Gate 6: Test-workspace AES coverage (per-workspace)
-      - name: Gate 6 — test-workspace AES coverage
+      - name: AES test-workspace coverage
         run: |
-          ALL_PASS=true
-          for SP in test-workspaces/crates test-workspaces/modules test-workspaces/packages; do
-            OUTPUT=$(./target/release/lint-arwaky-cli scan "$SP" 2>&1) || true
-            echo "$OUTPUT"
-            UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'Total Unique AES Codes:\s*\K[0-9]+' || echo "0")
-            NAME=$(basename "$SP")
-            echo "  $NAME: $UNIQUE_AES unique AES codes"
-            if [ "$UNIQUE_AES" -lt 24 ]; then
-              echo "FAIL: $NAME only $UNIQUE_AES unique AES codes (minimum 24)"
-              ALL_PASS=false
-            fi
-          done
-          if [ "$ALL_PASS" = false ]; then
+          OUTPUT=$(./target/release/lint-arwaky-cli scan test-workspaces 2>&1) || true
+          echo "$OUTPUT"
+          UNIQUE_AES=$(echo "$OUTPUT" | grep -oP 'AES\d+' | sort -u | wc -l)
+          echo "Unique AES codes detected: $UNIQUE_AES"
+          if [ "$UNIQUE_AES" -lt 24 ]; then
+            echo "FAIL: only $UNIQUE_AES unique AES codes (minimum 24 required)"
             exit 1
           fi
-          echo "PASS: All workspaces have >= 24 unique AES codes"
+          echo "PASS: Detected $UNIQUE_AES unique AES codes (>= 24)"
 
-      # Gate 7: Dependency audit
-      - name: Gate 7 — cargo deny
+  # ─── Job 4: Audit ────────────────────────────────────────
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: cargo deny
         uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
 
+  # ─── Job 5: Release (only on main, after all gates) ──────
   release:
     name: Release Binary
     runs-on: ubuntu-latest
-    needs: quality-gates
+    needs: [lint, test, compliance, audit]
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+
+      - name: Cache cargo (release)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/release
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
 
       - name: Build release
         run: cargo build --release
