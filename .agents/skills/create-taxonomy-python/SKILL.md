@@ -46,6 +46,22 @@ Taxonomy is the single source of truth for:
 
 No domain data structures may be defined in capabilities, agent, surface, or root layers.
 
+## AES401 — Taxonomy Purity and Primitive Restriction
+
+### Entity Check (AES401)
+Scan `_entity` files for raw primitives in type annotations. Flag `str`, `int`, `float`, `bool`, `list`, `dict` in dataclass fields.
+
+### Error Check (AES401)
+Same primitive scan on `_error` files. Error constructor params must use VOs, not raw primitives.
+
+### Event Check (AES401)
+Same primitive scan on `_event` files. Event payload fields must use VOs, not raw primitives.
+
+### Constant Check (AES401)
+Ensure `_constant` files contain only constant declarations (`ALL_CAPS = value`). Flag any `class`, `def`, `async def` definition.
+
+**Skip rules:** Lines starting with `class ` are type definitions (allowed in entity/error/event files). Lines containing internal VO wrappers are excluded. Lines starting with `def ` are excluded from constant files only.
+
 ## Definition of Done
 
 1. Domain data structures live in `shared/taxonomy`.
@@ -56,6 +72,8 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 6. Public domain contracts use VOs instead of raw primitives.
 7. New taxonomy modules are registered in `__init__.py`.
 8. `python -c "import <module>"` passes.
+9. **AES401:** Entity/error/event files have no raw primitives in type annotations.
+10. **AES401:** Constant files contain only `ALL_CAPS = value` declarations.
 
 ## References
 
@@ -125,6 +143,12 @@ grep -n "from.*capabilities_|from.*agent_|from.*surface_" modules/shared/src/*/t
 
 # Check possible I/O in taxonomy files
 grep -n "open(\|Path(\|os\." modules/shared/src/*/taxonomy_*.py
+
+# AES401: Check entity/error/event for raw primitives
+grep -n "\bstr\b\|\bint\b\|\bfloat\b\|\bbool\b\|\blist\b\|\bdict\b" modules/shared/src/*/taxonomy_*_entity.py modules/shared/src/*/taxonomy_*_error.py modules/shared/src/*/taxonomy_*_event.py
+
+# AES401: Check constant files for non-constant declarations
+grep -n "^class \|^def \|^async def " modules/shared/src/*/taxonomy_*_constant.py
 ```
 
 ## Common Mistakes

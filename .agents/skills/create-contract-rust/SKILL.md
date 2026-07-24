@@ -35,6 +35,16 @@ Two contract suffixes serve different roles:
 - `_protocol` → implemented by Capabilities (inbound behavior interface)
 - `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
 
+## AES402 — Contract Primitive Restriction
+
+### Protocol Check (AES402)
+Scan `_protocol` files for raw primitives in method signatures. Flag `String`, `i32`, `u64`, `bool`, `Vec`, `HashMap` in parameter types and return types. Method signatures must use VOs.
+
+### Aggregate Check (AES402)
+Same primitive scan on `_aggregate` files. All method signatures must use VOs for domain data.
+
+**Skip rules:** Lines containing internal VO wrappers are excluded. Lines starting with `fn` definitions in comments are excluded after noise stripping.
+
 ## Definition of Done
 
 1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
@@ -47,6 +57,8 @@ Two contract suffixes serve different roles:
 8. Contract signatures use shared VOs for domain data.
 9. New contract module is registered in `mod.rs`.
 10. `cargo check -p shared` passes.
+11. **AES402:** Protocol method signatures have no raw primitives.
+12. **AES402:** Aggregate method signatures have no raw primitives.
 
 ## References
 
@@ -104,6 +116,12 @@ rg -n "^\s*pub trait" crates/shared/src/**/contract_*.rs
 
 # Check forbidden imports
 rg -n "^\s*use\s+.*(capabilities_|agent_|surface_)" crates/shared/src/**/contract_*.rs
+
+# AES402: Check protocol method signatures for raw primitives
+rg -n "fn\s+\w+\(.*(&str|String|i32|u64|bool|Vec<|HashMap<)" crates/shared/src/**/contract_*_protocol.rs
+
+# AES402: Check aggregate method signatures for raw primitives
+rg -n "fn\s+\w+\(.*(&str|String|i32|u64|bool|Vec<|HashMap<)" crates/shared/src/**/contract_*_aggregate.rs
 ```
 
 ## Common Mistakes

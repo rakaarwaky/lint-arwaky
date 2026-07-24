@@ -58,6 +58,24 @@ The surface layer MUST NOT:
 - contain domain computation,
 - perform I/O directly.
 
+## AES406 — Surface Role Rules
+
+### Surface Classification
+- **Smart** (`_command`, `_controller`, `_page`, `_entry`): may contain orchestration logic
+- **Utility** (`_hook`, `_store`, `_action`, `_screen`, `_router`): supports smart surfaces
+- **Passive** (all other surface suffixes): presentation-only
+
+### Global Check (All Surfaces)
+- **Max 15 `fn` definitions per file.** Exceeding → violation.
+
+### Passive + Utility Checks
+- **Max 10 public methods per `impl` block.** Exceeding → violation.
+- **Max 80 lines per method body.** Exceeding → violation.
+- **Max 3 levels of if-nesting depth.** Exceeding → violation.
+- **Max 3 control-flow statements** (`if`, `else`, `for`, `while`, `match`). Exceeding → domain logic violation.
+
+Smart surfaces (`_command`, `_controller`, `_page`, `_entry`) are exempted from passive checks but still subject to the 15-function global limit.
+
 ## Definition of Done
 
 1. Surface file uses a valid suffix.
@@ -73,6 +91,11 @@ The surface layer MUST NOT:
 11. Service dependencies use `Arc<dyn Trait>`.
 12. Errors are handled explicitly.
 13. `cargo check -p <crate-name>` passes.
+14. **AES406:** File has max 15 `fn` definitions.
+15. **AES406 (passive/utility):** Each `impl` block has max 10 public methods.
+16. **AES406 (passive/utility):** Method bodies max 80 lines.
+17. **AES406 (passive/utility):** Nesting depth max 3 levels.
+18. **AES406 (passive/utility):** Max 3 control-flow statements.
 
 ## References
 
@@ -139,6 +162,18 @@ rg -n "^\s*use\s+.*(capabilities_|agent_)" crates/*/src/surface_*.rs
 
 # Check possible unwrap usage
 rg "unwrap\(\)|unwrap_or_default\(\)" crates/*/src/surface_*.rs
+
+# AES406: Count fn definitions per file (global limit: 15)
+rg -c "^\s*pub\s+fn|^\s*fn\s" crates/*/src/surface_*.rs
+
+# AES406: Count public methods per impl block (limit: 10)
+rg -n "^\s*pub\s+fn\s" crates/*/src/surface_*.rs
+
+# AES406: Check for deep nesting (limit: 3 levels)
+rg -n "^\s{12,}(if|for|while|match)\s" crates/*/src/surface_*.rs
+
+# AES406: Count control-flow in passive/utility surfaces (limit: 3)
+rg -c "(if|else|for|while|match)\s" crates/*/src/surface_*_component.rs crates/*/src/surface_*_view.rs crates/*/src/surface_*_layout.rs crates/*/src/surface_*_hook.rs crates/*/src/surface_*_store.rs crates/*/src/surface_*_action.rs crates/*/src/surface_*_screen.rs
 ```
 
 ## Common Mistakes

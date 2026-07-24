@@ -58,6 +58,24 @@ The surface layer MUST NOT:
 - contain domain computation,
 - perform I/O directly.
 
+## AES406 — Surface Role Rules
+
+### Surface Classification
+- **Smart** (`_command`, `_controller`, `_page`, `_entry`): may contain orchestration logic
+- **Utility** (`_hook`, `_store`, `_action`, `_screen`, `_router`): supports smart surfaces
+- **Passive** (all other surface suffixes): presentation-only
+
+### Global Check (All Surfaces)
+- **Max 15 `def` definitions per file.** Exceeding → violation.
+
+### Passive + Utility Checks
+- **Max 10 public methods per class.** Exceeding → violation.
+- **Max 80 lines per method body.** Exceeding → violation.
+- **Max 3 levels of if-nesting depth.** Exceeding → violation.
+- **Max 3 control-flow statements** (`if`, `elif`, `else`, `for`, `while`, `try`, `except`). Exceeding → domain logic violation.
+
+Smart surfaces (`_command`, `_controller`, `_page`, `_entry`) are exempted from passive checks but still subject to the 15-function global limit.
+
 ## Definition of Done
 
 1. Surface file uses a valid suffix.
@@ -73,6 +91,11 @@ The surface layer MUST NOT:
 11. Service dependencies use protocol interfaces via DI.
 12. Errors are handled explicitly.
 13. `python -c "import <module>"` passes.
+14. **AES406:** File has max 15 `def` definitions.
+15. **AES406 (passive/utility):** Each class has max 10 public methods.
+16. **AES406 (passive/utility):** Method bodies max 80 lines.
+17. **AES406 (passive/utility):** Nesting depth max 3 levels.
+18. **AES406 (passive/utility):** Max 3 control-flow statements.
 
 ## References
 
@@ -139,6 +162,18 @@ grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/su
 
 # Check syntax
 python -c "import <module>"
+
+# AES406: Count def definitions per file (global limit: 15)
+grep -c "^\s*def \|^\s*async def " modules/*/src/surface_*.py
+
+# AES406: Count public methods per class (limit: 10)
+grep -n "^\s*def [a-z]" modules/*/src/surface_*.py
+
+# AES406: Check for deep nesting (limit: 3 levels)
+grep -n "^\s{12,}if \|^\s{12,}for \|^\s{12,}while " modules/*/src/surface_*.py
+
+# AES406: Count control-flow in passive/utility surfaces (limit: 3)
+grep -c "if \|elif \|else:\|for \|while \|try:\|except " modules/*/src/surface_*_component.py modules/*/src/surface_*_view.py modules/*/src/surface_*_layout.py modules/*/src/surface_*_hook.py modules/*/src/surface_*_store.py modules/*/src/surface_*_action.py modules/*/src/surface_*_screen.py
 ```
 
 ## Common Mistakes
