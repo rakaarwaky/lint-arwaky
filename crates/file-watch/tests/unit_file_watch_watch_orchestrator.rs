@@ -102,5 +102,8 @@ fn run_with_running_false_exits_immediately() {
     let running = Arc::new(AtomicBool::new(false));
     let code = orch.run(config, running);
     // With running=false the loop body never executes; exits OK.
-    assert_eq!(code, shared::common::taxonomy_common_error::ExitCode::OK);
+    assert_eq!(
+        code,
+        shared_lint_arwaky::common::taxonomy_common_error::ExitCode::OK
+    );
 }
