@@ -3,7 +3,7 @@
 ## BAD: Computation in Agent
 
 ```typescript
-class <NameOrchestrator> {
+class <Name>Orchestrator {
     process(files: FilePath[]) {
         const total = files.length; // BAD: computation
         const sum = files.reduce((acc, f) => acc + f.size, 0); // BAD
@@ -14,7 +14,7 @@ class <NameOrchestrator> {
 ## BAD: Business Logic in Agent
 
 ```typescript
-class <NameOrchestrator> {
+class <Name>Orchestrator {
     evaluate(content: FileContent): boolean {
         return content.value.includes("forbidden-marker"); // BAD: business rule
     }
@@ -24,7 +24,7 @@ class <NameOrchestrator> {
 ## BAD: I/O in Agent
 
 ```typescript
-class <NameOrchestrator> {
+class <Name>Orchestrator {
     execute(path: FilePath) {
         const content = fs.readFileSync(path.value()); // BAD
     }
@@ -34,7 +34,7 @@ class <NameOrchestrator> {
 ## BAD: Interface in Agent File
 
 ```typescript
-interface <Report>VO {
+interface <Name>ReportVO {
     results: string[];
 }
 ```
@@ -42,40 +42,40 @@ interface <Report>VO {
 ## BAD: Concrete Service Field
 
 ```typescript
-class <NameOrchestrator> {
-    constructor(private readonly analyzer: <NameAnalyzer>) {} // BAD
+class <Name>Orchestrator {
+    constructor(private readonly service: <ServiceType>) {} // BAD: concrete type
 }
 ```
 
 ## GOOD: Correct 3-Block Order
 
 ```typescript
-import { I<NameAnalyzer>Protocol } from '../shared/<name-feature>/contract_analyzer_protocol';
-import { I<NameOrchestrator>Aggregate } from '../shared/<name-feature>/contract_orchestrator_aggregate';
-import { <ResultVO> } from '../shared/<name-feature>/taxonomy_result_vo';
+import { I<Protocol>Protocol } from '../shared/<domain>/contract_<protocol>_protocol';
+import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
+import { <RequestVO> } from '../shared/<domain>/taxonomy_<request>_vo';
+import { <ResultVO> } from '../shared/<domain>/taxonomy_<result>_vo';
 
-export class <NameOrchestrator> implements I<NameOrchestrator>Aggregate {
-    constructor(private readonly analyzer: I<NameAnalyzer>Protocol) {}
+export class <Name>Orchestrator implements I<Name>Aggregate {
+    constructor(private readonly deps: <Name>Deps) {}
 
-    execute(request: <ScanRequest>VO): <ResultVO>[] {
-        const results: <ResultVO>[] = [];
-        for (const file of request.files()) {
-            try {
-                const result = this.analyzer.analyze(file);
-                results.push(...result.intoResults());
-            } catch (err) {
-                results.push(<ResultVO>.fromAnalysisError(file, err));
-            }
-        }
-        return results;
+    execute(request: <RequestVO>): <ResultVO> {
+        const formatter: I<Protocol>Protocol = this.getFormatter(request);
+        return formatter.process(request);
     }
 
     toString(): string {
-        return '<NameOrchestrator>()';
+        return '<Name>Orchestrator()';
     }
 
-    static create(): <NameOrchestrator> {
-        return new <NameOrchestrator>(new Capabilities<NameCapability>());
+    private getFormatter(request: <RequestVO>): I<Protocol>Protocol {
+        switch (request.type) {
+            case RequestType.A: return this.deps.a;
+            case RequestType.B: return this.deps.b;
+        }
+    }
+
+    static create(): <Name>Orchestrator {
+        return new <Name>Orchestrator({ a: new Default<Protocol>(), b: new Default<Protocol>() });
     }
 }
 ```

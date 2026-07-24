@@ -3,7 +3,7 @@
 ## BAD: Computation in Agent
 
 ```python
-class <NameOrchestrator>:
+class <Name>Orchestrator:
     def process(self, files: list[FilePath]):
         total = len(files)  # BAD: computation
         sum_val = sum(f.size for f in files)  # BAD
@@ -12,7 +12,7 @@ class <NameOrchestrator>:
 ## BAD: Business Logic in Agent
 
 ```python
-class <NameOrchestrator>:
+class <Name>Orchestrator:
     def evaluate(self, content: FileContent) -> bool:
         return "forbidden-marker" in content.value  # BAD: business rule
 ```
@@ -20,7 +20,7 @@ class <NameOrchestrator>:
 ## BAD: I/O in Agent
 
 ```python
-class <NameOrchestrator>:
+class <Name>Orchestrator:
     def execute(self, path: FilePath):
         content = open(path.value()).read()  # BAD
 ```
@@ -29,43 +29,39 @@ class <NameOrchestrator>:
 
 ```python
 @dataclass
-class <Report>VO:
+class <Name>ReportVO:
     results: list[str]
 ```
 
 ## BAD: Concrete Service Field
 
 ```python
-class <NameOrchestrator>:
-    def __init__(self, analyzer: <NameAnalyzer>):  # BAD
+class <Name>Orchestrator:
+    def __init__(self, analyzer: TextFormatter):  # BAD: concrete type
         self._analyzer = analyzer
 ```
 
 ## GOOD: Correct 3-Block Order
 
 ```python
-from shared.<name-feature>.contract_analyzer_protocol import I<NameAnalyzer>Protocol
-from shared.<name-feature>.contract_orchestrator_aggregate import I<NameOrchestrator>Aggregate
-from shared.<name-feature>.taxonomy_result_vo import <ResultVO>
+from shared.<name_feature>.contract_<name>_protocol import I<Name>Protocol
+from shared.<name_feature>.contract_<name>_aggregate import I<Name>Aggregate
+from shared.<name_feature>.taxonomy_<name>_vo import <Name>VO
+from shared.<name_feature>.taxonomy_<result>_vo import <ResultVO>
 
-class <NameOrchestrator>(I<NameOrchestrator>Aggregate):
-    def __init__(self, analyzer: I<NameAnalyzer>Protocol):
-        self._analyzer = analyzer
+class <Name>Orchestrator(I<Name>Aggregate):
+    def __init__(self, deps: <Name>Deps):
+        self._deps = deps
 
-    def execute(self, request: <ScanRequest>VO) -> list[<ResultVO>]:
-        results: list[<ResultVO>] = []
-        for file in request.files():
-            try:
-                result = self._analyzer.analyze(file)
-                results.extend(result.into_results())
-            except Exception as e:
-                results.append(<ResultVO>.from_analysis_error(file, e))
-        return results
+    def execute(self, request: <RequestVO>) -> <ResultVO>:
+        formatter: I<Name>Protocol = self._get_formatter(request)
+        return formatter.process(request)
 
     def __repr__(self) -> str:
-        return "<NameOrchestrator>()"
+        return "<Name>Orchestrator()"
 
-    @classmethod
-    def create_default(cls) -> "<NameOrchestrator>":
-        return cls(analyzer=Capabilities<NameCapability>())
+    def _get_formatter(self, request: <RequestVO>) -> I<Name>Protocol:
+        match request.type:
+            case RequestType.A: return self._deps.a
+            case RequestType.B: return self._deps.b
 ```

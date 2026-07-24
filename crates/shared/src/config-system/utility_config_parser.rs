@@ -2,7 +2,22 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 
-/// Parse adapter names from the `adapters` section of a config YAML.
+/// Parse the score threshold from raw YAML config content.
+/// Checks `project.thresholds.score` then `thresholds.score`.
+/// Returns the value if found, otherwise None.
+pub fn parse_score_threshold(yaml_str: &str) -> Option<f64> {
+    let raw: serde_yaml_ng::Value = serde_yaml_ng::from_str(yaml_str).ok()?;
+    raw.get("project")
+        .and_then(|p| p.get("thresholds"))
+        .and_then(|t| t.get("score"))
+        .and_then(|s| s.as_f64())
+        .or_else(|| {
+            raw.get("thresholds")
+                .and_then(|t| t.get("score"))
+                .and_then(|s| s.as_f64())
+        })
+}
+
 /// Returns names of adapters whose status is "enabled" (default).
 /// Ignores special entries like "architecture" (internal analysis).
 pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {

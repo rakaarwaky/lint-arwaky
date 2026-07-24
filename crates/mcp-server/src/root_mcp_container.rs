@@ -1,7 +1,7 @@
 // PURPOSE: McpContainer — DI wiring for MCP server aggregates
 use std::sync::Arc;
 
-use agent_mcp_server_orchestrator::{McpServerDependencies, McpServerOrchestrator};
+use crate::agent_mcp_server_orchestrator::{McpServerDependencies, McpServerOrchestrator};
 use auto_fix::root_auto_fix_container::AutoFixContainer;
 use git_hooks::root_git_hooks_container::GitContainer;
 use maintenance::root_maintenance_container::MaintenanceContainer;
@@ -44,6 +44,9 @@ impl McpContainer {
             setup_orchestrator: self.setup_orchestrator.clone(),
             config_orchestrator: self.config_orchestrator.clone(),
             external_lint: self.external_lint.clone(),
+            import_orchestrator: self.import_orchestrator.clone(),
+            naming_orchestrator: self.naming_orchestrator.clone(),
+            role_orchestrator: self.role_orchestrator.clone(),
         };
         McpServerOrchestrator::new(deps)
     }

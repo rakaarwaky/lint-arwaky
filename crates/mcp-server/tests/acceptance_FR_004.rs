@@ -2,9 +2,6 @@
 // "health_check — check system health: adapters and system state."
 // "JSON-RPC conformance; tool discovery by AI clients."
 
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    McpServerDependencies, McpServerOrchestrator,
-};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::ServerHandler;
@@ -12,10 +9,7 @@ use std::sync::Arc;
 
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    LintArwakyMcpServer::new(Arc::new(McpServerOrchestrator::new(deps)))
+    LintArwakyMcpServer::new(Arc::new(container.orchestrator()))
 }
 
 /// FRD-MCP-004: health_check returns adapter availability
