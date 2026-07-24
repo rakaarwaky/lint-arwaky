@@ -464,7 +464,7 @@ taxonomy_     → taxonomy_*
 contract_     → taxonomy_*
 utility_      → taxonomy_*
 capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*
+agent_        → taxonomy_*, contract_*, utility_*
 surface_      → taxonomy_*, contract_*, utility_*
 root_         → ALL layers
 ```

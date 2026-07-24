@@ -35,7 +35,7 @@ cargo build --release
 
 Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into feature crates (vertical slicing).
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification, layer hierarchy, and naming conventions.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification
 
 ## Project Structure
 
@@ -56,8 +56,8 @@ lint-arwaky/
 │   ├── orphan-detector/    # Orphan code detection
 │   ├── project-setup/      # Setup utilities
 │   ├── role-rules/         # Role violations
+│   ├── shared/             # Taxonomy, contracts, utilities
 │   └── tui/                # TUI file browser
-├── shared/                 # Taxonomy, contracts, utilities
 ├── PRD.md                  # Product requirements
 ├── ARCHITECTURE.md         # AES specification
 └── README.md               # This file
@@ -65,8 +65,9 @@ lint-arwaky/
 
 ## Available Commands
 
+
 | Command                               | Description                               |
-| ------------------------------------- | ----------------------------------------- |
+| --------------------------------------- | ------------------------------------------- |
 | `lint-arwaky-cli scan [path]`         | Full architecture compliance analysis     |
 | `lint-arwaky-cli fix [path]`          | Apply safe fixes (`--dry-run` to preview) |
 | `lint-arwaky-cli ci [path]`           | CI mode with exit codes                   |
@@ -74,7 +75,7 @@ lint-arwaky/
 | `lint-arwaky-cli watch [path]`        | Watch and lint on changes                 |
 | `lint-arwaky-cli security [path]`     | Scan for security vulnerabilities         |
 | `lint-arwaky-cli dependencies [path]` | Scan for library vulnerabilities          |
-| `lint-arwaky-cli duplicates [path]`   | Detect code duplication                   |
+
 | `lint-arwaky-cli doctor`              | Environment diagnostics                   |
 | `lint-arwaky-cli version`             | Display version                           |
 
@@ -87,7 +88,7 @@ Configuration is loaded from YAML files. See [SKILL.md](SKILL.md) for details.
 lint-arwaky-cli init
 
 # Show current config
-lint-arwaky-cli config show
+lint-arwaky-cli config-show
 ```
 
 ## Testing

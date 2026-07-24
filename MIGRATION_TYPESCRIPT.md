@@ -425,7 +425,7 @@ npm run lint && npm run format
 | taxonomy     | `taxonomy_<concept>_<suffix>.ts`     | `taxonomy_user_vo.ts`          |
 | contract     | `contract_<concept>_<suffix>.ts`     | `contract_user_protocol.ts`    |
 | utility      | `utility_<concept>_<suffix>.ts`      | `utility_user_hasher.ts`       |
-| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.ts` |
+| capabilities | `capabilities_<concept>_<suffix>.ts` | `capabilities_user_checker.ts` |
 | agent        | `agent_<concept>_orchestrator.ts`    | `agent_user_orchestrator.ts`   |
 | surface      | `surface_<concept>_<suffix>.ts`      | `surface_user_command.ts`      |
 | root         | `root_<concept>_<suffix>.ts`         | `root_user_container.ts`       |
@@ -439,7 +439,7 @@ taxonomy_     → taxonomy_*
 contract_     → taxonomy_*
 utility_      → taxonomy_*
 capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*
+agent_        → taxonomy_*, contract_*, utility_*
 surface_      → taxonomy_*, contract_*, utility_*
 root_         → ALL layers
 ```
@@ -457,7 +457,7 @@ root_         → ALL layers
 | AES201     | Remove forbidden import, use contract interface   |
 | AES202     | Add missing import per layer requirements         |
 | AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
+| AES304     | Remove `@ts-ignore`, `@ts-expect-error`, bare `catch` |
 | AES401     | Move primitives to VO, constants to `_constant`   |
 | AES402     | Replace primitive types with VO types in contract |
 | AES403     | Implement protocol trait in capability            |

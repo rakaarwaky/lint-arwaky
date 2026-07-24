@@ -4,7 +4,7 @@
 
 ## 1. Test Projects
 
-There are 3 test workspace
+There are 3 test workspaces
 
 | Category         | Path                        | Purpose                               |
 | ---------------- | --------------------------- | ------------------------------------- |
@@ -52,9 +52,9 @@ The base codebase must be clean of any internal architecture rule violations.
   ```
 
 - [ ] _Criteria:_ Output must show **`Total violations: 0`**.
-- [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](file:///home/raka/mcp-arwaky/lint-arwaky/lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
+- [ ] _Safety Net:_ Ensure there are no arbitrary bypasses using `#[allow(...)]` or `unwrap()`. If an external module strictly requires an exception, register that module in the configuration file [lint_arwaky.config.rust.yaml](lint_arwaky.config.rust.yaml) under the `exceptions` block, rather than using inline bypass comments.
 
-  #### B. Cross-Language Functional Verification (Scan Test Projects)
+#### B. Cross-Language Functional Verification (Scan Test Projects)
 
 - [ ] Build a clean release and copy the binary:
 
@@ -65,7 +65,6 @@ The base codebase must be clean of any internal architecture rule violations.
 - [ ] Run scan on the test-workspaces folder:
 
   ```bash
-  cd test-workspaces
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
   cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
