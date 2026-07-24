@@ -10,13 +10,12 @@ pub enum PanelFocus {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PreviewMode {
-    FileContent,
     LintResults,
     HelpOverlay,
     ActionOutput,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct AppState {
     pub project_root: String,
     pub current_dir: String,
@@ -71,7 +70,7 @@ impl AppState {
             selected_index: 0,
             scroll_offset: 0,
             panel_focus: PanelFocus::FileList,
-            preview_mode: PreviewMode::FileContent,
+            preview_mode: PreviewMode::ActionOutput,
             preview_text: String::new(),
             status_message: "Ready".to_string(),
             action_flags: ActionFlags::default(),

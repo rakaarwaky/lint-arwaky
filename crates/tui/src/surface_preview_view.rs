@@ -33,13 +33,6 @@ impl PreviewView {
         };
 
         let (title, content) = match state.preview_mode {
-            PreviewMode::FileContent => {
-                let title = match state.selected_entry() {
-                    Some(entry) if !entry.is_dir => format!(" Preview: {} ", entry.name),
-                    _ => " Preview ".to_string(),
-                };
-                (title, state.preview_text.clone())
-            }
             PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview_text.clone()),
             PreviewMode::ActionOutput => {
                 (" Action Output ".to_string(), state.preview_text.clone())
