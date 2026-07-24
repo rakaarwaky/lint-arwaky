@@ -112,7 +112,7 @@ fn render_text(
     for (member_name, results) in grouped {
         total += results.len();
         if results.is_empty() {
-            println!("[?] {member_name} — clean");
+            continue;
         } else if is_specific_member {
             println!("[{member_name}] — {} violations", results.len());
             println!();
@@ -123,11 +123,13 @@ fn render_text(
         } else {
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
-            for r in results.iter().take(20) {
-                println!("  [{}] {}", r.code.code(), short_file(&r.file.value));
+            // Group by AES code, show count per code
+            let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
+            for r in results {
+                *code_counts.entry(r.code.code().to_string()).or_insert(0) += 1;
             }
-            if results.len() > 20 {
-                println!("  ... ({} more)", results.len() - 20);
+            for (code, count) in &code_counts {
+                println!("  [{code}] {count}");
             }
             println!();
         }

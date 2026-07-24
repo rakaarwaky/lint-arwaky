@@ -41,7 +41,7 @@ pub fn handle_scan_orphan(
     let workspaces = rt.block_on(config_orchestrator.discover_workspaces(&root_fp));
 
     if workspaces.is_empty() {
-        return scan_single_root(&root, &orphan_orchestrator, &config_orchestrator);
+        return scan_single_root(&root, &orphan_orchestrator, &config_orchestrator, format);
     }
 
     let workspaces = if let Some(ref member_name) = member {
@@ -121,7 +121,7 @@ pub fn handle_scan_orphan(
         root.clone()
     };
 
-    output_violations(&all_violations, &target, Format::Text, is_specific_member);
+    output_violations(&all_violations, &target, format, is_specific_member);
 
     if all_violations.is_empty() {
         ExitCode::SUCCESS
@@ -134,6 +134,7 @@ fn scan_single_root(
     root: &str,
     orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+    format: Format,
 ) -> ExitCode {
     let scan_root = crate::surface_common_command::resolve_file_path(root);
     let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
@@ -145,7 +146,7 @@ fn scan_single_root(
         .map(ViolationItem::from_lint_result)
         .collect();
 
-    output_violations(&violations, root, Format::Text, false);
+    output_violations(&violations, root, format, false);
 
     if violations.is_empty() {
         ExitCode::SUCCESS
