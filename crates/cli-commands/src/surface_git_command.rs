@@ -63,11 +63,15 @@ pub async fn handle_git_diff(
         total_violations += fv;
         if fv > 0 {
             println!("  {}  -> {} violation(s)", f.value, fv);
-            for r in results.iter().take(3) {
+            for r in &results {
+                let loc = match (r.line.value(), r.column.value()) {
+                    (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value(), l, c),
+                    (l, _) if l > 0 => format!("{}:{}", r.file.value(), l),
+                    _ => r.file.value().to_string(),
+                };
                 println!(
-                    "    {}:{} [{}] {}",
-                    r.file.value(),
-                    r.line.value(),
+                    "    {} [{}] {}",
+                    loc,
                     match r.severity {
                         shared::common::taxonomy_severity_vo::Severity::CRITICAL => "CRITICAL",
                         shared::common::taxonomy_severity_vo::Severity::HIGH => "HIGH",

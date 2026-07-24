@@ -3,8 +3,17 @@
 
 The output includes the crate's own source, its Cargo.toml, and any shared
 crate modules transitively reachable through `shared::...` import paths.
+
+Usage:
+    # Interactive mode (prompts for selection):
+    python3 scripts/export_feature.py
+
+    # CLI mode (non-interactive):
+    python3 scripts/export_feature.py --crate code-analysis
+    python3 scripts/export_feature.py --crate import-rules --output /tmp/out.md
 """
 
+import argparse
 import re
 import subprocess
 import sys
@@ -366,7 +375,85 @@ def _language_for(path: Path) -> str:
     return "rust"
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Export a feature crate into a single consolidated Markdown file."
+    )
+    parser.add_argument(
+        "--crate", "-c",
+        help="Crate name to export (non-interactive mode). Omit for interactive selection.",
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Output file path (default: .agents/finding/<crate>_v<ver>.md).",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+
+    if args.crate:
+        # Non-interactive CLI mode
+        workspace_root, crates_dir, docs_finding_dir = resolve_workspace()
+
+        feature_crates = list_feature_crates(crates_dir)
+        if args.crate not in feature_crates:
+            print(f"Error: Crate '{args.crate}' not found. Available: {', '.join(feature_crates)}", file=sys.stderr)
+            sys.exit(1)
+
+        selected_crate = args.crate
+        print(f"Processing crate: {selected_crate}...")
+
+        crate_path = crates_dir / selected_crate
+        version = read_crate_version(crate_path)
+        safe_version = sanitize_version(version)
+        print(f"Version resolved: {version} (filename-safe: {safe_version})")
+
+        shared_src_dir = crates_dir / "shared" / "src"
+        module_to_files, symbol_to_files = index_shared_module(shared_src_dir)
+
+        files_to_export = collect_crate_files(crate_path)
+
+        architecture_md = workspace_root / "ARCHITECTURE.md"
+        if architecture_md.is_file():
+            files_to_export.add(architecture_md)
+
+        feature_dashed = selected_crate.replace("_", "-")
+        add_shared_feature_dir(files_to_export, shared_src_dir, feature_dashed)
+        files_to_export.update(
+            scan_shared_imports(files_to_export, module_to_files, symbol_to_files)
+        )
+
+        print("Running lint-arwaky-cli scan...")
+        lint_output = run_lint_scan(workspace_root, crate_path)
+        if lint_output:
+            print("Lint scan completed.")
+        else:
+            print("No lint output (clean or scan failed).")
+
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            docs_finding_dir.mkdir(parents=True, exist_ok=True)
+            output_filename = f"{selected_crate}_v{safe_version}.md"
+            output_path = docs_finding_dir / output_filename
+
+        print(f"Writing export to {output_path}...")
+        sorted_files = sorted(files_to_export)
+        write_markdown(
+            output_path,
+            sorted_files,
+            workspace_root,
+            selected_crate,
+            safe_version,
+            lint_output,
+        )
+
+        print(f"\nSuccess! Consolidated markdown file created: {output_path}")
+        return
+
+    # Interactive mode
     while True:
         print("\n=== Lint Arwaky Feature Exporter ===")
 

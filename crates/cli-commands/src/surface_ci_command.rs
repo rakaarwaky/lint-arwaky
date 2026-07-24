@@ -57,7 +57,8 @@ pub fn handle_ci(
     // P2.7: compare as floats, not truncated u32
     let below_threshold = score.value() < threshold.value() as f64;
 
-    println!("Architecture Compliance CI");
+    let ver = env!("CARGO_PKG_VERSION");
+    println!("Lint Arwaky v{ver} — CI Architecture Compliance");
     println!("Score: {:.1} / 100", score.value());
     println!("Threshold: {}", threshold.value());
     println!();
@@ -96,9 +97,9 @@ pub fn handle_ci(
         ExitCode::OK
     } else {
         for r in &reasons {
-            println!("  {}", r);
+            eprintln!("  {}", r);
         }
-        println!("Result: FAIL (exit code 1)");
+        eprintln!("Result: FAIL (exit code 1)");
         ExitCode::POLICY_FAIL
     }
 }

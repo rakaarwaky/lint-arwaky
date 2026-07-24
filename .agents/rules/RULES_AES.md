@@ -62,7 +62,7 @@ Filename must follow pattern: `prefix_concept_suffix` or `prefix_concept1_concep
 
 - All **lowercase**
 - Separator: **underscore** (`_`)
-- Minimum **2 words** (prefix + suffix)
+- Minimum **3 words** (prefix + suffix)
 - Maximum: Unlimited
 - Examples: `capabilities_user_checker.rs`, `utility_path_resolver.rs`, `capabilities_db_adapter.py`
 

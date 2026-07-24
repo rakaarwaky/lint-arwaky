@@ -80,5 +80,17 @@ copy_docs_to_config "$CONFIG_DIR"
 # 6. Copy .agents/ to XDG config
 copy_agents_to_config "$CONFIG_DIR"
 
+# 7. Setup shell aliases (lac, lat, lam) if missing
+for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$RC_FILE" ] && ! grep -q "alias lac=" "$RC_FILE"; then
+        echo "" >> "$RC_FILE"
+        echo "# Lint Arwaky Aliases" >> "$RC_FILE"
+        echo "alias lac=\"lint-arwaky-cli\"" >> "$RC_FILE"
+        echo "alias lat=\"lint-arwaky-tui\"" >> "$RC_FILE"
+        echo "alias lam=\"lint-arwaky-mcp\"" >> "$RC_FILE"
+        echo "  -> Shell aliases added to $RC_FILE"
+    fi
+done
+
 CURRENT_VERSION=$(get_project_version)
 echo "Done (Local): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"

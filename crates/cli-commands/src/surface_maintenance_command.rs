@@ -10,6 +10,22 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use std::sync::Arc;
 
+fn status_icon(is_ok: bool) -> &'static str {
+    if std::env::var_os("NO_COLOR").is_some() {
+        if is_ok {
+            "[OK]  "
+        } else {
+            "[FAIL]"
+        }
+    } else {
+        if is_ok {
+            "✓"
+        } else {
+            "✗"
+        }
+    }
+}
+
 pub async fn handle_doctor(
     maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
 ) -> ExitCode {
@@ -22,7 +38,7 @@ pub async fn handle_doctor(
     for status in &diag.rust_tools {
         println!(
             "  {} {} {}  ({})",
-            if status.status == "OK" { "✓" } else { "✗" },
+            status_icon(status.status == "OK"),
             status.name,
             status.version,
             status.status
@@ -37,7 +53,7 @@ pub async fn handle_doctor(
     for status in &diag.python_tools {
         println!(
             "  {} {} {}  ({})",
-            if status.status == "OK" { "✓" } else { "✗" },
+            status_icon(status.status == "OK"),
             status.name,
             status.version,
             status.status
@@ -49,7 +65,7 @@ pub async fn handle_doctor(
     for status in &diag.js_tools {
         println!(
             "  {} {} {}  ({})",
-            if status.status == "OK" { "✓" } else { "✗" },
+            status_icon(status.status == "OK"),
             status.name,
             status.version,
             status.status
@@ -61,7 +77,7 @@ pub async fn handle_doctor(
     for status in &diag.vcs_tools {
         println!(
             "  {} {} {}  ({})",
-            if status.status == "OK" { "✓" } else { "✗" },
+            status_icon(status.status == "OK"),
             status.name,
             status.version,
             status.status
@@ -135,16 +151,32 @@ pub async fn handle_dependencies(
             println!("Language: {}", report.language);
             println!("Dependencies: {} total", report.dependencies.len());
             println!();
-            println!("{:<25} {:<12} Type", "Package", "Version");
-            for dep in report.dependencies.iter().take(30) {
-                println!("{:<25} {:<12} {}", dep.name, dep.version, dep.dep_type);
-            }
-            if report.dependencies.len() > 30 {
-                println!("... and {} more", report.dependencies.len() - 30);
+
+            let pkg_width = report
+                .dependencies
+                .iter()
+                .map(|d| d.name.len())
+                .max()
+                .unwrap_or(25)
+                .max(7);
+            let ver_width = report
+                .dependencies
+                .iter()
+                .map(|d| d.version.len())
+                .max()
+                .unwrap_or(12)
+                .max(7);
+
+            println!("{:<pkg_width$}  {:<ver_width$}  Type", "Package", "Version");
+            for dep in report.dependencies.iter() {
+                println!(
+                    "{:<pkg_width$}  {:<ver_width$}  {}",
+                    dep.name, dep.version, dep.dep_type
+                );
             }
         }
         Err(e) => {
-            println!("{e}");
+            eprintln!("{e}");
             return ExitCode::RUNTIME_ERROR;
         }
     }

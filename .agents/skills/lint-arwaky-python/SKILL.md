@@ -11,7 +11,7 @@ metadata:
   related:
     - cleanup-files-python
     - create-capabilities-python
----
+--------------------------------
 
 # lint-arwaky-python — Complete Command & Argument Reference
 
@@ -19,24 +19,39 @@ Run `lint-arwaky-cli` scanner and MCP server for Python projects. Validates AES 
 
 ---
 
+## Shell Aliases
+
+Shortcut aliases are available for fast terminal access (automatically added to `~/.bashrc` / `~/.zshrc`):
+
+
+| Alias | Target Binary     | Description                               | Example Usage                            |
+| :------ | :------------------ | :------------------------------------------ | :----------------------------------------- |
+| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner          | `lac scan .`, `lac fix`, `lac doctor`    |
+| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard   | `lat`                                    |
+| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Configured in Claude / Cursor / Windsurf |
+
+---
+
 ## 1. Global CLI Options
 
 These options apply globally across all `lint-arwaky-cli` subcommands:
 
-| Option | Long Flag | Description |
-| :--- | :--- | :--- |
-| `-v` | `--verbose` | Enable debug logging and detailed diagnostic traces. |
-| `-q` | `--quiet` | Minimize console output (suppress non-error messages). |
-| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration). |
-| | `--filter <CODE>` | Filter scan results by specific AES rule code (e.g. `AES101`, `AES301`, `AES401`). |
-| `-h` | `--help` | Print help information for the CLI or specific subcommand. |
-| `-V` | `--version` | Print CLI binary version. |
+
+| Option | Long Flag            | Description                                                                       |
+| :------- | :--------------------- | :---------------------------------------------------------------------------------- |
+| `-v`   | `--verbose`          | Enable debug logging and detailed diagnostic traces.                              |
+| `-q`   | `--quiet`            | Minimize console output (suppress non-error messages).                            |
+| `-o`   | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).             |
+|        | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g.`AES101`, `AES301`, `AES401`). |
+| `-h`   | `--help`             | Print help information for the CLI or specific subcommand.                        |
+| `-V`   | `--version`          | Print CLI binary version.                                                         |
 
 ---
 
 ## 2. Complete Commands & Subcommands Reference
 
 ### `scan` / `check`
+
 Scans target Python workspace, discovers modules, and runs all linters.
 
 ```bash
@@ -54,6 +69,7 @@ lint-arwaky-cli scan test-workspaces/modules --format json --output-dir ~/.local
 ```
 
 **Arguments & Flags**:
+
 * `[PATH]`: Target path to scan (defaults to current directory `.`).
 * `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
 * `--member <NAME>`: Target single workspace member by module name.
@@ -63,6 +79,7 @@ lint-arwaky-cli scan test-workspaces/modules --format json --output-dir ~/.local
 ---
 
 ### `fix`
+
 Applies safe automatic fixes to compliance violations across the codebase.
 
 ```bash
@@ -77,6 +94,7 @@ lint-arwaky-cli fix modules/ --dry-run --filter AES101
 ```
 
 **Arguments & Flags**:
+
 * `[PATH]`: Target path to fix (defaults to `.`).
 * `--dry-run`: Perform a dry run showing diffs without modifying files.
 * `--filter <CODE>`: Apply fixes only for a specific AES rule ID.
@@ -84,6 +102,7 @@ lint-arwaky-cli fix modules/ --dry-run --filter AES101
 ---
 
 ### `ci`
+
 Continuous Integration quality gate mode. Evaluates compliance score against a threshold.
 
 ```bash
@@ -95,6 +114,7 @@ lint-arwaky-cli ci modules/ --threshold 80 --format junit
 ```
 
 **Arguments & Flags**:
+
 * `[PATH]`: Target path (defaults to `.`).
 * `--threshold <SCORE>`: Minimum acceptable quality score (0–100, default: 80).
 * `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
@@ -102,6 +122,7 @@ lint-arwaky-cli ci modules/ --threshold 80 --format junit
 ---
 
 ### `quality`, `import`, `naming`, `role`, `orphan`, `external`
+
 Run a single linter independently for targeted analysis.
 
 ```bash
@@ -128,6 +149,7 @@ lint-arwaky-cli quality modules/
 ```
 
 **Arguments & Flags**:
+
 * `[PATH]`: Target path to scan (defaults to `.`).
 * `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
 * `--member <NAME>`: (orphan only) Target specific workspace member.
@@ -135,6 +157,7 @@ lint-arwaky-cli quality modules/
 ---
 
 ### `security` & `dependencies`
+
 Scans for security vulnerabilities and library dependency CVEs.
 
 ```bash
@@ -148,6 +171,7 @@ lint-arwaky-cli dependencies modules/
 ---
 
 ### `watch`
+
 Monitors file system changes and re-runs linting automatically upon file save.
 
 ```bash
@@ -158,6 +182,7 @@ lint-arwaky-cli watch modules/
 ---
 
 ### `install-hook` & `uninstall-hook`
+
 Manages Git pre-commit hook integration.
 
 ```bash
@@ -171,6 +196,7 @@ lint-arwaky-cli uninstall-hook
 ---
 
 ### `init` & `install`
+
 Initializes workspace configuration and installs linter adapter dependencies.
 
 ```bash
@@ -184,6 +210,7 @@ lint-arwaky-cli install
 ---
 
 ### `config-show`, `adapters`, & `mcp-config`
+
 Displays workspace configuration and active integrations.
 
 ```bash
@@ -200,6 +227,7 @@ lint-arwaky-cli mcp-config
 ---
 
 ### `doctor` & `version`
+
 Environment diagnostic tools.
 
 ```bash
@@ -208,6 +236,33 @@ lint-arwaky-cli doctor
 
 # Display binary version information
 lint-arwaky-cli version
+```
+
+---
+
+## MCP Server Tools Reference (`lint-arwaky-mcp`)
+
+`lint-arwaky-mcp` exposes 5 JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
+
+| Tool Name | Description | Arguments / Parameters |
+| :--- | :--- | :--- |
+| `execute_command` | Execute any CLI command action | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, etc.), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`) |
+| `list_commands` | List available CLI commands catalog | `domain` (optional: filter by domain string, e.g. `"setup"`, `"check"`) |
+| `read_skill` | Read `SKILL.md` documentation by section | `section` (optional: header name to extract) |
+| `health_check` | Check MCP server & adapter health | None (0 parameters) |
+| `get_config` | Get active architecture config | `path` (optional project path), `language` (optional: `"rust"`, `"python"`, `"javascript"`) |
+
+### Example MCP JSON-RPC Payload
+
+```json
+// execute_command: run Python scan
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"test-workspaces/modules"}}}}
+
+// health_check: check Python adapters (ruff, mypy, bandit)
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_check","arguments":{}}}
+
+// get_config: retrieve Python architecture configuration
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_config","arguments":{"language":"python"}}}
 ```
 
 ---
@@ -242,29 +297,31 @@ FORBIDDEN:  capabilities_*, agent_* (peer layers)
 
 ### Layer Boundaries (AES404)
 
-| Layer | Can Contain | Cannot Contain |
-| :--- | :--- | :--- |
-| capabilities | Pure computation, validation | I/O, network, database |
-| agent | Orchestration flow | Computation, I/O, business |
+
+| Layer        | Can Contain                  | Cannot Contain             |
+| :------------- | :----------------------------- | :--------------------------- |
+| capabilities | Pure computation, validation | I/O, network, database     |
+| agent        | Orchestration flow           | Computation, I/O, business |
 
 ---
 
 ## 5. Verification Checklist
 
-- [ ] All layer imports follow AES201 rules
-- [ ] All classes inherit appropriate protocol ABCs (AES403)
-- [ ] No mixed responsibilities in layers (AES404)
-- [ ] No magic constants in layers (AES405)
-- [ ] Surface files follow role-based imports (AES406)
+- [ ]  All layer imports follow AES201 rules
+- [ ]  All classes inherit appropriate protocol ABCs (AES403)
+- [ ]  No mixed responsibilities in layers (AES404)
+- [ ]  No magic constants in layers (AES405)
+- [ ]  Surface files follow role-based imports (AES406)
 
 ---
 
 ## 6. Common Issues & Fix Strategies
 
-| Issue | Fix Strategy |
-| :--- | :--- |
-| Cross-layer imports | Use contract layer protocols via DI |
-| Missing protocol inheritance | Create protocol ABC and inherit |
-| Mixed layer responsibilities | Move code to appropriate layer |
-| Magic constants | Extract to taxonomy constants |
-| Surface importing capabilities | Use aggregate contracts instead |
+
+| Issue                          | Fix Strategy                        |
+| :------------------------------- | :------------------------------------ |
+| Cross-layer imports            | Use contract layer protocols via DI |
+| Missing protocol inheritance   | Create protocol ABC and inherit     |
+| Mixed layer responsibilities   | Move code to appropriate layer      |
+| Magic constants                | Extract to taxonomy constants       |
+| Surface importing capabilities | Use aggregate contracts instead     |

@@ -7,6 +7,8 @@ use std::collections::BTreeMap;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::common::taxonomy_common_vo::ColumnNumber;
+use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -17,6 +19,8 @@ use shared::common::taxonomy_severity_vo::Severity;
 pub struct ViolationItem {
     pub code: ErrorCode,
     pub file: FilePath,
+    pub line: LineNumber,
+    pub column: ColumnNumber,
     pub message: LintMessage,
     pub severity: Severity,
 }
@@ -26,6 +30,8 @@ impl ViolationItem {
         Self {
             code: r.code.clone(),
             file: r.file.clone(),
+            line: r.line.clone(),
+            column: r.column.clone(),
             message: r.message.clone(),
             severity: r.severity.clone(),
         }
@@ -35,6 +41,8 @@ impl ViolationItem {
         Some(Self {
             code: ErrorCode::raw(item.get("code")?.as_str()?),
             file: FilePath::new(item.get("file")?.as_str()?.to_string()).ok()?,
+            line: LineNumber::new(item.get("line").and_then(|v| v.as_i64()).unwrap_or(0)),
+            column: ColumnNumber::new(item.get("column").and_then(|v| v.as_i64()).unwrap_or(0)),
             message: LintMessage::new(item.get("message")?.as_str()?),
             severity: parse_severity(
                 item.get("severity")
@@ -131,14 +139,14 @@ fn render_text(
             println!("[{member_name}] — {} violations", results.len());
             println!();
             for r in results {
-                println!(
-                    "  [{}] {}: {}",
-                    r.code.code(),
-                    short_file(&r.file.value),
-                    r.message.value
-                );
-                println!();
+                let loc = match (r.line.value(), r.column.value()) {
+                    (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value, l, c),
+                    (l, _) if l > 0 => format!("{}:{}", r.file.value, l),
+                    _ => r.file.value.clone(),
+                };
+                println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
             }
+            println!();
         } else {
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
@@ -195,6 +203,8 @@ fn render_json(
             serde_json::json!({
                 "code": v.code.code(),
                 "file": v.file.value,
+                "line": v.line.value(),
+                "column": v.column.value(),
                 "message": v.message.value,
                 "severity": format!("{}", v.severity),
                 "member": member,
@@ -229,15 +239,23 @@ fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
                         2 => "warning",
                         _ => "note",
                     };
+                    let mut location = serde_json::json!({
+                        "physicalLocation": {
+                            "artifactLocation": { "uri": v.file.value },
+                        }
+                    });
+                    if v.line.value() > 0 {
+                        let mut region = serde_json::json!({ "startLine": v.line.value() });
+                        if v.column.value() > 0 {
+                            region["startColumn"] = serde_json::json!(v.column.value());
+                        }
+                        location["physicalLocation"]["region"] = region;
+                    }
                     serde_json::json!({
                         "ruleId": v.code.code(),
                         "level": level,
                         "message": { "text": v.message.value },
-                        "locations": [{
-                            "physicalLocation": {
-                                "artifactLocation": { "uri": v.file.value },
-                            }
-                        }],
+                        "locations": [location],
                     })
                 })
                 .collect();
@@ -277,10 +295,15 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
                     .replace('&', "&amp;")
                     .replace('<', "&lt;")
                     .replace('>', "&gt;");
+                let loc = if r.line.value() > 0 {
+                    format!("{}:{}", r.file.value, r.line.value())
+                } else {
+                    r.file.value.clone()
+                };
                 println!(
                     "      <failure message=\"[{}] {}\">{}</failure>",
                     r.code.code(),
-                    short_file(&r.file.value),
+                    loc,
                     escaped
                 );
             }
@@ -292,10 +315,6 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 }
 
 // ─── Private helpers (UI-only) ──────────────────────────────
-
-fn short_file(path: &str) -> &str {
-    path.rsplit('/').next().unwrap_or(path)
-}
 
 fn lang_tag(path: &str) -> &str {
     if path.ends_with(".rs") {
