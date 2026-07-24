@@ -2,6 +2,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
@@ -33,7 +34,7 @@ pub fn handle_scan_external(
     let results = rt.block_on(external_lint.scan_all(&root_fp));
     let violations: Vec<ViolationItem> = results.values.iter().map(ViolationItem::from_lint_result).collect();
     let has_violations = !violations.is_empty();
-    output_violations(&violations, &root_fp.value, format, false);
+    output_violations(&violations, &root_fp.value, format, is_member_path(&root_fp.value));
     if has_violations {
         ExitCode::from(1)
     } else {

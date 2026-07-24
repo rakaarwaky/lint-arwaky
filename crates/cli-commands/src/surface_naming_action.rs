@@ -7,6 +7,7 @@ use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggrega
 
 use crate::surface_common_command;
 use crate::surface_output_component::{output_violations, ViolationItem};
+use shared::cli_commands::utility_path_resolver::is_member_path;
 
 pub fn handle_scan_naming(
     path: Option<FilePath>,
@@ -38,7 +39,7 @@ pub fn handle_scan_naming(
         }
     };
     let violations: Vec<ViolationItem> = results.iter().map(ViolationItem::from_lint_result).collect();
-    output_violations(&violations, &root, format, false);
+    output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
         ExitCode::SUCCESS
     } else {

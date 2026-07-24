@@ -1,6 +1,7 @@
 use crate::surface_common_command;
 use crate::surface_output_component::{output_violations, ViolationItem};
 use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
@@ -121,7 +122,7 @@ pub fn handle_scan_orphan(
         root.clone()
     };
 
-    output_violations(&all_violations, &target, format, is_specific_member);
+    output_violations(&all_violations, &target, format, is_specific_member || is_member_path(&target));
 
     if all_violations.is_empty() {
         ExitCode::SUCCESS
@@ -146,7 +147,7 @@ fn scan_single_root(
         .map(ViolationItem::from_lint_result)
         .collect();
 
-    output_violations(&violations, root, format, false);
+    output_violations(&violations, root, format, is_member_path(root));
 
     if violations.is_empty() {
         ExitCode::SUCCESS

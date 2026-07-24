@@ -66,15 +66,21 @@ fn parse_severity(s: &str) -> Severity {
 }
 
 /// Group violations by workspace member name extracted from file paths.
+/// If `force_member` is Some, all violations are grouped under that name (for member scans).
 pub fn group_by_member<'a>(
     violations: &'a [ViolationItem],
     root: &str,
+    force_member: Option<&str>,
 ) -> BTreeMap<String, Vec<&'a ViolationItem>> {
     let mut grouped: BTreeMap<String, Vec<&ViolationItem>> = BTreeMap::new();
     for v in violations {
-        let member = shared::cli_commands::utility_path_resolver::extract_member_from_path(
-            &v.file.value, root,
-        );
+        let member = if let Some(m) = force_member {
+            m.to_string()
+        } else {
+            shared::cli_commands::utility_path_resolver::extract_member_from_path(
+                &v.file.value, root,
+            )
+        };
         grouped.entry(member).or_default().push(v);
     }
     grouped
@@ -87,7 +93,15 @@ pub fn output_violations(
     format: Format,
     is_specific_member: bool,
 ) {
-    let grouped = group_by_member(violations, target_path);
+    // When scanning a specific member, extract the member name from the path
+    let force_member = if is_specific_member {
+        let p = std::path::Path::new(target_path);
+        p.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+    } else {
+        None
+    };
+    let grouped = group_by_member(violations, target_path, force_member.as_deref());
     match format {
         Format::Text => render_text(&grouped, target_path, is_specific_member),
         Format::Json => render_json(&grouped, violations, target_path),
@@ -150,7 +164,7 @@ fn render_text(
 fn render_json(
     grouped: &BTreeMap<String, Vec<&ViolationItem>>,
     all_violations: &[ViolationItem],
-    target_path: &str,
+    _target_path: &str,
 ) {
     let members: Vec<serde_json::Value> = grouped
         .iter()
@@ -159,13 +173,21 @@ fn render_json(
         })
         .collect();
 
+    // Build reverse lookup: file path → member name from grouped data
+    let mut file_to_member: std::collections::HashMap<String, &str> = std::collections::HashMap::new();
+    for (name, items) in grouped {
+        for v in items {
+            file_to_member.insert(v.file.value.clone(), name.as_str());
+        }
+    }
+
     let results: Vec<serde_json::Value> = all_violations
         .iter()
         .map(|v| {
-            let member =
-                shared::cli_commands::utility_path_resolver::extract_member_from_path(
-                    &v.file.value, target_path,
-                );
+            let member = file_to_member
+                .get(v.file.value.as_str())
+                .copied()
+                .unwrap_or(".");
             serde_json::json!({
                 "code": v.code.code(),
                 "file": v.file.value,
@@ -179,7 +201,7 @@ fn render_json(
     println!(
         "{}",
         serde_json::to_string_pretty(&serde_json::json!({
-            "target": target_path,
+            "target": _target_path,
             "total_violations": all_violations.len(),
             "members": members,
             "results": results,
