@@ -42,7 +42,7 @@ The external-lint crate is an aggregate bridge to external, industry-standard li
 - **Output**: Three booleans: has Rust, has Python, has JS.
 - **Business Rules**:
   - Single file: check extension directly (`.rs`, `.py`, `.js`, `.ts`, `.jsx`, `.tsx`).
-  - Directory: recursively scan, skipping `node_modules/`, `target/`, `.git/`, `.jj/`.
+  - Directory: recursively scan, skipping `node_modules/`, `target/`, `.git/`.
   - Early termination: stop scanning once all three languages are found.
   - Unknown extensions are ignored.
 - **Edge Cases**:

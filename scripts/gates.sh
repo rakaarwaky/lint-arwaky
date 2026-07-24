@@ -105,12 +105,16 @@ PIDS+=($!)
 wait_and_report "${PIDS[@]}"
 echo "Stage 3 duration: $((SECONDS - st3_start))s"
 
-# ─── Stage 4: Tests (cargo nextest if available, fallback to cargo test)
+# ─── Stage 4: Tests ─────────────────────────────────────────
 st4_start=$SECONDS
 echo -e "\n${CYAN}━━━ Stage 4: Tests ━━━${NC}"
+crates="shared-lint-arwaky code-analysis-lint-arwaky import-rules-lint-arwaky naming-rules-lint-arwaky role-rules-lint-arwaky config-system-lint-arwaky auto-fix-lint-arwaky file-watch-lint-arwaky orphan-detector-lint-arwaky external-lint-lint-arwaky maintenance-lint-arwaky git-hooks-lint-arwaky project-setup-lint-arwaky report-formatter-lint-arwaky cli-commands-lint-arwaky mcp-server-lint-arwaky tui-lint-arwaky"
+total_passed=0
+test_failed=0
+
 if cargo nextest --version &> /dev/null; then
     echo "  Using cargo-nextest runner..."
-    if test_out=$(cargo nextest run --workspace --lib --tests -j 4 2>&1); then
+    if test_out=$(cargo nextest run --workspace --lib --tests -j 2 2>&1); then
         echo "$test_out" | tail -n 5
         echo -e "${GREEN}✅ Tests PASSED (nextest, $((SECONDS - st4_start))s)${NC}"
         PASSED=$((PASSED + 1))
@@ -119,21 +123,26 @@ if cargo nextest --version &> /dev/null; then
         echo "$test_out" | tail -n 15 || true
         FAILED=$((FAILED + 1))
     fi
-elif test_out=$(cargo test --workspace --lib --tests --no-fail-fast 2>&1); then
-    passed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
-    failed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$2} END{print sum+0}')
-    echo "  passed: ${passed:-0}, failed: ${failed:-0}"
-    if [ "${failed:-0}" -eq 0 ]; then
+else
+    for crate in $crates; do
+        if test_out=$(cargo test -p "$crate" --lib --tests 2>&1); then
+            passed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
+            total_passed=$((total_passed + passed))
+        else
+            echo -e "${RED}❌ Tests FAILED on $crate${NC}"
+            echo "$test_out" | grep "^error" | head -10 || true
+            test_failed=1
+            break
+        fi
+    done
+
+    if [ "$test_failed" -eq 0 ]; then
+        echo "  passed: ${total_passed}, failed: 0"
         echo -e "${GREEN}✅ Tests PASSED ($((SECONDS - st4_start))s)${NC}"
         PASSED=$((PASSED + 1))
     else
-        echo -e "${RED}❌ Tests FAILED ($((SECONDS - st4_start))s)${NC}"
         FAILED=$((FAILED + 1))
     fi
-else
-    echo -e "${RED}❌ Tests FAILED (compilation/runtime, $((SECONDS - st4_start))s)${NC}"
-    echo "$test_out" | grep "^error" | head -10 || true
-    FAILED=$((FAILED + 1))
 fi
 
 TOTAL_TIME=$((SECONDS - START_TIME))

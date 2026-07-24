@@ -11,8 +11,8 @@
 #   1. Build   (cargo build --bin <target>)
 #   2. Lint    (AES self-check)
 #   3. Verify  (cargo fmt --check + clippy)
-#   4. Status  (jj st)
-#   5. Commit  (jj describe with message)
+#   4. Status  (git status)
+#   5. Commit  (git commit with message)
 #   6. Bump    (optional semver bump)
 #   7. Tag     (optional GitHub tag)
 #   8. Release (optional GitHub Release / crates.io publish)
@@ -24,7 +24,7 @@
 #     --no-lint             Skip self-lint step
 #     --no-fmt              Skip cargo fmt --check
 #     --no-clippy           Skip cargo clippy
-#     --no-commit           Skip jj commit (dry-run mode)
+#     --no-commit           Skip git commit (dry-run mode)
 #     --amend               Amend the last commit instead of a new one
 #     --ci-only             Run CI checks only, skip commit
 #     --fast                Skip slow checks (fmt, clippy)
@@ -271,8 +271,8 @@ if $CI_ONLY; then
   echo ""
   echo "  Project: lint-arwaky"
   echo "  Target:  $TARGET"
-  if command -v jj &>/dev/null; then
-    echo "  Commit:  $(jj log --no-graph -r @ -T 'commit_id.shortest(8)' 2>/dev/null || echo '?')"
+  if command -v git &>/dev/null; then
+    echo "  Commit:  $(git rev-parse --short HEAD 2>/dev/null || echo '?')"
   fi
   echo ""
   echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -283,13 +283,13 @@ fi
 echo ""
 echo -e "${BOLD}━━━ [4/8] Repository Status ━━━${NC}"
 
-if command -v jj &>/dev/null; then
+if command -v git &>/dev/null; then
   if $DRY_RUN; then
-    info "[DRY-RUN] Would show: jj st"
+    info "[DRY-RUN] Would show: git status --short"
   fi
-  jj st 2>/dev/null || warn "jj st failed"
+  git status --short 2>/dev/null || warn "git status failed"
 else
-  warn "jj (Jujutsu) not found — status unavailable"
+  warn "git not found — status unavailable"
 fi
 
 # ── 5. Commit ───────────────────────────────────────────────────────────────────
@@ -300,15 +300,15 @@ if $SKIP_COMMIT; then
   warn "Commit skipped (--no-commit)"
 else
   PENDING=0
-  if command -v jj &>/dev/null; then
-    PENDING=$(jj st 2>/dev/null | grep -c "^M\|^A\|^+\|^-" || true) || true
+  if command -v git &>/dev/null; then
+    PENDING=$(git status --porcelain 2>/dev/null | wc -l)
   fi
 
   if [ "${PENDING:-0}" -eq 0 ]; then
     info "No pending changes to commit."
   else
     info "Pending changes ($PENDING files):"
-    jj st 2>/dev/null || true
+    git status --short 2>/dev/null || true
     echo ""
 
     if [ -z "$COMMIT_MSG" ]; then
@@ -329,7 +329,7 @@ else
     fi
 
     echo ""
-    echo "  jj describe -m \"$COMMIT_MSG\""
+    echo "  git commit -m \"$COMMIT_MSG\""
     [ "$AMEND" = true ] && echo "  (--amend: update last commit)"
 
     if [ "$AUTO" = false ]; then
@@ -338,9 +338,14 @@ else
     fi
 
     if $DRY_RUN; then
-      info "[DRY-RUN] Would run: jj describe -m \"$COMMIT_MSG\""
+      info "[DRY-RUN] Would run: git add -A && git commit -m \"$COMMIT_MSG\""
     else
-      run "jj describe -m '$COMMIT_MSG'"
+      run "git add -A"
+      if [ "$AMEND" = true ]; then
+        run "git commit --amend -m '$COMMIT_MSG'"
+      else
+        run "git commit -m '$COMMIT_MSG'"
+      fi
       pass "Committed: $COMMIT_MSG"
     fi
   fi
@@ -374,14 +379,14 @@ echo -e "${BOLD}━━━ [7/8] Tag ━━━${NC}"
 
 if $SKIP_TAG || [[ -z "${NEW_VER:-}" ]]; then
   warn "Tag skipped (--no-tag or no --bump)"
-elif ! command -v jj &>/dev/null; then
-  warn "jj (Jujutsu) not found — cannot create tag"
+elif ! command -v git &>/dev/null; then
+  warn "git not found — cannot create tag"
 else
   TAG="v$NEW_VER"
   if $DRY_RUN; then
     info "[DRY-RUN] Would create tag: $TAG"
   else
-    run "jj bookmark set '$TAG'"
+    run "git tag -a '$TAG' -m '$TAG'"
     pass "Tag created: $TAG"
   fi
 fi
@@ -487,8 +492,8 @@ echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✅ Release script complete.${NC}"
 echo ""
-if command -v jj &>/dev/null; then
-  echo "  Status: $(jj st 2>/dev/null | head -1 || echo '?')"
+if command -v git &>/dev/null; then
+  echo "  Status: $(git status --short 2>/dev/null | head -1 || echo '?')"
 fi
 echo ""
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
