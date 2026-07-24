@@ -9,6 +9,7 @@ use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
+use shared::common::taxonomy_common_error::ExitCode as DomainExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
 
@@ -21,7 +22,8 @@ fn main() -> ExitCode {
         return surface_check_command::handle_default_check(
             ".",
             container.code_analysis_linter.clone(),
-        );
+        )
+        .to_process_exit_code();
     }
 
     let cli = match <Cli as clap::Parser>::try_parse_from(&raw_args) {
@@ -65,7 +67,7 @@ fn main() -> ExitCode {
     let container = CliContainer::new_default();
     let filter = cli.filter.clone();
 
-    match cli.command {
+    let domain_exit = match cli.command {
         Commands::Scan {
             path,
             member,
