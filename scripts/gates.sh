@@ -9,57 +9,50 @@ NC='\033[0m'
 
 PASSED=0
 FAILED=0
-GATE_RESULTS=""
 
-# Run a gate in background, capture result to a temp file.
-# Usage: gate_bg "name" command...
-gate_bg() {
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "$TMPDIR"' EXIT
+
+# Run a gate in background, print result when complete.
+# Usage: run_gate "name" command...
+run_gate() {
     local name="$1"
     shift
-    local tmpfile
-    tmpfile=$(mktemp)
-    (
-        if "$@" > "$tmpfile" 2>&1; then
-            echo "PASS" > "$tmpfile.result"
-        else
-            echo "FAIL" > "$tmpfile.result"
-        fi
-    ) &
-    GATE_RESULTS="${GATE_RESULTS}${name}|${tmpfile}\n"
+    local out="$TMPDIR/${name// /_}.out"
+    local result="$TMPDIR/${name// /_}.res"
+
+    if "$@" > "$out" 2>&1; then
+        echo "PASS" > "$result"
+    else
+        echo "FAIL" > "$result"
+    fi
 }
 
-# Wait for all background gates and print results.
 wait_and_report() {
-    local total=0
-    local failed=0
+    local pids=("$@")
+    for pid in "${pids[@]}"; do
+        wait "$pid" 2>/dev/null || true
+    done
 
-    while IFS= read -r entry; do
-        local name="${entry%%|*}"
-        local tmpfile="${entry##*|}"
+    for f in "$TMPDIR"/*.res; do
+        [ -f "$f" ] || continue
+        local name
+        name=$(basename "$f" .res)
+        name="${name//_/ }"
+        local out="${f%.res}.out"
+        local status
+        status=$(cat "$f")
 
-        # Wait for background process (we don't track PID, but the file won't exist yet)
-        # Sleep briefly to let bg jobs finish
-        local wait_count=0
-        while [ ! -f "${tmpfile}.result" ] && [ "$wait_count" -lt 120 ]; do
-            sleep 0.1
-            wait_count=$((wait_count + 1))
-        done
-
-        local result
-        result=$(cat "${tmpfile}.result" 2>/dev/null || echo "FAIL")
-        rm -f "$tmpfile" "${tmpfile}.result"
-
-        total=$((total + 1))
-        if [ "$result" = "PASS" ]; then
+        if [ "$status" = "PASS" ]; then
             echo -e "${GREEN}✅ ${name} PASSED${NC}"
             PASSED=$((PASSED + 1))
         else
             echo -e "${RED}❌ ${name} FAILED${NC}"
-            # Show last 20 lines of output on failure
-            tail -20 "$tmpfile" 2>/dev/null || true
+            tail -20 "$out" 2>/dev/null || true
             FAILED=$((FAILED + 1))
         fi
-    done < <(printf '%b' "$GATE_RESULTS")
+    done
+    rm -f "$TMPDIR"/*.res "$TMPDIR"/*.out
 }
 
 echo -e "${YELLOW}Lint Arwaky — Gate Checker${NC}"
@@ -67,9 +60,13 @@ echo "Running all quality gates locally..."
 echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # ─── Phase 1: Fast static checks (parallel) ───────────────
-gate_bg "Rust Format" cargo fmt --all -- --check
-gate_bg "Clippy" cargo clippy --all-targets -- -D warnings
-wait_and_report
+echo -e "\n${CYAN}━━━ Phase 1: Format + Clippy (parallel) ━━━${NC}"
+PIDS=()
+run_gate "Rust Format" cargo fmt --all -- --check &
+PIDS+=($!)
+run_gate "Clippy" cargo clippy --all-targets -- -D warnings &
+PIDS+=($!)
+wait_and_report "${PIDS[@]}"
 
 # ─── Phase 2: CLI build (shared for self-lint + AES codes) ─
 echo -e "\n${CYAN}━━━ Building lint-arwaky-cli ━━━${NC}"
@@ -77,39 +74,40 @@ cargo build --bin lint-arwaky-cli 2>&1
 echo -e "${GREEN}✅ CLI build complete${NC}"
 
 # ─── Phase 3: Lint gates (parallel, reuse binary) ─────────
-gate_bg "AES Self-Lint (check . = 0 violations)" bash -c '
-    output=$(cargo run --bin lint-arwaky-cli -- check . 2>&1)
+echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + AES Codes (parallel) ━━━${NC}"
+PIDS=()
+run_gate "AES Self-Lint (check . = 0 violations)" bash -c '
+    output=$(./target/debug/lint-arwaky-cli check . 2>&1)
     violations=$(echo "$output" | grep "Violations:" | grep -oP "\d+")
     echo "  violations: ${violations:-0}"
     [ "${violations:-0}" = "0" ]
-'
-gate_bg "AES Codes (test-workspaces >= 24)" bash -c '
-    codes=$(cargo run --bin lint-arwaky-cli -- scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+' &
+PIDS+=($!)
+run_gate "AES Codes (test-workspaces >= 24)" bash -c '
+    codes=$(./target/debug/lint-arwaky-cli scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  unique codes: ${codes:-0}"
     [ "${codes:-0}" -ge 24 ]
-'
-wait_and_report
+' &
+PIDS+=($!)
+wait_and_report "${PIDS[@]}"
 
-# ─── Phase 4: Tests (uses cargo test, incremental from clippy build) ─
+# ─── Phase 4: Tests (incremental from clippy build) ────────
 echo -e "\n${CYAN}━━━ Gate: Tests ━━━${NC}"
-test_output=$(cargo test --workspace --lib --tests 2>&1) || {
-    echo -e "${RED}❌ Tests FAILED (compilation/runtime)${NC}"
-    echo "$test_output" | grep "^error" | head -10 || true
-    FAILED=$((FAILED + 1))
-    # Continue to print summary
-    test_output=""
-}
-if [ -n "$test_output" ]; then
-    # Single awk pass instead of grep|sed|awk chain
-    read -r total_passed total_failed <<< "$(echo "$test_output" | awk '/^test result:/{for(i=1;i<=NF;i++){if($i=="ok.")p=$(i+1); if($i=="failed")f=$(i-1)}} END{gsub(/;/,"",p); gsub(/;/,"",f); print p+0, f+0}')"
-    echo "  passed: ${total_passed}, failed: ${total_failed}"
-    if [ "${total_failed}" = "0" ]; then
+if test_output=$(cargo test --workspace --lib --tests --no-fail-fast 2>&1); then
+    passed_count=$(echo "$test_output" | grep "^test result:" | awk '{for(i=1;i<=NF;i++) if($i=="ok;") print $(i-1)}' | awk '{s+=$1} END {print s+0}')
+    failed_count=$(echo "$test_output" | grep "^test result:" | awk '{for(i=1;i<=NF;i++) if($i=="failed;") print $(i-1)}' | awk '{s+=$1} END {print s+0}')
+    echo "  passed: ${passed_count}, failed: ${failed_count}"
+    if [ "${failed_count:-0}" -eq 0 ]; then
         echo -e "${GREEN}✅ Tests PASSED${NC}"
         PASSED=$((PASSED + 1))
     else
         echo -e "${RED}❌ Tests FAILED${NC}"
         FAILED=$((FAILED + 1))
     fi
+else
+    echo -e "${RED}❌ Tests FAILED (compilation/runtime)${NC}"
+    echo "$test_output" | grep "^error" | head -10 || true
+    FAILED=$((FAILED + 1))
 fi
 
 echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
