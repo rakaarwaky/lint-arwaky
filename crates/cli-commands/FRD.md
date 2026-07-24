@@ -6,7 +6,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Functional Requirements
 
-### FR-001: Check Command (Alias of Scan)
+### FR-001: Check/Scan Command (Mutual Aliases)
 
 - **Description**: Run full architecture compliance analysis on the target project or workspace. `check` and `scan` are 1:1 equivalent command aliases.
 - **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`, `git_diff: bool`
@@ -17,20 +17,6 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Results filtered to the target path using canonical path comparison.
   - Supports `--git-diff` for staged-only scanning via the git hooks aggregate.
   - Path validated before scanning — returns exit code 2 if path doesn't exist.
-- **Edge Cases**:
-  - Path doesn't exist → error message + exit code 2.
-  - No violations found → exit code 0.
-  - Pipeline runtime creation fails → exit code 2.
-  - Non-existent path provided → early return with error.
-- **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
-
-### FR-002: Scan Command (Alias of Check)
-
-- **Description**: Multi-workspace discovery scan that auto-detects workspace members and runs analysis on each. `scan` and `check` are 1:1 equivalent command aliases.
-- **Input**: `path: Option<FilePath>`, `filter: Option<String>`, `member: Option<String>`, `format: Format`
-- **Output**: `ExitCode` (0 = clean, 1 = violations, 2 = error)
-- **Business Rules**:
-  - `scan` and `check` are 1:1 equivalent command aliases operating identically across single-project and multi-workspace environments.
   - Auto-discovers workspace members via the config orchestrator aggregate.
   - Each workspace member gets isolated analysis with filtered results.
   - `--member <name>` targets a specific workspace member by directory name.
@@ -38,13 +24,16 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Falls back to single-scan mode if no workspaces discovered.
   - Pre-computes canonical paths once per workspace for efficient filtering.
 - **Edge Cases**:
+  - Path doesn't exist → error message + exit code 2.
+  - No violations found → exit code 0.
+  - Pipeline runtime creation fails → exit code 2.
   - `--member` with non-existent name → error message listing available members.
   - No workspace members discovered → falls back to single-scan.
   - Pipeline fails for a specific workspace → warning logged, continues with others.
   - Empty results across all workspaces → exit code 0.
-- **Error Handling**: Pipeline errors per workspace logged as warnings; global errors return exit code 2.
+- **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned. Pipeline errors per workspace logged as warnings; global errors return exit code 2.
 
-### FR-003: CI Command
+### FR-002: CI Command
 
 - **Description**: CI-optimized analysis with configurable threshold and auto-fail on CRITICAL violations.
 - **Input**: `FilePath`threshold: Threshold`
@@ -60,7 +49,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - No violations → score 100, passes.
 - **Error Handling**: None — pure computation on existing results.
 
-### FR-004: Fix Command
+### FR-003: Fix Command
 
 - **Description**: Apply automatic safe fixes to files that violate rules.
 - **Input**: `path: Option<FilePath>`, `dry_run: bool`
@@ -78,7 +67,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Fix operation itself fails → error propagated.
 - **Error Handling**: Exit code 1 if any violations remain after fix.
 
-### FR-005: Doctor Command
+### FR-004: Doctor Command
 
 - **Description**: Toolchain diagnostics — check availability and version of required tools.
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`
@@ -96,7 +85,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Binary path available → displayed for Rust tools.
 - **Error Handling**: None — diagnostic only, always exit 0.
 
-### FR-006: Security Command
+### FR-005: Security Command
 
 - **Description**: Vulnerability scanning via cargo-audit (Rust) or bandit (Python).
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`, `path: Option<FilePath>`
@@ -112,7 +101,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Vulnerabilities found → exit code 1 with findings listed.
 - **Error Handling**: Tool not found → exit code 3; scan failures → exit code 2.
 
-### FR-007: Dependencies Command
+### FR-006: Dependencies Command
 
 - **Description**: Dependency report from Cargo.lock / pyproject.toml / package.json.
 - **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`, `path: Option<FilePath>`
@@ -128,7 +117,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Invalid dependency file → error propagated.
 - **Error Handling**: `Err` from dependency report → error message + exit code 2.
 
-### FR-008: Init Command
+### FR-007: Init Command
 
 - **Description**: Create default lint-arwaky configuration files and distribute documentation.
 - **Input**: `setup_orchestrator: Arc<dyn SetupManagementAggregate>`
@@ -145,7 +134,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Write failure → error message, `all_ok` set to false.
 - **Error Handling**: Per-file errors logged; overall exit code 1 if any failure.
 
-### FR-009: Install Command
+### FR-008: Install Command
 
 - **Description**: Install adapter dependencies for detected languages.
 - **Input**: `setup_orchestrator: Arc<dyn SetupManagementAggregate>`, `sudo: bool`
@@ -161,7 +150,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Both succeed → exit code 0 with "Run `lint-arwaky doctor` to verify."
 - **Error Handling**: Per-language install status reported; overall exit code 1 if any failure.
 
-### FR-010: MCP Config Command
+### FR-009: MCP Config Command
 
 - **Description**: Print MCP server configuration JSON for a specified client.
 - **Input**: `client: &str` (claude, cursor, windsurf, copilot, hermes, vscode, all)
@@ -177,7 +166,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Unknown client → uses default mcpServers format.
 - **Error Handling**: Binary resolution failure → fallback string; canonicalization failure → error message.
 
-### FR-011: Config Show Command
+### FR-010: Config Show Command
 
 - **Description**: Display active configuration files and their contents with secret redaction.
 - **Input**: the config orchestrator aggregate
@@ -193,7 +182,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Multiple config files → each shown with language prefix.
 - **Error Handling**: Config read errors logged as warnings.
 
-### FR-012: Adapters Command
+### FR-011: Adapters Command
 
 - **Description**: List enabled external lint adapters discovered by the external-lint layer.
 - **Input**: the external lint aggregate
@@ -207,7 +196,7 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Multiple adapters → each listed.
 - **Error Handling**: None.
 
-### FR-013: Git Diff Command
+### FR-012: Git Diff Command
 
 - **Description**: Run AES analysis only on files changed since a specified git base.
 - **Input**: `git_aggregate: Arc<dyn GitHooksAggregate>`, `code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>`, `base: GitBranchName`, `project_path: Option<&str>`, `filter: Option<&str>`
