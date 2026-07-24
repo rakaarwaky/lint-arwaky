@@ -50,7 +50,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let status = cli_commands::surface_check_command::handle_scan_parallel_subprocesses(&path, shared::cli_commands::taxonomy_format_vo::Format::Text).await;
+                let status =
+                    cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
+                        &path,
+                        shared::cli_commands::taxonomy_format_vo::Format::Text,
+                    )
+                    .await;
                 serde_json::json!({
                     "status": if status == std::process::ExitCode::SUCCESS { "success" } else { "failure" },
                     "action": action,
@@ -77,7 +82,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     None => ".".to_string(),
                 };
                 let threshold = arg_threshold.unwrap_or(80);
-                let status = cli_commands::surface_check_command::handle_scan_parallel_subprocesses(&path, shared::cli_commands::taxonomy_format_vo::Format::Text).await;
+                let status =
+                    cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
+                        &path,
+                        shared::cli_commands::taxonomy_format_vo::Format::Text,
+                    )
+                    .await;
                 serde_json::json!({
                     "status": if status == std::process::ExitCode::SUCCESS { "pass" } else { "fail" },
                     "action": "ci",

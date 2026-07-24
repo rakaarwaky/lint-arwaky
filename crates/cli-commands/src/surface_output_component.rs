@@ -78,7 +78,8 @@ pub fn group_by_member<'a>(
             m.to_string()
         } else {
             shared::cli_commands::utility_path_resolver::extract_member_from_path(
-                &v.file.value, root,
+                &v.file.value,
+                root,
             )
         };
         grouped.entry(member).or_default().push(v);
@@ -96,8 +97,7 @@ pub fn output_violations(
     // When scanning a specific member, extract the member name from the path
     let force_member = if is_specific_member {
         let p = std::path::Path::new(target_path);
-        p.file_name()
-            .map(|n| n.to_string_lossy().to_string())
+        p.file_name().map(|n| n.to_string_lossy().to_string())
     } else {
         None
     };
@@ -131,7 +131,12 @@ fn render_text(
             println!("[{member_name}] — {} violations", results.len());
             println!();
             for r in results {
-                println!("  [{}] {}: {}", r.code.code(), short_file(&r.file.value), r.message.value);
+                println!(
+                    "  [{}] {}: {}",
+                    r.code.code(),
+                    short_file(&r.file.value),
+                    r.message.value
+                );
                 println!();
             }
         } else {
@@ -168,13 +173,12 @@ fn render_json(
 ) {
     let members: Vec<serde_json::Value> = grouped
         .iter()
-        .map(|(name, results)| {
-            serde_json::json!({ "member": name, "violations": results.len() })
-        })
+        .map(|(name, results)| serde_json::json!({ "member": name, "violations": results.len() }))
         .collect();
 
     // Build reverse lookup: file path → member name from grouped data
-    let mut file_to_member: std::collections::HashMap<String, &str> = std::collections::HashMap::new();
+    let mut file_to_member: std::collections::HashMap<String, &str> =
+        std::collections::HashMap::new();
     for (name, items) in grouped {
         for v in items {
             file_to_member.insert(v.file.value.clone(), name.as_str());
@@ -261,9 +265,7 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
     println!("<testsuites>");
     for (member_name, results) in grouped {
         let failures = results.len();
-        println!(
-            "  <testsuite name=\"{member_name}\" tests=\"1\" failures=\"{failures}\">"
-        );
+        println!("  <testsuite name=\"{member_name}\" tests=\"1\" failures=\"{failures}\">");
         if results.is_empty() {
             println!("    <testcase name=\"{member_name}\"/>");
         } else {

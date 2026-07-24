@@ -7,8 +7,6 @@ use std::sync::Arc;
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
@@ -18,6 +16,8 @@ use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggr
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
 use cli_commands_lint_arwaky::root_cli_container::CliContainer;

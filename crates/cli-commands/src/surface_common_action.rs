@@ -55,10 +55,18 @@ pub fn current_dir() -> std::path::PathBuf {
 
 pub fn run_ci_analysis(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    import_orchestrator: Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>,
-    naming_orchestrator: Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
-    role_orchestrator: Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
-    orphan_orchestrator: Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
+    import_orchestrator: Arc<
+        dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate,
+    >,
+    naming_orchestrator: Arc<
+        dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate,
+    >,
+    role_orchestrator: Arc<
+        dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate,
+    >,
+    orphan_orchestrator: Arc<
+        dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
+    >,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {

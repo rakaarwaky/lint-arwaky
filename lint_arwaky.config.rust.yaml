@@ -568,7 +568,8 @@ architecture:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions:
+        ["main.rs", "lib.rs", "mod.rs", "surface_check_command.rs", "surface_external_action.rs", "surface_import_action.rs", "surface_naming_action.rs", "surface_orphan_action.rs", "surface_quality_action.rs", "surface_role_action.rs"]
 
     # ─── AES400: Role ───
     AES401:

@@ -38,7 +38,10 @@ pub fn handle_scan_import(
             return ExitCode::from(2);
         }
     };
-    let violations: Vec<ViolationItem> = results.iter().map(ViolationItem::from_lint_result).collect();
+    let violations: Vec<ViolationItem> = results
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect();
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
         ExitCode::SUCCESS

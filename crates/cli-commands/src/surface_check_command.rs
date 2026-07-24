@@ -5,9 +5,9 @@ use std::sync::Arc;
 use tokio::process::Command;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
 
 use crate::surface_output_component::{output_violations, ViolationItem};
 
@@ -52,7 +52,8 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member = opts.member.is_some() || shared::cli_commands::utility_path_resolver::is_member_path(&root);
+    let is_specific_member =
+        opts.member.is_some() || shared::cli_commands::utility_path_resolver::is_member_path(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
@@ -136,9 +137,16 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
 
     let mut all: Vec<ViolationItem> = Vec::new();
     let target_canonical = std::fs::canonicalize(path).ok();
-    for out in [res_quality, res_role, res_import, res_naming, res_orphan, res_external]
-        .into_iter()
-        .flatten()
+    for out in [
+        res_quality,
+        res_role,
+        res_import,
+        res_naming,
+        res_orphan,
+        res_external,
+    ]
+    .into_iter()
+    .flatten()
     {
         let stdout = String::from_utf8_lossy(&out.stdout);
         if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
@@ -194,5 +202,8 @@ pub fn handle_default_check(
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };
-    rt.block_on(handle_scan_parallel_subprocesses(_project_root, Format::Text))
+    rt.block_on(handle_scan_parallel_subprocesses(
+        _project_root,
+        Format::Text,
+    ))
 }

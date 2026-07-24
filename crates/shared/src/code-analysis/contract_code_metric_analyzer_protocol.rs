@@ -4,8 +4,11 @@ use crate::common::taxonomy_path_vo::DirectoryPath;
 
 /// Protocol for analysing source-code metrics such as duplication.
 ///
-/// The single method scans a directory for duplicated blocks and returns
-/// the resulting violations so they can be reported in the final lint output.
+/// Scans a directory for duplicated blocks and returns
+/// the resulting (file_path, violation) tuples.
 pub trait ICodeMetricAnalyzerProtocol: Send + Sync {
-    fn handle_duplicates(&self, path: Option<DirectoryPath>) -> Vec<AesCodeAnalysisViolation>;
+    fn handle_duplicates(
+        &self,
+        path: Option<DirectoryPath>,
+    ) -> Vec<(String, AesCodeAnalysisViolation)>;
 }

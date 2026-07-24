@@ -122,7 +122,12 @@ pub fn handle_scan_orphan(
         root.clone()
     };
 
-    output_violations(&all_violations, &target, format, is_specific_member || is_member_path(&target));
+    output_violations(
+        &all_violations,
+        &target,
+        format,
+        is_specific_member || is_member_path(&target),
+    );
 
     if all_violations.is_empty() {
         ExitCode::SUCCESS

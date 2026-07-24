@@ -55,7 +55,10 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
             }
             // If the first component is a skip dir, go one level deeper
             if skip_dirs.contains(&member) {
-                let deeper = rest.trim_start_matches('/').trim_start_matches(member).trim_start_matches('/');
+                let deeper = rest
+                    .trim_start_matches('/')
+                    .trim_start_matches(member)
+                    .trim_start_matches('/');
                 if let Some(real_member) = deeper.split('/').next() {
                     if !real_member.is_empty() && !skip_dirs.contains(&real_member) {
                         return real_member.to_string();

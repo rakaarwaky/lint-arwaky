@@ -32,9 +32,18 @@ pub fn handle_scan_external(
         Err(_) => return ExitCode::from(2),
     };
     let results = rt.block_on(external_lint.scan_all(&root_fp));
-    let violations: Vec<ViolationItem> = results.values.iter().map(ViolationItem::from_lint_result).collect();
+    let violations: Vec<ViolationItem> = results
+        .values
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect();
     let has_violations = !violations.is_empty();
-    output_violations(&violations, &root_fp.value, format, is_member_path(&root_fp.value));
+    output_violations(
+        &violations,
+        &root_fp.value,
+        format,
+        is_member_path(&root_fp.value),
+    );
     if has_violations {
         ExitCode::from(1)
     } else {

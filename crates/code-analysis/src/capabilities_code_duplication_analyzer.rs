@@ -31,7 +31,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,
         path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
-    ) -> Vec<AesCodeAnalysisViolation> {
+    ) -> Vec<(String, AesCodeAnalysisViolation)> {
         let root = match &path {
             Some(p) => p.value.clone(),
             None => ".".to_string(),
@@ -74,9 +74,6 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
         );
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
         self.check_file_similarity(&file_strs, min_lines, threshold_pct)
-            .into_iter()
-            .map(|(_, v)| v)
-            .collect()
     }
 }
 
