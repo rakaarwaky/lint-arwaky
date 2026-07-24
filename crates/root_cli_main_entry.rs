@@ -130,7 +130,7 @@ fn main() -> ExitCode {
                 )
             }
         }
-        Commands::Quality { path, format } => {
+        Commands::ScanQuality { path, format } => {
             cli_commands::surface_quality_action::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
@@ -138,25 +138,25 @@ fn main() -> ExitCode {
                 container.report_formatter.clone(),
             )
         }
-        Commands::Import { path, format } => cli_commands::surface_import_action::handle_scan_import(
+        Commands::ScanImport { path, format } => cli_commands::surface_import_action::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::Naming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
+        Commands::ScanNaming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::Role { path, format } => cli_commands::surface_role_action::handle_scan_role(
+        Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::External { path, format } => {
+        Commands::ScanExternal { path, format } => {
             cli_commands::surface_external_action::handle_scan_external(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,

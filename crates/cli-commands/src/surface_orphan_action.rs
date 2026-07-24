@@ -1,4 +1,4 @@
-use crate::surface_common_command;
+use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
@@ -34,7 +34,7 @@ pub fn handle_scan_orphan(
         }
     };
 
-    let rt = match surface_common_command::create_current_thread_runtime() {
+    let rt = match surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };
@@ -137,7 +137,7 @@ fn scan_single_root(
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     format: Format,
 ) -> ExitCode {
-    let scan_root = crate::surface_common_command::resolve_file_path(root);
+    let scan_root = crate::surface_common_action::resolve_file_path(root);
     let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let (_, results) = orphan_orchestrator.scan_orphans(&scan_root, ignored.values());

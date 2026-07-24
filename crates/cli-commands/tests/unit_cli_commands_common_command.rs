@@ -1,6 +1,6 @@
-//! Unit tests for surface_common_command — runtime factories, path helpers.
+//! Unit tests for surface_common_action — runtime factories, path helpers.
 
-use cli_commands_lint_arwaky::surface_common_command::{
+use cli_commands_lint_arwaky::surface_common_action::{
     canonicalize_path, create_current_thread_runtime, create_runtime, current_dir,
     resolve_file_path,
 };
