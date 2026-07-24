@@ -1,5 +1,6 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict)
 use async_trait::async_trait;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -35,14 +36,21 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
         results: &mut LintResultList,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
-        for f in &files.values {
-            let f_str = f.to_string();
-            let filename = f.rsplit('/').next().unwrap_or(&f_str);
-            let layer = self._detect_layer(&f_str, &layer_keys);
-            let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
-            let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
-            self._check_domain_suffixes(&f_str, filename, def, &layer_name, &mut results.values);
-        }
+
+        let violations: Vec<LintResult> = files
+            .values
+            .par_iter()
+            .filter_map(|f| {
+                let f_str = f.to_string();
+                let filename = f.rsplit('/').next().unwrap_or(&f_str);
+                let layer = self._detect_layer(&f_str, &layer_keys);
+                let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
+                let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+                self._check_domain_suffixes(&f_str, filename, def, &layer_name)
+            })
+            .collect();
+
+        results.values.extend(violations);
     }
 }
 
@@ -72,26 +80,18 @@ impl SuffixPrefixChecker {
         filename: &str,
         definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
         _layer_name: &Option<LayerNameVO>,
-        violations: &mut Vec<LintResult>,
-    ) {
+    ) -> Option<LintResult> {
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
-            return;
+            return None;
         }
 
-        let def = match definition {
-            Some(d) => d,
-            None => return,
-        };
-
+        let def = definition?;
         if def.exceptions.values.contains(&filename.to_string()) {
-            return;
+            return None;
         }
 
-        let stem = match get_stem(filename) {
-            Some(s) => s,
-            None => return,
-        };
+        let stem = get_stem(filename)?;
 
         let suffix = get_suffix(stem);
 
@@ -101,7 +101,7 @@ impl SuffixPrefixChecker {
                     .as_ref()
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
-                violations.push(string_filename_result(
+                return Some(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixForbidden {
@@ -117,7 +117,6 @@ impl SuffixPrefixChecker {
                     .to_string(),
                     Severity::HIGH,
                 ));
-                return;
             }
         }
 
@@ -133,7 +132,7 @@ impl SuffixPrefixChecker {
                     .map(|l| l.value().to_string())
                     .unwrap_or_else(|| "unknown".to_string());
                 let suffix_display = suffix.unwrap_or("(none)");
-                violations.push(string_filename_result(
+                return Some(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::SuffixMismatch {
@@ -156,5 +155,7 @@ impl SuffixPrefixChecker {
                 ));
             }
         }
+
+        None
     }
 }

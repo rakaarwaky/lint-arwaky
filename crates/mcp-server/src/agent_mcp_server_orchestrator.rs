@@ -284,7 +284,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         }
 
         if config_files.is_empty() {
-            warnings.push("No config files found. Run `lint-arwaky init` to create one.".to_string());
+            warnings
+                .push("No config files found. Run `lint-arwaky init` to create one.".to_string());
         }
 
         let result = serde_json::json!({
