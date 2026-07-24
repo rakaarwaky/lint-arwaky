@@ -7,7 +7,24 @@
 
 set -euo pipefail
 
-REPO_ROOT="/home/raka/mcp-arwaky/lint-arwaky"
+usage() {
+    echo "Usage: sudo bash scripts/security.sh [command]"
+    echo ""
+    echo "Commands:"
+    echo "  install   Install and start the security monitor (default)"
+    echo "  status    Show service status"
+    echo "  logs      Follow live logs"
+    echo "  stop      Stop the service"
+    echo "  start     Start the service"
+    echo "  -h, --help Show this help"
+    exit 0
+}
+
+case "${1:-}" in
+    -h|--help) usage ;;
+esac
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SERVICE_NAME="lint-arwaky-security"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 CHECKSUM_FILE="$REPO_ROOT/.security-checksums"

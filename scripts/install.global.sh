@@ -2,8 +2,8 @@
 # install.global.sh — release build + global system-wide installation
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
+
 CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
 RELEASE_DIR="$PROJECT_ROOT/target/release"
 DIST_DIR="$PROJECT_ROOT/dist"
@@ -17,6 +17,26 @@ CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-/etc/lint-arwaky}"
 REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-/var/lib/lint-arwaky/reports}"
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
+
+usage() {
+    echo "Usage: bash scripts/install.global.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help"
+    echo ""
+    echo "Env vars:"
+    echo "  LINT_ARWAKY_INSTALL_BIN   Install binaries to (default: /usr/local/bin)"
+    echo "  LINT_ARWAKY_CONFIG_DIR    Config dir (default: /etc/lint-arwaky)"
+    echo "  LINT_ARWAKY_REPORT_DIR    Reports dir (default: /var/lib/lint-arwaky/reports)"
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage ;;
+        *) die "Unknown option: $1 (use -h for help)" ;;
+    esac
+done
 
 # 1. Cleanup & Install layout before build
 if [ -d "$CONFIG_DIR" ]; then
@@ -32,60 +52,13 @@ mkdir -p "$CONFIG_DIR/rules" "$REPORT_DIR" "$DIST_DIR" "$INSTALL_BIN"
 
 # 2. Install external dependencies (skip if already present)
 echo "==> Checking external dependencies..."
-
-detect_pkg_mgr() {
-    if command -v apt-get &>/dev/null; then
-        PKG_MGR="apt"
-    elif command -v dnf &>/dev/null; then
-        PKG_MGR="dnf"
-    elif command -v brew &>/dev/null; then
-        PKG_MGR="brew"
-    elif command -v pacman &>/dev/null; then
-        PKG_MGR="pacman"
-    else
-        PKG_MGR="unknown"
-    fi
-}
 detect_pkg_mgr
-
-npm_install() {
-    case "$PKG_MGR" in
-        apt)    curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs ;;
-        dnf)    curl -fsSL https://rpm.nodesource.com/setup_lts.x | bash - && dnf install -y nodejs ;;
-        brew)   brew install node ;;
-        pacman) pacman -S --noconfirm nodejs npm ;;
-        *)      echo "  [warn] Unknown package manager. Install node/npm manually." ;;
-    esac
-}
-
-pip_install() {
-    local pkg="$1"
-    if command -v pip3 &>/dev/null; then
-        pip3 install "$pkg"
-    elif command -v pip &>/dev/null; then
-        pip install "$pkg"
-    else
-        echo "  [warn] pip not found. Install $pkg manually."
-    fi
-}
-
-install_if_missing() {
-    local cmd="$1"
-    local pkg="$2"
-    local method="$3"
-    if command -v "$cmd" &>/dev/null; then
-        echo "  [skip] $cmd already installed"
-    else
-        echo "  [install] $pkg..."
-        eval "$method"
-    fi
-}
 
 # Node/npm first, then eslint/tsc depend on it
 install_if_missing cargo "Rust/Cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . \"\$HOME/.cargo/env\""
 install_if_missing npm "npm" "npm_install"
-install_if_missing eslint "eslint" "npm install -g eslint"
-install_if_missing tsc "typescript" "npm install -g typescript"
+install_if_missing eslint "eslint" "npm_install_global eslint"
+install_if_missing tsc "typescript" "npm_install_global typescript"
 install_if_missing mypy "mypy" "pip_install mypy"
 install_if_missing ruff "ruff" "pip_install ruff"
 install_if_missing bandit "bandit" "pip_install bandit"
@@ -106,64 +79,10 @@ for BIN in "${BINARIES[@]}"; do
 done
 
 # 5. Install docs + SKILL.md to global config
-Docs=(
-    "SKILL.md"
-    "ARCHITECTURE.md"
-    "MIGRATION_RUST.md"
-    "MIGRATION_PYTHON.md"
-    "MIGRATION_TYPESCRIPT.md"
-)
-for DOC in "${Docs[@]}"; do
-    SRC="$PROJECT_ROOT/$DOC"
-    if [ -f "$SRC" ]; then
-        cp "$SRC" "$CONFIG_DIR/$DOC"
-        echo "  $DOC -> $CONFIG_DIR/$DOC"
-    fi
-done
+copy_docs_to_config "$CONFIG_DIR"
 
-# RULES_AES.md: source in .agents/rules/, target at global config root
-RULES_SRC="$PROJECT_ROOT/.agents/rules/RULES_AES.md"
-if [ -f "$RULES_SRC" ]; then
-    cp "$RULES_SRC" "$CONFIG_DIR/RULES_AES.md"
-    echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
-fi
+# 6. Copy .agents/ to global config
+copy_agents_to_config "$CONFIG_DIR"
 
-# 6. Copy .agents/skills/, .agents/rules/, and .agents/prompts/ to target's .agents/ folder
-AGENTS_SRC="$PROJECT_ROOT/.agents"
-AGENTS_DST="$CONFIG_DIR/.agents"
-if [ -d "$AGENTS_SRC" ]; then
-    mkdir -p "$AGENTS_DST/skills" "$AGENTS_DST/rules" "$AGENTS_DST/prompts"
-
-    # Copy skills (each subdirectory = one skill)
-    for SKILL_DIR in "$AGENTS_SRC"/skills/*; do
-        if [ -d "$SKILL_DIR" ]; then
-            SKILL_NAME=$(basename "$SKILL_DIR")
-            cp -r "$SKILL_DIR" "$AGENTS_DST/skills/$SKILL_NAME"
-            echo "  .agents/skills/$SKILL_NAME -> $CONFIG_DIR/.agents/skills/$SKILL_NAME"
-        fi
-    done
-
-    # Copy rules
-    for RULE_FILE in "$AGENTS_SRC"/rules/*; do
-        if [ -f "$RULE_FILE" ]; then
-            RULE_NAME=$(basename "$RULE_FILE")
-            cp "$RULE_FILE" "$AGENTS_DST/rules/$RULE_NAME"
-            echo "  .agents/rules/$RULE_NAME -> $CONFIG_DIR/.agents/rules/$RULE_NAME"
-        fi
-    done
-
-    # Copy prompts
-    for PROMPT_FILE in "$AGENTS_SRC"/prompts/*; do
-        if [ -f "$PROMPT_FILE" ]; then
-            PROMPT_NAME=$(basename "$PROMPT_FILE")
-            cp "$PROMPT_FILE" "$AGENTS_DST/prompts/$PROMPT_NAME"
-            echo "  .agents/prompts/$PROMPT_NAME -> $CONFIG_DIR/.agents/prompts/$PROMPT_NAME"
-        fi
-    done
-fi
-
-CURRENT_VERSION=$(cargo metadata --no-deps --format-version 1 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1 || true)
-if [ -z "$CURRENT_VERSION" ]; then
-    CURRENT_VERSION=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "$CARGO_TOML" | head -1)
-fi
+CURRENT_VERSION=$(get_project_version)
 echo "Done (Global): $CURRENT_VERSION, config=$CONFIG_DIR, reports=$REPORT_DIR"

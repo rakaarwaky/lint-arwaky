@@ -4,6 +4,21 @@
 # ==============================================================================
 set -euo pipefail
 
+usage() {
+    echo "Usage: bash scripts/sync.sh [options]"
+    echo ""
+    echo "Synchronizes local main and develop branches with origin."
+    echo "WARNING: This resets local main to origin/main (destructive)."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help"
+    exit 0
+}
+
+case "${1:-}" in
+    -h|--help) usage ;;
+esac
+
 # Ensure we run from repository root
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
