@@ -565,6 +565,7 @@ architecture:
 
     AES305:
       enabled: true
+      duplication_threshold: 10.0
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surfaces"]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]

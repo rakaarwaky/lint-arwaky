@@ -134,8 +134,7 @@ fn main() -> ExitCode {
             cli_commands::surface_quality_action::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
-                container.code_analysis_linter.clone(),
-                container.report_formatter.clone(),
+                container.multi_project_orchestrator.clone(),
             )
         }
         Commands::ScanImport { path, format } => cli_commands::surface_import_action::handle_scan_import(
