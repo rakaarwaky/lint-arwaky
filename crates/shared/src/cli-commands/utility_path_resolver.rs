@@ -43,11 +43,24 @@ fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
 pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
     let normalized_root = root.trim_end_matches('/');
     let normalized_path = file_path.trim_start_matches("./");
+
+    // Skip common source directory names — they are not workspace members
+    let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
+
     if let Some(rest) = normalized_path.strip_prefix(normalized_root) {
         let rest = rest.trim_start_matches('/');
         if let Some(member) = rest.split('/').next() {
-            if !member.is_empty() {
+            if !member.is_empty() && !skip_dirs.contains(&member) {
                 return member.to_string();
+            }
+            // If the first component is a skip dir, go one level deeper
+            if skip_dirs.contains(&member) {
+                let deeper = rest.trim_start_matches('/').trim_start_matches(member).trim_start_matches('/');
+                if let Some(real_member) = deeper.split('/').next() {
+                    if !real_member.is_empty() && !skip_dirs.contains(&real_member) {
+                        return real_member.to_string();
+                    }
+                }
             }
         }
     }
@@ -55,11 +68,29 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
         if let Some(idx) = normalized_path.find(marker) {
             let after = &normalized_path[idx + marker.len()..].trim_start_matches('/');
             if let Some(member) = after.split('/').next() {
-                if !member.is_empty() {
+                if !member.is_empty() && !skip_dirs.contains(&member) {
                     return member.to_string();
                 }
             }
         }
     }
     ".".to_string()
+}
+
+/// Detect if a path is a member directory (not a workspace root).
+/// Returns true only if the path itself has a Cargo.toml without [workspace],
+/// meaning it's a single crate member, not a multi-member workspace or a directory container.
+pub fn is_member_path(path: &str) -> bool {
+    let p = std::path::Path::new(path);
+
+    // If path itself has Cargo.toml without [workspace], it's a member crate
+    let cargo_toml = p.join("Cargo.toml");
+    if cargo_toml.exists() {
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+            return !content.contains("[workspace]");
+        }
+        return true;
+    }
+
+    false
 }

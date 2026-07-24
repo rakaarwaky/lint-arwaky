@@ -52,7 +52,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member = opts.member.is_some() || is_member_path(&root);
+    let is_specific_member = opts.member.is_some() || shared::cli_commands::utility_path_resolver::is_member_path(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
@@ -135,6 +135,7 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         tokio::join!(p_quality, p_role, p_import, p_naming, p_orphan, p_external);
 
     let mut all: Vec<ViolationItem> = Vec::new();
+    let target_canonical = std::fs::canonicalize(path).ok();
     for res in [res_quality, res_role, res_import, res_naming, res_orphan, res_external] {
         if let Ok(out) = res {
             let stdout = String::from_utf8_lossy(&out.stdout);
@@ -155,13 +156,21 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
                         }
                     }
                 }
-                // If neither matches, skip (e.g. empty object, text output disguised as JSON)
-            } else {
-                // JSON parse failed — likely text output (orphan may output text even with --format json)
-                // Skip silently; individual subprocess can be run directly for full results
             }
         }
     }
+
+    // Filter: only keep violations whose file path is within the target directory
+    if let Some(canonical_target) = &target_canonical {
+        all.retain(|v| {
+            let file_path = std::path::Path::new(&v.file.value);
+            std::fs::canonicalize(file_path)
+                .or_else(|_| std::env::current_dir().map(|cwd| cwd.join(file_path)))
+                .map(|canonical_file| canonical_file.starts_with(canonical_target))
+                .unwrap_or(false)
+        });
+    }
+
     all
 }
 
@@ -188,36 +197,4 @@ pub fn handle_default_check(
         Err(_) => return ExitCode::from(2),
     };
     rt.block_on(handle_scan_parallel_subprocesses(_project_root, Format::Text))
-}
-
-/// Detect if a path is a member directory (not a workspace root).
-/// Returns true if the path looks like a single crate member, not a multi-member workspace.
-fn is_member_path(path: &str) -> bool {
-    let p = std::path::Path::new(path);
-
-    // If path itself has Cargo.toml without [workspace], it's a member crate
-    let cargo_toml = p.join("Cargo.toml");
-    if cargo_toml.exists() {
-        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-            return !content.contains("[workspace]");
-        }
-        return true;
-    }
-
-    // If parent has Cargo.toml with [workspace], this is a sub-directory member
-    if let Some(parent) = p.parent() {
-        let parent_cargo = parent.join("Cargo.toml");
-        if parent_cargo.exists() {
-            if let Ok(content) = std::fs::read_to_string(&parent_cargo) {
-                return content.contains("[workspace]");
-            }
-        }
-    }
-
-    // If it's a src/ directory or contains .rs/.py/.ts files, treat as member
-    if p.file_name().map(|n| n == "src").unwrap_or(false) {
-        return true;
-    }
-
-    false
 }

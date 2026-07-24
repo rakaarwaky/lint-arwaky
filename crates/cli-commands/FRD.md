@@ -227,45 +227,26 @@ The cli-commands crate provides the unified command-line interface that drives t
   - User presses Ctrl+C → prints "Stopping watcher...", graceful shutdown.
 - **Error Handler**: Signal handler registration failure → exit code 2.
 
-### FR-015: Analysis Pipeline Orchestration
-
-- **Description**: Coordinate all 6 linter groups to produce a unified ScanReport.
-- **Input**: `ScanRequest` (target path, mode, filter, member, format)
-- **Output**: `Result<ScanReport, PipelineError>`
-- **Business Rules**:
-  - Runs linter groups in fixed order: (1) Code analysis, (2-5) Naming, Import, External, Role concurrently, (6) Orphan detection.
-  - Each linter group produces lint results merged into single report.
-  - Pipeline diagnostics track per-group violation counts and failures.
-  - Audit failures (naming, import) reported as warnings, not fatal.
-  - Orphan detection uses workspace-wide import graph for reachability analysis.
-  - Multi-workspace mode: discovers members, runs per-member, aggregates results with path filtering.
-  - Pre-computes canonical paths once per workspace for efficient filtering.
-- **Edge Cases**:
-  - Naming audit fails → warning diagnostic, continues with other groups.
-  - Import audit fails → warning diagnostic, continues.
-  - No workspace members → falls back to single-scan mode.
-  - Invalid target path → pipeline error with invalid path variant.
-- **Error Handling**: Pipeline error variants include invalid path and linter-specific errors propagated.
 
 ## API Contract
 
 
-| Operation    | Input                                             | Output    | Description                             |
-| -------------- | --------------------------------------------------- | ----------- | ----------------------------------------- |
-| Check        | check options                                     | Exit code | Analysis on project (1:1 equivalent alias of Scan) |
+| Operation    | Input                                             | Output    | Description                                              |
+| -------------- | --------------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| Check        | check options                                     | Exit code | Analysis on project (1:1 equivalent alias of Scan)       |
 | Scan         | scan options                                      | Exit code | Multi-workspace analysis (1:1 equivalent alias of Check) |
-| CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison            |
-| Fix          | path, dry-run flag, linter, factory               | Exit code | Apply automatic fixes                   |
-| Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                   |
-| Security     | maintenance aggregate, path                       | Exit code | Vulnerability scan                      |
-| Dependencies | maintenance aggregate, path                       | Exit code | Dependency report                       |
-| Init         | setup aggregate                                   | Exit code | Create config files                     |
-| Install      | setup aggregate, sudo flag                        | Exit code | Install adapter dependencies            |
-| MCP Config   | client name                                       | Exit code | Print MCP client config JSON            |
-| Config Show  | config orchestrator aggregate                     | Exit code | Display active config files             |
-| Adapters     | external lint aggregate                           | Exit code | List enabled adapters                   |
-| Git Diff     | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files               |
-| Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint               |
+| CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison                             |
+| Fix          | path, dry-run flag, linter, factory               | Exit code | Apply automatic fixes                                    |
+| Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                                    |
+| Security     | maintenance aggregate, path                       | Exit code | Vulnerability scan                                       |
+| Dependencies | maintenance aggregate, path                       | Exit code | Dependency report                                        |
+| Init         | setup aggregate                                   | Exit code | Create config files                                      |
+| Install      | setup aggregate, sudo flag                        | Exit code | Install adapter dependencies                             |
+| MCP Config   | client name                                       | Exit code | Print MCP client config JSON                             |
+| Config Show  | config orchestrator aggregate                     | Exit code | Display active config files                              |
+| Adapters     | external lint aggregate                           | Exit code | List enabled adapters                                    |
+| Git Diff     | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files                                |
+| Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint                                |
 
 ## Integration Points
 
