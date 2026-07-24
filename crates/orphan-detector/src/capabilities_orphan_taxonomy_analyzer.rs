@@ -7,6 +7,8 @@ use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::taxonomy_definition_vo::LayerDefinition;
+use std::collections::{HashMap, HashSet};
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -123,9 +125,8 @@ impl TaxonomyOrphanAnalyzer {
         Self {}
     }
 
-    /// Fallback: check if any source file in the same crate imports this module via
-    /// `crate::` path, relative import, or direct reference.
-    /// The graph resolver doesn't always track same-crate imports (especially TS/JS).
+    /// Cached: check if any source file in the same crate imports this module.
+    /// Uses a global cache to avoid re-scanning files for each taxonomy file.
     fn has_crate_self_import(file_path: &str) -> bool {
         let stem = std::path::Path::new(file_path)
             .file_stem()
@@ -135,17 +136,15 @@ impl TaxonomyOrphanAnalyzer {
             return false;
         }
 
-        // Find the crate's src/ directory by walking up from the file
+        // Find the crate's src/ directory
         let file_path_obj = std::path::Path::new(file_path);
         let src_dir = if let Some(parent) = file_path_obj.parent() {
-            // Walk up to find src/ directory
             let mut current = parent.to_path_buf();
             loop {
                 if current.ends_with("src") {
                     break;
                 }
                 if !current.pop() {
-                    // Reached root without finding src/
                     return false;
                 }
             }
@@ -154,27 +153,42 @@ impl TaxonomyOrphanAnalyzer {
             return false;
         };
 
-        // Scan all source files (.rs, .py, .ts, .js) in the crate's src/ directory
+        // Use a static cache: maps (src_dir, stem) -> has_import
+        static CACHE: OnceLock<std::sync::Mutex<HashMap<(String, String), bool>>> =
+            OnceLock::new();
+        let cache = CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
+        let key = (src_dir.to_string_lossy().to_string(), stem.to_string());
+
+        if let Ok(guard) = cache.lock() {
+            if let Some(&result) = guard.get(&key) {
+                return result;
+            }
+        }
+
+        // Cache miss: scan files and build a set of all content
         let all_files =
             shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&src_dir);
-        for f in all_files {
+        let mut importers: HashSet<String> = HashSet::new();
+        for f in &all_files {
             if f == file_path {
                 continue;
             }
-            let path = std::path::PathBuf::from(&f);
-            // Support Rust, Python, TypeScript, and JavaScript files
+            let path = std::path::PathBuf::from(f);
             if path.extension().is_some_and(|e| {
                 let ext = e.to_str().unwrap_or("");
                 matches!(ext, "rs" | "py" | "ts" | "js")
             }) {
-                let content = shared::orphan_detector::utility_orphan_io::read_file_safe(&f);
-                // Check for any import pattern containing the stem
-                // This handles: crate::stem, common::stem, module::stem, etc.
+                let content = shared::orphan_detector::utility_orphan_io::read_file_safe(f);
                 if content.contains(stem) {
-                    return true;
+                    importers.insert(f.clone());
                 }
             }
         }
-        false
+
+        let result = !importers.is_empty();
+        if let Ok(mut guard) = cache.lock() {
+            guard.insert(key, result);
+        }
+        result
     }
 }

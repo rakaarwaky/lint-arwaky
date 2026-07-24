@@ -195,12 +195,12 @@ impl OrphanGraphResolver {
         // Expand files to include all workspace source files for cross-crate import resolution
         // This ensures that when scanning a subfolder, imports from other crates are visible
         let mut all_workspace_files: Vec<String> = files.to_vec();
-        let mut seen: HashSet<&String> = files.iter().collect();
+        let mut seen: HashSet<String> = files.iter().cloned().collect();
         for src_dir in crate_src_dirs.values() {
             let workspace_files =
                 shared::orphan_detector::utility_orphan_io::scan_directory_recursive(src_dir);
             for f in workspace_files {
-                if seen.insert(&f) {
+                if seen.insert(f.clone()) {
                     all_workspace_files.push(f);
                 }
             }

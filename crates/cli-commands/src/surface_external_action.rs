@@ -1,4 +1,4 @@
-use std::process::ExitCode;
+use shared::common::taxonomy_common_error::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
