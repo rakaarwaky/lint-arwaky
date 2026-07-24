@@ -229,6 +229,26 @@ pub use super::capabilities_real_impl::MyTrait;
 | Items with `#[allow(dead_code)]` | Developer explicitly marked as intentional — investigate WHY |
 | Taxonomy / utility files referenced by any layer | Cross-cutting concerns |
 
+### AES Layer-Specific Orphan Detection (AES501–AES506)
+
+After generic orphan detection, run layer-specific orphan checks using the `orphan-detector` tool:
+
+```bash
+# Run full orphan scan (detects AES501–AES506 layer violations)
+cargo run --bin lint-arwaky-cli -- orphan <project-path> --format json
+```
+
+The tool builds a full import reachability graph and checks:
+
+| Rule | Layer | Orphan If... | Severity |
+|------|-------|-------------|----------|
+| **AES501** | Taxonomy | No non-taxonomy file imports it | MEDIUM |
+| **AES502** | Contract | No implementation (`impl Trait for Type`) exists, or no callers | MEDIUM |
+| **AES503** | Capabilities | Not wired in any container and not reachable from entry points | HIGH |
+| **AES504** | Utility | Imported only by other utility files (utility-only chain = dead) | MEDIUM |
+| **AES505** | Agent | Not referenced by any surface, entry point, or container | **HIGH** |
+| **AES506** | Surface | Not reachable in `Entry→Smart→Utility→Passive` chain | MEDIUM |
+
 ### Phase 1 Workflow
 
 #### Step 1.1: Safety Snapshot

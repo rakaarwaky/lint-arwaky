@@ -2850,6 +2850,7 @@ dependencies = [
  "naming-rules-lint-arwaky",
  "once_cell",
  "orphan-detector-lint-arwaky",
+ "project-setup-lint-arwaky",
  "regex",
  "rmcp",
  "role-rules-lint-arwaky",

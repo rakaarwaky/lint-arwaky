@@ -277,6 +277,26 @@ import sys
 
 **Exception:** `__init__.py` files may legitimately be empty (package marker).
 
+### AES Layer-Specific Orphan Detection (AES501–AES506)
+
+After generic orphan detection, run layer-specific orphan checks using the `orphan-detector` tool:
+
+```bash
+# Run full orphan scan (detects AES501–AES506 layer violations)
+cargo run --bin lint-arwaky-cli -- orphan <project-path> --format json
+```
+
+The tool builds a full import reachability graph and checks:
+
+| Rule | Layer | Orphan If... | Severity |
+|------|-------|-------------|----------|
+| **AES501** | Taxonomy | No non-taxonomy file imports it | MEDIUM |
+| **AES502** | Contract | No implementation (`class X(Protocol)`) exists, or no callers | MEDIUM |
+| **AES503** | Capabilities | Not wired in any container and not reachable from entry points | HIGH |
+| **AES504** | Utility | Imported only by other utility files (utility-only chain = dead) | MEDIUM |
+| **AES505** | Agent | Not referenced by any surface, entry point, or container | **HIGH** |
+| **AES506** | Surface | Not reachable in `Entry→Smart→Utility→Passive` chain | MEDIUM |
+
 ### Exceptions (NEVER Remove Without Explicit Approval)
 
 | File / Pattern | Reason |
