@@ -20,7 +20,7 @@ use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-use cli_commands_lint_arwaky::CliContainer;
+use cli_commands_lint_arwaky::root_cli_container::CliContainer;
 
 // ─── Root Layer Contracts ────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ fn cli_container_exposes_fix_orchestrator_factory() {
 #[test]
 #[allow(clippy::type_complexity)]
 fn check_commands_surface_is_constructible() {
-    use cli_commands_lint_arwaky::CheckCommandsSurface;
+    use cli_commands_lint_arwaky::surface_check_command::CheckCommandsSurface;
     // Compile-time: CheckCommandsSurface::new exists with correct signature
     fn assert_new(
         _f: fn(
@@ -57,7 +57,7 @@ fn check_commands_surface_is_constructible() {
 #[test]
 #[allow(clippy::type_complexity)]
 fn fix_commands_surface_is_constructible() {
-    use cli_commands_lint_arwaky::FixCommandsSurface;
+    use cli_commands_lint_arwaky::surface_fix_action::FixCommandsSurface;
     fn assert_new(
         _f: fn(
             Arc<dyn ICodeAnalysisAggregate>,
@@ -70,13 +70,13 @@ fn fix_commands_surface_is_constructible() {
 
 #[test]
 fn watch_commands_surface_is_constructible() {
-    use cli_commands_lint_arwaky::WatchCommandsSurface;
+    use cli_commands_lint_arwaky::surface_watch_command::WatchCommandsSurface;
     let _surface = WatchCommandsSurface::new();
 }
 
 #[test]
 fn watch_commands_surface_implements_default() {
-    use cli_commands_lint_arwaky::WatchCommandsSurface;
+    use cli_commands_lint_arwaky::surface_watch_command::WatchCommandsSurface;
     fn assert_default<T: Default>() {}
     assert_default::<WatchCommandsSurface>();
 }
@@ -85,7 +85,7 @@ fn watch_commands_surface_implements_default() {
 
 #[test]
 fn report_formatter_orchestrator_implements_i_report_formatter_aggregate() {
-    use cli_commands_lint_arwaky::ReportFormatterOrchestrator;
+    use report_formatter::ReportFormatterOrchestrator;
     fn assert_trait<T: IReportFormatterAggregate>() {}
     assert_trait::<ReportFormatterOrchestrator>();
 }

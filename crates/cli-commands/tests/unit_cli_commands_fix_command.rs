@@ -1,6 +1,6 @@
 //! Unit tests for surface_fix_command — FixCommandsSurface construction and dry-run logic.
 
-use cli_commands_lint_arwaky::FixCommandsSurface;
+use cli_commands_lint_arwaky::surface_fix_action::FixCommandsSurface;
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
