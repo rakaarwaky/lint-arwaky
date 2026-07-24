@@ -101,7 +101,7 @@ test_output=$(cargo test --workspace --lib --tests 2>&1) || {
 }
 if [ -n "$test_output" ]; then
     # Single awk pass instead of grep|sed|awk chain
-    read -r total_passed total_failed <<< $(echo "$test_output" | awk '/^test result:/{for(i=1;i<=NF;i++){if($i=="ok.")p=$(i+1); if($i=="failed")f=$(i-1)}} END{gsub(/;/,"",p); gsub(/;/,"",f); print p+0, f+0}')
+    read -r total_passed total_failed <<< "$(echo "$test_output" | awk '/^test result:/{for(i=1;i<=NF;i++){if($i=="ok.")p=$(i+1); if($i=="failed")f=$(i-1)}} END{gsub(/;/,"",p); gsub(/;/,"",f); print p+0, f+0}')"
     echo "  passed: ${total_passed}, failed: ${total_failed}"
     if [ "${total_failed}" = "0" ]; then
         echo -e "${GREEN}✅ Tests PASSED${NC}"
