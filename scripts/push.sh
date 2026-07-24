@@ -88,19 +88,21 @@ if [ $CI_EXIT -ne 0 ]; then
   [ "$AUTO" = false ] && read -rp "Continue anyway? [y/N] " ans && [[ "$ans" =~ ^[yY] ]] || die "Aborted."
 fi
 
+info() { echo -e " ${CYAN}ℹ${NC} $1"; }
+
 # ── 4. Commit + Push ──
 echo ""
 echo -e "${BOLD}━━━ [4/4] Commit & Push ━━━${NC}"
 
-if ! command -v jj &>/dev/null; then
-  die "jj (Jujutsu) not found."
+if ! command -v git &>/dev/null; then
+  die "git not found."
 fi
 
-PENDING=$(jj st 2>/dev/null | grep -c "^M\|^A\|^+\|^-" || true) || true
+PENDING=$(git status --porcelain 2>/dev/null | wc -l)
 if [ "${PENDING:-0}" -eq 0 ]; then
   info "No pending changes."
 else
-  jj st 2>/dev/null || true
+  git status --short 2>/dev/null || true
   echo ""
 
   if [ -z "$COMMIT_MSG" ]; then
@@ -119,10 +121,11 @@ else
     [[ "$ans" =~ ^[nN] ]] && die "Aborted."
   fi
 
-  jj describe -m "$COMMIT_MSG"
+  git add -A
+  git commit -m "$COMMIT_MSG"
   pass "Committed: $COMMIT_MSG"
 
-  jj git push 2>&1 && pass "Pushed to remote" || die "Push failed."
+  git push 2>&1 && pass "Pushed to remote" || die "Push failed."
 fi
 
 echo ""

@@ -250,7 +250,7 @@ sudo bash scripts/install.global.sh
 
 ### Release Pipeline Automation
 
-Executes release build, self-linting, clippy/fmt checks, version bump, Jujutsu (JJ) commit/bookmarking, and crates.io publishing:
+Executes release build, self-linting, clippy/fmt checks, version bump, Git commit/tagging, and crates.io publishing:
 
 ```bash
 # Full release pipeline with interactive commit & patch bump

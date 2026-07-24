@@ -23,7 +23,6 @@ ignored_paths:
   - "/node_modules"
   - "/.opencode"
   - "/.mimocode"
-  - "/.jj"
   - "/scripts"
   - ".min.js"
   - ".min.css"

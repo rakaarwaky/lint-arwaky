@@ -61,10 +61,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                         Some(n) => n,
                         None => continue,
                     };
-                    if !matches!(
-                        name,
-                        "node_modules" | "target" | ".git" | ".jj" | "Graph-It-Live"
-                    ) {
+                    if !matches!(name, "node_modules" | "target" | ".git" | "Graph-It-Live") {
                         let _ = detect_languages(&path, has_rs, has_py, has_js);
                     }
                 } else if let Some(ext) = path.extension() {

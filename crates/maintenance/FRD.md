@@ -95,7 +95,7 @@ The maintenance crate provides operational health and upkeep commands for the li
   - Rust tools: `cargo`, `clippy`, `rustfmt` — all required.
   - Python tools: `python3`, `ruff`, `mypy`, `bandit` — all optional.
   - JS tools: `node`, `eslint`, `prettier`, `tsc` — all optional; local `node_modules/.bin/` preferred over global.
-  - VCS tools: `git` (required), `jj` (optional).
+  - VCS tools: `git` (required).
   - Tool status: `OK` (found), `WARN` (optional, not found), `FAIL` (required, not found).
   - Version extracted from first line of stdout.
 - **Edge Cases**:

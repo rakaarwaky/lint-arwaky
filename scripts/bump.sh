@@ -10,7 +10,7 @@
 #
 # Options:
 #   --dry-run     Show changes without applying
-#   --no-commit   Skip git/jj commit after bump
+#   --no-commit   Skip git commit after bump
 #   -y, --yes     Auto-confirm (no prompts)
 #   -h, --help    Show this help
 set -euo pipefail
@@ -54,7 +54,7 @@ Usage:
 
 Options:
   --dry-run     Show changes without applying
-  --no-commit   Skip git/jj commit after bump
+  --no-commit   Skip git commit after bump
   -y, --yes     Auto-confirm (no prompts)
   -h, --help    Show this help
 EOF
@@ -147,15 +147,12 @@ if [ "$NO_COMMIT" = false ]; then
   echo ""
   info "Committing version bump..."
 
-  if command -v jj &>/dev/null; then
-    jj describe -m "chore: bump version to $CALCULATED_VERSION" 2>/dev/null && \
-      pass "Committed via jj" || warn "jj commit failed"
-  elif command -v git &>/dev/null; then
+  if command -v git &>/dev/null; then
     git add "$CARGO_TOML" 2>/dev/null
     git commit -m "chore: bump version to $CALCULATED_VERSION" 2>/dev/null && \
       pass "Committed via git" || warn "git commit failed (no changes?)"
   else
-    warn "No jj or git found — skipping commit"
+    warn "No git found — skipping commit"
   fi
 fi
 

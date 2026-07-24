@@ -59,7 +59,7 @@ fi
 rustup component add clippy rustfmt 2>/dev/null || true
 
 # Install cargo-nextest for fast parallel testing
-if ! command -v cargo-nextest &>/dev/null && ! cargo nextest --version &>/dev/null; then
+if ! command -v cargo-nextest &>/dev/null; then
     echo "  [install] cargo-nextest runner..."
     curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C "$HOME/.cargo/bin" 2>/dev/null || cargo install cargo-nextest --locked || true
 else

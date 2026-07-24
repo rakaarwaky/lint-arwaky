@@ -112,10 +112,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         };
         js_tools.push(tsc_status);
 
-        let vcs_tools = vec![
-            check_tool("git", &["--version"], true),
-            check_tool("jj", &["--version"], false),
-        ];
+        let vcs_tools = vec![check_tool("git", &["--version"], true)];
 
         let binary_path = match std::env::current_exe() {
             Ok(p) => p.to_string_lossy().to_string(),
