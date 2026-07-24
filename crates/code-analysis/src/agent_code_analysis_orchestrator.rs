@@ -273,6 +273,17 @@ impl CodeAnalysisOrchestrator {
             for (file_path, aes_violation) in
                 self.deps.duplication_checker.handle_duplicates(Some(dp))
             {
+                // Check AES305 exceptions (match against file stem or full filename)
+                let file_name = Path::new(&file_path)
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+                let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
+                if let Some(rule) = aes305_rule {
+                    if rule.exceptions.values.contains(&file_name.to_string()) {
+                        continue;
+                    }
+                }
                 let msg = aes_violation.to_string();
                 violations.push(LintResult::new_arch(
                     &file_path,
