@@ -20,7 +20,9 @@ fn bench_orchestrator_instantiation(c: &mut Criterion) {
             b.iter(|| {
                 for _ in 0..count {
                     let checker = Arc::new(MaintenanceChecker::new());
-                    black_box(MaintenanceCommandsOrchestrator::new(MaintenanceDeps { checker }));
+                    black_box(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
+                        checker,
+                    }));
                 }
             });
         });

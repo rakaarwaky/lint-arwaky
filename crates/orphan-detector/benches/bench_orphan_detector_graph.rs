@@ -99,13 +99,9 @@ fn bench_check_orphans(c: &mut Criterion) {
         let files = generate_file_list(size);
         let file_vo = OrphanFileListVO::new(files);
         group.throughput(Throughput::Elements(size as u64));
-        group.bench_with_input(
-            BenchmarkId::new("files", size),
-            &file_vo,
-            |b, data| {
-                b.iter(|| black_box(analyzer.check_orphans(data, &root)));
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("files", size), &file_vo, |b, data| {
+            b.iter(|| black_box(analyzer.check_orphans(data, &root)));
+        });
     }
     group.finish();
 }
@@ -167,21 +163,17 @@ fn bench_expand_workspace_files(c: &mut Criterion) {
         group.throughput(Throughput::Elements(files.len() as u64));
 
         // Vec::contains — O(n²)
-        group.bench_with_input(
-            BenchmarkId::new("vec_contains", size),
-            &files,
-            |b, data| {
-                b.iter(|| {
-                    let mut result: Vec<String> = data.clone();
-                    for f in data {
-                        if !result.contains(f) {
-                            result.push(f.clone());
-                        }
+        group.bench_with_input(BenchmarkId::new("vec_contains", size), &files, |b, data| {
+            b.iter(|| {
+                let mut result: Vec<String> = data.clone();
+                for f in data {
+                    if !result.contains(f) {
+                        result.push(f.clone());
                     }
-                    black_box(result);
-                });
-            },
-        );
+                }
+                black_box(result);
+            });
+        });
 
         // HashSet::insert — O(n)
         group.bench_with_input(
@@ -276,30 +268,22 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
         group.throughput(Throughput::Elements(size as u64));
 
         // Sequential (original pattern)
-        group.bench_with_input(
-            BenchmarkId::new("sequential", size),
-            &files,
-            |b, data| {
-                b.iter(|| {
-                    let vo = OrphanFileListVO::new(data.clone());
-                    let results = analyzer.check_orphans_with_context(&vo, &root, &context);
-                    black_box(results);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("sequential", size), &files, |b, data| {
+            b.iter(|| {
+                let vo = OrphanFileListVO::new(data.clone());
+                let results = analyzer.check_orphans_with_context(&vo, &root, &context);
+                black_box(results);
+            });
+        });
 
         // Parallel (current — uses par_iter internally)
-        group.bench_with_input(
-            BenchmarkId::new("parallel", size),
-            &files,
-            |b, data| {
-                b.iter(|| {
-                    let vo = OrphanFileListVO::new(data.clone());
-                    let results = analyzer.check_orphans_with_context(&vo, &root, &context);
-                    black_box(results);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", size), &files, |b, data| {
+            b.iter(|| {
+                let vo = OrphanFileListVO::new(data.clone());
+                let results = analyzer.check_orphans_with_context(&vo, &root, &context);
+                black_box(results);
+            });
+        });
     }
     group.finish();
 }
@@ -320,29 +304,21 @@ fn bench_graph_context_reuse(c: &mut Criterion) {
         group.throughput(Throughput::Elements(size as u64));
 
         // Without context reuse
-        group.bench_with_input(
-            BenchmarkId::new("no_reuse", size),
-            &file_vo,
-            |b, data| {
-                b.iter(|| {
-                    let results = analyzer.check_orphans(data, &root);
-                    black_box(results);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("no_reuse", size), &file_vo, |b, data| {
+            b.iter(|| {
+                let results = analyzer.check_orphans(data, &root);
+                black_box(results);
+            });
+        });
 
         // With context reuse
-        group.bench_with_input(
-            BenchmarkId::new("with_reuse", size),
-            &file_vo,
-            |b, data| {
-                let context = analyzer.build_orphan_graph_context(data, &root);
-                b.iter(|| {
-                    let results = analyzer.check_orphans_with_context(data, &root, &context);
-                    black_box(results);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("with_reuse", size), &file_vo, |b, data| {
+            let context = analyzer.build_orphan_graph_context(data, &root);
+            b.iter(|| {
+                let results = analyzer.check_orphans_with_context(data, &root, &context);
+                black_box(results);
+            });
+        });
     }
     group.finish();
 }

@@ -39,9 +39,13 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let detector = WorkspaceDetector::new();
     let mut group = c.benchmark_group("workspace_detect");
     group.sample_size(30);
-    group.bench_with_input(BenchmarkId::new("detect", "rust_project"), &fp, |b, path| {
-        b.iter(|| black_box(detector.detect(path)));
-    });
+    group.bench_with_input(
+        BenchmarkId::new("detect", "rust_project"),
+        &fp,
+        |b, path| {
+            b.iter(|| black_box(detector.detect(path)));
+        },
+    );
     group.finish();
 }
 
@@ -95,10 +99,14 @@ fn bench_load_config_sync(c: &mut Criterion) {
     let root_str = tmp.path().to_str().unwrap().to_string();
     let mut group = c.benchmark_group("load_config_sync");
     group.sample_size(30);
-    group.bench_with_input(BenchmarkId::new("load", "rust_project"), &root_str, |b, path| {
-        let orch = ConfigContainer::new().orchestrator();
-        b.iter(|| black_box(orch.load_config_sync(path)))
-    });
+    group.bench_with_input(
+        BenchmarkId::new("load", "rust_project"),
+        &root_str,
+        |b, path| {
+            let orch = ConfigContainer::new().orchestrator();
+            b.iter(|| black_box(orch.load_config_sync(path)))
+        },
+    );
     group.finish();
 }
 
