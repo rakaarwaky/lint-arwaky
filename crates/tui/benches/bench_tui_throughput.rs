@@ -11,11 +11,14 @@ use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn build_tui_stack() -> (Arc<LintExecutor>, Arc<ActionHandler>) {
-    let executor = Arc::new(LintExecutor::new(
+    let executor: Arc<LintExecutor> = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
     ));
-    let handler = Arc::new(ActionHandler::new(executor));
+    let handler = Arc::new(ActionHandler::new(executor.clone()
+        as Arc<
+            dyn shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol,
+        >));
     (executor, handler)
 }
 
@@ -39,7 +42,7 @@ fn bench_component_instantiation(c: &mut Criterion) {
 }
 
 fn bench_event_handling(c: &mut Criterion) {
-    let (executor, handler) = build_tui_stack();
+    let (_executor, handler) = build_tui_stack();
     let mut group = c.benchmark_group("event_handling");
     group.sample_size(30);
 
@@ -48,9 +51,8 @@ fn bench_event_handling(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 let mut state = AppState::new(".".to_string());
-                let event = TuiEvent::Quit;
                 for _ in 0..count {
-                    black_box(handler.handle(&mut state, event));
+                    handler.handle(&mut state, TuiEvent::Quit);
                 }
             });
         });
@@ -69,7 +71,7 @@ fn bench_directory_loading(c: &mut Criterion) {
             b.iter(|| {
                 let mut state = AppState::new(".".to_string());
                 for _ in 0..count {
-                    black_box(handler.load_directory(&mut state, "/tmp"));
+                    handler.load_directory(&mut state, "/tmp");
                 }
             });
         });
@@ -88,7 +90,7 @@ fn bench_preview_loading(c: &mut Criterion) {
             b.iter(|| {
                 let mut state = AppState::new(".".to_string());
                 for _ in 0..count {
-                    black_box(handler.load_preview(&mut state));
+                    handler.load_preview(&mut state);
                 }
             });
         });

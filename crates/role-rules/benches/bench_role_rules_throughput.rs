@@ -47,7 +47,7 @@ fn bench_container_orchestration(c: &mut Criterion) {
                     let container = RoleContainer::new_with_config(
                         shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
                     );
-                    black_box((container.orchestrator(), container.aggregate()));
+                    black_box(container.orchestrator());
                 }
             });
         });
