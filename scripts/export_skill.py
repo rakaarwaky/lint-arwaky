@@ -2,8 +2,17 @@
 """Export a selected skill into a single consolidated Markdown file.
 
 The output includes all files within the skill directory under `.agents/skills/<name>/`.
+
+Usage:
+    # Interactive mode (prompts for selection):
+    python3 scripts/export_skill.py
+
+    # CLI mode (non-interactive):
+    python3 scripts/export_skill.py --skill add-docs-rust
+    python3 scripts/export_skill.py --skill create-agent-python --output /tmp/out.md
 """
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -139,7 +148,61 @@ def write_markdown(
             out.write("```\n\n---\n\n")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Export a skill directory into a single consolidated Markdown file."
+    )
+    parser.add_argument(
+        "--skill", "-s",
+        help="Skill name to export (non-interactive mode). Omit for interactive selection.",
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Output file path (default: .agents/skills/exports/<skill>.md).",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+
+    if args.skill:
+        # Non-interactive CLI mode
+        project_root, skills_dir = resolve_project_root()
+
+        skill_dirs = list_skill_dirs(skills_dir)
+        if args.skill not in skill_dirs:
+            print(f"Error: Skill '{args.skill}' not found. Available: {', '.join(skill_dirs)}", file=sys.stderr)
+            sys.exit(1)
+
+        selected_skill = args.skill
+        print(f"Processing skill: {selected_skill}...")
+
+        skill_path = skills_dir / selected_skill
+        files_to_export = collect_skill_files(skill_path)
+
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_filename = f"{selected_skill}.md"
+            output_path = skills_dir / "exports" / output_filename
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        print(f"Collecting {len(files_to_export)} file(s)...")
+        sorted_files = sorted(files_to_export)
+
+        print(f"Writing export to {output_path}...")
+        write_markdown(
+            output_path,
+            sorted_files,
+            project_root,
+            selected_skill,
+        )
+
+        print(f"\nSuccess! Consolidated markdown file created: {output_path}")
+        return
+
+    # Interactive mode
     while True:
         print("\n=== Lint Arwaky Skill Exporter ===")
 

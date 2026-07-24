@@ -111,6 +111,12 @@ if $FAST; then
 fi
 
 # ── Helpers ─────────────────────────────────────────────────────────────────────
+cleanup() {
+    [ -n "${CHANGELOG_FILE:-}" ] && [ -f "${CHANGELOG_FILE:-}" ] && rm -f "$CHANGELOG_FILE"
+    rm -f crates/shared/src/config-system/lint_arwaky.config.*.yaml 2>/dev/null || true
+}
+trap cleanup EXIT
+
 current_version() {
   grep '^version = ' "$CARGO_TOML" | head -1 | sed -E 's/version = "([^"]+)"/\1/'
 }
@@ -395,21 +401,42 @@ fi
 echo ""
 echo -e "${BOLD}━━━ [8/8] Release ━━━${NC}"
 
+# Generate changelog with git-cliff if available
+CHANGELOG_FILE=""
+if command -v git-cliff &>/dev/null && [[ -n "${NEW_VER:-}" ]]; then
+    CHANGELOG_FILE=$(mktemp /tmp/changelog-XXXXXX.md)
+    if $DRY_RUN; then
+        info "[DRY-RUN] Would generate changelog with git-cliff"
+    else
+        git-cliff --tag "v$NEW_VER" -o "$CHANGELOG_FILE" 2>/dev/null || true
+        if [ -s "$CHANGELOG_FILE" ]; then
+            info "Generated changelog from git-cliff"
+        else
+            rm -f "$CHANGELOG_FILE"
+            CHANGELOG_FILE=""
+        fi
+    fi
+fi
+
 if $NO_GH_RELEASE || [[ -z "${NEW_VER:-}" ]]; then
   warn "GitHub Release skipped (--no-gh-release or no --bump)"
 elif ! command -v gh &>/dev/null; then
   warn "gh CLI not installed — skipping GitHub Release creation"
 else
-  # Best-effort release notes from recent commits
-  prev_tag="$(git tag --sort=-creatordate | head -2 | tail -1 || true)"
-  if [ -n "$prev_tag" ]; then
-    release_notes="$(git log --oneline --no-decorate "${prev_tag}..HEAD" 2>/dev/null || true)"
+  # Best-effort release notes: use git-cliff changelog if available, else recent commits
+  if [ -n "$CHANGELOG_FILE" ] && [ -s "$CHANGELOG_FILE" ]; then
+    release_notes=$(cat "$CHANGELOG_FILE")
   else
-    release_notes="$(git log --oneline --no-decorate -20 2>/dev/null || true)"
-  fi
-  release_notes="## What's Changed
+    prev_tag="$(git tag --sort=-creatordate | head -2 | tail -1 || true)"
+    if [ -n "$prev_tag" ]; then
+      release_notes="$(git log --oneline --no-decorate "${prev_tag}..HEAD" 2>/dev/null || true)"
+    else
+      release_notes="$(git log --oneline --no-decorate -20 2>/dev/null || true)"
+    fi
+    release_notes="## What's Changed
 
 ${release_notes:-Initial release $NEW_VER}"
+  fi
 
   if $DRY_RUN; then
     info "[DRY-RUN] Would create GitHub Release: $NEW_VER"

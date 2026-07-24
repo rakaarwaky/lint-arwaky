@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/<name-feature>/todo/FRONTEND_DEVELOPER.<TIMESTAMP>.md
+.agents/report/done-<feature>-frontend-developer-<timestamp>.md
 ```
 
 ### Report Structure

@@ -4,8 +4,17 @@
 The output includes the selected file's content, its transitive dependencies
 (imported files from `use` / `import` statements), and related documentation
 (ARCHITECTURE.md, PRD.md, FRD of the owning crate, relevant SKILL.md files).
+
+Usage:
+    # Interactive mode (prompts for selection):
+    python3 scripts/export_file.py
+
+    # CLI mode (non-interactive):
+    python3 scripts/export_file.py --file crates/code-analysis/src/lib.rs
+    python3 scripts/export_file.py --file src/main.rs --output /tmp/out.md
 """
 
+import argparse
 import os
 import re
 import sys
@@ -463,7 +472,91 @@ def write_markdown(
 # ---------------------------------------------------------------------------
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Export a source file into a single consolidated Markdown document."
+    )
+    parser.add_argument(
+        "--file", "-f",
+        help="Source file path to export (non-interactive mode). Omit for interactive selection.",
+    )
+    parser.add_argument(
+        "--output", "-o",
+        help="Output file path (default: .agents/finding/<stem>_export.md).",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
+
+    if args.file:
+        # Non-interactive CLI mode
+        project_root = resolve_project_root()
+        skills_dir = project_root / ".agents" / "skills"
+
+        selected_file = Path(args.file)
+        if not selected_file.is_absolute():
+            selected_file = project_root / selected_file
+        if not selected_file.is_file():
+            print(f"Error: File not found: {args.file}", file=sys.stderr)
+            sys.exit(1)
+
+        rel = selected_file.relative_to(project_root)
+        print(f"Processing: {rel}")
+
+        try:
+            content = selected_file.read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            print(f"Error: Cannot read file ({e})", file=sys.stderr)
+            sys.exit(1)
+
+        deps = extract_dependencies(selected_file, content)
+        initial_deps: set[Path] = set()
+        for dep in deps:
+            initial_deps.update(resolve_dependency_path(dep, selected_file, project_root))
+
+        print(f"Extracted {len(deps)} dependency reference(s), resolved to {len(initial_deps)} file(s).")
+
+        transitive = resolve_transitive_dependencies(initial_deps, project_root)
+        all_dep_files = (initial_deps | transitive) - {selected_file}
+        print(f"Transitive resolution: {len(all_dep_files)} dependency file(s).")
+
+        frds = find_frd_for_file(selected_file, project_root)
+        skills = find_relevant_skills(selected_file, skills_dir)
+        related_docs: set[Path] = set()
+
+        arch_md = project_root / "ARCHITECTURE.md"
+        prd_md = project_root / "PRD.md"
+        if arch_md.is_file():
+            related_docs.add(arch_md)
+        if prd_md.is_file():
+            related_docs.add(prd_md)
+
+        related_docs.update(frds)
+        related_docs.update(skills)
+        print(f"Related docs: {len(frds)} FRD(s), {len(skills)} skill(s).")
+
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            output_filename = f"{selected_file.stem}_export.md"
+            output_path = project_root / ".agents" / "finding" / output_filename
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        print(f"Writing export to {output_path}...")
+        write_markdown(
+            output_path,
+            selected_file,
+            all_dep_files,
+            project_root,
+            related_docs,
+        )
+
+        print(f"\nSuccess! Consolidated markdown file created: {output_path}")
+        return
+
+    # Interactive mode
     while True:
         print("\n=== Lint Arwaky File Exporter ===")
 

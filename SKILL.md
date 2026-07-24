@@ -9,6 +9,18 @@ description: Comprehensive terminal commands and argument reference for lint-arw
 
 ---
 
+## Shell Aliases
+
+Shortcut aliases are available for quick terminal access (automatically configured via `scripts/install.local.sh`):
+
+| Alias | Target Binary | Description | Example Usage |
+| :--- | :--- | :--- | :--- |
+| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner | `lac scan .`, `lac fix`, `lac doctor` |
+| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard | `lat` |
+| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Used by Claude Code / Cursor / Windsurf |
+
+---
+
 ## 1. Global Options
 
 These options apply globally across all subcommands:
@@ -195,6 +207,39 @@ lint-arwaky-cli doctor
 
 # Display binary version information
 lint-arwaky-cli version
+```
+
+---
+
+## MCP Server Tools Reference (`lint-arwaky-mcp`)
+
+`lint-arwaky-mcp` exposes 5 JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
+
+| Tool Name | Description | Arguments / Parameters |
+| :--- | :--- | :--- |
+| `execute_command` | Execute any CLI command action | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, etc.), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`) |
+| `list_commands` | List available CLI commands catalog | `domain` (optional: filter by domain string, e.g. `"setup"`, `"check"`) |
+| `read_skill` | Read `SKILL.md` documentation by section | `section` (optional: header name to extract) |
+| `health_check` | Check MCP server & adapter health | None (0 parameters) |
+| `get_config` | Get active architecture config | `path` (optional project path), `language` (optional: `"rust"`, `"python"`, `"javascript"`) |
+
+### Example MCP JSON-RPC Payload
+
+```json
+// execute_command: run full workspace scan
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"."}}}}
+
+// list_commands: list available commands
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"list_commands","arguments":{"domain":"check"}}}
+
+// read_skill: read documentation section
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"read_skill","arguments":{"section":"Global Options"}}}
+
+// health_check: system & adapter diagnostics
+{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"health_check","arguments":{}}}
+
+// get_config: retrieve architecture rules and thresholds
+{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"get_config","arguments":{"language":"rust"}}}
 ```
 
 ---

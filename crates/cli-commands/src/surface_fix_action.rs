@@ -45,13 +45,25 @@ impl FixCommandsSurface {
     }
 
     pub fn run_fix(&self, project_path: FilePath, dry_run: bool) -> ExitCode {
+        let results = self.code_analysis_linter.run_code_analysis(&project_path);
+
         if dry_run {
             println!("[DRY-RUN] Previewing fixes for {}...", project_path.value);
+            for r in results.iter() {
+                let code_str = r.code.code();
+                if code_str == "AES101" || code_str == "AES203" || code_str == "AES304" {
+                    let loc = match (r.line.value(), r.column.value()) {
+                        (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value(), l, c),
+                        (l, _) if l > 0 => format!("{}:{}", r.file.value(), l),
+                        _ => r.file.value().to_string(),
+                    };
+                    println!("  [fixable] {} [{}] {}", loc, code_str, r.message.value());
+                }
+            }
         } else {
             println!("Applying safe fixes to {}...", project_path.value);
         }
 
-        let results = self.code_analysis_linter.run_code_analysis(&project_path);
         println!("Found {} violations before fix (AES301-305 only; other rules not included in count — #107 P1 #15)", results.len());
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
@@ -75,7 +87,7 @@ impl FixCommandsSurface {
                 println!("Fix complete — all violations resolved.");
                 ExitCode::OK
             } else {
-                println!("Fix complete — {} violations remain.", after_results.len());
+                eprintln!("Fix complete — {} violations remain.", after_results.len());
                 ExitCode::POLICY_FAIL
             }
         }

@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/<name-feature>/todo/SCRUM_MASTER.<TIMESTAMP>.md
+.agents/report/done-<feature>-scrum-master-<timestamp>.md
 ```
 
 ### Report Structure
