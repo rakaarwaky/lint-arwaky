@@ -4,6 +4,8 @@
 
 A state-driven 3-panel Ratatui terminal UI that provides real-time AES architecture linting with file browsing, preview, and all CLI commands mapped to keyboard shortcuts. Replaces the flat-menu dialoguer TUI with an interactive Ratatui-based interface supporting keyboard and mouse navigation.
 
+**Product priority (locked):** **P1 — supported surface.** Critical-path acceptance required for layout (FR-001), navigation (FR-002/003), path dialog (FR-011), lint action (FR-005), and background scan progress (FR-012). TUI must invoke the same aggregates as CLI (no divergent lint path).
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ lint-arwaky TUI │ Path: /home/user/project  [q/Esc] Quit│
@@ -328,4 +330,4 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## Reference
 
-- PRD: [PRD.md](../../PRD.md)
+- PRD: [PRD.md](../../PRD.md) (TUI = P1; Exit Code Contract; MCP parity is separate surface)

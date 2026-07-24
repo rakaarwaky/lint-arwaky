@@ -120,20 +120,21 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
   - Single file in workspace — no violations (no other files to compare)
 - **Error Handling**: Emit AES305 with the shared percentage, total windows, and list of similar files (up to 5)
 
-### FR-006: File Read Error Diagnostics (AES000)
+### FR-006: File Read Error Diagnostics (`DIAG_IO`)
 
-- **Description**: Emit diagnostic when a file cannot be read or exceeds the maximum lintable size.
+- **Description**: Emit a **non-AES internal diagnostic** when a file cannot be read or exceeds the maximum lintable size. Product AES rule count remains **24** (AES101–AES506); `DIAG_IO` is not an AES rule.
 - **Input**: File path
-- **Output**: AES000 or AES301 (LOW severity) diagnostic
+- **Output**: `DIAG_IO` (LOW severity) or AES301 (LOW severity for oversized files) diagnostic
 - **Business Rules**:
-  - Max file size: 2 MiB — files exceeding this emit AES301 with LOW severity and skip
-  - Read errors (permissions, I/O) emit AES000 with the error reason
-  - Cargo.toml read errors also emit AES000
+  - Max file size: 2 MiB — files exceeding this emit AES301 with LOW severity and skip further checks
+  - Read errors (permissions, I/O) emit **`DIAG_IO`** with the error reason (not AES000)
+  - Cargo.toml read errors also emit `DIAG_IO`
+  - Reports and filters MUST NOT treat `DIAG_IO` as an AES architecture violation for scoring unless product config explicitly opts in
 - **Edge Cases**:
   - Binary files — may fail to read or produce garbled content
   - Symlinks to non-existent targets — read error
-  - Permission-denied files — AES000 with reason
-- **Error Handling**: Emit AES000/AES301 with error message; file is skipped for further checks
+  - Permission-denied files — `DIAG_IO` with reason
+- **Error Handling**: Emit `DIAG_IO` / AES301 with error message; file is skipped for further AES checks
 
 ## API Contract
 
@@ -189,8 +190,8 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 | 15  | File with 70% content shared across 2+ files             | AES305 — duplication exceeds 50% threshold        | AES305      |
 | 16  | File with 30% content shared across 2+ files             | No violation (below 50% threshold)                | AES305 pass |
 | 17  | Single file in workspace                                 | No duplication violation (no files to compare)    | AES305 pass |
-| 18  | File exceeding 2 MiB                                     | AES301 LOW — file skipped (exceeds lintable size) | AES000      |
-| 19  | File with read permission denied                         | AES000 — file skipped with error reason           | AES000      |
+| 18  | File exceeding 2 MiB                                     | AES301 LOW — file skipped (exceeds lintable size) | AES301      |
+| 19  | File with read permission denied                         | DIAG_IO — file skipped with error reason          | DIAG_IO     |
 | 20  | `mod.rs` or `__init__.py`                                | No violation (barrel file exception)              | exception   |
 
 ## Assumptions & Constraints
@@ -210,7 +211,8 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 - **Dead inheritance**: Empty or stub definitions (unit structs, empty classes) that provide no real implementation
 - **Primary symbol**: A meaningful type declaration (struct, enum, trait, class, interface, type alias)
 - **Window**: A contiguous block of N lines used for duplication comparison
-- **Severity levels**: CRITICAL (bypasses), HIGH (line count, naming), MEDIUM (dead inheritance), LOW (file read errors)
+- **Severity levels**: CRITICAL (bypasses), HIGH (line count, naming), MEDIUM (dead inheritance), LOW (oversized files / internal diagnostics)
+- **DIAG_IO**: Non-AES internal diagnostic for unreadable files (product decision: not part of the 24 AES rules)
 
 ## Reference
 
