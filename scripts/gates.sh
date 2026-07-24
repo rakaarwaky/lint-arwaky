@@ -2,7 +2,7 @@
 set -euo pipefail
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
-export RUST_MIN_STACK="${RUST_MIN_STACK:-33554432}"
+export RUST_MIN_STACK="${RUST_MIN_STACK:-67108864}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -109,7 +109,7 @@ st4_start=$SECONDS
 echo -e "\n${CYAN}━━━ Stage 4: Tests ━━━${NC}"
 if cargo nextest --version &> /dev/null; then
     echo "  Using cargo-nextest runner..."
-    if test_out=$(cargo nextest run --workspace --lib --tests 2>&1); then
+    if test_out=$(cargo nextest run --workspace --lib --tests -j 4 2>&1); then
         echo "$test_out" | tail -n 5
         echo -e "${GREEN}✅ Tests PASSED (nextest, $((SECONDS - st4_start))s)${NC}"
         PASSED=$((PASSED + 1))
