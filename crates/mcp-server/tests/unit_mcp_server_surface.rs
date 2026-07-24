@@ -5,7 +5,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::ServerHandler;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
 use std::sync::Arc;
 
@@ -23,6 +23,9 @@ impl IMcpServerAggregate for StubAggregate {
     }
     async fn read_skill(&self, _args: Parameters<ReadSkillArgs>) -> String {
         r#"{"content":"stub"}"#.to_string()
+    }
+    async fn get_config(&self, _args: Parameters<GetConfigArgs>) -> String {
+        r#"{"config":"stub"}"#.to_string()
     }
 }
 
