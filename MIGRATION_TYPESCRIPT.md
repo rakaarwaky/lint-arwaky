@@ -1,7 +1,7 @@
 # AES Migration Guide — TypeScript
 
-> Step-by-step guide for migrating a TypeScript/JavaScript project to AES architecture.
-> Workspace structure: `packages/` with npm/pnpm workspaces.
+> Skill-driven migration workflow for TypeScript/JavaScript projects to AES architecture.
+> Each phase delegates to a dedicated skill in `.agents/skills/`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
 
@@ -17,40 +17,27 @@ project-root/
 │   │   └── src/
 │   │       ├── index.ts
 │   │       ├── common/          ← truly shared across ALL features
-│   │       │   ├── index.ts
-│   │       │   ├── taxonomy_common_vo.ts
-│   │       │   ├── taxonomy_path_vo.ts
-│   │       │   └── ...
-│   │       └── user/            ← shared types for user feature (domain folder)
-│   │           ├── index.ts
-│   │           ├── taxonomy_user_vo.ts
-│   │           ├── taxonomy_user_error.ts
-│   │           ├── taxonomy_user_constant.ts
-│   │           ├── contract_user_protocol.ts
-│   │           ├── contract_user_aggregate.ts
-│   │           └── utility_user_hasher.ts
+│   │       └── <feature>/       ← shared types per feature domain
 │   │
-│   ├── user/                ← feature package
+│   ├── <feature>/           ← feature package
 │   │   ├── package.json
 │   │   └── src/
 │   │       ├── index.ts
-│   │       ├── capabilities_user_checker.ts     ← business logic capability
-│   │       ├── capabilities_user_repository.ts  ← external adaptation capability
-│   │       ├── agent_user_orchestrator.ts       ← agent layer (orchestrator)
-│   │       ├── surface_user_command.ts          ← surfaces layer
-│   │       └── root_user_container.ts           ← root container
-│   └── order/
-│       └── src/
-│           └── ...
+│   │       ├── capabilities_<concept>_<role>.ts
+│   │       ├── agent_<concept>_orchestrator.ts
+│   │       ├── surface_<concept>_<role>.ts
+│   │       └── root_<concept>_container.ts
+│   └── ...
 └── src/
-    └── root_cli_main_entry.ts   ← CLI entry point (at workspace root)
+    └── root_<name>_entry.ts   ← entry point (at workspace root)
 ```
 
 **Key rules:**
 
-- All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `packages/shared/src/<feature>/`. Orchestration, capabilities, and surfaces live in the feature package.
+- All 7 layers coexist in each feature slice.
+- Stable domain taxonomy, contracts, and utilities live under `packages/shared/src/<feature>/`.
+- Orchestration, capabilities, and surfaces live in the feature package.
 - Entry points (`root_*_entry.ts`) live at workspace root or `src/`.
-- Shared types go in `packages/shared/`.
 
 ---
 
@@ -66,6 +53,8 @@ lint-arwaky-cli scan your-project/
 
 ## Phase 0: Audit
 
+> **Skill:** `lint-arwaky-typescript` — load for audit commands and violation analysis.
+
 ```bash
 lint-arwaky-cli scan your-project/
 find your-project/packages -name "*.ts" | wc -l
@@ -79,387 +68,152 @@ find your-project/packages -name "*.ts" | wc -l
 
 ## Phase 1: Taxonomy Layer
 
-Define Value Objects, Errors, Events, and compile-time Constants under the `shared` member.
+> **Skill:** `create-taxonomy-typescript` — load for VOs, errors, constants, entities, events.
 
-### Step 1.1: Identify Domain Types
+Define Value Objects, Errors, Events, and compile-time Constants under `packages/shared/src/<feature>/`.
 
-```bash
-grep -rn "^export interface\|^export type\|^export enum\|^export class" your-project/packages/*/src/ | grep -v test | grep -v node_modules
-```
+### Steps
 
-### Step 1.2: Create Value Objects
-
-```typescript
-// packages/shared/src/user/taxonomy_user_vo.ts
-/** User value object — immutable domain data container. */
-
-export interface UserVO {
-  readonly id: string;
-  readonly name: string;
-  readonly email: string;
-}
-
-export function createUserVO(id: string, name: string, email: string): UserVO {
-  return { id, name, email };
-}
-```
-
-### Step 1.3: Create Constants
-
-```typescript
-// packages/shared/src/user/taxonomy_user_constant.ts
-/** User constants — compile-time literal values. */
-
-export const MAX_RETRY_COUNT = 3;
-export const DEFAULT_TIMEOUT_MS = 5000;
-```
-
-### Step 1.4: Create Error Types
-
-```typescript
-// packages/shared/src/user/taxonomy_user_error.ts
-/** User domain-level errors. */
-
-export class UserError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UserError";
-  }
-}
-
-export class UserNotFoundError extends UserError {
-  constructor(userId: string) {
-    super(`User not found: ${userId}`);
-    this.name = "UserNotFoundError";
-  }
-}
-
-export class InvalidEmailError extends UserError {
-  constructor(email: string) {
-    super(`Invalid email: ${email}`);
-    this.name = "InvalidEmailError";
-  }
-}
-```
+1. Identify domain types with `grep -rn "^export interface\|^export type\|^export enum" packages/*/src/`
+2. Load `create-taxonomy-typescript` skill
+3. Create taxonomy files following skill templates and workflow
+4. Register in domain `index.ts`
+5. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 2: Contract Layer
 
+> **Skill:** `create-contract-typescript` — load for protocol and aggregate interfaces.
+
 Contracts define public interfaces (Protocols and Aggregates) without exposing implementation.
 
-### Step 2.1: Create Protocols (inbound/outbound interfaces)
+### Steps
 
-Define protocol interfaces implemented by Capabilities (both business calculation and external adapters) and consumed by the Agent.
-
-```typescript
-// packages/shared/src/user/contract_user_protocol.ts
-/** User contract protocols. */
-
-import type { UserVO } from "./taxonomy_user_vo";
-
-export interface IUserProtocol {
-  checkValidEmail(email: string): boolean;
-}
-
-export interface IUserRepositoryProtocol {
-  findById(userId: string): Promise<UserVO | null>;
-  save(user: UserVO): Promise<void>;
-  delete(userId: string): Promise<void>;
-}
-```
-
-### Step 2.2: Create Aggregates (facades)
-
-Define aggregate facades implemented by the Agent and consumed by Surfaces.
-
-```typescript
-// packages/shared/src/user/contract_user_aggregate.ts
-/** User contract aggregate facade. */
-
-import type { UserVO } from "./taxonomy_user_vo";
-
-export interface IUserAggregate {
-  getUser(userId: string): Promise<UserVO>;
-  createUser(name: string, email: string): Promise<UserVO>;
-  deleteUser(userId: string): Promise<void>;
-}
-```
+1. Load `create-contract-typescript` skill
+2. Create protocol interfaces (inbound/outbound) under `packages/shared/src/<feature>/`
+3. Create aggregate facades under `packages/shared/src/<feature>/`
+4. Register in domain `index.ts`
+5. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 3: Utility Layer
 
-Utility contains low-level technical mechanics. It must contain only **stateless standalone functions** (no stateful objects, no behavior, no contract implementation, and no business decisions).
+> **Skill:** `create-utility-typescript` — load for stateless standalone functions.
 
-### Step 3.1: Create Technical Utilities
+Utility contains low-level technical mechanics — **stateless standalone functions only**.
 
-Extract reusable technical actions (e.g. parsing, hash computation, formatting) into the Utility layer inside the `shared` member.
+### Steps
 
-```typescript
-// packages/shared/src/user/utility_user_hasher.ts
-/** User utility functions. */
-
-export function hashUserToken(inputStr: string): string {
-  // stateless technical operation
-  return `hash_${inputStr}`;
-}
-```
+1. Identify reusable stateless functions across modules
+2. Load `create-utility-typescript` skill
+3. Create utility files under `packages/shared/src/<feature>/`
+4. Register in domain `index.ts`
+5. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 4: Capabilities Layer
 
-Capabilities contain concrete behavior implementations. This includes business logic (validations, computations) and external adaptation (database repositories, network integration, third-party clients).
+> **Skill:** `create-capabilities-typescript` — load for business logic and external adaptation.
 
-- Must implement one domain protocol interface defined in Contract.
-- Must use dependency injection for collaborator services.
-- Must not import or depend on other Capabilities.
+Capabilities contain concrete behavior implementations (business logic + external adapters).
 
-### Step 4.1: Create Business Logic Capability
+### Steps
 
-```typescript
-// packages/user/src/capabilities_user_checker.ts
-/** Validates user domain rules — pure business logic. */
-
-import type { IUserProtocol } from "shared/user/contract_user_protocol";
-
-export class UserChecker implements IUserProtocol {
-  checkValidEmail(email: string): boolean {
-    return email.includes("@") && email.includes(".");
-  }
-}
-```
-
-### Step 4.2: Create External Adaptation Capability (formerly Infrastructure)
-
-```typescript
-// packages/user/src/capabilities_user_repository.ts
-/** User persistence repository — implements IUserRepositoryProtocol for database. */
-
-import type { IUserRepositoryProtocol } from "shared/user/contract_user_protocol";
-import type { UserVO } from "shared/user/taxonomy_user_vo";
-
-export class UserRepository implements IUserRepositoryProtocol {
-  constructor(private readonly dbPath: string) {}
-
-  async findById(userId: string): Promise<UserVO | null> {
-    // Actual database call here using local state or shared utilities
-    throw new Error("Query DB");
-  }
-
-  async save(user: UserVO): Promise<void> {
-    throw new Error("Insert/update user");
-  }
-
-  async delete(userId: string): Promise<void> {
-    throw new Error("Delete user");
-  }
-}
-```
+1. Load `create-capabilities-typescript` skill
+2. Create business logic capabilities (implement protocol interfaces)
+3. Create external adaptation capabilities (repositories, clients)
+4. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 5: Agent Layer
 
-Orchestrates sequential execution, branching, looping, and error handling. Ignorant of concrete capability and utility implementations (coordinates only via contract protocols injected at constructor time).
+> **Skill:** `create-agent-typescript` — load for orchestration logic.
 
-```typescript
-// packages/user/src/agent_user_orchestrator.ts
-/** User orchestration — coordinates user-related operations. */
+Orchestrates sequential execution, branching, looping, and error handling.
 
-import { v4 as uuidv4 } from "uuid";
-import type { IUserAggregate } from "shared/user/contract_user_aggregate";
-import type {
-  IUserProtocol,
-  IUserRepositoryProtocol,
-} from "shared/user/contract_user_protocol";
-import type { UserVO } from "shared/user/taxonomy_user_vo";
-import {
-  InvalidEmailError,
-  UserNotFoundError,
-} from "shared/user/taxonomy_user_error";
+### Steps
 
-export class UserOrchestrator implements IUserAggregate {
-  constructor(
-    private readonly checker: IUserProtocol,
-    private readonly repository: IUserRepositoryProtocol,
-  ) {}
-
-  async getUser(userId: string): Promise<UserVO> {
-    const user = await this.repository.findById(userId);
-    if (user === null) {
-      throw new UserNotFoundError(userId);
-    }
-    return user;
-  }
-
-  async createUser(name: string, email: string): Promise<UserVO> {
-    if (!this.checker.checkValidEmail(email)) {
-      throw new InvalidEmailError(email);
-    }
-    const user: UserVO = { id: uuidv4(), name, email };
-    await this.repository.save(user);
-    return user;
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    await this.repository.delete(userId);
-  }
-}
-```
+1. Load `create-agent-typescript` skill
+2. Create orchestrator class implementing aggregate interface
+3. Inject protocol dependencies via constructor
+4. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 6: Surface Layer
 
-Translates user-facing inputs into actions, delegating execution to the Agent orchestrator.
+> **Skill:** `create-surface-typescript` — load for user-facing input translation.
 
-```typescript
-// packages/user/src/surface_user_command.ts
-/** CLI command surface for user operations. */
+Translates user-facing inputs into actions, delegating to the Agent orchestrator.
 
-import type { IUserAggregate } from "shared/user/contract_user_aggregate";
+### Steps
 
-export class UserCommand {
-  constructor(private readonly orchestrator: IUserAggregate) {}
-
-  async run(args: string[]): Promise<string> {
-    if (args.length === 0) {
-      return "Usage: user <get|create> [args...]";
-    }
-
-    const action = args[0];
-    if (action === "get") {
-      const id = args[1];
-      if (!id) throw new Error("Missing user ID");
-      const user = await this.orchestrator.getUser(id);
-      return `User: ${user.name} <${user.email}>`;
-    } else if (action === "create") {
-      const name = args[1];
-      const email = args[2];
-      if (!name || !email) throw new Error("Missing name or email");
-      const user = await this.orchestrator.createUser(name, email);
-      return `Created user: ${user.id}`;
-    } else {
-      return "Usage: user <get|create> [args...]";
-    }
-  }
-}
-```
+1. Load `create-surface-typescript` skill
+2. Create surface classes (commands, handlers, endpoints)
+3. Inject aggregate interface via constructor
+4. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 7: Root Layer
 
+> **Skill:** `create-root-typescript` — load for DI container and entry point wiring.
+
 Wires concrete implementations to contracts and bootstraps the system.
 
-### Container
+### Steps
 
-```typescript
-// packages/user/src/root_user_container.ts
-/** User feature DI container. */
-
-import { UserOrchestrator } from "./agent_user_orchestrator";
-import { UserChecker } from "./capabilities_user_checker";
-import { UserRepository } from "./capabilities_user_repository";
-import type { IUserAggregate } from "shared/user/contract_user_aggregate";
-
-export class UserContainer {
-  private readonly _orchestrator: IUserAggregate;
-
-  constructor(dbPath: string) {
-    const checker = new UserChecker();
-    const repository = new UserRepository(dbPath);
-    this._orchestrator = new UserOrchestrator(checker, repository);
-  }
-
-  get orchestrator(): IUserAggregate {
-    return this._orchestrator;
-  }
-}
-```
-
-### Entry Point
-
-```typescript
-// src/root_cli_main_entry.ts
-/** CLI Main entry point. */
-
-import { UserContainer } from "../packages/user/src/root_user_container";
-import { UserCommand } from "../packages/user/src/surface_user_command";
-
-async function main() {
-  const container = new UserContainer("data.db");
-  const command = new UserCommand(container.orchestrator);
-
-  const args = process.argv.slice(2);
-  try {
-    const output = await command.run(args);
-    console.log(output);
-  } catch (error: any) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
-  }
-}
-
-main();
-```
+1. Load `create-root-typescript` skill
+2. Create DI container wiring all capabilities → orchestrator → surface
+3. Create entry point at workspace root or `src/`
+4. Verify: `npx tsc --noEmit`
 
 ---
 
 ## Phase 8: Verify
 
+> **Skill:** `build-verify-all` — load for final build verification.
+
 ```bash
 lint-arwaky-cli scan your-project/
+npx tsc --noEmit
 vitest run
 npm run lint && npm run format
 ```
 
 ---
 
-## File Naming Reference
+## Supplementary Skills (Post-Migration)
 
-| Layer        | Pattern                              | Example                        |
-| ------------ | ------------------------------------ | ------------------------------ |
-| taxonomy     | `taxonomy_<concept>_<suffix>.ts`     | `taxonomy_user_vo.ts`          |
-| contract     | `contract_<concept>_<suffix>.ts`     | `contract_user_protocol.ts`    |
-| utility      | `utility_<concept>_<suffix>.ts`      | `utility_user_hasher.ts`       |
-| capabilities | `capabilities_<concept>_<suffix>.ts` | `capabilities_user_checker.ts` |
-| agent        | `agent_<concept>_orchestrator.ts`    | `agent_user_orchestrator.ts`   |
-| surface      | `surface_<concept>_<suffix>.ts`      | `surface_user_command.ts`      |
-| root         | `root_<concept>_<suffix>.ts`         | `root_user_container.ts`       |
+| Skill | When to Use |
+|-------|-------------|
+| `add-docs-typescript` | Add JSDoc, type annotations after migration |
+| `fix-bypass-typescript` | Remove `@ts-ignore`, `@ts-expect-error` |
+| `cleanup-consolidate-typescript` | Remove dead code, merge duplicates |
+| `create-test-typescript` | Generate test suites |
 
 ---
 
-## Import Rules
+## Reference: File Naming & Import Rules
 
-```
-taxonomy_     → taxonomy_*
-contract_     → taxonomy_*
-utility_      → taxonomy_*
-capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*, utility_*
-surface_      → taxonomy_*, contract_*, utility_*
-root_         → ALL layers
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) §3 (Naming Convention) and §11 (Import Rules).
 
-**NEVER:** capabilities → agent, agent → surface, surface → capabilities, capability → capability.
+| Layer | Pattern |
+|-------|---------|
+| taxonomy | `taxonomy_<concept>_<suffix>.ts` |
+| contract | `contract_<concept>_<suffix>.ts` |
+| utility | `utility_<concept>_<suffix>.ts` |
+| capabilities | `capabilities_<concept>_<suffix>.ts` |
+| agent | `agent_<concept>_orchestrator.ts` |
+| surface | `surface_<concept>_<suffix>.ts` |
+| root | `root_<concept>_<suffix>.ts` |
 
 ---
 
 ## Troubleshooting
 
-| Violation  | Fix                                               |
-| ---------- | ------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                  |
-| AES102     | Change suffix to match layer's allowed list       |
-| AES201     | Remove forbidden import, use contract interface   |
-| AES202     | Add missing import per layer requirements         |
-| AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `@ts-ignore`, `@ts-expect-error`, bare `catch` |
-| AES401     | Move primitives to VO, constants to `_constant`   |
-| AES402     | Replace primitive types with VO types in contract |
-| AES403     | Implement protocol trait in capability            |
-| AES404     | Move stateless helper functions to Utility        |
-| AES501-506 | Wire in container or remove dead code             |
+See [ARCHITECTURE.md](ARCHITECTURE.md) §12 (Troubleshooting) for violation codes and fixes.
