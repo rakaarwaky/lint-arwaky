@@ -55,6 +55,7 @@ fn bench_build_graph_context(c: &mut Criterion) {
     let resolver = OrphanGraphResolver::new();
     let root = bench_root();
     let mut group = c.benchmark_group("build_graph_context");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [10, 100, 500, 1000, 5000] {
         let files = generate_file_list(size);
@@ -72,6 +73,7 @@ fn bench_build_graph_context(c: &mut Criterion) {
 fn bench_identify_entry_points(c: &mut Criterion) {
     let resolver = OrphanGraphResolver::new();
     let mut group = c.benchmark_group("identify_entry_points");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [10, 100, 500, 1000, 5000] {
         let files = generate_file_list_with_entry_points(size);
@@ -91,6 +93,7 @@ fn bench_check_orphans(c: &mut Criterion) {
     let analyzer = container.analyzer();
     let root = bench_root();
     let mut group = c.benchmark_group("check_orphans");
+    group.sample_size(30);
 
     for size in [10, 50, 100, 500] {
         let files = generate_file_list(size);
@@ -111,6 +114,7 @@ fn bench_check_orphans(c: &mut Criterion) {
 
 fn bench_trace_reachability(c: &mut Criterion) {
     let mut group = c.benchmark_group("trace_reachability_bfs");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 1000, 5000, 10000] {
         let graph = generate_import_graph(size);
@@ -149,6 +153,7 @@ fn bench_trace_reachability(c: &mut Criterion) {
 
 fn bench_expand_workspace_files(c: &mut Criterion) {
     let mut group = c.benchmark_group("expand_workspace_dedup");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 1000, 5000] {
         let mut files: Vec<String> = (0..size)
@@ -204,6 +209,7 @@ fn bench_expand_workspace_files(c: &mut Criterion) {
 
 fn bench_alive_set_construction(c: &mut Criterion) {
     let mut group = c.benchmark_group("alive_set_construction");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 1000, 5000] {
         let alive_files: Vec<String> = (0..size)
@@ -260,6 +266,7 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
     let analyzer = container.analyzer();
     let root = bench_root();
     let mut group = c.benchmark_group("seq_vs_par_file_processing");
+    group.sample_size(30);
 
     for size in [100, 500, 1000] {
         let files = generate_file_list(size);
@@ -304,6 +311,7 @@ fn bench_graph_context_reuse(c: &mut Criterion) {
     let analyzer = container.analyzer();
     let root = bench_root();
     let mut group = c.benchmark_group("graph_context_reuse");
+    group.sample_size(30);
 
     for size in [100, 500, 1000] {
         let files = generate_file_list(size);

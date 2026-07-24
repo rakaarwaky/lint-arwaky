@@ -1,10 +1,11 @@
 // PURPOSE: Benchmark tests for code-analysis — measures throughput of
 // bypass checking, line counting, and duplication analysis.
+// Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
 use code_analysis_lint_arwaky::{
     ArchLineChecker, BypassChecker, CodeDuplicationAnalyzer, MandatoryDefinitionChecker,
 };
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
@@ -48,9 +49,11 @@ fn make_def() -> LayerDefinition {
 fn bench_bypass_checker(c: &mut Criterion) {
     let checker = BypassChecker::new();
     let mut group = c.benchmark_group("bypass_checker");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 500, 1000] {
         let content = generate_bypass_rust(size);
+        group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(
             BenchmarkId::new("check_bypass_comments", size),
             &content,
@@ -58,7 +61,7 @@ fn bench_bypass_checker(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     checker.check_bypass_comments("bench.rs", data, &mut violations);
-                    violations
+                    black_box(violations)
                 })
             },
         );
@@ -72,9 +75,11 @@ fn bench_line_checker(c: &mut Criterion) {
     let checker = ArchLineChecker::new();
     let def = make_def();
     let mut group = c.benchmark_group("line_checker");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 500, 1000] {
         let content = generate_clean_rust(size);
+        group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(
             BenchmarkId::new("check_line_counts", size),
             &content,
@@ -82,7 +87,7 @@ fn bench_line_checker(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     checker.check_line_counts("bench.rs", Some(&def), data, &mut violations);
-                    violations
+                    black_box(violations)
                 })
             },
         );
@@ -96,12 +101,14 @@ fn bench_mandatory_checker(c: &mut Criterion) {
     let checker = MandatoryDefinitionChecker::new();
     let def = make_def();
     let mut group = c.benchmark_group("mandatory_checker");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 500, 1000] {
         let content = format!(
             "pub struct BenchStruct {{\n{}\n}}",
             generate_clean_rust(size)
         );
+        group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(
             BenchmarkId::new("check_mandatory_class_definition", size),
             &content,
@@ -114,7 +121,7 @@ fn bench_mandatory_checker(c: &mut Criterion) {
                         data,
                         &mut violations,
                     );
-                    violations
+                    black_box(violations)
                 })
             },
         );
@@ -127,6 +134,7 @@ fn bench_mandatory_checker(c: &mut Criterion) {
 fn bench_duplication_analyzer(c: &mut Criterion) {
     let analyzer = CodeDuplicationAnalyzer::new();
     let mut group = c.benchmark_group("duplication_analyzer");
+    group.sample_size(30);
 
     for file_count in [5, 10, 20] {
         let entries: Vec<(String, String)> = (0..file_count)
@@ -136,10 +144,11 @@ fn bench_duplication_analyzer(c: &mut Criterion) {
             })
             .collect();
 
+        group.throughput(Throughput::Elements(file_count as u64));
         group.bench_with_input(
             BenchmarkId::new("check_file_similarity_entries", file_count),
             &entries,
-            |b, data| b.iter(|| analyzer.check_file_similarity_entries(data, 5, 50.0)),
+            |b, data| b.iter(|| black_box(analyzer.check_file_similarity_entries(data, 5, 50.0))),
         );
     }
     group.finish();

@@ -1,7 +1,8 @@
 // PURPOSE: Benchmark tests for import-rules performance.
 // Requirement: Check 1000 files in < 2 seconds (FRD non-functional requirement).
+// Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
@@ -133,22 +134,20 @@ fn bench_full_orchestrator(c: &mut Criterion) {
     let mut group = c.benchmark_group("full_orchestrator");
     group.sample_size(10); // Fewer samples for I/O-heavy benchmark
 
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    for i in 0..1000 {
+        let path = dir.path().join(format!("taxonomy_bench_{}_vo.rs", i));
+        std::fs::write(&path, generate_clean_content(i)).unwrap();
+    }
+
+    let config = ArchitectureConfig::default();
+    let container = ImportContainer::new_with_config(config);
+    let orch = container.orchestrator();
+    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+
     group.bench_function("1000_clean_files", |b| {
-        let dir = tempfile::tempdir().unwrap();
-        for i in 0..1000 {
-            let path = dir.path().join(format!("taxonomy_bench_{}_vo.rs", i));
-            std::fs::write(&path, generate_clean_content(i)).unwrap();
-        }
-
-        let config = ArchitectureConfig::default();
-        let container = ImportContainer::new_with_config(config);
-        let orch = container.orchestrator();
-        let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-
-        b.iter(|| {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async { orch.run_audit(&target).await })
-        });
+        b.iter(|| black_box(rt.block_on(async { orch.run_audit(&target).await })))
     });
 
     group.finish();
