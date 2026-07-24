@@ -8,9 +8,8 @@ use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
 use cli_commands::CliContainer;
-use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands, ScanSubcommands};
+use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::common::taxonomy_threshold_vo::Threshold;
 
 pub struct CliMainEntry {}
