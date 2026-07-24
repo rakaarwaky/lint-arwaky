@@ -1,8 +1,8 @@
 // PURPOSE: Benchmark tests for import-rules performance.
 // Requirement: Check 1000 files in < 2 seconds (FRD non-functional requirement).
-// Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
+// Best practices: significance_level(0.05), sample_size(30+), throughput, scaling
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
@@ -52,14 +52,16 @@ pub struct Struct{} {{
     )
 }
 
-// ─── Benchmark: Unused Import Check Throughput ────────────
+// ─── Benchmark: Unused Import Check — Throughput ──────────
 
 fn bench_unused_import_check(c: &mut Criterion) {
     let checker = UnusedImportRuleChecker::new();
     let mut group = c.benchmark_group("unused_import_check");
+    group.significance_level(0.05).sample_size(30);
 
     for file_count in [10, 100, 1000] {
         let contents: Vec<String> = (0..file_count).map(generate_clean_content).collect();
+        group.throughput(Throughput::Elements(file_count as u64));
 
         group.bench_with_input(
             BenchmarkId::new("clean_files", file_count),
@@ -74,6 +76,7 @@ fn bench_unused_import_check(c: &mut Criterion) {
                             &mut violations,
                         );
                     }
+                    black_box(&violations);
                 });
             },
         );
@@ -81,13 +84,14 @@ fn bench_unused_import_check(c: &mut Criterion) {
     group.finish();
 }
 
-// ─── Benchmark: Dummy Import Check Throughput ─────────────
+// ─── Benchmark: Dummy Import Check — Throughput ───────────
 
 fn bench_dummy_import_check(c: &mut Criterion) {
     let checker = DummyImportChecker::new();
     let layer_map = LayerMapVO::new(HashMap::new());
     let root = FilePath::new(".").unwrap();
     let mut group = c.benchmark_group("dummy_import_check");
+    group.significance_level(0.05).sample_size(30);
 
     for file_count in [10, 100, 1000] {
         let contents: Vec<(FilePath, ContentString)> = (0..file_count)
@@ -98,6 +102,7 @@ fn bench_dummy_import_check(c: &mut Criterion) {
                 )
             })
             .collect();
+        group.throughput(Throughput::Elements(file_count as u64));
 
         group.bench_with_input(
             BenchmarkId::new("violation_files", file_count),
@@ -106,21 +111,9 @@ fn bench_dummy_import_check(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     for (file, content) in files {
-                        checker.check_dummy_functions(
-                            file,
-                            content,
-                            &mut violations,
-                            &root,
-                            &layer_map,
-                        );
-                        checker.check_dummy_imports(
-                            file,
-                            content,
-                            &mut violations,
-                            &root,
-                            &layer_map,
-                        );
+                        checker.check_all_dummy(file, content, &mut violations, &root, &layer_map);
                     }
+                    black_box(&violations);
                 });
             },
         );
@@ -128,28 +121,119 @@ fn bench_dummy_import_check(c: &mut Criterion) {
     group.finish();
 }
 
-// ─── Benchmark: Full Orchestrator (1000 files) ────────────
+// ─── Benchmark: Dummy Import — check_all vs individual ────
+
+fn bench_dummy_all_vs_individual(c: &mut Criterion) {
+    let checker = DummyImportChecker::new();
+    let layer_map = LayerMapVO::new(HashMap::new());
+    let root = FilePath::new(".").unwrap();
+    let mut group = c.benchmark_group("dummy_all_vs_individual");
+    group.significance_level(0.05).sample_size(30);
+
+    let file_count = 100;
+    let contents: Vec<(FilePath, ContentString)> = (0..file_count)
+        .map(|i| {
+            (
+                FilePath::new(format!("capabilities_file_{}.rs", i)).unwrap(),
+                ContentString::new(generate_violation_content(i)),
+            )
+        })
+        .collect();
+    group.throughput(Throughput::Elements(file_count as u64));
+
+    group.bench_function("check_all_dummy", |b| {
+        b.iter(|| {
+            let mut violations = Vec::new();
+            for (file, content) in &contents {
+                checker.check_all_dummy(file, content, &mut violations, &root, &layer_map);
+            }
+            black_box(&violations);
+        });
+    });
+
+    group.bench_function("individual_checks", |b| {
+        b.iter(|| {
+            let mut violations = Vec::new();
+            for (file, content) in &contents {
+                checker.check_dummy_imports(file, content, &mut violations, &root, &layer_map);
+                checker.check_dummy_functions(file, content, &mut violations, &root, &layer_map);
+                checker.check_dummy_impls(file, content, &mut violations, &root, &layer_map);
+                checker.check_taxonomy_intent(file, content, &mut violations, &root, &layer_map);
+                checker.check_surface_logic(file, content, &mut violations, &root, &layer_map);
+            }
+            black_box(&violations);
+        });
+    });
+
+    group.finish();
+}
+
+// ─── Benchmark: Full Orchestrator — Scaling ───────────────
 
 fn bench_full_orchestrator(c: &mut Criterion) {
     let mut group = c.benchmark_group("full_orchestrator");
-    group.sample_size(10); // Fewer samples for I/O-heavy benchmark
+    group.significance_level(0.05).sample_size(10);
 
     let rt = tokio::runtime::Runtime::new().unwrap();
-    let dir = tempfile::tempdir().unwrap();
-    for i in 0..1000 {
-        let path = dir.path().join(format!("taxonomy_bench_{}_vo.rs", i));
-        std::fs::write(&path, generate_clean_content(i)).unwrap();
+
+    for file_count in [100, 500, 1000] {
+        let dir = tempfile::tempdir().unwrap();
+        for i in 0..file_count {
+            let path = dir.path().join(format!("taxonomy_bench_{}_vo.rs", i));
+            std::fs::write(&path, generate_clean_content(i)).unwrap();
+        }
+
+        let config = ArchitectureConfig::default();
+        let container = ImportContainer::new_with_config(config);
+        let orch = container.orchestrator();
+        let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+        group.throughput(Throughput::Elements(file_count as u64));
+
+        group.bench_with_input(
+            BenchmarkId::new("audit", file_count),
+            &file_count,
+            |b, _| b.iter(|| black_box(rt.block_on(async { orch.run_audit(&target).await }))),
+        );
     }
+    group.finish();
+}
 
+// ─── Benchmark: Cycle Analyzer — Scaling ──────────────────
+
+fn bench_cycle_analyzer(c: &mut Criterion) {
+    use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
+    use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+
+    let analyzer = DependencyCycleAnalyzer::new();
     let config = ArchitectureConfig::default();
-    let container = ImportContainer::new_with_config(config);
-    let orch = container.orchestrator();
-    let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let layer_map = LayerMapVO::new(HashMap::new());
+    let root = FilePath::new(".").unwrap();
+    let mut group = c.benchmark_group("cycle_analyzer");
+    group.significance_level(0.05).sample_size(30);
 
-    group.bench_function("1000_clean_files", |b| {
-        b.iter(|| black_box(rt.block_on(async { orch.run_audit(&target).await })))
-    });
+    for file_count in [10, 100, 500] {
+        let dir = tempfile::tempdir().unwrap();
+        for i in 0..file_count {
+            let path = dir.path().join(format!("taxonomy_cycle_{}_vo.rs", i));
+            std::fs::write(&path, generate_clean_content(i)).unwrap();
+        }
+        let files: Vec<FilePath> = (0..file_count)
+            .map(|i| {
+                FilePath::new(
+                    dir.path()
+                        .join(format!("taxonomy_cycle_{}_vo.rs", i))
+                        .to_string_lossy()
+                        .to_string(),
+                )
+                .unwrap()
+            })
+            .collect();
+        group.throughput(Throughput::Elements(file_count as u64));
 
+        group.bench_with_input(BenchmarkId::new("scan", file_count), &files, |b, fls| {
+            b.iter(|| black_box(analyzer.scan(&config, &layer_map, fls, &root)))
+        });
+    }
     group.finish();
 }
 
@@ -157,7 +241,9 @@ criterion_group!(
     benches,
     bench_unused_import_check,
     bench_dummy_import_check,
+    bench_dummy_all_vs_individual,
     bench_full_orchestrator,
+    bench_cycle_analyzer,
 );
 criterion_main!(benches);
 
@@ -189,7 +275,5 @@ fn perf_1000_files_under_2_seconds() {
         elapsed.as_secs_f64()
     );
 
-    // Verify the audit actually ran (results may be empty if no violations, that's fine)
-    // The key assertion is the timing, not the violation count.
     let _ = results;
 }
