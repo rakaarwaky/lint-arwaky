@@ -11,6 +11,7 @@ use std::sync::Arc;
 pub fn handle_scan_orphan(
     path: Option<FilePath>,
     member: Option<String>,
+    format: Format,
     orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
@@ -104,12 +105,7 @@ pub fn handle_scan_orphan(
             .collect();
 
         for r in &filtered {
-            all_violations.push(ViolationItem {
-                code: r.code.code().to_string(),
-                file: r.file.value.clone(),
-                message: r.message.value.clone(),
-                severity: format!("{:?}", r.severity),
-            });
+            all_violations.push(ViolationItem::from_lint_result(r));
         }
     }
 
@@ -146,12 +142,7 @@ fn scan_single_root(
 
     let violations: Vec<ViolationItem> = results
         .iter()
-        .map(|r| ViolationItem {
-            code: r.code.code().to_string(),
-            file: r.file.value.clone(),
-            message: r.message.value.clone(),
-            severity: format!("{:?}", r.severity),
-        })
+        .map(ViolationItem::from_lint_result)
         .collect();
 
     output_violations(&violations, root, Format::Text, false);

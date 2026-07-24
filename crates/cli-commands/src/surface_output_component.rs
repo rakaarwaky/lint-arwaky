@@ -1,52 +1,67 @@
 // PURPOSE: SurfaceOutputComponent — UI-only output formatting for all surface actions.
 // Single source of truth for text/json/sarif/junit output format.
 // Zero business logic, zero utility functions — pure rendering.
+// Uses existing VOs from shared: ErrorCode, FilePath, LintMessage, Severity.
 
 use std::collections::BTreeMap;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::common::taxonomy_error_vo::ErrorCode;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 
-/// Minimal violation item for display.
+/// Minimal violation item for display. Uses existing VOs — no duplicate String wrappers.
 #[derive(Debug, Clone)]
 pub struct ViolationItem {
-    pub code: String,
-    pub file: String,
-    pub message: String,
-    pub severity: String,
+    pub code: ErrorCode,
+    pub file: FilePath,
+    pub message: LintMessage,
+    pub severity: Severity,
 }
 
 impl ViolationItem {
     pub fn from_lint_result(r: &LintResult) -> Self {
         Self {
-            code: r.code.code().to_string(),
-            file: r.file.value.clone(),
-            message: r.message.value.clone(),
-            severity: format!("{:?}", r.severity),
+            code: r.code.clone(),
+            file: r.file.clone(),
+            message: r.message.clone(),
+            severity: r.severity.clone(),
         }
     }
 
     pub fn from_json_obj(item: &serde_json::Value) -> Option<Self> {
         Some(Self {
-            code: item.get("code")?.as_str()?.to_string(),
-            file: item.get("file")?.as_str()?.to_string(),
-            message: item.get("message")?.as_str()?.to_string(),
-            severity: item
-                .get("severity")
-                .and_then(|v| v.as_str())
-                .unwrap_or("INFO")
-                .to_string(),
+            code: ErrorCode::raw(item.get("code")?.as_str()?),
+            file: FilePath::new(item.get("file")?.as_str()?.to_string()).ok()?,
+            message: LintMessage::new(item.get("message")?.as_str()?),
+            severity: parse_severity(
+                item.get("severity")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("INFO"),
+            ),
         })
     }
 
     fn severity_level(&self) -> u8 {
-        match self.severity.to_uppercase().as_str() {
-            "CRITICAL" => 4,
-            "HIGH" => 3,
-            "MEDIUM" => 2,
-            "LOW" => 1,
-            _ => 0,
+        match self.severity {
+            Severity::CRITICAL => 4,
+            Severity::HIGH => 3,
+            Severity::MEDIUM => 2,
+            Severity::LOW => 1,
+            Severity::INFO => 0,
         }
+    }
+}
+
+fn parse_severity(s: &str) -> Severity {
+    match s.to_uppercase().as_str() {
+        "CRITICAL" => Severity::CRITICAL,
+        "HIGH" => Severity::HIGH,
+        "MEDIUM" => Severity::MEDIUM,
+        "LOW" => Severity::LOW,
+        _ => Severity::INFO,
     }
 }
 
@@ -58,7 +73,7 @@ pub fn group_by_member<'a>(
     let mut grouped: BTreeMap<String, Vec<&ViolationItem>> = BTreeMap::new();
     for v in violations {
         let member = shared::cli_commands::utility_path_resolver::extract_member_from_path(
-            &v.file, root,
+            &v.file.value, root,
         );
         grouped.entry(member).or_default().push(v);
     }
@@ -102,14 +117,14 @@ fn render_text(
             println!("[{member_name}] — {} violations", results.len());
             println!();
             for r in results {
-                println!("  [{}] {}: {}", r.code, short_file(&r.file), r.message);
+                println!("  [{}] {}: {}", r.code.code(), short_file(&r.file.value), r.message.value);
                 println!();
             }
         } else {
-            let lang = lang_tag(&results[0].file);
+            let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
             for r in results.iter().take(20) {
-                println!("  [{}] {}", r.code, short_file(&r.file));
+                println!("  [{}] {}", r.code.code(), short_file(&r.file.value));
             }
             if results.len() > 20 {
                 println!("  ... ({} more)", results.len() - 20);
@@ -147,13 +162,13 @@ fn render_json(
         .map(|v| {
             let member =
                 shared::cli_commands::utility_path_resolver::extract_member_from_path(
-                    &v.file, target_path,
+                    &v.file.value, target_path,
                 );
             serde_json::json!({
-                "code": v.code,
-                "file": v.file,
-                "message": v.message,
-                "severity": v.severity,
+                "code": v.code.code(),
+                "file": v.file.value,
+                "message": v.message.value,
+                "severity": format!("{}", v.severity),
                 "member": member,
             })
         })
@@ -187,12 +202,12 @@ fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
                         _ => "note",
                     };
                     serde_json::json!({
-                        "ruleId": v.code,
+                        "ruleId": v.code.code(),
                         "level": level,
-                        "message": { "text": v.message },
+                        "message": { "text": v.message.value },
                         "locations": [{
                             "physicalLocation": {
-                                "artifactLocation": { "uri": v.file },
+                                "artifactLocation": { "uri": v.file.value },
                             }
                         }],
                     })
@@ -232,13 +247,14 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
             for r in results {
                 let escaped = r
                     .message
+                    .value
                     .replace('&', "&amp;")
                     .replace('<', "&lt;")
                     .replace('>', "&gt;");
                 println!(
                     "      <failure message=\"[{}] {}\">{}</failure>",
-                    r.code,
-                    short_file(&r.file),
+                    r.code.code(),
+                    short_file(&r.file.value),
                     escaped
                 );
             }

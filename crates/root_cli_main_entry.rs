@@ -130,6 +130,7 @@ fn main() -> ExitCode {
                     cli_commands::surface_orphan_action::handle_scan_orphan(
                         Some(FilePath::new(target_path).unwrap_or_default()),
                         target_member,
+                        format.clone(),
                         container.orphan_orchestrator.clone(),
                         container.multi_project_orchestrator.clone(),
                         container.report_formatter.clone(),
@@ -190,6 +191,7 @@ fn main() -> ExitCode {
                 cli_commands::surface_orphan_action::handle_scan_orphan(
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
+                    Format::Text,
                     container.orphan_orchestrator.clone(),
                     container.multi_project_orchestrator.clone(),
                     container.report_formatter.clone(),
@@ -227,6 +229,16 @@ fn main() -> ExitCode {
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.external_lint.clone(),
+                container.report_formatter.clone(),
+            )
+        }
+        Commands::ScanOrphan { path, format } => {
+            cli_commands::surface_orphan_action::handle_scan_orphan(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                None,
+                format,
+                container.orphan_orchestrator.clone(),
+                container.multi_project_orchestrator.clone(),
                 container.report_formatter.clone(),
             )
         }
