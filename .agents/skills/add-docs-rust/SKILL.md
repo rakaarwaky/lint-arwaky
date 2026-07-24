@@ -13,7 +13,7 @@ metadata:
   dependencies: []
   related:
     - lint-arwaky-rust
-    - cleanup-files-rust
+    - cleanup-consolidate-rust
 ---
 
 # add-docs-rust

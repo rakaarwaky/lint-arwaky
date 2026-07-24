@@ -9,7 +9,7 @@ metadata:
     - "remove ts-expect-error typescript"
   dependencies: []
   related:
-    - cleanup-files-typescript
+    - cleanup-consolidate-typescript
 ---
 
 # fix-bypass-typescript
