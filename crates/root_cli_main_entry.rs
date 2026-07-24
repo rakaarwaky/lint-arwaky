@@ -104,7 +104,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR,
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
                 orchestrator,
@@ -123,7 +123,7 @@ fn main() -> ExitCode {
                     None,
                 );
                 surface.check_orphan_single_file(&path);
-                ExitCode::SUCCESS
+                DomainExitCode::OK
             } else {
                 // Directory mode — scan all files
                 cli_commands::surface_orphan_action::handle_scan_orphan(
@@ -182,7 +182,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             rt.block_on(cli_commands::surface_maintenance_command::handle_security(
                 orchestrator,
@@ -198,7 +198,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             rt.block_on(
                 cli_commands::surface_maintenance_command::handle_dependencies(
@@ -226,21 +226,21 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             let exe_path = default_file_path("lint-arwaky".to_string());
             match rt.block_on(aggregate.install_hook(&exe_path)) {
                 Ok(status) if status.value => {
                     println!("Installed git pre-commit hook successfully");
-                    ExitCode::SUCCESS
+                    DomainExitCode::OK
                 }
                 Ok(_) => {
                     println!("Not a git repository, hook installation skipped");
-                    ExitCode::SUCCESS
+                    DomainExitCode::OK
                 }
                 Err(e) => {
                     eprintln!("Failed to install pre-commit hook: {:?}", e);
-                    ExitCode::from(2)
+                    DomainExitCode::RUNTIME_ERROR
                 }
             }
         }
@@ -253,20 +253,20 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             match rt.block_on(aggregate.uninstall_hook()) {
                 Ok(status) if status.value => {
                     println!("Removed git pre-commit hook successfully");
-                    ExitCode::SUCCESS
+                    DomainExitCode::OK
                 }
                 Ok(_) => {
                     println!("Not a git repository, hook removal skipped");
-                    ExitCode::SUCCESS
+                    DomainExitCode::OK
                 }
                 Err(e) => {
                     eprintln!("Failed to remove pre-commit hook: {:?}", e);
-                    ExitCode::FAILURE
+                    DomainExitCode::RUNTIME_ERROR
                 }
             }
         }
@@ -284,7 +284,7 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             rt.block_on(cli_commands::surface_setup_command::handle_install(
                 setup_orchestrator,
@@ -303,15 +303,16 @@ fn main() -> ExitCode {
                 .build()
             {
                 Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
             rt.block_on(cli_commands::surface_config_command::handle_config_show(
                 config_orchestrator,
             ))
         }
         // P3.3: these are handled by early-exit above
-        _ => ExitCode::SUCCESS,
-    }
+        _ => DomainExitCode::OK,
+    };
+    domain_exit.to_process_exit_code()
 }
 
 fn default_file_path(s: String) -> shared::common::taxonomy_path_vo::FilePath {
