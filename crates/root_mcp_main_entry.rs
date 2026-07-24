@@ -9,7 +9,6 @@
 use rmcp::ServiceExt;
 use std::sync::Arc;
 
-use mcp_server::agent_mcp_server_orchestrator::{McpServerDependencies, McpServerOrchestrator};
 use mcp_server::root_mcp_container::McpContainer;
 use mcp_server::surface_mcp_command::LintArwakyMcpServer;
 
@@ -27,9 +26,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Create the orchestrator that dispatches incoming commands to the
     // correct linter pipeline, and wrap it in the MCP server handler.
-    let agent = McpServerOrchestrator::new(McpServerDependencies {
-        external_lint: container.external_lint,
-    });
+    let agent = container.orchestrator();
 
     // Start serving the MCP protocol over standard I/O.
     // The rmcp SDK handles JSON-RPC 2.0 framing over stdin/stdout.
