@@ -20,11 +20,11 @@ pub fn handle_scan_quality(
     };
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
     let root_fp = match FilePath::new(root.clone()) {
         Ok(fp) => fp,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
 
     // Load config from the target path, not from "."

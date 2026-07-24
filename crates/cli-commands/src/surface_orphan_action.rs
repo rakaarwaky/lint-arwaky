@@ -36,7 +36,7 @@ pub fn handle_scan_orphan(
 
     let rt = match surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
 
     let workspaces = rt.block_on(config_orchestrator.discover_workspaces(&root_fp));
@@ -59,7 +59,7 @@ pub fn handle_scan_orphan(
             .collect();
         if filtered.is_empty() {
             eprintln!("[error] no workspace member matching '{member_name}'");
-            return ExitCode::from(2);
+            return ExitCode::RUNTIME_ERROR;
         }
         filtered
     } else {
@@ -130,9 +130,9 @@ pub fn handle_scan_orphan(
     );
 
     if all_violations.is_empty() {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
 

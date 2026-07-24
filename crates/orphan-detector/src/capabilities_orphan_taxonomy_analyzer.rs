@@ -154,8 +154,7 @@ impl TaxonomyOrphanAnalyzer {
         };
 
         // Use a static cache: maps (src_dir, stem) -> has_import
-        static CACHE: OnceLock<std::sync::Mutex<HashMap<(String, String), bool>>> =
-            OnceLock::new();
+        static CACHE: OnceLock<std::sync::Mutex<HashMap<(String, String), bool>>> = OnceLock::new();
         let cache = CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
         let key = (src_dir.to_string_lossy().to_string(), stem.to_string());
 

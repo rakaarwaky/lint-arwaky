@@ -8,7 +8,7 @@ use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggreg
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use std::process::ExitCode;
+use shared::common::taxonomy_common_error::ExitCode;
 use std::sync::Arc;
 
 pub struct GitCommandsSurface {}
@@ -90,8 +90,8 @@ pub async fn handle_git_diff(
         files.len()
     );
     if total_violations > 0 {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     } else {
-        ExitCode::SUCCESS
+        ExitCode::OK
     }
 }

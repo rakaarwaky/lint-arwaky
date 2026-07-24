@@ -59,7 +59,8 @@ fn main() -> ExitCode {
         Commands::Adapters => {
             let external_lint_container =
                 external_lint::root_external_lint_container::ExternalLintContainer::new_default();
-            return surface_plugin_command::handle_adapters(external_lint_container.aggregate());
+            return surface_plugin_command::handle_adapters(external_lint_container.aggregate())
+                .to_process_exit_code();
         }
         _ => {}
     }

@@ -4,10 +4,10 @@
 // and delegates to IWatchAggregate.run() which blocks until interrupted.
 //
 // The atomic `running` flag coordinates graceful shutdown on Ctrl+C.
-use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
@@ -41,7 +41,7 @@ pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<File
         r.store(false, Ordering::SeqCst);
     }) {
         eprintln!("[error] failed to set Ctrl+C handler: {}", e);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
 
     watch_aggregate.run(config, running)
