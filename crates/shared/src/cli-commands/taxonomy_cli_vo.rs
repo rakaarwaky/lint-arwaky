@@ -29,50 +29,10 @@ pub struct Cli {
 }
 
 #[derive(Subcommand, Debug)]
-pub enum ScanSubcommands {
-    /// Run code-quality analysis only (AES101-AES306)
-    Quality {
-        /// Path to scan
-        path: Option<String>,
-    },
-
-    /// Run import-rule checks only (AES201-AES299)
-    Import {
-        /// Path to scan
-        path: Option<String>,
-    },
-
-    /// Run naming-rule checks only (AES401-AES406)
-    Naming {
-        /// Path to scan
-        path: Option<String>,
-    },
-
-    /// Run role-rule checks only (AES301-AES399)
-    Role {
-        /// Path to scan
-        path: Option<String>,
-    },
-
-    /// Check orphan: file path -> check single file, directory path -> scan all files in directory
-    Orphan {
-        /// File or directory path to check
-        path: Option<String>,
-        /// Scan only a specific workspace member by name
-        #[arg(long)]
-        member: Option<String>,
-    },
-}
-
-#[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Run all linters and calculate score.
-    /// Supports subcommands: quality, import, naming, role, orphan (e.g. `scan quality [path]`)
     #[command(alias = "check")]
     Scan {
-        #[command(subcommand)]
-        subcommand: Option<ScanSubcommands>,
-
         /// Path to scan
         path: Option<String>,
         /// Scan only a specific workspace member by name (e.g. "shared", "import-rules")
@@ -111,9 +71,13 @@ pub enum Commands {
         /// Scan only a specific workspace member by name (only for directory mode)
         #[arg(long)]
         member: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
     },
 
     /// Run code-quality analysis only (AES101-AES306)
+    #[command(name = "quality")]
     ScanQuality {
         /// Path to scan
         path: Option<String>,
@@ -123,6 +87,7 @@ pub enum Commands {
     },
 
     /// Run import-rule checks only (AES201-AES299)
+    #[command(name = "import")]
     ScanImport {
         /// Path to scan
         path: Option<String>,
@@ -132,6 +97,7 @@ pub enum Commands {
     },
 
     /// Run naming-rule checks only (AES401-AES406)
+    #[command(name = "naming")]
     ScanNaming {
         /// Path to scan
         path: Option<String>,
@@ -141,6 +107,7 @@ pub enum Commands {
     },
 
     /// Run role-rule checks only (AES301-AES399)
+    #[command(name = "role")]
     ScanRole {
         /// Path to scan
         path: Option<String>,
@@ -150,17 +117,9 @@ pub enum Commands {
     },
 
     /// Run external linter checks only (Clippy, Ruff, ESLint, etc.)
+    #[command(name = "external")]
     ScanExternal {
         /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
-    /// Check orphan: file path -> check single file, directory path -> scan all files in directory
-    ScanOrphan {
-        /// File or directory path to check
         path: Option<String>,
         /// Output format: text, json, sarif, junit
         #[arg(long, default_value_t = Format::Text)]
