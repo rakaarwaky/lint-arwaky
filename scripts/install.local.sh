@@ -26,10 +26,72 @@ fi
 
 mkdir -p "$CONFIG_DIR/rules" "$REPORT_DIR" "$DIST_DIR" "$INSTALL_BIN"
 
-# 2. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
+# 2. Install external dependencies (skip if already present)
+echo "==> Checking external dependencies..."
+
+detect_pkg_mgr() {
+    if command -v apt-get &>/dev/null; then
+        PKG_MGR="apt"
+    elif command -v dnf &>/dev/null; then
+        PKG_MGR="dnf"
+    elif command -v brew &>/dev/null; then
+        PKG_MGR="brew"
+    elif command -v pacman &>/dev/null; then
+        PKG_MGR="pacman"
+    else
+        PKG_MGR="unknown"
+    fi
+}
+detect_pkg_mgr
+
+npm_install() {
+    case "$PKG_MGR" in
+        apt)    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs ;;
+        dnf)    curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash - && sudo dnf install -y nodejs ;;
+        brew)   brew install node ;;
+        pacman) sudo pacman -S --noconfirm nodejs npm ;;
+        *)      echo "  [warn] Unknown package manager. Install node/npm manually." ;;
+    esac
+}
+
+pip_install() {
+    local pkg="$1"
+    if command -v pip3 &>/dev/null; then
+        pip3 install --user "$pkg"
+    elif command -v pip &>/dev/null; then
+        pip install --user "$pkg"
+    else
+        echo "  [warn] pip not found. Install $pkg manually."
+    fi
+}
+
+install_if_missing() {
+    local cmd="$1"
+    local pkg="$2"
+    local method="$3"
+    if command -v "$cmd" &>/dev/null; then
+        echo "  [skip] $cmd already installed"
+    else
+        echo "  [install] $pkg..."
+        eval "$method"
+    fi
+}
+
+# Node/npm first, then eslint/tsc depend on it
+install_if_missing cargo "Rust/Cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . \"\$HOME/.cargo/env\""
+install_if_missing npm "npm" "npm_install"
+install_if_missing eslint "eslint" "sudo npm install -g eslint"
+install_if_missing tsc "typescript" "sudo npm install -g typescript"
+install_if_missing mypy "mypy" "pip_install mypy"
+install_if_missing ruff "ruff" "pip_install ruff"
+install_if_missing bandit "bandit" "pip_install bandit"
+
+echo "==> External dependency check done."
+
+# 3. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
 RUST_MIN_STACK=33554432 cargo build --release
 
-# 3. Checksums + install
+# 4. Checksums + install
 pushd "$RELEASE_DIR" >/dev/null
 sha256sum "${BINARIES[@]}" > "$DIST_DIR/SHA256SUMS.txt"
 popd >/dev/null
@@ -39,7 +101,7 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
-# 4. Install docs + SKILL.md to XDG config
+# 5. Install docs + SKILL.md to XDG config
 Docs=(
     "SKILL.md"
     "ARCHITECTURE.md"
@@ -62,7 +124,7 @@ if [ -f "$RULES_SRC" ]; then
     echo "  RULES_AES.md -> $CONFIG_DIR/RULES_AES.md"
 fi
 
-# 5. Copy .agents/skills/, .agents/rules/, and .agents/prompts/ to target's .agents/ folder
+# 6. Copy .agents/skills/, .agents/rules/, and .agents/prompts/ to target's .agents/ folder
 AGENTS_SRC="$PROJECT_ROOT/.agents"
 AGENTS_DST="$CONFIG_DIR/.agents"
 if [ -d "$AGENTS_SRC" ]; then
