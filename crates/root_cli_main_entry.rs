@@ -120,7 +120,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             } else {
                 // Directory mode — scan all files
-                cli_commands::surface_orphan_command::handle_scan_orphan(
+                cli_commands::surface_orphan_action::handle_scan_orphan(
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
                     format,
@@ -130,34 +130,34 @@ fn main() -> ExitCode {
                 )
             }
         }
-        Commands::ScanQuality { path, format } => {
-            cli_commands::surface_quality_command::handle_scan_quality(
+        Commands::Quality { path, format } => {
+            cli_commands::surface_quality_action::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.code_analysis_linter.clone(),
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanImport { path, format } => cli_commands::surface_import_command::handle_scan_import(
+        Commands::Import { path, format } => cli_commands::surface_import_action::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanNaming { path, format } => cli_commands::surface_naming_command::handle_scan_naming(
+        Commands::Naming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanRole { path, format } => cli_commands::surface_role_command::handle_scan_role(
+        Commands::Role { path, format } => cli_commands::surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanExternal { path, format } => {
-            cli_commands::surface_external_command::handle_scan_external(
+        Commands::External { path, format } => {
+            cli_commands::surface_external_action::handle_scan_external(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.external_lint.clone(),
