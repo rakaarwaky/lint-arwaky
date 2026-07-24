@@ -31,7 +31,7 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use rayon::prelude::*;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
