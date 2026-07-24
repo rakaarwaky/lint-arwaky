@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::collections::HashSet;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -38,22 +39,20 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
+        let aes202_exceptions: HashSet<String> = config
+            .rules
+            .iter()
+            .filter(|r| r.name.value == "AES202")
+            .flat_map(|r| r.exceptions.values.iter().cloned())
+            .collect();
+
         let file_violations: Vec<LintResult> = files
             .values
             .iter()
             .flat_map(|f| {
                 let f_str = f.to_string();
                 let basename = f.basename();
-
-                let mut is_exception = false;
-                for r in &config.rules {
-                    if r.name.value.as_str() == "AES202" && r.exceptions.values.contains(&basename)
-                    {
-                        is_exception = true;
-                        break;
-                    }
-                }
-                if is_exception {
+                if aes202_exceptions.contains(&basename) {
                     return Vec::new();
                 }
 

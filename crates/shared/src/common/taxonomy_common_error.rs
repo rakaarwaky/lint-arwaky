@@ -55,6 +55,12 @@ impl ExitCode {
     pub fn to_process_exit_code(&self) -> std::process::ExitCode {
         std::process::ExitCode::from(self.value.value() as u8)
     }
+
+    /// Compare against a `std::process::ExitCode` (e.g. from CLI handlers).
+    /// Uses the underlying numeric value for comparison.
+    pub fn matches_std(&self, other: &std::process::ExitCode) -> bool {
+        self.to_process_exit_code() == *other
+    }
 }
 
 impl std::fmt::Display for ExitCode {
