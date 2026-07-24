@@ -105,16 +105,36 @@ lint-arwaky-cli ci crates/ --threshold 80 --format junit
 
 ---
 
-### `orphan`
-Checks if a target Rust source file is an orphan (AES501–AES506) unreachable from entry points.
+### `quality`, `import`, `naming`, `role`, `orphan`, `external`
+Run a single linter independently for targeted analysis.
 
 ```bash
-# Check single file for orphan status
-lint-arwaky-cli orphan crates/shared/src/utility_generator.rs
+# Run only naming rules
+lint-arwaky-cli naming crates/
+
+# Run only orphan detection with JSON output
+lint-arwaky-cli orphan crates/ --format json
+
+# Run orphan on a specific member
+lint-arwaky-cli orphan crates/ --member shared_common
+
+# Run only import rules on a specific path
+lint-arwaky-cli import crates/code_analysis
+
+# Run only role rules
+lint-arwaky-cli role crates/
+
+# Run only external linters (clippy)
+lint-arwaky-cli external crates/
+
+# Run only quality analysis
+lint-arwaky-cli quality crates/
 ```
 
 **Arguments & Flags**:
-* `<FILE_PATH>`: Relative or absolute path to the target source file.
+* `[PATH]`: Target path to scan (defaults to `.`).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+* `--member <NAME>`: (orphan only) Target specific workspace member.
 
 ---
 

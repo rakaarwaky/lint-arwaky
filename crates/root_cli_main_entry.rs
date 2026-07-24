@@ -68,85 +68,17 @@ fn main() -> ExitCode {
 
     match cli.command {
         Commands::Scan {
-            subcommand,
             path,
             member,
             format,
-        } => match subcommand {
-            Some(ScanSubcommands::Quality { path: sub_path }) => {
-                cli_commands::surface_quality_action::handle_scan_quality(
-                    sub_path
-                        .or(path)
-                        .map(|p| FilePath::new(p).unwrap_or_default()),
-                    format.clone(),
-                    container.code_analysis_linter.clone(),
-                    container.report_formatter.clone(),
-                )
-            }
-            Some(ScanSubcommands::Import { path: sub_path }) => {
-                cli_commands::surface_import_action::handle_scan_import(
-                    sub_path
-                        .or(path)
-                        .map(|p| FilePath::new(p).unwrap_or_default()),
-                    format.clone(),
-                    container.import_orchestrator.clone(),
-                    container.report_formatter.clone(),
-                )
-            }
-            Some(ScanSubcommands::Naming { path: sub_path }) => {
-                cli_commands::surface_naming_action::handle_scan_naming(
-                    sub_path
-                        .or(path)
-                        .map(|p| FilePath::new(p).unwrap_or_default()),
-                    format.clone(),
-                    container.naming_orchestrator.clone(),
-                    container.report_formatter.clone(),
-                )
-            }
-            Some(ScanSubcommands::Role { path: sub_path }) => {
-                cli_commands::surface_role_action::handle_scan_role(
-                    sub_path
-                        .or(path)
-                        .map(|p| FilePath::new(p).unwrap_or_default()),
-                    format.clone(),
-                    container.role_orchestrator.clone(),
-                    container.report_formatter.clone(),
-                )
-            }
-            Some(ScanSubcommands::Orphan {
-                path: sub_path,
-                member: sub_member,
-            }) => {
-                let target_path = sub_path.or(path).unwrap_or_else(|| ".".to_string());
-                let target_member = sub_member.or(member);
-                let path_obj = std::path::Path::new(&target_path);
-                if path_obj.is_file() {
-                    let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
-                        container.report_formatter.clone(),
-                        None,
-                    );
-                    surface.check_orphan_single_file(&target_path);
-                    ExitCode::SUCCESS
-                } else {
-                    cli_commands::surface_orphan_action::handle_scan_orphan(
-                        Some(FilePath::new(target_path).unwrap_or_default()),
-                        target_member,
-                        format.clone(),
-                        container.orphan_orchestrator.clone(),
-                        container.multi_project_orchestrator.clone(),
-                        container.report_formatter.clone(),
-                    )
-                }
-            }
-            None => surface_check_command::handle_scan(surface_check_command::ScanOptions {
-                path: path.map(|p| FilePath::new(p).unwrap_or_default()),
-                report_formatter: container.report_formatter.clone(),
-                multi_project_orchestrator: Some(container.multi_project_orchestrator.clone()),
-                filter,
-                member,
-                format,
-            }),
-        },
+        } => surface_check_command::handle_scan(surface_check_command::ScanOptions {
+            path: path.map(|p| FilePath::new(p).unwrap_or_default()),
+            report_formatter: container.report_formatter.clone(),
+            multi_project_orchestrator: Some(container.multi_project_orchestrator.clone()),
+            filter,
+            member,
+            format,
+        }),
         Commands::Fix { path, dry_run } => surface_fix_action::handle_fix(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             dry_run,

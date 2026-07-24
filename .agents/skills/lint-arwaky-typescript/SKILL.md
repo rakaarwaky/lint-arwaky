@@ -104,16 +104,36 @@ lint-arwaky-cli ci packages/ --threshold 80 --format junit
 
 ---
 
-### `orphan`
-Checks if a target TypeScript source file is an orphan (AES501–AES506) unreachable from entry points.
+### `quality`, `import`, `naming`, `role`, `orphan`, `external`
+Run a single linter independently for targeted analysis.
 
 ```bash
-# Check single file for orphan status
-lint-arwaky-cli orphan packages/animator/src/utility_helper.ts
+# Run only naming rules
+lint-arwaky-cli naming packages/
+
+# Run only orphan detection with JSON output
+lint-arwaky-cli orphan packages/ --format json
+
+# Run orphan on a specific member
+lint-arwaky-cli orphan packages/ --member animator
+
+# Run only import rules
+lint-arwaky-cli import packages/
+
+# Run only role rules
+lint-arwaky-cli role packages/
+
+# Run only external linters (eslint)
+lint-arwaky-cli external packages/
+
+# Run only quality analysis
+lint-arwaky-cli quality packages/
 ```
 
 **Arguments & Flags**:
-* `<FILE_PATH>`: Relative or absolute path to the target source file.
+* `[PATH]`: Target path to scan (defaults to `.`).
+* `--format <FORMAT>`: Output format (`text`, `json`, `sarif`, `junit`).
+* `--member <NAME>`: (orphan only) Target specific workspace member.
 
 ---
 

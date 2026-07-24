@@ -227,6 +227,26 @@ The cli-commands crate provides the unified command-line interface that drives t
   - User presses Ctrl+C → prints "Stopping watcher...", graceful shutdown.
 - **Error Handler**: Signal handler registration failure → exit code 2.
 
+### FR-015: Individual Linter Commands (quality, import, naming, role, orphan, external)
+
+- **Description**: Run a single linter independently for targeted analysis.
+- **Input**: `path: Option<String>`, `format: Format`, (orphan: `member: Option<String>`)
+- **Output**: `ExitCode` (0 = pass, 1 = violations found, 2 = error)
+- **Business Rules**:
+  - `quality` — Runs code-quality analysis (AES301-305).
+  - `import` — Runs import-rule checks (AES201-205).
+  - `naming` — Runs naming-rule checks (AES101-102).
+  - `role` — Runs role-rule checks (AES401-406).
+  - `orphan` — Runs orphan detection (AES501-506). Supports `--member` for workspace filtering.
+  - `external` — Runs external linters (Clippy, Ruff, ESLint).
+  - Each command supports `--format` (text, json, sarif, junit).
+  - When scanning a specific member path, output shows detailed per-file violations.
+  - When scanning a workspace root, output shows compact per-AES-code counts.
+- **Edge Cases**:
+  - Path doesn't exist → error message + exit code 2.
+  - No violations found → exit code 0.
+- **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
+
 
 ## API Contract
 
@@ -235,6 +255,12 @@ The cli-commands crate provides the unified command-line interface that drives t
 | -------------- | --------------------------------------------------- | ----------- | ---------------------------------------------------------- |
 | Check        | check options                                     | Exit code | Analysis on project (1:1 equivalent alias of Scan)       |
 | Scan         | scan options                                      | Exit code | Multi-workspace analysis (1:1 equivalent alias of Check) |
+| Quality      | path, format                                      | Exit code | Code-quality analysis only (AES301-305)                  |
+| Import       | path, format                                      | Exit code | Import-rule checks only (AES201-205)                     |
+| Naming       | path, format                                      | Exit code | Naming-rule checks only (AES101-102)                     |
+| Role         | path, format                                      | Exit code | Role-rule checks only (AES401-406)                       |
+| Orphan       | path, member, format                              | Exit code | Orphan detection only (AES501-506)                       |
+| External     | path, format                                      | Exit code | External linter checks only (Clippy, Ruff, ESLint)       |
 | CI           | linter, path, threshold                           | Exit code | CI-mode threshold comparison                             |
 | Fix          | path, dry-run flag, linter, factory               | Exit code | Apply automatic fixes                                    |
 | Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                                    |
