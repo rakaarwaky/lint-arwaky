@@ -1,6 +1,6 @@
 // PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
 // and delegates output formatting to surface_output_component.
-use std::process::ExitCode;
+use shared::common::taxonomy_common_error::ExitCode;
 use std::sync::Arc;
 use tokio::process::Command;
 
@@ -43,12 +43,12 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
 
     let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
 
     let format = opts.format;
@@ -60,7 +60,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         if let Some(ref orchestrator) = opts.multi_project_orchestrator {
             let root_fp = match FilePath::new(root.clone()) {
                 Ok(fp) => fp,
-                Err(_) => return ExitCode::from(2),
+                Err(_) => return ExitCode::RUNTIME_ERROR,
             };
             let workspaces = rt.block_on(orchestrator.discover_workspaces(&root_fp));
             if !workspaces.is_empty() {
@@ -73,7 +73,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
                 });
                 if !matched {
                     eprintln!("[error] no workspace member matching '{m}'");
-                    return ExitCode::from(2);
+                    return ExitCode::RUNTIME_ERROR;
                 }
             }
         }

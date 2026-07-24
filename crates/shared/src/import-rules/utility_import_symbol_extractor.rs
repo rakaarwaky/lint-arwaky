@@ -28,6 +28,9 @@ const DERIVE_MACROS: &[&str] = &[
     "Display",
     "EnumString",
     "AsRefStr",
+    "IntoParallelRefIterator",
+    "ParallelIterator",
+    "IntoParallelIterator",
 ];
 
 fn is_rust_trait_import(name: &str) -> bool {
