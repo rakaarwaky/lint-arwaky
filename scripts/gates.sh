@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+usage() {
+    echo "Usage: bash scripts/gates.sh [options]"
+    echo ""
+    echo "Runs all quality gates: format, clippy, self-lint, AES codes, tests."
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help"
+    exit 0
+}
+
+case "${1:-}" in
+    -h|--help) usage ;;
+esac
+
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
 export RUST_MIN_STACK="${RUST_MIN_STACK:-268435456}"
 export CARGO_INCREMENTAL=0

@@ -124,7 +124,7 @@ bump_version() {
   case "$bump_type" in
     patch) patch=$((patch + 1)) ;;
     minor) minor=$((minor + 1)); patch=0 ;;
-    major) major=$((minor + 1)); minor=0; patch=0 ;;
+    major) major=$((major + 1)); minor=0; patch=0 ;;
     *) die "Invalid bump type: $bump_type (expected patch|minor|major|X.Y.Z)" ;;
   esac
   echo "${major}.${minor}.${patch}"
@@ -338,9 +338,9 @@ else
     fi
 
     if $DRY_RUN; then
-      info "[DRY-RUN] Would run: git add -A && git commit -m \"$COMMIT_MSG\""
+      info "[DRY-RUN] Would run: git add -u && git commit -m \"$COMMIT_MSG\""
     else
-      run "git add -A"
+      run "git add -u"
       if [ "$AMEND" = true ]; then
         run "git commit --amend -m '$COMMIT_MSG'"
       else

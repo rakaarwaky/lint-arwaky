@@ -121,7 +121,7 @@ else
     [[ "$ans" =~ ^[nN] ]] && die "Aborted."
   fi
 
-  git add -A
+  git add -u
   git commit -m "$COMMIT_MSG"
   pass "Committed: $COMMIT_MSG"
 

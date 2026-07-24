@@ -3,24 +3,35 @@
 # Sets up all developer tools, adapters, linkers, git hooks, and builds the project.
 set -euo pipefail
 
-BOLD='\033[1m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
 export RUST_MIN_STACK="${RUST_MIN_STACK:-268435456}"
 export CARGO_INCREMENTAL=0
 
+usage() {
+    echo "Usage: bash scripts/install.dev.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help"
+    echo ""
+    echo "Sets up: Rust toolchain, cargo-nextest, cargo-audit, cargo-watch,"
+    echo "  mold linker, eslint, prettier, typescript, mypy, ruff, bandit,"
+    echo "  pytest, git hooks, and builds the project."
+    exit 0
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help) usage ;;
+        *) die "Unknown option: $1 (use -h for help)" ;;
+    esac
+done
+
 echo -e "${BOLD}"
 echo "  _     _       _         _                   _                 "
-echo " | |   (_)_ __ | |_      / \   _ __ __      ____ _| |k _   _ "
-echo " | |   | | '_ \| __|    / _ \ | '__|\ \ /\ / / _\` | |/ /| | | |"
+echo " | |   (_)_ __ | |_      / \   _ __ __      ____ _| |_   _ "
+echo " | |   | | '_ \| __|    / _ \ | '__|\ \ /\ / / _\` | / / | | | |"
 echo " | |___| | | | | |_    / ___ \| |    \ V  V / (_| |   < | |_| |"
 echo " |_____|_|_| |_|\__|  /_/   \_\_|     \_/\_/ \__,_|_|\_\ \__, |"
 echo "                                                         |___/ "
@@ -29,21 +40,8 @@ echo -e "${NC}"
 
 # 1. System & Package Manager Detection
 echo -e "${BOLD}[1/6] Detecting platform and package manager...${NC}"
-detect_pkg_mgr() {
-    if command -v apt-get &>/dev/null; then
-        PKG_MGR="apt"
-    elif command -v dnf &>/dev/null; then
-        PKG_MGR="dnf"
-    elif command -v brew &>/dev/null; then
-        PKG_MGR="brew"
-    elif command -v pacman &>/dev/null; then
-        PKG_MGR="pacman"
-    else
-        PKG_MGR="unknown"
-    fi
-}
 detect_pkg_mgr
-echo "  Platform: linux, Package Manager: $PKG_MGR"
+echo "  Platform: $(uname -s), Package Manager: $PKG_MGR"
 
 # 2. Rust Toolchain & Dev Extensions
 echo -e "\n${BOLD}[2/6] Setting up Rust toolchain & developer tools...${NC}"
@@ -99,43 +97,10 @@ fi
 # 3. External Linters & Adapters
 echo -e "\n${BOLD}[3/6] Installing external linter adapters...${NC}"
 
-npm_install() {
-    case "$PKG_MGR" in
-        apt)    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - && sudo apt-get install -y nodejs ;;
-        dnf)    curl -fsSL https://rpm.nodesource.com/setup_lts.x | sudo bash - && sudo dnf install -y nodejs ;;
-        brew)   brew install node ;;
-        pacman) sudo pacman -S --noconfirm nodejs npm ;;
-        *)      echo "  [warn] Unknown package manager. Install node/npm manually." ;;
-    esac
-}
-
-pip_install() {
-    local pkg="$1"
-    if command -v pip3 &>/dev/null; then
-        pip3 install --user "$pkg"
-    elif command -v pip &>/dev/null; then
-        pip install --user "$pkg"
-    else
-        echo "  [warn] pip not found. Install $pkg manually."
-    fi
-}
-
-install_if_missing() {
-    local cmd="$1"
-    local pkg="$2"
-    local method="$3"
-    if command -v "$cmd" &>/dev/null; then
-        echo "  [skip] $cmd already installed"
-    else
-        echo "  [install] $pkg..."
-        eval "$method"
-    fi
-}
-
 install_if_missing npm "npm" "npm_install"
-install_if_missing eslint "eslint" "sudo npm install -g eslint || npm install -g eslint"
-install_if_missing tsc "typescript" "sudo npm install -g typescript || npm install -g typescript"
-install_if_missing prettier "prettier" "sudo npm install -g prettier || npm install -g prettier"
+install_if_missing eslint "eslint" "npm_install_global eslint"
+install_if_missing tsc "typescript" "npm_install_global typescript"
+install_if_missing prettier "prettier" "npm_install_global prettier"
 install_if_missing mypy "mypy" "pip_install mypy"
 install_if_missing ruff "ruff" "pip_install ruff"
 install_if_missing bandit "bandit" "pip_install bandit"
