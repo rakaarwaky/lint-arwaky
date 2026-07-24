@@ -57,7 +57,7 @@ fn default_rows() -> ShortcutRows {
             ("s", "scan"),
             ("f", "fix"),
             ("t", "ci"),
-            ("w", "watch"),
+            ("w", "toggle watch"),
             ("o", "orphan"),
             ("d", "doctor"),
             ("i", "init"),

@@ -104,6 +104,11 @@ impl TuiCommandSurface {
                 }
             }
 
+            // --- Poll watch updates (non-blocking) ---
+            if state.watching {
+                self.tui_aggregate.poll_watch(state);
+            }
+
             terminal.draw(|frame| {
                 let area = frame.area();
 

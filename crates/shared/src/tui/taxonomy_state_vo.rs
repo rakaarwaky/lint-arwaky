@@ -45,6 +45,10 @@ pub struct AppState {
     pub filter_pos: usize,
     /// Whether file watching is active (w key toggles this).
     pub watching: bool,
+    /// Receiver for watch-mode lint updates from background thread.
+    pub watch_receiver: Option<std::sync::mpsc::Receiver<String>>,
+    /// Latest watch output to display in preview panel.
+    pub watch_results: String,
     /// Whether a background scan is currently running.
     pub scanning: bool,
     /// Current phase description shown during scanning (e.g. "AES checks").
@@ -85,6 +89,8 @@ impl AppState {
             filtered_indices: Vec::new(),
             filter_pos: 0,
             watching: false,
+            watch_receiver: None,
+            watch_results: String::new(),
             scanning: false,
             scan_phase: String::new(),
             scan_files_done: 0,

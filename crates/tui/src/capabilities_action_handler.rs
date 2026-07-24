@@ -39,7 +39,19 @@ impl IActionHandlerProtocol for ActionHandler {
         ActionHandler::load_preview(self, state);
     }
 
-    fn poll_watch(&self, _state: &mut AppState) {}
+    fn poll_watch(&self, state: &mut AppState) {
+        // Check for new watch results from background thread
+        if let Some(rx) = &state.watch_receiver {
+            while let Ok(message) = rx.try_recv() {
+                state.watch_results.push_str(&message);
+                state.watch_results.push('\n');
+            }
+            // Update preview with latest watch results
+            if !state.watch_results.is_empty() {
+                state.preview_text.clone_from(&state.watch_results);
+            }
+        }
+    }
 
     fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
         // Guard: don't start a second scan while one is running.
@@ -222,11 +234,25 @@ impl ActionHandler {
             }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
-            // ---- Watch: not yet implemented in TUI — redirect to CLI ----
+            // ---- Watch: start/stop file watcher with real linting loop ----
             TuiEvent::ActionWatch => {
-                state.preview_text = "File watch is not available in the TUI yet.\n\nUse the CLI command:\n  lint-arwaky-cli watch <path>\n\nThis will start a file watcher that re-runs\nthe linter on every file change.".to_string();
-                state.preview_mode = PreviewMode::ActionOutput;
-                state.set_status("File watch: use CLI `lint-arwaky-cli watch`");
+                if state.watching {
+                    // Stop watch mode
+                    state.watching = false;
+                    state.watch_receiver = None;
+                    state.watch_results.clear();
+                    state.preview_text = "Watch stopped.".to_string();
+                    state.preview_mode = PreviewMode::ActionOutput;
+                    state.set_status("Watch stopped.");
+                } else {
+                    // Start watch mode
+                    let (result, rx) = self.lint_port.watch(state.selected_path());
+                    state.watching = true;
+                    state.watch_receiver = Some(rx);
+                    state.preview_text = result.output;
+                    state.preview_mode = PreviewMode::ActionOutput;
+                    state.set_status("Watching for file changes (press w to stop)...");
+                }
             }
             // ---- Path input dialog: character-by-character editing ----
             TuiEvent::PathInput(ch) => state.path_input.push(ch),

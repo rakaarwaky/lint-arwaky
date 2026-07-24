@@ -26,11 +26,13 @@ use std::sync::Arc;
 // with user-facing output formatting.
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+    watch_provider: Option<Arc<dyn IWatchProviderProtocol>>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
     maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
@@ -548,14 +550,89 @@ impl ILintExecutorProtocol for LintExecutor {
         );
         LintExecutionResult::success(output, 0)
     }
+
+    fn watch(&self, path: &str) -> (LintExecutionResult, std::sync::mpsc::Receiver<String>) {
+        use shared::common::taxonomy_path_vo::FilePath;
+        use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+
+        // Run initial scan
+        let fp = FilePath::new(path.to_string()).unwrap_or_default();
+        let results = self.code_analysis.run_code_analysis(&fp);
+        let count = results.len();
+        let score = self.code_analysis.calc_score(&results.values);
+        let initial_output = format!(
+            "Watch mode started for {}\n[initial] {} violations, score {:.1}\nWatching for file changes (press Ctrl+C or Esc to stop)...\n",
+            path, count, score
+        );
+
+        // Spawn background thread for file watching
+        let provider = match &self.watch_provider {
+            Some(p) => p.clone(),
+            None => {
+                // No watch provider available — just return initial result
+                let (tx, rx) = std::sync::mpsc::channel();
+                let _ = tx.send(format!("[initial] {} violations, score {:.1}", count, score));
+                let result = LintExecutionResult {
+                    output: initial_output,
+                    violation_count: count,
+                    success: count == 0,
+                };
+                return (result, rx);
+            }
+        };
+
+        let config = WatchConfig::from_path(path.to_string());
+        let (tx, rx) = std::sync::mpsc::channel();
+
+        // Clone for the thread
+        let code_analysis_thread = self.code_analysis.clone();
+        let provider_thread = provider.clone();
+
+        std::thread::spawn(move || {
+            use file_watch::ChangeAnalyzer;
+
+            // Initial lint already done by caller, start watcher now
+            if provider_thread.start(&config).is_err() {
+                return;
+            }
+
+            let mut rx_events = provider_thread.subscribe();
+
+            while let Ok(event) = rx_events.recv() {
+                if ChangeAnalyzer::is_lintable(&event.path) {
+                    let event_fp = FilePath::new(&event.path).unwrap_or_default();
+                    let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
+                    let lint_count = lint_results.len();
+                    let lint_score = code_analysis_thread.calc_score(&lint_results.values);
+
+                    let _ = tx.send(format!(
+                        "[change] {} | {} violations, score {:.1}",
+                        event.path, lint_count, lint_score
+                    ));
+                }
+            }
+        });
+
+        let result = LintExecutionResult {
+            output: initial_output,
+            violation_count: count,
+            success: count == 0,
+        };
+
+        (result, rx)
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl LintExecutor {
-    pub fn new(code_analysis: Arc<dyn ICodeAnalysisAggregate>) -> Self {
+    pub fn new(
+        code_analysis: Arc<dyn ICodeAnalysisAggregate>,
+        watch_provider: Option<Arc<dyn IWatchProviderProtocol>>,
+    ) -> Self {
         Self {
             code_analysis,
+            watch_provider,
             fix_orchestrator: None,
             setup_aggregate: None,
             maintenance: None,
@@ -628,6 +705,11 @@ impl LintExecutor {
         role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     ) -> Self {
         self.role_orchestrator = Some(role_orchestrator);
+        self
+    }
+
+    pub fn with_watch_provider(mut self, watch_provider: Arc<dyn IWatchProviderProtocol>) -> Self {
+        self.watch_provider = Some(watch_provider);
         self
     }
 
