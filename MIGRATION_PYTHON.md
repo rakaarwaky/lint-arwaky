@@ -407,7 +407,7 @@ if __name__ == "__main__":
 ```bash
 lint-arwaky-cli scan your-project/
 pytest
-black --check . && flake8 .
+ruff check . && ruff format --check .
 ```
 
 ---
@@ -433,7 +433,7 @@ taxonomy_     → taxonomy_*
 contract_     → taxonomy_*
 utility_      → taxonomy_*
 capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*
+agent_        → taxonomy_*, contract_*, utility_*
 surface_      → taxonomy_*, contract_*, utility_*
 root_         → ALL layers
 ```
@@ -451,7 +451,7 @@ root_         → ALL layers
 | AES201     | Remove forbidden import, use contract interface   |
 | AES202     | Add missing import per layer requirements         |
 | AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
+| AES304     | Remove `# type: ignore`, `noqa`, bare `except`    |
 | AES401     | Move primitives to VO, constants to `_constant`   |
 | AES402     | Replace primitive types with VO types in contract |
 | AES403     | Implement protocol trait in capability            |
