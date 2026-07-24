@@ -1,9 +1,6 @@
-// PURPOSE: Acceptance test — FRD: AES Fix: File Naming Correction
-// Requirement: Automatically rename files that violate the snake_case convention.
+// PURPOSE: Acceptance test — FR-003: Symbol Renaming (AES101)
+// Requirement: Rename symbols that violate snake_case naming conventions.
 // Scope: All supported languages.
-// Note: The current implementation handles symbol renaming (AES101) via
-//       LintFixProcessor::rename_symbol. File-level renaming is delegated
-//       to the orchestrator pipeline.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;

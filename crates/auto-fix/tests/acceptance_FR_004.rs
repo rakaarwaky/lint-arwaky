@@ -1,5 +1,6 @@
-// PURPOSE: Acceptance test — FRD: Fixes must be idempotent and deterministic.
+// PURPOSE: Acceptance test — FR-004: Dry-Run Mode & Idempotency
 // Requirement: Running auto-fix repeatedly on the same file produces no further changes.
+//              Dry-run reports outcomes without modifying files.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
