@@ -1,0 +1,272 @@
+// PURPOSE: SurfaceOutputComponent — UI-only output formatting for all surface actions.
+// Single source of truth for text/json/sarif/junit output format.
+// Zero business logic, zero utility functions — pure rendering.
+
+use std::collections::BTreeMap;
+
+use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+
+/// Minimal violation item for display.
+#[derive(Debug, Clone)]
+pub struct ViolationItem {
+    pub code: String,
+    pub file: String,
+    pub message: String,
+    pub severity: String,
+}
+
+impl ViolationItem {
+    pub fn from_lint_result(r: &LintResult) -> Self {
+        Self {
+            code: r.code.code().to_string(),
+            file: r.file.value.clone(),
+            message: r.message.value.clone(),
+            severity: format!("{:?}", r.severity),
+        }
+    }
+
+    pub fn from_json_obj(item: &serde_json::Value) -> Option<Self> {
+        Some(Self {
+            code: item.get("code")?.as_str()?.to_string(),
+            file: item.get("file")?.as_str()?.to_string(),
+            message: item.get("message")?.as_str()?.to_string(),
+            severity: item
+                .get("severity")
+                .and_then(|v| v.as_str())
+                .unwrap_or("INFO")
+                .to_string(),
+        })
+    }
+
+    fn severity_level(&self) -> u8 {
+        match self.severity.to_uppercase().as_str() {
+            "CRITICAL" => 4,
+            "HIGH" => 3,
+            "MEDIUM" => 2,
+            "LOW" => 1,
+            _ => 0,
+        }
+    }
+}
+
+/// Group violations by workspace member name extracted from file paths.
+pub fn group_by_member<'a>(
+    violations: &'a [ViolationItem],
+    root: &str,
+) -> BTreeMap<String, Vec<&'a ViolationItem>> {
+    let mut grouped: BTreeMap<String, Vec<&ViolationItem>> = BTreeMap::new();
+    for v in violations {
+        let member = shared::cli_commands::utility_path_resolver::extract_member_from_path(
+            &v.file, root,
+        );
+        grouped.entry(member).or_default().push(v);
+    }
+    grouped
+}
+
+/// Output violations in the requested format. `is_specific_member` controls compact vs detailed.
+pub fn output_violations(
+    violations: &[ViolationItem],
+    target_path: &str,
+    format: Format,
+    is_specific_member: bool,
+) {
+    let grouped = group_by_member(violations, target_path);
+    match format {
+        Format::Text => render_text(&grouped, target_path, is_specific_member),
+        Format::Json => render_json(&grouped, violations, target_path),
+        Format::Sarif => render_sarif(&grouped),
+        Format::Junit => render_junit(&grouped),
+    }
+}
+
+// ─── Text ───────────────────────────────────────────────────
+
+fn render_text(
+    grouped: &BTreeMap<String, Vec<&ViolationItem>>,
+    target_path: &str,
+    is_specific_member: bool,
+) {
+    let ver = env!("CARGO_PKG_VERSION");
+    println!("Lint Arwaky v{ver} — Scan Report");
+    println!("Target: {target_path}");
+    println!();
+
+    let mut total = 0usize;
+    for (member_name, results) in grouped {
+        total += results.len();
+        if results.is_empty() {
+            println!("[?] {member_name} — clean");
+        } else if is_specific_member {
+            println!("[{member_name}] — {} violations", results.len());
+            println!();
+            for r in results {
+                println!("  [{}] {}: {}", r.code, short_file(&r.file), r.message);
+                println!();
+            }
+        } else {
+            let lang = lang_tag(&results[0].file);
+            println!("[{lang}] {member_name} — {} violations", results.len());
+            for r in results.iter().take(20) {
+                println!("  [{}] {}", r.code, short_file(&r.file));
+            }
+            if results.len() > 20 {
+                println!("  ... ({} more)", results.len() - 20);
+            }
+            println!();
+        }
+    }
+
+    println!("Total: {total} violations");
+
+    if !is_specific_member {
+        println!();
+        println!("Tip: Scan specific member for detailed violations:");
+        println!("  lint-arwaky-cli scan <member-path>");
+        println!("  lint-arwaky-cli scan <root> --member <member-name>");
+    }
+}
+
+// ─── JSON ───────────────────────────────────────────────────
+
+fn render_json(
+    grouped: &BTreeMap<String, Vec<&ViolationItem>>,
+    all_violations: &[ViolationItem],
+    target_path: &str,
+) {
+    let members: Vec<serde_json::Value> = grouped
+        .iter()
+        .map(|(name, results)| {
+            serde_json::json!({ "member": name, "violations": results.len() })
+        })
+        .collect();
+
+    let results: Vec<serde_json::Value> = all_violations
+        .iter()
+        .map(|v| {
+            let member =
+                shared::cli_commands::utility_path_resolver::extract_member_from_path(
+                    &v.file, target_path,
+                );
+            serde_json::json!({
+                "code": v.code,
+                "file": v.file,
+                "message": v.message,
+                "severity": v.severity,
+                "member": member,
+            })
+        })
+        .collect();
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "target": target_path,
+            "total_violations": all_violations.len(),
+            "members": members,
+            "results": results,
+        }))
+        .unwrap_or_default()
+    );
+}
+
+// ─── SARIF ──────────────────────────────────────────────────
+
+fn render_sarif(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
+    let ver = env!("CARGO_PKG_VERSION");
+    let runs: Vec<serde_json::Value> = grouped
+        .iter()
+        .map(|(member_name, results)| {
+            let items: Vec<serde_json::Value> = results
+                .iter()
+                .map(|v| {
+                    let level = match v.severity_level() {
+                        4 | 3 => "error",
+                        2 => "warning",
+                        _ => "note",
+                    };
+                    serde_json::json!({
+                        "ruleId": v.code,
+                        "level": level,
+                        "message": { "text": v.message },
+                        "locations": [{
+                            "physicalLocation": {
+                                "artifactLocation": { "uri": v.file },
+                            }
+                        }],
+                    })
+                })
+                .collect();
+            serde_json::json!({
+                "tool": { "driver": { "name": member_name, "version": ver } },
+                "results": items,
+            })
+        })
+        .collect();
+
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "version": "2.1.0",
+            "runs": runs,
+        }))
+        .unwrap_or_default()
+    );
+}
+
+// ─── JUnit ──────────────────────────────────────────────────
+
+fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
+    println!(r#"<?xml version="1.0" encoding="UTF-8"?>"#);
+    println!("<testsuites>");
+    for (member_name, results) in grouped {
+        let failures = results.len();
+        println!(
+            "  <testsuite name=\"{member_name}\" tests=\"1\" failures=\"{failures}\">"
+        );
+        if results.is_empty() {
+            println!("    <testcase name=\"{member_name}\"/>");
+        } else {
+            println!("    <testcase name=\"{member_name}\">");
+            for r in results {
+                let escaped = r
+                    .message
+                    .replace('&', "&amp;")
+                    .replace('<', "&lt;")
+                    .replace('>', "&gt;");
+                println!(
+                    "      <failure message=\"[{}] {}\">{}</failure>",
+                    r.code,
+                    short_file(&r.file),
+                    escaped
+                );
+            }
+            println!("    </testcase>");
+        }
+        println!("  </testsuite>");
+    }
+    println!("</testsuites>");
+}
+
+// ─── Private helpers (UI-only) ──────────────────────────────
+
+fn short_file(path: &str) -> &str {
+    path.rsplit('/').next().unwrap_or(path)
+}
+
+fn lang_tag(path: &str) -> &str {
+    if path.ends_with(".rs") {
+        "rust"
+    } else if path.ends_with(".py") {
+        "python"
+    } else if path.ends_with(".ts")
+        || path.ends_with(".tsx")
+        || path.ends_with(".js")
+        || path.ends_with(".jsx")
+    {
+        "typescript"
+    } else {
+        "unknown"
+    }
+}

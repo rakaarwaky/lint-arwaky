@@ -1,23 +1,18 @@
-// PURPOSE: ExternalCommandsSurface — CLI surface for external lint commands
-//
-// Thin CLI surface that delegates all external lint logic to the agent layer.
-// Handles path resolution, request construction, and output formatting.
 use std::process::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 
 use crate::surface_common_command;
+use crate::surface_output_component::{output_violations, ViolationItem};
 
 pub fn handle_scan_external(
     path: Option<FilePath>,
     format: Format,
     external_lint: Arc<dyn IExternalLintAggregate>,
-    report_formatter: Arc<dyn IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -36,10 +31,10 @@ pub fn handle_scan_external(
         Err(_) => return ExitCode::from(2),
     };
     let results = rt.block_on(external_lint.scan_all(&root_fp));
-    let report = ScanReport::new(results.values, vec![]);
-    let output = report_formatter.format(&report, format);
-    println!("{output}");
-    if report.violation_count() > 0 {
+    let violations: Vec<ViolationItem> = results.values.iter().map(ViolationItem::from_lint_result).collect();
+    let has_violations = !violations.is_empty();
+    output_violations(&violations, &root_fp.value, format, false);
+    if has_violations {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS

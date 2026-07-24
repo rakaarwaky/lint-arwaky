@@ -230,22 +230,6 @@ fn main() -> ExitCode {
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanParallelSubprocess { path, format } => {
-            let target_path = path.unwrap_or_else(|| ".".to_string());
-            let rt = match tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-            {
-                Ok(r) => r,
-                Err(_) => return ExitCode::from(2),
-            };
-            rt.block_on(
-                cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
-                    &target_path,
-                    format,
-                ),
-            )
-        }
         Commands::Security { path } => {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();

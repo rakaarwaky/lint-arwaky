@@ -37,3 +37,29 @@ fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
     path.components()
         .any(|c| matches!(c, std::path::Component::Normal(name) if name == component))
 }
+
+/// Extract workspace member name from a file path relative to the scan root.
+/// e.g. `("test-workspaces/crates/shared_common/src/foo.rs", "test-workspaces/crates")` → `"shared_common"`
+pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
+    let normalized_root = root.trim_end_matches('/');
+    let normalized_path = file_path.trim_start_matches("./");
+    if let Some(rest) = normalized_path.strip_prefix(normalized_root) {
+        let rest = rest.trim_start_matches('/');
+        if let Some(member) = rest.split('/').next() {
+            if !member.is_empty() {
+                return member.to_string();
+            }
+        }
+    }
+    for marker in &["crates", "modules", "packages"] {
+        if let Some(idx) = normalized_path.find(marker) {
+            let after = &normalized_path[idx + marker.len()..].trim_start_matches('/');
+            if let Some(member) = after.split('/').next() {
+                if !member.is_empty() {
+                    return member.to_string();
+                }
+            }
+        }
+    }
+    ".".to_string()
+}

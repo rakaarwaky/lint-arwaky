@@ -1,8 +1,6 @@
 use crate::surface_common_command;
+use crate::surface_output_component::{output_violations, ViolationItem};
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
-use shared::cli_commands::utility_path_resolver;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
@@ -15,7 +13,7 @@ pub fn handle_scan_orphan(
     member: Option<String>,
     orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    report_formatter: Arc<dyn IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -42,12 +40,7 @@ pub fn handle_scan_orphan(
     let workspaces = rt.block_on(config_orchestrator.discover_workspaces(&root_fp));
 
     if workspaces.is_empty() {
-        return scan_single_root(
-            &root,
-            &orphan_orchestrator,
-            &config_orchestrator,
-            &report_formatter,
-        );
+        return scan_single_root(&root, &orphan_orchestrator, &config_orchestrator);
     }
 
     let workspaces = if let Some(ref member_name) = member {
@@ -72,17 +65,9 @@ pub fn handle_scan_orphan(
     };
 
     let cwd = std::env::current_dir().unwrap_or_default();
-    let multi = workspaces.len() > 1;
-    if multi {
-        println!(
-            "Lint Arwaky v{} (Scan-Orphan Multi-Workspace)",
-            env!("CARGO_PKG_VERSION")
-        );
-        println!("Found {} workspaces in {root}", workspaces.len());
-        println!();
-    }
+    let is_specific_member = member.is_some();
 
-    let mut global_results = Vec::new();
+    let mut all_violations: Vec<ViolationItem> = Vec::new();
     let workspace_canonicals: Vec<_> = workspaces
         .iter()
         .map(|ws| {
@@ -118,32 +103,31 @@ pub fn handle_scan_orphan(
             })
             .collect();
 
-        if multi {
-            let name = std::path::Path::new(&ws.path.value)
-                .file_name()
-                .map(|n| n.to_string_lossy())
-                .unwrap_or_default();
-            println!("── {} ──────────────────────", name);
-            if filtered.is_empty() {
-                println!("  (clean)");
-            } else {
-                for r in &filtered {
-                    println!("  [{}] {}: {}", r.code, r.file.value, r.message.value);
-                }
-            }
-            println!();
+        for r in &filtered {
+            all_violations.push(ViolationItem {
+                code: r.code.code().to_string(),
+                file: r.file.value.clone(),
+                message: r.message.value.clone(),
+                severity: format!("{:?}", r.severity),
+            });
         }
-
-        global_results.extend(filtered);
     }
 
-    let report = ScanReport::new(global_results.clone(), vec![]);
-    if !multi {
-        let output = report_formatter.format(&report, Format::Text);
-        println!("{output}");
-    }
+    // Use workspace root as target for proper member grouping
+    let target = if is_specific_member {
+        let member_path = std::path::Path::new(&root).join(member.as_deref().unwrap_or(""));
+        if member_path.exists() {
+            member_path.to_string_lossy().to_string()
+        } else {
+            root.clone()
+        }
+    } else {
+        root.clone()
+    };
 
-    if global_results.is_empty() {
+    output_violations(&all_violations, &target, Format::Text, is_specific_member);
+
+    if all_violations.is_empty() {
         ExitCode::SUCCESS
     } else {
         ExitCode::from(1)
@@ -154,25 +138,25 @@ fn scan_single_root(
     root: &str,
     orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
-    report_formatter: &Arc<dyn IReportFormatterAggregate>,
 ) -> ExitCode {
-    let scan_root =
-        utility_path_resolver::find_workspace_root(root).unwrap_or(std::path::PathBuf::from(root));
-    let scan_root_str = scan_root.to_string_lossy().to_string();
-    let root_fp = match FilePath::new(scan_root_str.clone()) {
-        Ok(fp) => fp,
-        Err(_) => {
-            eprintln!("[error] invalid path: {scan_root_str}");
-            return ExitCode::from(2);
-        }
-    };
-    let lang = utility_path_resolver::detect_language_from_path(&scan_root_str);
-    let ignored = config_orchestrator.ignored_paths_for_language(&root_fp, lang);
-    let (_, results) = orphan_orchestrator.scan_orphans(&root_fp, ignored.values());
-    let report = ScanReport::new(results.clone(), vec![]);
-    let output = report_formatter.format(&report, Format::Text);
-    println!("{output}");
-    if results.is_empty() {
+    let scan_root = crate::surface_common_command::resolve_file_path(root);
+    let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
+    let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
+    let (_, results) = orphan_orchestrator.scan_orphans(&scan_root, ignored.values());
+
+    let violations: Vec<ViolationItem> = results
+        .iter()
+        .map(|r| ViolationItem {
+            code: r.code.code().to_string(),
+            file: r.file.value.clone(),
+            message: r.message.value.clone(),
+            severity: format!("{:?}", r.severity),
+        })
+        .collect();
+
+    output_violations(&violations, root, Format::Text, false);
+
+    if violations.is_empty() {
         ExitCode::SUCCESS
     } else {
         ExitCode::from(1)
