@@ -75,8 +75,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-debug-
 
-      - name: Run tests
-        run: cargo test --workspace --lib --tests --no-fail-fast
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run tests (nextest)
+        run: cargo nextest run --workspace --lib --tests
 
   # ─── Job 3: Compliance (self-lint + AES codes, parallel) ─
   compliance:

@@ -16,8 +16,6 @@ FAILED=0
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
-# Run a gate in background, print result when complete.
-# Usage: run_gate "name" command...
 run_gate() {
     local name="$1"
     shift
@@ -51,7 +49,7 @@ wait_and_report() {
             PASSED=$((PASSED + 1))
         else
             echo -e "${RED}❌ ${name} FAILED${NC}"
-            tail -20 "$out" 2>/dev/null || true
+            tail -n 20 "$out" 2>/dev/null || true
             FAILED=$((FAILED + 1))
         fi
     done
@@ -62,8 +60,8 @@ echo -e "${YELLOW}Lint Arwaky — Gate Checker${NC}"
 echo "Running all quality gates locally..."
 echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
 
-# ─── Phase 1: Fast static checks (parallel) ───────────────
-echo -e "\n${CYAN}━━━ Phase 1: Format + Clippy (parallel) ━━━${NC}"
+# ─── Stage 1: Fast static checks (parallel) ───────────────
+echo -e "\n${CYAN}━━━ Stage 1: Format + Clippy (parallel) ━━━${NC}"
 PIDS=()
 run_gate "Rust Format" cargo fmt --all -- --check &
 PIDS+=($!)
@@ -71,13 +69,13 @@ run_gate "Clippy" cargo clippy --all-targets -- -D warnings &
 PIDS+=($!)
 wait_and_report "${PIDS[@]}"
 
-# ─── Phase 2: CLI build (shared for self-lint + AES codes) ─
-echo -e "\n${CYAN}━━━ Building lint-arwaky-cli ━━━${NC}"
+# ─── Stage 2: CLI build (shared for self-lint + AES codes) ─
+echo -e "\n${CYAN}━━━ Stage 2: Building lint-arwaky-cli ━━━${NC}"
 cargo build --bin lint-arwaky-cli 2>&1
 echo -e "${GREEN}✅ CLI build complete${NC}"
 
-# ─── Phase 3: Lint gates (parallel, reuse binary) ─────────
-echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + AES Codes (parallel) ━━━${NC}"
+# ─── Stage 3: Self-Lint + AES Codes (parallel) ────────────
+echo -e "\n${CYAN}━━━ Stage 3: Self-Lint + AES Codes (parallel) ━━━${NC}"
 PIDS=()
 run_gate "AES Self-Lint (check . = 0 violations)" bash -c '
     output=$(./target/debug/lint-arwaky-cli check . 2>&1)
@@ -94,29 +92,33 @@ run_gate "AES Codes (test-workspaces >= 24)" bash -c '
 PIDS+=($!)
 wait_and_report "${PIDS[@]}"
 
-# ─── Phase 4: Tests (incremental per crate) ────────────────
-echo -e "\n${CYAN}━━━ Gate: Tests ━━━${NC}"
-total_passed=0
-test_failed=0
-crates="shared-lint-arwaky code-analysis-lint-arwaky import-rules-lint-arwaky naming-rules-lint-arwaky role-rules-lint-arwaky config-system-lint-arwaky auto-fix-lint-arwaky file-watch-lint-arwaky orphan-detector-lint-arwaky external-lint-lint-arwaky maintenance-lint-arwaky git-hooks-lint-arwaky project-setup-lint-arwaky report-formatter-lint-arwaky cli-commands-lint-arwaky mcp-server-lint-arwaky tui-lint-arwaky"
-
-for crate in $crates; do
-    if test_out=$(cargo test -p "$crate" 2>&1); then
-        passed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
-        total_passed=$((total_passed + passed))
+# ─── Stage 4: Tests (cargo nextest if available, fallback to cargo test)
+echo -e "\n${CYAN}━━━ Stage 4: Tests ━━━${NC}"
+if cargo nextest --version &> /dev/null; then
+    echo "  Using cargo-nextest runner..."
+    if test_out=$(cargo nextest run --workspace --lib --tests 2>&1); then
+        echo "$test_out" | tail -n 5
+        echo -e "${GREEN}✅ Tests PASSED (nextest)${NC}"
+        PASSED=$((PASSED + 1))
     else
-        echo -e "${RED}❌ Tests FAILED on $crate${NC}"
-        echo "$test_out" | grep "^error" | head -10 || true
-        test_failed=1
-        break
+        echo -e "${RED}❌ Tests FAILED (nextest)${NC}"
+        echo "$test_out" | tail -n 15 || true
+        FAILED=$((FAILED + 1))
     fi
-done
-
-if [ "$test_failed" -eq 0 ]; then
-    echo "  passed: ${total_passed}, failed: 0"
-    echo -e "${GREEN}✅ Tests PASSED${NC}"
-    PASSED=$((PASSED + 1))
+elif test_out=$(cargo test --workspace --lib --tests --no-fail-fast 2>&1); then
+    passed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
+    failed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$2} END{print sum+0}')
+    echo "  passed: ${passed:-0}, failed: ${failed:-0}"
+    if [ "${failed:-0}" -eq 0 ]; then
+        echo -e "${GREEN}✅ Tests PASSED${NC}"
+        PASSED=$((PASSED + 1))
+    else
+        echo -e "${RED}❌ Tests FAILED${NC}"
+        FAILED=$((FAILED + 1))
+    fi
 else
+    echo -e "${RED}❌ Tests FAILED (compilation/runtime)${NC}"
+    echo "$test_out" | grep "^error" | head -10 || true
     FAILED=$((FAILED + 1))
 fi
 
