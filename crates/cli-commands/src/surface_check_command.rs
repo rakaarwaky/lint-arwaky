@@ -113,22 +113,22 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
     };
 
     let p_quality = Command::new(&exe_path)
-        .args(["scan-quality", path, "--format", "json"])
+        .args(["quality", path, "--format", "json"])
         .output();
     let p_role = Command::new(&exe_path)
-        .args(["scan-role", path, "--format", "json"])
+        .args(["role", path, "--format", "json"])
         .output();
     let p_import = Command::new(&exe_path)
-        .args(["scan-import", path, "--format", "json"])
+        .args(["import", path, "--format", "json"])
         .output();
     let p_naming = Command::new(&exe_path)
-        .args(["scan-naming", path, "--format", "json"])
+        .args(["naming", path, "--format", "json"])
         .output();
     let p_orphan = Command::new(&exe_path)
-        .args(["scan-orphan", path, "--format", "json"])
+        .args(["orphan", path, "--format", "json"])
         .output();
     let p_external = Command::new(&exe_path)
-        .args(["scan-external", path, "--format", "json"])
+        .args(["external", path, "--format", "json"])
         .output();
 
     let (res_quality, res_role, res_import, res_naming, res_orphan, res_external) =
