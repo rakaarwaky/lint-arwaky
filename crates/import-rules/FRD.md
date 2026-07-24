@@ -40,7 +40,7 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 - **Edge Cases**: Re-exports, pub use statements
 - **Error Handling**: Emit AES203 diagnostic with unused symbol name
 
-### FR-004a: Dummy Import Detection (AES204)
+### FR-004: Dummy Import Detection (AES204)
 
 - **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings.
 - **Input**: Rust, Python, JS/TS source files
@@ -53,7 +53,7 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 - **Edge Cases**: Re-exports, pub use statements
 - **Error Handling**: Emit AES204 diagnostic with dummy symbol name and line number
 
-### FR-004b: Forbidden Import Detection (AES201)
+### FR-005: Forbidden Import Config Detection (AES201)
 
 - **Description**: Detects imports that violate layer boundary rules defined in YAML configuration.
 - **Input**: Rust, Python, JS/TS source files
@@ -64,7 +64,7 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 - **Edge Cases**: Conditional imports, feature flags
 - **Error Handling**: Emit AES201 diagnostic with forbidden import path
 
-### FR-005: Circular Dependency Detection (AES205)
+### FR-006: Circular Dependency Detection (AES205)
 
 - **Description**: Builds a dependency graph of imports across all workspace files and detects cycles.
 - **Input**: All workspace source files

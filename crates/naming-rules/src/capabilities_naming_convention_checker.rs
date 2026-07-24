@@ -1,5 +1,6 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min 3 words)
 use async_trait::async_trait;
+use rayon::prelude::*;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
@@ -38,26 +39,24 @@ impl INamingConventionChecker for NamingConventionChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let min_words = Self::min_words_from_config(config);
-        for f in &files.values {
-            let f_str: String = f.to_string();
-            let filename: &str = match f.rsplit('/').next() {
-                Some(name) => name,
-                None => &f_str,
-            };
-            let layer: Option<String> = self._detect_layer(&f_str, &layer_keys);
-            let layer_name: Option<LayerNameVO> =
-                layer.as_ref().map(|l: &String| LayerNameVO::new(l.clone()));
-            let def: Option<&shared::taxonomy_definition_vo::LayerDefinition> =
-                layer_name.as_ref().and_then(|l| layer_map.values.get(l));
-            self._check_file_naming(
-                &f_str,
-                filename,
-                &layer_name,
-                def,
-                min_words,
-                &mut results.values,
-            );
-        }
+
+        let violations: Vec<LintResult> = files
+            .values
+            .par_iter()
+            .filter_map(|f| {
+                let f_str = f.to_string();
+                let filename = match f.rsplit('/').next() {
+                    Some(name) => name,
+                    None => &f_str,
+                };
+                let layer = self._detect_layer(&f_str, &layer_keys);
+                let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
+                let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+                self._check_file_naming(&f_str, filename, &layer_name, def, min_words)
+            })
+            .collect();
+
+        results.values.extend(violations);
     }
 }
 
@@ -122,13 +121,12 @@ impl NamingConventionChecker {
         layer_name: &Option<LayerNameVO>,
         definition: Option<&shared::taxonomy_definition_vo::LayerDefinition>,
         min_words: usize,
-        violations: &mut Vec<LintResult>,
-    ) {
+    ) -> Option<LintResult> {
         let layer_prefixes = LAYER_PREFIXES;
 
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
-            return;
+            return None;
         }
 
         let stem = get_stem(filename).unwrap_or_default();
@@ -146,7 +144,7 @@ impl NamingConventionChecker {
                             .collect()
                     })
                     .clone();
-                violations.push(string_filename_result(
+                return Some(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,
                     NamingViolation::UnknownPrefix {
@@ -162,10 +160,9 @@ impl NamingConventionChecker {
                     .to_string(),
                     Severity::HIGH,
                 ));
-                return;
             }
 
-            violations.push(string_filename_result(
+            return Some(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
@@ -181,17 +178,16 @@ impl NamingConventionChecker {
                 .to_string(),
                 Severity::HIGH,
             ));
-            return;
         }
 
         if let Some(def) = definition {
             if def.exceptions.values.contains(&filename.to_string()) {
-                return;
+                return None;
             }
         }
 
         if Self::naming_regex(min_words).is_none_or(|re| !re.is_match(stem)) {
-            violations.push(string_filename_result(
+            return Some(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
                 NamingViolation::NamingConvention {
@@ -209,5 +205,7 @@ impl NamingConventionChecker {
                 Severity::HIGH,
             ));
         }
+
+        None
     }
 }

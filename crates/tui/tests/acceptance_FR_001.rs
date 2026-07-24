@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance tests — verify FRD requirements for tui.
+// PURPOSE: Acceptance tests — verify FR-001 layout rendering and state transitions for tui.
 // Layer: Acceptance (FRD requirement validation).
 
 use shared::tui::contract_tui_aggregate::ITuiAggregate;

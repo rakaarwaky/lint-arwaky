@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
 
 #[derive(Clone)]

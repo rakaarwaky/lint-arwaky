@@ -23,3 +23,11 @@ pub struct ReadSkillArgs {
     /// Section to read from SKILL.md
     pub section: Option<String>,
 }
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct GetConfigArgs {
+    /// Optional project path to inspect config for
+    pub path: Option<String>,
+    /// Optional language hint (rust, python, javascript)
+    pub language: Option<String>,
+}

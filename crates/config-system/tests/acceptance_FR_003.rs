@@ -1,4 +1,4 @@
-// US-3 — Config Fallback Safety
+// FR-003 — Config Fallback Safety
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use tempfile::TempDir;
