@@ -43,8 +43,8 @@ pub fn handle_scan_quality(
         .collect();
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }

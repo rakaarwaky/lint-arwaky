@@ -56,11 +56,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::cli_commands::taxonomy_format_vo::Format::Text,
                     )
                     .await;
-                let exit_code = if status == std::process::ExitCode::SUCCESS {
-                    0
-                } else {
-                    1
-                };
+                let exit_code =
+                    if status == shared::common::taxonomy_common_error::ExitCode::OK {
+                        0
+                    } else {
+                        1
+                    };
                 serde_json::json!({
                     "status": if exit_code == 0 { "success" } else { "failure" },
                     "action": action,
@@ -101,11 +102,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::cli_commands::taxonomy_format_vo::Format::Text,
                     )
                     .await;
-                let exit_code = if status == std::process::ExitCode::SUCCESS {
-                    0
-                } else {
-                    1
-                };
+                let exit_code =
+                    if status == shared::common::taxonomy_common_error::ExitCode::OK {
+                        0
+                    } else {
+                        1
+                    };
                 serde_json::json!({
                     "status": if exit_code == 0 { "pass" } else { "fail" },
                     "action": "ci",
