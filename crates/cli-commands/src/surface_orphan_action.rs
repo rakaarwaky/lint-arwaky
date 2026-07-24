@@ -2,11 +2,11 @@ use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use std::process::ExitCode;
 use std::sync::Arc;
 
 pub fn handle_scan_orphan(
@@ -23,14 +23,14 @@ pub fn handle_scan_orphan(
     };
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
 
     let root_fp = match FilePath::new(root.clone()) {
         Ok(fp) => fp,
         Err(_) => {
             eprintln!("[error] invalid path: {root}");
-            return ExitCode::from(2);
+            return ExitCode::RUNTIME_ERROR;
         }
     };
 
@@ -155,8 +155,8 @@ fn scan_single_root(
     output_violations(&violations, root, format, is_member_path(root));
 
     if violations.is_empty() {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }

@@ -70,22 +70,25 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         // Phase 2: Fallback — token-based matching across all files
         let tokens = shared::orphan_detector::utility_orphan_detector::import_tokens(fp);
 
-        for other_file in all_files {
-            if other_file == fp {
-                continue;
-            }
-
-            let other_content = shared::common::utility_file_handler::read_file_safe(other_file);
-            if other_content.is_empty() {
-                continue;
-            }
-
-            let is_consumer = {
+        // Pre-filter: only check files from consumer layers
+        let consumer_files: Vec<&String> = all_files
+            .iter()
+            .filter(|other_file| {
+                if *other_file == fp {
+                    return false;
+                }
                 let filename = utility_layer_detector::extract_filename(other_file);
                 utility_layer_detector::detect_layer_from_prefix(filename)
                     .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
                     .unwrap_or(false)
-            };
+            })
+            .collect();
+
+        for other_file in consumer_files {
+            let other_content = shared::common::utility_file_handler::read_file_safe(other_file);
+            if other_content.is_empty() {
+                continue;
+            }
 
             let imported = self.check_import_pattern(&other_content, &module_name)
                 || tokens.iter().any(|token| {
@@ -102,11 +105,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                     .unwrap_or("unknown")
                     .to_string();
 
-                if is_consumer {
-                    consumer_importers.push(stem);
-                } else {
-                    utility_importers.push(stem);
-                }
+                consumer_importers.push(stem);
             }
         }
 

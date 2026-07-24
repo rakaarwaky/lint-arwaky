@@ -1,4 +1,4 @@
-use std::process::ExitCode;
+use shared::common::taxonomy_common_error::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
@@ -21,21 +21,21 @@ pub fn handle_scan_naming(
     };
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
     let root_fp = match FilePath::new(root.clone()) {
         Ok(fp) => fp,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let rt = match surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let results = match rt.block_on(naming_orchestrator.run_audit(&root_fp)) {
         Ok(r) => r,
         Err(e) => {
             eprintln!("[error] naming rules failed: {e}");
-            return ExitCode::from(2);
+            return ExitCode::RUNTIME_ERROR;
         }
     };
     let violations: Vec<ViolationItem> = results
@@ -44,8 +44,8 @@ pub fn handle_scan_naming(
         .collect();
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
