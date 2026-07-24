@@ -10,8 +10,8 @@ metadata:
     - "scan rust project"
   dependencies: []
   related:
-    - module_logic_validator
-    - cleanup-files-rust
+    - cleanup-consolidate-rust
+    - build-verify-all
 ---
 
 # lint-arwaky-rust — Complete Command & Argument Reference

@@ -9,7 +9,7 @@ metadata:
     - "verify aes compliance typescript"
   dependencies: []
   related:
-    - cleanup-files-typescript
+    - cleanup-consolidate-typescript
     - create-capabilities-typescript
 ---
 

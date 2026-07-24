@@ -12,8 +12,8 @@ metadata:
     - "add package readme typescript"
   dependencies: []
   related:
-    - cleanup-files-typescript
-    - consolidate-files-typescript
+    - cleanup-consolidate-typescript
+    - add-docs-rust
 ---
 
 # add-docs-typescript
