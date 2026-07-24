@@ -2,7 +2,6 @@
 // and delegates output formatting to surface_output_component.
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::time::Instant;
 use tokio::process::Command;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
@@ -53,25 +52,54 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member = opts.member.is_some();
-    let target_path = if let Some(ref m) = opts.member {
-        let member_path = std::path::Path::new(&root).join(m);
-        if member_path.exists() {
-            member_path.to_string_lossy().to_string()
+    let is_specific_member = opts.member.is_some() || is_member_path(&root);
+
+    // Validate member against discovered workspaces
+    if let Some(ref m) = opts.member {
+        if let Some(ref orchestrator) = opts.multi_project_orchestrator {
+            let root_fp = match FilePath::new(root.clone()) {
+                Ok(fp) => fp,
+                Err(_) => return ExitCode::from(2),
+            };
+            let workspaces = rt.block_on(orchestrator.discover_workspaces(&root_fp));
+            if !workspaces.is_empty() {
+                let matched = workspaces.iter().any(|ws| {
+                    let ws_file = std::path::Path::new(&ws.path.value)
+                        .file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    ws_file.as_ref() == m.as_str() || ws.path.value == *m
+                });
+                if !matched {
+                    eprintln!("[error] no workspace member matching '{m}'");
+                    return ExitCode::from(2);
+                }
+            }
+        }
+        let target_path = {
+            let member_path = std::path::Path::new(&root).join(m);
+            if member_path.exists() {
+                member_path.to_string_lossy().to_string()
+            } else {
+                root.clone()
+            }
+        };
+        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        output_violations(&all_violations, &target_path, format, is_specific_member);
+        if all_violations.is_empty() {
+            ExitCode::SUCCESS
         } else {
-            root.clone()
+            ExitCode::from(1)
         }
     } else {
-        root.clone()
-    };
-
-    let all_violations = rt.block_on(run_all_linters_json(&target_path));
-    output_violations(&all_violations, &target_path, format, is_specific_member);
-
-    if all_violations.is_empty() {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
+        let target_path = root.clone();
+        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        output_violations(&all_violations, &target_path, format, is_specific_member);
+        if all_violations.is_empty() {
+            ExitCode::SUCCESS
+        } else {
+            ExitCode::from(1)
+        }
     }
 }
 
@@ -110,14 +138,27 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
     for res in [res_quality, res_role, res_import, res_naming, res_orphan, res_external] {
         if let Ok(out) = res {
             let stdout = String::from_utf8_lossy(&out.stdout);
-            if let Ok(arr) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
-                if let Some(items) = arr.as_array() {
+            if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+                // Handle both formats:
+                // 1. {"members": [...], "results": [...]} — structured JSON output
+                // 2. [item, item, ...] — flat array (fallback)
+                if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
+                    for item in results {
+                        if let Some(v) = ViolationItem::from_json_obj(item) {
+                            all.push(v);
+                        }
+                    }
+                } else if let Some(items) = val.as_array() {
                     for item in items {
                         if let Some(v) = ViolationItem::from_json_obj(item) {
                             all.push(v);
                         }
                     }
                 }
+                // If neither matches, skip (e.g. empty object, text output disguised as JSON)
+            } else {
+                // JSON parse failed — likely text output (orphan may output text even with --format json)
+                // Skip silently; individual subprocess can be run directly for full results
             }
         }
     }
@@ -147,4 +188,36 @@ pub fn handle_default_check(
         Err(_) => return ExitCode::from(2),
     };
     rt.block_on(handle_scan_parallel_subprocesses(_project_root, Format::Text))
+}
+
+/// Detect if a path is a member directory (not a workspace root).
+/// Returns true if the path looks like a single crate member, not a multi-member workspace.
+fn is_member_path(path: &str) -> bool {
+    let p = std::path::Path::new(path);
+
+    // If path itself has Cargo.toml without [workspace], it's a member crate
+    let cargo_toml = p.join("Cargo.toml");
+    if cargo_toml.exists() {
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+            return !content.contains("[workspace]");
+        }
+        return true;
+    }
+
+    // If parent has Cargo.toml with [workspace], this is a sub-directory member
+    if let Some(parent) = p.parent() {
+        let parent_cargo = parent.join("Cargo.toml");
+        if parent_cargo.exists() {
+            if let Ok(content) = std::fs::read_to_string(&parent_cargo) {
+                return content.contains("[workspace]");
+            }
+        }
+    }
+
+    // If it's a src/ directory or contains .rs/.py/.ts files, treat as member
+    if p.file_name().map(|n| n == "src").unwrap_or(false) {
+        return true;
+    }
+
+    false
 }

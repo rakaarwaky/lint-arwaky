@@ -1,7 +1,6 @@
 // PURPOSE: Verify all trait implementations exist for role-rules structs.
 // Layer: Contract verification — runs in ms, every PR.
 
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleCheckerDeps;
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
