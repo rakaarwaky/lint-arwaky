@@ -105,8 +105,16 @@ impl LintArwakyMcpServer {
             "version": env!("CARGO_PKG_VERSION"),
             "adapters_available": available,
             "adapters_total": adapters.len(),
-            "adapters": adapters
+            "adapters": adapters,
+            "exit_code": 0,
         });
         serde_json::to_string_pretty(&result).unwrap_or_default()
+    }
+
+    #[tool(
+        description = "Return the effective architecture configuration for a target path/language. Shows rules, thresholds, adapters."
+    )]
+    pub async fn get_config(&self, args: Parameters<GetConfigArgs>) -> String {
+        self.agent.get_config(args).await
     }
 }
