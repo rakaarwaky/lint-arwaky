@@ -182,7 +182,7 @@ impl CodeAnalysisOrchestrator {
                         violations.push(LintResult::new_arch(
                             &cargo_path.to_string_lossy(),
                             0,
-                            "AES000",
+                            "DIAG_IO",
                             Severity::LOW,
                             format!("Cargo.toml skipped: {}", e),
                         ));
@@ -212,7 +212,7 @@ impl CodeAnalysisOrchestrator {
                     violations.push(LintResult::new_arch(
                         file,
                         0,
-                        "AES000",
+                        "DIAG_IO",
                         Severity::LOW,
                         format!("File skipped: {}", e),
                     ));

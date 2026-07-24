@@ -56,12 +56,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::cli_commands::taxonomy_format_vo::Format::Text,
                     )
                     .await;
+                let exit_code = if status == std::process::ExitCode::SUCCESS { 0 } else { 1 };
                 serde_json::json!({
-                    "status": if status == std::process::ExitCode::SUCCESS { "success" } else { "failure" },
+                    "status": if exit_code == 0 { "success" } else { "failure" },
                     "action": action,
                     "path": path,
-                    "total_violations": 0,
-                    "results": Vec::<serde_json::Value>::new(),
+                    "exit_code": exit_code,
                 })
             }
             "fix" => {
@@ -69,11 +69,25 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
+                let dry_run = args
+                    .args
+                    .as_ref()
+                    .and_then(|a| a.get("dry_run"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                let status =
+                    cli_commands::surface_fix_action::handle_fix_from_path(
+                        &path,
+                        dry_run,
+                    )
+                    .await;
+                let exit_code = if status == std::process::ExitCode::SUCCESS { 0 } else { 1 };
                 serde_json::json!({
-                    "status": "success",
+                    "status": if exit_code == 0 { "success" } else { "failure" },
                     "action": "fix",
                     "path": path,
-                    "message": "Auto-fix completed."
+                    "dry_run": dry_run,
+                    "exit_code": exit_code,
                 })
             }
             "ci" => {
@@ -88,11 +102,13 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::cli_commands::taxonomy_format_vo::Format::Text,
                     )
                     .await;
+                let exit_code = if status == std::process::ExitCode::SUCCESS { 0 } else { 1 };
                 serde_json::json!({
-                    "status": if status == std::process::ExitCode::SUCCESS { "pass" } else { "fail" },
+                    "status": if exit_code == 0 { "pass" } else { "fail" },
                     "action": "ci",
                     "threshold": threshold,
                     "path": path,
+                    "exit_code": exit_code,
                 })
             }
             "doctor" => {
@@ -112,17 +128,39 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     })
                 });
                 let checks = futures::future::join_all(futures).await;
-                serde_json::json!({"status": "success", "action": "doctor", "checks": checks})
+                serde_json::json!({"status": "success", "action": "doctor", "exit_code": 0, "checks": checks})
             }
-            "orphan" | "security" | "duplicates" | "dependencies" => {
+            "orphan" => {
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                serde_json::json!({"status": "success", "action": action, "path": path})
+                let status =
+                    cli_commands::surface_orphan_action::handle_orphan_from_path(&path)
+                        .await;
+                let exit_code = if status == std::process::ExitCode::SUCCESS { 0 } else { 1 };
+                serde_json::json!({"status": if exit_code == 0 { "success" } else { "failure" }, "action": "orphan", "path": path, "exit_code": exit_code})
+            }
+            "security" => {
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let status =
+                    cli_commands::surface_maintenance_command::handle_security_from_path(&path)
+                        .await;
+                let exit_code: i64 = if status == std::process::ExitCode::SUCCESS { 0 } else { 1 };
+                serde_json::json!({"status": if exit_code == 0 { "success" } else { "failure" }, "action": "security", "path": path, "exit_code": exit_code})
+            }
+            "duplicates" | "dependencies" => {
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                serde_json::json!({"status": "success", "action": action, "path": path, "exit_code": 0})
             }
             "version" => {
-                serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky"})
+                serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky", "exit_code": 0})
             }
             "adapters" => {
                 let ext = self.deps.external_lint.clone();
@@ -139,25 +177,25 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     serde_json::json!({"name": name.value, "enabled": found})
                 });
                 let adapters = futures::future::join_all(futures).await;
-                serde_json::json!({"adapters": adapters})
+                serde_json::json!({"adapters": adapters, "exit_code": 0})
             }
             "install-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook installed."})
+                serde_json::json!({"status": "success", "message": "Git hook installed.", "exit_code": 0})
             }
             "uninstall-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook removed."})
+                serde_json::json!({"status": "success", "message": "Git hook removed.", "exit_code": 0})
             }
-            "init" => serde_json::json!({"status": "success", "action": "init"}),
-            "install" => serde_json::json!({"status": "success", "action": "install"}),
+            "init" => serde_json::json!({"status": "success", "action": "init", "exit_code": 0}),
+            "install" => serde_json::json!({"status": "success", "action": "install", "exit_code": 0}),
             "mcp-config" => {
                 let client = match arg_client {
                     Some(c) => c,
                     None => "all".to_string(),
                 };
-                serde_json::json!({"status": "success", "action": "mcp-config", "client": client})
+                serde_json::json!({"status": "success", "action": "mcp-config", "client": client, "exit_code": 0})
             }
-            "config-show" => serde_json::json!({"status": "success", "action": "config-show"}),
-            _ => serde_json::json!({"error": format!("Unknown action: {}", action)}),
+            "config-show" => serde_json::json!({"status": "success", "action": "config-show", "exit_code": 0}),
+            _ => serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2}),
         };
         serde_json::to_string(&result).unwrap_or_default()
     }

@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test for FR-006: File Read Error Diagnostics (AES000)
+// PURPOSE: Acceptance test for FR-006: File Read Error Diagnostics (DIAG_IO)
 // Emit diagnostic when file cannot be read or exceeds size limit.
 
 use shared::code_analysis::utility_file_reader::{read_lintable_file, MAX_LINT_FILE_BYTES};
