@@ -12,7 +12,6 @@ use std::sync::Arc;
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
 use crate::utility_file_system;
-use shared::common::taxonomy_line_count_vo::LineCount;
 use shared::tui::utility_tui_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -36,7 +35,8 @@ impl IActionHandlerProtocol for ActionHandler {
     }
 
     fn load_preview(&self, state: &mut AppState) {
-        ActionHandler::load_preview(self, state);
+        // No-op — TUI Preview panel only shows action output (check, scan, fix, etc.)
+        // File content preview is intentionally disabled per FRD compliance.
     }
 
     fn poll_watch(&self, state: &mut AppState) {
@@ -131,7 +131,6 @@ impl ActionHandler {
                     state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
                 } else {
                     state.select_next();
-                    self.load_preview(state);
                 }
             }
             TuiEvent::MoveUp => {
@@ -139,7 +138,6 @@ impl ActionHandler {
                     state.preview_scroll = state.preview_scroll.saturating_sub(3);
                 } else {
                     state.select_prev();
-                    self.load_preview(state);
                 }
             }
             TuiEvent::MoveTop => {
@@ -176,7 +174,8 @@ impl ActionHandler {
                 if state.show_help {
                     state.preview_mode = PreviewMode::HelpOverlay;
                 } else {
-                    state.preview_mode = PreviewMode::FileContent;
+                    // No file content preview — return to action output mode
+                    state.preview_mode = PreviewMode::ActionOutput;
                 }
             }
             // ---- Search mode: incremental file filtering ----
@@ -246,7 +245,7 @@ impl ActionHandler {
                     state.set_status("Watch stopped.");
                 } else {
                     // Start watch mode
-                    let (result, rx) = self.lint_port.watch(state.selected_path());
+                    let (result, rx) = self.lint_port.watch(&state.selected_path());
                     state.watching = true;
                     state.watch_receiver = Some(rx);
                     state.preview_text = result.output;
@@ -332,7 +331,7 @@ impl ActionHandler {
         }
     }
 
-    /// Navigate into a directory or load a file preview.
+    /// Navigate into a directory or select a file (no preview loading).
     fn navigate_forward(&self, state: &mut AppState) {
         let path = state.selected_path();
         let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(false);
@@ -341,7 +340,9 @@ impl ActionHandler {
             state.current_dir = path;
             self.load_directory(state, &state.current_dir.clone());
         } else {
-            self.load_file_preview(state, &path);
+            // File selected — no preview loading, Preview panel stays empty
+            // User must run an action (check, scan, fix, etc.) to see output
+            state.set_status(format!("Selected: {}", path));
         }
     }
 
@@ -360,27 +361,24 @@ impl ActionHandler {
         });
         state.selected_index = 0;
         state.scroll_offset = 0;
-        state.preview_mode = PreviewMode::FileContent;
+        // No file content preview — Preview panel stays empty until action is run
+        state.preview_mode = PreviewMode::ActionOutput;
         state.set_status(format!("Dir: {}", path));
         state.compute_filtered_indices();
     }
 
     /// Read up to 100 lines of a file for inline preview.
-    fn load_file_preview(&self, state: &mut AppState, path: &str) {
-        let fp = FilePath::new(path).unwrap_or_default();
-        let max_lines = LineCount::new(100);
-        state.preview_text =
-            utility_file_system::read_file_preview(&fp, max_lines.value()).to_string();
-        state.preview_mode = PreviewMode::FileContent;
+    /// No-op — file content preview is intentionally disabled per FRD compliance.
+    fn load_file_preview(&self, state: &mut AppState, _path: &str) {
+        // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
+        // No file content preview is loaded.
     }
 
     /// Load preview for the currently selected entry if it's a file.
+    /// No-op — file content preview is intentionally disabled per FRD compliance.
     pub fn load_preview(&self, state: &mut AppState) {
-        let path = state.selected_path();
-        let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(true);
-        if !is_dir {
-            self.load_file_preview(state, &path);
-        }
+        // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
+        // No file content preview is loaded.
     }
 
     /// Run a lint action that requires a selected path.

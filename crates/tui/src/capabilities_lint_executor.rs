@@ -591,26 +591,37 @@ impl ILintExecutorProtocol for LintExecutor {
         std::thread::spawn(move || {
             use file_watch::ChangeAnalyzer;
 
-            // Initial lint already done by caller, start watcher now
-            if provider_thread.start(&config).is_err() {
-                return;
-            }
+            // Create a tokio runtime for async watch operations
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(r) => r,
+                Err(_) => return,
+            };
 
-            let mut rx_events = provider_thread.subscribe();
-
-            while let Ok(event) = rx_events.recv() {
-                if ChangeAnalyzer::is_lintable(&event.path) {
-                    let event_fp = FilePath::new(&event.path).unwrap_or_default();
-                    let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
-                    let lint_count = lint_results.len();
-                    let lint_score = code_analysis_thread.calc_score(&lint_results.values);
-
-                    let _ = tx.send(format!(
-                        "[change] {} | {} violations, score {:.1}",
-                        event.path, lint_count, lint_score
-                    ));
+            rt.block_on(async {
+                // Initial lint already done by caller, start watcher now
+                if provider_thread.start(&config).await.is_err() {
+                    return;
                 }
-            }
+
+                let mut rx_events = provider_thread.subscribe();
+
+                while let Ok(event) = rx_events.recv().await {
+                    if <ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(&event.path) {
+                        let event_fp = FilePath::new(&event.path).unwrap_or_default();
+                        let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
+                        let lint_count = lint_results.len();
+                        let lint_score = code_analysis_thread.calc_score(&lint_results);
+
+                        let _ = tx.send(format!(
+                            "[change] {} | {} violations, score {:.1}",
+                            event.path, lint_count, lint_score
+                        ));
+                    }
+                }
+            });
         });
 
         let result = LintExecutionResult {

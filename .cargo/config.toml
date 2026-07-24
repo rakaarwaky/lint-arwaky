@@ -1,0 +1,2 @@
+[build]
+rustc-wrapper = "/tmp/rustc-wrapper.sh"
