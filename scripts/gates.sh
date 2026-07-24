@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
+export RUST_MIN_STACK="${RUST_MIN_STACK:-33554432}"
+
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -94,10 +97,10 @@ wait_and_report "${PIDS[@]}"
 # ─── Phase 4: Tests (incremental from clippy build) ────────
 echo -e "\n${CYAN}━━━ Gate: Tests ━━━${NC}"
 if test_output=$(cargo test --workspace --lib --tests --no-fail-fast 2>&1); then
-    passed_count=$(echo "$test_output" | grep "^test result:" | awk '{for(i=1;i<=NF;i++) if($i=="ok;") print $(i-1)}' | awk '{s+=$1} END {print s+0}')
-    failed_count=$(echo "$test_output" | grep "^test result:" | awk '{for(i=1;i<=NF;i++) if($i=="failed;") print $(i-1)}' | awk '{s+=$1} END {print s+0}')
-    echo "  passed: ${passed_count}, failed: ${failed_count}"
-    if [ "${failed_count:-0}" -eq 0 ]; then
+    total_passed=$(echo "$test_output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
+    total_failed=$(echo "$test_output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$2} END{print sum+0}')
+    echo "  passed: ${total_passed}, failed: ${total_failed}"
+    if [ "${total_failed:-0}" -eq 0 ]; then
         echo -e "${GREEN}✅ Tests PASSED${NC}"
         PASSED=$((PASSED + 1))
     else
