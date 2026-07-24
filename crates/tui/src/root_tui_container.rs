@@ -2,6 +2,7 @@ use crate::agent_tui_orchestrator::TuiOrchestrator;
 use crate::capabilities_action_handler::ActionHandler;
 use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
+use file_watch::FileWatchContainer;
 use maintenance::root_maintenance_container::MaintenanceContainer;
 use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
 use shared::tui::contract_tui_aggregate::ITuiAggregate;
@@ -69,8 +70,9 @@ impl TuiContainer {
                 ".",
             );
 
+        let file_watch_container = FileWatchContainer::new();
         let lint_executor = Arc::new(
-            LintExecutor::new(code_analysis_aggregate)
+            LintExecutor::new(code_analysis_aggregate, Some(file_watch_container.provider()))
                 .with_fix(fix_orchestrator)
                 .with_setup(setup_aggregate)
                 .with_hook_port(hook_adapter)
