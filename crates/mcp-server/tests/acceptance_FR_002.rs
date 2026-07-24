@@ -1,9 +1,6 @@
 // PURPOSE: Acceptance test — FRD Requirement: list_commands tool
 // "list_commands — list available CLI commands with descriptions and examples."
 
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    McpServerDependencies, McpServerOrchestrator,
-};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::handler::server::wrapper::Parameters;
@@ -12,10 +9,7 @@ use std::sync::Arc;
 
 fn build_surface() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    LintArwakyMcpServer::new(Arc::new(McpServerOrchestrator::new(deps)))
+    LintArwakyMcpServer::new(Arc::new(container.orchestrator()))
 }
 
 /// FRD-MCP-002: list_commands returns all commands with name, description, example

@@ -1,8 +1,5 @@
 // PURPOSE: Integration tests — real DI container wiring, orchestrator + surface composition
 
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    McpServerDependencies, McpServerOrchestrator,
-};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::handler::server::wrapper::Parameters;
@@ -15,7 +12,7 @@ use std::sync::Arc;
 #[test]
 fn container_new_default_produces_all_dependencies() {
     // This test requires the real filesystem and config system.
-    // It validates that McpContainer::new_default() wires all 7 dependencies.
+    // It validates that McpContainer::new_default() wires all 11 dependencies.
     let container = McpContainer::new_default();
 
     // All Arc<dyn Trait> fields must be non-null (they always are with Arc,
@@ -34,23 +31,14 @@ fn container_new_default_produces_all_dependencies() {
 #[test]
 fn orchestrator_constructed_from_container_deps() {
     let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let _surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let _surface = LintArwakyMcpServer::new(Arc::new(container.orchestrator()));
 }
 
 // ─── Full Pipeline: Surface → Agent → Mock Capabilities ─────────────
 
 #[tokio::test]
 async fn surface_execute_command_flows_through_orchestrator() {
-    let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let surface = LintArwakyMcpServer::new(Arc::new(McpContainer::new_default().orchestrator()));
 
     let args = Parameters(ExecuteCommandArgs {
         action: "version".to_string(),
@@ -63,12 +51,7 @@ async fn surface_execute_command_flows_through_orchestrator() {
 
 #[tokio::test]
 async fn surface_list_commands_returns_catalog() {
-    let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let surface = LintArwakyMcpServer::new(Arc::new(McpContainer::new_default().orchestrator()));
 
     let args = Parameters(ListCommandsArgs { domain: None });
     let result = surface.list_commands(args).await;
@@ -80,12 +63,7 @@ async fn surface_list_commands_returns_catalog() {
 
 #[test]
 fn surface_get_info_reports_tools_capability() {
-    let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let surface = LintArwakyMcpServer::new(Arc::new(McpContainer::new_default().orchestrator()));
     let info = surface.get_info();
     assert!(info.capabilities.tools.is_some());
     assert_eq!(info.server_info.name, "lint-arwaky");

@@ -1,8 +1,5 @@
 // PURPOSE: E2E tests — full request lifecycle through all layers (Surface → Agent → Capabilities)
 
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    McpServerDependencies, McpServerOrchestrator,
-};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::handler::server::wrapper::Parameters;
@@ -11,11 +8,7 @@ use std::sync::Arc;
 
 fn build_full_stack() -> LintArwakyMcpServer {
     let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    LintArwakyMcpServer::new(Arc::new(orchestrator))
+    LintArwakyMcpServer::new(Arc::new(container.orchestrator()))
 }
 
 // ─── E2E: Full scan lifecycle ────────────────────────────────────────

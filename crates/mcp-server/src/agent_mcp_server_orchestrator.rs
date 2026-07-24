@@ -29,6 +29,9 @@ pub struct McpServerDependencies {
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub external_lint: Arc<dyn shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate>,
+    pub import_orchestrator: Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>,
+    pub naming_orchestrator: Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
+    pub role_orchestrator: Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -117,7 +120,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
 
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
                 let fix_result = self.deps.fix_orchestrator.execute(&fp);
 
                 serde_json::json!({
@@ -174,7 +177,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
                 // Get ignored paths from config orchestrator
                 let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
@@ -202,7 +205,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
                 let report = self.deps.maintenance_orchestrator.run_security_scan(&fp).await;
 
@@ -239,23 +242,28 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
-                // Use code duplication detector from code-analysis shared crate
-                let results = shared::code_analysis::utility_code_duplication_detector::CodeDuplicationDetector::find_duplicates(&fp);
+                // Collect lintable files and scan for duplicates using the shared utility
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let entries = shared::code_analysis::utility_code_duplication_detector::collect_file_entries(std::slice::from_ref(&fp.value));
+                let min_dup_lines = 5; // minimum lines for a duplicate block
+
+                // Calculate total LOC before moving entries
+                let total_loc: usize = entries.iter().map(|(_, c)| c.lines().count()).sum();
+
+                // Scan for duplicates (consumes entries)
+                let blocks = shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(entries, min_dup_lines);
+
+                // Build violation list
+                let violations = shared::code_analysis::utility_code_duplication_detector::build_violations(&blocks, total_loc, min_dup_lines);
 
                 serde_json::json!({
                     "status": "success",
                     "action": "duplicates",
                     "path": path,
                     "exit_code": 0,
-                    "duplicate_count": results.len(),
-                    "duplicates": results.iter().map(|d| serde_json::json!({
-                        "file": d.file.value.as_str(),
-                        "start_line": d.start_line,
-                        "end_line": d.end_line,
-                        "lines": d.line_count,
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "duplicate_blocks": blocks.len(),
+                    "violations": violations.len(),
                 })
             }
             "dependencies" => {
@@ -264,7 +272,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
                 match self.deps.maintenance_orchestrator.run_dependency_report(&fp).await {
                     Ok(report) => {
@@ -314,7 +322,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "install-hook" => {
                 // Wire real git-hooks aggregate for actual hook installation
-                let path = match arg_path {
+                let _path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
@@ -354,7 +362,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let mut languages: Vec<serde_json::Value> = Vec::new();
                 let mut all_ok = true;
 
-                for lang in &result {
+                for lang in result.iter() {
                     let lang_str = lang.value();
                     let target = format!("lint_arwaky.config.{}.yaml", lang_str);
                     if self.deps.setup_orchestrator.file_exists(&target) {
@@ -366,7 +374,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                                 languages.push(serde_json::json!({"config": target, "status": "created", "description": desc.value}));
                             }
                             Err(e) => {
-                                languages.push(serde_json::json!({"config": target, "status": "error", "error": e}));
+                                languages.push(serde_json::json!({"config": target, "status": "error", "error": e.to_string()}));
                                 all_ok = false;
                             }
                         }
@@ -497,36 +505,62 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
                 match self.deps.config_orchestrator.list_config_files(&fp).await {
                     Ok(config_files) if !config_files.is_empty() => {
-                        let configs: Vec<serde_json::Value> = config_files.iter().map(|(lang, path)| {
-                            // Simple redaction for display
+                        // Process each config file sequentially to handle async read_config
+                        let mut configs = Vec::new();
+                        for (lang, path) in &config_files {
+                            // Simple redaction for display (mimics surface_config_command::redact_secrets)
+                            // Regex built once outside the loop to avoid clippy::regex_creation_in_loops
+                            static AWS_KEY_RE: once_cell::sync::Lazy<Option<regex::Regex>> =
+                                once_cell::sync::Lazy::new(|| regex::Regex::new(r"AKIA[0-9A-Z]{16}").ok());
                             let redact_secrets = |content: &str| -> String {
                                 let mut result = content.to_string();
                                 if result.contains("AKIA") {
-                                    result = result.replacen(&result.chars().take(4).collect::<String>(), "[REDACTED-AWS-KEY]", 1);
+                                    if let Some(re) = AWS_KEY_RE.as_ref() {
+                                        result = re.replace_all(&result, "[REDACTED-AWS-KEY]").to_string();
+                                    }
+                                }
+                                // Redact very long base64-like strings
+                                if result.len() > 100 {
+                                    let words: Vec<String> = result.split_whitespace().map(|s| s.to_string()).collect();
+                                    for word in &words {
+                                        if word.len() >= 40
+                                            && word.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '='))
+                                        {
+                                            result = result.replacen(word, "[REDACTED]", 1);
+                                        }
+                                    }
                                 }
                                 result
                             };
 
-                            match self.deps.config_orchestrator.read_config(&fp, *lang) {
-                                Ok(Some(source)) => {
+                            // Read config content with secret redaction (async is already available in the handler)
+                            let source = match self.deps.config_orchestrator.read_config(&fp, *lang).await {
+                                Ok(Some(source)) => Some(source),
+                                _ => None,
+                            };
+
+                            match source {
+                                Some(source) => {
                                     let safe_content = redact_secrets(&source.raw_content);
-                                    serde_json::json!({
+                                    configs.push(serde_json::json!({
                                         "language": lang.as_str(),
                                         "path": path.value.as_str(),
                                         "content": safe_content,
-                                    })
+                                    }));
                                 }
-                                _ => serde_json::json!({
-                                    "language": lang.as_str(),
-                                    "path": path.value.as_str(),
-                                    "error": "Could not read config content",
-                                }),
+                                None => {
+                                    configs.push(serde_json::json!({
+                                        "language": lang.as_str(),
+                                        "path": path.value.as_str(),
+                                        "error": "Could not read config content",
+                                    }));
+                                }
                             }
-                        }).collect();
+                        }
 
                         serde_json::json!({
                             "status": "success",
@@ -555,6 +589,155 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         })
                     }
                 }
+            }
+            "watch" => {
+                // watch is long-lived and not supported via MCP; FRD explicitly allows explicit unsupported
+                serde_json::json!({
+                    "error": "watch is not supported via MCP (long-lived action — use CLI: lint-arwaky watch <path>)",
+                    "action": "watch",
+                    "exit_code": 2,
+                })
+            }
+            "quality" => {
+                // Run code quality analysis directly via code-analysis aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "quality", "exit_code": 2}).to_string(),
+                };
+                let results = self.deps.code_analysis_linter.run_code_analysis_path(&fp);
+                let exit_code = if results.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "quality",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "violation_count": results.len(),
+                    "results": results.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
+            }
+            "import" => {
+                // Run import rules analysis directly via import_orchestrator aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "import", "exit_code": 2}).to_string(),
+                };
+                let results = match self.deps.import_orchestrator.run_audit(&fp).await {
+                    Ok(r) => r,
+                    Err(e) => return serde_json::json!({"error": format!("Import audit failed: {}", e), "action": "import", "exit_code": 2}).to_string(),
+                };
+                let exit_code = if results.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "import",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "violation_count": results.len(),
+                    "results": results.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
+            }
+            "naming" => {
+                // Run naming rules analysis directly via naming_orchestrator aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "naming", "exit_code": 2}).to_string(),
+                };
+                let results = match self.deps.naming_orchestrator.run_audit(&fp).await {
+                    Ok(r) => r,
+                    Err(e) => return serde_json::json!({"error": format!("Naming audit failed: {}", e), "action": "naming", "exit_code": 2}).to_string(),
+                };
+                let exit_code = if results.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "naming",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "violation_count": results.len(),
+                    "results": results.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
+            }
+            "role" => {
+                // Run role rules analysis directly via role_orchestrator aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "role", "exit_code": 2}).to_string(),
+                };
+                let results = self.deps.role_orchestrator.run_audit(&fp).await;
+                let exit_code = if results.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "role",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "violation_count": results.len(),
+                    "results": results.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
+            }
+            "external" => {
+                // Run external linters directly via external_lint aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "external", "exit_code": 2}).to_string(),
+                };
+                let scan_results = self.deps.external_lint.scan_all(&fp).await;
+                let exit_code = if scan_results.values.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "external",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "violation_count": scan_results.values.len(),
+                    "results": scan_results.values.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
             }
             _ => {
                 serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
@@ -632,7 +815,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         let language = args.language;
 
-        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
 
         // Use the same config orchestrator aggregate as CLI for parity
         let config_files = match self.deps.config_orchestrator.list_config_files(&fp).await {
@@ -652,17 +835,29 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         let mut rules_enabled = Vec::new();
         let mut ignored_paths = Vec::new();
         let mut warnings = Vec::new();
+        let mut score_threshold: Option<f64> = None;
+        let mut adapter_toggles: Vec<serde_json::Value> = Vec::new();
 
         // Get config data for each language found
-        for (lang, config_path) in &config_files {
+        for (lang, _config_path) in &config_files {
             layers.push(lang.as_str());
             if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang).await {
-                // Parse and extract rules from config content
-                let parsed = shared::config_system::utility_config_parser::parse_config_content(&source.raw_content);
-                if let Some(config) = &parsed {
-                    // Extract threshold and other settings
-                    rules_enabled.push(lang.as_str());
-                    ignored_paths.extend(config.ignored_paths.iter().map(|p| p.value.clone()));
+                // Parse architecture config (rules, ignored_paths)
+                let arch_config = shared::config_system::utility_config_parser::parse_config_yaml(&source.raw_content);
+                rules_enabled.push(lang.as_str());
+                ignored_paths.extend(arch_config.ignored_paths.values.iter().map(|p| p.value.clone()));
+
+                // Parse adapter names for adapter_toggles
+                let adapter_names = shared::config_system::utility_config_parser::parse_adapter_names_from_yaml(&source.raw_content);
+                for name in adapter_names {
+                    adapter_toggles.push(serde_json::json!({"name": name, "status": "enabled"}));
+                }
+
+                // Extract score threshold via shared utility (project.thresholds.score or thresholds.score)
+                if score_threshold.is_none() {
+                    if let Some(t) = shared::config_system::utility_config_parser::parse_score_threshold(&source.raw_content) {
+                        score_threshold = Some(t);
+                    }
                 }
             } else {
                 warnings.push(format!("No config data for {}", lang.as_str()));
@@ -679,6 +874,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             "language": language,
             "layers": layers,
             "rules_enabled": rules_enabled,
+            "score_threshold": score_threshold.unwrap_or(80.0),
+            "adapter_toggles": adapter_toggles,
             "ignored_paths": ignored_paths,
             "config_files": config_files.iter().map(|(_, p)| p.value.as_str()).collect::<Vec<&str>>(),
             "warnings": warnings,

@@ -1,8 +1,5 @@
 // PURPOSE: Smoke test — MCP server boots and responds within 5 seconds
 
-use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::{
-    McpServerDependencies, McpServerOrchestrator,
-};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::handler::server::wrapper::Parameters;
@@ -15,12 +12,7 @@ async fn mcp_server_boots_and_responds_under_5_seconds() {
     let start = Instant::now();
 
     // Boot: construct container → orchestrator → surface
-    let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let surface = LintArwakyMcpServer::new(Arc::new(McpContainer::new_default().orchestrator()));
 
     // Respond: call version (lightest operation)
     let args = Parameters(ExecuteCommandArgs {
@@ -45,12 +37,7 @@ async fn mcp_server_boots_and_responds_under_5_seconds() {
 async fn mcp_server_health_check_responds_under_5_seconds() {
     let start = Instant::now();
 
-    let container = McpContainer::new_default();
-    let deps = McpServerDependencies {
-        external_lint: container.external_lint.clone(),
-    };
-    let orchestrator = McpServerOrchestrator::new(deps);
-    let surface = LintArwakyMcpServer::new(Arc::new(orchestrator));
+    let surface = LintArwakyMcpServer::new(Arc::new(McpContainer::new_default().orchestrator()));
 
     let result = surface.health_check().await;
 
