@@ -9,7 +9,7 @@ metadata:
     - "remove type ignore python"
   dependencies: []
   related:
-    - cleanup-files-python
+    - cleanup-consolidate-python
 ---
 
 # fix-bypass-python

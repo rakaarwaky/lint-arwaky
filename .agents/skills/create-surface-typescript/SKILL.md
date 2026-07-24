@@ -135,7 +135,7 @@ npx tsc --noEmit
 
 ```bash
 # Check forbidden lower-layer imports
-grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
+grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" packages/*/src/surface_*.ts
 
 # Check TypeScript
 npx tsc --noEmit

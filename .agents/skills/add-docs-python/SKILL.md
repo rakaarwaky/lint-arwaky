@@ -12,8 +12,8 @@ metadata:
     - "add package readme python"
   dependencies: []
   related:
-    - cleanup-files-python
-    - consolidate-files-python
+    - cleanup-consolidate-python
+    - add-docs-rust
 ---
 
 # add-docs-python

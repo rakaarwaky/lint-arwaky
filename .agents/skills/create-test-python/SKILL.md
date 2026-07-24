@@ -151,21 +151,19 @@ No → add to test plan.
 Verify class/interface implementation exists and is callable:
 
 ```python
-# tests/contract_aes.py
+# tests/contract_user_checker.py
 import pytest
-from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
+from user.capabilities_user_checker import UserChecker
 
 
-class TestAesContract:
-    """Contract tests for AES capability."""
+class TestUserCheckerContract:
+    """Contract tests for UserChecker capability."""
 
-    def test_implements_encrypt_interface(self):
-        """Verify AesCapability has required methods."""
-        cap = AesCapability()
-        assert hasattr(cap, "encrypt")
-        assert hasattr(cap, "decrypt")
-        assert callable(getattr(cap, "encrypt"))
-        assert callable(getattr(cap, "decrypt"))
+    def test_implements_check_interface(self):
+        """Verify UserChecker has required methods."""
+        checker = UserChecker()
+        assert hasattr(checker, "check_valid_email")
+        assert callable(getattr(checker, "check_valid_email"))
 
     def test_implements_key_management(self):
         """Verify key management methods exist."""
@@ -179,23 +177,21 @@ class TestAesContract:
 One file per module or logical group. Public API only.
 
 ```python
-# tests/unit_aes_encrypt.py
+# tests/unit_user_checker.py
 import pytest
-from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
+from user.capabilities_user_checker import UserChecker
 
 
-class TestAesEncrypt:
-    """Unit tests for AES encryption."""
+class TestUserChecker:
+    """Unit tests for UserChecker."""
 
     def setup_method(self):
         """Setup test fixtures."""
-        self.key = b"0123456789abcdef" * 2  # 32 bytes
-        self.cap = AesCapability(key=self.key)
+        self.checker = UserChecker()
 
-    def test_encrypt_happy_path(self):
-        """Test encryption returns valid ciphertext."""
-        plaintext = b"hello world"
-        result = self.cap.encrypt(plaintext)
+    def test_check_valid_email_happy_path(self):
+        """Test valid email returns True."""
+        result = self.checker.check_valid_email("user@example.com")
         assert result is not None
         assert result != plaintext  # Must be different from plaintext
 
@@ -371,14 +367,13 @@ def test_frq_043_wrong_key_rejected():
 ```python
 # benches/bench_aes_throughput.py
 import pytest
-from.*capabilities_|from.*agent_|from.*surface_aes import AesCapability
+from user.capabilities_user_checker import UserChecker
 
 
 @pytest.fixture
-def aes_capability():
-    """Provide AES capability for benchmarks."""
-    key = b"0123456789abcdef" * 2  # 32 bytes
-    return AesCapability(key=key)
+def user_checker():
+    """Provide UserChecker for benchmarks."""
+    return UserChecker()
 
 
 def bench_encrypt_small(aes_capability, benchmark):

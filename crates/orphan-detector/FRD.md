@@ -143,20 +143,6 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Edge Cases**: A file named `mod.rs` inside a deeply nested module is still skipped.
 - **Error Handling**: N/A — simple filename suffix check.
 
-### FR-011: Configuration-Driven Orphan Rules
-
-- **Description**: Respect per-layer configuration for enabling/disabling orphan checks and providing exceptions.
-- **Input**: Architecture configuration with layer definitions.
-- **Output**: Filtered scan results.
-- **Business Rules**:
-  - `ignored_paths` — Path patterns to exclude from scanning entirely.
-  - `orphan_entry_points` — Additional entry point filename patterns beyond defaults.
-  - `layers.<layer>.orphan.check_orphan` — Enable/disable orphan checking per layer.
-  - `layers.<layer>.exceptions` — Files to exclude from orphan detection per layer.
-  - When configuration is disabled, the full orphan scan returns empty immediately.
-- **Edge Cases**: Empty exceptions list means all files in the layer are checked. Nonexistent ignored paths are silently ignored.
-- **Error Handling**: Malformed config values default to permissive (check enabled, no exceptions).
-
 ## API Contract
 
 | Function                           | Input                                                                 | Output                     | Description                                       |
