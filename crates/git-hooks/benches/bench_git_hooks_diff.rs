@@ -68,7 +68,10 @@ fn bench_container_construction(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(git_hooks_lint_arwaky::root_git_hooks_container::GitContainer::new_default());
+                    black_box(
+                        git_hooks_lint_arwaky::root_git_hooks_container::GitContainer::new_default(
+                        ),
+                    );
                 }
             });
         });

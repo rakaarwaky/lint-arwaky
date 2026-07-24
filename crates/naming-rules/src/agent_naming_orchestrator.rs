@@ -41,35 +41,34 @@ impl INamingRunnerAggregate for NamingOrchestrator {
             ));
         }
 
-        let mut results = LintResultList::new(Vec::new());
         let all_files = shared::naming_rules::utility_naming_filesystem::walk_recursive(
             target,
             Some(&self.ignored_patterns),
         );
         let files = shared::naming_rules::utility_file_filter::filter_source_files(&all_files);
 
-        self.deps
-            .naming_convention_checker
-            .check_file_naming(
-                self.deps.config.as_ref(),
-                self.deps.layer_map.as_ref(),
-                &files,
-                target,
-                &mut results,
-            )
-            .await;
-        self.deps
-            .suffix_prefix_checker
-            .check_domain_suffixes(
-                self.deps.config.as_ref(),
-                self.deps.layer_map.as_ref(),
-                &files,
-                target,
-                &mut results,
-            )
-            .await;
+        let mut naming_results = LintResultList::new(Vec::new());
+        let mut suffix_results = LintResultList::new(Vec::new());
 
-        Ok(results.values)
+        let ((), ()) = tokio::join!(
+            self.deps.naming_convention_checker.check_file_naming(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                &files,
+                target,
+                &mut naming_results,
+            ),
+            self.deps.suffix_prefix_checker.check_domain_suffixes(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                &files,
+                target,
+                &mut suffix_results,
+            ),
+        );
+
+        naming_results.values.extend(suffix_results.values);
+        Ok(naming_results.values)
     }
 
     fn name(&self) -> &str {
