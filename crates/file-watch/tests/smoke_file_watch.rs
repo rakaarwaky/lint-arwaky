@@ -66,5 +66,5 @@ fn smoke_crate_boots_and_core_types_work() {
     let config = WatchConfig::from_path(tmp_dir.path().to_string_lossy().to_string());
     let running = Arc::new(AtomicBool::new(false));
     let code = orch.run(config, running);
-    assert_eq!(code, std::process::ExitCode::SUCCESS);
+    assert_eq!(code, shared::common::taxonomy_common_error::ExitCode::OK);
 }

@@ -54,20 +54,7 @@ fn bench_validate_thresholds(c: &mut Criterion) {
     group.sample_size(30);
 
     for n in [10, 50, 200] {
-        let config = ProjectConfig {
-            adapters: (0..n)
-                .map(|i| {
-                    AdapterEntry::new(
-                        AdapterName::raw(format!("adapter_{}", i)),
-                        AdapterStatus::Enabled,
-                        1.0,
-                    )
-                })
-                .collect(),
-            ..Default::default()
-        };
         group.throughput(Throughput::Elements(n as u64));
-        let validator = ConfigRulesValidator::new();
         group.bench_with_input(BenchmarkId::new("validate", n), &n, |b, val| {
             let config = ProjectConfig {
                 adapters: (0..*val)
@@ -96,12 +83,12 @@ fn bench_load_config_sync(c: &mut Criterion) {
     )
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
-    let root_str = tmp.path().to_str().unwrap().to_string();
+    let root = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let mut group = c.benchmark_group("load_config_sync");
     group.sample_size(30);
     group.bench_with_input(
         BenchmarkId::new("load", "rust_project"),
-        &root_str,
+        &root,
         |b, path| {
             let orch = ConfigContainer::new().orchestrator();
             b.iter(|| black_box(orch.load_config_sync(path)))

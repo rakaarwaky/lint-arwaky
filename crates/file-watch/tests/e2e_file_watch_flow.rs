@@ -148,5 +148,5 @@ fn e2e_orchestrator_full_lifecycle_immediate_stop() {
     // Set running = false so the loop exits after initial lint.
     let running = Arc::new(AtomicBool::new(false));
     let code = orch.run(config, running);
-    assert_eq!(code, std::process::ExitCode::SUCCESS);
+    assert_eq!(code, shared::common::taxonomy_common_error::ExitCode::OK);
 }

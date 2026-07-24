@@ -8,7 +8,7 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_severity_vo::Severity;
 
@@ -16,7 +16,7 @@ fn generate_results(count: usize) -> Vec<LintResult> {
     (0..count)
         .map(|i| {
             LintResult::new_arch(
-                format!("src/file_{i}.rs"),
+                &format!("src/file_{i}.rs"),
                 i + 1,
                 "AES301",
                 Severity::LOW,
@@ -56,7 +56,7 @@ fn bench_text_format(c: &mut Criterion) {
 
     for result_count in [10, 100, 1000] {
         let results = generate_results(result_count);
-        let report = ScanReport::new(results.clone(), LintResultList::new(results));
+        let report = ScanReport::new(results.clone(), Vec::new());
         group.throughput(Throughput::Elements(result_count as u64));
         let text = TextFormatter::new(
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
