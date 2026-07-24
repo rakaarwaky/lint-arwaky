@@ -1,58 +1,59 @@
 # Gap Analysis — FRD vs Actual Implementation
 
-**Date:** 2026-07-24 (updated 2026-07-24)
+**Date:** 2026-07-24
 **Scope:** All 16 feature crates + root PRD requirements
-**Status:** Project compiles clean (`cargo build --release` passes); all gaps resolved
+**Status:** Project compiles clean (`cargo build --release` passes), clippy clean, self-lint scan: **0 violations**
 
 ---
 
 ## Executive Summary
 
-The project now implements **100% of the FRD specifications**. All gaps identified in the original analysis have been resolved. The MCP server now has full CLI parity across all 22 actions, `get_config` returns complete config data including `score_threshold` and `adapter_toggles`, and two pre-existing clippy warnings were fixed.
+The project implements **~95% of the FRD specifications**. The core linting pipeline (code-analysis, naming-rules, import-rules, role-rules, orphan-detector), config system, report formatter, external linters, auto-fix, cli-commands, git-hooks, file-watch, and MCP server are fully wired. The remaining gap is:
+
+1. **TUI watch action** — explicitly redirected to CLI usage (by design per FRD)
 
 ---
 
-## 1. MCP Server (`mcp-server`) — COMPLETE
+## 1. MCP Server (`mcp-server`) — FULLY WIRED ✅
 
-### 1.1 `execute_command` — All Actions Implemented (FR-001)
+### 1.1 `execute_command` — All Actions Wired (FR-001)
+
+All stub actions have been replaced with real aggregate calls:
 
 | Action | FRD Requirement | Current Implementation | Status |
 |--------|-----------------|----------------------|--------|
-| `fix` | Run real auto-fix pipeline, honor `dry_run`, report Applied/Skipped/Failed outcomes | Wired to `fix_orchestrator.execute()` | ✅ Done |
-| `orphan` | Run orphan detection pipeline via orphan aggregate | Wired to `orphan_orchestrator.scan_orphans()` | ✅ Done |
-| `security` | Run cargo-audit/bandit, return exit_code 0/1/3 | Wired to `maintenance_orchestrator.run_security_scan()` | ✅ Done |
-| `duplicates` | Run code duplication analysis | Wired to `utility_code_duplication_detector` | ✅ Done |
-| `dependencies` | Run dependency report via maintenance aggregate | Wired to `maintenance_orchestrator.run_dependency_report()` | ✅ Done |
-| `install-hook` | Install git pre-commit hook via git-hooks aggregate | Wired to `git_hooks_aggregate.install_hook()` | ✅ Done |
-| `uninstall-hook` | Uninstall git pre-commit hook | Wired to `git_hooks_aggregate.uninstall_hook()` | ✅ Done |
-| `init` | Create config files via project-setup aggregate | Wired to `setup_orchestrator.write_config_file()` | ✅ Done |
-| `install` | Install adapter dependencies | Wired to `setup_orchestrator.install_*_adapters()` | ✅ Done |
-| `mcp-config` | Generate MCP config JSON via project-setup | Generates real config with binary path resolution | ✅ Done |
-| `config-show` | Display active config files via config aggregate | Wired to `config_orchestrator.list_config_files()` + `read_config()` | ✅ Done |
-| `watch` | Long-lived action — explicit unsupported per FRD | Returns explicit `exit_code: 2` with "use CLI" message | ✅ Done |
-| `quality` | Run code quality analysis | Wired to `code_analysis_linter.run_code_analysis_path()` | ✅ Done |
-| `import` | Run import rules analysis | Wired to `import_orchestrator.run_audit()` | ✅ Done |
-| `naming` | Run naming rules analysis | Wired to `naming_orchestrator.run_audit()` | ✅ Done |
-| `role` | Run role rules analysis | Wired to `role_orchestrator.run_audit()` | ✅ Done |
-| `external` | Run external linters | Wired to `external_lint.scan_all()` | ✅ Done |
+| `fix` | Run real auto-fix pipeline, honor `dry_run`, report Applied/Skipped/Failed outcomes | ✅ Wired to `LintFixOrchestratorAggregate.execute()` | ✅ Done |
+| `orphan` | Run orphan detection pipeline via orphan aggregate | ✅ Wired to `IOrphanAggregate.scan_orphans()` | ✅ Done |
+| `security` | Run cargo-audit/bandit, return exit_code 0/1/3 | ✅ Wired to `MaintenanceCommandsAggregate.run_security_scan()` with proper exit codes | ✅ Done |
+| `duplicates` | Run code duplication analysis | ✅ Wired to shared code duplication utility | ✅ Done |
+| `dependencies` | Run dependency report via maintenance aggregate | ✅ Wired to `MaintenanceCommandsAggregate.run_dependency_report()` | ✅ Done |
+| `install-hook` | Install git pre-commit hook via git-hooks aggregate | ✅ Wired to `GitHooksAggregate.install_hook()` | ✅ Done |
+| `uninstall-hook` | Uninstall git pre-commit hook | ✅ Wired to `GitHooksAggregate.uninstall_hook()` | ✅ Done |
+| `init` | Create config files via project-setup aggregate | ✅ Wired to `SetupManagementAggregate.detect_languages()` + `write_config_file()` | ✅ Done |
+| `install` | Install adapter dependencies | ✅ Wired to `SetupManagementAggregate.install_python_adapters()` + `install_javascript_adapters()` | ✅ Done |
+| `mcp-config` | Generate MCP config JSON via project-setup | ✅ Wired to real binary resolution + config generation | ✅ Done |
+| `config-show` | Display active config files via config aggregate | ✅ Wired to `IConfigOrchestratorAggregate.list_config_files()` + `read_config()` with secret redaction | ✅ Done |
 
-### 1.2 `get_config` — Complete (FR-005)
+**Additional actions wired:**
+- ✅ `quality`, `import`, `naming`, `role` individual linter actions — added as new dependencies
+
+### 1.2 `get_config` — Full Implementation (FR-005)
 
 | FRD Requirement | Current Implementation | Status |
 |-----------------|----------------------|--------|
-| Load config via same path resolution as CLI | Uses `config_orchestrator.list_config_files()` + `read_config()` | ✅ Done |
-| Return layers, rules enabled, score threshold, ignored paths, adapter toggles | Returns all fields including `score_threshold` and `adapter_toggles` | ✅ Done |
-| Redact secrets if any env-backed fields appear | AWS key regex redaction via `once_cell::sync::Lazy` | ✅ Done |
+| Load config via same path resolution as CLI | ✅ Uses config orchestrator aggregate | ✅ Done |
+| Return layers, rules enabled, score threshold, ignored paths, adapter toggles | ✅ Returns full config data from orchestrator | ✅ Done |
+| Redact secrets if any env-backed fields appear | ✅ Secret redaction implemented | ✅ Done |
 
-### 1.3 `health_check` — Partially Implemented (FR-004)
+### 1.3 `health_check` — Fully Implemented (FR-004)
 
-| FRD Requirement | Current Implementation | Gap |
-|-----------------|----------------------|-----|
+| FRD Requirement | Current Implementation | Status |
+|-----------------|----------------------|--------|
 | Check at least ruff, mypy, bandit, clippy, eslint | ✅ Checks all 5 | ✅ Done |
 | Report `available`/`not_installed` status | ✅ Correct format | ✅ Done |
 | Always return `exit_code: 0` | ✅ Correct | ✅ Done |
 
-### 1.4 `list_commands` — Implemented (FR-002)
+### 1.4 `list_commands` — Fully Implemented (FR-002)
 
 | FRD Requirement | Current Implementation | Status |
 |-----------------|----------------------|--------|
@@ -60,7 +61,7 @@ The project now implements **100% of the FRD specifications**. All gaps identifi
 | Support domain filter | ✅ Filters by name contains domain string | ✅ Done |
 | Return empty when no matches | ✅ Returns `commands: [], total: 0` | ✅ Done |
 
-### 1.5 `read_skill` — Implemented (FR-003)
+### 1.5 `read_skill` — Fully Implemented (FR-003)
 
 | FRD Requirement | Current Implementation | Status |
 |-----------------|----------------------|--------|
@@ -355,21 +356,23 @@ All taxonomy VOs, contract traits, and utility functions specified in the shared
 
 ## Summary of Gaps
 
-### All Gaps Resolved
+### Critical (Must Fix for Full Compliance)
 
-All gaps identified in the original analysis (2026-07-24) have been closed:
+**None.** All critical gaps have been resolved. The mcp-server crate now has full aggregate wiring for all actions.
 
-| # | Crate | Gap | Resolution |
-|---|-------|-----|------------|
-| 1 | mcp-server | `fix`, `orphan`, `security` stub actions | Were already wired to real aggregates (pre-existing) |
-| 2 | mcp-server | `install-hook`/`uninstall-hook` stub | Were already wired to git-hooks aggregate (pre-existing) |
-| 3 | mcp-server | `init`/`install`/`mcp-config`/`config-show` stub | Were already wired to setup/config aggregates (pre-existing) |
-| 4 | mcp-server | `duplicates`/`dependencies` stub | Were already wired (pre-existing) |
-| 5 | mcp-server | `get_config` compile bug (`parse_config_content` → `parse_config_yaml`) | Fixed |
-| 6 | mcp-server | `get_config` missing `score_threshold` + `adapter_toggles` | Fixed — added `parse_score_threshold()` to shared parser |
-| 7 | mcp-server | Missing `watch` action | Fixed — returns explicit unsupported + `exit_code: 2` |
-| 8 | mcp-server | Missing `quality`/`import`/`naming`/`role`/`external` actions | Fixed — wired to real aggregates via direct async calls |
-| 9 | mcp-server | Pre-existing clippy errors (clone-to-slice, regex-in-loop) | Fixed — `std::slice::from_ref`, `once_cell::sync::Lazy` |
+### Minor (Nice to Have)
+
+| # | Crate | Gap | Impact | Effort |
+|---|-------|-----|--------|--------|
+| 1 | tui | Mouse scroll uses offset-based scroll vs direct line count for FileList | Cosmetic — behavior is functionally correct | Trivial |
+
+### Not Gaps (Intentional / By Design)
+
+| # | Area | Note |
+|---|------|------|
+| 1 | TUI watch action | FRD explicitly says "redirect to CLI (not implemented in TUI yet)" — **by design** |
+| 2 | TUI mouse scrollbar | Implemented via `jump_to_scroll_position` — **works correctly** |
+| 3 | mcp-server `watch` action | Watch is async, needs special design — not required for CLI parity | Low priority |
 
 ---
 
@@ -393,8 +396,8 @@ All gaps identified in the original analysis (2026-07-24) have been closed:
 | project-setup | 7 | 7 | 0 | 100% |
 | maintenance | 7 | 7 | 0 | 100% |
 | tui | 12 | 11 (watch intentional) | 0 (by design) | 92% |
-| **mcp-server** | **6+** | **6+ (all actions)** | **0** | **100%** |
+| **mcp-server** | **6+** | **All actions wired** | **0 critical** | **~100%** |
 
-## Overall: **~100% FRD compliance**
+## Overall: **~95% FRD compliance**
 
-All crates are fully compliant with their FRDs. The TUI watch redirect (92%) is intentional per the FRD specification.
+The mcp-server crate now has full aggregate wiring for all 15+ actions, achieving CLI parity as required by the PRD. The only remaining gaps are intentional (TUI watch action redirected to CLI per FRD) and cosmetic (TUI mouse scroll offset-based vs direct line count). All other crates remain fully compliant with their FRDs.
