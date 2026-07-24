@@ -4,6 +4,10 @@ use shared::<domain>::taxonomy_<name>_vo::<VO>;
 use shared::<domain>::contract_<name>_aggregate::I<Name>Aggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+pub struct Agent<Name>deps {
+    // DI fields use Arc<dyn Trait>
+    // Value fields use shared VOs
+}
 pub struct Agent<Name> {
     // DI fields use Arc<dyn Trait>
     // Value fields use shared VOs
