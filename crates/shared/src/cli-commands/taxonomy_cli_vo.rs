@@ -167,15 +167,6 @@ pub enum Commands {
         format: Format,
     },
 
-    /// Run 6 linter subcommands as parallel Rust subprocesses and measure timing
-    ScanParallelSubprocess {
-        /// Path to scan
-        path: Option<String>,
-        /// Output format: text, json, sarif, junit
-        #[arg(long, default_value_t = Format::Text)]
-        format: Format,
-    },
-
     /// Scan for security vulnerabilities
     Security {
         /// Path to scan

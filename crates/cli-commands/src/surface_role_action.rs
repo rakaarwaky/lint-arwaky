@@ -2,18 +2,17 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
 use crate::surface_common_command;
+use crate::surface_output_component::{output_violations, ViolationItem};
 
 pub fn handle_scan_role(
     path: Option<FilePath>,
     format: Format,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    report_formatter: Arc<dyn IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -23,7 +22,7 @@ pub fn handle_scan_role(
         eprintln!("Error: path '{}' does not exist", root);
         return ExitCode::from(2);
     }
-    let root_fp = match FilePath::new(root) {
+    let root_fp = match FilePath::new(root.clone()) {
         Ok(fp) => fp,
         Err(_) => return ExitCode::from(2),
     };
@@ -32,10 +31,9 @@ pub fn handle_scan_role(
         Err(_) => return ExitCode::from(2),
     };
     let results = rt.block_on(role_orchestrator.run_audit(&root_fp));
-    let report = ScanReport::new(results.clone(), vec![]);
-    let output = report_formatter.format(&report, format);
-    println!("{output}");
-    if results.is_empty() {
+    let violations: Vec<ViolationItem> = results.iter().map(ViolationItem::from_lint_result).collect();
+    output_violations(&violations, &root, format, false);
+    if violations.is_empty() {
         ExitCode::SUCCESS
     } else {
         ExitCode::from(1)
