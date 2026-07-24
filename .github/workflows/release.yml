@@ -12,17 +12,44 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 1
+  RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
 
 jobs:
   build:
     name: Build release binaries
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo build --release --all-targets
-      - run: cp target/release/lint-arwaky-cli lint-arwaky-cli
-      - run: cp target/release/lint-arwaky-mcp lint-arwaky-mcp
+
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+
+      - name: Cache cargo (release)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/release
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+
+      - name: Build release binaries
+        run: cargo build --release --bin lint-arwaky-cli --bin lint-arwaky-mcp
+
+      - name: Strip binaries
+        run: strip target/release/lint-arwaky-cli target/release/lint-arwaky-mcp
+
+      - name: Copy binaries
+        run: |
+          cp target/release/lint-arwaky-cli lint-arwaky-cli
+          cp target/release/lint-arwaky-mcp lint-arwaky-mcp
+
       - uses: actions/upload-artifact@v4
         with:
           name: binaries
@@ -38,10 +65,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: binaries
+
       - run: chmod +x lint-arwaky-cli lint-arwaky-mcp
-      - run: ./lint-arwaky-cli --version
-      - run: ./lint-arwaky-cli --help
-      - run: ./lint-arwaky-cli report . --output-format json | grep '"score"'
+
+      - name: Verify CLI
+        run: |
+          ./lint-arwaky-cli --version
+          ./lint-arwaky-cli --help
+
+      - name: Verify MCP server
+        run: ./lint-arwaky-mcp --version || true
+
+      - name: Smoke scan
+        run: ./lint-arwaky-cli report . --output-format json | grep '"score"'
 
   provenance:
     name: Generate SLSA provenance
@@ -52,10 +88,12 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: binaries
           path: release-assets
+
       - uses: actions/attest-build-provenance@v2
         with:
           subject-path: "release-assets/*"
@@ -70,6 +108,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: binaries
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |

@@ -94,22 +94,29 @@ run_gate "AES Codes (test-workspaces >= 24)" bash -c '
 PIDS+=($!)
 wait_and_report "${PIDS[@]}"
 
-# ─── Phase 4: Tests (incremental from clippy build) ────────
+# ─── Phase 4: Tests (incremental per crate) ────────────────
 echo -e "\n${CYAN}━━━ Gate: Tests ━━━${NC}"
-if test_output=$(cargo test --workspace --lib --tests --no-fail-fast 2>&1); then
-    total_passed=$(echo "$test_output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
-    total_failed=$(echo "$test_output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$2} END{print sum+0}')
-    echo "  passed: ${total_passed}, failed: ${total_failed}"
-    if [ "${total_failed:-0}" -eq 0 ]; then
-        echo -e "${GREEN}✅ Tests PASSED${NC}"
-        PASSED=$((PASSED + 1))
+total_passed=0
+test_failed=0
+crates="shared-lint-arwaky code-analysis-lint-arwaky import-rules-lint-arwaky naming-rules-lint-arwaky role-rules-lint-arwaky config-system-lint-arwaky auto-fix-lint-arwaky file-watch-lint-arwaky orphan-detector-lint-arwaky external-lint-lint-arwaky maintenance-lint-arwaky git-hooks-lint-arwaky project-setup-lint-arwaky report-formatter-lint-arwaky cli-commands-lint-arwaky mcp-server-lint-arwaky tui-lint-arwaky"
+
+for crate in $crates; do
+    if test_out=$(cargo test -p "$crate" 2>&1); then
+        passed=$(echo "$test_out" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" '{sum+=$1} END{print sum+0}')
+        total_passed=$((total_passed + passed))
     else
-        echo -e "${RED}❌ Tests FAILED${NC}"
-        FAILED=$((FAILED + 1))
+        echo -e "${RED}❌ Tests FAILED on $crate${NC}"
+        echo "$test_out" | grep "^error" | head -10 || true
+        test_failed=1
+        break
     fi
+done
+
+if [ "$test_failed" -eq 0 ]; then
+    echo "  passed: ${total_passed}, failed: 0"
+    echo -e "${GREEN}✅ Tests PASSED${NC}"
+    PASSED=$((PASSED + 1))
 else
-    echo -e "${RED}❌ Tests FAILED (compilation/runtime)${NC}"
-    echo "$test_output" | grep "^error" | head -10 || true
     FAILED=$((FAILED + 1))
 fi
 
