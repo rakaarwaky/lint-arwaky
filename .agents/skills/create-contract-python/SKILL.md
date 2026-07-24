@@ -35,6 +35,16 @@ Two contract suffixes serve different roles:
 - `_protocol` → implemented by Capabilities (inbound behavior interface)
 - `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
 
+## AES402 — Contract Primitive Restriction
+
+### Protocol Check (AES402)
+Scan `_protocol` files for raw primitives in method signatures. Flag `str`, `int`, `float`, `bool`, `list`, `dict` in parameter types and return types. Method signatures must use VOs.
+
+### Aggregate Check (AES402)
+Same primitive scan on `_aggregate` files. All method signatures must use VOs for domain data.
+
+**Skip rules:** Lines containing internal VO wrappers are excluded. Lines starting with `def` in comments are excluded after noise stripping.
+
 ## Definition of Done
 
 1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
@@ -47,6 +57,8 @@ Two contract suffixes serve different roles:
 8. Contract signatures use shared VOs for domain data.
 9. New contract module is registered in `__init__.py`.
 10. `python -c "import <module>"` passes.
+11. **AES402:** Protocol method signatures have no raw primitives.
+12. **AES402:** Aggregate method signatures have no raw primitives.
 
 ## References
 
@@ -104,6 +116,12 @@ grep -n "^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/
 
 # Check forbidden imports
 grep -n "from.*capabilities_|from.*agent_|from.*surface_" modules/shared/src/*/contract_*.py
+
+# AES402: Check protocol method signatures for raw primitives
+grep -n "def\s\+\w\+(.*\(str\|int\|float\|bool\|list\|dict\)" modules/shared/src/*/contract_*_protocol.py
+
+# AES402: Check aggregate method signatures for raw primitives
+grep -n "def\s\+\w\+(.*\(str\|int\|float\|bool\|list\|dict\)" modules/shared/src/*/contract_*_aggregate.py
 ```
 
 ## Common Mistakes
