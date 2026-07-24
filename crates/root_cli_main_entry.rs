@@ -120,7 +120,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             } else {
                 // Directory mode — scan all files
-                cli_commands::surface_orphan_action::handle_scan_orphan(
+                cli_commands::surface_orphan
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
                     format,
@@ -131,20 +131,20 @@ fn main() -> ExitCode {
             }
         }
         Commands::ScanQuality { path, format } => {
-            cli_commands::surface_quality_action::handle_scan_quality(
+            cli_commands::surface_quality_command::handle_scan_quality(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.code_analysis_linter.clone(),
                 container.report_formatter.clone(),
             )
         }
-        Commands::ScanImport { path, format } => cli_commands::surface_import_action::handle_scan_import(
+        Commands::ScanImport { path, format } => cli_commands::surface_import_command::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanNaming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
+        Commands::ScanNaming { path, format } => cli_commands::surface_naming_command::(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.naming_orchestrator.clone(),
