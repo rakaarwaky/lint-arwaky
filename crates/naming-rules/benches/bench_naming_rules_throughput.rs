@@ -1,8 +1,9 @@
 // PURPOSE: Benchmark — naming checks throughput
 // NFR: Check 1000 files in < 1 second
 // Uses criterion — never hand-rolled timing
+// Best practices: significance_level(0.05), sample_size(30+)
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -47,6 +48,7 @@ fn bench_naming_convention_checker(c: &mut Criterion) {
     let root = FilePath::new("/project".to_string()).unwrap();
 
     let mut group = c.benchmark_group("naming_convention_checker");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 500, 1000, 5000] {
         let files = generate_files(size);
@@ -77,6 +79,7 @@ fn bench_suffix_prefix_checker(c: &mut Criterion) {
     let root = FilePath::new("/project".to_string()).unwrap();
 
     let mut group = c.benchmark_group("suffix_prefix_checker");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for size in [100, 500, 1000, 5000] {
         let files = generate_files(size);

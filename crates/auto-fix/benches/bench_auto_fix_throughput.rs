@@ -1,9 +1,10 @@
 // PURPOSE: Benchmark tests — performance regression for auto-fix operations.
 // Uses criterion for statistically sound measurements.
+// Best practices: throughput measurement, significance_level(0.05), sample_size(30+)
 
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
@@ -49,6 +50,7 @@ impl ICodeAnalysisAggregate for BenchLinter {
 
 fn bench_fix_unused_import(c: &mut Criterion) {
     let mut group = c.benchmark_group("fix_unused_import");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for line_count in [10, 100, 1000] {
         let mut tmp = tempfile::NamedTempFile::new().unwrap();
@@ -91,6 +93,7 @@ fn bench_fix_unused_import(c: &mut Criterion) {
 
 fn bench_fix_bypass_comments(c: &mut Criterion) {
     let mut group = c.benchmark_group("fix_bypass_comments");
+    group.significance_level(0.05).confidence_level(0.95);
 
     for line_count in [10, 100, 1000] {
         group.bench_with_input(
@@ -116,6 +119,7 @@ fn bench_fix_bypass_comments(c: &mut Criterion) {
 
 fn bench_file_adapter_read(c: &mut Criterion) {
     let mut group = c.benchmark_group("file_adapter_read");
+    group.sample_size(30);
 
     for size_kb in [1, 10, 100] {
         let mut tmp = tempfile::NamedTempFile::new().unwrap();
@@ -139,6 +143,7 @@ fn bench_file_adapter_read(c: &mut Criterion) {
 
 fn bench_execute_pipeline(c: &mut Criterion) {
     let mut group = c.benchmark_group("execute_pipeline");
+    group.sample_size(30);
 
     for violation_count in [0, 5, 20] {
         let mut tmp = tempfile::NamedTempFile::new().unwrap();
