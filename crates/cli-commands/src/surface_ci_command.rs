@@ -26,16 +26,16 @@ pub fn handle_ci(
     };
     if !std::path::Path::new(&root_str).exists() {
         eprintln!("Error: path '{}' does not exist", root_str);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
     let root = match FilePath::new(root_str) {
         Ok(fp) => fp,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
 
     let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
 
     let mut results = code_analysis_linter.run_code_analysis_path(&root);
