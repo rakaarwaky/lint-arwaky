@@ -148,20 +148,6 @@ impl ImportOrchestrator {
     ) -> Self {
         let layer_map = LayerMapVO::new(config.layers.clone());
 
-        let aes201_exceptions: HashSet<String> = config
-            .rules
-            .iter()
-            .filter(|r| r.name.value == "AES201")
-            .flat_map(|r| r.exceptions.values.iter().cloned())
-            .collect();
-
-        let aes202_exceptions: HashSet<String> = config
-            .rules
-            .iter()
-            .filter(|r| r.name.value == "AES202")
-            .flat_map(|r| r.exceptions.values.iter().cloned())
-            .collect();
-
         Self {
             deps,
             config,
