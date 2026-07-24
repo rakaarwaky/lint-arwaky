@@ -371,6 +371,15 @@ cargo tarpaulin -p <name>                               # coverage
 cargo test -p <name> -- --nocapture                     # with stdout
 ```
 
+## Common Mistakes (AVOID)
+
+- ❌ **Testing implementation details**: Test public APIs, not private internals
+- ❌ **Missing edge cases**: Always test error paths, invalid inputs, empty values
+- ❌ **Over-mocking**: Only mock external dependencies (DB, HTTP), not internal logic
+- ❌ **Skipping setup**: Use `#[ctor]` or test fixtures for consistent test state
+- ❌ **Hardcoding assertions**: Use parameterized tests (`rstest`) for repetitive scenarios
+- ❌ **Running benchmarks by default**: Benchmarks should be opt-in (`cargo bench`)
+
 ## Directory Layout
 
 ```

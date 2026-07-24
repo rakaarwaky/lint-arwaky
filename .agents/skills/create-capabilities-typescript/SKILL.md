@@ -183,7 +183,7 @@ npx tsc --noEmit
 
 ```bash
 # Check forbidden imports (no agent, no other capabilities)
-grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.ts
+grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" packages/*/src/capabilities_*.ts
 
 # List protocol interface implementations
 grep -n "implements I[A-Za-z0-9_]*Protocol" packages/*/src/capabilities_*.ts

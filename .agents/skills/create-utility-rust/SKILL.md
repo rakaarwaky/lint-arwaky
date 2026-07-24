@@ -22,8 +22,7 @@ metadata:
   dependencies: []
   related:
     - create-capabilities-rust
-    - cleanup-files-rust
-    - consolidate-files-rust
+    - cleanup-consolidate-rust
 ---
 
 # create-utility-rust

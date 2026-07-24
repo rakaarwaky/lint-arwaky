@@ -28,14 +28,12 @@ The maintenance crate provides operational health and upkeep commands for the li
 - **Input**: None (operates on current working directory).
 - **Output**: Doctor result containing python version, installation status, config presence, adapter statuses (map), issues list, and overall health status.
 - **Business Rules**:
-  - Checks for config files: `.lint_arwaky.json`, `lint_arwaky.config.yaml`, `pyproject.toml`.
-  - Checks adapter availability for: `ruff`, `mypy`, `bandit`, `radon` via `which` command.
-  - Checks lint-arwaky pip package installation via `pip show`.
+  - Checks for config files: `lint_arwaky.config.rust.yaml`, `lint_arwaky.config.python.yaml`, `lint_arwaky.config.javascript.yaml`, `pyproject.toml`, `Cargo.toml`, `package.json`.
+  - Checks adapter availability for: `ruff`, `mypy`, `bandit`, `clippy`, `eslint`, `prettier`, `tsc` via `which` command.
   - If no config file found, adds "No configuration file found" issue.
   - If adapter not found, adds "Linter adapter '<name></name>' is not installed" issue.
   - Health is true only if issues list is empty.
 - **Edge Cases**:
-  - `pip show` command fails — installation status set to false.
   - `which` command fails for adapter — status set to "MISSING".
   - Config files exist but are empty — still counted as found.
 - **Error Handling**: No error thrown; issues collected in the result's issues list.
@@ -77,7 +75,7 @@ The maintenance crate provides operational health and upkeep commands for the li
 - **Input**: None.
 - **Output**: None (side effect: pip install --upgrade executed).
 - **Business Rules**:
-  - Targets: `ruff`, `mypy`, `bandit`, `radon`.
+  - Targets: `ruff`, `mypy`, `bandit`.
   - Each tool upgraded independently via pip install --upgrade command.
   - Failure of one tool does not prevent others from being upgraded.
 - **Edge Cases**:
@@ -185,7 +183,7 @@ The maintenance crate provides operational health and upkeep commands for the li
 - [ ] Stats on empty directory — returns all zeros.
 - [ ] Clean removes `.pytest_cache` directories from project.
 - [ ] Clean skips `target/` and `.git/` directories.
-- [ ] Update upgrades ruff, mypy, bandit, radon independently.
+- [ ] Update upgrades ruff, mypy, bandit independently.
 - [ ] Diagnose toolchain with cargo installed — reports "OK".
 - [ ] Diagnose toolchain with missing clippy — reports "FAIL" (required).
 - [ ] Security scan on Rust project with Cargo.lock — runs cargo-audit.

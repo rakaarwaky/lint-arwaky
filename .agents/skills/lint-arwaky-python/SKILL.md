@@ -9,9 +9,9 @@ metadata:
     - "verify aes compliance python"
   dependencies: []
   related:
-    - cleanup-files-python
+    - cleanup-consolidate-python
     - create-capabilities-python
---------------------------------
+---
 
 # lint-arwaky-python — Complete Command & Argument Reference
 

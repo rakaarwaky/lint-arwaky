@@ -78,9 +78,9 @@ No domain data structures may be defined in capabilities, agent, surface, or roo
 
 ## Workflow
 
-### Step 1: Identify the Data Type
+### Step 1: Identify the Domain Type
 
-When you find an interface/type in a layer file, ask: **"Is this a data type or an implementor?"**
+When you find an interface/type in a layer file, ask: **"Is this a domain type or an implementor?"**
 
 If it carries domain data → move to taxonomy. If it implements an interface and uses DI → keep in layer file.
 

@@ -219,7 +219,7 @@ pub struct ImportOrchestrator {
 
 ## README.md Template (DEVELOPER ONBOARDING — how to use)
 
-````markdown
+```markdown
 # <crate-name>
 
 > One-liner: what this crate does and who it's for.

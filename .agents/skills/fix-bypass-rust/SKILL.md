@@ -10,7 +10,7 @@ metadata:
     - "remove unwrap rust"
   dependencies: []
   related:
-    - module_logic_validator
+    - cleanup-consolidate-rust
 ---
 
 # fix-bypass-rust

@@ -258,6 +258,17 @@ The cli-commands crate provides the unified command-line interface that drives t
   - No violations found → exit code 0.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
+### FR-015: Version Command
+
+- **Description**: Display CLI binary version information.
+- **Input**: None.
+- **Output**: Version string printed to stdout, exit code 0.
+- **Business Rules**:
+  - Prints binary name and semantic version (e.g., `lint-arwaky-cli 1.10.106`).
+  - Exit code always 0 on success.
+- **Edge Cases**: None — always succeeds.
+- **Error Handling**: N/A.
+
 
 ## API Contract
 
@@ -282,6 +293,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 | MCP Config   | client name                                       | Exit code | Print MCP client config JSON                             |
 | Config Show  | config orchestrator aggregate                     | Exit code | Display active config files                              |
 | Adapters     | external lint aggregate                           | Exit code | List enabled adapters                                    |
+| Version      | None                                              | Exit code | Display binary version                                   |
 | Git Diff     | git hooks aggregate, linter, branch, path, filter | Exit code | Analyze git-changed files                                |
 | Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint                                |
 
@@ -331,6 +343,7 @@ The cli-commands crate provides the unified command-line interface that drives t
 - [ ] FR-012: `git-diff` analyzes only changed files
 - [ ] FR-013: `watch` monitors files and re-scans; handler fail → exit 2
 - [ ] FR-014: individual linters (quality/import/naming/role/orphan/external)
+- [ ] FR-015: `version` prints binary name and version; exit 0
 
 ## Assumptions & Constraints
 

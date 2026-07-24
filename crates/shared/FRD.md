@@ -34,7 +34,7 @@ shared (foundation — no feature crate dependencies)
 - **Business Rules**:
   - All VOs support serialization, cloning, debugging, and equality comparison.
   - VOs wrap primitives to enforce type safety: file path, line number, column number, severity, error code, score, timestamp, boolean flag, count, pattern list.
-  - Severity levels: HIGH, MEDIUM, LOW with score impact calculation.
+  - Severity levels: CRITICAL, HIGH, MEDIUM, LOW with score impact calculation.
   - File path validates non-empty path strings.
   - Line number and column number use integer values (1-indexed).
   - Score supports perfection check, threshold passing, and severity deduction.
@@ -157,7 +157,7 @@ shared (foundation — no feature crate dependencies)
 | Module                               | Key Types / Functions                                                | Description                                  |
 | ------------------------------------ | -------------------------------------------------------------------- | -------------------------------------------- |
 | common path value object             | file path value object                                               | Typed file path value object with validation |
-| common severity value object         | severity value object                                                | HIGH / MEDIUM / LOW levels                   |
+| common severity value object         | severity value object                                                | CRITICAL / HIGH / MEDIUM / LOW levels        |
 | common error value object            | error code                                                           | Lint rule code (e.g., "AES401")              |
 | common lint value object             | lint result, scope reference, location, location list                | Violation output types                       |
 | common primitive value objects       | boolean flag, score, pattern list, count, line number, column number | Primitive wrapper value objects              |

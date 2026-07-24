@@ -183,13 +183,13 @@ python -c "import <module>"
 
 ```bash
 # Check forbidden imports (no agent, no other capabilities)
-grep -n "^\s*from.*capabilities_|from.*agent_|from.*surface_*.py
+grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/capabilities_*.py
 
 # List protocol ABC implementations
 grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
 
 # Check _protocol import (guard)
-grep -n "from.*capabilities_|from.*agent_|from.*surface_*.py
+grep -n "from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/capabilities_*.py
 ```
 
 ## Common Mistakes

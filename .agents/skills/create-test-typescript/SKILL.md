@@ -156,21 +156,14 @@ No → add to test plan.
 Verify class/interface implementation exists and is callable:
 
 ```typescript
-// tests/contract_aes.ts
+// tests/contract_user_checker.ts
 import { describe, it, expect } from "vitest";
-import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
+import { UserChecker } from "../../packages/user/src/capabilities_user_checker";
 
-describe("AesContract", () => {
-  it("implements encrypt method", () => {
-    const cap = new AesCapability();
-    expect(typeof cap.encrypt).toBe("function");
-    expect(cap.decrypt).toBeDefined();
-  });
-
-  it("implements key management methods", () => {
-    const cap = new AesCapability();
-    expect(cap.generateKey).toBeDefined();
-    expect(cap.validateKey).toBeDefined();
+describe("UserCheckerContract", () => {
+  it("implements checkValidEmail method", () => {
+    const checker = new UserChecker();
+    expect(typeof checker.checkValidEmail).toBe("function");
   });
 });
 ```
@@ -180,23 +173,20 @@ describe("AesContract", () => {
 One file per module or logical group. Public API only.
 
 ```typescript
-// tests/unit_aes_encrypt.ts
+// tests/unit_user_checker.ts
 import { describe, it, expect, beforeEach } from "vitest";
-import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
+import { UserChecker } from "../../packages/user/src/capabilities_user_checker";
 
-describe("AesEncrypt", () => {
-  let cap: AesCapability;
-  const key = Buffer.from("0123456789abcdef" * 2, "hex").slice(0, 32);
+describe("UserChecker", () => {
+  let checker: UserChecker;
 
   beforeEach(() => {
-    cap = new AesCapability(key);
+    checker = new UserChecker();
   });
 
-  it("encrypts plaintext to ciphertext", () => {
-    const plaintext = Buffer.from("hello world");
-    const result = cap.encrypt(plaintext);
-    expect(result).toBeDefined();
-    expect(result).not.toEqual(plaintext); // Must be different
+  it("returns true for valid email", () => {
+    const result = checker.checkValidEmail("user@example.com");
+    expect(result).toBe(true);
   });
 
   it("handles empty input", () => {
@@ -368,17 +358,14 @@ describe("FRD-043", () => {
 ### Step 9: Benchmark Tests
 
 ```typescript
-// benches/bench_aes_throughput.ts
-import { bench, describe, fit } from "vitest/plugin/testing";
-import { AesCapability } from.*capabilities_|from.*agent_|from.*surface_aes";
+// benches/bench_user_checker.ts
+import { bench, describe } from "vitest";
+import { UserChecker } from "../../packages/user/src/capabilities_user_checker";
 
-const key = Buffer.from("0123456789abcdef" * 2, "hex").slice(0, 32);
-
-describe("AES Benchmarks", () => {
-  bench("encrypt small (64 bytes)", () => {
-    const cap = new AesCapability(key);
-    const payload = Buffer.from("0".repeat(64));
-    cap.encrypt(payload);
+describe("UserChecker Benchmarks", () => {
+  bench("check valid email", () => {
+    const checker = new UserChecker();
+    checker.checkValidEmail("user@example.com");
   });
 
   bench("encrypt medium (1KB)", () => {

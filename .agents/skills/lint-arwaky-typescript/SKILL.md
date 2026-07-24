@@ -249,7 +249,7 @@ lint-arwaky-cli version
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_check","arguments":{}}}
 
 // get_config: retrieve TypeScript architecture configuration
-{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_config","arguments":{"language":"javascript"}}}
+{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_config","arguments":{"language":"typescript"}}}
 ```
 
 ---
