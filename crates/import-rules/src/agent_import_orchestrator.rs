@@ -2,6 +2,8 @@
 // Uses new protocol interfaces — no IAnalyzer, no IArchImportProtocol.
 
 use async_trait::async_trait;
+use rayon::prelude::*;
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -36,6 +38,8 @@ pub struct ImportOrchestrator {
     layer_map: LayerMapVO,
     config: ArchitectureConfig,
     ignored_paths: Vec<String>,
+    aes201_exceptions: HashSet<String>,
+    aes202_exceptions: HashSet<String>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -54,7 +58,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             ));
         }
 
-        let mut results = LintResultList::new(Vec::new());
         let files = self.collect_files(target);
 
         let root_dir = shared::common::utility_file_handler::find_workspace_root(target.value())
@@ -85,62 +88,39 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 r
             }
         );
-        results.values.extend(mandatory_results.values);
-        results.values.extend(forbidden_results.values);
+
+        let root_dir_clone = root_dir.clone();
+        let deps = &self.deps;
+        let layer_map = &self.layer_map;
 
         let file_violations: Vec<LintResult> = files
             .values
-            .iter()
+            .par_iter()
             .flat_map(|file| {
                 let mut local_results = Vec::new();
                 if let Ok(content) = std::fs::read_to_string(file.value()) {
-                    self.deps.unused.check_unused_imports(
+                    deps.unused.check_unused_imports(
                         file.value(),
                         &content,
                         &mut local_results,
                     );
 
                     let content_str = ContentString::new(content);
-                    self.deps.dummy.check_dummy_imports(
+                    deps.dummy.check_all_dummy(
                         file,
                         &content_str,
                         &mut local_results,
-                        &root_dir,
-                        &self.layer_map,
-                    );
-                    self.deps.dummy.check_dummy_functions(
-                        file,
-                        &content_str,
-                        &mut local_results,
-                        &root_dir,
-                        &self.layer_map,
-                    );
-                    self.deps.dummy.check_dummy_impls(
-                        file,
-                        &content_str,
-                        &mut local_results,
-                        &root_dir,
-                        &self.layer_map,
-                    );
-                    self.deps.dummy.check_taxonomy_intent(
-                        file,
-                        &content_str,
-                        &mut local_results,
-                        &root_dir,
-                        &self.layer_map,
-                    );
-                    self.deps.dummy.check_surface_logic(
-                        file,
-                        &content_str,
-                        &mut local_results,
-                        &root_dir,
-                        &self.layer_map,
+                        &root_dir_clone,
+                        layer_map,
                     );
                 }
                 local_results
             })
             .collect();
 
+        let mut results = LintResultList::new(Vec::new());
+        results.values.extend(mandatory_results.values);
+        results.values.extend(forbidden_results.values);
         results.values.extend(file_violations);
 
         self.deps
@@ -170,11 +150,28 @@ impl ImportOrchestrator {
         ignored_paths: Vec<String>,
     ) -> Self {
         let layer_map = LayerMapVO::new(config.layers.clone());
+
+        let aes201_exceptions: HashSet<String> = config
+            .rules
+            .iter()
+            .filter(|r| r.name.value == "AES201")
+            .flat_map(|r| r.exceptions.values.iter().cloned())
+            .collect();
+
+        let aes202_exceptions: HashSet<String> = config
+            .rules
+            .iter()
+            .filter(|r| r.name.value == "AES202")
+            .flat_map(|r| r.exceptions.values.iter().cloned())
+            .collect();
+
         Self {
             deps,
             config,
             layer_map,
             ignored_paths,
+            aes201_exceptions,
+            aes202_exceptions,
         }
     }
 

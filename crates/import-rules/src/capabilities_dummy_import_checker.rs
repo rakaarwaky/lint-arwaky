@@ -152,6 +152,23 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     ) {
         Self::_check_surface_logic(file.value(), content.value(), violations);
     }
+
+    fn check_all_dummy(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        violations: &mut Vec<LintResult>,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) {
+        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
+            Self::_check_dummy_imports(file.value(), &ctx, violations, layer_map);
+            Self::_check_dummy_functions(file.value(), &ctx, violations);
+            Self::_check_dummy_impls(file.value(), &ctx, violations);
+            Self::_check_taxonomy_intent(file.value(), &ctx, violations);
+            Self::_check_surface_logic(file.value(), content.value(), violations);
+        }
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
