@@ -19,6 +19,60 @@ use shared::taxonomy_name_vo::SymbolName;
 
 pub struct DummyImportChecker;
 
+// Pre-computed per-file data shared across all dummy checks.
+struct DummyFileContext {
+    lines: Vec<String>,
+    line_refs: Vec<String>,
+    lang: LanguageVO,
+    layer_name: String,
+    dummy_ranges: Vec<(shared::taxonomy_common_vo::LineNumber, shared::taxonomy_common_vo::LineNumber)>,
+    dummy_impl_traits: Vec<String>,
+}
+
+impl DummyFileContext {
+    fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
+        let lines_owned: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+        let line_refs: Vec<String> = lines_owned.clone();
+        let lang = LanguageVO::from_path(file);
+        let layer_name = Self::detect_layer(file, layer_map);
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(
+            &line_refs.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+            lang,
+        );
+        let dummy_impl_traits: Vec<String> =
+            utility_dummy_detector::dummy_impl_traits_with_lines(
+                &line_refs.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+            )
+            .into_iter()
+            .map(|(t, _)| t.value().to_string())
+            .collect();
+        Some(Self {
+            lines: lines_owned,
+            line_refs,
+            lang,
+            layer_name,
+            dummy_ranges,
+            dummy_impl_traits,
+        })
+    }
+
+    fn detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
+        let filename: &str = utility_layer_detector::extract_filename(file);
+        match utility_layer_detector::detect_layer_from_prefix(filename) {
+            Some(base) => {
+                let layer_keys: Vec<String> =
+                    layer_map.values.keys().map(|k| k.to_string()).collect();
+                utility_layer_detector::resolve_specialized_layer(&base, file, &layer_keys)
+            }
+            None => "any".to_string(),
+        }
+    }
+
+    fn as_str_refs(&self) -> Vec<&str> {
+        self.lines.iter().map(|s| s.as_str()).collect()
+    }
+}
+
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IDummyImportCheckerProtocol for DummyImportChecker {
@@ -34,7 +88,9 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
     ) {
-        Self::_check_dummy_imports(file.value(), content.value(), violations, layer_map);
+        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
+            Self::_check_dummy_imports(file.value(), &ctx, violations, layer_map);
+        }
     }
 
     fn check_dummy_functions(
@@ -45,7 +101,9 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
     ) {
-        Self::_check_dummy_functions(file.value(), content.value(), violations, layer_map);
+        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
+            Self::_check_dummy_functions(file.value(), &ctx, violations);
+        }
     }
 
     fn check_dummy_impls(
@@ -56,7 +114,9 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
     ) {
-        Self::_check_dummy_impls(file.value(), content.value(), violations, layer_map);
+        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
+            Self::_check_dummy_impls(file.value(), &ctx, violations);
+        }
     }
 
     fn check_taxonomy_intent(
@@ -67,7 +127,9 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
     ) {
-        Self::_check_taxonomy_intent(file.value(), content.value(), violations, layer_map);
+        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
+            Self::_check_taxonomy_intent(file.value(), &ctx, violations);
+        }
     }
 
     fn check_layer_contract_intent(
@@ -104,47 +166,28 @@ impl DummyImportChecker {
         Self
     }
 
-    fn _detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
-        let filename: &str = utility_layer_detector::extract_filename(file);
-        match utility_layer_detector::detect_layer_from_prefix(filename) {
-            Some(base) => {
-                let layer_keys: Vec<String> =
-                    layer_map.values.keys().map(|k| k.to_string()).collect();
-                utility_layer_detector::resolve_specialized_layer(&base, file, &layer_keys)
-            }
-            None => "any".to_string(),
-        }
-    }
-
     fn _check_dummy_imports(
         file: &str,
-        content: &str,
+        ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
-        layer_map: &LayerMapVO,
+        _layer_map: &LayerMapVO,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang: LanguageVO = LanguageVO::from_path(file);
-        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
-        let dummy_impl_traits: Vec<String> =
-            utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
-                .into_iter()
-                .map(|(t, _)| t.value().to_string())
-                .collect();
-        let layer_name: String = Self::_detect_layer(file, layer_map);
+        let lines = ctx.as_str_refs();
+        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
 
-        for (symbol, line_no) in utility_dummy_detector::imported_symbols(&lines, lang) {
+        for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
             if utility_dummy_detector::symbol_used_real(
                 &lines,
                 &symbol_str,
-                &dummy_ranges,
-                &dummy_impl_traits,
+                &ctx.dummy_ranges,
+                &ctx.dummy_impl_traits,
             ) {
                 continue;
             }
             violations.push(LintResult::new_arch(file, line_no.value() as usize, "AES204", Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(layer_name.clone()),
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
                     import_type: SymbolName::new(symbol_str),
                     intent: SymbolName::new("Use imported symbols in real logic, not only in dummy functions or stubs"),
                     reason: Some(LintMessage::new(
@@ -157,22 +200,17 @@ impl DummyImportChecker {
 
     fn _check_dummy_functions(
         file: &str,
-        content: &str,
+        ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
-        layer_map: &LayerMapVO,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = LanguageVO::from_path(file);
-        let layer_name = Self::_detect_layer(file, layer_map);
-
-        for (start, end) in utility_dummy_detector::dummy_function_ranges(&lines, lang) {
+        for (start, end) in &ctx.dummy_ranges {
             violations.push(LintResult::new_arch(
                 file,
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(layer_name.clone()),
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
                     import_type: SymbolName::new("_use_mandatory_imports"),
                     intent: SymbolName::new(
                         "Remove dummy functions that exist only to silence unused import checks",
@@ -189,21 +227,20 @@ impl DummyImportChecker {
 
     fn _check_dummy_impls(
         file: &str,
-        content: &str,
+        ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
-        layer_map: &LayerMapVO,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let layer_name = Self::_detect_layer(file, layer_map);
-
-        for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
+        let lines = ctx.as_str_refs();
+        for (trait_name, start) in
+            utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
+        {
             violations.push(LintResult::new_arch(
                 file,
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
                 AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(layer_name.clone()),
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
                     import_type: SymbolName::new(trait_name.value().to_string()),
                     intent: SymbolName::new(
                         "Implement contract methods with real behavior instead of empty/todo stubs",
@@ -219,26 +256,17 @@ impl DummyImportChecker {
 
     fn _check_taxonomy_intent(
         file: &str,
-        content: &str,
+        ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
-        layer_map: &LayerMapVO,
     ) {
-        let lines: Vec<&str> = content.lines().collect();
-        let lang = LanguageVO::from_path(file);
-        let _layer_name = Self::_detect_layer(file, layer_map);
-        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&lines, lang);
-        let dummy_impl_traits: Vec<String> =
-            utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
-                .into_iter()
-                .map(|(t, _)| t.value().to_string())
-                .collect();
-        let imported = utility_dummy_detector::imported_symbols(&lines, lang);
+        let lines = ctx.as_str_refs();
+        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
 
         let mut has_dummy_function = false;
         let mut dummy_function_line = 0;
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
-            let is_dummy = match lang {
+            let is_dummy = match ctx.lang {
                 LanguageVO::Rust => trimmed.starts_with("fn _use_") && trimmed.contains("()"),
                 LanguageVO::Python => trimmed.starts_with("def _use_") && trimmed.contains("()"),
                 LanguageVO::JavaScript => {
@@ -261,7 +289,7 @@ impl DummyImportChecker {
                 .get(line_no.value().saturating_sub(1) as usize)
                 .is_some_and(|line| {
                     let t = line.trim();
-                    match lang {
+                    match ctx.lang {
                         LanguageVO::Rust => {
                             t.contains("use shared::taxonomy_")
                                 || t.contains("use shared::common::taxonomy_")
@@ -283,15 +311,15 @@ impl DummyImportChecker {
             utility_dummy_detector::symbol_used_real(
                 &lines,
                 symbol.value(),
-                &dummy_ranges,
-                &dummy_impl_traits,
+                &ctx.dummy_ranges,
+                &ctx.dummy_impl_traits,
             )
         });
 
         if !has_real_usage {
             let has_taxonomy_import = lines.iter().any(|l| {
                 let t = l.trim();
-                match lang {
+                match ctx.lang {
                     LanguageVO::Rust => {
                         t.contains("use shared::taxonomy_")
                             || t.contains("use shared::common::taxonomy_")
