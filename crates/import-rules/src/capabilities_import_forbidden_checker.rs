@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use std::collections::HashSet;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -12,6 +11,7 @@ use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_path_normalizer;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
+use std::collections::HashSet;
 
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.

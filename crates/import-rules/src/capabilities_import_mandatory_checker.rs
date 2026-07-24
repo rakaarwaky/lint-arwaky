@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use std::collections::HashSet;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -13,6 +12,7 @@ use shared::taxonomy_common_vo::LineNumber;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::taxonomy_name_vo::SymbolName;
+use std::collections::HashSet;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.

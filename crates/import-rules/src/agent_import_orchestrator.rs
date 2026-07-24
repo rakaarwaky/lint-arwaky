@@ -96,11 +96,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .flat_map(|file| {
                 let mut local_results = Vec::new();
                 if let Ok(content) = std::fs::read_to_string(file.value()) {
-                    deps.unused.check_unused_imports(
-                        file.value(),
-                        &content,
-                        &mut local_results,
-                    );
+                    deps.unused
+                        .check_unused_imports(file.value(), &content, &mut local_results);
 
                     let content_str = ContentString::new(content);
                     deps.dummy.check_all_dummy(
@@ -153,8 +150,6 @@ impl ImportOrchestrator {
             config,
             layer_map,
             ignored_paths,
-            aes201_exceptions,
-            aes202_exceptions,
         }
     }
 

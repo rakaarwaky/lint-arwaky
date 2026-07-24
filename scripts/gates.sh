@@ -45,16 +45,21 @@ gate "AES Codes (test-workspaces >= 24)" bash -c '
 '
 
 gate "Tests" bash -c '
-    output=$(cargo test --workspace 2>&1) || true
-    if echo "$output" | grep -q "^error"; then
-        echo "$output" | grep "^error" | head -10
-        echo "  COMPILATION FAILED"
-        exit 1
-    fi
-    total_passed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$1} END{print sum+0}")
-    total_failed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$2} END{print sum+0}")
-    echo "  passed: ${total_passed:-0}, failed: ${total_failed:-0}"
-    [ "${total_failed:-0}" = "0" ]
+    total_passed=0
+    total_failed=0
+    for crate in shared-lint-arwaky code-analysis-lint-arwaky import-rules-lint-arwaky naming-rules-lint-arwaky role-rules-lint-arwaky config-system-lint-arwaky auto-fix-lint-arwaky file-watch-lint-arwaky orphan-detector-lint-arwaky external-lint-lint-arwaky maintenance-lint-arwaky git-hooks-lint-arwaky project-setup-lint-arwaky report-formatter-lint-arwaky cli-commands-lint-arwaky mcp-server-lint-arwaky tui-lint-arwaky; do
+        output=$(cargo test -p "$crate" 2>&1) || {
+            echo "  FAILED on $crate"
+            echo "$output" | grep "^error" | head -10 || true
+            exit 1
+        }
+        passed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$1} END{print sum+0}")
+        failed=$(echo "$output" | grep "^test result:" | sed "s/.*ok\. //" | awk -F";" "{sum+=\$2} END{print sum+0}")
+        total_passed=$((total_passed + passed))
+        total_failed=$((total_failed + failed))
+    done
+    echo "  passed: ${total_passed}, failed: ${total_failed}"
+    [ "${total_failed}" = "0" ]
 '
 
 echo -e "\n${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
