@@ -22,7 +22,6 @@ pub struct DummyImportChecker;
 // Pre-computed per-file data shared across all dummy checks.
 struct DummyFileContext {
     lines: Vec<String>,
-    line_refs: Vec<String>,
     lang: LanguageVO,
     layer_name: String,
     dummy_ranges: Vec<(shared::taxonomy_common_vo::LineNumber, shared::taxonomy_common_vo::LineNumber)>,
@@ -31,24 +30,18 @@ struct DummyFileContext {
 
 impl DummyFileContext {
     fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
-        let lines_owned: Vec<String> = content.lines().map(|l| l.to_string()).collect();
-        let line_refs: Vec<String> = lines_owned.clone();
+        let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+        let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
         let lang = LanguageVO::from_path(file);
         let layer_name = Self::detect_layer(file, layer_map);
-        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(
-            &line_refs.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-            lang,
-        );
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
         let dummy_impl_traits: Vec<String> =
-            utility_dummy_detector::dummy_impl_traits_with_lines(
-                &line_refs.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-            )
-            .into_iter()
-            .map(|(t, _)| t.value().to_string())
-            .collect();
+            utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
+                .into_iter()
+                .map(|(t, _)| t.value().to_string())
+                .collect();
         Some(Self {
-            lines: lines_owned,
-            line_refs,
+            lines,
             lang,
             layer_name,
             dummy_ranges,
@@ -68,7 +61,7 @@ impl DummyFileContext {
         }
     }
 
-    fn as_str_refs(&self) -> Vec<&str> {
+    fn str_refs(&self) -> Vec<&str> {
         self.lines.iter().map(|s| s.as_str()).collect()
     }
 }
@@ -189,7 +182,7 @@ impl DummyImportChecker {
         violations: &mut Vec<LintResult>,
         _layer_map: &LayerMapVO,
     ) {
-        let lines = ctx.as_str_refs();
+        let lines = ctx.str_refs();
         let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
 
         for (symbol, line_no) in imported {
