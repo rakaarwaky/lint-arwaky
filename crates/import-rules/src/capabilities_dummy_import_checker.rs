@@ -24,7 +24,10 @@ struct DummyFileContext {
     lines: Vec<String>,
     lang: LanguageVO,
     layer_name: String,
-    dummy_ranges: Vec<(shared::taxonomy_common_vo::LineNumber, shared::taxonomy_common_vo::LineNumber)>,
+    dummy_ranges: Vec<(
+        shared::taxonomy_common_vo::LineNumber,
+        shared::taxonomy_common_vo::LineNumber,
+    )>,
     dummy_impl_traits: Vec<String>,
 }
 
@@ -235,15 +238,9 @@ impl DummyImportChecker {
         }
     }
 
-    fn _check_dummy_impls(
-        file: &str,
-        ctx: &DummyFileContext,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let lines = ctx.as_str_refs();
-        for (trait_name, start) in
-            utility_dummy_detector::dummy_impl_traits_with_lines(&lines)
-        {
+    fn _check_dummy_impls(file: &str, ctx: &DummyFileContext, violations: &mut Vec<LintResult>) {
+        let lines = ctx.str_refs();
+        for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
             violations.push(LintResult::new_arch(
                 file,
                 start.value() as usize,
@@ -269,7 +266,7 @@ impl DummyImportChecker {
         ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
     ) {
-        let lines = ctx.as_str_refs();
+        let lines = ctx.str_refs();
         let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
 
         let mut has_dummy_function = false;
