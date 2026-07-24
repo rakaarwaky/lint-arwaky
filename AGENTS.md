@@ -6,14 +6,14 @@ See also [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ## Build & dev
 
-````bash
-_# Build everything
+```bash
+# Build everything
 cargo build --release
 
 # Self-lint
 cargo run --bin lint-arwaky-cli -- scan .
 
-# Scan —
+# Scan
 cargo run --bin lint-arwaky-cli -- scan <project-path>
 
 # Run MCP server
@@ -31,6 +31,7 @@ cargo test -p code_analysis_lint_arwaky
 cargo test --workspace        # all
 cargo test -p import_rules_lint_arwaky    # single crate
 cargo test --lib <name_fragment>  # single test by name
+```
 
 ## Testing with test projects
 
@@ -39,14 +40,14 @@ cd /home/raka/mcp-arwaky/lint-arwaky
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
 cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
-````
+```
 
-# Format & lint
+## Format & lint
 
+```bash
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
 cargo clippy -p import_rules -- -D warnings # per crate
-
 ```
 
 ## Architecture (7-layer AES + Vertical Slicing + Multi-Crate Workspace)
@@ -66,6 +67,5 @@ Allowed branch naming:
 
 When merging a PR to develop:
 
-- ** use `--delete-branch`** — for feature / fix branches after merger
-- **do NOT be deleted `develop` branch ** after merge to `main`
-```
+- **use `--delete-branch`** — for feature / fix branches after merger
+- **do NOT delete `develop` branch** after merge to `main`
