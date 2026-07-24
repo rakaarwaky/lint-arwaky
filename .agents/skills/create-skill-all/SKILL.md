@@ -14,7 +14,6 @@ metadata:
   dependencies: []
   related: []
 ---
-
 # Authoring Skills
 
 ## Quick start
@@ -45,8 +44,9 @@ description: What it does and when to use it. Third person. Include trigger term
 
 Only these keys pass validation. Any other key causes upload failure.
 
+
 | Field         | Required | Constraints                                                                                                                                 |
-| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`        | Yes      | Max 64 chars. Lowercase`a-z`, `0-9`, `-` only. No leading/trailing hyphen. No `--`. No XML tags. No reserved words ("anthropic", "claude"). |
 | `description` | Yes      | Max 1,024 chars. Non-empty. No`<` or `>` characters. No XML tags.                                                                           |
 | `metadata`    | yes      | Arbitrary key-value pairs for your own tracking.                                                                                            |
@@ -56,7 +56,6 @@ Only these keys pass validation. Any other key causes upload failure.
 - Gerund form preferred: `processing-pdfs`, `analyzing-data`, `managing-deployments`
 - Valid: `pdf-processing`, `process-pdfs`
 - Invalid: `-leading`, `trailing-`, `double--hyphen`, `Helper`, `utils`, `tools`
-- No reserved words: "anthropic", "claude"
 
 ### Description
 
@@ -135,16 +134,16 @@ Add feedback loops: run validator → fix errors → repeat. Only proceed when v
 
 ## Pre-publish checklist
 
-- [ ] Frontmatter uses ONLY allowed keys (name, description, metadata)
-- [ ] Name: lowercase, hyphens, no leading/trailing `-`, no `--`, no reserved words
-- [ ] Description: third person, specific, no `<` or `>`, includes triggers
-- [ ] Exactly one SKILL.md at skill root (no nested SKILL.md)
-- [ ] Body under 500 lines; overflow in linked files
-- [ ] References one level deep only
-- [ ] Consistent terminology throughout
-- [ ] Concrete examples (not abstract)
-- [ ] Workflows have clear sequential steps + feedback loops
-- [ ] Scripts handle errors; no magic numbers
-- [ ] Dependencies listed; paths use forward slashes
-- [ ] No time-sensitive content in main body
-- [ ] Tested with all target models and real scenarios
+- [ ]  Frontmatter uses ONLY allowed keys (name, description, metadata)
+- [ ]  Name: lowercase, hyphens, no leading/trailing `-`, no `--`, no reserved words
+- [ ]  Description: third person, specific, no `<` or `>`, includes triggers
+- [ ]  Exactly one SKILL.md at skill root (no nested SKILL.md)
+- [ ]  Body under 500 lines; overflow in linked files
+- [ ]  References one level deep only
+- [ ]  Consistent terminology throughout
+- [ ]  Concrete examples (not abstract)
+- [ ]  Workflows have clear sequential steps + feedback loops
+- [ ]  Scripts handle errors; no magic numbers
+- [ ]  Dependencies listed; paths use forward slashes
+- [ ]  No time-sensitive content in main body
+- [ ]  Tested with all target models and real scenarios

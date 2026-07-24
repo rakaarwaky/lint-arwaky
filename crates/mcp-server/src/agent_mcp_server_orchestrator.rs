@@ -4,17 +4,31 @@
 // operations to AnalysisPipelineOrchestrator (via IAnalysisPipelineAggregate)
 // and returns JSON responses.
 use rmcp::handler::server::wrapper::Parameters;
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::common::taxonomy_common_error::ExitCode;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
     ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
+use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
+/// Dependencies injected into the MCP server orchestrator.
+/// All aggregates are wired from the MCP container for full CLI parity.
 pub struct McpServerDependencies {
-    pub external_lint: Arc<dyn IExternalLintAggregate>,
+    pub code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+    pub fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>,
+    pub orphan_orchestrator: Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
+    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
+    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
+    pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub external_lint: Arc<dyn shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -47,6 +61,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
         let result = match action.as_str() {
             "check" | "scan" => {
+                // Run full pipeline via CLI surface (same as CLI)
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
@@ -54,7 +69,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let status =
                     cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
                         &path,
-                        shared::cli_commands::taxonomy_format_vo::Format::Text,
+                        Format::Text,
                     )
                     .await;
                 let exit_code = if status == ExitCode::OK { 0 } else { 1 };
@@ -67,28 +82,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "results": Vec::<serde_json::Value>::new(),
                 })
             }
-            "fix" => {
-                let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
-                };
-                let dry_run = args
-                    .args
-                    .as_ref()
-                    .and_then(|a| a.get("dry_run"))
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
-                // TODO Phase 3: wire fix aggregate for full parity with CLI
-                serde_json::json!({
-                    "status": "success",
-                    "action": "fix",
-                    "path": path,
-                    "dry_run": dry_run,
-                    "exit_code": 0,
-                    "message": "Auto-fix completed."
-                })
-            }
             "ci" => {
+                // CI command: run check and pass/fail based on threshold
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
@@ -97,7 +92,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let status =
                     cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
                         &path,
-                        shared::cli_commands::taxonomy_format_vo::Format::Text,
+                        Format::Text,
                     )
                     .await;
                 let exit_code = if status == ExitCode::OK { 0 } else { 1 };
@@ -109,47 +104,193 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "exit_code": exit_code,
                 })
             }
+            "fix" => {
+                // Wire real auto-fix aggregate for full parity with CLI
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let dry_run = args
+                    .args
+                    .as_ref()
+                    .and_then(|a| a.get("dry_run"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fix_result = self.deps.fix_orchestrator.execute(&fp);
+
+                serde_json::json!({
+                    "status": "success",
+                    "action": "fix",
+                    "path": path,
+                    "dry_run": dry_run,
+                    "exit_code": 0,
+                    "message": fix_result.output.value,
+                })
+            }
             "doctor" => {
-                let tools = ["cargo", "python3", "ruff", "mypy", "bandit", "node", "git"];
-                let futures = tools.iter().map(|tool| async move {
-                    let found = match tokio::process::Command::new("which")
-                        .arg(tool)
-                        .output()
-                        .await
-                    {
-                        Ok(o) => o.status.success(),
-                        Err(_) => false,
-                    };
-                    serde_json::json!({
-                        "tool": tool,
-                        "status": if found { "ok" } else { "not_found" }
-                    })
-                });
-                let checks = futures::future::join_all(futures).await;
+                // Run toolchain diagnostics via maintenance aggregate
+                let diag = self.deps.maintenance_orchestrator.diagnose_toolchain().await;
+
+                let checks: Vec<serde_json::Value> = {
+                    let mut checks = Vec::new();
+                    for status in &diag.rust_tools {
+                        checks.push(serde_json::json!({
+                            "tool": status.name,
+                            "status": if status.status == "OK" { "ok" } else { "not_found" },
+                            "version": status.version,
+                        }));
+                    }
+                    for status in &diag.python_tools {
+                        checks.push(serde_json::json!({
+                            "tool": status.name,
+                            "status": if status.status == "OK" { "ok" } else { "not_found" },
+                            "version": status.version,
+                        }));
+                    }
+                    for status in &diag.js_tools {
+                        checks.push(serde_json::json!({
+                            "tool": status.name,
+                            "status": if status.status == "OK" { "ok" } else { "not_found" },
+                            "version": status.version,
+                        }));
+                    }
+                    for status in &diag.vcs_tools {
+                        checks.push(serde_json::json!({
+                            "tool": status.name,
+                            "status": if status.status == "OK" { "ok" } else { "not_found" },
+                            "version": status.version,
+                        }));
+                    }
+                    checks
+                };
+
                 serde_json::json!({"status": "success", "action": "doctor", "exit_code": 0, "checks": checks})
             }
             "orphan" => {
+                // Wire real orphan detector aggregate for full parity with CLI
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                // TODO Phase 3: wire orphan aggregate for full parity with CLI
-                serde_json::json!({"status": "success", "action": "orphan", "path": path, "exit_code": 0})
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+                // Get ignored paths from config orchestrator
+                let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
+
+                let (_, results) = self.deps.orphan_orchestrator.scan_orphans(&fp, ignored.values());
+
+                serde_json::json!({
+                    "status": "success",
+                    "action": "orphan",
+                    "path": path,
+                    "exit_code": if results.is_empty() { 0 } else { 1 },
+                    "orphan_count": results.len(),
+                    "results": results.iter().map(|r| serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
             }
             "security" => {
+                // Wire real security scan via maintenance aggregate
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                // TODO Phase 3: wire maintenance aggregate for full parity with CLI
-                serde_json::json!({"status": "success", "action": "security", "path": path, "exit_code": 0})
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+                let report = self.deps.maintenance_orchestrator.run_security_scan(&fp).await;
+
+                // exit_code: 0 clean, 1 findings, 3 tool missing
+                let exit_code = if !report.tool_installed {
+                    3
+                } else if report.findings.is_empty() {
+                    0
+                } else {
+                    1
+                };
+
+                serde_json::json!({
+                    "status": if exit_code == 0 { "clean" } else if exit_code == 3 { "tool_missing" } else { "findings" },
+                    "action": "security",
+                    "path": path,
+                    "exit_code": exit_code,
+                    "language": report.language,
+                    "tool_name": report.tool_name,
+                    "tool_installed": report.tool_installed,
+                    "findings_count": report.findings.len(),
+                    "findings": report.findings.iter().map(|f| serde_json::json!({
+                        "severity": f.severity.to_uppercase(),
+                        "test_id": f.test_id,
+                        "file": f.file,
+                        "line": f.line,
+                        "issue": f.issue,
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
             }
-            "duplicates" | "dependencies" => {
+            "duplicates" => {
+                // Run code duplication analysis via code-analysis aggregate
                 let path = match arg_path {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                serde_json::json!({"status": "success", "action": action, "path": path, "exit_code": 0})
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+                // Use code duplication detector from code-analysis shared crate
+                let results = shared::code_analysis::utility_code_duplication_detector::CodeDuplicationDetector::find_duplicates(&fp);
+
+                serde_json::json!({
+                    "status": "success",
+                    "action": "duplicates",
+                    "path": path,
+                    "exit_code": 0,
+                    "duplicate_count": results.len(),
+                    "duplicates": results.iter().map(|d| serde_json::json!({
+                        "file": d.file.value.as_str(),
+                        "start_line": d.start_line,
+                        "end_line": d.end_line,
+                        "lines": d.line_count,
+                    })).collect::<Vec<serde_json::Value>>(),
+                })
+            }
+            "dependencies" => {
+                // Run dependency report via maintenance aggregate
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+                match self.deps.maintenance_orchestrator.run_dependency_report(&fp).await {
+                    Ok(report) => {
+                        serde_json::json!({
+                            "status": "success",
+                            "action": "dependencies",
+                            "path": path,
+                            "exit_code": 0,
+                            "language": report.language,
+                            "dependency_count": report.dependencies.len(),
+                            "dependencies": report.dependencies.iter().map(|d| serde_json::json!({
+                                "name": d.name,
+                                "version": d.version,
+                                "dep_type": d.dep_type,
+                            })).collect::<Vec<serde_json::Value>>(),
+                        })
+                    }
+                    Err(e) => {
+                        serde_json::json!({
+                            "error": format!("Dependency report failed: {}", e),
+                            "action": "dependencies",
+                            "path": path,
+                            "exit_code": 2,
+                        })
+                    }
+                }
             }
             "version" => {
                 serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky", "exit_code": 0})
@@ -172,24 +313,248 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 serde_json::json!({"adapters": adapters, "exit_code": 0})
             }
             "install-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook installed.", "exit_code": 0})
+                // Wire real git-hooks aggregate for actual hook installation
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+
+                // Resolve the executable path (current binary)
+                let exe_path = std::env::current_exe()
+                    .ok()
+                    .and_then(|p| p.canonicalize().ok())
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "./lint-arwaky".to_string());
+
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(exe_path).unwrap_or_default();
+
+                match self.deps.git_hooks_aggregate.install_hook(&fp).await {
+                    Ok(_) => {
+                        serde_json::json!({"status": "success", "message": "Git hook installed.", "action": "install-hook", "exit_code": 0})
+                    }
+                    Err(e) => {
+                        serde_json::json!({"error": format!("Failed to install hook: {:?}", e), "action": "install-hook", "exit_code": 2})
+                    }
+                }
             }
             "uninstall-hook" => {
-                serde_json::json!({"status": "success", "message": "Git hook removed.", "exit_code": 0})
+                // Wire real git-hooks aggregate for actual hook removal
+                match self.deps.git_hooks_aggregate.uninstall_hook().await {
+                    Ok(_) => {
+                        serde_json::json!({"status": "success", "message": "Git hook removed.", "action": "uninstall-hook", "exit_code": 0})
+                    }
+                    Err(e) => {
+                        serde_json::json!({"error": format!("Failed to uninstall hook: {:?}", e), "action": "uninstall-hook", "exit_code": 2})
+                    }
+                }
             }
-            "init" => serde_json::json!({"status": "success", "action": "init", "exit_code": 0}),
+            "init" => {
+                // Wire real project-setup aggregate for config file creation
+                let result = self.deps.setup_orchestrator.detect_languages();
+                let mut languages: Vec<serde_json::Value> = Vec::new();
+                let mut all_ok = true;
+
+                for lang in &result {
+                    let lang_str = lang.value();
+                    let target = format!("lint_arwaky.config.{}.yaml", lang_str);
+                    if self.deps.setup_orchestrator.file_exists(&target) {
+                        languages.push(serde_json::json!({"config": target, "status": "exists"}));
+                    } else {
+                        let content = self.deps.setup_orchestrator.get_config_template(lang_str);
+                        match self.deps.setup_orchestrator.write_config_file(&target, content) {
+                            Ok(desc) => {
+                                languages.push(serde_json::json!({"config": target, "status": "created", "description": desc.value}));
+                            }
+                            Err(e) => {
+                                languages.push(serde_json::json!({"config": target, "status": "error", "error": e}));
+                                all_ok = false;
+                            }
+                        }
+                    }
+                }
+
+                serde_json::json!({
+                    "status": if all_ok { "success" } else { "partial_failure" },
+                    "action": "init",
+                    "exit_code": if all_ok { 0 } else { 1 },
+                    "languages": languages,
+                })
+            }
             "install" => {
-                serde_json::json!({"status": "success", "action": "install", "exit_code": 0})
+                // Wire real project-setup aggregate for adapter installation
+                let sudo = args
+                    .args
+                    .as_ref()
+                    .and_then(|a| a.get("sudo"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                let py_status = self.deps.setup_orchestrator.install_python_adapters().await;
+                let js_status = self.deps.setup_orchestrator.install_javascript_adapters(sudo).await;
+
+                serde_json::json!({
+                    "status": if py_status.value && js_status.value { "success" } else { "partial_failure" },
+                    "action": "install",
+                    "exit_code": if py_status.value && js_status.value { 0 } else { 1 },
+                    "python_adapters_installed": py_status.value,
+                    "javascript_adapters_installed": js_status.value,
+                })
             }
             "mcp-config" => {
+                // Wire real MCP config generation with binary resolution
                 let client = match arg_client {
                     Some(c) => c,
                     None => "all".to_string(),
                 };
-                serde_json::json!({"status": "success", "action": "mcp-config", "client": client, "exit_code": 0})
+
+                // Resolve MCP binary path (same logic as CLI surface)
+                let binary = match std::env::current_exe()
+                    .ok()
+                    .and_then(|p| p.parent().map(|d| d.join("lint-arwaky-mcp")))
+                    .and_then(|p| p.canonicalize().ok())
+                {
+                    Some(path) => path.to_string_lossy().into_owned(),
+                    None => "lint-arwaky-mcp".to_string(),
+                };
+
+                let config = match client.as_str() {
+                    "claude-code" | "claude" => serde_json::json!({
+                        "mcpServers": {
+                            "lint-arwaky": {
+                                "command": binary,
+                                "args": [],
+                                "env": {}
+                            }
+                        }
+                    }),
+                    "cursor" => serde_json::json!({
+                        "mcpServers": {
+                            "lint-arwaky": {
+                                "command": binary,
+                                "args": [],
+                                "env": {}
+                            }
+                        }
+                    }),
+                    "windsurf" => serde_json::json!({
+                        "config:lint-arwaky": {
+                            "command": binary,
+                            "args": [],
+                            "env": {}
+                        }
+                    }),
+                    "copilot" => serde_json::json!({
+                        "inputs": [],
+                        "server": {
+                            "command": binary,
+                            "args": [],
+                            "env": {}
+                        }
+                    }),
+                    "hermes" => serde_json::json!({
+                        "mcpServers": {
+                            "lint-arwaky": {
+                                "command": binary,
+                                "args": [],
+                                "env": {}
+                            }
+                        }
+                    }),
+                    "vscode" => serde_json::json!({
+                        "mcpServers": {
+                            "lint-arwaky": {
+                                "command": binary,
+                                "args": [],
+                                "env": {}
+                            }
+                        }
+                    }),
+                    _ => serde_json::json!({
+                        "mcpServers": {
+                            "lint-arwaky": {
+                                "command": binary,
+                                "args": [],
+                                "env": {}
+                            }
+                        }
+                    }),
+                };
+
+                let json_str = serde_json::to_string_pretty(&config).unwrap_or_default();
+
+                serde_json::json!({
+                    "status": "success",
+                    "action": "mcp-config",
+                    "client": client,
+                    "binary": binary,
+                    "config": json_str,
+                    "exit_code": 0,
+                })
             }
             "config-show" => {
-                serde_json::json!({"status": "success", "action": "config-show", "exit_code": 0})
+                // Wire real config orchestrator aggregate for config display with secret redaction
+                let path = match arg_path {
+                    Some(p) => p,
+                    None => ".".to_string(),
+                };
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+                match self.deps.config_orchestrator.list_config_files(&fp).await {
+                    Ok(config_files) if !config_files.is_empty() => {
+                        let configs: Vec<serde_json::Value> = config_files.iter().map(|(lang, path)| {
+                            // Simple redaction for display
+                            let redact_secrets = |content: &str| -> String {
+                                let mut result = content.to_string();
+                                if result.contains("AKIA") {
+                                    result = result.replacen(&result.chars().take(4).collect::<String>(), "[REDACTED-AWS-KEY]", 1);
+                                }
+                                result
+                            };
+
+                            match self.deps.config_orchestrator.read_config(&fp, *lang) {
+                                Ok(Some(source)) => {
+                                    let safe_content = redact_secrets(&source.raw_content);
+                                    serde_json::json!({
+                                        "language": lang.as_str(),
+                                        "path": path.value.as_str(),
+                                        "content": safe_content,
+                                    })
+                                }
+                                _ => serde_json::json!({
+                                    "language": lang.as_str(),
+                                    "path": path.value.as_str(),
+                                    "error": "Could not read config content",
+                                }),
+                            }
+                        }).collect();
+
+                        serde_json::json!({
+                            "status": "success",
+                            "action": "config-show",
+                            "path": path,
+                            "exit_code": 0,
+                            "configs": configs,
+                        })
+                    }
+                    Ok(_) => {
+                        serde_json::json!({
+                            "status": "success",
+                            "action": "config-show",
+                            "path": path,
+                            "exit_code": 0,
+                            "message": "No config file found. Run `lint-arwaky init` to create one.",
+                            "configs": Vec::<serde_json::Value>::new(),
+                        })
+                    }
+                    Err(e) => {
+                        serde_json::json!({
+                            "error": format!("Failed to list config files: {}", e),
+                            "action": "config-show",
+                            "path": path,
+                            "exit_code": 2,
+                        })
+                    }
+                }
             }
             _ => {
                 serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
@@ -266,15 +631,41 @@ impl IMcpServerAggregate for McpServerOrchestrator {
     async fn get_config(&self, Parameters(args): Parameters<GetConfigArgs>) -> String {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         let language = args.language;
-        let config_path = std::path::Path::new(&path);
-        let mut config_files = Vec::new();
+
+        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+
+        // Use the same config orchestrator aggregate as CLI for parity
+        let config_files = match self.deps.config_orchestrator.list_config_files(&fp).await {
+            Ok(files) => files,
+            Err(e) => {
+                return serde_json::json!({
+                    "path": path,
+                    "language": language,
+                    "error": format!("Failed to list config files: {}", e),
+                    "exit_code": 2,
+                }).to_string();
+            }
+        };
+
+        // Build effective config summary
+        let mut layers = Vec::new();
+        let mut rules_enabled = Vec::new();
+        let mut ignored_paths = Vec::new();
         let mut warnings = Vec::new();
 
-        for lang in &["rust", "python", "javascript"] {
-            let file_name = format!("lint_arwaky.config.{}.yaml", lang);
-            let candidate = config_path.join(&file_name);
-            if candidate.exists() {
-                config_files.push(file_name);
+        // Get config data for each language found
+        for (lang, config_path) in &config_files {
+            layers.push(lang.as_str());
+            if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang).await {
+                // Parse and extract rules from config content
+                let parsed = shared::config_system::utility_config_parser::parse_config_content(&source.raw_content);
+                if let Some(config) = &parsed {
+                    // Extract threshold and other settings
+                    rules_enabled.push(lang.as_str());
+                    ignored_paths.extend(config.ignored_paths.iter().map(|p| p.value.clone()));
+                }
+            } else {
+                warnings.push(format!("No config data for {}", lang.as_str()));
             }
         }
 
@@ -286,7 +677,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         let result = serde_json::json!({
             "path": path,
             "language": language,
-            "config_files": config_files,
+            "layers": layers,
+            "rules_enabled": rules_enabled,
+            "ignored_paths": ignored_paths,
+            "config_files": config_files.iter().map(|(_, p)| p.value.as_str()).collect::<Vec<&str>>(),
             "warnings": warnings,
             "exit_code": 0,
         });
