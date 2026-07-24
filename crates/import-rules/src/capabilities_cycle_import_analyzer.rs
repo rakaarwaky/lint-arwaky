@@ -1,5 +1,6 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
+use rayon::prelude::*;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
@@ -83,7 +84,7 @@ impl DependencyCycleAnalyzer {
         let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
         let file_results: Vec<ScannedFileEdges> = files
-            .iter()
+            .par_iter()
             .filter_map(|file| {
                 let file_fp = FilePath::new(file.clone()).ok()?;
                 let basename = file_fp.basename();

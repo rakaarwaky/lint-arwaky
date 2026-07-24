@@ -3,7 +3,6 @@
 
 use async_trait::async_trait;
 use rayon::prelude::*;
-use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -38,8 +37,6 @@ pub struct ImportOrchestrator {
     layer_map: LayerMapVO,
     config: ArchitectureConfig,
     ignored_paths: Vec<String>,
-    aes201_exceptions: HashSet<String>,
-    aes202_exceptions: HashSet<String>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────

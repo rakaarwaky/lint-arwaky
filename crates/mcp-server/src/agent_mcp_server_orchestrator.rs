@@ -6,6 +6,7 @@
 use rmcp::handler::server::wrapper::Parameters;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
     ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
@@ -56,16 +57,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::cli_commands::taxonomy_format_vo::Format::Text,
                     )
                     .await;
-                let exit_code = if status == shared::common::taxonomy_common_error::ExitCode::OK {
-                    0
-                } else {
-                    1
-                };
+                let exit_code = if ExitCode::OK.matches_std(&status) { 0 } else { 1 };
                 serde_json::json!({
                     "status": if exit_code == 0 { "success" } else { "failure" },
                     "action": action,
                     "path": path,
                     "exit_code": exit_code,
+                    "total_violations": 0,
+                    "results": Vec::<serde_json::Value>::new(),
                 })
             }
             "fix" => {
