@@ -1,7 +1,7 @@
 # AES Migration Guide — Rust
 
-> Step-by-step guide for migrating a Rust project to AES architecture.
-> Workspace structure: `crates/` with Cargo workspace.
+> Skill-driven migration workflow for Rust projects to AES architecture.
+> Each phase delegates to a dedicated skill in `.agents/skills/`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
 
@@ -16,42 +16,28 @@ project-root/
 │   │   └── src/
 │   │       ├── lib.rs           ← re-exports all subfolders
 │   │       ├── common/          ← truly shared across ALL features
-│   │       │   ├── mod.rs
-│   │       │   ├── taxonomy_common_vo.rs
-│   │       │   ├── taxonomy_path_vo.rs
-│   │       │   └── ...
-│   │       ├── user/            ← shared types for user feature (domain folder)
-│   │       │   ├── mod.rs
-│   │       │   ├── taxonomy_user_vo.rs
-│   │       │   ├── taxonomy_user_error.rs
-│   │       │   ├── taxonomy_user_constant.rs
-│   │       │   ├── contract_user_protocol.rs
-│   │       │   ├── contract_user_aggregate.rs
-│   │       │   ├── utility_user_hasher.rs
-│   │       │   └── ...
-│   │       └── ...              ← one subfolder per feature crate
+│   │       └── <feature>/       ← shared types per feature domain
 │   │
-│   ├── user/               ← feature crate
+│   ├── <feature>/          ← feature crate
 │   │   ├── Cargo.toml
 │   │   └── src/
-│   │       ├── capabilities_user_checker.rs     ← business logic capability
-│   │       ├── capabilities_user_repository.rs  ← external adaptation capability
-│   │       ├── agent_user_orchestrator.rs       ← agent layer (orchestrator)
-│   │       ├── surface_user_command.rs          ← surfaces layer
-│   │       ├── root_user_container.rs           ← root container
+│   │       ├── capabilities_<concept>_<role>.rs
+│   │       ├── agent_<concept>_orchestrator.rs
+│   │       ├── surface_<concept>_<role>.rs
+│   │       ├── root_<concept>_container.rs
 │   │       └── lib.rs
-│   ├── root_cli_main_entry.rs   ← CLI binary (file, NOT directory)
-│   ├── root_mcp_main_entry.rs   ← MCP server binary
-│   ├── root_tui_main_entry.rs   ← TUI binary
+│   ├── root_<name>_entry.rs   ← binary entry point (file, NOT directory)
 │   └── lib.rs
 └── Cargo.lock
 ```
 
 **Key rules:**
 
-- All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `crates/shared/<feature>/`. Orchestration, capabilities, and surfaces live in the feature crate.
+- All 7 layers coexist in each feature slice.
+- Stable domain taxonomy, contracts, and utilities live under `crates/shared/<feature>/`.
+- Orchestration, capabilities, and surfaces live in the feature crate.
 - Entry points (`root_*_entry.rs`) are files inside `crates/`, not separate directories.
-- `crates/shared/src/common/` holds types shared across ALL features (path VOs, common errors, etc.).
+- `crates/shared/src/common/` holds types shared across ALL features.
 
 ---
 
@@ -67,6 +53,8 @@ lint-arwaky-cli scan your-project/
 
 ## Phase 0: Audit
 
+> **Skill:** `lint-arwaky-rust` — load for audit commands and violation analysis.
+
 ```bash
 lint-arwaky-cli scan your-project/
 find your-project/crates -name "*.rs" | wc -l
@@ -80,360 +68,117 @@ find your-project/crates -name "*.rs" | wc -l
 
 ## Phase 1: Taxonomy Layer
 
-Define Value Objects, Errors, Events, and compile-time Constants under the `shared` member.
+> **Skill:** `create-taxonomy-rust` — load for VOs, errors, constants, entities, events.
 
-### Step 1.1: Identify Domain Types
+Define Value Objects, Errors, Events, and compile-time Constants under `crates/shared/<feature>/`.
 
-```bash
-grep -rn "pub struct\|pub enum" your-project/crates/*/src/ | grep -v test | grep -v mod.rs
-```
+### Steps
 
-### Step 1.2: Create Value Objects
-
-```rust
-// crates/shared/src/user/taxonomy_user_vo.rs
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct UserVO {
-    pub id: String,
-    pub name: String,
-    pub email: String,
-}
-
-impl UserVO {
-    pub fn new(id: String, name: String, email: String) -> Self {
-        Self { id, name, email }
-    }
-}
-```
-
-### Step 1.3: Create Constants
-
-```rust
-// crates/shared/src/user/taxonomy_user_constant.rs
-pub const MAX_RETRY_COUNT: u32 = 3;
-pub const DEFAULT_TIMEOUT_MS: u64 = 5000;
-```
-
-### Step 1.4: Create Error Types
-
-```rust
-// crates/shared/src/user/taxonomy_user_error.rs
-#[derive(Debug, thiserror::Error)]
-pub enum UserError {
-    #[error("User not found: {0}")]
-    NotFound(String),
-    #[error("Invalid email: {0}")]
-    InvalidEmail(String),
-}
-```
-
-### Step 1.5: Register in mod.rs
-
-```rust
-// crates/shared/src/user/mod.rs
-pub mod taxonomy_user_vo;
-pub mod taxonomy_user_error;
-pub mod taxonomy_user_constant;
-```
+1. Identify domain types with `grep -rn "pub struct\|pub enum" crates/*/src/ | grep -v test | grep -v mod.rs`
+2. Load `create-taxonomy-rust` skill
+3. Create taxonomy files following skill templates and workflow
+4. Register in domain `mod.rs`
+5. Verify: `cargo check -p shared`
 
 ---
 
 ## Phase 2: Contract Layer
 
+> **Skill:** `create-contract-rust` — load for protocol and aggregate traits.
+
 Contracts define public interfaces (Protocols and Aggregates) without exposing implementation.
 
-### Step 2.1: Create Protocols (inbound/outbound interfaces)
+### Steps
 
-Define protocol traits implemented by Capabilities (both business calculation and external adapters) and consumed by the Agent.
-
-```rust
-// crates/shared/src/user/contract_user_protocol.rs
-use crate::user::taxonomy_user_vo::UserVO;
-
-pub trait IUserProtocol {
-    fn check_valid_email(&self, email: &str) -> bool;
-}
-
-pub trait IUserRepositoryProtocol {
-    fn find_by_id(&self, id: &str) -> Result<Option<UserVO>, Box<dyn std::error::Error>>;
-    fn save(&self, user: &UserVO) -> Result<(), Box<dyn std::error::Error>>;
-    fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error>>;
-}
-```
-
-### Step 2.2: Create Aggregates (facades)
-
-Define aggregate facades implemented by the Agent and consumed by Surfaces.
-
-```rust
-// crates/shared/src/user/contract_user_aggregate.rs
-use crate::user::taxonomy_user_vo::UserVO;
-
-pub trait IUserAggregate {
-    fn get_user(&self, id: &str) -> Result<UserVO, String>;
-    fn create_user(&self, name: &str, email: &str) -> Result<UserVO, String>;
-    fn delete_user(&self, id: &str) -> Result<(), String>;
-}
-```
-
-### Step 2.3: Register in mod.rs
-
-```rust
-// crates/shared/src/user/mod.rs
-pub mod contract_user_protocol;
-pub mod contract_user_aggregate;
-```
+1. Load `create-contract-rust` skill
+2. Create protocol traits (inbound/outbound) under `crates/shared/<feature>/`
+3. Create aggregate facade traits under `crates/shared/<feature>/`
+4. Register in domain `mod.rs`
+5. Verify: `cargo check -p shared`
 
 ---
 
 ## Phase 3: Utility Layer
 
-Utility contains low-level technical mechanics. It must contain only **stateless standalone functions** (no stateful objects, no behavior, no contract implementation, and no business decisions).
+> **Skill:** `create-utility-rust` — load for stateless standalone functions.
 
-### Step 3.1: Create Technical Utilities
+Utility contains low-level technical mechanics — **stateless standalone functions only**.
 
-Extract reusable technical actions (e.g. parsing, hash computation, formatting) into the Utility layer inside the `shared` member.
+### Steps
 
-```rust
-// crates/shared/src/user/utility_user_hasher.rs
-pub fn hash_user_token(input: &str) -> String {
-    // stateless technical operation
-    format!("hash_{}", input)
-}
-```
-
-### Step 3.2: Register in mod.rs
-
-```rust
-// crates/shared/src/user/mod.rs
-pub mod utility_user_hasher;
-```
+1. Identify reusable stateless functions across modules
+2. Load `create-utility-rust` skill
+3. Create utility files under `crates/shared/<feature>/`
+4. Register in domain `mod.rs`
+5. Verify: `cargo check -p shared`
 
 ---
 
 ## Phase 4: Capabilities Layer
 
-Capabilities contain concrete behavior implementations. This includes business logic (validations, computations) and external adaptation (database repositories, network integration, third-party clients).
+> **Skill:** `create-capabilities-rust` — load for business logic and external adaptation.
 
-- Must implement one domain protocol trait defined in Contract.
-- Must follow strict **3-Block Structure** separated by block comments.
-- Must use dependency injection for collaborator services via `Arc<dyn Trait>`.
-- Must not import or depend on other Capabilities.
+Capabilities contain concrete behavior implementations (business logic + external adapters).
 
-### Step 4.1: Create Business Logic Capability
+### Steps
 
-```rust
-// crates/user/src/capabilities_user_checker.rs
-use shared::user::contract_user_protocol::IUserProtocol;
-
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct UserChecker;
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-impl IUserProtocol for UserChecker {
-    fn check_valid_email(&self, email: &str) -> bool {
-        email.contains('@') && email.contains('.')
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl Default for UserChecker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl UserChecker {
-    pub fn new() -> Self {
-        Self
-    }
-}
-```
-
-### Step 4.2: Create External Adaptation Capability (formerly Infrastructure)
-
-```rust
-// crates/user/src/capabilities_user_repository.rs
-use shared::user::contract_user_protocol::IUserRepositoryProtocol;
-use shared::user::taxonomy_user_vo::UserVO;
-
-// ─── Block 1: Struct Definition ───────────────────────────
-pub struct UserRepository {
-    db_path: String,
-}
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-impl IUserRepositoryProtocol for UserRepository {
-    fn find_by_id(&self, id: &str) -> Result<Option<UserVO>, Box<dyn std::error::Error>> {
-        // Concrete database query using local state and/or shared utilities
-        todo!("Query DB at {}", self.db_path)
-    }
-
-    fn save(&self, user: &UserVO) -> Result<(), Box<dyn std::error::Error>> {
-        todo!("Insert/update user")
-    }
-
-    fn delete(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
-        todo!("Delete user")
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl UserRepository {
-    pub fn new(db_path: String) -> Self {
-        Self { db_path }
-    }
-}
-```
+1. Load `create-capabilities-rust` skill
+2. Create business logic capabilities (implement protocol traits)
+3. Create external adaptation capabilities (repositories, clients)
+4. Follow 3-Block Structure: Struct → Trait Impl → Constructors
+5. Use `Arc<dyn Trait>` for DI
+6. Verify: `cargo check -p <feature>`
 
 ---
 
 ## Phase 5: Agent Layer
 
-Orchestrates sequential execution, branching, looping, and error handling. Ignorant of concrete capability and utility implementations (coordinates only via contract protocols injected via `Arc`).
+> **Skill:** `create-agent-rust` — load for orchestration logic.
 
-```rust
-// crates/user/src/agent_user_orchestrator.rs
-use shared::user::contract_user_aggregate::IUserAggregate;
-use shared::user::contract_user_protocol::{IUserProtocol, IUserRepositoryProtocol};
-use shared::user::taxonomy_user_vo::UserVO;
-use std::sync::Arc;
+Orchestrates sequential execution, branching, looping, and error handling.
 
-pub struct UserOrchestrator {
-    checker: Arc<dyn IUserProtocol>,
-    repository: Arc<dyn IUserRepositoryProtocol>,
-}
+### Steps
 
-impl UserOrchestrator {
-    pub fn new(
-        checker: Arc<dyn IUserProtocol>,
-        repository: Arc<dyn IUserRepositoryProtocol>,
-    ) -> Self {
-        Self { checker, repository }
-    }
-}
-
-impl IUserAggregate for UserOrchestrator {
-    fn get_user(&self, id: &str) -> Result<UserVO, String> {
-        self.repository.find_by_id(id)
-            .map_err(|e| e.to_string())?
-            .ok_or_else(|| format!("User not found: {}", id))
-    }
-
-    fn create_user(&self, name: &str, email: &str) -> Result<UserVO, String> {
-        if !self.checker.check_valid_email(email) {
-            return Err("Invalid email".to_string());
-        }
-        let user = UserVO::new(
-            uuid::Uuid::new_v4().to_string(),
-            name.to_string(),
-            email.to_string(),
-        );
-        self.repository.save(&user).map_err(|e| e.to_string())?;
-        Ok(user)
-    }
-
-    fn delete_user(&self, id: &str) -> Result<(), String> {
-        self.repository.delete(id).map_err(|e| e.to_string())
-    }
-}
-```
+1. Load `create-agent-rust` skill
+2. Create orchestrator struct implementing aggregate trait
+3. Inject protocol dependencies via `Arc<dyn Trait>`
+4. Verify: `cargo check -p <feature>`
 
 ---
 
 ## Phase 6: Surface Layer
 
-Translates user-facing inputs into actions, delegating execution to the Agent orchestrator.
+> **Skill:** `create-surface-rust` — load for user-facing input translation.
 
-```rust
-// crates/user/src/surface_user_command.rs
-use shared::user::contract_user_aggregate::IUserAggregate;
-use std::sync::Arc;
+Translates user-facing inputs into actions, delegating to the Agent orchestrator.
 
-pub struct UserCommand {
-    orchestrator: Arc<dyn IUserAggregate>,
-}
+### Steps
 
-impl UserCommand {
-    pub fn new(orchestrator: Arc<dyn IUserAggregate>) -> Self {
-        Self { orchestrator }
-    }
-
-    pub fn run(&self, args: &[String]) -> Result<String, String> {
-        match args.first().map(|s| s.as_str()) {
-            Some("get") => {
-                let id = args.get(1).ok_or("Missing user ID")?;
-                let user = self.orchestrator.get_user(id)?;
-                Ok(format!("User: {} <{}>", user.name, user.email))
-            }
-            Some("create") => {
-                let name = args.get(1).ok_or("Missing name")?;
-                let email = args.get(2).ok_or("Missing email")?;
-                let user = self.orchestrator.create_user(name, email)?;
-                Ok(format!("Created user: {}", user.id))
-            }
-            _ => Err("Usage: user <get|create> [args...]".to_string()),
-        }
-    }
-}
-```
+1. Load `create-surface-rust` skill
+2. Create surface structs (commands, handlers, endpoints)
+3. Inject aggregate trait via `Arc<dyn Trait>`
+4. Verify: `cargo check -p <feature>`
 
 ---
 
 ## Phase 7: Root Layer
 
+> **Skill:** `create-root-rust` — load for DI container and entry point wiring.
+
 Wires concrete implementations to contracts and bootstraps the system.
 
-### Container
+### Steps
 
-```rust
-// crates/user/src/root_user_container.rs
-use crate::agent_user_orchestrator::UserOrchestrator;
-use crate::capabilities_user_checker::UserChecker;
-use crate::capabilities_user_repository::UserRepository;
-use shared::user::contract_user_aggregate::IUserAggregate;
-use std::sync::Arc;
-
-pub struct UserContainer {
-    orchestrator: Arc<dyn IUserAggregate>,
-}
-
-impl UserContainer {
-    pub fn new(db_path: &str) -> Self {
-        let checker = Arc::new(UserChecker::new());
-        let repository = Arc::new(UserRepository::new(db_path.to_string()));
-        let orchestrator = Arc::new(UserOrchestrator::new(checker, repository));
-        Self { orchestrator }
-    }
-
-    pub fn orchestrator(&self) -> Arc<dyn IUserAggregate> {
-        self.orchestrator.clone()
-    }
-}
-```
-
-### Entry Point
-
-```rust
-// crates/root_cli_main_entry.rs
-use user::root_user_container::UserContainer;
-use user::surface_user_command::UserCommand;
-
-fn main() {
-    let container = UserContainer::new("data.db");
-    let command = UserCommand::new(container.orchestrator());
-
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    match command.run(&args) {
-        Ok(output) => println!("{}", output),
-        Err(e) => eprintln!("Error: {}", e),
-    }
-}
-```
+1. Load `create-root-rust` skill
+2. Create DI container wiring all capabilities → orchestrator → surface
+3. Create entry point file at `crates/root_<name>_entry.rs`
+4. Verify: `cargo check -p <feature>`
 
 ---
 
 ## Phase 8: Verify
+
+> **Skill:** `build-verify-all` — load for final build verification.
 
 ```bash
 lint-arwaky-cli scan your-project/
@@ -443,48 +188,33 @@ cargo fmt --all && cargo clippy --all-targets -- -D warnings
 
 ---
 
-## File Naming Reference
+## Supplementary Skills (Post-Migration)
 
-| Layer        | Pattern                              | Example                        |
-| ------------ | ------------------------------------ | ------------------------------ |
-| taxonomy     | `taxonomy_<concept>_<suffix>.rs`     | `taxonomy_user_vo.rs`          |
-| contract     | `contract_<concept>_<suffix>.rs`     | `contract_user_protocol.rs`    |
-| utility      | `utility_<concept>_<suffix>.rs`      | `utility_user_hasher.rs`       |
-| capabilities | `capabilities_<concept>_<suffix>.rs` | `capabilities_user_checker.rs` |
-| agent        | `agent_<concept>_orchestrator.rs`    | `agent_user_orchestrator.rs`   |
-| surface      | `surface_<concept>_<suffix>.rs`      | `surface_user_command.rs`      |
-| root         | `root_<concept>_<suffix>.rs`         | `root_user_container.rs`       |
+| Skill | When to Use |
+|-------|-------------|
+| `add-docs-rust` | Add doc comments, type annotations after migration |
+| `fix-bypass-rust` | Remove `#[allow]`, `unwrap()`, `panic!` |
+| `cleanup-consolidate-rust` | Remove dead code, merge duplicates |
+| `create-test-rust` | Generate test suites |
 
 ---
 
-## Import Rules
+## Reference: File Naming & Import Rules
 
-```
-taxonomy_     → taxonomy_*
-contract_     → taxonomy_*
-utility_      → taxonomy_*
-capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*, utility_*
-surface_      → taxonomy_*, contract_*, utility_*
-root_         → ALL layers
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) §3 (Naming Convention) and §11 (Import Rules).
 
-**NEVER:** capabilities → agent, agent → surface, surface → capabilities, capability → capability.
+| Layer | Pattern |
+|-------|---------|
+| taxonomy | `taxonomy_<concept>_<suffix>.rs` |
+| contract | `contract_<concept>_<suffix>.rs` |
+| utility | `utility_<concept>_<suffix>.rs` |
+| capabilities | `capabilities_<concept>_<suffix>.rs` |
+| agent | `agent_<concept>_orchestrator.rs` |
+| surface | `surface_<concept>_<suffix>.rs` |
+| root | `root_<concept>_<suffix>.rs` |
 
 ---
 
 ## Troubleshooting
 
-| Violation  | Fix                                               |
-| ---------- | ------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                  |
-| AES102     | Change suffix to match layer's allowed list       |
-| AES201     | Remove forbidden import, use contract interface   |
-| AES202     | Add missing import per layer requirements         |
-| AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `#[allow]`, `unwrap()`, `panic!`           |
-| AES401     | Move primitives to VO, constants to `_constant`   |
-| AES402     | Replace primitive types with VO types in contract |
-| AES403     | Implement protocol trait in capability            |
-| AES404     | Move stateless helper functions to Utility        |
-| AES501-506 | Wire in container or remove dead code             |
+See [ARCHITECTURE.md](ARCHITECTURE.md) §12 (Troubleshooting) for violation codes and fixes.

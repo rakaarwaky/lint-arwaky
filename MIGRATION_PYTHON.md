@@ -1,7 +1,7 @@
 # AES Migration Guide — Python
 
-> Step-by-step guide for migrating a Python project to AES architecture.
-> Workspace structure: `modules/` with pyproject.toml.
+> Skill-driven migration workflow for Python projects to AES architecture.
+> Each phase delegates to a dedicated skill in `.agents/skills/`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for layer rules and [README.md](README.md) for project usage.
 
@@ -16,38 +16,26 @@ project-root/
 │   │   └── src/
 │   │       ├── __init__.py
 │   │       ├── common/          ← truly shared across ALL features
-│   │       │   ├── __init__.py
-│   │       │   ├── taxonomy_common_vo.py
-│   │       │   ├── taxonomy_path_vo.py
-│   │       │   └── ...
-│   │       └── user/            ← shared types for user feature (domain folder)
-│   │           ├── __init__.py
-│   │           ├── taxonomy_user_vo.py
-│   │           ├── taxonomy_user_error.py
-│   │           ├── taxonomy_user_constant.py
-│   │           ├── contract_user_protocol.py
-│   │           ├── contract_user_aggregate.py
-│   │           └── utility_user_hasher.py
+│   │       └── <feature>/       ← shared types per feature domain
 │   │
-│   ├── user/                ← feature module
+│   ├── <feature>/          ← feature module
 │   │   ├── pyproject.toml
 │   │   └── src/
 │   │       ├── __init__.py
-│   │       ├── capabilities_user_checker.py     ← business logic capability
-│   │       ├── capabilities_user_repository.py  ← external adaptation capability
-│   │       ├── agent_user_orchestrator.py       ← agent layer (orchestrator)
-│   │       ├── surface_user_command.py          ← surfaces layer
-│   │       └── root_user_container.py           ← root container
-│   └── order/
-│       └── src/
-│           └── ...
+│   │       ├── capabilities_<concept>_<role>.py
+│   │       ├── agent_<concept>_orchestrator.py
+│   │       ├── surface_<concept>_<role>.py
+│   │       └── root_<concept>_container.py
+│   └── ...
 └── src/
-    └── root_cli_main_entry.py   ← CLI entry point (at workspace root)
+    └── root_<name>_entry.py   ← entry point (at workspace root)
 ```
 
 **Key rules:**
 
-- All 7 layers coexist in each feature slice. Stable domain taxonomy, contracts, and utilities live under `modules/shared/src/<feature>/`. Orchestration, capabilities, and surfaces live in the feature module.
+- All 7 layers coexist in each feature slice.
+- Stable domain taxonomy, contracts, and utilities live under `modules/shared/src/<feature>/`.
+- Orchestration, capabilities, and surfaces live in the feature module.
 - Entry points (`root_*_entry.py`) live at workspace root or `src/`.
 - Shared types go in `modules/shared/`.
 
@@ -65,6 +53,8 @@ lint-arwaky-cli scan your-project/
 
 ## Phase 0: Audit
 
+> **Skill:** `lint-arwaky-python` — load for audit commands and violation analysis.
+
 ```bash
 lint-arwaky-cli scan your-project/
 find your-project/modules -name "*.py" | wc -l
@@ -78,331 +68,115 @@ find your-project/modules -name "*.py" | wc -l
 
 ## Phase 1: Taxonomy Layer
 
-Define Value Objects, Errors, Events, and compile-time Constants under the `shared` member.
+> **Skill:** `create-taxonomy-python` — load for VOs, errors, constants, entities, events.
 
-### Step 1.1: Identify Domain Types
+Define Value Objects, Errors, Events, and compile-time Constants under `modules/shared/src/<feature>/`.
 
-```bash
-grep -rn "^class " your-project/modules/*/src/ | grep -v test | grep -v __init__
-```
+### Steps
 
-### Step 1.2: Create Value Objects
-
-```python
-# modules/shared/src/user/taxonomy_user_vo.py
-"""User value object — immutable domain data container."""
-
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class UserVO:
-    id: str
-    name: str
-    email: str
-```
-
-### Step 1.3: Create Constants
-
-```python
-# modules/shared/src/user/taxonomy_user_constant.py
-"""User constants — compile-time literal values."""
-
-MAX_RETRY_COUNT = 3
-DEFAULT_TIMEOUT_MS = 5000
-```
-
-### Step 1.4: Create Error Types
-
-```python
-# modules/shared/src/user/taxonomy_user_error.py
-"""User domain-level errors."""
-
-
-class UserError(Exception):
-    """Base error for user domain."""
-
-
-class UserNotFoundError(UserError):
-    def __init__(self, user_id: str):
-        super().__init__(f"User not found: {user_id}")
-
-
-class InvalidEmailError(UserError):
-    def __init__(self, email: str):
-        super().__init__(f"Invalid email: {email}")
-```
+1. Identify domain types with `grep -rn "^class " modules/*/src/ | grep -v test | grep -v __init__`
+2. Load `create-taxonomy-python` skill
+3. Create taxonomy files following skill templates and workflow
+4. Register in domain `__init__.py`
+5. Verify: `python -c "import modules.shared.src.<feature>"`
 
 ---
 
 ## Phase 2: Contract Layer
 
+> **Skill:** `create-contract-python` — load for protocol and aggregate ABCs.
+
 Contracts define public interfaces (Protocols and Aggregates) without exposing implementation.
 
-### Step 2.1: Create Protocols (inbound/outbound interfaces)
+### Steps
 
-Define protocol interfaces implemented by Capabilities (both business calculation and external adapters) and consumed by the Agent.
-
-```python
-# modules/shared/src/user/contract_user_protocol.py
-"""User contract protocols."""
-
-from abc import ABC, abstractmethod
-from typing import Optional
-from .taxonomy_user_vo import UserVO
-
-
-class IUserProtocol(ABC):
-    @abstractmethod
-    def check_valid_email(self, email: str) -> bool:
-        ...
-
-
-class IUserRepositoryProtocol(ABC):
-    @abstractmethod
-    def find_by_id(self, user_id: str) -> Optional[UserVO]:
-        ...
-
-    @abstractmethod
-    def save(self, user: UserVO) -> None:
-        ...
-
-    @abstractmethod
-    def delete(self, user_id: str) -> None:
-        ...
-```
-
-### Step 2.2: Create Aggregates (facades)
-
-Define aggregate facades implemented by the Agent and consumed by Surfaces.
-
-```python
-# modules/shared/src/user/contract_user_aggregate.py
-"""User contract aggregate facade."""
-
-from abc import ABC, abstractmethod
-from .taxonomy_user_vo import UserVO
-
-
-class IUserAggregate(ABC):
-    @abstractmethod
-    def get_user(self, user_id: str) -> UserVO:
-        ...
-
-    @abstractmethod
-    def create_user(self, name: str, email: str) -> UserVO:
-        ...
-
-    @abstractmethod
-    def delete_user(self, user_id: str) -> None:
-        ...
-```
+1. Load `create-contract-python` skill
+2. Create protocol ABCs (inbound/outbound) under `modules/shared/src/<feature>/`
+3. Create aggregate facade ABCs under `modules/shared/src/<feature>/`
+4. Register in domain `__init__.py`
+5. Verify: `python -c "import modules.shared.src.<feature>"`
 
 ---
 
 ## Phase 3: Utility Layer
 
-Utility contains low-level technical mechanics. It must contain only **stateless standalone functions** (no stateful objects, no behavior, no contract implementation, and no business decisions).
+> **Skill:** `create-utility-python` — load for stateless standalone functions.
 
-### Step 3.1: Create Technical Utilities
+Utility contains low-level technical mechanics — **stateless standalone functions only**.
 
-Extract reusable technical actions (e.g. parsing, hash computation, formatting) into the Utility layer inside the `shared` member.
+### Steps
 
-```python
-# modules/shared/src/user/utility_user_hasher.py
-"""User utility functions."""
-
-
-def hash_user_token(input_str: str) -> str:
-    # stateless technical operation
-    return f"hash_{input_str}"
-```
+1. Identify reusable stateless functions across modules
+2. Load `create-utility-python` skill
+3. Create utility files under `modules/shared/src/<feature>/`
+4. Register in domain `__init__.py`
+5. Verify: `python -c "import modules.shared.src.<feature>"`
 
 ---
 
 ## Phase 4: Capabilities Layer
 
-Capabilities contain concrete behavior implementations. This includes business logic (validations, computations) and external adaptation (database repositories, network integration, third-party clients).
+> **Skill:** `create-capabilities-python` — load for business logic and external adaptation.
 
-- Must implement one domain protocol ABC defined in Contract.
-- Must use dependency injection for collaborator services.
-- Must not import or depend on other Capabilities.
+Capabilities contain concrete behavior implementations (business logic + external adapters).
 
-### Step 4.1: Create Business Logic Capability
+### Steps
 
-```python
-# modules/user/src/capabilities_user_checker.py
-"""Validates user domain rules — pure business logic."""
-
-from shared.user.contract_user_protocol import IUserProtocol
-
-
-class UserChecker(IUserProtocol):
-    def check_valid_email(self, email: str) -> bool:
-        return "@" in email and "." in email
-```
-
-### Step 4.2: Create External Adaptation Capability (formerly Infrastructure)
-
-```python
-# modules/user/src/capabilities_user_repository.py
-"""User persistence repository — implements IUserRepositoryProtocol for database."""
-
-from typing import Optional
-from shared.user.contract_user_protocol import IUserRepositoryProtocol
-from shared.user.taxonomy_user_vo import UserVO
-
-
-class UserRepository(IUserRepositoryProtocol):
-    def __init__(self, db_path: str):
-        self._db_path = db_path
-
-    def find_by_id(self, user_id: str) -> Optional[UserVO]:
-        # Actual database call here using local state or shared utilities
-        raise NotImplementedError("Query DB")
-
-    def save(self, user: UserVO) -> None:
-        raise NotImplementedError("Insert/update user")
-
-    def delete(self, user_id: str) -> None:
-        raise NotImplementedError("Delete user")
-```
+1. Load `create-capabilities-python` skill
+2. Create business logic capabilities (implement protocol ABCs)
+3. Create external adaptation capabilities (repositories, clients)
+4. Verify: `python -c "import modules.user.src.capabilities_*"`
 
 ---
 
 ## Phase 5: Agent Layer
 
-Orchestrates sequential execution, branching, looping, and error handling. Ignorant of concrete capability and utility implementations (coordinates only via contract protocols injected at constructor time).
+> **Skill:** `create-agent-python` — load for orchestration logic.
 
-```python
-# modules/user/src/agent_user_orchestrator.py
-"""User orchestration — coordinates user-related operations."""
+Orchestrates sequential execution, branching, looping, and error handling.
 
-import uuid
-from shared.user.contract_user_aggregate import IUserAggregate
-from shared.user.contract_user_protocol import IUserProtocol, IUserRepositoryProtocol
-from shared.user.taxonomy_user_vo import UserVO
-from shared.user.taxonomy_user_error import InvalidEmailError, UserNotFoundError
+### Steps
 
-
-class UserOrchestrator(IUserAggregate):
-    def __init__(self, checker: IUserProtocol, repository: IUserRepositoryProtocol):
-        self._checker = checker
-        self._repository = repository
-
-    def get_user(self, user_id: str) -> UserVO:
-        user = self._repository.find_by_id(user_id)
-        if user is None:
-            raise UserNotFoundError(user_id)
-        return user
-
-    def create_user(self, name: str, email: str) -> UserVO:
-        if not self._checker.check_valid_email(email):
-            raise InvalidEmailError(email)
-        user = UserVO(id=str(uuid.uuid4()), name=name, email=email)
-        self._repository.save(user)
-        return user
-
-    def delete_user(self, user_id: str) -> None:
-        self._repository.delete(user_id)
-```
+1. Load `create-agent-python` skill
+2. Create orchestrator class implementing aggregate ABC
+3. Inject protocol dependencies via constructor
+4. Verify: `python -c "import modules.user.src.agent_*"`
 
 ---
 
 ## Phase 6: Surface Layer
 
-Translates user-facing inputs into actions, delegating execution to the Agent orchestrator.
+> **Skill:** `create-surface-python` — load for user-facing input translation.
 
-```python
-# modules/user/src/surface_user_command.py
-"""CLI command surface for user operations."""
+Translates user-facing inputs into actions, delegating to the Agent orchestrator.
 
-from typing import List
-from shared.user.contract_user_aggregate import IUserAggregate
+### Steps
 
-
-class UserCommand:
-    def __init__(self, orchestrator: IUserAggregate):
-        self._orchestrator = orchestrator
-
-    def run(self, args: List[str]) -> str:
-        if not args:
-            return "Usage: user <get|create> [args...]"
-
-        action = args[0]
-        if action == "get":
-            if len(args) < 2:
-                raise ValueError("Missing user ID")
-            user = self._orchestrator.get_user(args[1])
-            return f"User: {user.name} <{user.email}>"
-        elif action == "create":
-            if len(args) < 3:
-                raise ValueError("Missing name or email")
-            user = self._orchestrator.create_user(args[1], args[2])
-            return f"Created user: {user.id}"
-        else:
-            return "Usage: user <get|create> [args...]"
-```
+1. Load `create-surface-python` skill
+2. Create surface classes (commands, handlers, endpoints)
+3. Inject aggregate ABC via constructor
+4. Verify: `python -c "import modules.user.src.surface_*"`
 
 ---
 
 ## Phase 7: Root Layer
 
+> **Skill:** `create-root-python` — load for DI container and entry point wiring.
+
 Wires concrete implementations to contracts and bootstraps the system.
 
-### Container
+### Steps
 
-```python
-# modules/user/src/root_user_container.py
-"""User feature DI container."""
-
-from .agent_user_orchestrator import UserOrchestrator
-from .capabilities_user_checker import UserChecker
-from .capabilities_user_repository import UserRepository
-from shared.user.contract_user_aggregate import IUserAggregate
-
-
-class UserContainer:
-    def __init__(self, db_path: str):
-        checker = UserChecker()
-        repository = UserRepository(db_path)
-        self._orchestrator = UserOrchestrator(checker, repository)
-
-    @property
-    def orchestrator(self) -> IUserAggregate:
-        return self._orchestrator
-```
-
-### Entry Point
-
-```python
-# src/root_cli_main_entry.py
-"""CLI Main entry point."""
-
-import sys
-from modules.user.src.root_user_container import UserContainer
-from modules.user.src.surface_user_command import UserCommand
-
-
-def main() -> None:
-    container = UserContainer("data.db")
-    command = UserCommand(container.orchestrator)
-
-    args = sys.argv[1:]
-    try:
-        output = command.run(args)
-        print(output)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-
-
-if __name__ == "__main__":
-    main()
-```
+1. Load `create-root-python` skill
+2. Create DI container wiring all capabilities → orchestrator → surface
+3. Create entry point at workspace root or `src/`
+4. Verify: `python -c "import src.root_*_entry"`
 
 ---
 
 ## Phase 8: Verify
+
+> **Skill:** `build-verify-all` — load for final build verification.
 
 ```bash
 lint-arwaky-cli scan your-project/
@@ -412,48 +186,33 @@ ruff check . && ruff format --check .
 
 ---
 
-## File Naming Reference
+## Supplementary Skills (Post-Migration)
 
-| Layer        | Pattern                              | Example                        |
-| ------------ | ------------------------------------ | ------------------------------ |
-| taxonomy     | `taxonomy_<concept>_<suffix>.py`     | `taxonomy_user_vo.py`          |
-| contract     | `contract_<concept>_<suffix>.py`     | `contract_user_protocol.py`    |
-| utility      | `utility_<concept>_<suffix>.py`      | `utility_user_hasher.py`       |
-| capabilities | `capabilities_<concept>_<suffix>.py` | `capabilities_user_checker.py` |
-| agent        | `agent_<concept>_orchestrator.py`    | `agent_user_orchestrator.py`   |
-| surface      | `surface_<concept>_<suffix>.py`      | `surface_user_command.py`      |
-| root         | `root_<concept>_<suffix>.py`         | `root_user_container.py`       |
+| Skill | When to Use |
+|-------|-------------|
+| `add-docs-python` | Add docstrings, type hints after migration |
+| `fix-bypass-python` | Remove `# type: ignore`, `noqa` |
+| `cleanup-consolidate-python` | Remove dead code, merge duplicates |
+| `create-test-python` | Generate test suites |
 
 ---
 
-## Import Rules
+## Reference: File Naming & Import Rules
 
-```
-taxonomy_     → taxonomy_*
-contract_     → taxonomy_*
-utility_      → taxonomy_*
-capabilities_ → taxonomy_*, contract_*, utility_*
-agent_        → taxonomy_*, contract_*, utility_*
-surface_      → taxonomy_*, contract_*, utility_*
-root_         → ALL layers
-```
+See [ARCHITECTURE.md](ARCHITECTURE.md) §3 (Naming Convention) and §11 (Import Rules).
 
-**NEVER:** capabilities → agent, agent → surface, surface → capabilities, capability → capability.
+| Layer | Pattern |
+|-------|---------|
+| taxonomy | `taxonomy_<concept>_<suffix>.py` |
+| contract | `contract_<concept>_<suffix>.py` |
+| utility | `utility_<concept>_<suffix>.py` |
+| capabilities | `capabilities_<concept>_<suffix>.py` |
+| agent | `agent_<concept>_orchestrator.py` |
+| surface | `surface_<concept>_<suffix>.py` |
+| root | `root_<concept>_<suffix>.py` |
 
 ---
 
 ## Troubleshooting
 
-| Violation  | Fix                                               |
-| ---------- | ------------------------------------------------- |
-| AES101     | Rename to `layer_concept_suffix`                  |
-| AES102     | Change suffix to match layer's allowed list       |
-| AES201     | Remove forbidden import, use contract interface   |
-| AES202     | Add missing import per layer requirements         |
-| AES303     | Add struct/enum/trait definition                  |
-| AES304     | Remove `# type: ignore`, `noqa`, bare `except`    |
-| AES401     | Move primitives to VO, constants to `_constant`   |
-| AES402     | Replace primitive types with VO types in contract |
-| AES403     | Implement protocol trait in capability            |
-| AES404     | Move stateless helper functions to Utility        |
-| AES501-506 | Wire in container or remove dead code             |
+See [ARCHITECTURE.md](ARCHITECTURE.md) §12 (Troubleshooting) for violation codes and fixes.
