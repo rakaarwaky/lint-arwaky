@@ -7,8 +7,8 @@
 //
 // Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
 
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use std::process::ExitCode;
 use std::sync::Arc;
 
 pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
@@ -74,9 +74,9 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
     }
 
     if all_ok {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
 
@@ -106,10 +106,10 @@ pub async fn handle_install(
     println!("\n{}", "=".repeat(50));
     if py_status.value && js_status.value {
         println!("Done! Run `lint-arwaky doctor` to verify.");
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
         println!("Installation failed. Run with `--sudo` if npm globally requires permissions.");
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
 
@@ -191,7 +191,7 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
     println!("Binary: {}", binary);
     println!();
     println!("{}", json_str);
-    ExitCode::SUCCESS
+    ExitCode::OK
 }
 
 fn which_mcp_binary() -> String {

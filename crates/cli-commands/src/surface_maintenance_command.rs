@@ -5,9 +5,9 @@
 //   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
 //   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
 
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use std::process::ExitCode;
 use std::sync::Arc;
 
 pub async fn handle_doctor(
@@ -68,7 +68,7 @@ pub async fn handle_doctor(
         );
     }
 
-    ExitCode::SUCCESS
+    ExitCode::OK
 }
 
 pub async fn handle_security(
@@ -93,8 +93,7 @@ pub async fn handle_security(
 
     if !report.tool_installed {
         eprintln!("Error: {} is not installed.", report.tool_name);
-        // P5.1: return exit code 3 (tool missing) instead of success
-        return ExitCode::from(3);
+        return ExitCode::PREREQUISITE_MISSING;
     }
 
     println!("Findings: {}", report.findings.len());
@@ -109,7 +108,11 @@ pub async fn handle_security(
         );
     }
 
-    ExitCode::SUCCESS
+    if report.findings.is_empty() {
+        ExitCode::OK
+    } else {
+        ExitCode::POLICY_FAIL
+    }
 }
 
 pub async fn handle_dependencies(
@@ -142,9 +145,9 @@ pub async fn handle_dependencies(
         }
         Err(e) => {
             println!("{e}");
-            return ExitCode::from(2);
+            return ExitCode::RUNTIME_ERROR;
         }
     }
 
-    ExitCode::SUCCESS
+    ExitCode::OK
 }

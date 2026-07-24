@@ -1,7 +1,7 @@
 // PURPOSE: ConfigCommandsSurface — CLI surface for config show
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use std::process::ExitCode;
 use std::sync::Arc;
 
 /// Redact sensitive values from config content.
@@ -72,5 +72,5 @@ pub async fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggrega
             eprintln!("Failed to list config files: {}", e);
         }
     }
-    ExitCode::SUCCESS
+    ExitCode::OK
 }

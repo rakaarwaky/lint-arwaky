@@ -12,11 +12,11 @@
 //
 // The event loop uses tokio::select! for cancellability — the sleep branch
 // allows checking the running flag every 100ms without blocking on recv().
-use std::process::ExitCode;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::common::taxonomy_common_error::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
@@ -42,7 +42,7 @@ impl IWatchAggregate for WatchOrchestrator {
                 Ok(r) => r,
                 Err(e) => {
                     eprintln!("Failed to create tokio runtime: {}", e);
-                    return ExitCode::FAILURE;
+                    return ExitCode::RUNTIME_ERROR;
                 }
             };
             rt.block_on(self.run_async(config, running))
@@ -75,7 +75,7 @@ impl WatchOrchestrator {
         // Start watcher
         if let Err(e) = self.provider.start(&config).await {
             eprintln!("Failed to start watcher: {}", e);
-            return ExitCode::FAILURE;
+            return ExitCode::RUNTIME_ERROR;
         }
 
         let mut rx = self.provider.subscribe();
@@ -110,6 +110,6 @@ impl WatchOrchestrator {
 
         let _ = self.provider.stop().await;
         println!("Watcher stopped.");
-        ExitCode::SUCCESS
+        ExitCode::OK
     }
 }

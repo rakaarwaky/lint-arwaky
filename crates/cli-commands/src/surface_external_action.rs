@@ -21,15 +21,15 @@ pub fn handle_scan_external(
     };
     if !std::path::Path::new(&root).exists() {
         eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::from(2);
+        return ExitCode::RUNTIME_ERROR;
     }
     let root_fp = match FilePath::new(root) {
         Ok(fp) => fp,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let rt = match surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let results = rt.block_on(external_lint.scan_all(&root_fp));
     let violations: Vec<ViolationItem> = results
@@ -45,8 +45,8 @@ pub fn handle_scan_external(
         is_member_path(&root_fp.value),
     );
     if has_violations {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     } else {
-        ExitCode::SUCCESS
+        ExitCode::OK
     }
 }
