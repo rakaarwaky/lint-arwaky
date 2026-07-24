@@ -19,6 +19,8 @@ use shared::taxonomy_name_vo::SymbolName;
 
 pub struct DummyImportChecker;
 
+impl DummyImportChecker {}
+
 // Pre-computed per-file data shared across all dummy checks.
 struct DummyFileContext {
     lines: Vec<String>,
