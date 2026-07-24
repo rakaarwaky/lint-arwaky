@@ -1,10 +1,12 @@
 use crate::agent_code_analysis_orchestrator::{CodeAnalysisDeps, CodeAnalysisOrchestrator};
 use crate::capabilities_check_bypass_checker::BypassChecker;
+use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -27,6 +29,8 @@ impl CodeAnalysisContainer {
             dead_inheritance_checker: mandatory.clone() as Arc<dyn IDeadInheritanceProtocol>,
             line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
             class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
+            duplication_checker: Arc::new(CodeDuplicationAnalyzer::new())
+                as Arc<dyn ICodeMetricAnalyzerProtocol>,
         };
         Self {
             code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),
@@ -41,11 +45,15 @@ impl CodeAnalysisContainer {
             .find(|r| r.name.value == "AES304")
             .map(|r| BypassChecker::from_patterns(&r.code_analysis.forbidden_bypass))
             .unwrap_or_default();
+        let dup_checker = Arc::new(CodeDuplicationAnalyzer::from_config(Arc::new(
+            config.clone(),
+        )));
         let deps = CodeAnalysisDeps {
             bypass_checker: Arc::new(bypass) as Arc<dyn IBypassCheckerProtocol>,
             dead_inheritance_checker: mandatory.clone() as Arc<dyn IDeadInheritanceProtocol>,
             line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
             class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
+            duplication_checker: dup_checker as Arc<dyn ICodeMetricAnalyzerProtocol>,
         };
         Self {
             code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),

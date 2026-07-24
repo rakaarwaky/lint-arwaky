@@ -2,12 +2,12 @@
 use std::env;
 use std::process::ExitCode;
 
+use cli_commands::root_cli_container::CliContainer;
 use cli_commands::surface_check_command;
 use cli_commands::surface_ci_command;
 use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
-use cli_commands::root_cli_container::CliContainer;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
@@ -108,7 +108,11 @@ fn main() -> ExitCode {
                 orchestrator,
             ))
         }
-        Commands::Orphan { path, member, format } => {
+        Commands::Orphan {
+            path,
+            member,
+            format,
+        } => {
             let path_obj = std::path::Path::new(&path);
             if path_obj.is_file() {
                 // Single file mode
@@ -137,18 +141,22 @@ fn main() -> ExitCode {
                 container.multi_project_orchestrator.clone(),
             )
         }
-        Commands::ScanImport { path, format } => cli_commands::surface_import_action::handle_scan_import(
-            path.map(|p| FilePath::new(p).unwrap_or_default()),
-            format,
-            container.import_orchestrator.clone(),
-            container.report_formatter.clone(),
-        ),
-        Commands::ScanNaming { path, format } => cli_commands::surface_naming_action::handle_scan_naming(
-            path.map(|p| FilePath::new(p).unwrap_or_default()),
-            format,
-            container.naming_orchestrator.clone(),
-            container.report_formatter.clone(),
-        ),
+        Commands::ScanImport { path, format } => {
+            cli_commands::surface_import_action::handle_scan_import(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                format,
+                container.import_orchestrator.clone(),
+                container.report_formatter.clone(),
+            )
+        }
+        Commands::ScanNaming { path, format } => {
+            cli_commands::surface_naming_action::handle_scan_naming(
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+                format,
+                container.naming_orchestrator.clone(),
+                container.report_formatter.clone(),
+            )
+        }
         Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,

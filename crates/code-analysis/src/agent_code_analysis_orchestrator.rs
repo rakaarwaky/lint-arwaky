@@ -22,8 +22,10 @@ use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+
 use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use shared::common::taxonomy_common_vo::{BooleanVO, Score};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
@@ -47,6 +49,7 @@ pub struct CodeAnalysisDeps {
     pub dead_inheritance_checker: Arc<dyn IDeadInheritanceProtocol>,
     pub line_checker: Arc<dyn ILineCheckerProtocol>,
     pub class_checker: Arc<dyn IMandatoryClassProtocol>,
+    pub duplication_checker: Arc<dyn ICodeMetricAnalyzerProtocol>,
 }
 
 pub struct CodeAnalysisOrchestrator {
@@ -260,7 +263,26 @@ impl CodeAnalysisOrchestrator {
             );
         }
 
-        // AES305: File-level similarity check — handled by capabilities_code_duplication_analyzer
+        // AES305: File-level similarity check
+        let src_dir = shared::code_analysis::utility_target_resolver::detect_source_dir(
+            std::path::Path::new(root_dir),
+        );
+        if let Ok(dp) = shared::common::taxonomy_path_vo::DirectoryPath::new(
+            src_dir.to_string_lossy().to_string(),
+        ) {
+            for (file_path, aes_violation) in
+                self.deps.duplication_checker.handle_duplicates(Some(dp))
+            {
+                let msg = aes_violation.to_string();
+                violations.push(LintResult::new_arch(
+                    &file_path,
+                    1,
+                    "AES305",
+                    Severity::LOW,
+                    msg,
+                ));
+            }
+        }
 
         violations
     }

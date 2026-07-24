@@ -2,11 +2,11 @@
 //
 // Formats ScanReport into SARIF 2.1.0 JSON format.
 use crate::utility_report_format::format_report_default;
-use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.

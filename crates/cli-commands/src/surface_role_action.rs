@@ -32,7 +32,10 @@ pub fn handle_scan_role(
         Err(_) => return ExitCode::from(2),
     };
     let results = rt.block_on(role_orchestrator.run_audit(&root_fp));
-    let violations: Vec<ViolationItem> = results.iter().map(ViolationItem::from_lint_result).collect();
+    let violations: Vec<ViolationItem> = results
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect();
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
         ExitCode::SUCCESS

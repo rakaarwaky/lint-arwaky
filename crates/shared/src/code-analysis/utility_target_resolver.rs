@@ -32,8 +32,10 @@ fn has_source_files(dir: &Path) -> bool {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             if let Some(name) = entry.file_name().to_str() {
-                if name.ends_with(".rs") || name.ends_with(".py")
-                    || name.ends_with(".ts") || name.ends_with(".js")
+                if name.ends_with(".rs")
+                    || name.ends_with(".py")
+                    || name.ends_with(".ts")
+                    || name.ends_with(".js")
                 {
                     return true;
                 }
