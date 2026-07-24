@@ -3,7 +3,7 @@
 //! These tests use the REAL CliContainer to verify that all components
 //! are wired correctly and can be constructed without panics.
 
-use cli_commands_lint_arwaky::CliContainer;
+use cli_commands_lint_arwaky::root_cli_container::CliContainer;
 use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
@@ -77,7 +77,7 @@ fn report_formatter_formats_empty_report_as_sarif() {
 
 #[test]
 fn check_commands_surface_can_be_constructed() {
-    use cli_commands_lint_arwaky::CheckCommandsSurface;
+    use cli_commands_lint_arwaky::surface_check_command::CheckCommandsSurface;
 
     let container = CliContainer::new_default();
     let _surface = CheckCommandsSurface::new(
@@ -91,7 +91,7 @@ fn check_commands_surface_can_be_constructed() {
 #[test]
 fn check_orphan_single_file_nonexistent_returns_empty() {
     let container = CliContainer::new_default();
-    let surface = cli_commands_lint_arwaky::CheckCommandsSurface::new(
+    let surface = cli_commands_lint_arwaky::surface_check_command::CheckCommandsSurface::new(
         container.report_formatter.clone(),
         None,
     );

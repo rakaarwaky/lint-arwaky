@@ -7,7 +7,7 @@ use cli_commands::surface_ci_command;
 use cli_commands::surface_fix_action;
 use cli_commands::surface_plugin_command;
 use cli_commands::surface_watch_command;
-use cli_commands::CliContainer;
+use cli_commands::root_cli_container::CliContainer;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
@@ -120,7 +120,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             } else {
                 // Directory mode — scan all files
-                cli_commands::surface_orphan
+                cli_commands::surface_orphan_command::handle_scan_orphan(
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
                     format,
