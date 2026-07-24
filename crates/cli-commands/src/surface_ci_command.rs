@@ -33,7 +33,7 @@ pub fn handle_ci(
         Err(_) => return ExitCode::from(2),
     };
 
-    let rt = match crate::surface_common_command::create_current_thread_runtime() {
+    let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };

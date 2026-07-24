@@ -46,7 +46,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         return ExitCode::from(2);
     }
 
-    let rt = match crate::surface_common_command::create_current_thread_runtime() {
+    let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };
@@ -192,7 +192,7 @@ pub fn handle_default_check(
         dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
     >,
 ) -> ExitCode {
-    let rt = match crate::surface_common_command::create_current_thread_runtime() {
+    let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };

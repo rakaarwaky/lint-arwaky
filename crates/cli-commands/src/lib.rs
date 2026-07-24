@@ -1,7 +1,7 @@
 // PURPOSE: Module declarations for cli-commands (surfaces, transport, container)
 pub mod surface_check_command;
 pub mod surface_ci_command;
-pub mod surface_common_command;
+pub mod surface_common_action;
 pub mod surface_fix_action;
 pub mod surface_git_command;
 pub mod surface_maintenance_command;

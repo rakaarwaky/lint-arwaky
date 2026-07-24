@@ -6,7 +6,7 @@ use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
-use crate::surface_common_command;
+use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
 
 pub fn handle_scan_role(
@@ -27,7 +27,7 @@ pub fn handle_scan_role(
         Ok(fp) => fp,
         Err(_) => return ExitCode::from(2),
     };
-    let rt = match surface_common_command::create_current_thread_runtime() {
+    let rt = match surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
         Err(_) => return ExitCode::from(2),
     };
