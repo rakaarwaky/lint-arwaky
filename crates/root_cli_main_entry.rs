@@ -144,20 +144,20 @@ fn main() -> ExitCode {
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanNaming { path, format } => cli_commands::surface_naming_command::(
+        Commands::ScanNaming { path, format } => cli_commands::surface_naming_command::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
-        Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
+        Commands::ScanRole { path, format } => cli_commands::surface_role_command::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
         ),
         Commands::ScanExternal { path, format } => {
-            cli_commands::surface_external_action::handle_scan_external(
+            cli_commands::surface_external_command::handle_scan_external(
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.external_lint.clone(),
