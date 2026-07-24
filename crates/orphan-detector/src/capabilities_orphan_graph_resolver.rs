@@ -11,7 +11,7 @@ use shared::orphan_detector::taxonomy_orphan_contract_vo::{
 };
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_io;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -195,11 +195,12 @@ impl OrphanGraphResolver {
         // Expand files to include all workspace source files for cross-crate import resolution
         // This ensures that when scanning a subfolder, imports from other crates are visible
         let mut all_workspace_files: Vec<String> = files.to_vec();
+        let mut seen: HashSet<&String> = files.iter().collect();
         for src_dir in crate_src_dirs.values() {
             let workspace_files =
                 shared::orphan_detector::utility_orphan_io::scan_directory_recursive(src_dir);
             for f in workspace_files {
-                if !all_workspace_files.contains(&f) {
+                if seen.insert(&f) {
                     all_workspace_files.push(f);
                 }
             }
@@ -219,8 +220,9 @@ impl OrphanGraphResolver {
                             || name.ends_with(".py")
                             || name.ends_with(".ts")
                             || name.ends_with(".js"))
-                        && !all_workspace_files.contains(&path_str)
+                        && !seen.contains(&path_str)
                     {
+                        seen.insert(path_str.clone());
                         all_workspace_files.push(path_str);
                     }
                 }

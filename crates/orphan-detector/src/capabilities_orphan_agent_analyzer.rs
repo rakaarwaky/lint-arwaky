@@ -36,45 +36,45 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         }
 
         // Bug 2 fix: agent is orphan only if ALL aggregates are uncalled (not ANY)
-        let mut any_called = false;
-        for agg_name in &aggregate_traits {
-            for cf in all_files {
+        // Pre-filter candidate files (surfaces, containers, entries, mains) once
+        let candidates: Vec<&String> = all_files
+            .iter()
+            .filter(|cf| {
                 let cb = match cf.split('/').next_back() {
                     Some(b) => b,
-                    None => continue,
+                    None => return false,
                 };
-                let is_surface = cb.starts_with("surface_");
-                let is_container = cb.ends_with("_container.rs")
+                cb.starts_with("surface_")
+                    || cb.ends_with("_container.rs")
                     || cb.ends_with("_container.py")
                     || cb.ends_with("_container.ts")
-                    || cb.ends_with("_container.js");
-                let is_entry = cb.ends_with("_entry.rs")
+                    || cb.ends_with("_container.js")
+                    || cb.ends_with("_entry.rs")
                     || cb.ends_with("_entry.py")
                     || cb.ends_with("_entry.ts")
-                    || cb.ends_with("_entry.js");
-                let is_main = matches!(
-                    cb,
-                    "main.rs"
-                        | "lib.rs"
-                        | "main.py"
-                        | "__main__.py"
-                        | "main.ts"
-                        | "main.js"
-                        | "index.ts"
-                        | "index.js"
-                );
+                    || cb.ends_with("_entry.js")
+                    || matches!(
+                        cb,
+                        "main.rs"
+                            | "lib.rs"
+                            | "main.py"
+                            | "__main__.py"
+                            | "main.ts"
+                            | "main.js"
+                            | "index.ts"
+                            | "index.js"
+                    )
+            })
+            .collect();
 
-                if !is_surface && !is_container && !is_entry && !is_main {
-                    continue;
-                }
+        let mut any_called = false;
+        'outer: for agg_name in &aggregate_traits {
+            for cf in &candidates {
                 let c = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
-                if c.contains(agg_name) {
+                if c.contains(agg_name.as_str()) {
                     any_called = true;
-                    break;
+                    break 'outer;
                 }
-            }
-            if any_called {
-                break;
             }
         }
 
