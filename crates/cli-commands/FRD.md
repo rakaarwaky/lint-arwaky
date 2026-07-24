@@ -4,6 +4,17 @@
 
 The cli-commands crate provides the unified command-line interface that drives the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers that parse CLI args and delegate all business logic to agent/orchestration layers. Report formatting is delegated to the report-formatter crate via the report formatter aggregate.
 
+**Exit Code Contract** (workspace standard — see root PRD):
+
+| Code | Meaning |
+| ---- | ------- |
+| 0 | Ok / clean / diagnostic completed |
+| 1 | Policy fail (violations, CI fail, vulns found, remaining after fix) |
+| 2 | Runtime error (bad path, pipeline crash, invalid state) |
+| 3 | Prerequisite missing (required external tool not installed) |
+
+**Doctor policy (locked):** exit **0** when the diagnostic finishes (missing tools are listed in the body); exit **2** only if the doctor command itself fails.
+
 ## Functional Requirements
 
 ### FR-001: Check/Scan Command (Mutual Aliases)
@@ -70,20 +81,20 @@ The cli-commands crate provides the unified command-line interface that drives t
 ### FR-004: Doctor Command
 
 - **Description**: Toolchain diagnostics — check availability and version of required tools.
-- **Input**: `maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>`
-- **Output**: `ExitCode` (always 0 — diagnostic only)
+- **Input**: Target project context (optional path); maintenance aggregate
+- **Output**: `ExitCode` — **0** when diagnostic completes; **2** if the doctor command fails internally
 - **Business Rules**:
   - Checks Rust toolchain (rustc, cargo, clippy, rustfmt).
   - Checks Python toolchain (python3, ruff, mypy, bandit).
   - Checks JavaScript toolchain (node, npm, eslint, prettier, typescript).
   - Checks VCS tools (git).
   - Displays version and status (OK/MISSING) for each tool.
-  - Returns exit code 0 regardless of findings.
+  - Missing tools are **reported in the body**, not as exit code 3 (exit 3 is reserved for commands that require a tool to run, e.g. security).
 - **Edge Cases**:
-  - All tools installed → all show OK status.
+  - All tools installed → all show OK status, exit 0.
   - Some tools missing → shows MISSING status, still exit 0.
   - Binary path available → displayed for Rust tools.
-- **Error Handling**: None — diagnostic only, always exit 0.
+- **Error Handling**: Internal failure of doctor → exit 2.
 
 ### FR-005: Security Command
 
@@ -213,24 +224,24 @@ The cli-commands crate provides the unified command-line interface that drives t
   - Multiple violations per file → shows top 3.
 - **Error Handling**: None — analysis runs per-file independently.
 
-### FR-014: Watch Command
+### FR-013: Watch Command
 
 - **Description**: Monitor file changes and trigger re-scans on modified files.
-- **Input**: `watch_aggregate: Arc<dyn IWatchAggregate>`, `path: Option<FilePath>`
-- **Output**: `ExitCode` (2 = error setting up handler)
+- **Input**: Watch aggregate, optional project path
+- **Output**: `ExitCode` (0 = clean shutdown; 2 = error setting up handler)
 - **Business Rules**:
   - Creates a watch configuration from the given path.
   - Sets up Ctrl+C signal handler for graceful shutdown via atomic running flag.
-  - Delegates to the watch aggregate run method which blocks until interrupted.
+  - Delegates to the watch aggregate which blocks until interrupted.
 - **Edge Cases**:
   - Ctrl+C handler setup fails → error message + exit code 2.
-  - User presses Ctrl+C → prints "Stopping watcher...", graceful shutdown.
-- **Error Handler**: Signal handler registration failure → exit code 2.
+  - User presses Ctrl+C → prints "Stopping watcher...", graceful shutdown, exit 0.
+- **Error Handling**: Signal handler registration failure → exit code 2.
 
-### FR-015: Individual Linter Commands (quality, import, naming, role, orphan, external)
+### FR-014: Individual Linter Commands (quality, import, naming, role, orphan, external)
 
 - **Description**: Run a single linter independently for targeted analysis.
-- **Input**: `path: Option<String>`, `format: Format`, (orphan: `member: Option<String>`)
+- **Input**: Optional path, format; orphan may take member filter
 - **Output**: `ExitCode` (0 = pass, 1 = violations found, 2 = error)
 - **Business Rules**:
   - `quality` — Runs code-quality analysis (AES301-305).
@@ -300,43 +311,36 @@ The cli-commands crate provides the unified command-line interface that drives t
 
 ## Test Scenarios / QA Checklist
 
-- [ ]  FR-001: `check` runs full pipeline and returns correct exit code
-- [ ]  FR-001: `check` with non-existent path returns exit code 2
-- [ ]  FR-001: `check --git-diff` filters to staged files only
-- [ ]  FR-002: `scan` discovers workspace members and runs per-member analysis
-- [ ]  FR-002: `scan --member <name>` targets specific workspace member
-- [ ]  FR-002: `scan` with non-existent member name prints available members
-- [ ]  FR-002: `scan` falls back to single-scan when no workspaces found
-- [ ]  FR-003: `ci` passes when score >= threshold and no CRITICAL
-- [ ]  FR-003: `ci` fails on CRITICAL violation regardless of score
-- [ ]  FR-003: `ci` compares score as float (not truncated integer)
-- [ ]  FR-004: `fix` applies fixes and reports fixed count
-- [ ]  FR-004: `fix --dry-run` previews without applying changes
-- [ ]  FR-005: `doctor` shows all tool statuses and returns exit 0
-- [ ]  FR-006: `security` returns exit 3 when tool missing
-- [ ]  FR-006: `security` returns exit 1 when vulnerabilities found
-- [ ]  FR-007: `dependencies` lists up to 30 deps then truncates
-- [ ]  FR-008: `init` creates config files for detected languages
-- [ ]  FR-008: `init` skips existing files
-- [ ]  FR-009: `install` installs Python and JS adapters
-- [ ]  FR-010: `mcp-config` generates correct JSON for each client
-- [ ]  FR-010: `mcp-config` resolves binary via sibling lookup
-- [ ]  FR-011: `config-show` displays config content with secrets redacted
-- [ ]  FR-011: `config-show` shows "no config found" when none exists
-- [ ]  FR-012: `adapters` lists enabled adapters or "(none enabled)"
-- [ ]  FR-013: `git-diff` analyzes only changed files
-- [ ]  FR-014: `watch` monitors files and re-scans on changes
-- [ ]  FR-015: Pipeline runs all 6 linter groups and merges results
-- [ ]  FR-015: Pipeline handles naming/import audit failures as warnings
+- [ ] FR-001: `check`/`scan` run full pipeline; correct exit 0/1/2
+- [ ] FR-001: non-existent path → exit 2
+- [ ] FR-001: `--git-diff` filters to staged/changed files
+- [ ] FR-001: workspace member discovery, `--member`, fallback single-scan
+- [ ] FR-002: `ci` passes when score ≥ threshold and no CRITICAL
+- [ ] FR-002: `ci` fails on CRITICAL regardless of score; float threshold compare
+- [ ] FR-003: `fix` applies remove/replace/rename; reports counts
+- [ ] FR-003: `fix --dry-run` previews without applying changes
+- [ ] FR-004: `doctor` shows tool statuses; exit 0 even when some MISSING
+- [ ] FR-004: doctor internal failure → exit 2
+- [ ] FR-005: `security` exit 3 when tool missing; exit 1 when vulns found
+- [ ] FR-006: `dependencies` lists up to 30 then truncates; error → exit 2
+- [ ] FR-007: `init` creates config for detected languages; skips existing
+- [ ] FR-008: `install` installs adapters; partial failure → exit 1
+- [ ] FR-009: `mcp-config` correct JSON per client; binary resolve fail-closed
+- [ ] FR-010: `config-show` redacts secrets; handles missing config
+- [ ] FR-011: `adapters` lists enabled adapters or none
+- [ ] FR-012: `git-diff` analyzes only changed files
+- [ ] FR-013: `watch` monitors files and re-scans; handler fail → exit 2
+- [ ] FR-014: individual linters (quality/import/naming/role/orphan/external)
 
 ## Assumptions & Constraints
 
 - All surface handlers follow AES406: zero business logic, only dispatch.
 - Report formatting never happens in surface layer — always delegated to the report formatter aggregate.
-- Exit code conventions are standardized: 0=success, 1=violations, 2=error, 3=tool missing.
+- Exit codes follow the workspace contract: 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing.
 - Workspace structure follows `crates/`, `packages/`, `modules/` convention.
 - MCP binary resolution uses fail-closed strategy (no PATH fallback).
 - Config-show always redacts secrets before display.
+- MCP execute surface must preserve full parity with these commands (see mcp-server FRD).
 
 ## Glossary
 

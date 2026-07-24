@@ -2,164 +2,161 @@
 
 ## System Overview
 
-The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools accessible by AI agents and IDEs. It registers four MCP tools (execute command, list commands, read skill, health check) via the MCP protocol library, delegates command execution to the analysis pipeline orchestrator, and returns structured JSON responses. The crate follows the AES 7-layer architecture: the MCP server orchestrator (agent) implements the MCP server aggregate, the lint-arwaky MCP server (surface) registers tools and handles protocol, and the MCP container (root) wires all dependencies.
+The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools for AI agents and IDEs.
+
+**Product policy (locked):**
+
+- **Five MCP tools** (not four): `execute_command`, `list_commands`, `read_skill`, `health_check`, **`get_config`**.
+- **Full CLI parity** for every action under `execute_command` — no silent stubs or placeholder success responses.
+- JSON responses include `exit_code` aligned with the workspace Exit Code Contract (`0` / `1` / `2` / `3`) from the root PRD.
 
 ## Functional Requirements
 
 ### FR-001: Execute Command
 
-- **Description**: Execute any lint-arwaky CLI command via the MCP interface. Supports actions: `check`, `scan`, `fix`, `ci`, `doctor`, `version`, `adapters`, `install-hook`, `uninstall-hook`, `init`, `install`, `mcp-config`, `config-show`, `orphan`, `security`, `duplicates`, `dependencies`.
-- **Input**: Execute command args with action string and optional argument map (keys: path, threshold, client).
-- **Output**: JSON string with `status`, `action`, and action-specific fields (e.g., `total_violations`, `results`, `error`).
+- **Description**: Execute any lint-arwaky CLI-equivalent action via MCP with the same business outcome as the CLI.
+- **Input**: Action string and optional argument map (keys: `path`, `threshold`, `client`, `dry_run`, `format`, `member`, `base`, …).
+- **Output**: JSON with `status`, `action`, `exit_code`, and action-specific fields (e.g. `total_violations`, `results`, `error`).
 - **Business Rules**:
-  - `check` / `scan`: defaults path to `"."`, creates a scan request with scan mode set to scan, delegates to the analysis pipeline aggregate's run method.
-  - `ci`: defaults path to `"."`, defaults threshold to 80, creates a scan request with CI scan mode and threshold, returns `pass` if violations == 0 else `fail`.
-  - `fix`: returns placeholder success response.
-  - `doctor`: checks availability of tools (`cargo`, `python3`, `ruff`, `mypy`, `bandit`, `node`, `git`) via `which`.
-  - `adapters`: queries the external lint aggregate's adapter names and checks each via `which`.
-  - `version`: returns the crate version.
-  - `install-hook` / `uninstall-hook`: returns success messages.
-  - `init` / `install` / `mcp-config` / `config-show`: returns status JSON.
-  - `orphan` / `security` / `duplicates` / `dependencies`: returns action + path.
-  - Unknown action: returns `{"error": "Unknown action: <action>"}`.
+  - Supported actions MUST match CLI capability: `check`, `scan`, `fix`, `ci`, `doctor`, `version`, `adapters`, `install-hook`, `uninstall-hook`, `init`, `install`, `mcp-config`, `config-show`, `orphan`, `security`, `duplicates`, `dependencies`, `quality`, `import`, `naming`, `role`, `external`, `watch` (if long-lived, may return explicit `unsupported` with `exit_code: 2` until async watch is designed).
+  - Each action **delegates to the same aggregates** used by the CLI (analysis, auto-fix, maintenance, git-hooks, project-setup, etc.).
+  - **Forbidden**: placeholder success, empty success without side effects, or “returns action + path only” stubs for actions that perform real work on CLI.
+  - `check` / `scan`: default path `"."`; run full pipeline; `exit_code` 0/1/2 per Exit Code Contract.
+  - `ci`: default path `"."`, default threshold 80; pass/fail with `exit_code` 0/1/2.
+  - `fix`: run auto-fix (remove/replace/rename); honor `dry_run`; report applied/skipped/failed outcomes.
+  - `doctor`: toolchain diagnostics; `exit_code` 0 when diagnostic completes (missing tools listed in body); `2` on internal failure.
+  - `security`: vulnerability scan; `exit_code` 0 clean, 1 findings, 2 runtime error, **3** tool missing.
+  - `install-hook` / `uninstall-hook`: perform real hook install/uninstall via git-hooks aggregate.
+  - `init` / `install` / `mcp-config` / `config-show`: perform real setup/config operations via project-setup / config aggregates.
+  - `orphan` / `dependencies` / individual linter actions: run real analysis or reports.
+  - Unknown action: `{"error": "Unknown action: <action>", "exit_code": 2}`.
 - **Edge Cases**:
-  - Missing `path` argument: defaults to `"."`.
-  - Missing `threshold` argument: defaults to 80.
-  - Missing `client` argument: defaults to `"all"`.
-  - Pipeline execution error: returns `{"error": "pipeline failed: <message>"}`.
-  - JSON serialization failure: returns empty string.
+  - Missing `path`: defaults to `"."`.
+  - Missing `threshold`: defaults to 80.
+  - Pipeline failure: `exit_code: 2` with error message.
+  - Required tool missing (security): `exit_code: 3`.
 - **Error Handling**:
-  - Pipeline errors are caught and returned as JSON error objects.
-  - Unknown actions return descriptive error messages.
+  - Errors returned as JSON objects with `error` + `exit_code`; never silent success.
 
 ### FR-002: List Commands
 
 - **Description**: List available CLI commands with descriptions and examples, optionally filtered by domain.
-- **Input**: List commands args with optional domain filter string.
-- **Output**: JSON string with `commands` array (each: `name`, `description`, `example`) and `total` count.
+- **Input**: Optional domain filter string.
+- **Output**: JSON with `commands` array (`name`, `description`, `example`), `total`, `exit_code: 0`.
 - **Business Rules**:
-  - If `domain` is provided and non-empty, only commands whose name contains the domain string are returned.
-  - If `domain` is `None` or empty, all commands are returned.
-  - Commands are sourced from the command catalog in the taxonomy layer.
+  - Non-empty domain filter restricts to commands whose name contains the domain string.
+  - Empty/absent domain returns full catalog from taxonomy/command catalog.
 - **Edge Cases**:
-  - No commands match the domain filter: returns empty `commands` array with `total: 0`.
-  - Empty catalog: returns empty array.
+  - No matches: empty `commands`, `total: 0`.
 - **Error Handling**:
-  - JSON serialization failure: returns empty string.
+  - Serialization failure: `exit_code: 2` with error (prefer error object over empty string).
 
 ### FR-003: Read Skill
 
-- **Description**: Read SKILL.md documentation by section, searching multiple candidate locations.
-- **Input**: Read skill args with optional section filter string.
-- **Output**: JSON string with `content` (full or section-specific) or `error` if not found.
+- **Description**: Read SKILL.md documentation by section from candidate locations.
+- **Input**: Optional section filter string.
+- **Output**: JSON with `content` or `error`, plus `exit_code`.
 - **Business Rules**:
-  - Search order for SKILL.md: `../SKILL.md`, `./SKILL.md`, `./SKILL.md`, XDG config dir (`~/.config/lint-arwaky/SKILL.md`).
-  - If `section` is provided, extracts content between `## <section>` headers.
-  - Returns full content if no section specified.
+  - Search order: project-relative candidates, then XDG config (`~/.config/lint-arwaky/SKILL.md`).
+  - Optional section extracts content between `## <section>` headers.
 - **Edge Cases**:
-  - SKILL.md not found in any location: returns `{"error": "SKILL.md not found", "searched": [...]}`.
-  - Section not found in SKILL.md: returns `{"error": "Section '<name>' not found"}`.
-  - Section is the last section (no following `## ` header): returns content to end of file.
+  - Not found: error + searched paths, `exit_code: 2`.
+  - Section missing: error, `exit_code: 2`.
 - **Error Handling**:
-  - File read failure: treated as file not found.
+  - File read failure treated as not found.
 
 ### FR-004: Health Check
 
-- **Description**: Check system health by verifying availability of linter adapters and returning system state.
+- **Description**: Report adapter availability and server version.
 - **Input**: None.
-- **Output**: JSON string with `version`, `adapters_available`, `adapters_total`, and `adapters` array (each: `name`, `language`, `status`).
+- **Output**: JSON with `version`, `adapters_available`, `adapters_total`, `adapters[]` (`name`, `language`, `status`), `exit_code: 0` when check completes.
 - **Business Rules**:
-  - Checks: `ruff` (python), `mypy` (python), `bandit` (python), `clippy` (rust), `eslint` (javascript).
-  - `clippy` is checked via `cargo clippy --version` instead of `which`.
-  - Other adapters are checked via `which <name>`.
-  - Status is `"available"` or `"not_installed"`.
+  - Adapters checked include at least: ruff, mypy, bandit, clippy, eslint.
+  - Status is `available` or `not_installed`.
+  - Completing the check always yields `exit_code: 0` (missing adapters are data, not process failure).
 - **Edge Cases**:
-  - All adapters missing: `adapters_available: 0`.
-  - `which` command fails (e.g., not installed on system): treated as not found.
+  - All adapters missing: `adapters_available: 0`, still `exit_code: 0`.
 - **Error Handling**:
-  - Process spawn failure: treated as adapter not found.
-  - JSON serialization failure: returns empty string.
+  - Spawn/`which` failure for a tool → that adapter `not_installed`.
 
-### FR-005: MCP Protocol Registration
+### FR-005: Get Config (5th tool)
 
-- **Description**: Register MCP tools and server info with the MCP protocol framework.
-- **Input**: None (configured at construction).
-- **Output**: Server info with protocol version, server name ("lint-arwaky"), version, and tools capability.
+- **Description**: Return the effective architecture configuration for a target path/language so agents can reason about rules, thresholds, and adapters without shelling out.
+- **Input**: Optional `path`, optional language hint.
+- **Output**: JSON with effective config summary (layers, rules enabled, score threshold, ignored paths, adapter toggles), config source path(s), warnings, `exit_code`.
 - **Business Rules**:
-  - Tools are registered via the tool router: execute command, list commands, read skill, health check.
-  - Server name is "lint-arwaky", version from the crate version.
-  - Protocol version uses the default protocol version.
+  - Loads config via the same config-system path resolution as CLI (`config-show` parity for data).
+  - Does not mutate files.
+  - Redacts secrets if any env-backed fields appear (none expected for core config).
 - **Edge Cases**:
-  - None (static configuration).
+  - No config file: return embedded defaults + warning, `exit_code: 0`.
+  - Invalid path: `exit_code: 2`.
 - **Error Handling**:
-  - None (declarative registration).
+  - Parse failures: surface warnings or `exit_code: 2` when config is unusable.
+
+### FR-006: MCP Protocol Registration
+
+- **Description**: Register all five tools and server metadata with the MCP framework.
+- **Input**: None (construction-time).
+- **Output**: Server info with protocol version, name `lint-arwaky`, version, tools capability listing five tools.
+- **Business Rules**:
+  - Tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`.
+- **Edge Cases**: None (declarative).
+- **Error Handling**: Registration failures prevent server start (fail fast).
 
 ## API Contract
 
-| Function                                             | Input                | Output        | Description                   |
-| ---------------------------------------------------- | -------------------- | ------------- | ----------------------------- |
-| The MCP server orchestrator's execute command method | execute command args | JSON string   | Execute a CLI command via MCP |
-| The MCP server orchestrator's list commands method   | list commands args   | JSON string   | List available commands       |
-| The MCP server orchestrator's read skill method      | read skill args      | JSON string   | Read SKILL.md by section      |
-| The MCP server surface's health check method         | none                 | JSON string   | Check adapter availability    |
-| The MCP server surface's get info method             | none                 | server info   | Return MCP server metadata    |
-| The MCP container's default factory                  | none                 | MCP container | Wire all dependencies         |
+| Operation | Input | Output | Description |
+| --------- | ----- | ------ | ----------- |
+| Execute command | action + args | JSON + exit_code | CLI-parity action execution |
+| List commands | optional domain | JSON command catalog | Discover actions |
+| Read skill | optional section | JSON content/error | Documentation access |
+| Health check | none | JSON adapter status | Environment health |
+| Get config | optional path/language | JSON effective config | Agent-readable configuration |
+| Server info | none | server metadata | MCP handshake |
 
 ## Integration Points
 
 - **Internal**:
-  - The CLI commands crate: the analysis pipeline aggregate for running lint pipelines, the command catalog for command metadata.
-  - The external lint crate: the external lint aggregate for adapter discovery.
-  - The analysis, import rules, naming rules, orphan detection, role rules, and config system crates: wired via the MCP container for full pipeline support.
-  - The shared crate: VOs, contracts, config types.
+  - CLI command aggregates / analysis pipeline (same as CLI)
+  - auto-fix, maintenance, git-hooks, project-setup, config-system, external-lint
+  - shared taxonomy VOs and contracts
 - **External**:
-  - `rmcp` crate: MCP protocol framework (JSON-RPC, tool registration, server handler).
-  - `serde_json`: JSON serialization/deserialization.
-  - `tokio`: async runtime for process spawning (`which` commands).
-  - System: `which` command, `cargo clippy --version` for adapter detection.
+  - MCP protocol library (JSON-RPC, tool registration)
+  - Host process environment (`which`, cargo, language toolchains)
 
 ## Non-functional Requirements (Detailed)
 
-- **Performance**: Standard operations (execute_command, list_commands, read_skill) should complete under 5 seconds. Health check involves multiple `which` subprocess calls; concurrent execution via async join.
-- **Memory**: Server holds shared references to all pipeline orchestrators. Memory usage scales with the number of registered aggregates.
-- **Accuracy**: JSON responses must conform to MCP JSON-RPC standards. Tool discovery must be reliable for AI clients.
-- **Concurrency**: MCP server is `Clone`-able; tool handlers are `async` and can handle concurrent requests.
-- **Security**: The `execute_command` tool accepts arbitrary action strings; unknown actions return errors but do not execute arbitrary system commands.
+- **Performance**: list/read_skill/get_config/health under 5s typical; execute bounded by underlying pipeline.
+- **Parity**: For every non-watch action, MCP and CLI produce equivalent exit semantics and side effects.
+- **Concurrency**: Handlers may run concurrently; file mutations (fix) must remain safe (serialize per path if needed).
+- **Security**: Unknown actions never invoke arbitrary shell; only allowlisted actions.
 
 ## Test Scenarios / QA Checklist
 
-- [ ] `execute_command` with `action: "check"` and valid path returns violation count and results.
-- [ ] `execute_command` with `action: "check"` and no path defaults to `"."`.
-- [ ] `execute_command` with `action: "ci"` and threshold returns `pass` or `fail`.
-- [ ] `execute_command` with unknown action returns `{"error": "Unknown action: ..."}`.
-- [ ] `execute_command` with pipeline error returns `{"error": "pipeline failed: ..."}`.
-- [ ] `list_commands` with no domain filter returns all commands.
-- [ ] `list_commands` with domain filter returns matching subset.
-- [ ] `read_skill` with no section returns full SKILL.md content.
-- [ ] `read_skill` with valid section returns section content.
-- [ ] `read_skill` with nonexistent section returns error.
-- [ ] `read_skill` when SKILL.md not found returns error with searched paths.
-- [ ] `health_check` returns adapter availability for all 5 adapters.
-- [ ] `health_check` with clippy installed returns `"available"`.
-- [ ] `health_check` with missing adapter returns `"not_installed"`.
-- [ ] MCP get info returns correct server name and version.
-- [ ] All 4 tools are discoverable via MCP tool listing.
+- [ ] FR-001: `check`/`scan` returns violations + `exit_code` 0/1/2 matching CLI on same fixture.
+- [ ] FR-001: `fix` applies real fixes (or dry-run report); no placeholder success.
+- [ ] FR-001: `install-hook` / `uninstall-hook` change hook state like CLI.
+- [ ] FR-001: `security` returns `exit_code: 3` when tool missing.
+- [ ] FR-001: unknown action → error + `exit_code: 2`.
+- [ ] FR-002: list with/without domain filter.
+- [ ] FR-003: read full skill and section; missing skill errors.
+- [ ] FR-004: health lists adapters; all missing still `exit_code: 0`.
+- [ ] FR-005: get_config returns defaults when no file; errors on bad path.
+- [ ] FR-006: MCP tool listing exposes **exactly five** tools.
 
 ## Assumptions & Constraints
 
-- The `rmcp` crate provides a stable MCP JSON-RPC protocol implementation.
-- The analysis pipeline orchestrator correctly handles all scan mode variants.
-- System has `which` command available for adapter detection.
-- SKILL.md exists in at least one of the searched candidate locations for `read_skill` to succeed.
-- The MCP server runs within a Tokio async runtime.
+- Same aggregates as CLI are wired into the MCP composition root.
+- Long-lived `watch` may be deferred with explicit unsupported response until async design exists.
+- SKILL.md location search is best-effort across project and XDG paths.
 
 ## Glossary
 
-- **MCP**: Model Context Protocol — a JSON-RPC standard for AI agent tool integration.
-- **Tool**: An MCP-exposed function that AI clients can discover and invoke.
-- **Adapter**: An external linter binary (ruff, mypy, clippy, eslint, etc.) used by the pipeline.
-- **Pipeline**: The analysis pipeline that runs all lint rules against a target path.
-- **Surface layer**: The outermost AES layer that handles protocol/framework concerns (MCP tool registration).
+- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tools.
+- **Parity**: Same business outcome for an action via CLI or MCP.
+- **Exit Code Contract**: 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing.
+- **get_config**: Fifth MCP tool for effective configuration inspection.
 
 ## Reference
 

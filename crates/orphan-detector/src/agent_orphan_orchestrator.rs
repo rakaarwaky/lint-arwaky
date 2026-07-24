@@ -27,8 +27,11 @@ use shared::taxonomy_lint_vo::LocationList;
 use shared::taxonomy_lint_vo::ScopeRef;
 use shared::taxonomy_message_vo::LintMessage;
 use shared::taxonomy_suggestion_vo::DescriptionVO;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
+
+use rayon::prelude::*;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -55,37 +58,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         files: &OrphanFileListVO,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
-        let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
-        let mut all_workspace_files: Vec<String> = files.values.clone();
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = top_root.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
-                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
-                for (name, _path_str, is_dir_entry) in entries {
-                    if !is_dir_entry {
-                        continue;
-                    }
-                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        let workspace_files =
-                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
-                                &src_dir,
-                            );
-                        for f in workspace_files {
-                            let rel = std::path::Path::new(&f)
-                                .strip_prefix(&top_root)
-                                .map(|p| p.to_string_lossy().to_string())
-                                .unwrap_or(f);
-                            if !all_workspace_files.contains(&rel) {
-                                all_workspace_files.push(rel);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        let all_workspace_files = self._expand_workspace_files(files, root_dir);
         let full_files_vo = OrphanFileListVO::new(all_workspace_files);
         self.deps
             .resolver
@@ -103,126 +76,15 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             return Vec::new();
         }
 
-        // Expand files to include all workspace source files for cross-crate import resolution
-        let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
-        let mut all_workspace_files: Vec<String> = files.values.clone();
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = top_root.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
-                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
-                for (name, _path_str, is_dir_entry) in entries {
-                    if !is_dir_entry {
-                        continue;
-                    }
-                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        let workspace_files =
-                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
-                                &src_dir,
-                            );
-                        for f in workspace_files {
-                            let rel = std::path::Path::new(&f)
-                                .strip_prefix(&top_root)
-                                .map(|p| p.to_string_lossy().to_string())
-                                .unwrap_or(f);
-                            if !all_workspace_files.contains(&rel) {
-                                all_workspace_files.push(rel);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        let all_workspace_files = self._expand_workspace_files(files, root_dir);
 
-        let mut results: Vec<LintResult> = Vec::new();
-        // Use expanded files for graph context to capture cross-crate imports
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
-            all_workspace_files.clone(),
-        );
-        let context: GraphAnalysisContext = self
+        let file_vo = OrphanFileListVO::new(all_workspace_files);
+        let context = self
             .deps
             .resolver
             .build_graph_context(std::slice::from_ref(&file_vo), root_dir.value());
 
-        let configured = self.get_orphan_entry_points();
-        let configured_vo =
-            shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
-                configured,
-            );
-        let entry_points = self
-            .deps
-            .resolver
-            .identify_entry_points(&[file_vo], &[configured_vo]);
-        let alive_files_set: Vec<String> =
-            self._trace_reachability(&entry_points.values, &context.import_graph);
-
-        let layer_keys: Vec<String> = self
-            .config
-            .layers
-            .keys()
-            .map(|k| k.value.to_string())
-            .collect();
-
-        for f in &files.values {
-            let file_fp = match FilePath::new(f.clone()) {
-                Ok(fp) => fp,
-                Err(_) => continue,
-            };
-
-            let filename =
-                shared::common::utility_layer_detector::extract_filename(file_fp.value());
-            let base_layer =
-                match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
-                    Some(l) => l,
-                    None => continue,
-                };
-            let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
-                &base_layer,
-                file_fp.value(),
-                &layer_keys,
-            );
-            let definition = match shared::common::utility_layer_detector::get_layer_def(
-                &layer_str,
-                &self.config.layers,
-            ) {
-                Some(d) => d.clone(),
-                None => continue,
-            };
-
-            let basename = file_fp.basename();
-            if definition.exceptions.values.contains(&basename) {
-                continue;
-            }
-            if !definition.orphan.check_orphan.value {
-                continue;
-            }
-
-            let layer_vo = LayerNameVO::new(&layer_str);
-            let res = self._evaluate_layer(
-                f,
-                &context,
-                &alive_files_set,
-                &layer_vo,
-                &all_workspace_files,
-                root_dir.value(),
-            );
-            if res.is_orphan {
-                let code = match layer_str.to_lowercase() {
-                    s if s.contains(LAYER_TAXONOMY) => "AES501",
-                    s if s.contains(LAYER_CONTRACT) => "AES502",
-                    s if s.contains(LAYER_CAPABILITIES) => "AES503",
-                    s if s.contains(LAYER_UTILITY) => "AES504",
-                    s if s.contains(LAYER_AGENT) => "AES505",
-                    s if s.contains(LAYER_SURFACES) => "AES506",
-                    _ => continue,
-                };
-                results.push(self._make_result(f, &res.reason, res.severity, code));
-            }
-        }
-
-        results
+        self._check_orphans_inner(files, root_dir, &context, &file_vo)
     }
 
     fn scan_orphans(
@@ -259,11 +121,29 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             return Vec::new();
         }
 
-        // Expand files to include all workspace source files for cross-crate import resolution
+        let all_workspace_files = self._expand_workspace_files(files, root_dir);
+        let file_vo = OrphanFileListVO::new(all_workspace_files);
+
+        self._check_orphans_inner(files, root_dir, context, &file_vo)
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ArchOrphanAnalyzer {
+    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
+        Self { deps, config }
+    }
+
+    fn _expand_workspace_files(
+        &self,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
+    ) -> Vec<String> {
         let root_path = std::path::Path::new(root_dir.value());
         let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
             .unwrap_or_else(|| root_path.to_path_buf());
-        let mut all_workspace_files: Vec<String> = files.values.clone();
+        let mut seen: HashSet<String> = files.values.iter().cloned().collect();
+        let mut result: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = top_root.join(ws_dir);
             if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
@@ -283,32 +163,40 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                                 .strip_prefix(&top_root)
                                 .map(|p| p.to_string_lossy().to_string())
                                 .unwrap_or(f);
-                            if !all_workspace_files.contains(&rel) {
-                                all_workspace_files.push(rel);
+                            if seen.insert(rel.clone()) {
+                                result.push(rel);
                             }
                         }
                     }
                 }
             }
         }
+        result
+    }
 
-        let mut results: Vec<LintResult> = Vec::new();
-        // Use pre-built context (avoids rebuilding inbound_links per call)
-
+    fn _check_orphans_inner(
+        &self,
+        files: &OrphanFileListVO,
+        root_dir: &FilePath,
+        context: &GraphAnalysisContext,
+        file_vo: &OrphanFileListVO,
+    ) -> Vec<LintResult> {
         let configured = self.get_orphan_entry_points();
         let configured_vo =
             shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
                 configured,
             );
-        let file_vo = shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
-            all_workspace_files.clone(),
-        );
         let entry_points = self
             .deps
             .resolver
-            .identify_entry_points(&[file_vo], &[configured_vo]);
-        let alive_files_set: Vec<String> =
-            self._trace_reachability(&entry_points.values, &context.import_graph);
+            .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);
+        let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
+        let alive_result = ReachabilityResult::new(
+            alive_set
+                .iter()
+                .filter_map(|s| FilePath::new(s.clone()).ok())
+                .collect(),
+        );
 
         let layer_keys: Vec<String> = self
             .config
@@ -317,71 +205,71 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .map(|k| k.value.to_string())
             .collect();
 
-        for f in &files.values {
-            let file_fp = match FilePath::new(f.clone()) {
-                Ok(fp) => fp,
-                Err(_) => continue,
-            };
+        let all_files: Vec<String> = file_vo.values.clone();
+        let root_dir_str = root_dir.value().to_string();
 
-            let filename =
-                shared::common::utility_layer_detector::extract_filename(file_fp.value());
-            let base_layer =
-                match shared::common::utility_layer_detector::detect_layer_from_prefix(filename) {
-                    Some(l) => l,
-                    None => continue,
-                };
-            let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
-                &base_layer,
-                file_fp.value(),
-                &layer_keys,
-            );
-            let definition = match shared::common::utility_layer_detector::get_layer_def(
-                &layer_str,
-                &self.config.layers,
-            ) {
-                Some(d) => d.clone(),
-                None => continue,
-            };
+        files
+            .values
+            .par_iter()
+            .filter_map(|f| {
+                self._process_file(
+                    f,
+                    context,
+                    &alive_result,
+                    &layer_keys,
+                    &all_files,
+                    &root_dir_str,
+                )
+            })
+            .collect()
+    }
 
-            let basename = file_fp.basename();
-            if definition.exceptions.values.contains(&basename) {
-                continue;
-            }
-            if !definition.orphan.check_orphan.value {
-                continue;
-            }
+    fn _process_file(
+        &self,
+        f: &str,
+        context: &GraphAnalysisContext,
+        alive_result: &ReachabilityResult,
+        layer_keys: &[String],
+        all_files: &[String],
+        root_dir_str: &str,
+    ) -> Option<LintResult> {
+        let file_fp = FilePath::new(f.to_string()).ok()?;
+        let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
+        let base_layer =
+            shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
+        let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
+            &base_layer,
+            file_fp.value(),
+            layer_keys,
+        );
+        let definition =
+            shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers)?
+                .clone();
 
-            let layer_vo = LayerNameVO::new(&layer_str);
-            let res = self._evaluate_layer(
-                f,
-                context,
-                &alive_files_set,
-                &layer_vo,
-                &all_workspace_files,
-                root_dir.value(),
-            );
-            if res.is_orphan {
-                let code = match layer_str.to_lowercase() {
-                    s if s.contains(LAYER_TAXONOMY) => "AES501",
-                    s if s.contains(LAYER_CONTRACT) => "AES502",
-                    s if s.contains(LAYER_CAPABILITIES) => "AES503",
-                    s if s.contains(LAYER_UTILITY) => "AES504",
-                    s if s.contains(LAYER_AGENT) => "AES505",
-                    s if s.contains(LAYER_SURFACES) => "AES506",
-                    _ => continue,
-                };
-                results.push(self._make_result(f, &res.reason, res.severity, code));
-            }
+        let basename = file_fp.basename();
+        if definition.exceptions.values.contains(&basename) {
+            return None;
+        }
+        if !definition.orphan.check_orphan.value {
+            return None;
         }
 
-        results
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ArchOrphanAnalyzer {
-    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
-        Self { deps, config }
+        let layer_vo = LayerNameVO::new(&layer_str);
+        let res =
+            self._evaluate_layer(f, context, alive_result, &layer_vo, all_files, root_dir_str);
+        if res.is_orphan {
+            let code = match layer_str.to_lowercase() {
+                s if s.contains(LAYER_TAXONOMY) => "AES501",
+                s if s.contains(LAYER_CONTRACT) => "AES502",
+                s if s.contains(LAYER_CAPABILITIES) => "AES503",
+                s if s.contains(LAYER_UTILITY) => "AES504",
+                s if s.contains(LAYER_AGENT) => "AES505",
+                s if s.contains(LAYER_SURFACES) => "AES506",
+                _ => return None,
+            };
+            return Some(self._make_result(f, &res.reason, res.severity, code));
+        }
+        None
     }
 
     fn _make_result(&self, file: &str, msg: &str, sev: Severity, code: &str) -> LintResult {
@@ -406,9 +294,8 @@ impl ArchOrphanAnalyzer {
         }
     }
 
-    fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> Vec<String> {
-        let mut reachable: std::collections::HashSet<String> =
-            entry_points.iter().cloned().collect();
+    fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> HashSet<String> {
+        let mut reachable: HashSet<String> = entry_points.iter().cloned().collect();
         let mut queue: VecDeque<String> = entry_points.iter().cloned().collect();
 
         while let Some(current) = queue.pop_front() {
@@ -421,14 +308,14 @@ impl ArchOrphanAnalyzer {
             }
         }
 
-        reachable.into_iter().collect()
+        reachable
     }
 
     fn _evaluate_layer(
         &self,
         f: &str,
         context: &GraphAnalysisContext,
-        alive_files_set: &[String],
+        alive_result: &ReachabilityResult,
         layer_vo: &LayerNameVO,
         all_files: &[String],
         root_dir: &str,
@@ -442,11 +329,7 @@ impl ArchOrphanAnalyzer {
             || f.ends_with("/index.js")
             || f.ends_with("\\index.js")
         {
-            return shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult::new(
-                false,
-                String::new(),
-                Severity::HIGH,
-            );
+            return OrphanIndicatorResult::new(false, String::new(), Severity::HIGH);
         }
 
         let layer_str = layer_vo.value.to_lowercase();
@@ -479,18 +362,12 @@ impl ArchOrphanAnalyzer {
             );
         }
 
-        let alive_set = ReachabilityResult::new(
-            alive_files_set
-                .iter()
-                .filter_map(|s| FilePath::new(s.clone()).ok())
-                .collect(),
-        );
-
         if layer_str.contains(LAYER_CAPABILITIES) {
-            return self
-                .deps
-                .capabilities_analyzer
-                .is_capabilities_orphan(&fp, &root, &alive_set);
+            return self.deps.capabilities_analyzer.is_capabilities_orphan(
+                &fp,
+                &root,
+                alive_result,
+            );
         }
 
         if layer_str.contains(LAYER_UTILITY) {
@@ -513,7 +390,7 @@ impl ArchOrphanAnalyzer {
             return self
                 .deps
                 .surfaces_analyzer
-                .is_surface_orphan(&fp, &root, &alive_set, None);
+                .is_surface_orphan(&fp, &root, alive_result, None);
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)

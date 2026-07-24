@@ -3121,6 +3121,7 @@ version = "1.10.106"
 dependencies = [
  "criterion",
  "once_cell",
+ "rayon",
  "regex",
  "serde",
  "serde_json",
