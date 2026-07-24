@@ -20,7 +20,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 OUTPUT=$("$LINT_CMD" scan "$REPO_ROOT" 2>&1) || true
 echo "$OUTPUT"
 
-VIOLATIONS=$(echo "$OUTPUT" | grep -oP 'Total Violations:\s*\K[0-9]+' || echo "0")
+VIOLATIONS=$(echo "$OUTPUT" | grep -oP 'Total:\s*\K[0-9]+' || echo "0")
 
 if [ "$VIOLATIONS" -eq 0 ]; then
     echo "✅ 0 violations — commit allowed."

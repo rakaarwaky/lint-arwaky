@@ -2,7 +2,7 @@
 // Uses new protocol interfaces — no IAnalyzer, no IArchImportProtocol.
 
 use async_trait::async_trait;
-use rayon::prelude::*;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::path::Path;
 use std::sync::Arc;
 

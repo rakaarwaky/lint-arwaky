@@ -1,6 +1,6 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
-use rayon::prelude::*;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
