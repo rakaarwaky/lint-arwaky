@@ -56,4 +56,20 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         root_dir: &FilePath,
         layer_map: &LayerMapVO,
     );
+
+    /// Run all dummy checks in one call, pre-computing shared data once.
+    fn check_all_dummy(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        violations: &mut Vec<LintResult>,
+        root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) {
+        self.check_dummy_imports(file, content, violations, root_dir, layer_map);
+        self.check_dummy_functions(file, content, violations, root_dir, layer_map);
+        self.check_dummy_impls(file, content, violations, root_dir, layer_map);
+        self.check_taxonomy_intent(file, content, violations, root_dir, layer_map);
+        self.check_surface_logic(file, content, violations, root_dir, layer_map);
+    }
 }
