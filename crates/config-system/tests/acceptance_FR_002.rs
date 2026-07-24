@@ -1,4 +1,4 @@
-// US-2 — Multi-Language Support
+// FR-002 — Multi-Language Support
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::fs;

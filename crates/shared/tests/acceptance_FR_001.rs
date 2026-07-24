@@ -12,7 +12,10 @@ fn test_exit_code_contract_values() {
     assert_eq!(ExitCode::RUNTIME_ERROR.value(), 2);
     assert_eq!(ExitCode::PREREQUISITE_MISSING.value(), 3);
 
-    assert_eq!(ExitCode::OK.to_process_exit_code(), std::process::ExitCode::SUCCESS);
+    assert_eq!(
+        ExitCode::OK.to_process_exit_code(),
+        std::process::ExitCode::SUCCESS
+    );
 }
 
 #[test]
