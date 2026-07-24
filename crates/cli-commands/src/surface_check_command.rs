@@ -88,18 +88,18 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         let all_violations = rt.block_on(run_all_linters_json(&target_path));
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
-            ExitCode::SUCCESS
+            ExitCode::OK
         } else {
-            ExitCode::from(1)
+            ExitCode::POLICY_FAIL
         }
     } else {
         let target_path = root.clone();
         let all_violations = rt.block_on(run_all_linters_json(&target_path));
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
-            ExitCode::SUCCESS
+            ExitCode::OK
         } else {
-            ExitCode::from(1)
+            ExitCode::POLICY_FAIL
         }
     }
 }
@@ -186,9 +186,9 @@ pub async fn handle_scan_parallel_subprocesses(path: &str, format: Format) -> Ex
     output_violations(&all_violations, path, format, false);
 
     if all_violations.is_empty() {
-        ExitCode::SUCCESS
+        ExitCode::OK
     } else {
-        ExitCode::from(1)
+        ExitCode::POLICY_FAIL
     }
 }
 
@@ -200,7 +200,7 @@ pub fn handle_default_check(
 ) -> ExitCode {
     let rt = match crate::surface_common_action::create_current_thread_runtime() {
         Ok(r) => r,
-        Err(_) => return ExitCode::from(2),
+        Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     rt.block_on(handle_scan_parallel_subprocesses(
         _project_root,

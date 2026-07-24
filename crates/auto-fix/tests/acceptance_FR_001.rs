@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test — FRD: AES Fix: Unused Import Correction
+// PURPOSE: Acceptance test — FR-001: Unused Import Removal (AES203)
 // Requirement: Automatically remove import lines that are not referenced in the file.
 // Scope: Rust, Python, JavaScript, and TypeScript.
 

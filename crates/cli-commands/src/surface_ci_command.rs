@@ -1,5 +1,5 @@
 // PURPOSE: CI entry point — surface action for CI threshold validation across all 5 linters
-use std::process::ExitCode;
+use shared::common::taxonomy_common_error::ExitCode;
 use std::sync::Arc;
 
 use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;

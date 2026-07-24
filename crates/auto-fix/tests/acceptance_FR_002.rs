@@ -1,6 +1,5 @@
-// PURPOSE: Acceptance test — FRD: AES Fix: Bypass Warning Correction
-// Requirement: Add or fix invalid bypass comments to the correct format,
-//              or remove them along with the code fix.
+// PURPOSE: Acceptance test — FR-002: Bypass Comment Removal (AES304)
+// Requirement: Remove or replace invalid bypass comments (#[allow(...)], unwrap(), noqa, type: ignore, panic!).
 // Scope: Python (ruff, mypy) and JavaScript/TypeScript (eslint), Rust (allow attrs).
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
