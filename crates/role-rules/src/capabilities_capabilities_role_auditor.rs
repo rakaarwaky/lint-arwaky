@@ -315,28 +315,15 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: must have _protocol import ──────────────────
-        let has_proto_import = (content.contains("import ") || content.contains("from "))
-            && content.contains("_protocol");
-        if !has_proto_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES403",
-                Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoProtocol { reason: None },
-            ));
-            return;
-        }
-
-        // ── Collect names imported from _protocol ────────────────
-        //    example: from shared.some_protocol import ISomeService, IOther
-        //    → proto_names = {"ISomeService", "IOther"}
-        let proto_names: Vec<&str> = content
+        // ── Collect ALL imported names (from any module path) ────
+        //    example: from shared.some_protocol import ISomeService
+        //             from modules.shared.src.server import IBlenderConnectionProtocol
+        //    → all_imports = {"ISomeService", "IBlenderConnectionProtocol"}
+        let all_imports: Vec<&str> = content
             .lines()
             .filter(|l| {
                 let t = l.trim();
-                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_protocol")
+                t.starts_with("from ") || t.starts_with("import ")
             })
             .flat_map(|l| {
                 // extract the part after "import"
@@ -352,6 +339,27 @@ impl CapabilitiesRoleChecker {
                 }
             })
             .collect();
+
+        // ── CHECK 1: Import check — must have ≥ 1 protocol-like import ──
+        //    Protocol heuristic: names ending with 'Protocol' (case-insensitive)
+        //    example: IBlenderConnectionProtocol, IBrokerProtocol, IStorageProtocol
+        let proto_names: Vec<&str> = all_imports
+            .into_iter()
+            .filter(|name| name.to_lowercase().ends_with("protocol"))
+            .collect();
+
+        if proto_names.is_empty() {
+            violations.push(LintResult::new_arch(
+                file,
+                0,
+                "AES403",
+                Severity::MEDIUM,
+                AesRoleViolation::CapabilityNoProtocol { reason: None },
+            ));
+            return;
+        }
+
+        // ── CHECK 2: Implement check — must have ≥ 1 class inheriting from protocol ──
 
         let lines: Vec<&str> = content.lines().collect();
 
@@ -417,7 +425,8 @@ impl CapabilitiesRoleChecker {
 
         // ── RULE 2: must have ≥ 1 ABC implementor ─────────────
         //    Implementor = class that inherits from a name
-        //    imported from _protocol
+        //    matching protocol heuristic (I* prefix, contains Protocol/ABC/Abstract)
+        //    imported from ANY module path (not just _protocol modules)
         //    example: class PaymentCap(ISomeService):  ← implementor
         let has_implementor = classes
             .iter()

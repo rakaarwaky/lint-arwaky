@@ -72,9 +72,9 @@ impl MyChecker {
 #[test]
 fn python_capabilities_with_protocol_import_passes() {
     let content = r#"
-from shared.role_rules.contract_agent_role_protocol import IAgentRoleChecker
+from shared.role_rules.contract_agent_role_protocol import IAgentRoleProtocol
 
-class MyChecker(IAgentRoleChecker):
+class MyChecker(IAgentRoleProtocol):
     def check_container(self, source, violations):
         pass
 "#;
