@@ -36,7 +36,10 @@ fn lint_executor_implements_protocol() {
 
 #[test]
 fn tui_orchestrator_implements_aggregate() {
-    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(linter(), None))));
+    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(
+        linter(),
+        None,
+    ))));
     let orchestrator = TuiOrchestrator::new(handler);
     let _: &dyn ITuiAggregate = &orchestrator;
 }
@@ -62,7 +65,10 @@ fn lint_executor_all_methods_accessible() {
 
 #[test]
 fn tui_orchestrator_all_methods_accessible() {
-    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(linter(), None))));
+    let handler = Arc::new(ActionHandler::new(Arc::new(LintExecutor::new(
+        linter(),
+        None,
+    ))));
     let orchestrator = TuiOrchestrator::new(handler);
 
     // Verify all trait methods are accessible

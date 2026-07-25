@@ -370,8 +370,7 @@ impl ActionHandler {
 
     /// Read up to 100 lines of a file for inline preview.
     /// No-op — file content preview is intentionally disabled per FRD compliance.
-    #[allow(dead_code)]
-    fn load_file_preview(&self, _state: &mut AppState, _path: &str) {
+    pub fn load_file_preview(&self, _state: &mut AppState, _path: &str) {
         // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
         // No file content preview is loaded.
     }

@@ -45,7 +45,8 @@ pub struct AppState {
     /// Whether file watching is active (w key toggles this).
     pub watching: bool,
     /// Receiver for watch-mode lint updates from background thread.
-    pub watch_receiver: Option<std::sync::mpsc::Receiver<crate::tui::taxonomy_watch_message_vo::WatchMessage>>,
+    pub watch_receiver:
+        Option<std::sync::mpsc::Receiver<crate::tui::taxonomy_watch_message_vo::WatchMessage>>,
     /// Latest watch output to display in preview panel.
     pub watch_results: String,
     /// Whether a background scan is currently running.

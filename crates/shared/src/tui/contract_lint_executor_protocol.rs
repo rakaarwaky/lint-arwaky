@@ -25,4 +25,3 @@ pub trait ILintExecutorProtocol: Send + Sync {
     /// that lints changed files. Returns (initial_result, receiver_for_updates).
     fn watch(&self, path: &str) -> (LintExecutionResult, Receiver<WatchMessage>);
 }
-
