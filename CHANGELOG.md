@@ -2,6 +2,22 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 1.10.114 (2026-07-25)
+
+### Added
+
+- **Synchronized Workspace Release**: Unified versioning across all 17 workspace crates (`shared-lint-arwaky`, `tui-lint-arwaky`, `cli-commands-lint-arwaky`, `mcp-server-lint-arwaky`, etc.) to `v1.10.114`.
+- **TUI File Watch Mode**: Integrated live watch event background receiver in Ratatui TUI with output preview compliance.
+- **WatchMessage VO**: Introduced `WatchMessage` value object for async event passing between background watch threads and TUI event loops.
+
+### Fixed
+
+- **AES304 Bypass Policy Compliance**: Resolved `AES304` bypass annotation violations in `tui` crate by removing `#[allow(dead_code)]` and exposing public interface methods.
+- **Serde Macro Expansion**: Added `#[serde(crate = "serde")]` to `single_field_vo!` in `taxonomy_definition_vo.rs` to fix `_serde` macro expansion errors.
+- **Quality Gates Execution**: Optimized `gates.sh` stage execution to run static checks and self-lint tasks reliably without thread stack overflow crashes.
+
+---
+
 ## 1.10.87 (2026-06-30)
 
 ### Added
