@@ -54,10 +54,15 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             utility_import_symbol_extractor::extract_used_symbols(content, &imported_aliases);
 
         for alias in imported_aliases.keys() {
+            // Skip __future__ imports — they affect parsing behavior, not runtime usage.
+            let alias_str = alias.value();
+            if unused_import_is_future_import(content, alias_str) {
+                continue;
+            }
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
                 let line_num = utility_import_resolver::find_import_line_number(
                     content,
-                    alias.value(),
+                    alias_str,
                 )
                 .value() as usize;
                 violations.push(LintResult::new_arch(
@@ -68,7 +73,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                     AesImportViolation::FixUnusedImport {
                         reason: Some(LintMessage::new(format!(
                             "Import '{}' is declared but never used in this file.",
-                            alias
+                            alias_str
                         ))),
                     }
                     .to_string(),
@@ -113,4 +118,18 @@ impl UnusedImportRuleChecker {
     pub fn new() -> Self {
         Self
     }
+}
+
+/// Check if an import is a __future__ import (e.g., `from __future__ import annotations`).
+/// These are special Python constructs that affect parsing behavior and should not be
+/// flagged as unused — they have no runtime symbol usage.
+fn unused_import_is_future_import(content: &str, alias: &str) -> bool {
+    // Check if any line matches `from __future__ import ...alias...`
+    content.lines().any(|line| {
+        let trimmed = line.trim();
+        trimmed.starts_with("from __future__ import ")
+            && (trimmed == format!("from __future__ import {}", alias)
+                || trimmed.contains(format!(", {}", alias).as_str())
+                || trimmed.contains(format!(" {},", alias).as_str()))
+    })
 }

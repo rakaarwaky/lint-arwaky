@@ -38,7 +38,6 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
             continue;
         }
         if in_cfg_block {
-            // Count braces to find the end of the cfg block
             for ch in trimmed.chars() {
                 match ch {
                     '{' => cfg_brace_depth += 1,
@@ -83,7 +82,6 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
                     }
                     i += 1;
                 }
-                // Normalize whitespace and clean trailing commas before closing brace
                 combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
                 combined = clean_trailing_commas(&combined);
                 result.push((
@@ -127,15 +125,12 @@ pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentV
 }
 
 /// Clean trailing commas before closing braces in use statements.
-/// e.g., `use foo::{A, B,}` → `use foo::{A, B}`
 fn clean_trailing_commas(s: &str) -> String {
     if let Some(brace_pos) = s.rfind('{') {
         let after_brace = &s[brace_pos..];
-        if after_brace.ends_with("}") || after_brace.ends_with("};") {
-            // Find the last non-whitespace char before }
+        if after_brace.ends_with('}') || after_brace.ends_with("};") {
             let bytes = after_brace.as_bytes();
             let mut end = bytes.len();
-            // Skip trailing } and ;
             while end > 0 && (bytes[end - 1] == b'}' || bytes[end - 1] == b';') {
                 end -= 1;
             }
@@ -150,8 +145,7 @@ fn clean_trailing_commas(s: &str) -> String {
     s.to_string()
 }
 
-/// Parse a scope value (e.g. "contract(protocol)", "taxonomy(entity,error,event)")
-/// into layer + suffix matches. Returns (LayerNameVO, Vec<Identity>).
+/// Parse a scope value (e.g. "contract(protocol)") into layer + suffix matches.
 pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
     let scope_str = scope.value();
     if let Some(paren) = scope_str.find('(') {
@@ -316,16 +310,47 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
 }
 
 // ─── Barrel Import Resolution ─────────────────────────────
+//
+// Barrel files (__init__.py, index.ts, mod.rs) re-export symbols from
+// their original source files. When an import goes through a barrel file,
+// the module path hides the original file name and its layer prefix.
+//
+// These functions resolve imported symbols back to their original source
+// files so that layer detection works correctly.
+//
+// # Example
+// ```text
+// import:   from modules.shared.src.server import IBlenderConnectionProtocol
+// barrel:   modules/shared/src/server/__init__.py
+//           → from .contract_connection_protocol import IBlenderConnectionProtocol
+// resolved: resolved_file = "contract_connection_protocol" → layer "contract" ✅
+// ```
 
-/// Check if a module path points to a barrel file.
-/// Returns the barrel file path if it exists.
+/// Normalize a module path for filesystem lookup.
+/// Strips relative prefixes (`./`, `../`) and converts dots to path separators.
 ///
 /// # Examples
-/// - `"mypackage"` → checks `mypackage/__init__.py`, `mypackage/index.ts`, `mypackage/mod.rs`
-/// - `"./services"` → checks `./services/__init__.py`, `./services/index.ts`
+/// - `"modules.shared.src.server"` → `"modules/shared/src/server"`
+/// - `"./services"`                → `"services"`
+/// - `"../utils"`                  → `"utils"`
+fn normalize_module_path(module_path: &str) -> String {
+    module_path
+        .trim_start_matches("./")
+        .trim_start_matches("../")
+        .replace('.', "/")
+}
+
+/// Find the barrel file (__init__.py, index.ts, mod.rs) for a module path.
+///
+/// # Examples
+/// - `("modules.shared.src.server", "/workspace")` →
+///     checks `/workspace/modules/shared/src/server/__init__.py`
+/// - `("./services", "/workspace")` →
+///     checks `/workspace/services/index.ts`
 pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
     let base = Path::new(root_dir);
-    let module_dir = base.join(module_path.replace('.', "/"));
+    let clean_path = normalize_module_path(module_path);
+    let module_dir = base.join(&clean_path);
 
     let barrel_candidates = [
         "__init__.py",
@@ -345,13 +370,46 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
     None
 }
 
-/// Parse re-export mappings from a barrel file's content.
-/// Returns a map: symbol_name → source_module_path
+/// Extract the file stem (last path component without extension) from a module path.
 ///
-/// Handles:
-/// - Python: `from .module import X`, `from .sub.module import X as Y`
-/// - TS/JS:  `export { X } from './module'`, `export { default as X } from './module'`
-/// - Rust:   `pub use submodule::Type;`, `pub use submodule::{A, B};`
+/// # Examples
+/// - `"contract_connection_protocol"`           → `"contract_connection_protocol"`
+/// - `"sub.contract_connection_protocol"`       → `"contract_connection_protocol"`
+/// - `"./services/user-service"`                → `"user-service"`
+/// - `"auth"`                                   → `"auth"`
+fn extract_module_stem(module_path: &str) -> String {
+    module_path
+        .trim_start_matches("./")
+        .trim_start_matches("../")
+        .rsplit(|c| c == '.' || c == '/')
+        .next()
+        .unwrap_or(module_path)
+        .to_string()
+}
+
+/// Parse re-export mappings from a barrel file's content.
+/// Returns a map: **symbol_name → source_file_stem**
+///
+/// The value is the **file stem** (not the full path, not the symbol name),
+/// so that `extract_layer_from_prefix()` can detect the layer directly.
+///
+/// # Python `__init__.py`:
+/// ```python
+/// from .contract_connection_protocol import IBlenderConnectionProtocol
+/// ```
+/// → `{"IBlenderConnectionProtocol": "contract_connection_protocol"}`
+///
+/// # TS `index.ts`:
+/// ```typescript
+/// export { UserService } from './user-service';
+/// ```
+/// → `{"UserService": "user-service"}`
+///
+/// # Rust `mod.rs`:
+/// ```rust
+/// pub use auth::AuthOrchestrator;
+/// ```
+/// → `{"AuthOrchestrator": "auth"}`
 pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
     let mut reexports: HashMap<String, String> = HashMap::new();
 
@@ -362,23 +420,18 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some((from_part, import_part)) = trimmed.split_once(" import ") {
                 let module = from_part.strip_prefix("from ").unwrap_or("").trim();
-                // Convert relative module to path: ".capabilities_payment_service" → "capabilities_payment_service"
-                let module_path = module.trim_start_matches('.').replace('.', "/");
+                // Extract file stem: ".contract_connection_protocol" → "contract_connection_protocol"
+                //                     ".sub.contract_protocol"      → "contract_protocol"
+                let module_stem = extract_module_stem(module);
 
                 for name in import_part.split(',') {
                     let name = name.trim();
                     if name.is_empty() || name == "*" {
                         continue;
                     }
-                    // Handle "X as Y" → exported name is Y, source is X
-                    let (source_name, exported_name) = match name.split_once(" as ") {
-                        Some((src, alias)) => (src.trim(), alias.trim()),
-                        None => (name, name),
-                    };
-                    reexports.insert(
-                        exported_name.to_string(),
-                        format!("{}/{}", module_path, source_name),
-                    );
+                    // Handle "X as Y" → exported name is Y
+                    let exported_name = name.split(" as ").last().unwrap_or(name).trim();
+                    reexports.insert(exported_name.to_string(), module_stem.clone());
                 }
             }
             continue;
@@ -388,10 +441,12 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
         if trimmed.starts_with("export ") && trimmed.contains(" from ") {
             if let Some(from_pos) = trimmed.rfind(" from ") {
                 let module_part = trimmed[from_pos + 6..].trim();
-                let module_path = module_part
+                let module_clean = module_part
                     .trim_end_matches(';')
-                    .trim_matches(|c: char| c == '\'' || c == '"' || c == '`')
-                    .trim_start_matches("./");
+                    .trim_matches(|c: char| c == '\'' || c == '"' || c == '`');
+                // Extract file stem: "./user-service" → "user-service"
+                //                     "../types/index"  → "index"
+                let module_stem = extract_module_stem(module_clean);
 
                 if let Some(brace_start) = trimmed.find('{') {
                     if let Some(brace_end) = trimmed.find('}') {
@@ -401,14 +456,9 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                             if part.is_empty() {
                                 continue;
                             }
-                            let (source_name, exported_name) = match part.split_once(" as ") {
-                                Some((src, alias)) => (src.trim(), alias.trim()),
-                                None => (part, part),
-                            };
-                            reexports.insert(
-                                exported_name.to_string(),
-                                format!("{}/{}", module_path, source_name),
-                            );
+                            let exported_name =
+                                part.split(" as ").last().unwrap_or(part).trim();
+                            reexports.insert(exported_name.to_string(), module_stem.clone());
                         }
                     }
                 }
@@ -416,7 +466,7 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
             continue;
         }
 
-        // ── Rust: pub use submodule::Type; ──
+        // ── Rust: pub use submodule::Type; / pub use submodule::{A, B}; ──
         if trimmed.starts_with("pub use ") || trimmed.starts_with("pub(crate) use ") {
             let use_part = trimmed
                 .trim_start_matches("pub(crate) use ")
@@ -425,21 +475,35 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                 .trim();
 
             if let Some(brace_pos) = use_part.find("::{") {
+                // pub use submodule::{A, B};
                 let prefix = &use_part[..brace_pos];
+                // Extract module stem: "features::auth" → "auth"
+                let module_stem = prefix
+                    .rsplit("::")
+                    .next()
+                    .unwrap_or(prefix)
+                    .to_string();
                 let inner = use_part[brace_pos + 3..].trim_end_matches('}');
                 for name in inner.split(',') {
                     let name = name.trim().split(" as ").last().unwrap_or("").trim();
                     if !name.is_empty() && name != "*" {
-                        reexports.insert(
-                            name.to_string(),
-                            format!("{}::{}", prefix, name),
-                        );
+                        reexports.insert(name.to_string(), module_stem.clone());
                     }
                 }
             } else {
+                // pub use submodule::Type;
                 let name = use_part.rsplit("::").next().unwrap_or("").trim();
+                // Extract module stem: "auth::AuthOrchestrator" → "auth"
+                let module_stem = use_part
+                    .rsplitn(2, "::")
+                    .nth(1)
+                    .unwrap_or(use_part)
+                    .rsplit("::")
+                    .next()
+                    .unwrap_or(use_part)
+                    .to_string();
                 if !name.is_empty() && name != "*" {
-                    reexports.insert(name.to_string(), use_part.to_string());
+                    reexports.insert(name.to_string(), module_stem);
                 }
             }
         }
@@ -451,13 +515,24 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
 /// Resolve an import through a barrel file to its original source file.
 ///
 /// # Arguments
-/// * `module_path` - The module path from the import statement (e.g., "mypackage")
-/// * `symbol_name` - The imported symbol (e.g., "PaymentService")
+/// * `module_path` - The module path from the import statement (e.g., "modules.shared.src.server")
+/// * `symbol_name` - The imported symbol (e.g., "IBlenderConnectionProtocol")
 /// * `root_dir` - Workspace root directory
 ///
 /// # Returns
 /// `Some(ResolvedImport)` if the symbol was found in a barrel file's re-exports,
 /// `None` if no barrel file exists or symbol not found.
+///
+/// # Example
+/// ```text
+/// resolve_barrel_import("modules.shared.src.server", "IBlenderConnectionProtocol", "/workspace")
+/// → Some(ResolvedImport {
+///     original_module: "modules.shared.src.server",
+///     resolved_file:   "contract_connection_protocol",
+///     resolved_layer:  Some("contract"),
+///     symbol:          "IBlenderConnectionProtocol",
+/// })
+/// ```
 pub fn resolve_barrel_import(
     module_path: &str,
     symbol_name: &str,
@@ -469,23 +544,14 @@ pub fn resolve_barrel_import(
     // Step 2: Read barrel file content
     let barrel_content = std::fs::read_to_string(&barrel_path).ok()?;
 
-    // Step 3: Parse re-export mappings
+    // Step 3: Parse re-export mappings (symbol → file_stem)
     let reexports = parse_barrel_reexports(&barrel_content);
 
-    // Step 4: Look up the symbol
-    let resolved_source = reexports.get(symbol_name)?;
+    // Step 4: Look up the symbol → get source file stem
+    let resolved_file = reexports.get(symbol_name)?.clone();
 
-    // Step 5: Extract the file name from resolved source for layer detection
-    // "capabilities_payment_service/PaymentService" → "capabilities_payment_service"
-    // "./services/user-service/UserService" → "user-service"
-    let resolved_file = resolved_source
-        .rsplit('/')
-        .next()
-        .or_else(|| resolved_source.rsplit("::").next())
-        .unwrap_or(resolved_source)
-        .to_string();
-
-    // Step 6: Detect layer from resolved file name
+    // Step 5: Detect layer from resolved file stem
+    // "contract_connection_protocol" → Some("contract")
     let resolved_layer = utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
 
     Some(ResolvedImport {
@@ -494,4 +560,106 @@ pub fn resolve_barrel_import(
         resolved_layer,
         symbol: symbol_name.to_string(),
     })
+}
+
+/// Convenience wrapper: resolve a barrel import and return just the file stem.
+///
+/// # Example
+/// ```text
+/// resolve_barrel_symbol("modules.shared.src.server", "IBlenderConnectionProtocol", "/workspace")
+/// → Some("contract_connection_protocol")
+/// ```
+pub fn resolve_barrel_symbol(
+    module_path: &str,
+    symbol: &str,
+    root_dir: &str,
+) -> Option<String> {
+    resolve_barrel_import(module_path, symbol, root_dir).map(|r| r.resolved_file)
+}
+
+/// Extract imported symbol names from an import line.
+/// Handles Python, Rust, and TS/JS import syntax.
+///
+/// # Examples
+/// - `from X import A, B as C`       → ["A", "C"]
+/// - `use crate::mod::{A, B};`       → ["A", "B"]
+/// - `import { A, B } from './mod'`  → ["A", "B"]
+/// - `import X from './mod'`         → ["X"]
+pub fn extract_symbol_names(line: &str) -> Vec<String> {
+    let trimmed = line.trim();
+    let mut names = Vec::new();
+
+    // ── Python: from X import A, B ──
+    if trimmed.starts_with("from ") {
+        if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
+            let clean = import_part
+                .trim_start_matches('(')
+                .trim_end_matches(')')
+                .trim_end_matches(';');
+            for part in clean.split(',') {
+                let name = part.trim().split(" as ").last().unwrap_or("").trim();
+                if !name.is_empty() && name != "*" {
+                    names.push(name.to_string());
+                }
+            }
+        }
+        return names;
+    }
+
+    // ── Rust: use crate::module::{A, B}; / use module::Type; ──
+    if trimmed.starts_with("use ")
+        || trimmed.starts_with("pub use ")
+        || trimmed.starts_with("pub(crate) use ")
+    {
+        let use_part = trimmed
+            .trim_start_matches("pub(crate) use ")
+            .trim_start_matches("pub use ")
+            .trim_start_matches("use ")
+            .trim_end_matches(';')
+            .trim();
+
+        if let Some(brace_start) = use_part.find("::{") {
+            let inner = use_part[brace_start + 3..].trim_end_matches('}');
+            for part in inner.split(',') {
+                let name = part.trim().split(" as ").last().unwrap_or("").trim();
+                if !name.is_empty() && name != "*" && name != "self" {
+                    names.push(name.to_string());
+                }
+            }
+        } else {
+            let name = use_part.rsplit("::").next().unwrap_or("").trim();
+            if !name.is_empty() && name != "*" {
+                names.push(name.to_string());
+            }
+        }
+        return names;
+    }
+
+    // ── TS/JS: import { A, B } from './module' ──
+    if trimmed.starts_with("import ") && trimmed.contains('{') {
+        if let Some(open) = trimmed.find('{') {
+            if let Some(close) = trimmed.find('}') {
+                let inner = &trimmed[open + 1..close];
+                for part in inner.split(',') {
+                    let name = part.trim().split(" as ").last().unwrap_or("").trim();
+                    if !name.is_empty() {
+                        names.push(name.to_string());
+                    }
+                }
+            }
+        }
+        return names;
+    }
+
+    // ── TS/JS: import X from './module' ──
+    if trimmed.starts_with("import ") && trimmed.contains(" from ") {
+        if let Some(import_part) = trimmed.strip_prefix("import ") {
+            let name = import_part.split(" from ").next().unwrap_or("").trim();
+            if !name.is_empty() && name != "default" && name != "*" {
+                names.push(name.to_string());
+            }
+        }
+    }
+
+    names
 }

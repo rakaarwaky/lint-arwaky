@@ -135,15 +135,28 @@ impl ArchImportMandatoryChecker {
             let required_identity = Identity::new(required);
             let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
             let layer_str: &str = layer.value();
-            let is_present: bool = if suffixes.is_empty() {
+            let is_present = if suffixes.is_empty() {
+                // First try: direct match (existing behavior)
                 import_lines
                     .iter()
                     .any(|(_, l)| l.value().contains(layer_str))
             } else {
+                // First try: scope match (existing behavior)
                 import_lines.iter().any(|(_, l)| {
                     utility_import_resolver::import_matches_scope(l, &layer, &suffixes)
                 })
             };
+
+            // Fallback: barrel resolution — when direct match fails, try resolving
+            // through barrel files to detect contracts exported via __init__.py / mod.rs
+            let is_present = is_present || self._check_barrel_mandatory_imports(
+                file,
+                import_lines,
+                &layer,
+                &suffixes,
+                layer_str,
+            );
+
             if !is_present {
                 violations.push(LintResult::new_arch(
                     file,
@@ -217,5 +230,70 @@ impl ArchImportMandatoryChecker {
                 }
             }
         }
+    }
+
+    /// Check if any import line resolves to a contract (or required layer) through barrel files.
+    ///
+    /// Handles cases like `from modules.shared.src.asset import AssetSearchProtocol` where
+    /// the barrel file `modules/shared/src/asset/__init__.py` re-exports contract protocols.
+    fn _check_barrel_mandatory_imports(
+        &self,
+        file: &str,
+        import_lines: &[(LineNumber, LineContentVO)],
+        layer: &LayerNameVO,
+        suffixes: &[Identity],
+        layer_str: &str,
+    ) -> bool {
+        // Extract workspace root for barrel resolution
+        let root_dir = shared::common::utility_file_handler::find_workspace_root(file)
+            .and_then(|p| Some(p.to_string_lossy().to_string()))
+            .unwrap_or_else(|| ".".to_string());
+
+        for (_, line) in import_lines {
+            let line_val = line.value();
+
+            // Extract module path from import line
+            if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
+                let module_val = module.value();
+
+                // Try barrel resolution — look for __init__.py / mod.rs / index.ts
+                if let Some(barrel_path) = utility_import_resolver::find_barrel_file(&module_val, &root_dir) {
+                    if let Ok(barrel_content) = std::fs::read_to_string(&barrel_path) {
+                        let reexports = utility_import_resolver::parse_barrel_reexports(&barrel_content);
+
+                        // Check if any imported symbol resolves to the required layer
+                        for (_, import_part) in line_val.split_once("import ") {
+                            for name in import_part.split(',') {
+                                let name = name.trim();
+                                if name.is_empty() || name == "*" {
+                                    continue;
+                                }
+                                let symbol_name = match name.split_once(" as ") {
+                                    Some((_, alias)) => alias.trim(),
+                                    None => name.split_whitespace().next().unwrap_or(""),
+                                };
+
+                                if let Some(resolved_source) = reexports.get(symbol_name) {
+                                    // Extract file name from resolved source for layer detection
+                                    let resolved_file = resolved_source
+                                        .rsplit('/')
+                                        .next()
+                                        .or_else(|| resolved_source.rsplit("::").next())
+                                        .unwrap_or(resolved_source);
+
+                                    // Check if resolved file has the required layer prefix
+                                    if let Some(resolved_layer) = utility_layer_detector::detect_layer_from_prefix(resolved_file) {
+                                        if resolved_layer == layer_str || !suffixes.is_empty() {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        false
     }
 }

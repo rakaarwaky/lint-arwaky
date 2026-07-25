@@ -192,6 +192,10 @@ impl DummyImportChecker {
 
         for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
+            // Skip __future__ imports — they affect parsing behavior, not runtime usage.
+            if is_future_import(&lines, &symbol_str) {
+                continue;
+            }
             if utility_dummy_detector::symbol_used_real(
                 &lines,
                 &symbol_str,
@@ -405,4 +409,17 @@ impl DummyImportChecker {
             }
         }
     }
+}
+
+/// Check if any line matches `from __future__ import ...symbol...`.
+/// These are special Python constructs that affect parsing behavior and should not be
+/// flagged as dummy imports — they have no runtime symbol usage.
+fn is_future_import(lines: &[&str], symbol: &str) -> bool {
+    lines.iter().any(|line| {
+        let trimmed = line.trim();
+        trimmed.starts_with("from __future__ import ")
+            && (trimmed == format!("from __future__ import {}", symbol)
+                || trimmed.contains(format!(", {}", symbol).as_str())
+                || trimmed.contains(format!(" {},", symbol).as_str()))
+    })
 }
