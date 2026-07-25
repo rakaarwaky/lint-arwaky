@@ -2,7 +2,7 @@
 // mapping language flags to adapter name lists.
 
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::IExternalLintSelectorProtocol;
 
 fn sut() -> CapabilitiesExternalLintSelector {
     CapabilitiesExternalLintSelector::with_defaults()
@@ -77,7 +77,7 @@ fn select_python_and_js_returns_six_adapters() {
 
 #[test]
 fn custom_adapter_lists_are_respected() {
-    use shared::common::taxonomy_adapter_name_vo::AdapterName;
+    use shared::common::AdapterName;
 
     let selector = CapabilitiesExternalLintSelector::new(
         vec![AdapterName::raw("custom-rs")],

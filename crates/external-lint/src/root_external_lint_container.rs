@@ -10,10 +10,13 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::taxonomy_duration_vo::Timeout;
+use shared::code_analysis::ILinterAdapterProtocol;
+use shared::external_lint::{
+    IExternalLintAggregate,
+    IExternalLintExecutorProtocol,
+};
+
+use shared::common::Timeout;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,

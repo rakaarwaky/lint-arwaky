@@ -2,9 +2,9 @@
 // Requirement: Taxonomy layer files must be reachable from contracts, capabilities, or orchestrators.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::ITaxonomyOrphanProtocol;
+use shared::code_analysis::InboundLinkMap;
+use shared::common::FilePath;
+use shared::orphan_detector::ITaxonomyOrphanProtocol;
 use std::collections::HashMap;
 
 fn make_inbound(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {

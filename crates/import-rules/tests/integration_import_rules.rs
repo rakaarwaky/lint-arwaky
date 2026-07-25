@@ -3,12 +3,15 @@
 // and the orchestrator runs the complete pipeline.
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{
+    LayerDefinition,
+    LayerNameVO,
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -97,10 +100,13 @@ async fn clean_project_produces_zero_violations() {
         dir.path(),
         "capabilities_foo_checker.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::IUnusedImportProtocol;
+use shared::common::{
+    FilePath,
+    LintMessage,
+};
+
+use shared::cli_commands::LintResult;
 
 pub struct FooChecker;
 
@@ -197,7 +203,7 @@ async fn dummy_function_detected_through_full_pipeline() {
         dir.path(),
         "capabilities_dummy.rs",
         r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -231,7 +237,7 @@ async fn multiple_violation_types_aggregated() {
         "capabilities_multi.rs",
         r#"
 use std::collections::HashMap;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");

@@ -5,8 +5,8 @@ use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestr
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::{
+use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::{
     ISetupInstallerProtocol, ISetupManagementProtocol,
 };
 use std::sync::Arc;

@@ -10,15 +10,24 @@
 //   - Language detection and config template loading
 //   - Config file writing and XDG config dir creation
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_protocol_vo::TransportProtocol;
-use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
-use shared::common::taxonomy_job_vo::EnvContentVO;
-use shared::common::taxonomy_job_vo::McpConfigVO;
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::ProjectLanguagesVO;
+use shared::cli_commands::{
+    TransportProtocol,
+    TransportUrlVO,
+};
+
+use shared::common::{
+    EnvContentVO,
+    McpConfigVO,
+    SuccessStatus,
+    DirectoryPath,
+};
+
+use shared::project_setup::{
+    SetupManagementAggregate,
+    ISetupManagementProtocol,
+    ProjectLanguagesVO,
+};
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

@@ -10,13 +10,16 @@ use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChec
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
+use shared::role_rules::{
+    IAgentRoleChecker,
+    ICapabilitiesRoleChecker,
+    IContractRoleChecker,
+    IRoleRunnerAggregate,
+    ISurfaceRoleChecker,
+    ITaxonomyRoleChecker,
+    IUtilityRoleChecker,
+};
+
 
 // ─── IAgentRoleChecker ──────────────────────────────
 

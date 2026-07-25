@@ -5,9 +5,12 @@ use config_system_lint_arwaky::agent_config_orchestrator::{
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::common::FilePath;
+use shared::config_system::{
+    IConfigOrchestratorAggregate,
+    ConfigLanguage,
+};
+
 use std::fs;
 use std::sync::Arc;
 use tempfile::TempDir;

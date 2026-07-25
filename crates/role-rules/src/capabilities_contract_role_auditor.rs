@@ -1,15 +1,21 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::{
+    Language,
+    Severity,
+};
+
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::role_rules::{
+    IContractRoleChecker,
+    AesRoleViolation,
+};
+
+use shared::common::SourceContentVO;
 
 // PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
 //

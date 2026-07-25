@@ -1,10 +1,10 @@
 // PURPOSE: Unit tests for UtilityRoleChecker — Python AES404 checks
 
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::{ContentString, SourceContentVO};
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
+use shared::cli_commands::LintResult;
+use shared::common::FilePath;
+use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::IUtilityRoleChecker;
 
 fn make_py_source(content: &str) -> SourceContentVO {
     SourceContentVO::new(

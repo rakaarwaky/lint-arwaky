@@ -3,7 +3,7 @@
 // Must complete in under 5 seconds.
 
 use code_analysis_lint_arwaky::CodeAnalysisContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 use std::time::Instant;
 
 #[test]

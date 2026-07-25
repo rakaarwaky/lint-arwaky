@@ -1,10 +1,10 @@
 // PURPOSE: Unit tests for ArchLineChecker (AES301/AES302) — file line count limits.
 
 use code_analysis_lint_arwaky::ArchLineChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::common::taxonomy_common_vo::{Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::ILineCheckerProtocol;
+use shared::common::{Count, PatternList};
+use shared::common::LayerDefinition;
 
 fn checker() -> ArchLineChecker {
     ArchLineChecker::new()

@@ -6,8 +6,8 @@
 // - Rule 3: Max 3 type declarations per file
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::role_rules::ICapabilitiesRoleChecker;
+use shared::common::{ContentString, SourceContentVO};
 
 fn checker() -> CapabilitiesRoleChecker {
     CapabilitiesRoleChecker::new()
@@ -24,7 +24,7 @@ fn make_source(file: &str, content: &str) -> SourceContentVO {
 #[test]
 fn rust_capabilities_with_impl_trait_passes() {
     let content = r#"
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleChecker;
 
 pub struct MyChecker;
 
@@ -41,7 +41,7 @@ impl IAgentRoleChecker for MyChecker {
 #[test]
 fn rust_capabilities_with_port_impl_passes() {
     let content = r#"
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
+use shared::role_rules::IContractRoleChecker;
 
 pub struct MyChecker;
 
@@ -139,7 +139,7 @@ export class MyChecker {
 fn rust_internal_struct_allowed_without_trait_impl() {
     // 1 implementor + 1 internal helper = total 2, passed (Rule 1)
     let content = r#"
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleChecker;
 
 pub struct MyChecker;
 
@@ -167,7 +167,7 @@ impl InternalCache {
 fn rust_no_implementor_flagged() {
     // Only internal structs, no impl Trait for Struct
     let content = r#"
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleChecker;
 
 struct HelperA {
     x: i32,
@@ -197,7 +197,7 @@ struct HelperB {
 fn rust_too_many_types_flagged() {
     // 1 impl + 2 struct + 1 enum = 4 types > 3
     let content = r#"
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleChecker;
 
 pub struct Cap {}
 
@@ -225,7 +225,7 @@ enum C {
 fn rust_exactly_three_types_passes() {
     // 1 impl + 1 struct + 1 enum = 3 types, lolos
     let content = r#"
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleChecker;
 
 pub struct Cap {}
 

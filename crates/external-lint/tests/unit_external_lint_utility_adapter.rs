@@ -2,9 +2,12 @@
 // and command protocol implementations.
 
 use external_lint_lint_arwaky::capabilities_external_lint_adapter::ExternalLintUtilityAdapter;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::contract_external_lint_utility_protocol::{
+use shared::common::{
+    PatternList,
+    FilePath,
+};
+
+use shared::external_lint::{
     IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
     IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };

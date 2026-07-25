@@ -4,11 +4,14 @@ use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvide
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::{
+    IConfigOrchestratorAggregate,
+    IConfigParserProtocol,
+    IConfigReaderProtocol,
+    IConfigValidatorProtocol,
+    IWorkspaceDetectorProtocol,
+};
+
 
 #[test]
 fn config_orchestrator_implements_aggregate() {

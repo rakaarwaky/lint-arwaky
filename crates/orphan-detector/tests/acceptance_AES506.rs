@@ -2,9 +2,9 @@
 // Requirement: Surface layer files must be registered in the routing system or called from main entries.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::ISurfacesOrphanProtocol;
+use shared::code_analysis::ReachabilityResult;
+use shared::common::FilePath;
+use shared::orphan_detector::ISurfacesOrphanProtocol;
 use std::collections::HashSet;
 use std::fs;
 

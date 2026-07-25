@@ -1,7 +1,7 @@
 // Unit tests for ConfigParserProvider — YAML and TOML config parsing.
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
+use shared::common::FilePath;
+use shared::config_system::IConfigParserProtocol;
 use std::fs;
 use tempfile::TempDir;
 

@@ -1,11 +1,14 @@
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::common::{
+    SuccessStatus,
+    FilePath,
+};
+
+use shared::git_hooks::IHookManagerProtocol;
 use shared::git_hooks::utility_git_io as git_io;
 
 // PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 
-use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::LintMessage;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

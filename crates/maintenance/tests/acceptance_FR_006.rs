@@ -2,7 +2,7 @@
 // Maps 1:1 to FRD requirement: "dep-update — update Rust/Python/JS dependencies across the workspace."
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 /// FRD-dep-update: The system can analyze project dependencies and produce a structured report.
 /// This validates the "dependency_report" capability that underpins the update workflow.

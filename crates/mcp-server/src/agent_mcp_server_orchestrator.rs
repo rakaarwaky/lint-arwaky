@@ -4,17 +4,17 @@
 // operations to AnalysisPipelineOrchestrator (via IAnalysisPipelineAggregate)
 // and returns JSON responses.
 use rmcp::handler::server::wrapper::Parameters;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
+use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::cli_commands::Format;
+use shared::common::ExitCode;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::git_hooks::GitHooksAggregate;
+use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::mcp_server::IMcpServerAggregate;
+use shared::mcp_server::{
     ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

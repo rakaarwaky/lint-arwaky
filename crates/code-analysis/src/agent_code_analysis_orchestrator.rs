@@ -17,28 +17,37 @@
 //   4. Run duplication check using pre-read entries (AES305)
 //   5. Return aggregated LintResult list
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::cli_commands::{
+    LintResult,
+    LintResultList,
+};
 
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::{BooleanVO, Score};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::code_analysis::{
+    IBypassCheckerProtocol,
+    IMandatoryClassProtocol,
+    ICodeAnalysisAggregate,
+    ICodeMetricAnalyzerProtocol,
+    IDeadInheritanceProtocol,
+    ILineCheckerProtocol,
+};
+
+
+use shared::code_analysis::CodeAnalysisRuleVO;
+use shared::common::{BooleanVO, Score};
+use shared::common::DisplayContent;
+use shared::common::{DirectoryPath, FilePath};
+use shared::common::Severity;
 use shared::common::utility_compliance_score::compute_score;
 use shared::common::utility_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
 };
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::LayerNameVO;
+use shared::config_system::ArchitectureConfig;
+use shared::common::{
+    LayerMapVO,
+    LayerNameVO,
+};
+
 use std::path::Path;
 use std::sync::Arc;
 

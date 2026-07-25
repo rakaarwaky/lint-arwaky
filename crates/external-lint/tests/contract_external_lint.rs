@@ -3,11 +3,14 @@
 // at compile time — no runtime behavior is exercised here.
 
 use external_lint_lint_arwaky::*;
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::code_analysis::ILinterAdapterProtocol;
+use shared::common::ICommandExecutorProtocol;
+use shared::external_lint::{
+    IExternalLintAggregate,
+    IExternalLintExecutorProtocol,
+    IExternalLintSelectorProtocol,
+};
+
 
 // ─── ILinterAdapterProtocol Implementations ───────────────
 

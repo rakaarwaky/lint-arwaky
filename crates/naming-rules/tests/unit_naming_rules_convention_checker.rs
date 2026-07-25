@@ -3,14 +3,17 @@
 // Coverage target: Capabilities ≥ 70%
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
+use shared::cli_commands::LintResultList;
+use shared::common::{
+    LayerDefinition,
+    LayerMapVO,
+    LayerNameVO,
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::naming_rules::INamingConventionChecker;
 use std::collections::HashMap;
 
 fn default_config() -> ArchitectureConfig {

@@ -1,10 +1,16 @@
 use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
+use shared::common::FilePath;
+use shared::config_system::{
+    IConfigOrchestratorAggregate,
+    ArchitectureConfig,
+};
+
+use shared::orphan_detector::{
+    IOrphanAggregate,
+    IOrphanGraphResolverProtocol,
+};
+
 use std::sync::Arc;
 
 pub struct OrphanContainer {

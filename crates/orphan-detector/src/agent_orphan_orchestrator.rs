@@ -1,32 +1,41 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    GraphAnalysisContext,
+    ImportGraph,
+    OrphanIndicatorResult,
+    ReachabilityResult,
+};
 
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::contract_orphan_protocol::{
+use shared::common::FilePath;
+
+use shared::common::Severity;
+use shared::config_system::ArchitectureConfig;
+use shared::orphan_detector::{
+    IOrphanAggregate,
+    IOrphanGraphResolverProtocol,
+};
+
+use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use shared::orphan_detector::OrphanFileListVO;
 
-use shared::role_rules::taxonomy_layer_names_constant::{
+use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::{
+    AdapterName,
+    ColumnNumber,
+    LineNumber,
+    ErrorCode,
+    LayerNameVO,
+    LocationList,
+    ScopeRef,
+    LintMessage,
+    DescriptionVO,
+};
+
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;

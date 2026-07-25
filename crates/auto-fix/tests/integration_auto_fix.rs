@@ -2,12 +2,18 @@
 // Verifies the container correctly wires LintFixProcessor → FixOrchestrator.
 
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::{BooleanVO, Score};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::code_analysis::{
+    ICodeAnalysisAggregate,
+    CodeAnalysisRuleVO,
+};
+
+use shared::common::{BooleanVO, Score};
+use shared::common::{
+    DisplayContent,
+    FilePath,
+};
+
 use std::sync::Arc;
 
 // ─── Mock ICodeAnalysisAggregate ──────────────────────────

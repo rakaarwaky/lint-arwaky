@@ -1,13 +1,13 @@
 // PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
 // and delegates output formatting to surface_output_component.
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 use tokio::process::Command;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::cli_commands::Format;
+use shared::common::FilePath;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::report_formatter::IReportFormatterAggregate;
 
 use crate::surface_output_component::{output_violations, ViolationItem};
 

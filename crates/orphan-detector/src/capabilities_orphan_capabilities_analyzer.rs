@@ -1,10 +1,19 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
-use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::code_analysis::{
+    OrphanIndicatorResult,
+    ReachabilityResult,
+};
+
+use shared::common::{
+    FilePath,
+    Severity,
+};
+
+use shared::orphan_detector::{
+    ICapabilitiesOrphanProtocol,
+    AesOrphanViolation,
+};
+
 use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan_detector::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;

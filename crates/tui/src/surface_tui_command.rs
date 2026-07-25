@@ -16,10 +16,13 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Terminal;
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
-use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
-use shared::tui::taxonomy_state_vo::AppState;
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::{
+    ITuiAggregate,
+    ScanUpdate,
+    AppState,
+    TuiEvent,
+};
+
 use std::io::stdout;
 use std::sync::Arc;
 use std::time::Duration;

@@ -1,16 +1,22 @@
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{
+use shared::common::{
+    SuccessStatus,
+    FilePath,
+    DescriptionVO,
+};
+
+use shared::git_hooks::{
+    IHookProtocol,
+    IHookManagerProtocol,
+};
+
+use shared::git_hooks::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::GitHookError;
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
-use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::Identity;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

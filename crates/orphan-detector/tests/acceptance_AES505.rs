@@ -2,8 +2,8 @@
 // Requirement: Agent orchestrator files must be called by surface layer files or binary entry points.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
+use shared::common::FilePath;
+use shared::orphan_detector::IAgentOrphanProtocol;
 use std::fs;
 
 /// AES505: Agent aggregate called by a container is NOT orphan.

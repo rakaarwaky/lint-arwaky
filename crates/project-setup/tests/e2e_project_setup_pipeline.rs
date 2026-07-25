@@ -2,8 +2,8 @@
 // Layer: E2E (full integration of all layers).
 
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
-use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::cli_commands::{TransportProtocol, TransportUrlVO};
+use shared::common::DirectoryPath;
 
 fn create_container() -> SetupContainer {
     SetupContainer::new()

@@ -1,12 +1,21 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use regex::Regex;
-use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
-use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::code_analysis::{
+    FileDefinitionMap,
+    InheritanceMap,
+    OrphanIndicatorResult,
+};
+
+use shared::common::{
+    FilePath,
+    Severity,
+};
+
+use shared::orphan_detector::{
+    IContractOrphanProtocol,
+    AesOrphanViolation,
+};
+
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace_scanner::collect_source_files;

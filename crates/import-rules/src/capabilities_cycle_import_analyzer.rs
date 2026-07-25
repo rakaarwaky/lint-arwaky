@@ -1,22 +1,31 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::{
+    FilePath,
+    FilePathList,
+    Severity,
+};
+
 use shared::common::utility_layer_detector;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_cycle_detector;
 use shared::import_rules::utility_import_module_parser;
-use shared::import_rules::AesImportViolation;
-use shared::import_rules::DependencyEdge;
-use shared::import_rules::ICycleImportProtocol;
-use shared::import_rules::ImportError;
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared::import_rules::{
+    AesImportViolation,
+    DependencyEdge,
+    ICycleImportProtocol,
+    ImportError,
+};
+
+use shared::common::{
+    LayerMapVO,
+    LayerNameVO,
+    LintMessage,
+    SymbolName,
+};
+
 use std::collections::HashMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────

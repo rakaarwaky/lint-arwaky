@@ -11,24 +11,36 @@
 //   - Only reports added lines (+ prefix) as violations, not context lines
 
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_adapter_error::AdapterError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{
+    LintResult,
+    LintResultList,
+};
+
+use shared::code_analysis::{
+    ILinterAdapterProtocol,
+    LinterOperationError,
+};
+
+use shared::common::{
+    ICommandExecutorProtocol,
+    AdapterError,
+    FilePath,
+    Severity,
+};
+
 use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_error::ErrorMessage;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_common_vo::PatternList;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::ComplianceStatus;
-use shared::taxonomy_message_vo::LintMessage;
+use shared::common::{
+    AdapterName,
+    ErrorMessage,
+    ColumnNumber,
+    LineNumber,
+    PatternList,
+    ErrorCode,
+    LocationList,
+    ComplianceStatus,
+    LintMessage,
+};
+
 use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;

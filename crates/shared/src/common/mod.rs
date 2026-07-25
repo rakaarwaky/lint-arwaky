@@ -39,3 +39,85 @@ pub mod utility_path_normalization;
 pub mod utility_scope_matcher;
 pub mod utility_signature_parser;
 pub mod utility_value_object_generator;
+
+// ─── Re-exports ────────────────────────────────────────────
+// Barrel re-export pattern: allows consumers to import directly
+// NOTE: lib.rs re-exports all of common via `pub use common::*`
+
+// ── Contract traits ──
+pub use contract_executor_protocol::ICommandExecutorProtocol;
+
+// ── Taxonomy types ──
+pub use taxonomy_action_vo::ActionName;
+pub use taxonomy_action_vo::JobId;
+pub use taxonomy_adapter_error::AdapterError;
+pub use taxonomy_adapter_error::ScanError;
+pub use taxonomy_adapter_error::ValidationError;
+pub use taxonomy_adapter_list_vo::AdapterNameList;
+pub use taxonomy_adapter_name_vo::AdapterName;
+pub use taxonomy_common_error::ExitCode;
+pub use taxonomy_common_error::Cause;
+pub use taxonomy_common_error::Constraint;
+pub use taxonomy_common_error::FieldName;
+pub use taxonomy_common_error::ModuleName;
+pub use taxonomy_common_error::PrimitiveTypeName;
+pub use taxonomy_common_vo::LanguageVO;
+pub use taxonomy_common_vo::BooleanVO;
+pub use taxonomy_common_vo::ColumnNumber;
+pub use taxonomy_common_vo::Count;
+pub use taxonomy_common_vo::DataFlowList;
+pub use taxonomy_common_vo::JobIdList;
+pub use taxonomy_common_vo::LineContentList;
+pub use taxonomy_common_vo::LineNumber;
+pub use taxonomy_common_vo::PatternList;
+pub use taxonomy_common_vo::ResponseDataList;
+pub use taxonomy_common_vo::Score;
+pub use taxonomy_common_vo::Timestamp;
+pub use taxonomy_common_vo::IntoPatternListValues;
+pub use taxonomy_common_vo::ErrorMessage;
+pub use taxonomy_common_vo::SuffixPolicyVO;
+pub use taxonomy_common_vo::SuffixVO;
+pub use taxonomy_definition_vo::LayerDefinition;
+pub use taxonomy_definition_vo::LayerMapVO;
+pub use taxonomy_definition_vo::NamingConfig;
+pub use taxonomy_display_content_vo::DisplayContent;
+pub use taxonomy_duration_vo::Timeout;
+pub use taxonomy_error_vo::ErrorCode;
+pub use taxonomy_filesystem_error::FileSystemError;
+pub use taxonomy_git_vo::GitBranchName;
+pub use taxonomy_job_vo::SuccessStatus;
+pub use taxonomy_job_vo::AdapterMetadata;
+pub use taxonomy_job_vo::EnvContentVO;
+pub use taxonomy_job_vo::McpConfigVO;
+pub use taxonomy_language_info_vo::LanguageInfo;
+pub use taxonomy_language_vo::Language;
+pub use taxonomy_layer_vo::LayerNameVO;
+pub use taxonomy_layer_vo::Identity;
+pub use taxonomy_layer_vo::FileContentVO;
+pub use taxonomy_layer_vo::LineContentVO;
+pub use taxonomy_line_count_vo::LineCount;
+pub use taxonomy_lint_vo::ScopeRef;
+pub use taxonomy_lint_vo::Location;
+pub use taxonomy_lint_vo::LocationList;
+pub use taxonomy_lint_vo::ViolationConstraint;
+pub use taxonomy_lint_vo::CommandArgs;
+pub use taxonomy_lint_vo::ScopeBounds;
+pub use taxonomy_message_vo::LintMessage;
+pub use taxonomy_message_vo::ComplianceStatus;
+pub use taxonomy_name_vo::NameVariants;
+pub use taxonomy_name_vo::SymbolName;
+pub use taxonomy_path_utils_vo::PathUtils;
+pub use taxonomy_path_vo::FilePath;
+pub use taxonomy_path_vo::DirectoryPath;
+pub use taxonomy_paths_vo::FilePathList;
+pub use taxonomy_paths_vo::RenamedFile;
+pub use taxonomy_paths_vo::RenamedFileList;
+pub use taxonomy_response_data_vo::ResponseData;
+pub use taxonomy_severity_vo::Severity;
+pub use taxonomy_source_vo::ContentString;
+pub use taxonomy_source_vo::SourceContentVO;
+pub use taxonomy_suffix_vo::SuffixPolicyVO as SuffixPolicyVOMod;
+pub use taxonomy_suffix_vo::SuffixVO as SuffixVOMod;
+pub use taxonomy_suggestion_vo::DescriptionVO;
+pub use taxonomy_suggestion_vo::MetadataVO;
+pub use taxonomy_threshold_vo::Threshold;

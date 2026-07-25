@@ -1,5 +1,8 @@
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
+use shared::project_setup::{
+    ISetupInstallerProtocol,
+    SetupError,
+};
+
 
 // PURPOSE: SetupInstallerAdapter — capabilities adapter for executing npm/pip install commands
 //

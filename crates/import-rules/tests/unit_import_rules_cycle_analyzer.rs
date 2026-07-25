@@ -2,14 +2,20 @@
 // Tests cycle detection logic using temp files with cross-layer imports.
 
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::common::{BooleanVO, Count};
+use shared::common::{
+    LayerMapVO,
+    LayerNameVO,
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::{
+    ICycleImportProtocol,
+    DependencyEdge,
+};
+
 use std::collections::HashMap;
 use std::io::Write;
 

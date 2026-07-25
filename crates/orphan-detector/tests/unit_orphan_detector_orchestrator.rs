@@ -10,10 +10,13 @@ use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraph
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
 use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use shared::common::FilePath;
+use shared::config_system::ArchitectureConfig;
+use shared::orphan_detector::{
+    IOrphanAggregate,
+    OrphanFileListVO,
+};
+
 use std::sync::Arc;
 
 fn build_analyzer(config: ArchitectureConfig) -> ArchOrphanAnalyzer {

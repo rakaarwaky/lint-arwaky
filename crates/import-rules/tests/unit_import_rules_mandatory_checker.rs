@@ -2,13 +2,16 @@
 // Uses temp files because the checker reads from disk internally.
 
 use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{
+    LayerNameVO,
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::IImportMandatoryProtocol;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -61,7 +64,7 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 async fn capabilities_with_contract_import_passes() {
     let dir = tempfile::tempdir().unwrap();
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 pub struct MyChecker;
 

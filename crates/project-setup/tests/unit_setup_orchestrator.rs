@@ -4,7 +4,7 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
 fn build_orchestrator() -> SetupManagementOrchestrator {

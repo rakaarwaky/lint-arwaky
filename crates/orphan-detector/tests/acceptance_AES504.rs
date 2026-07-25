@@ -2,9 +2,9 @@
 // Requirement: Utility files must be wired into root containers or imported by capabilities/agents.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
+use shared::code_analysis::InboundLinkMap;
+use shared::common::FilePath;
+use shared::orphan_detector::IUtilityOrphanProtocol;
 use std::collections::HashMap;
 
 fn make_inbound(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {

@@ -1,18 +1,24 @@
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{
+    FilePath,
+    FilePathList,
+    Severity,
+};
+
 use shared::common::utility_layer_detector;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_import_resolver;
-use shared::import_rules::AesImportViolation;
-use shared::import_rules::IImportMandatoryProtocol;
-use shared::import_rules::ImportError;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
-use shared::taxonomy_name_vo::SymbolName;
+use shared::import_rules::{
+    AesImportViolation,
+    IImportMandatoryProtocol,
+    ImportError,
+};
+
+use shared::common::LineNumber;
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared::common::SymbolName;
 use std::collections::HashSet;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules

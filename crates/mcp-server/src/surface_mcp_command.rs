@@ -7,8 +7,8 @@ use rmcp::model::{
 use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
-use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
+use shared::mcp_server::IMcpServerAggregate;
+use shared::mcp_server::{
     ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
 };
 

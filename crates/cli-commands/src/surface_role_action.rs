@@ -1,10 +1,10 @@
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::common::FilePath;
+use shared::role_rules::IRoleRunnerAggregate;
 
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};

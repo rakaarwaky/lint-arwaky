@@ -1,9 +1,12 @@
 // PURPOSE: Acceptance tests — verify FR-001 layout rendering and state transitions for tui.
 // Layer: Acceptance (FRD requirement validation).
 
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
-use shared::tui::taxonomy_state_vo::AppState;
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::{
+    ITuiAggregate,
+    AppState,
+    TuiEvent,
+};
+
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;

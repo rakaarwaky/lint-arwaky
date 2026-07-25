@@ -5,14 +5,20 @@
 
 use std::collections::BTreeMap;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_common_vo::ColumnNumber;
-use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{
+    Format,
+    LintResult,
+};
+
+use shared::common::{
+    ColumnNumber,
+    LineNumber,
+    ErrorCode,
+    LintMessage,
+    FilePath,
+    Severity,
+};
+
 
 /// Minimal violation item for display. Uses existing VOs — no duplicate String wrappers.
 #[derive(Debug, Clone)]

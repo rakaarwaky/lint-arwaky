@@ -1,17 +1,20 @@
 use std::path::PathBuf;
 
-use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_adapter_error::AdapterError;
-use shared::common::taxonomy_adapter_error::ScanError;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_utility_protocol::{
+use shared::code_analysis::LinterOperationError;
+use shared::common::{
+    ICommandExecutorProtocol,
+    AdapterError,
+    ScanError,
+    AdapterName,
+    ErrorMessage,
+    PatternList,
+    Timeout,
+    ComplianceStatus,
+};
+
+use shared::common::{DirectoryPath, FilePath};
+use shared::common::ResponseData;
+use shared::external_lint::{
     IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
     IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };

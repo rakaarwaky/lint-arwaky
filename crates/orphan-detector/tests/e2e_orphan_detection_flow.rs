@@ -3,8 +3,8 @@
 // Speed: s
 
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use shared::common::FilePath;
+use shared::orphan_detector::OrphanFileListVO;
 use std::fs;
 
 fn create_test_project(dir: &std::path::Path) {

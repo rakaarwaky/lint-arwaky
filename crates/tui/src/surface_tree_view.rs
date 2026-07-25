@@ -10,7 +10,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem};
 use ratatui::Frame;
-use shared::tui::taxonomy_state_vo::{AppState, PanelFocus};
+use shared::tui::{AppState, PanelFocus};
 use std::path::Path;
 
 pub struct TreeView;

@@ -14,18 +14,24 @@
 //   4. Unknown prefixes are silently skipped (handled by other crates).
 
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::cli_commands::LintResult;
+use shared::common::{
+    FilePath,
+    FilePathList,
+};
+
 use shared::common::utility_language_detector::detect_language;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::role_rules::{
+    IAgentRoleChecker,
+    ICapabilitiesRoleChecker,
+    IContractRoleChecker,
+    IRoleRunnerAggregate,
+    ISurfaceRoleChecker,
+    ITaxonomyRoleChecker,
+    IUtilityRoleChecker,
+};
+
+use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 

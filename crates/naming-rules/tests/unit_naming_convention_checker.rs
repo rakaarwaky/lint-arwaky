@@ -1,18 +1,24 @@
 // Unit tests for NamingConventionChecker — AES101 naming convention validation
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChecker;
-use shared::naming_rules::taxonomy_naming_constant::{
+use shared::cli_commands::LintResultList;
+use shared::common::{
+    LayerDefinition,
+    FilePath,
+    FilePathList,
+    Severity,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::naming_rules::INamingConventionChecker;
+use shared::naming_rules::{
     ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
 };
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::LayerNameVO;
+use shared::common::{
+    LayerMapVO,
+    LayerNameVO,
+};
+
 
 // ─── Unit Tests: Happy Path — Valid File Naming ─────────────────────
 

@@ -7,10 +7,13 @@
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
 use std::borrow::Cow;
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    IBypassCheckerProtocol,
+    CodeAnalysisRuleVO,
+};
+
+use shared::code_analysis::{
     AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
 use shared::code_analysis::utility_bypass_detector::{
@@ -19,8 +22,11 @@ use shared::code_analysis::utility_bypass_detector::{
 };
 use shared::code_analysis::utility_column_index;
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::{
+    PatternList,
+    Severity,
+};
+
 
 use shared::common::utility_value_object_generator;
 

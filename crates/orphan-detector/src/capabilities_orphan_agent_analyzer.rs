@@ -1,9 +1,15 @@
 // PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::IAgentOrphanProtocol;
-use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::code_analysis::OrphanIndicatorResult;
+use shared::common::{
+    FilePath,
+    Severity,
+};
+
+use shared::orphan_detector::{
+    IAgentOrphanProtocol,
+    AesOrphanViolation,
+};
+
 
 use regex::Regex;
 use std::sync::OnceLock;

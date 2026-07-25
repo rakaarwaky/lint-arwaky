@@ -2,7 +2,7 @@
 // Tests check_unused_imports with content passed directly — no file I/O.
 
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 fn sut() -> UnusedImportRuleChecker {
     UnusedImportRuleChecker::new()
@@ -116,7 +116,7 @@ struct Foo {
 #[test]
 fn trait_imports_not_flagged_as_unused() {
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 struct MyChecker;
 
@@ -189,7 +189,7 @@ def main():
 
 #[test]
 fn find_unused_imports_nonexistent_file_returns_error() {
-    use shared::common::taxonomy_path_vo::FilePath;
+    use shared::common::FilePath;
     let path = FilePath::new("/nonexistent/path/file.rs").unwrap();
     let result = sut().find_unused_imports(&path);
     assert!(result.is_err(), "Nonexistent file should return Err");

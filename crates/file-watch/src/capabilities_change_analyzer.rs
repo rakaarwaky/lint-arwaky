@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
+use shared::file_watch::{
+    IChangeAnalyzerProtocol,
+    WatchEvent,
+};
+
 
 // PURPOSE: ChangeAnalyzer — deduplicates and batches watch events for lint
 

@@ -2,11 +2,14 @@
 // Delegates all events/commands to the ActionHandler (Capabilities layer).
 // This is the top-level aggregate that mediates between the TUI surface and business logic.
 
-use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
-use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
-use shared::tui::taxonomy_state_vo::AppState;
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::{
+    IActionHandlerProtocol,
+    ITuiAggregate,
+    ScanUpdate,
+    AppState,
+    TuiEvent,
+};
+
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

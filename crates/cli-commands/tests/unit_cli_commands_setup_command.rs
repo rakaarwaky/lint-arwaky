@@ -1,7 +1,7 @@
 //! Unit tests for surface_setup_command — mcp-config binary resolution.
 
 use cli_commands_lint_arwaky::surface_setup_command::handle_mcp_config;
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 
 #[test]
 fn mcp_config_claude_produces_valid_json() {

@@ -11,11 +11,14 @@
 //        - Python: class ClassName(, def function_name(
 //     4. Flag violation if any found
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::cli_commands::LintResult;
+use shared::common::Severity;
+use shared::role_rules::{
+    IUtilityRoleChecker,
+    AesRoleViolation,
+};
+
+use shared::common::SourceContentVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

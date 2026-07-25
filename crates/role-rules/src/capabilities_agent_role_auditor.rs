@@ -19,13 +19,19 @@
 //     Line-by-line scan for `: any`, `: Any`, `-> any`, `-> Any`,
 //     `Any<`, `Any[`, `any[` patterns. Flags each as AES405 AnyType.
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::role_rules::{
+    IAgentRoleChecker,
+    AesRoleViolation,
+};
+
+use shared::common::{
+    SymbolName,
+    SourceContentVO,
+};
+
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

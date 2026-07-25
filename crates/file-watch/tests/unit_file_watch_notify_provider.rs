@@ -2,8 +2,11 @@
 // Layer: Capabilities (target ≥ 70% coverage)
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
-use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::file_watch::{
+    IWatchProviderProtocol,
+    WatchConfig,
+};
+
 
 // ─── Helpers ────────────────────────────────────────────────
 

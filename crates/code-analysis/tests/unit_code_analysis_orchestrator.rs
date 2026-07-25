@@ -2,10 +2,13 @@
 // score calculation, critical check, report formatting.
 
 use code_analysis_lint_arwaky::{has_critical, CodeAnalysisContainer};
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{
+    FilePath,
+    Severity,
+};
+
 
 fn orchestrator() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
     CodeAnalysisContainer::new().code_analysis_linter()

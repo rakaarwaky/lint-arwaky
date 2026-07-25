@@ -1,9 +1,12 @@
 // PURPOSE: Contract tests — verify all trait implementations for tui types.
 // Layer: Contract (trait verification).
 
-use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
+use shared::tui::{
+    IActionHandlerProtocol,
+    ILintExecutorProtocol,
+    ITuiAggregate,
+};
+
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;

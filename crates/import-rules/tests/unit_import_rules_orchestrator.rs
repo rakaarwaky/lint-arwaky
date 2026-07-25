@@ -2,10 +2,13 @@
 // Tests orchestration flow: file collection, ignore logic, enabled gate.
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::{BooleanVO, Count};
+use shared::common::{
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
 use std::collections::HashMap;
 use std::io::Write;
 

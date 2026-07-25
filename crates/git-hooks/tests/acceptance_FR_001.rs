@@ -3,8 +3,8 @@
 // Maps to: FRD Success Indicator #1
 
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::common::FilePath;
+use shared::git_hooks::IHookManagerProtocol;
 
 fn create_temp_repo() -> (tempfile::TempDir, String) {
     let tmp_dir = tempfile::tempdir().unwrap();

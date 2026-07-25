@@ -8,7 +8,7 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 #[test]

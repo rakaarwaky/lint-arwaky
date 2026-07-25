@@ -1,17 +1,23 @@
 use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::taxonomy_config_error::ConfigError;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use shared::config_system::taxonomy_source_vo::ConfigResult;
-use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::common::{
+    PatternList,
+    FilePath,
+};
+
+use shared::config_system::{
+    IConfigOrchestratorAggregate,
+    IConfigReaderProtocol,
+    IConfigValidatorProtocol,
+    IWorkspaceDetectorProtocol,
+    ConfigError,
+    ConfigLanguage,
+    ArchitectureConfig,
+    WorkspaceInfo,
+    ConfigResult,
+    ConfigSource,
+};
+
 use shared::config_system::utility_config_defaults::default_config_for_language;
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use std::collections::HashMap;

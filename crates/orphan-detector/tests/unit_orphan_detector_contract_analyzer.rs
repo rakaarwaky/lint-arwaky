@@ -3,10 +3,13 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-use shared::code_analysis::taxonomy_analysis_vo::{FileDefinitionMap, InheritanceMap};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
+use shared::code_analysis::{FileDefinitionMap, InheritanceMap};
+use shared::common::{
+    FilePath,
+    Severity,
+};
+
+use shared::orphan_detector::IContractOrphanProtocol;
 use std::collections::HashMap;
 
 fn analyzer() -> ContractOrphanAnalyzer {

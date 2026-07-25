@@ -4,9 +4,12 @@
 // Speed: ms
 
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
-use shared::common::taxonomy_git_vo::GitBranchName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::common::{
+    GitBranchName,
+    FilePath,
+};
+
+use shared::git_hooks::IDiffProtocol;
 
 fn sut() -> DiffChecker {
     DiffChecker::new()

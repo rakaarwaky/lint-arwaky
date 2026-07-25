@@ -2,8 +2,8 @@
 // checkers to formatted report output. Uses real filesystem (temp dir).
 
 use code_analysis_lint_arwaky::CodeAnalysisContainer;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::FilePath;
 use std::fs;
 
 fn setup_temp_project(files: Vec<(&str, &str)>) -> tempfile::TempDir {

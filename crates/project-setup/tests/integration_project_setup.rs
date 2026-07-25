@@ -2,8 +2,11 @@
 // Layer: Integration (uses real SetupContainer).
 
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::{
+    SetupManagementAggregate,
+    ISetupManagementProtocol,
+};
+
 use std::sync::Arc;
 
 fn container() -> SetupContainer {

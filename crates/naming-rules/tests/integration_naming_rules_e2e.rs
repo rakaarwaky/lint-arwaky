@@ -4,10 +4,13 @@
 // Uses a real tempdir with mixed valid and invalid file names
 
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{
+    LayerNameVO,
+    FilePath,
+};
+
+use shared::config_system::ArchitectureConfig;
 use std::sync::Arc;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

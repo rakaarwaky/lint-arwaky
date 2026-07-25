@@ -1,7 +1,10 @@
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::code_analysis::{
+    ICodeMetricAnalyzerProtocol,
+    AesCodeAnalysisViolation,
+};
+
+use shared::common::LintMessage;
+use shared::config_system::ArchitectureConfig;
 use std::collections::hash_map::DefaultHasher;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase

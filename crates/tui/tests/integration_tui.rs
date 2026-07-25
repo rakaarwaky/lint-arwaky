@@ -1,11 +1,14 @@
 // PURPOSE: Integration tests — verify DI container wiring and cross-layer collaboration.
 // Layer: Integration (uses real TuiContainer components).
 
-use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
-use shared::tui::taxonomy_state_vo::AppState;
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::{
+    IActionHandlerProtocol,
+    ILintExecutorProtocol,
+    ITuiAggregate,
+    AppState,
+    TuiEvent,
+};
+
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;

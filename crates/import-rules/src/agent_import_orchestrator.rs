@@ -6,21 +6,27 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_adapter_error::ScanError;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::DEFAULT_SKIP_DIRS;
-use shared::import_rules::ICycleImportProtocol;
-use shared::import_rules::IDummyImportCheckerProtocol;
-use shared::import_rules::IImportForbiddenProtocol;
-use shared::import_rules::IImportMandatoryProtocol;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::IUnusedImportProtocol;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{
+    ScanError,
+    ErrorMessage,
+    FilePath,
+    FilePathList,
+    ContentString,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::{
+    DEFAULT_SKIP_DIRS,
+    ICycleImportProtocol,
+    IDummyImportCheckerProtocol,
+    IImportForbiddenProtocol,
+    IImportMandatoryProtocol,
+    IImportRunnerAggregate,
+    IUnusedImportProtocol,
+};
+
+use shared::common::LayerMapVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

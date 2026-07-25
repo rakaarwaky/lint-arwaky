@@ -1,6 +1,6 @@
 // PURPOSE: Initialize tracing-based logging for the TUI.
 // Output: file under `log/` plus optional terminal output.
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::TuiEvent;
 use std::fs;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};

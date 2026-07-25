@@ -1,16 +1,22 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_adapter_error::ScanError;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::{
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{
+    ScanError,
+    ErrorMessage,
+    FilePath,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::naming_rules::{
     INamingConventionChecker, ISuffixPrefixChecker,
 };
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::taxonomy_common_vo::PatternList;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::common::{
+    PatternList,
+    LayerMapVO,
+};
+
 use std::path::Path;
 use std::sync::Arc;
 

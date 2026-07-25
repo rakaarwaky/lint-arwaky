@@ -1,9 +1,12 @@
 // PURPOSE: E2E tests — verify full tui pipeline from orchestrator to all components.
 // Layer: E2E (full integration of all layers).
 
-use shared::tui::contract_tui_aggregate::ITuiAggregate;
-use shared::tui::taxonomy_state_vo::AppState;
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::tui::{
+    ITuiAggregate,
+    AppState,
+    TuiEvent,
+};
+
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;

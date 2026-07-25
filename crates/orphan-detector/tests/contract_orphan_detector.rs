@@ -12,9 +12,12 @@ use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::Taxonomy
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::contract_orphan_protocol::{
+use shared::orphan_detector::{
+    IOrphanAggregate,
+    IOrphanGraphResolverProtocol,
+};
+
+use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };

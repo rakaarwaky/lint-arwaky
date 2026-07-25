@@ -1,10 +1,16 @@
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::{Count, Score};
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::{
+    AdapterName,
+    ErrorMessage,
+};
+
+use shared::common::{Count, Score};
+use shared::common::{
+    ComplianceStatus,
+    FilePath,
+    FilePathList,
+    DescriptionVO,
+};
+
 
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
 //
@@ -19,12 +25,12 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 //   7. doctor: check tool installations and config presence.
 
 use shared::common::utility_command_runner as proc_io;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::maintenance::taxonomy_doctor_vo::{
+use shared::maintenance::IMaintenanceCheckerProtocol;
+use shared::maintenance::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,
 };
-use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::utility_dependency_io as dep_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────

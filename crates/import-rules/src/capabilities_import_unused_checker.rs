@@ -1,15 +1,22 @@
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::{
+    LintMessage,
+    FilePath,
+    Severity,
+    ErrorMessage,
+};
+
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_import_symbol_extractor;
-use shared::import_rules::AesImportViolation;
-use shared::import_rules::IUnusedImportProtocol;
-use shared::import_rules::ImportError;
+use shared::import_rules::{
+    AesImportViolation,
+    IUnusedImportProtocol,
+    ImportError,
+};
+
 
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
 // Uses utility functions directly — no IImportParserProtocol.
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::cli_commands::LintResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -27,7 +34,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             shared::common::utility_file_handler::read_file_generic(path.value()).map_err(|_| {
                 ImportError::module_resolution(
                     path.value().to_string(),
-                    Some(shared::common::taxonomy_common_vo::ErrorMessage::new(
+                    Some(ErrorMessage::new(
                         "File could not be read for unused import analysis",
                     )),
                 )

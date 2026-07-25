@@ -1,18 +1,27 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_common_vo::LanguageVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_source_vo::ContentString;
+use shared::cli_commands::LintResult;
+use shared::common::{
+    LanguageVO,
+    FilePath,
+    Severity,
+    ContentString,
+};
+
 use shared::common::utility_layer_detector;
 use shared::import_rules::utility_dummy_detector;
 use shared::import_rules::utility_import_resolver;
-use shared::import_rules::AesImportViolation;
-use shared::import_rules::IDummyImportCheckerProtocol;
-use shared::import_rules::ImportError;
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared::import_rules::{
+    AesImportViolation,
+    IDummyImportCheckerProtocol,
+    ImportError,
+};
+
+use shared::common::LayerMapVO;
+use shared::common::{Identity, LayerNameVO, LineNumber};
+use shared::common::{
+    LintMessage,
+    SymbolName,
+};
+
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -29,8 +38,8 @@ struct DummyFileContext {
     lang: LanguageVO,
     layer_name: String,
     dummy_ranges: Vec<(
-        shared::taxonomy_common_vo::LineNumber,
-        shared::taxonomy_common_vo::LineNumber,
+        LineNumber,
+        LineNumber,
     )>,
     dummy_impl_traits: Vec<String>,
 }

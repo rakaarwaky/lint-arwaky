@@ -2,14 +2,17 @@
 // Uses temp files because the checker reads from disk internally.
 
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::cli_commands::LintResultList;
+use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{
+    LayerNameVO,
+    FilePath,
+    FilePathList,
+};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::IImportForbiddenProtocol;
 use std::collections::HashMap;
 use std::io::Write;
 

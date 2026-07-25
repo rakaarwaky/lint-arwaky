@@ -17,13 +17,16 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use futures::future;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::common::taxonomy_adapter_list_vo::AdapterNameList;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::cli_commands::LintResultList;
+use shared::code_analysis::ILinterAdapterProtocol;
+use shared::common::{
+    AdapterNameList,
+    AdapterName,
+    FilePath,
+};
+
 use shared::config_system::utility_config_parser::parse_adapter_names_from_yaml;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::IExternalLintAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

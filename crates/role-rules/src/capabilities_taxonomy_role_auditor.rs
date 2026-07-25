@@ -1,12 +1,21 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::{
+    Language,
+    Severity,
+};
+
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::role_rules::{
+    ITaxonomyRoleChecker,
+    AesRoleViolation,
+};
+
+use shared::common::{
+    SymbolName,
+    SourceContentVO,
+};
+
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────

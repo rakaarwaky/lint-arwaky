@@ -1,7 +1,10 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::tui::taxonomy_file_entry_vo::FileEntry;
+use shared::common::{
+    DisplayContent,
+    FilePath,
+};
+
+use shared::tui::FileEntry;
 use std::io::Write;
 use std::path::Path;
 

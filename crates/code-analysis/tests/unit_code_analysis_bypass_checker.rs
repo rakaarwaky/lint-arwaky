@@ -2,9 +2,9 @@
 // unwrap/expect/panic/todo detection, Cargo.toml clippy allow detection.
 
 use code_analysis_lint_arwaky::BypassChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::IBypassCheckerProtocol;
+use shared::common::Severity;
 
 fn checker() -> BypassChecker {
     BypassChecker::new()

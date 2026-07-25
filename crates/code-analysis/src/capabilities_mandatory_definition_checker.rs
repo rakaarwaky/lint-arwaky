@@ -1,11 +1,17 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    IMandatoryClassProtocol,
+    IDeadInheritanceProtocol,
+    AesCodeAnalysisViolation,
+};
+
 use shared::code_analysis::utility_bypass_detector::skip_cfg_test_block;
 use shared::code_analysis::utility_mandatory_checker::rust_declares_type;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::common::{
+    Severity,
+    LayerDefinition,
+};
+
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).

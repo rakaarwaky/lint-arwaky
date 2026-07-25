@@ -2,9 +2,9 @@
 // Layer: Capabilities (AgentRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::common::FilePath;
+use shared::role_rules::IAgentRoleChecker;
+use shared::common::{ContentString, SourceContentVO};
 
 fn checker() -> AgentRoleChecker {
     AgentRoleChecker::new()

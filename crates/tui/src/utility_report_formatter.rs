@@ -3,11 +3,11 @@
 // Provides formatting functions for scan results, toolchain diagnostics,
 // dependencies, and active configurations. Pure utility functions — no trait impls.
 
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::config_system::taxonomy_source_vo::ConfigResult;
-use shared::maintenance::taxonomy_doctor_vo::{DependencyReport, ToolchainDiagnostics};
-use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::cli_commands::LintResultList;
+use shared::common::DisplayContent;
+use shared::config_system::ConfigResult;
+use shared::maintenance::{DependencyReport, ToolchainDiagnostics};
+use shared::tui::LintExecutionResult;
 
 /// Format lint results into a human-readable string.
 pub fn format_results(results: &LintResultList) -> DisplayContent {

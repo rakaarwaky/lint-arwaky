@@ -7,19 +7,25 @@
 // original source file and its layer prefix.
 
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{
+    FilePath,
+    FilePathList,
+    Severity,
+};
+
 use shared::common::utility_layer_detector;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_path_normalizer;
-use shared::import_rules::AesImportViolation;
-use shared::import_rules::IImportForbiddenProtocol;
-use shared::import_rules::ImportError;
-use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared::import_rules::{
+    AesImportViolation,
+    IImportForbiddenProtocol,
+    ImportError,
+};
+
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{Identity, LayerNameVO, LineNumber, LineContentVO};
 use std::collections::HashSet;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -125,11 +131,10 @@ impl ArchImportForbiddenChecker {
         &self,
         file: &str,
         layer_name: &str,
-        definition: &LayerDefinition,
-        import_lines: &[(
-            shared::taxonomy_common_vo::LineNumber,
-            shared::taxonomy_layer_vo::LineContentVO,
-        )],
+        definition: &LayerDefinition,    import_lines: &[(
+        LineNumber,
+        LineContentVO,
+    )],
         root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
@@ -247,8 +252,8 @@ impl ArchImportForbiddenChecker {
         basename: &str,
         config: &ArchitectureConfig,
         import_lines: &[(
-            shared::taxonomy_common_vo::LineNumber,
-            shared::taxonomy_layer_vo::LineContentVO,
+            LineNumber,
+            LineContentVO,
         )],
         violations: &mut Vec<LintResult>,
     ) {

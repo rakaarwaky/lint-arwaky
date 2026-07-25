@@ -1,8 +1,14 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    ILineCheckerProtocol,
+    AesCodeAnalysisViolation,
+};
+
+use shared::common::{
+    Severity,
+    LayerDefinition,
+};
+
 
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:

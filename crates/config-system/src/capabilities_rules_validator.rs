@@ -1,8 +1,11 @@
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::taxonomy_setting_vo::AdapterStatus;
-use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::config_system::taxonomy_validation_vo::ValidationResult;
-use shared::taxonomy_adapter_name_vo::AdapterName;
+use shared::config_system::{
+    IConfigValidatorProtocol,
+    AdapterStatus,
+    ProjectConfig,
+    ValidationResult,
+};
+
+use shared::common::AdapterName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

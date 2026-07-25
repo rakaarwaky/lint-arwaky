@@ -3,8 +3,11 @@ use std::sync::Arc;
 
 use crate::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
 use crate::capabilities_maintenance_checker::MaintenanceChecker;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::{
+    MaintenanceCommandsAggregate,
+    IMaintenanceCheckerProtocol,
+};
+
 
 pub struct MaintenanceContainer {
     orchestrator: Arc<dyn MaintenanceCommandsAggregate>,

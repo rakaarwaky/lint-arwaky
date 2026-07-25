@@ -5,9 +5,12 @@ use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 
-use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::auto_fix::contract_fix_protocol::IFixProtocol;
+use shared::auto_fix::{
+    IFileAdapterProtocol,
+    LintFixOrchestratorAggregate,
+    IFixProtocol,
+};
+
 
 // ─── IFileAdapterProtocol ─────────────────────────────────
 

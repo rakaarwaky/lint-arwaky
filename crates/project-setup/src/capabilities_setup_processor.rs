@@ -1,15 +1,15 @@
-use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO};
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
-use shared::project_setup::taxonomy_setup_contract_vo::{
+use shared::common::{EnvContentVO, McpConfigVO};
+use shared::common::DirectoryPath;
+use shared::project_setup::ISetupManagementProtocol;
+use shared::project_setup::{
     McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
 };
 use shared::project_setup::utility_filesystem_checker;
 use shared::project_setup::utility_setup_io as setup_io;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::DescriptionVO;
 
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
+use shared::common::SuccessStatus;
+use shared::project_setup::ISetupInstallerProtocol;
 use std::sync::Arc;
 
 // PURPOSE: SetupProcessor — processes project setup steps (env, gitignore, config, hooks)

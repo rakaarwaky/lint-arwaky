@@ -1,7 +1,10 @@
 use async_trait::async_trait;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
+use shared::common::FilePath;
+use shared::config_system::{
+    IWorkspaceDetectorProtocol,
+    WorkspaceType,
+};
+
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -1,17 +1,23 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
-use shared::auto_fix::contract_fix_protocol::IFixProtocol;
-use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
-use shared::auto_fix::taxonomy_fix_vo::FixResult;
+use shared::auto_fix::{
+    IFixProtocol,
+    FixApplied,
+    FixResult,
+};
+
 use shared::auto_fix::utility_symbol_renamer;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::Count;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{
+    FilePath,
+    AdapterName,
+    Count,
+    LineNumber,
+    ErrorCode,
+    LintMessage,
+    DescriptionVO,
+};
+
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

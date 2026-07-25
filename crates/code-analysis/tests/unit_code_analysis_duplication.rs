@@ -2,7 +2,7 @@
 // similarity detection using window-based hashing.
 
 use code_analysis_lint_arwaky::CodeDuplicationAnalyzer;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::code_analysis::ICodeMetricAnalyzerProtocol;
 
 fn analyzer() -> CodeDuplicationAnalyzer {
     CodeDuplicationAnalyzer::new()

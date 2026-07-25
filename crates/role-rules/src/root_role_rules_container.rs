@@ -10,9 +10,9 @@ use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::common::FilePath;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::role_rules::IRoleRunnerAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

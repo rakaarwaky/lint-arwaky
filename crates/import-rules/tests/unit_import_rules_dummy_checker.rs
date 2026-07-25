@@ -2,10 +2,13 @@
 // Tests dummy function detection, dummy impl detection, taxonomy intent, surface logic.
 
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::common::{
+    FilePath,
+    ContentString,
+};
+
+use shared::import_rules::IDummyImportCheckerProtocol;
+use shared::common::LayerMapVO;
 
 fn sut() -> DummyImportChecker {
     DummyImportChecker::new()
@@ -24,7 +27,7 @@ fn root_dir() -> FilePath {
 #[test]
 fn detects_rust_dummy_function() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -89,7 +92,7 @@ def real_logic():
 #[test]
 fn detects_empty_trait_impl() {
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 struct MyChecker;
 
@@ -115,7 +118,7 @@ impl IUnusedImportProtocol for MyChecker {
 #[test]
 fn real_trait_impl_not_flagged() {
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 struct MyChecker;
 
@@ -147,7 +150,7 @@ impl IUnusedImportProtocol for MyChecker {
 #[test]
 fn import_only_used_in_dummy_function_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -170,7 +173,7 @@ fn real_logic() {
 #[test]
 fn import_used_in_real_logic_not_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn real_logic() {
     let path = FilePath::new("real/path.rs").unwrap();
@@ -230,7 +233,7 @@ fn handle_command() {
 #[test]
 fn taxonomy_import_only_in_dummy_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");

@@ -1,12 +1,18 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
-use shared::cli_commands::taxonomy_format_vo::Format;
+use shared::cli_commands::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::common::{
+    ExitCode,
+    FilePath,
+};
+
+use shared::config_system::{
+    IConfigOrchestratorAggregate,
+    ConfigLanguage,
+};
+
+use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;
 
 pub fn handle_scan_orphan(

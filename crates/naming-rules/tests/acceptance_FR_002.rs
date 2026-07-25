@@ -2,13 +2,22 @@
 // Maps 1:1 to FRD business rules
 
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_common_vo::SuffixPolicyVO;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::taxonomy_config_vo::NamingRuleVO;
+use shared::common::{
+    PatternList,
+    SuffixPolicyVO,
+};
+
+use shared::common::{LayerDefinition, LayerMapVO};
+use shared::common::{
+    LayerNameVO,
+    FilePath,
+};
+
+use shared::config_system::{
+    ArchitectureConfig,
+    NamingRuleVO,
+};
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

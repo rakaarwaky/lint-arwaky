@@ -2,7 +2,7 @@
 // within 5 seconds. If this fails, nothing else matters.
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 #[tokio::test]
 async fn external_lint_boots_and_returns_adapter_names() {

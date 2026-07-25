@@ -2,11 +2,17 @@
 // mandatory class/struct definition + dead inheritance detection.
 
 use code_analysis_lint_arwaky::MandatoryDefinitionChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::common::taxonomy_common_vo::BooleanVO;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    IMandatoryClassProtocol,
+    IDeadInheritanceProtocol,
+};
+
+use shared::common::{
+    BooleanVO,
+    LayerDefinition,
+};
+
 
 fn checker() -> MandatoryDefinitionChecker {
     MandatoryDefinitionChecker::new()

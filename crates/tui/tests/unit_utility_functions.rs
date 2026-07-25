@@ -1,7 +1,7 @@
 // PURPOSE: Unit tests for utility functions — FileSystem and ReportFormatter helpers.
 // Layer: Utility (stateless functions)
 
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 use tui_lint_arwaky::utility_file_system;
 use tui_lint_arwaky::utility_report_formatter;
 

@@ -5,20 +5,23 @@
 
 use std::sync::Arc;
 
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::external_lint::IExternalLintAggregate;
+use shared::file_watch::IWatchAggregate;
+use shared::git_hooks::GitHooksAggregate;
+use shared::import_rules::IImportRunnerAggregate;
+use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::orphan_detector::IOrphanAggregate;
+use shared::project_setup::SetupManagementAggregate;
+use shared::report_formatter::{
+    IReportFormatterAggregate,
+    IReportFormatterProtocol,
+};
+
+use shared::role_rules::IRoleRunnerAggregate;
 
 use cli_commands_lint_arwaky::root_cli_container::CliContainer;
 

@@ -2,8 +2,8 @@
 // Layer: Capabilities (target ≥ 70% coverage).
 
 use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_tool_executor_protocol::IToolExecutorProtocol;
+use shared::common::FilePath;
+use shared::project_setup::IToolExecutorProtocol;
 
 fn sut() -> ToolExecutorAdapter {
     ToolExecutorAdapter::new()
