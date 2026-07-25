@@ -48,7 +48,7 @@ pub struct RoleCheckerDeps {
 
 pub struct RoleOrchestrator {
     deps: RoleCheckerDeps,
-    config: shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+    config: shared::config_system::ArchitectureConfig,
     ignored_paths: Vec<String>,
 }
 
@@ -74,7 +74,7 @@ impl IRoleRunnerAggregate for RoleOrchestrator {
 impl RoleOrchestrator {
     pub fn new(
         deps: RoleCheckerDeps,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &shared::config_system::ArchitectureConfig,
     ) -> Self {
         let ignored_paths: Vec<String> = config
             .ignored_paths

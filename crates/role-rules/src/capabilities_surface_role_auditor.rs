@@ -58,25 +58,25 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_utility_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_passive_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_fn_count_limit(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
         let content = source.content.value();
         let file = source.file_path.value();

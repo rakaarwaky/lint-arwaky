@@ -13,7 +13,7 @@ pub fn handle_scan_external(
     path: Option<FilePath>,
     format: Format,
     external_lint: Arc<dyn IExternalLintAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),

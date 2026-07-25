@@ -13,7 +13,7 @@ pub fn handle_scan_naming(
     path: Option<FilePath>,
     format: Format,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),

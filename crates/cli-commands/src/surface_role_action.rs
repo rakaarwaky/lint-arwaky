@@ -13,7 +13,7 @@ pub fn handle_scan_role(
     path: Option<FilePath>,
     format: Format,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),

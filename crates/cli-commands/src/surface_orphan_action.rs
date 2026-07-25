@@ -21,7 +21,7 @@ pub fn handle_scan_orphan(
     format: Format,
     orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),

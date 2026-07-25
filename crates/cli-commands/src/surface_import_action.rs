@@ -13,7 +13,7 @@ pub fn handle_scan_import(
     path: Option<FilePath>,
     format: Format,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),

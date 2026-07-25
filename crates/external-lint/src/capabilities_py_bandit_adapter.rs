@@ -37,9 +37,8 @@ use shared::common::{
 use std::sync::Arc;
 
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{
-    default_working_dir, has_python_files, noop_apply_fix,
-};
+use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files, noop_apply_fix};
+
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
