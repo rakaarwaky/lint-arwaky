@@ -14,6 +14,7 @@ fn build_tui_stack() -> (Arc<LintExecutor>, Arc<ActionHandler>) {
     let executor: Arc<LintExecutor> = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     let handler = Arc::new(ActionHandler::new(executor.clone()
         as Arc<

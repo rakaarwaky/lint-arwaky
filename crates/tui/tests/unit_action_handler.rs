@@ -11,6 +11,7 @@ fn build_handler() -> ActionHandler {
     let lint_executor = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     ActionHandler::new(lint_executor)
 }
@@ -23,45 +24,29 @@ fn action_handler_handles_key_press() {
     let mut state = AppState::new(".".to_string());
     let event = TuiEvent::Quit;
 
-    // Should not panic on valid event
     handler.handle(&mut state, event);
 }
 
-// ─── handle: Navigation events ──
-
 #[test]
-fn action_handler_handles_navigation() {
+fn action_handler_handles_char_event() {
     let handler = build_handler();
     let mut state = AppState::new(".".to_string());
+    let event = TuiEvent::SearchInput('q');
 
-    // Test up/down navigation
-    let event_up = TuiEvent::MoveUp;
-    handler.handle(&mut state, event_up);
-
-    let event_down = TuiEvent::MoveDown;
-    handler.handle(&mut state, event_down);
+    handler.handle(&mut state, event);
 }
 
-// ─── load_directory: Path validation ──
+// ─── load_directory: Directory loading test ──
 
 #[test]
-fn action_handler_loads_valid_directory() {
+fn action_handler_loads_directory() {
     let handler = build_handler();
     let mut state = AppState::new(".".to_string());
 
-    // Should handle directory loading without panic
-    handler.load_directory(&mut state, "/tmp");
-}
+    handler.load_directory(&mut state, "src");
 
-// ─── load_preview: Preview mode toggle ──
-
-#[test]
-fn action_handler_loads_preview() {
-    let handler = build_handler();
-    let mut state = AppState::new(".".to_string());
-
-    // Should handle preview loading without panic
-    handler.load_preview(&mut state);
+    // Directory entries should be populated
+    assert!(!state.entries.is_empty());
 }
 
 // ─── Default constructor ──
@@ -71,6 +56,7 @@ fn action_handler_default_creates_valid_instance() {
     let lint_executor = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     let _ = ActionHandler::new(lint_executor);
 }

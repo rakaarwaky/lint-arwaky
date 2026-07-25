@@ -126,7 +126,10 @@ async fn execute_command_fix_returns_success_message() {
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["status"], "success");
     assert_eq!(parsed["action"], "fix");
-    assert!(parsed["message"].is_string(), "message field should be a string"); // real fix output varies
+    assert!(
+        parsed["message"].is_string(),
+        "message field should be a string"
+    ); // real fix output varies
 }
 
 // ─── execute_command: init / install / mcp-config / config-show ─────

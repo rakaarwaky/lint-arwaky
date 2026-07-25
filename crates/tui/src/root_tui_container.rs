@@ -72,18 +72,21 @@ impl TuiContainer {
 
         let file_watch_container = FileWatchContainer::new();
         let lint_executor = Arc::new(
-            LintExecutor::new(code_analysis_aggregate, Some(file_watch_container.provider()))
-                .with_fix(fix_orchestrator)
-                .with_setup(setup_aggregate)
-                .with_hook_port(hook_adapter)
-                .with_config(config_container.orchestrator())
-                .with_maintenance(maintenance_container.orchestrator())
-                .with_orphan(orphan_container.analyzer())
-                .with_external_lint(external_lint_container.aggregate())
-                .with_import_orchestrator(import_container.orchestrator())
-                .with_naming_orchestrator(naming_container.orchestrator())
-                .with_role_orchestrator(role_container.orchestrator())
-                .with_multi_project_orchestrator(config_container.orchestrator()),
+            LintExecutor::new(
+                code_analysis_aggregate,
+                Some(file_watch_container.provider()),
+            )
+            .with_fix(fix_orchestrator)
+            .with_setup(setup_aggregate)
+            .with_hook_port(hook_adapter)
+            .with_config(config_container.orchestrator())
+            .with_maintenance(maintenance_container.orchestrator())
+            .with_orphan(orphan_container.analyzer())
+            .with_external_lint(external_lint_container.aggregate())
+            .with_import_orchestrator(import_container.orchestrator())
+            .with_naming_orchestrator(naming_container.orchestrator())
+            .with_role_orchestrator(role_container.orchestrator())
+            .with_multi_project_orchestrator(config_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(lint_executor));

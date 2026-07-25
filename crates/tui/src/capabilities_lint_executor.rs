@@ -552,7 +552,13 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, 0)
     }
 
-    fn watch(&self, path: &str) -> (LintExecutionResult, std::sync::mpsc::Receiver<shared::tui::taxonomy_watch_message_vo::WatchMessage>) {
+    fn watch(
+        &self,
+        path: &str,
+    ) -> (
+        LintExecutionResult,
+        std::sync::mpsc::Receiver<shared::tui::taxonomy_watch_message_vo::WatchMessage>,
+    ) {
         use shared::common::taxonomy_path_vo::FilePath;
         use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
         use shared::tui::taxonomy_watch_message_vo::WatchMessage;
@@ -573,7 +579,10 @@ impl ILintExecutorProtocol for LintExecutor {
             None => {
                 // No watch provider available — just return initial result
                 let (tx, rx) = std::sync::mpsc::channel();
-                let _ = tx.send(WatchMessage::new(format!("[initial] {} violations, score {:.1}", count, score)));
+                let _ = tx.send(WatchMessage::new(format!(
+                    "[initial] {} violations, score {:.1}",
+                    count, score
+                )));
                 let result = LintExecutionResult {
                     output: initial_output,
                     violation_count: count,
@@ -609,7 +618,9 @@ impl ILintExecutorProtocol for LintExecutor {
                 let mut rx_events = provider_thread.subscribe();
 
                 while let Ok(event) = rx_events.recv().await {
-                    if <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(&event.path) {
+                    if <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(
+                        &event.path,
+                    ) {
                         let event_fp = FilePath::new(&event.path).unwrap_or_default();
                         let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
                         let lint_count = lint_results.len();
@@ -623,7 +634,6 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             });
         });
-
 
         let result = LintExecutionResult {
             output: initial_output,

@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 macro_rules! single_field_vo {
     ($name:ident, $field:ident: $field_ty:ty) => {
         #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+        #[serde(crate = "serde")]
         pub struct $name {
             pub $field: $field_ty,
         }

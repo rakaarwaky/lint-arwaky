@@ -97,8 +97,7 @@ impl McpContainer {
         let role_orchestrator = role_container.orchestrator();
 
         // Auto-fix orchestrator (uses same code analysis linter)
-        let auto_fix_container =
-            AutoFixContainer::new(code_analysis_linter.clone());
+        let auto_fix_container = AutoFixContainer::new(code_analysis_linter.clone());
         let fix_orchestrator = auto_fix_container.orchestrator(false);
 
         // Git hooks aggregate

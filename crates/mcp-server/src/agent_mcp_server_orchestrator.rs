@@ -21,17 +21,23 @@ use std::sync::Arc;
 /// Dependencies injected into the MCP server orchestrator.
 /// All aggregates are wired from the MCP container for full CLI parity.
 pub struct McpServerDependencies {
-    pub code_analysis_linter: Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
+    pub code_analysis_linter:
+        Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate>,
     pub fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>,
-    pub orphan_orchestrator: Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
+    pub orphan_orchestrator:
+        Arc<dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate>,
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub external_lint: Arc<dyn shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate>,
-    pub import_orchestrator: Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>,
-    pub naming_orchestrator: Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
-    pub role_orchestrator: Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
+    pub external_lint:
+        Arc<dyn shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate>,
+    pub import_orchestrator:
+        Arc<dyn shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate>,
+    pub naming_orchestrator:
+        Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
+    pub role_orchestrator:
+        Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -120,7 +126,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
 
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
                 let fix_result = self.deps.fix_orchestrator.execute(&fp);
 
                 serde_json::json!({
@@ -134,7 +143,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
             "doctor" => {
                 // Run toolchain diagnostics via maintenance aggregate
-                let diag = self.deps.maintenance_orchestrator.diagnose_toolchain().await;
+                let diag = self
+                    .deps
+                    .maintenance_orchestrator
+                    .diagnose_toolchain()
+                    .await;
 
                 let checks: Vec<serde_json::Value> = {
                     let mut checks = Vec::new();
@@ -177,12 +190,18 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
 
                 // Get ignored paths from config orchestrator
                 let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
 
-                let (_, results) = self.deps.orphan_orchestrator.scan_orphans(&fp, ignored.values());
+                let (_, results) = self
+                    .deps
+                    .orphan_orchestrator
+                    .scan_orphans(&fp, ignored.values());
 
                 serde_json::json!({
                     "status": "success",
@@ -205,9 +224,16 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
 
-                let report = self.deps.maintenance_orchestrator.run_security_scan(&fp).await;
+                let report = self
+                    .deps
+                    .maintenance_orchestrator
+                    .run_security_scan(&fp)
+                    .await;
 
                 // exit_code: 0 clean, 1 findings, 3 tool missing
                 let exit_code = if !report.tool_installed {
@@ -244,18 +270,33 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 };
 
                 // Collect lintable files and scan for duplicates using the shared utility
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
-                let entries = shared::code_analysis::utility_code_duplication_detector::collect_file_entries(std::slice::from_ref(&fp.value));
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
+                let entries =
+                    shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
+                        std::slice::from_ref(&fp.value),
+                    );
                 let min_dup_lines = 5; // minimum lines for a duplicate block
 
                 // Calculate total LOC before moving entries
                 let total_loc: usize = entries.iter().map(|(_, c)| c.lines().count()).sum();
 
                 // Scan for duplicates (consumes entries)
-                let blocks = shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(entries, min_dup_lines);
+                let blocks =
+                    shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+                        entries,
+                        min_dup_lines,
+                    );
 
                 // Build violation list
-                let violations = shared::code_analysis::utility_code_duplication_detector::build_violations(&blocks, total_loc, min_dup_lines);
+                let violations =
+                    shared::code_analysis::utility_code_duplication_detector::build_violations(
+                        &blocks,
+                        total_loc,
+                        min_dup_lines,
+                    );
 
                 serde_json::json!({
                     "status": "success",
@@ -272,9 +313,17 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
 
-                match self.deps.maintenance_orchestrator.run_dependency_report(&fp).await {
+                match self
+                    .deps
+                    .maintenance_orchestrator
+                    .run_dependency_report(&fp)
+                    .await
+                {
                     Ok(report) => {
                         serde_json::json!({
                             "status": "success",
@@ -334,7 +383,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| "./lint-arwaky".to_string());
 
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(exe_path).unwrap_or_default();
+                let fp =
+                    shared::common::taxonomy_path_vo::FilePath::new(exe_path).unwrap_or_default();
 
                 match self.deps.git_hooks_aggregate.install_hook(&fp).await {
                     Ok(_) => {
@@ -369,7 +419,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         languages.push(serde_json::json!({"config": target, "status": "exists"}));
                     } else {
                         let content = self.deps.setup_orchestrator.get_config_template(lang_str);
-                        match self.deps.setup_orchestrator.write_config_file(&target, content) {
+                        match self
+                            .deps
+                            .setup_orchestrator
+                            .write_config_file(&target, content)
+                        {
                             Ok(desc) => {
                                 languages.push(serde_json::json!({"config": target, "status": "created", "description": desc.value}));
                             }
@@ -398,7 +452,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .unwrap_or(false);
 
                 let py_status = self.deps.setup_orchestrator.install_python_adapters().await;
-                let js_status = self.deps.setup_orchestrator.install_javascript_adapters(sudo).await;
+                let js_status = self
+                    .deps
+                    .setup_orchestrator
+                    .install_javascript_adapters(sudo)
+                    .await;
 
                 serde_json::json!({
                     "status": if py_status.value && js_status.value { "success" } else { "partial_failure" },
@@ -505,7 +563,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+                let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone())
+                    .unwrap_or_else(|_| {
+                        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+                    });
 
                 match self.deps.config_orchestrator.list_config_files(&fp).await {
                     Ok(config_files) if !config_files.is_empty() => {
@@ -515,20 +576,28 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                             // Simple redaction for display (mimics surface_config_command::redact_secrets)
                             // Regex built once outside the loop to avoid clippy::regex_creation_in_loops
                             static AWS_KEY_RE: once_cell::sync::Lazy<Option<regex::Regex>> =
-                                once_cell::sync::Lazy::new(|| regex::Regex::new(r"AKIA[0-9A-Z]{16}").ok());
+                                once_cell::sync::Lazy::new(|| {
+                                    regex::Regex::new(r"AKIA[0-9A-Z]{16}").ok()
+                                });
                             let redact_secrets = |content: &str| -> String {
                                 let mut result = content.to_string();
                                 if result.contains("AKIA") {
                                     if let Some(re) = AWS_KEY_RE.as_ref() {
-                                        result = re.replace_all(&result, "[REDACTED-AWS-KEY]").to_string();
+                                        result = re
+                                            .replace_all(&result, "[REDACTED-AWS-KEY]")
+                                            .to_string();
                                     }
                                 }
                                 // Redact very long base64-like strings
                                 if result.len() > 100 {
-                                    let words: Vec<String> = result.split_whitespace().map(|s| s.to_string()).collect();
+                                    let words: Vec<String> =
+                                        result.split_whitespace().map(|s| s.to_string()).collect();
                                     for word in &words {
                                         if word.len() >= 40
-                                            && word.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '='))
+                                            && word.chars().all(|c| {
+                                                c.is_ascii_alphanumeric()
+                                                    || matches!(c, '/' | '+' | '=')
+                                            })
                                         {
                                             result = result.replacen(word, "[REDACTED]", 1);
                                         }
@@ -538,10 +607,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                             };
 
                             // Read config content with secret redaction (async is already available in the handler)
-                            let source = match self.deps.config_orchestrator.read_config(&fp, *lang).await {
-                                Ok(Some(source)) => Some(source),
-                                _ => None,
-                            };
+                            let source =
+                                match self.deps.config_orchestrator.read_config(&fp, *lang).await {
+                                    Ok(Some(source)) => Some(source),
+                                    _ => None,
+                                };
 
                             match source {
                                 Some(source) => {
@@ -815,7 +885,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
         let path = args.path.unwrap_or_else(|| ".".to_string());
         let language = args.language;
 
-        let fp = shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default());
+        let fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.clone()).unwrap_or_else(|_| {
+                shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
+            });
 
         // Use the same config orchestrator aggregate as CLI for parity
         let config_files = match self.deps.config_orchestrator.list_config_files(&fp).await {
@@ -826,7 +899,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "language": language,
                     "error": format!("Failed to list config files: {}", e),
                     "exit_code": 2,
-                }).to_string();
+                })
+                .to_string();
             }
         };
 
@@ -843,19 +917,34 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             layers.push(lang.as_str());
             if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang).await {
                 // Parse architecture config (rules, ignored_paths)
-                let arch_config = shared::config_system::utility_config_parser::parse_config_yaml(&source.raw_content);
+                let arch_config = shared::config_system::utility_config_parser::parse_config_yaml(
+                    &source.raw_content,
+                );
                 rules_enabled.push(lang.as_str());
-                ignored_paths.extend(arch_config.ignored_paths.values.iter().map(|p| p.value.clone()));
+                ignored_paths.extend(
+                    arch_config
+                        .ignored_paths
+                        .values
+                        .iter()
+                        .map(|p| p.value.clone()),
+                );
 
                 // Parse adapter names for adapter_toggles
-                let adapter_names = shared::config_system::utility_config_parser::parse_adapter_names_from_yaml(&source.raw_content);
+                let adapter_names =
+                    shared::config_system::utility_config_parser::parse_adapter_names_from_yaml(
+                        &source.raw_content,
+                    );
                 for name in adapter_names {
                     adapter_toggles.push(serde_json::json!({"name": name, "status": "enabled"}));
                 }
 
                 // Extract score threshold via shared utility (project.thresholds.score or thresholds.score)
                 if score_threshold.is_none() {
-                    if let Some(t) = shared::config_system::utility_config_parser::parse_score_threshold(&source.raw_content) {
+                    if let Some(t) =
+                        shared::config_system::utility_config_parser::parse_score_threshold(
+                            &source.raw_content,
+                        )
+                    {
                         score_threshold = Some(t);
                     }
                 }
