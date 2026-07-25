@@ -837,43 +837,29 @@ impl IMcpServerAggregate for McpServerOrchestrator {
     }
 
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
-        let mut candidates = vec![
-            env!("CARGO_MANIFEST_DIR").to_string() + "/../.agents/skills/lint-arwaky-rust/SKILL.md",
-            env!("CARGO_MANIFEST_DIR").to_string()
-                + "/../.agents/skills/lint-arwaky-python/SKILL.md",
-            env!("CARGO_MANIFEST_DIR").to_string()
-                + "/../.agents/skills/lint-arwaky-typescript/SKILL.md",
-            ".agents/skills/lint-arwaky-rust/SKILL.md".to_string(),
-            ".agents/skills/lint-arwaky-python/SKILL.md".to_string(),
-            ".agents/skills/lint-arwaky-typescript/SKILL.md".to_string(),
+        let skills = [
+            "lint-arwaky-rust",
+            "lint-arwaky-python",
+            "lint-arwaky-typescript",
         ];
-        // XDG config fallback: ~/.config/lint-arwaky/.agents/skills/...
+        let base = env!("CARGO_MANIFEST_DIR");
+        let mut candidates: Vec<String> = skills
+            .iter()
+            .flat_map(|s| {
+                vec![
+                    format!("{}/../.agents/skills/{}/SKILL.md", base, s),
+                    format!(".agents/skills/{}/SKILL.md", s),
+                ]
+            })
+            .collect();
         if let Some(config_dir) = dirs::config_dir() {
-            let xdg_skills = config_dir
+            let xdg = config_dir
                 .join("lint-arwaky")
                 .join(".agents")
                 .join("skills");
-            candidates.push(
-                xdg_skills
-                    .join("lint-arwaky-rust")
-                    .join("SKILL.md")
-                    .to_string_lossy()
-                    .to_string(),
-            );
-            candidates.push(
-                xdg_skills
-                    .join("lint-arwaky-python")
-                    .join("SKILL.md")
-                    .to_string_lossy()
-                    .to_string(),
-            );
-            candidates.push(
-                xdg_skills
-                    .join("lint-arwaky-typescript")
-                    .join("SKILL.md")
-                    .to_string_lossy()
-                    .to_string(),
-            );
+            for s in &skills {
+                candidates.push(xdg.join(s).join("SKILL.md").to_string_lossy().to_string());
+            }
         }
         let content = candidates
             .iter()
