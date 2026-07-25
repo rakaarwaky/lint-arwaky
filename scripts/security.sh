@@ -42,7 +42,6 @@ critical_files=(
     "ARCHITECTURE.md"
     ".agents/rules/RULES_AES.md"
     "CONTRIBUTING.md"
-    "SKILL.md"
     "MIGRATION_RUST.md"
     "MIGRATION_PYTHON.md"
     "MIGRATION_TYPESCRIPT.md"

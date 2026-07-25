@@ -136,10 +136,10 @@ The cli-commands crate provides the unified command-line interface that drives t
 - **Business Rules**:
   - Detects languages present in the project.
   - Creates `lint_arwaky.config.<lang>.yaml` for each detected language.
-  - Distributes docs from XDG config: `SKILL.md`, `ARCHITECTURE.md`, `MIGRATION_RUST.md`, `MIGRATION_PYTHON.md`, `MIGRATION_TYPESCRIPT.md`, `RULES_AES.md`.
-  - Skips files that already exist.
+  - Distributes docs from XDG config: `ARCHITECTURE.md`, `MIGRATION_RUST.md`, `MIGRATION_PYTHON.md`, `MIGRATION_TYPESCRIPT.md`, `RULES_AES.md`.
+  - Copies `.agents/` (prompts, rules, skills) from XDG config into project `.agents/`.
+  - Overwrites existing files.
 - **Edge Cases**:
-  - Config file already exists → prints "already exists", skips.
   - Doc file not in XDG config → prints "not in XDG config", skips.
   - XDG config directory cannot be determined → warning printed.
   - Write failure → error message, `all_ok` set to false.

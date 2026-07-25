@@ -20,7 +20,7 @@ pub struct ListCommandsArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ReadSkillArgs {
-    /// Section to read from SKILL.md
+    /// Section to read from skill documentation
     pub section: Option<String>,
 }
 

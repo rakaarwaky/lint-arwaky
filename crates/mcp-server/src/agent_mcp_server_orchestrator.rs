@@ -838,15 +838,42 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
     async fn read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
         let mut candidates = vec![
-            env!("CARGO_MANIFEST_DIR").to_string() + "/../SKILL.md",
-            env!("CARGO_MANIFEST_DIR").to_string() + "/SKILL.md",
-            "SKILL.md".to_string(),
-            "./SKILL.md".to_string(),
+            env!("CARGO_MANIFEST_DIR").to_string() + "/../.agents/skills/lint-arwaky-rust/SKILL.md",
+            env!("CARGO_MANIFEST_DIR").to_string()
+                + "/../.agents/skills/lint-arwaky-python/SKILL.md",
+            env!("CARGO_MANIFEST_DIR").to_string()
+                + "/../.agents/skills/lint-arwaky-typescript/SKILL.md",
+            ".agents/skills/lint-arwaky-rust/SKILL.md".to_string(),
+            ".agents/skills/lint-arwaky-python/SKILL.md".to_string(),
+            ".agents/skills/lint-arwaky-typescript/SKILL.md".to_string(),
         ];
-        // XDG config fallback: ~/.config/lint-arwaky/SKILL.md
+        // XDG config fallback: ~/.config/lint-arwaky/.agents/skills/...
         if let Some(config_dir) = dirs::config_dir() {
-            let xdg_skill = config_dir.join("lint-arwaky").join("SKILL.md");
-            candidates.push(xdg_skill.to_string_lossy().to_string());
+            let xdg_skills = config_dir
+                .join("lint-arwaky")
+                .join(".agents")
+                .join("skills");
+            candidates.push(
+                xdg_skills
+                    .join("lint-arwaky-rust")
+                    .join("SKILL.md")
+                    .to_string_lossy()
+                    .to_string(),
+            );
+            candidates.push(
+                xdg_skills
+                    .join("lint-arwaky-python")
+                    .join("SKILL.md")
+                    .to_string_lossy()
+                    .to_string(),
+            );
+            candidates.push(
+                xdg_skills
+                    .join("lint-arwaky-typescript")
+                    .join("SKILL.md")
+                    .to_string_lossy()
+                    .to_string(),
+            );
         }
         let content = candidates
             .iter()
@@ -857,7 +884,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             Some(c) => c,
             None => {
                 return serde_json::json!({
-                    "error": "SKILL.md not found",
+                    "error": "Skill documentation not found",
                     "searched": candidates
                 })
                 .to_string();

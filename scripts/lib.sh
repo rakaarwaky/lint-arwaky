@@ -87,7 +87,6 @@ copy_docs_to_config() {
     local config_dir="$1"
     local project_root="${2:-$PROJECT_ROOT}"
     local Docs=(
-        "SKILL.md"
         "ARCHITECTURE.md"
         "MIGRATION_RUST.md"
         "MIGRATION_PYTHON.md"

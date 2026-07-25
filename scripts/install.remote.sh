@@ -120,10 +120,9 @@ else
     cargo install --git https://github.com/rakaarwaky/lint-arwaky.git --force
 fi
 
-# 4. Install documentation & SKILL.md
+# 4. Install documentation
 echo -e "\n${BOLD}[4/6] Installing docs & configuration...${NC}"
 Docs=(
-    "SKILL.md"
     "ARCHITECTURE.md"
     "MIGRATION_RUST.md"
     "MIGRATION_PYTHON.md"
