@@ -2,6 +2,51 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 1.10.114 (2026-07-25)
+
+### Added
+
+- **Synchronized Workspace Release**: Unified versioning across all 17 workspace crates (`shared-lint-arwaky`, `tui-lint-arwaky`, `cli-commands-lint-arwaky`, `mcp-server-lint-arwaky`, etc.) to `v1.10.114`.
+- **TUI Live Watch Mode**: Integrated background file watcher event loop in Ratatui TUI using `WatchMessage` value objects for real-time compliance updates.
+- **CLI Secret Redaction**: Added automatic sensitive token and key redaction in CLI scan and report outputs.
+
+### Fixed
+
+- **AES304 Bypass Compliance**: Removed internal `#[allow(...)]` attributes in `tui` crate and fixed false positives in comment classification.
+- **Serde Macro Expansion**: Added `#[serde(crate = "serde")]` to `single_field_vo!` in `taxonomy_definition_vo.rs` to fix `_serde` macro expansion errors.
+- **Gates Script Optimization**: Refactored `gates.sh` stage execution to prevent LLVM thread stack overflow and SIGSEGV crashes.
+
+---
+
+## 1.10.106 (2026-07-20)
+
+### Added
+
+- **Report Formatter Crate**: Introduced `report-formatter-lint-arwaky` crate to decouple terminal output rendering from CLI logic.
+- **External Lint Capability**: Added `IExternalLintExecutorProtocol` and refactored external linter integration (`clippy`, `eslint`, `mypy`, `ruff`, `bandit`).
+- **Domain Value Objects**: Replaced legacy helper modules with domain VOs (`FilePath`, `DirectoryPath`, `LanguageInfo`).
+
+### Fixed
+
+- **AES404 False Positives**: Fixed Python interface detection for `_port` and `_protocol` naming conventions.
+- **Crate Decoupling**: Removed obsolete `source-parsing` crate to make feature crates self-contained.
+
+---
+
+## 1.10.91 (2026-07-10)
+
+### Added
+
+- **Dynamic Ignored Rules**: Added `ignored_rules` configuration support in architecture settings.
+- **Config Search Depth**: Expanded workspace configuration search depth to 5 directory levels.
+
+### Fixed
+
+- **MCP Path Resolution**: Fixed skill and configuration file lookup fallbacks in MCP server execution.
+- **CLI Exit Codes**: Standardized error exit codes across CLI subcommands.
+
+---
+
 ## 1.10.87 (2026-06-30)
 
 ### Added
