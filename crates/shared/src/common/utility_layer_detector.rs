@@ -224,3 +224,38 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
 
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_module_layer_with_prefix() {
+        let layer_names: Vec<String> = vec![
+            "taxonomy".into(),
+            "contract".into(),
+            "utility".into(),
+            "capabilities".into(),
+            "agent".into(),
+            "surface".into(),
+        ];
+
+        // Standard module path with layer prefix in segment
+        assert_eq!(
+            detect_module_layer("shared.src.contract_protocol", &layer_names),
+            Some("contract".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_module_path_to_layer() {
+        // Test with blender-arwaky structure
+        let result =
+            resolve_module_path_to_layer("modules.shared.src.server", "/home/raka/mcp-arwaky/blender-arwaky");
+        assert!(result.is_some(), "Should detect layer from server directory");
+        assert!(
+            result.as_ref().unwrap() == "contract" || result.as_ref().unwrap() == "taxonomy" || result.as_ref().unwrap() == "utility",
+            "Detected layer should be contract, taxonomy, or utility"
+        );
+    }
+}

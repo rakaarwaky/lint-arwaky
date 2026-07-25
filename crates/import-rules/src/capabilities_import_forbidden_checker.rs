@@ -160,9 +160,11 @@ impl ArchImportForbiddenChecker {
             let symbol_name = extract_symbol_from_import_line((line_num, line));
 
             // ── Barrel resolution: resolve through __init__.py / mod.rs / index.ts ──
+            // ── Fallback to filesystem scan if barrel resolution fails ──
             let resolved_layer = if let Some(sym) = &symbol_name {
                 utility_import_resolver::resolve_barrel_import(module_val, sym, root_dir)
                     .and_then(|r| r.resolved_layer)
+                    .or_else(|| utility_layer_detector::resolve_module_path_to_layer(module_val, root_dir))
             } else {
                 None
             };
