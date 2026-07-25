@@ -216,4 +216,4 @@ cargo build --release
 
 - Repository: https://github.com/rakaarwaky/lint-arwaky
 - Issues: https://github.com/rakaarwaky/lint-arwaky/issues
-- Documentation: [README.md](README.md), [SKILL.md](SKILL.md), [RULES_AES.md](RULES_AES.md), [ARCHITECTURE.md](ARCHITECTURE.md)
+- Documentation: [README.md](README.md), [RULES_AES.md](RULES_AES.md), [ARCHITECTURE.md](ARCHITECTURE.md)

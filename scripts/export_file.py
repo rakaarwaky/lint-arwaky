@@ -3,7 +3,7 @@
 
 The output includes the selected file's content, its transitive dependencies
 (imported files from `use` / `import` statements), and related documentation
-(ARCHITECTURE.md, PRD.md, FRD of the owning crate, relevant SKILL.md files).
+(ARCHITECTURE.md, PRD.md, FRD of the owning crate, relevant skill files in .agents/skills/).
 
 Usage:
     # Interactive mode (prompts for selection):

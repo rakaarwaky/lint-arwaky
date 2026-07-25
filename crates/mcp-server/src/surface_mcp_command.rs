@@ -61,7 +61,7 @@ impl LintArwakyMcpServer {
     }
 
     #[tool(
-        description = "Read SKILL.md documentation by section. Searches several candidate locations."
+        description = "Read skill documentation by section. Searches skill candidate locations."
     )]
     pub async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
         self.agent.read_skill(args).await

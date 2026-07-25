@@ -74,7 +74,7 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
-# 5. Install docs + SKILL.md to XDG config
+# 5. Install docs to XDG config
 copy_docs_to_config "$CONFIG_DIR"
 
 # 6. Copy .agents/ to XDG config

@@ -78,7 +78,7 @@ for BIN in "${BINARIES[@]}"; do
     echo "  -> $INSTALL_BIN/$BIN"
 done
 
-# 5. Install docs + SKILL.md to global config
+# 5. Install docs to global config
 copy_docs_to_config "$CONFIG_DIR"
 
 # 6. Copy .agents/ to global config

@@ -53,11 +53,11 @@ The mcp-server crate implements a Model Context Protocol (MCP) server that expos
 
 ### FR-003: Read Skill
 
-- **Description**: Read SKILL.md documentation by section from candidate locations.
+- **Description**: Read skill documentation by section from candidate locations.
 - **Input**: Optional section filter string.
 - **Output**: JSON with `content` or `error`, plus `exit_code`.
 - **Business Rules**:
-  - Search order: project-relative candidates, then XDG config (`~/.config/lint-arwaky/SKILL.md`).
+  - Search order: `.agents/skills/` skill candidates, then XDG config (`~/.config/lint-arwaky/.agents/skills/`).
   - Optional section extracts content between `## <section>` headers.
 - **Edge Cases**:
   - Not found: error + searched paths, `exit_code: 2`.

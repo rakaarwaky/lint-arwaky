@@ -12,32 +12,30 @@ use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use std::sync::Arc;
 
 pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
-    // 1. Write language config files
+    // 1. Write language config files (always overwrite)
     let mut all_ok = true;
     let languages = setup_orchestrator.detect_languages();
     for lang in languages.iter() {
         let lang_str = lang.value();
         let target = format!("lint_arwaky.config.{}.yaml", lang_str);
-        if setup_orchestrator.file_exists(&target) {
-            println!("Config already exists: {}", target);
-        } else {
-            let content = setup_orchestrator.get_config_template(lang_str);
-            match setup_orchestrator.write_config_file(&target, content) {
-                Ok(desc) => {
-                    println!("Config created: {} (language: {})", target, lang_str);
-                    println!("  {}", desc.value);
-                }
-                Err(e) => {
-                    println!("Error creating config for {}: {e}", lang_str);
-                    all_ok = false;
-                }
+        let content = setup_orchestrator.get_config_template(lang_str);
+        match setup_orchestrator.write_config_file(&target, content) {
+            Ok(desc) => {
+                println!(
+                    "Config written/overwritten: {} (language: {})",
+                    target, lang_str
+                );
+                println!("  {}", desc.value);
+            }
+            Err(e) => {
+                println!("Error creating config for {}: {e}", lang_str);
+                all_ok = false;
             }
         }
     }
 
-    // 2. Distribute docs + SKILL.md from XDG config to project
+    // 2. Distribute docs from XDG config to project (always overwrite)
     let doc_files = [
-        "SKILL.md",
         "ARCHITECTURE.md",
         "MIGRATION_RUST.md",
         "MIGRATION_PYTHON.md",
@@ -47,10 +45,6 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
     if let Some(config_dir) = dirs::config_dir() {
         let xdg_base = config_dir.join("lint-arwaky");
         for doc in &doc_files {
-            if setup_orchestrator.file_exists(doc) {
-                println!("  {doc} — already exists, skipping");
-                continue;
-            }
             let xdg_src = xdg_base.join(doc);
             if !xdg_src.exists() {
                 println!("  {doc} — not in XDG config, skipping");
@@ -62,12 +56,29 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
                         let _ = std::fs::create_dir_all(parent);
                     }
                     match setup_orchestrator.write_config_file(doc, &content) {
-                        Ok(_) => println!("  {doc} — distributed from XDG config"),
+                        Ok(_) => println!("  {doc} — copied/overwritten from XDG config"),
                         Err(e) => println!("  {doc} — error: {e}"),
                     }
                 }
                 Err(e) => println!("  {doc} — read error: {e}"),
             }
+        }
+
+        // 3. Copy .agents/ (prompts, rules, skills) from XDG config to current project
+        let xdg_agents = xdg_base.join(".agents");
+        if xdg_agents.exists() && xdg_agents.is_dir() {
+            let target_agents = std::path::Path::new(".agents");
+            match copy_dir_all(&xdg_agents, target_agents) {
+                Ok(count) => {
+                    println!("  .agents/ (prompts, rules, skills) — copied/overwritten {count} file(s) from XDG config");
+                }
+                Err(e) => {
+                    println!("  .agents/ — copy error: {e}");
+                    all_ok = false;
+                }
+            }
+        } else {
+            println!("  .agents/ — not in XDG config, skipping");
         }
     } else {
         println!("Warning: could not determine XDG config dir");
@@ -78,6 +89,24 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
     } else {
         ExitCode::POLICY_FAIL
     }
+}
+
+fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<usize> {
+    std::fs::create_dir_all(dst)?;
+    let mut count = 0;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        if ty.is_dir() {
+            count += copy_dir_all(&src_path, &dst_path)?;
+        } else {
+            std::fs::copy(&src_path, &dst_path)?;
+            count += 1;
+        }
+    }
+    Ok(count)
 }
 
 pub async fn handle_install(

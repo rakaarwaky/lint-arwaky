@@ -81,7 +81,7 @@ lint-arwaky/
 
 ## Configuration
 
-Configuration is loaded from YAML files. See [SKILL.md](SKILL.md) for details.
+Configuration is loaded from YAML files.
 
 ```bash
 # Create default config
@@ -106,7 +106,7 @@ cargo run --bin lint-arwaky-mcp
 
 ## MCP Server
 
-See [SKILL.md](SKILL.md) for the MCP tool reference and [DEPLOY.md](DEPLOY.md) for client setup.
+See [DEPLOY.md](DEPLOY.md) for client setup and MCP tool reference.
 
 ## Contributing
 
