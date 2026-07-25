@@ -13,6 +13,7 @@ fn build_orchestrator() -> TuiOrchestrator {
     let executor = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     let handler = Arc::new(ActionHandler::new(executor));
     TuiOrchestrator::new(handler)

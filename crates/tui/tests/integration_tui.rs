@@ -15,6 +15,7 @@ fn build_full_wiring() -> (TuiOrchestrator, Arc<ActionHandler>, Arc<LintExecutor
     let executor = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     let handler = Arc::new(ActionHandler::new(executor.clone()));
     let orchestrator = TuiOrchestrator::new(handler.clone());
@@ -58,6 +59,7 @@ fn handler_and_orchestrator_share_arc() {
     let executor = Arc::new(LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     ));
     let handler = Arc::new(ActionHandler::new(executor));
     let _orchestrator = TuiOrchestrator::new(handler);
@@ -73,6 +75,6 @@ fn tui_components_default_creates_valid_instances() {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter();
 
-    let executor = Arc::new(LintExecutor::new(code_analysis));
+    let executor = Arc::new(LintExecutor::new(code_analysis, None));
     let _handler = ActionHandler::new(executor);
 }

@@ -15,8 +15,8 @@ case "${1:-}" in
     -h|--help) usage ;;
 esac
 
-export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
-export RUST_MIN_STACK="${RUST_MIN_STACK:-536870912}"
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
+export RUST_MIN_STACK="${RUST_MIN_STACK:-134217728}"
 export CARGO_INCREMENTAL=0
 export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER="${CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER:-cc}"
 
@@ -83,15 +83,12 @@ echo -e "${YELLOW}Lint Arwaky — Gate Checker${NC}"
 echo "Running all quality gates locally..."
 echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
 
-# ─── Stage 1: Fast static checks (parallel) ───────────────
+# ─── Stage 1: Fast static checks (sequential) ─────────────
 st1_start=$SECONDS
-echo -e "\n${CYAN}━━━ Stage 1: Format + Clippy (parallel) ━━━${NC}"
-PIDS=()
-run_gate "Rust Format" cargo fmt --all -- --check &
-PIDS+=($!)
-run_gate "Clippy" cargo clippy --all-targets -- -D warnings &
-PIDS+=($!)
-wait_and_report "${PIDS[@]}"
+echo -e "\n${CYAN}━━━ Stage 1: Format + Clippy (sequential) ━━━${NC}"
+run_gate "Rust Format" cargo fmt --all -- --check
+run_gate "Clippy" cargo clippy --all-targets -- -D warnings
+wait_and_report
 echo "Stage 1 duration: $((SECONDS - st1_start))s"
 
 # ─── Stage 2: CLI build (shared for self-lint + AES codes) ─
@@ -100,24 +97,21 @@ echo -e "\n${CYAN}━━━ Stage 2: Building lint-arwaky-cli ━━━${NC}"
 cargo build --bin lint-arwaky-cli 2>&1
 echo -e "${GREEN}✅ CLI build complete ($((SECONDS - st2_start))s)${NC}"
 
-# ─── Stage 3: Self-Lint + AES Codes (parallel) ────────────
+# ─── Stage 3: Self-Lint + AES Codes (sequential) ──────────
 st3_start=$SECONDS
-echo -e "\n${CYAN}━━━ Stage 3: Self-Lint + AES Codes (parallel) ━━━${NC}"
-PIDS=()
+echo -e "\n${CYAN}━━━ Stage 3: Self-Lint + AES Codes (sequential) ━━━${NC}"
 run_gate "AES Self-Lint (check . = 0 violations)" bash -c '
     output=$(./target/debug/lint-arwaky-cli check . 2>&1)
     violations=$(echo "$output" | grep "Violations:" | grep -oP "\d+")
     echo "  violations: ${violations:-0}"
     [ "${violations:-0}" = "0" ]
-' &
-PIDS+=($!)
+'
 run_gate "AES Codes (test-workspaces >= 24)" bash -c '
     codes=$(./target/debug/lint-arwaky-cli scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  unique codes: ${codes:-0}"
     [ "${codes:-0}" -ge 24 ]
-' &
-PIDS+=($!)
-wait_and_report "${PIDS[@]}"
+'
+wait_and_report
 echo "Stage 3 duration: $((SECONDS - st3_start))s"
 
 # ─── Stage 4: Tests ─────────────────────────────────────────

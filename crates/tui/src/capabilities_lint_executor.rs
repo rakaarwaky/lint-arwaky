@@ -26,6 +26,7 @@ use std::sync::Arc;
 // with user-facing output formatting.
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -590,8 +591,6 @@ impl ILintExecutorProtocol for LintExecutor {
         let provider_thread = provider.clone();
 
         std::thread::spawn(move || {
-            use file_watch::ChangeAnalyzer;
-
             // Create a tokio runtime for async watch operations
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()
@@ -610,7 +609,7 @@ impl ILintExecutorProtocol for LintExecutor {
                 let mut rx_events = provider_thread.subscribe();
 
                 while let Ok(event) = rx_events.recv().await {
-                    if <ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(&event.path) {
+                    if <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(&event.path) {
                         let event_fp = FilePath::new(&event.path).unwrap_or_default();
                         let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
                         let lint_count = lint_results.len();

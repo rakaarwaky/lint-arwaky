@@ -9,6 +9,7 @@ fn executor() -> LintExecutor {
     LintExecutor::new(
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
+        None,
     )
 }
 
@@ -94,5 +95,5 @@ fn lint_executor_default_creates_valid_instance() {
     let code_analysis =
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter();
-    let _ = LintExecutor::new(code_analysis);
+    let _ = LintExecutor::new(code_analysis, None);
 }

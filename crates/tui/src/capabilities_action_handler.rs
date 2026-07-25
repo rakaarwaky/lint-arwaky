@@ -34,7 +34,7 @@ impl IActionHandlerProtocol for ActionHandler {
         ActionHandler::load_directory(self, state, path);
     }
 
-    fn load_preview(&self, state: &mut AppState) {
+    fn load_preview(&self, _state: &mut AppState) {
         // No-op — TUI Preview panel only shows action output (check, scan, fix, etc.)
         // File content preview is intentionally disabled per FRD compliance.
     }
@@ -370,14 +370,15 @@ impl ActionHandler {
 
     /// Read up to 100 lines of a file for inline preview.
     /// No-op — file content preview is intentionally disabled per FRD compliance.
-    fn load_file_preview(&self, state: &mut AppState, _path: &str) {
+    #[allow(dead_code)]
+    fn load_file_preview(&self, _state: &mut AppState, _path: &str) {
         // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
         // No file content preview is loaded.
     }
 
     /// Load preview for the currently selected entry if it's a file.
     /// No-op — file content preview is intentionally disabled per FRD compliance.
-    pub fn load_preview(&self, state: &mut AppState) {
+    pub fn load_preview(&self, _state: &mut AppState) {
         // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
         // No file content preview is loaded.
     }
