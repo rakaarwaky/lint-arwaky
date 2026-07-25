@@ -72,10 +72,10 @@ python -c "import <module>"
 
 ```bash
 # Find root files
-grep -rn "root_\|container\|entry" modules/*/src/
+grep -rn "root_\|container\|entry" modules/
 
 # Check for business logic in root
-grep -n "def calculate\|def validate\|def analyze" modules/*/src/root_*.py
+grep -n "def calculate\|def validate\|def analyze" modules/
 ```
 
 ## Common Mistakes

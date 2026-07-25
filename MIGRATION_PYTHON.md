@@ -26,9 +26,9 @@ project-root/
 │   │       ├── agent_<concept>_orchestrator.py
 │   │       ├── surface_<concept>_<role>.py
 │   │       └── root_<concept>_container.py
+│   │
+│   ├── root_<name>_entry.py   ← entry point (file inside modules/)
 │   └── ...
-└── src/
-    └── root_<name>_entry.py   ← entry point (at workspace root)
 ```
 
 **Key rules:**
@@ -36,7 +36,7 @@ project-root/
 - All 7 layers coexist in each feature slice.
 - Stable domain taxonomy, contracts, and utilities live under `modules/shared/src/<feature>/`.
 - Orchestration, capabilities, and surfaces live in the feature module.
-- Entry points (`root_*_entry.py`) live at workspace root or `src/`.
+- Entry points (`root_*_entry.py`) live directly under `modules/` (file, NOT directory).
 - Shared types go in `modules/shared/`.
 
 ---

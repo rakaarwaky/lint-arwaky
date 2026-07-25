@@ -27,9 +27,9 @@ project-root/
 │   │       ├── agent_<concept>_orchestrator.ts
 │   │       ├── surface_<concept>_<role>.ts
 │   │       └── root_<concept>_container.ts
+│   │
+│   ├── root_<name>_entry.ts   ← entry point (file inside packages/)
 │   └── ...
-└── src/
-    └── root_<name>_entry.ts   ← entry point (at workspace root)
 ```
 
 **Key rules:**
@@ -37,7 +37,8 @@ project-root/
 - All 7 layers coexist in each feature slice.
 - Stable domain taxonomy, contracts, and utilities live under `packages/shared/src/<feature>/`.
 - Orchestration, capabilities, and surfaces live in the feature package.
-- Entry points (`root_*_entry.ts`) live at workspace root or `src/`.
+- Entry points (`root_*_entry.ts`) live directly under `packages/` (file, NOT directory).
+- Shared types go in `packages/shared/`.
 
 ---
 

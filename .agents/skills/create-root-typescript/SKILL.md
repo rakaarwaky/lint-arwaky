@@ -72,10 +72,10 @@ npx tsc --noEmit
 
 ```bash
 # Find root files
-grep -rn "root_\|container\|entry" packages/*/src/
+grep -rn "root_\|container\|entry" packages/
 
 # Check for business logic in root
-grep -n "function calculate\|function validate\|function analyze" packages/*/src/root_*.ts
+grep -n "function calculate\|function validate\|function analyze" packages/
 ```
 
 ## Common Mistakes
