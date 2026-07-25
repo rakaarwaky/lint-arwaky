@@ -34,10 +34,11 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &FilePathList,
-        _root_dir: &FilePath,
+        root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        let root_dir_str = root_dir.to_string();
 
         let aes201_exceptions: HashSet<String> = config
             .rules
@@ -82,6 +83,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                             &specialized,
                             def,
                             &import_lines,
+                            &root_dir_str,
                             &mut local_violations,
                         );
                     }
@@ -123,6 +125,7 @@ impl ArchImportForbiddenChecker {
             shared::taxonomy_common_vo::LineNumber,
             shared::taxonomy_layer_vo::LineContentVO,
         )],
+        root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
@@ -147,54 +150,71 @@ impl ArchImportForbiddenChecker {
         let layer_name_vo = LayerNameVO::new(layer_name);
 
         for (line_num, line) in import_lines {
-            if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                let module_val = module.value();
-                for forbidden in &forbidden_list {
-                    let forbidden_identity = Identity::new(forbidden);
-                    let (layer, suffixes) =
-                        utility_import_resolver::resolve_scope(&forbidden_identity);
-                    let is_forbidden = if suffixes.is_empty() {
-                        module_val
-                            .split([':', '.', '/', '\\'])
-                            .filter(|s| !s.is_empty())
-                            .any(|seg| {
-                                let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                                match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                    Some(l) => l == layer,
-                                    None => false,
-                                }
-                            })
-                    } else {
-                        utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
-                    };
-                    if is_forbidden {
-                        let allowed: Vec<LayerNameVO> = definition
-                            .allowed
-                            .values
-                            .iter()
-                            .map(|s| {
-                                LayerNameVO::new(
-                                    utility_import_resolver::resolve_scope(&Identity::new(s))
-                                        .0
-                                        .value()
-                                        .to_string(),
-                                )
-                            })
-                            .collect();
-                        violations.push(LintResult::new_arch(
-                            file,
-                            line_num.value() as usize,
-                            "AES201",
-                            Severity::CRITICAL,
-                            AesImportViolation::ForbiddenImport {
-                                source_layer: layer_name_vo.clone(),
-                                forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                                allowed,
-                                reason: None,
+            let module = match utility_import_resolver::extract_module_from_line(line) {
+                Some(m) => m,
+                None => continue,
+            };
+            let module_val = module.value();
+
+            // ── Extract symbol name from import line for barrel resolution ──
+            let symbol_name = extract_symbol_from_import_line((line_num, line));
+
+            // ── Barrel resolution: resolve through __init__.py / mod.rs / index.ts ──
+            let resolved_layer = if let Some(sym) = &symbol_name {
+                utility_import_resolver::resolve_barrel_import(module_val, sym, root_dir)
+                    .and_then(|r| r.resolved_layer)
+            } else {
+                None
+            };
+
+            for forbidden in &forbidden_list {
+                let forbidden_identity = Identity::new(forbidden);
+                let (layer, suffixes) =
+                    utility_import_resolver::resolve_scope(&forbidden_identity);
+
+                // Use resolved layer from barrel if available, otherwise use original module
+                let check_val = resolved_layer.clone().unwrap_or_else(|| module_val.to_string());
+                let is_forbidden = if suffixes.is_empty() {
+                    check_val
+                        .split([':', '.', '/', '\\'])
+                        .filter(|s| !s.is_empty())
+                        .any(|seg| {
+                            let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                            match utility_import_resolver::extract_layer_from_import(&cleaned) {
+                                Some(l) => l == layer,
+                                None => false,
                             }
-                            .to_string(),
-                        ));
-                    }
+                        })
+                } else {
+                    utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
+                };
+                if is_forbidden {
+                    let allowed: Vec<LayerNameVO> = definition
+                        .allowed
+                        .values
+                        .iter()
+                        .map(|s| {
+                            LayerNameVO::new(
+                                utility_import_resolver::resolve_scope(&Identity::new(s))
+                                    .0
+                                    .value()
+                                    .to_string(),
+                            )
+                        })
+                        .collect();
+                    violations.push(LintResult::new_arch(
+                        file,
+                        line_num.value() as usize,
+                        "AES201",
+                        Severity::CRITICAL,
+                        AesImportViolation::ForbiddenImport {
+                            source_layer: layer_name_vo.clone(),
+                            forbidden_layer: LayerNameVO::new(forbidden.clone()),
+                            allowed,
+                            reason: None,
+                        }
+                        .to_string(),
+                    ));
                 }
             }
         }
@@ -288,4 +308,84 @@ impl ArchImportForbiddenChecker {
             }
         }
     }
+}
+
+/// Extract the symbol name from an import line for barrel resolution.
+/// Returns None if no symbol can be extracted.
+fn extract_symbol_from_import_line(
+    line: (&shared::common::taxonomy_common_vo::LineNumber, &shared::common::taxonomy_layer_vo::LineContentVO),
+) -> Option<String> {
+    let trimmed = line.1.value().trim();
+
+    // Python: from X import Y
+    if let Some(rest) = trimmed.strip_prefix("from ") {
+        if let Some(import_part) = rest.split_once(" import ") {
+            let imports = import_part.1;
+            // Handle "from X import Y, Z" → take first symbol
+            for name in imports.split(',') {
+                let name = name.trim().split(" as ").next().unwrap_or("").trim();
+                if !name.is_empty() && name != "*" {
+                    return Some(name.to_string());
+                }
+            }
+        }
+    }
+
+    // Rust: use module::Type; or use module::{A, B};
+    if trimmed.starts_with("use ")
+        || trimmed.starts_with("pub use ")
+        || trimmed.starts_with("pub(crate) use ")
+    {
+        let use_part = trimmed
+            .trim_start_matches("pub(crate) use ")
+            .trim_start_matches("pub use ")
+            .trim_start_matches("use ")
+            .trim_end_matches(';')
+            .trim();
+
+        if let Some(brace_pos) = use_part.find("::{") {
+            // use module::{A, B};
+            let inner = use_part[brace_pos + 3..].trim_end_matches('}');
+            for name in inner.split(',') {
+                let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                if !name.is_empty() && name != "*" {
+                    return Some(name.to_string());
+                }
+            }
+        } else {
+            // use module::Type;
+            let name = use_part.rsplit("::").next().unwrap_or("").trim();
+            if !name.is_empty() && name != "*" {
+                return Some(name.to_string());
+            }
+        }
+    }
+
+    // TS/JS: import { X, Y } from './module';
+    if trimmed.starts_with("import ") && trimmed.contains(" from ") {
+        if let Some(from_pos) = trimmed.rfind(" from ") {
+            let import_part = &trimmed[7..from_pos];
+            if import_part.contains('{') {
+                if let Some(open) = import_part.find('{') {
+                    if let Some(close) = import_part.find('}') {
+                        let inner = &import_part[open + 1..close];
+                        for name in inner.split(',') {
+                            let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                            if !name.is_empty() {
+                                return Some(name.to_string());
+                            }
+                        }
+                    }
+                }
+            } else {
+                // import X from './module'
+                let name = import_part.trim();
+                if !name.is_empty() && name != "default" {
+                    return Some(name.to_string());
+                }
+            }
+        }
+    }
+
+    None
 }

@@ -95,6 +95,16 @@ pub fn group_by_member<'a>(
     grouped
 }
 
+/// Check if a path points to a recognized source file (not a directory).
+fn is_source_file(path: &str) -> bool {
+    path.ends_with(".rs")
+        || path.ends_with(".py")
+        || path.ends_with(".ts")
+        || path.ends_with(".tsx")
+        || path.ends_with(".js")
+        || path.ends_with(".jsx")
+}
+
 /// Output violations in the requested format. `is_specific_member` controls compact vs detailed.
 pub fn output_violations(
     violations: &[ViolationItem],
@@ -110,8 +120,9 @@ pub fn output_violations(
         None
     };
     let grouped = group_by_member(violations, target_path, force_member.as_deref());
+    let is_single_file = is_source_file(target_path);
     match format {
-        Format::Text => render_text(&grouped, target_path, is_specific_member),
+        Format::Text => render_text(&grouped, target_path, is_specific_member, is_single_file),
         Format::Json => render_json(&grouped, violations, target_path),
         Format::Sarif => render_sarif(&grouped),
         Format::Junit => render_junit(&grouped),
@@ -124,6 +135,7 @@ fn render_text(
     grouped: &BTreeMap<String, Vec<&ViolationItem>>,
     target_path: &str,
     is_specific_member: bool,
+    is_single_file: bool,
 ) {
     let ver = env!("CARGO_PKG_VERSION");
     println!("Lint Arwaky v{ver} — Scan Report");
@@ -135,7 +147,8 @@ fn render_text(
         total += results.len();
         if results.is_empty() {
             continue;
-        } else if is_specific_member {
+        } else if is_single_file {
+            // ── Mode 3: Single file scan — show ALL violations WITH messages, no tip ──
             println!("[{member_name}] — {} violations", results.len());
             println!();
             for r in results {
@@ -147,7 +160,37 @@ fn render_text(
                 println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
             }
             println!();
+        } else if is_specific_member {
+            // ── Mode 2: Feature folder scan — per-file violations WITHOUT messages, with file tip ──
+            println!("[{member_name}] — violations by file");
+            println!();
+
+            // Group violations by file path
+            let mut file_violations: BTreeMap<String, Vec<&&ViolationItem>> = BTreeMap::new();
+            for r in results {
+                file_violations
+                    .entry(r.file.value.clone())
+                    .or_default()
+                    .push(r);
+            }
+            for (file_path, file_results) in &file_violations {
+                println!("  {file_path}:");
+                for r in file_results {
+                    let loc = match (r.line.value(), r.column.value()) {
+                        (l, c) if l > 0 && c > 0 => format!("line:{}:{}", l, c),
+                        (l, _) if l > 0 => format!("line:{}", l),
+                        _ => String::new(),
+                    };
+                    if loc.is_empty() {
+                        println!("    [{}]", r.code.code());
+                    } else {
+                        println!("    [{}] {}", r.code.code(), loc);
+                    }
+                }
+            }
+            println!();
         } else {
+            // ── Mode 1: Workspace root scan — per-member AES codes + counts, with member tip ──
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
             // Group by AES code, show count per code
@@ -165,11 +208,18 @@ fn render_text(
     println!("Total: {total} violations");
 
     if !is_specific_member {
+        // Mode 1 tip: scan specific feature folder
         println!();
-        println!("Tip: Scan specific member for detailed violations:");
+        println!("Tip: Scan specific feature folder for file-level violations:");
         println!("  lint-arwaky-cli scan <member-path>");
         println!("  lint-arwaky-cli scan <root> --member <member-name>");
+    } else if !is_single_file {
+        // Mode 2 tip: scan specific file for detailed violations
+        println!();
+        println!("Tip: Scan a specific file for detailed violations:");
+        println!("  lint-arwaky-cli scan <file-path>");
     }
+    // Mode 3 (single file): no scan tip
 }
 
 // ─── JSON ───────────────────────────────────────────────────

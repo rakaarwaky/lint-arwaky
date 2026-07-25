@@ -74,7 +74,7 @@ impl DependencyCycleAnalyzer {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &[String],
-        _root_dir: &str,
+        root_dir: &str,
     ) -> Vec<LintResult> {
         if !config.enabled.value {
             return vec![];
@@ -112,7 +112,15 @@ impl DependencyCycleAnalyzer {
                     None => return None,
                 };
 
-                let modules = utility_import_module_parser::extract_import_modules(&content);
+                // ── Barrel-aware module extraction ──
+                // For imports through barrel files, resolve to original source
+                // so dependency graph reflects actual file-to-file dependencies.
+                let resolved_modules = utility_import_module_parser::extract_import_modules_resolved(&content, root_dir);
+
+                let modules: Vec<SymbolName> = resolved_modules
+                    .into_iter()
+                    .map(|(_, resolved)| resolved)
+                    .collect();
                 let mut local_edges = Vec::new();
                 let mut has_cross_layer = false;
                 for module in modules {
@@ -143,9 +151,11 @@ impl DependencyCycleAnalyzer {
                     } else {
                         module_value
                     };
-                    if let Some(target_layer) =
-                        utility_layer_detector::detect_module_layer(module_path, &layer_keys)
-                    {
+                    // Try standard detection first, then fallback to filesystem scan
+                    let target_layer = utility_layer_detector::detect_module_layer(module_path, &layer_keys)
+                        .or_else(|| utility_layer_detector::resolve_module_path_to_layer(module_path, root_dir));
+
+                    if let Some(target_layer) = target_layer {
                         let target_layer_str = match target_layer.split('(').next() {
                             Some(p) => p.to_string(),
                             None => target_layer,

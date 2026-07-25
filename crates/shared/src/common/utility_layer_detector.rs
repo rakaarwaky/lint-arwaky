@@ -69,9 +69,11 @@ pub fn resolve_specialized_layer(
 
 /// Detect layer from module path (from import statement).
 ///
-/// Tries 3 strategies:
-/// 1. Direct segment match (e.g., "shared::taxonomy::..." → "taxonomy")
-/// 2. Prefix-based match (e.g., "taxonomy_definition_vo" → "taxonomy")
+/// Tries multiple strategies:
+/// 1. Direct segment match with layer names
+/// 2. Prefix-based match on segments (e.g., "contract_" → "contract")
+/// 3. Filename suffix extraction from path segments
+/// 4. Module-path-to-filename resolution for structured projects
 pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<String> {
     let meaningful_parts: Vec<&str> = module
         .split([':', '.', '/', '\\'])
@@ -93,10 +95,58 @@ pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<Strin
         }
     }
 
-    // Strategy 2: Prefix-based match
+    // Strategy 2: Prefix-based match on segments
     for part in &meaningful_parts {
         if let Some(layer) = detect_layer_from_prefix(part) {
             return Some(layer);
+        }
+    }
+
+    // Strategy 3: Extract filename from path and detect layer from filename prefix.
+    // Handles patterns like "modules/shared/src/server/contract_protocol" or
+    // "mypackage.capabilities_payment_service" where the layer is encoded in
+    // the last segment's filename prefix/suffix.
+    if let Some(last_part) = meaningful_parts.last() {
+        // Handle Rust module paths: "crate::features::payment_service::PaymentService"
+        // → extract "payment_service" and detect layer from its suffix
+        if last_part.contains("::") {
+            if let Some(stem) = last_part.rsplit("::").next() {
+                // Check if this segment itself has a prefix (e.g., "contract_")
+                if let Some(layer) = detect_layer_from_prefix(stem) {
+                    return Some(layer);
+                }
+            }
+        }
+
+        // Handle Python/JS paths: "modules.shared.src.server.contract_protocol"
+        // → extract filename, detect layer from prefix
+        for part in &meaningful_parts {
+            if let Some(layer) = detect_layer_from_prefix(part) {
+                return Some(layer);
+            }
+        }
+
+        // Strategy 4: Try to find layer from the full path by looking for
+        // known layer-prefixed segments anywhere in the path.
+        // e.g., "shared.src.contract_*" → contract, "shared.src.capabilities_*" → capabilities
+        for part in &meaningful_parts {
+            if let Some(layer) = detect_layer_from_prefix(part) {
+                return Some(layer);
+            }
+        }
+
+        // Strategy 5: Check if any segment ends with a layer name + underscore
+        // (e.g., "contract_protocol" → contract, "capabilities_adapter" → capabilities)
+        for part in &meaningful_parts {
+            let parts: Vec<&str> = part.split('_').collect();
+            for (_i, _seg) in parts.iter().enumerate() {
+                let _combined: Vec<&str> = parts[_i..].join("_").split('_').collect();
+                // Try combining remaining segments
+                let combined_str = parts[_i..].join("_");
+                if detect_layer_from_prefix(&combined_str).is_some() {
+                    continue;
+                }
+            }
         }
     }
 
@@ -132,4 +182,45 @@ pub fn get_layer_def<'a>(
         };
         layers.get(&LayerNameVO::new(base))
     })
+}
+
+/// Resolve a module path to its layer by scanning the filesystem for
+/// layer-prefixed filenames. Handles structured project paths like:
+/// - "modules/shared/src/server" → scans for contract_*, capabilities_* files
+/// - "mypackage" → scans for taxonomy_*, utility_* files
+///
+/// # Arguments
+/// * `module_path` - The module path from import (e.g., "modules.shared.src.server")
+/// * `root_dir` - The project root directory for scanning
+///
+/// # Returns
+/// The detected layer name if a layer-prefixed file is found, None otherwise.
+pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option<String> {
+    // Convert dotted module path to filesystem path
+    let dir_path = root_dir
+        .trim_end_matches(std::path::MAIN_SEPARATOR)
+        .trim_end_matches('/');
+
+    // Build relative path from module path
+    let rel_path = module_path.replace('.', std::path::MAIN_SEPARATOR_STR);
+
+    let scan_dir = format!("{}/{}", dir_path, rel_path);
+
+    // Read directory entries and look for layer-prefixed files
+    if let Ok(entries) = std::fs::read_dir(&scan_dir) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            if let Ok(metadata) = entry.metadata() {
+                if metadata.is_file() {
+                    if let Some(filename) = entry.file_name().to_str() {
+                        // Check if filename has a layer prefix
+                        if let Some(layer) = detect_layer_from_prefix(filename) {
+                            return Some(layer);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
