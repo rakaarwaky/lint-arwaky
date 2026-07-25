@@ -468,9 +468,7 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
                 let open_parens = after_import.matches('(').count();
                 let close_parens = after_import.matches(')').count();
 
-                let full_import_part: String;
-
-                if open_parens > 0 && open_parens != close_parens {
+                let full_import_part: String = if open_parens > 0 && open_parens != close_parens {
                     // ── Multi-line parenthesized import ──
                     // Accumulate lines until parens balance
                     let mut accum = String::from(after_import);
@@ -489,14 +487,14 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
                         }
                     }
 
-                    full_import_part = accum;
+                    accum
                 } else {
                     // ── Single-line import (with or without parens) ──
-                    full_import_part = after_import.to_string();
-                }
+                    after_import.to_string()
+                };
 
                 // Strip all parentheses, then split by comma
-                let clean = full_import_part.replace('(', " ").replace(')', " ");
+                let clean = full_import_part.replace(['(', ')'], " ");
 
                 for name in clean.split(',') {
                     let name = name.trim();

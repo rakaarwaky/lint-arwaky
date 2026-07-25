@@ -5,16 +5,15 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_import_resolver;
-use shared::taxonomy_common_vo::LineNumber;
+use shared::import_rules::utility_path_normalizer;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
-use shared::taxonomy_name_vo::SymbolName;
+use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::collections::HashSet;
 
-// PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
+// PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
 //
 // Barrel resolution: when direct module-path matching fails (e.g. import
@@ -24,17 +23,18 @@ use std::collections::HashSet;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ArchImportMandatoryChecker;
+pub struct ArchImportForbiddenChecker;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 #[async_trait]
-impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
+impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity {
-        Identity::new("AES202")
+        let _ = utility_path_normalizer::extract_layer_from_prefix("");
+        Identity::new("AES201")
     }
 
-    async fn run_mandatory_imports(
+    async fn check_forbidden_imports(
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
@@ -43,15 +43,14 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         results: &mut LintResultList,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        let root_dir_str = root_dir.to_string();
 
-        let aes202_exceptions: HashSet<String> = config
+        let aes201_exceptions: HashSet<String> = config
             .rules
             .iter()
-            .filter(|r| r.name.value == "AES202")
+            .filter(|r| r.name.value == "AES201")
             .flat_map(|r| r.exceptions.values.iter().cloned())
             .collect();
-
-        let root_str = root_dir.value().to_string();
 
         let file_violations: Vec<LintResult> = files
             .values
@@ -59,7 +58,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             .flat_map(|f| {
                 let f_str = f.to_string();
                 let basename = f.basename();
-                if aes202_exceptions.contains(&basename) {
+                if aes201_exceptions.contains(&basename) {
                     return Vec::new();
                 }
 
@@ -68,9 +67,10 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                         Some(c) => c,
                         None => return Vec::new(),
                     };
-                let file_content = FileContentVO::new(content);
-                let import_lines: Vec<(LineNumber, LineContentVO)> =
-                    utility_import_resolver::parse_import_lines_helper(file_content.value());
+                let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
+                if import_lines.is_empty() {
+                    return Vec::new();
+                }
 
                 let mut local_violations = Vec::new();
                 let filename = utility_layer_detector::extract_filename(&f_str);
@@ -83,22 +83,21 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     );
                     let layer_name = LayerNameVO::new(specialized.as_str());
                     if let Some(def) = layer_map.values.get(&layer_name) {
-                        self._check_mandatory_imports_with_lines(
+                        self._check_forbidden_imports_with_lines(
                             &f_str,
-                            &basename,
+                            &specialized,
                             def,
                             &import_lines,
-                            &root_str,
+                            &root_dir_str,
                             &mut local_violations,
                         );
                     }
                 }
-                self._check_scope_mandatory_imports_with_lines(
+                self._check_scope_forbidden_imports_with_lines(
                     &f_str,
                     &basename,
                     config,
                     &import_lines,
-                    &root_str,
                     &mut local_violations,
                 );
                 local_violations
@@ -111,146 +110,128 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for ArchImportMandatoryChecker {
+impl Default for ArchImportForbiddenChecker {
     fn default() -> Self {
         Self
     }
 }
 
-impl ArchImportMandatoryChecker {
+impl ArchImportForbiddenChecker {
     pub fn new() -> Self {
         Self
     }
 
-    fn _check_mandatory_imports_with_lines(
+    fn _check_forbidden_imports_with_lines(
         &self,
         file: &str,
-        basename: &str,
+        layer_name: &str,
         definition: &LayerDefinition,
-        import_lines: &[(LineNumber, LineContentVO)],
+        import_lines: &[(
+            shared::taxonomy_common_vo::LineNumber,
+            shared::taxonomy_layer_vo::LineContentVO,
+        )],
         root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.mandatory.values.is_empty() || basename == "__init__.py" {
-            return;
-        }
+        let file_path = match FilePath::new(file.to_string()) {
+            Ok(p) => p,
+            Err(_) => return,
+        };
+        let basename = file_path.basename();
         if definition.exceptions.values.contains(&basename.to_string()) {
             return;
         }
 
-        let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
-        let source_layer: &str = stem.split('_').next().map_or("unknown", |s| s);
-
-        for required in &definition.mandatory.values {
-            let required_identity = Identity::new(required);
-            let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
-            let layer_str: &str = layer.value();
-
-            // ── Direct match (existing behavior) ──
-            let is_present_direct = if suffixes.is_empty() {
-                import_lines
-                    .iter()
-                    .any(|(_, l)| l.value().contains(layer_str))
-            } else {
-                import_lines.iter().any(|(_, l)| {
-                    utility_import_resolver::import_matches_scope(l, &layer, &suffixes)
-                })
-            };
-
-            // ── Barrel resolution fallback ──
-            let is_present = is_present_direct
-                || self._check_barrel_mandatory_imports(
-                    import_lines,
-                    &layer,
-                    &suffixes,
-                    layer_str,
-                    root_dir,
-                );
-
-            if !is_present {
-                violations.push(LintResult::new_arch(
-                    file,
-                    0,
-                    "AES202",
-                    Severity::HIGH,
-                    AesImportViolation::MissingImport {
-                        source_layer: LayerNameVO::new(source_layer.to_string()),
-                        required: SymbolName::new(required.clone()),
-                        reason: None,
-                    }
-                    .to_string(),
-                ));
-            }
-        }
-    }
-
-    fn _check_scope_mandatory_imports_with_lines(
-        &self,
-        file: &str,
-        basename: &str,
-        config: &ArchitectureConfig,
-        import_lines: &[(LineNumber, LineContentVO)],
-        root_dir: &str,
-        violations: &mut Vec<LintResult>,
-    ) {
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+        let is_surfaces = layer_name == "surfaces" || layer_name.starts_with("surfaces(");
+        if definition.forbidden.values.is_empty() && !is_surfaces {
             return;
         }
+        let forbidden_list: Vec<String> = if !definition.forbidden.values.is_empty() {
+            definition.forbidden.values.clone()
+        } else {
+            vec!["agent".into(), "capabilities".into()]
+        };
 
-        for rule in &config.rules {
-            if rule.mandatory.values.is_empty() {
-                continue;
-            }
-            let scope_identity = Identity::new(&rule.scope.value);
-            let Some((rule_layer_str, _rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename,
-                    &scope_identity,
-                )
-            else {
-                continue;
+        let layer_name_vo = LayerNameVO::new(layer_name);
+
+        for (line_num, line) in import_lines {
+            let module = match utility_import_resolver::extract_module_from_line(line) {
+                Some(m) => m,
+                None => continue,
             };
+            let module_val = module.value();
 
-            for required in &rule.mandatory.values {
-                let required_identity = Identity::new(required);
-                let (req_layer, req_suffixes) =
-                    utility_import_resolver::resolve_scope(&required_identity);
-                let req_layer_str = req_layer.value();
+            // ── Extract symbol name from import line for barrel resolution ──
+            let symbol_names = utility_import_resolver::extract_symbol_names(line.value());
 
-                // ── Direct match ──
-                let is_present_direct = if req_suffixes.is_empty() {
-                    import_lines
-                        .iter()
-                        .any(|(_, l)| l.value().contains(req_layer_str))
+            // ── Barrel resolution: resolve through __init__.py / mod.rs / index.ts ──
+            // Uses the new extract_symbol_names (handles Python/Rust/TS/JS) to get
+            // all imported symbols and resolves each through barrel files.
+            for forbidden in &forbidden_list {
+                let forbidden_identity = Identity::new(forbidden);
+                let (layer, suffixes) =
+                    utility_import_resolver::resolve_scope(&forbidden_identity);
+
+                // First: check direct module path match (existing behavior)
+                let mut is_forbidden = if suffixes.is_empty() {
+                    module_val
+                        .split([':', '.', '/', '\\'])
+                        .filter(|s| !s.is_empty())
+                        .any(|seg| {
+                            let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                            match utility_import_resolver::extract_layer_from_import(&cleaned) {
+                                Some(l) => l == layer,
+                                None => false,
+                            }
+                        })
                 } else {
-                    import_lines.iter().any(|(_, l)| {
-                        utility_import_resolver::import_matches_scope(
-                            l,
-                            &req_layer,
-                            &req_suffixes,
-                        )
-                    })
+                    utility_import_resolver::import_matches_scope(
+                        line,
+                        &layer,
+                        &suffixes,
+                    )
                 };
 
-                // ── Barrel resolution fallback ──
-                let is_present = is_present_direct
-                    || self._check_barrel_mandatory_imports(
-                        import_lines,
-                        &req_layer,
-                        &req_suffixes,
-                        req_layer_str,
-                        root_dir,
-                    );
+                // Second: barrel resolution fallback — check if any imported symbol
+                // resolves to the forbidden layer through barrel files
+                if !is_forbidden {
+                    for sym in &symbol_names {
+                        if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
+                            module_val,
+                            sym,
+                            root_dir,
+                        ) {
+                            if resolved.matches_layer(layer.value()) && (suffixes.is_empty() || suffixes.iter().any(|s| resolved.has_suffix(s.value()))) {
+                                is_forbidden = true;
+                                break;
+                            }
+                        }
+                    }
+                }
 
-                if !is_present {
+                if is_forbidden {
+                    let allowed: Vec<LayerNameVO> = definition
+                        .allowed
+                        .values
+                        .iter()
+                        .map(|s| {
+                            LayerNameVO::new(
+                                utility_import_resolver::resolve_scope(&Identity::new(s))
+                                    .0
+                                    .value()
+                                    .to_string(),
+                            )
+                        })
+                        .collect();
                     violations.push(LintResult::new_arch(
                         file,
-                        0,
-                        "AES202",
-                        Severity::HIGH,
-                        AesImportViolation::MissingImport {
-                            source_layer: LayerNameVO::new(rule_layer_str.clone()),
-                            required: SymbolName::new(required.clone()),
+                        line_num.value() as usize,
+                        "AES201",
+                        Severity::CRITICAL,
+                        AesImportViolation::ForbiddenImport {
+                            source_layer: layer_name_vo.clone(),
+                            forbidden_layer: LayerNameVO::new(forbidden.clone()),
+                            allowed,
                             reason: None,
                         }
                         .to_string(),
@@ -260,184 +241,92 @@ impl ArchImportMandatoryChecker {
         }
     }
 
-    /// Barrel resolution fallback for mandatory import checks.
-    ///
-    /// When direct module-path matching fails (e.g. `from modules.shared.src.server import X`
-    /// doesn't contain "contract"), resolve each imported symbol through the barrel file
-    /// (__init__.py / mod.rs / index.ts) to find the original source file and its layer.
-    ///
-    /// # Example
-    /// ```text
-    /// import:  from modules.shared.src.server import IBlenderConnectionProtocol
-    /// barrel:  modules/shared/src/server/__init__.py
-    ///          → from .contract_connection_protocol import IBlenderConnectionProtocol
-    /// resolved: contract_connection_protocol → layer "contract", suffix "_protocol" 
-    /// ```
-    fn _check_barrel_mandatory_imports(
+    fn _check_scope_forbidden_imports_with_lines(
         &self,
-        import_lines: &[(LineNumber, LineContentVO)],
-        layer: &LayerNameVO,
-        suffixes: &[Identity],
-        layer_str: &str,
-        root_dir: &str,
-    ) -> bool {
-        for (_, line) in import_lines {
-            let line_val = line.value();
+        file: &str,
+        basename: &str,
+        config: &ArchitectureConfig,
+        import_lines: &[(
+            shared::taxonomy_common_vo::LineNumber,
+            shared::taxonomy_layer_vo::LineContentVO,
+        )],
+        violations: &mut Vec<LintResult>,
+    ) {
+        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+            return;
+        }
 
-            let Some(module) = utility_import_resolver::extract_module_from_line(line) else {
+        for rule in &config.rules {
+            if rule.exceptions.values.contains(&basename.to_string()) {
                 continue;
-            };
-            let module_val = module.value();
-
-            // Find barrel file for this module path
-            let Some(barrel_path) =
-                utility_import_resolver::find_barrel_file(module_val, root_dir)
+            }
+            let Some((rule_layer_str, _rule_suffixes)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename,
+                    &Identity::new(&rule.scope.value),
+                )
             else {
                 continue;
             };
-            let Ok(barrel_content) = std::fs::read_to_string(&barrel_path) else {
-                continue;
-            };
-            let reexports = utility_import_resolver::parse_barrel_reexports(&barrel_content);
-            if reexports.is_empty() {
-                continue;
-            }
 
-            // Extract imported symbol names from the line
-            let symbols = Self::_extract_symbol_names(line_val);
-
-            for symbol_name in &symbols {
-                let Some(resolved_source) = reexports.get(symbol_name.as_str()) else {
-                    continue;
-                };
-
-                // Extract file stem from resolved source path
-                // "contract_connection_protocol" or "contract_connection_protocol/IBlenderConnectionProtocol"
-                let resolved_file = resolved_source
-                    .rsplit('/')
-                    .next()
-                    .or_else(|| resolved_source.rsplit("::").next())
-                    .unwrap_or(resolved_source);
-
-                // Detect layer from resolved file name
-                let Some(resolved_layer) =
-                    utility_layer_detector::detect_layer_from_prefix(resolved_file)
-                else {
-                    continue;
-                };
-
-                // ── Layer must match ──
-                if resolved_layer != layer_str {
-                    continue;
-                }
-
-                // ── Suffix check (if required) ──
-                if suffixes.is_empty() {
-                    // No suffix constraint — layer match is sufficient
-                    return true;
-                }
-
-                // Check if resolved file name contains the required suffix
-                // e.g. "contract_connection_protocol" contains "_protocol" 
-                let resolved_lower = resolved_file.to_lowercase();
-                if suffixes.iter().any(|s| {
-                    resolved_lower.contains(&format!("_{}", s.value().to_lowercase()))
-                }) {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
-    /// Extract imported symbol names from an import line.
-    /// Handles Python, Rust, and TS/JS import syntax.
-    ///
-    /// # Examples
-    /// - `from X import A, B as C`       → ["A", "C"]
-    /// - `use crate::mod::{A, B};`       → ["A", "B"]
-    /// - `import { A, B } from './mod'`  → ["A", "B"]
-    /// - `import X from './mod'`         → ["X"]
-    fn _extract_symbol_names(line: &str) -> Vec<String> {
-        let trimmed = line.trim();
-        let mut names = Vec::new();
-
-        // ── Python: from X import A, B ──
-        if trimmed.starts_with("from ") {
-            if let Some(import_part) = trimmed.split_once(" import ").map(|(_, p)| p) {
-                let clean = import_part
-                    .trim_start_matches('(')
-                    .trim_end_matches(')')
-                    .trim_end_matches(';');
-                for part in clean.split(',') {
-                    let name = part.trim().split(" as ").last().unwrap_or("").trim();
-                    if !name.is_empty() && name != "*" {
-                        names.push(name.to_string());
-                    }
-                }
-            }
-            return names;
-        }
-
-        // ── Rust: use crate::module::{A, B}; / use module::Type; ──
-        if trimmed.starts_with("use ")
-            || trimmed.starts_with("pub use ")
-            || trimmed.starts_with("pub(crate) use ")
-        {
-            let use_part = trimmed
-                .trim_start_matches("pub(crate) use ")
-                .trim_start_matches("pub use ")
-                .trim_start_matches("use ")
-                .trim_end_matches(';')
-                .trim();
-
-            if let Some(brace_start) = use_part.find("::{") {
-                let inner = use_part[brace_start + 3..].trim_end_matches('}');
-                for part in inner.split(',') {
-                    let name = part.trim().split(" as ").last().unwrap_or("").trim();
-                    if !name.is_empty() && name != "*" && name != "self" {
-                        names.push(name.to_string());
-                    }
-                }
-            } else {
-                let name = use_part.rsplit("::").next().unwrap_or("").trim();
-                if !name.is_empty() && name != "*" {
-                    names.push(name.to_string());
-                }
-            }
-            return names;
-        }
-
-        // ── TS/JS: import { A, B } from './module' ──
-        if trimmed.starts_with("import ") && trimmed.contains('{') {
-            if let Some(open) = trimmed.find('{') {
-                if let Some(close) = trimmed.find('}') {
-                    let inner = &trimmed[open + 1..close];
-                    for part in inner.split(',') {
-                        let name = part.trim().split(" as ").last().unwrap_or("").trim();
-                        if !name.is_empty() {
-                            names.push(name.to_string());
+            for (line_num, line) in import_lines {
+                if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
+                    let module_val = module.value();
+                    for forbidden in &rule.forbidden.values {
+                        let forbidden_identity = Identity::new(forbidden);
+                        let (forbidden_layer, forbidden_suffixes) =
+                            utility_import_resolver::resolve_scope(&forbidden_identity);
+                        let is_forbidden = if forbidden_suffixes.is_empty() {
+                            module_val
+                                .split([':', '.', '/', '\\'])
+                                .filter(|s| !s.is_empty())
+                                .any(|seg| {
+                                    let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                                    match utility_import_resolver::extract_layer_from_import(
+                                        &cleaned,
+                                    ) {
+                                        Some(l) => l == forbidden_layer,
+                                        None => false,
+                                    }
+                                })
+                        } else {
+                            utility_import_resolver::import_matches_scope(
+                                line,
+                                &forbidden_layer,
+                                &forbidden_suffixes,
+                            )
+                        };
+                        if is_forbidden {
+                            let allowed: Vec<LayerNameVO> = rule
+                                .allowed
+                                .values
+                                .iter()
+                                .map(|s| {
+                                    LayerNameVO::new(
+                                        utility_import_resolver::resolve_scope(&Identity::new(s))
+                                            .0
+                                            .value()
+                                            .to_string(),
+                                    )
+                                })
+                                .collect();
+                            violations.push(LintResult::new_arch(
+                                file,
+                                line_num.value() as usize,
+                                "AES201",
+                                Severity::CRITICAL,
+                                AesImportViolation::ForbiddenImport {
+                                    source_layer: LayerNameVO::new(rule_layer_str.clone()),
+                                    forbidden_layer: LayerNameVO::new(forbidden.clone()),
+                                    allowed,
+                                    reason: None,
+                                }
+                                .to_string(),
+                            ));
                         }
                     }
                 }
             }
-            return names;
         }
-
-        // ── TS/JS: import X from './module' ──
-        if trimmed.starts_with("import ") && trimmed.contains(" from ") {
-            if let Some(import_part) = trimmed.strip_prefix("import ") {
-                let name = import_part
-                    .split(" from ")
-                    .next()
-                    .unwrap_or("")
-                    .trim();
-                if !name.is_empty() && name != "default" && name != "*" {
-                    names.push(name.to_string());
-                }
-            }
-        }
-
-        names
     }
 }

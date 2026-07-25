@@ -16,6 +16,11 @@ use std::collections::HashSet;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+//
+// Barrel resolution: when direct module-path matching fails (e.g. import
+// through __init__.py / mod.rs / index.ts hides the original file name),
+// resolves each imported symbol through the barrel file to detect the
+// original source file and its layer prefix.
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -34,7 +39,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &FilePathList,
-        _root_dir: &FilePath,
+        root_dir: &FilePath,
         results: &mut LintResultList,
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
@@ -45,6 +50,8 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             .filter(|r| r.name.value == "AES202")
             .flat_map(|r| r.exceptions.values.iter().cloned())
             .collect();
+
+        let root_str = root_dir.value().to_string();
 
         let file_violations: Vec<LintResult> = files
             .values
@@ -81,6 +88,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                             &basename,
                             def,
                             &import_lines,
+                            &root_str,
                             &mut local_violations,
                         );
                     }
@@ -90,6 +98,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     &basename,
                     config,
                     &import_lines,
+                    &root_str,
                     &mut local_violations,
                 );
                 local_violations
@@ -119,6 +128,7 @@ impl ArchImportMandatoryChecker {
         basename: &str,
         definition: &LayerDefinition,
         import_lines: &[(LineNumber, LineContentVO)],
+        root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
         if definition.mandatory.values.is_empty() || basename == "__init__.py" {
@@ -135,27 +145,27 @@ impl ArchImportMandatoryChecker {
             let required_identity = Identity::new(required);
             let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
             let layer_str: &str = layer.value();
-            let is_present = if suffixes.is_empty() {
-                // First try: direct match (existing behavior)
+
+            // ── Direct match (existing behavior) ──
+            let is_present_direct = if suffixes.is_empty() {
                 import_lines
                     .iter()
                     .any(|(_, l)| l.value().contains(layer_str))
             } else {
-                // First try: scope match (existing behavior)
                 import_lines.iter().any(|(_, l)| {
                     utility_import_resolver::import_matches_scope(l, &layer, &suffixes)
                 })
             };
 
-            // Fallback: barrel resolution — when direct match fails, try resolving
-            // through barrel files to detect contracts exported via __init__.py / mod.rs
-            let is_present = is_present || self._check_barrel_mandatory_imports(
-                file,
-                import_lines,
-                &layer,
-                &suffixes,
-                layer_str,
-            );
+            // ── Barrel resolution fallback ──
+            let is_present = is_present_direct
+                || self._check_barrel_mandatory_imports(
+                    import_lines,
+                    &layer,
+                    &suffixes,
+                    layer_str,
+                    root_dir,
+                );
 
             if !is_present {
                 violations.push(LintResult::new_arch(
@@ -180,6 +190,7 @@ impl ArchImportMandatoryChecker {
         basename: &str,
         config: &ArchitectureConfig,
         import_lines: &[(LineNumber, LineContentVO)],
+        root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
@@ -205,15 +216,32 @@ impl ArchImportMandatoryChecker {
                 let (req_layer, req_suffixes) =
                     utility_import_resolver::resolve_scope(&required_identity);
                 let req_layer_str = req_layer.value();
-                let is_present = if req_suffixes.is_empty() {
+
+                // ── Direct match ──
+                let is_present_direct = if req_suffixes.is_empty() {
                     import_lines
                         .iter()
                         .any(|(_, l)| l.value().contains(req_layer_str))
                 } else {
                     import_lines.iter().any(|(_, l)| {
-                        utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes)
+                        utility_import_resolver::import_matches_scope(
+                            l,
+                            &req_layer,
+                            &req_suffixes,
+                        )
                     })
                 };
+
+                // ── Barrel resolution fallback ──
+                let is_present = is_present_direct
+                    || self._check_barrel_mandatory_imports(
+                        import_lines,
+                        &req_layer,
+                        &req_suffixes,
+                        req_layer_str,
+                        root_dir,
+                    );
+
                 if !is_present {
                     violations.push(LintResult::new_arch(
                         file,
@@ -232,65 +260,67 @@ impl ArchImportMandatoryChecker {
         }
     }
 
-    /// Check if any import line resolves to a contract (or required layer) through barrel files.
+    /// Barrel resolution fallback for mandatory import checks.
     ///
-    /// Handles cases like `from modules.shared.src.asset import AssetSearchProtocol` where
-    /// the barrel file `modules/shared/src/asset/__init__.py` re-exports contract protocols.
+    /// When direct module-path matching fails (e.g. `from modules.shared.src.server import X`
+    /// doesn't contain "contract"), resolve each imported symbol through the barrel file
+    /// (__init__.py / mod.rs / index.ts) to find the original source file and its layer.
+    ///
+    /// Resolves via `utility_import_resolver::resolve_barrel_import()` which uses the shared
+    /// `parse_barrel_reexports()` to track symbol → file_stem mappings.
+    ///
+    /// # Example
+    /// ```text
+    /// import:  from modules.shared.src.server import IBlenderConnectionProtocol
+    /// barrel:  modules/shared/src/server/__init__.py
+    ///          → from .contract_connection_protocol import IBlenderConnectionProtocol
+    /// resolved: resolve_barrel_import → ResolvedImport {
+    ///     resolved_file: "contract_connection_protocol",
+    ///     resolved_layer: Some("contract"),
+    /// }
+    /// suffix "_protocol" check: contract_connection_protocol contains "_protocol" ✅
+    /// ```
     fn _check_barrel_mandatory_imports(
         &self,
-        file: &str,
         import_lines: &[(LineNumber, LineContentVO)],
-        layer: &LayerNameVO,
+        _layer: &LayerNameVO,
         suffixes: &[Identity],
         layer_str: &str,
+        root_dir: &str,
     ) -> bool {
-        // Extract workspace root for barrel resolution
-        let root_dir = shared::common::utility_file_handler::find_workspace_root(file)
-            .and_then(|p| Some(p.to_string_lossy().to_string()))
-            .unwrap_or_else(|| ".".to_string());
-
         for (_, line) in import_lines {
             let line_val = line.value();
 
-            // Extract module path from import line
-            if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                let module_val = module.value();
+            // Extract module path from the import line
+            let Some(module) = utility_import_resolver::extract_module_from_line(line) else {
+                continue;
+            };
+            let module_val = module.value();
 
-                // Try barrel resolution — look for __init__.py / mod.rs / index.ts
-                if let Some(barrel_path) = utility_import_resolver::find_barrel_file(&module_val, &root_dir) {
-                    if let Ok(barrel_content) = std::fs::read_to_string(&barrel_path) {
-                        let reexports = utility_import_resolver::parse_barrel_reexports(&barrel_content);
+            // Extract imported symbol names using shared utility (handles Python/Rust/TS/JS)
+            let symbols = utility_import_resolver::extract_symbol_names(line_val);
 
-                        // Check if any imported symbol resolves to the required layer
-                        for (_, import_part) in line_val.split_once("import ") {
-                            for name in import_part.split(',') {
-                                let name = name.trim();
-                                if name.is_empty() || name == "*" {
-                                    continue;
-                                }
-                                let symbol_name = match name.split_once(" as ") {
-                                    Some((_, alias)) => alias.trim(),
-                                    None => name.split_whitespace().next().unwrap_or(""),
-                                };
+            for symbol_name in &symbols {
+                // Resolve symbol through barrel file to find original source file stem
+                let Some(resolved) =
+                    utility_import_resolver::resolve_barrel_import(module_val, symbol_name, root_dir)
+                else {
+                    continue;
+                };
 
-                                if let Some(resolved_source) = reexports.get(symbol_name) {
-                                    // Extract file name from resolved source for layer detection
-                                    let resolved_file = resolved_source
-                                        .rsplit('/')
-                                        .next()
-                                        .or_else(|| resolved_source.rsplit("::").next())
-                                        .unwrap_or(resolved_source);
+                // ── Layer must match the required layer ──
+                if !resolved.matches_layer(layer_str) {
+                    continue;
+                }
 
-                                    // Check if resolved file has the required layer prefix
-                                    if let Some(resolved_layer) = utility_layer_detector::detect_layer_from_prefix(resolved_file) {
-                                        if resolved_layer == layer_str || !suffixes.is_empty() {
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                // ── Suffix check (if required) ──
+                // e.g. required = "contract(protocol)" → layer="contract", suffixes=["protocol"]
+                // resolved file stem = "contract_connection_protocol" → contains "_protocol" ✅
+                if suffixes.is_empty() {
+                    return true;
+                }
+                if suffixes.iter().any(|s| resolved.has_suffix(s.value())) {
+                    return true;
                 }
             }
         }

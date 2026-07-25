@@ -344,9 +344,9 @@ fn normalize_module_path(module_path: &str) -> String {
 ///
 /// # Examples
 /// - `("modules.shared.src.server", "/workspace")` →
-///     checks `/workspace/modules/shared/src/server/__init__.py`
+///   checks `/workspace/modules/shared/src/server/__init__.py`
 /// - `("./services", "/workspace")` →
-///     checks `/workspace/services/index.ts`
+///   checks `/workspace/services/index.ts`
 pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
     let base = Path::new(root_dir);
     let clean_path = normalize_module_path(module_path);
@@ -381,7 +381,7 @@ fn extract_module_stem(module_path: &str) -> String {
     module_path
         .trim_start_matches("./")
         .trim_start_matches("../")
-        .rsplit(|c| c == '.' || c == '/')
+        .rsplit(['.', '/'])
         .next()
         .unwrap_or(module_path)
         .to_string()
@@ -406,7 +406,7 @@ fn extract_module_stem(module_path: &str) -> String {
 /// → `{"UserService": "user-service"}`
 ///
 /// # Rust `mod.rs`:
-/// ```rust
+/// ```rust,ignore
 /// pub use auth::AuthOrchestrator;
 /// ```
 /// → `{"AuthOrchestrator": "auth"}`
@@ -495,8 +495,8 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                 let name = use_part.rsplit("::").next().unwrap_or("").trim();
                 // Extract module stem: "auth::AuthOrchestrator" → "auth"
                 let module_stem = use_part
-                    .rsplitn(2, "::")
-                    .nth(1)
+                    .rsplit_once("::")
+                    .map(|x| x.0)
                     .unwrap_or(use_part)
                     .rsplit("::")
                     .next()
