@@ -1,5 +1,6 @@
 use crate::tui::taxonomy_action_flags_vo::ActionFlags;
 use crate::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use crate::tui::taxonomy_watch_message_vo::WatchMessage;
 use std::sync::mpsc::Receiver;
 
 pub trait ILintExecutorProtocol: Send + Sync {
@@ -22,5 +23,6 @@ pub trait ILintExecutorProtocol: Send + Sync {
     fn version(&self) -> LintExecutionResult;
     /// Start file-watch mode: run initial scan, then spawn background thread
     /// that lints changed files. Returns (initial_result, receiver_for_updates).
-    fn watch(&self, path: &str) -> (LintExecutionResult, Receiver<String>);
+    fn watch(&self, path: &str) -> (LintExecutionResult, Receiver<WatchMessage>);
 }
+

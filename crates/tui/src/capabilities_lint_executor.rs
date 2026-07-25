@@ -551,9 +551,10 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, 0)
     }
 
-    fn watch(&self, path: &str) -> (LintExecutionResult, std::sync::mpsc::Receiver<String>) {
+    fn watch(&self, path: &str) -> (LintExecutionResult, std::sync::mpsc::Receiver<shared::tui::taxonomy_watch_message_vo::WatchMessage>) {
         use shared::common::taxonomy_path_vo::FilePath;
         use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+        use shared::tui::taxonomy_watch_message_vo::WatchMessage;
 
         // Run initial scan
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
@@ -571,7 +572,7 @@ impl ILintExecutorProtocol for LintExecutor {
             None => {
                 // No watch provider available — just return initial result
                 let (tx, rx) = std::sync::mpsc::channel();
-                let _ = tx.send(format!("[initial] {} violations, score {:.1}", count, score));
+                let _ = tx.send(WatchMessage::new(format!("[initial] {} violations, score {:.1}", count, score)));
                 let result = LintExecutionResult {
                     output: initial_output,
                     violation_count: count,
@@ -615,14 +616,15 @@ impl ILintExecutorProtocol for LintExecutor {
                         let lint_count = lint_results.len();
                         let lint_score = code_analysis_thread.calc_score(&lint_results);
 
-                        let _ = tx.send(format!(
+                        let _ = tx.send(WatchMessage::new(format!(
                             "[change] {} | {} violations, score {:.1}",
                             event.path, lint_count, lint_score
-                        ));
+                        )));
                     }
                 }
             });
         });
+
 
         let result = LintExecutionResult {
             output: initial_output,
