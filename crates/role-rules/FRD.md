@@ -70,11 +70,11 @@ Target Path
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
 - **Business Rules**:
-  - **Rule 3**: Max 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip implementor check.
+  - **Rule 1**: Max 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip implementor check.
   - **Rule 2**: At least 1 struct/class must implement a protocol (`impl Trait for Struct` in Rust, `class Name(Parent)` in Python, `class Name implements IProtocol` in TS). Violation: "missing protocol implementor".
   - Internal helper types (structs/classes without protocol impl) are allowed and not flagged.
   - **Note**: Protocol import checking is handled by the import-rules crate, not role-rules. This rule only checks implementation, not imports.
-- **Edge Cases**: Capability file with no implementor — flagged by Rule 2. File with exactly 3 types — passes Rule 3. File with >3 types — flagged by Rule 3 only (implementor check skipped).
+- **Edge Cases**: Capability file with no implementor — flagged by Rule 2. File with exactly 3 types — passes Rule 1. File with >3 types — flagged by Rule 1 only (implementor check skipped).
 - **Error Handling**: Files that cannot be parsed for types produce no violations (fail-safe).
 
 ### FR-005: Utility Purity (AES404)

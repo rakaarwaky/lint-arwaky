@@ -3,12 +3,13 @@
 // ALGORITHM (applied uniformly across Rust, Python, TypeScript):
 //   1. Collect all type declarations (struct/class/enum/interface).
 //      Skip #[cfg(test)] blocks (Rust only).
-//   2. Rule 2 — Must have ≥ 1 implementor:
+//   2. Rule 1 — Max 3 type declarations per file. If exceeded → flag CapabilityTooManyTypes.
+//      Checked first; if violated, skip implementor check entirely.
+//   3. Rule 2 — Must have ≥ 1 implementor:
 //        Rust:   impl <Trait> for <Struct>
 //        Python: class <Name>(<Parent>):
 //        TS:     class <Name> implements <IProtocol>
 //      If none → flag CapabilityNoImplementor.
-//   3. Rule 3 — Max 3 type declarations per file. If exceeded → flag CapabilityTooManyTypes.
 //   4. Internal helper types (without implementor pattern) are ALLOWED and not flagged.
 //
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
@@ -113,7 +114,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── RULE 3: max 3 types (struct + enum) ──────────────
+        // ── RULE 1: max 3 types (struct + enum) ──────────────
         if type_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -148,7 +149,7 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── RULE 1: internal struct without trait impl → NOT flagged ──
+    
     }
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -216,7 +217,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── RULE 3: max 3 types ──────────────────────────────
+        // ── RULE 1: max 3 types ──────────────────────────────
         if type_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -242,7 +243,7 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── RULE 1: internal class without implements → NOT flagged ──
+
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -283,7 +284,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── RULE 3: max 3 types ──────────────────────────────
+        // ── RULE 1: max 3 types ──────────────────────────────
         if class_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -309,6 +310,5 @@ impl CapabilitiesRoleChecker {
             ));
         }
 
-        // ── RULE 1: internal class without inheritance → NOT flagged ──
     }
 }
