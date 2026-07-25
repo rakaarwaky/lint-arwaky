@@ -43,9 +43,10 @@ impl IActionHandlerProtocol for ActionHandler {
         // Check for new watch results from background thread
         if let Some(rx) = &state.watch_receiver {
             while let Ok(message) = rx.try_recv() {
-                state.watch_results.push_str(&message);
+                state.watch_results.push_str(&message.value);
                 state.watch_results.push('\n');
             }
+
             // Update preview with latest watch results
             if !state.watch_results.is_empty() {
                 state.preview_text.clone_from(&state.watch_results);

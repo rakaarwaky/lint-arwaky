@@ -5,6 +5,7 @@ pub mod taxonomy_lint_result_vo;
 pub mod taxonomy_scan_update_vo;
 pub mod taxonomy_state_vo;
 pub mod taxonomy_tui_event;
+pub mod taxonomy_watch_message_vo;
 
 pub mod contract_action_handler_protocol;
 pub mod contract_lint_executor_protocol;
