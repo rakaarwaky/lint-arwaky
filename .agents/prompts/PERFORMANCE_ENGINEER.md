@@ -9,7 +9,7 @@ IMPORTANT: Before making any changes, you MUST read and follow the rules in `.ag
 When your review is complete, save the report to:
 
 ```
-.agents/report/done-<feature>-performance-engineer-<timestamp>.md
+.agents/report/todo-<feature>-performance-engineer-<timestamp>.md
 ```
 
 ### Report Structure
