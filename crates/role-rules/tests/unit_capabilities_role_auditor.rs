@@ -1,5 +1,9 @@
-// PURPOSE: Unit tests for CapabilitiesRoleChecker (AES403) — protocol import routing.
+// PURPOSE: Unit tests for CapabilitiesRoleChecker (AES403) — protocol implementation checks.
 // Layer: Capabilities (CapabilitiesRoleChecker)
+//
+// Note: Import checking is handled by import-rules crate. This rule only checks:
+// - Rule 2: At least 1 implementor (struct/class with trait impl or inheritance)
+// - Rule 3: Max 3 type declarations per file
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
@@ -18,7 +22,7 @@ fn make_source(file: &str, content: &str) -> SourceContentVO {
 // ─── check_capability_routing: Happy Path (Rust) ────
 
 #[test]
-fn rust_capabilities_with_protocol_import_passes() {
+fn rust_capabilities_with_impl_trait_passes() {
     let content = r#"
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
 
@@ -35,7 +39,7 @@ impl IAgentRoleChecker for MyChecker {
 }
 
 #[test]
-fn rust_capabilities_with_port_import_passes() {
+fn rust_capabilities_with_port_impl_passes() {
     let content = r#"
 use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
 
@@ -52,7 +56,7 @@ impl IContractRoleChecker for MyChecker {}
 // ─── check_capability_routing: AES403 Violation (Rust) ──
 
 #[test]
-fn rust_capabilities_without_protocol_import_flagged() {
+fn rust_capabilities_no_impl_flagged() {
     let content = r#"
 pub struct MyChecker;
 
@@ -70,11 +74,9 @@ impl MyChecker {
 // ─── check_capability_routing: Happy Path (Python) ──
 
 #[test]
-fn python_capabilities_with_protocol_import_passes() {
+fn python_capabilities_with_inheritance_passes() {
     let content = r#"
-from shared.role_rules.contract_agent_role_protocol import IAgentRoleProtocol
-
-class MyChecker(IAgentRoleProtocol):
+class MyChecker(SomeProtocol):
     def check_container(self, source, violations):
         pass
 "#;
@@ -87,7 +89,7 @@ class MyChecker(IAgentRoleProtocol):
 // ─── check_capability_routing: AES403 Violation (Python) ──
 
 #[test]
-fn python_capabilities_without_protocol_import_flagged() {
+fn python_capabilities_no_inheritance_flagged() {
     let content = r#"
 class MyChecker:
     def do_work(self):
@@ -103,10 +105,8 @@ class MyChecker:
 // ─── check_capability_routing: Happy Path (JS/TS) ────
 
 #[test]
-fn typescript_capabilities_with_protocol_import_passes() {
+fn typescript_capabilities_with_implements_passes() {
     let content = r#"
-import { IAgentRoleChecker } from 'shared/role_rules/contract_agent_role_protocol';
-
 export class MyChecker implements IAgentRoleChecker {
     checkContainer(source: string, violations: any[]) {}
 }
@@ -120,7 +120,7 @@ export class MyChecker implements IAgentRoleChecker {
 // ─── check_capability_routing: AES403 Violation (JS/TS) ──
 
 #[test]
-fn typescript_capabilities_without_protocol_import_flagged() {
+fn typescript_capabilities_no_implements_flagged() {
     let content = r#"
 export class MyChecker {
     doWork() {}
