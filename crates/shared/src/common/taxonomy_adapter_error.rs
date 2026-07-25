@@ -8,6 +8,7 @@ use crate::common::taxonomy_common_error::FieldName;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
+use crate::import_rules::taxonomy_import_error::ImportError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
@@ -66,6 +67,22 @@ impl ScanError {
             message,
             error_code: None,
             adapter_name: None,
+            cause: None,
+        }
+    }
+}
+
+impl From<ImportError> for ScanError {
+    fn from(e: ImportError) -> Self {
+        let path = match &e {
+            ImportError::CircularDependency { file: Some(p), .. } => p.clone(),
+            _ => FilePath::new(".").unwrap_or_default(),
+        };
+        ScanError {
+            path,
+            message: ErrorMessage::new(e.to_string()),
+            error_code: Some(ErrorCode::raw("IMPORT_ERR")),
+            adapter_name: Some(AdapterName::raw("import-rules")),
             cause: None,
         }
     }

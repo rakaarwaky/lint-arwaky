@@ -20,8 +20,7 @@ fn main() {
     println!("{:?}", map);
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("test.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("test.rs", content).unwrap();
     assert!(violations.is_empty(), "Used import should not be flagged");
 }
 
@@ -36,9 +35,7 @@ fn main() {
     let _s: HashSet<i32> = HashSet::new();
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("test.rs", content, &mut violations);
-    assert!(violations.is_empty());
+    assert!(sut().check_unused_imports("test.rs", content).unwrap().is_empty());
 }
 
 // ─── Unused Import Detection ──────────────────────────────
@@ -53,8 +50,7 @@ fn main() {
     let _m: HashMap<String, i32> = HashMap::new();
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("test.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("test.rs", content).unwrap();
     assert!(
         violations
             .iter()
@@ -74,8 +70,7 @@ fn main() {
     println!("hello");
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("test.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("test.rs", content).unwrap();
     assert!(
         violations.len() >= 2,
         "Multiple unused imports should be flagged"
@@ -86,9 +81,7 @@ fn main() {
 
 #[test]
 fn empty_file_produces_no_violations() {
-    let mut violations = Vec::new();
-    sut().check_unused_imports("empty.rs", "", &mut violations);
-    assert!(violations.is_empty());
+    assert!(sut().check_unused_imports("empty.rs", "").unwrap().is_empty());
 }
 
 #[test]
@@ -98,9 +91,7 @@ fn main() {
     println!("hello world");
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("no_imports.rs", content, &mut violations);
-    assert!(violations.is_empty());
+    assert!(sut().check_unused_imports("no_imports.rs", content).unwrap().is_empty());
 }
 
 #[test]
@@ -113,8 +104,7 @@ struct Foo {
     bar: String,
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("derive.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("derive.rs", content).unwrap();
     assert!(
         !violations.iter().any(|v| {
             v.message.value().contains("Serialize") || v.message.value().contains("Deserialize")
@@ -137,8 +127,7 @@ impl IUnusedImportProtocol for MyChecker {
     fn check_unused_imports(&self, _file: &str, _content: &str, _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>) {}
 }
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("trait_impl.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("trait_impl.rs", content).unwrap();
     assert!(
         !violations
             .iter()
@@ -156,8 +145,7 @@ use std::collections::HashMap;
 
 fn main() {}
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("meta.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("meta.rs", content).unwrap();
     if let Some(v) = violations.first() {
         assert_eq!(v.code.code(), "AES203");
     }
@@ -170,8 +158,7 @@ use std::collections::HashMap;
 
 fn main() {}
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("sev.rs", content, &mut violations);
+    let violations = sut().check_unused_imports("sev.rs", content).unwrap();
     if let Some(v) = violations.first() {
         assert_eq!(
             v.severity,
@@ -191,8 +178,7 @@ import sys
 def main():
     print(os.getcwd())
 "#;
-    let mut violations = Vec::new();
-    sut().check_unused_imports("test.py", content, &mut violations);
+    let violations = sut().check_unused_imports("test.py", content).unwrap();
     assert!(
         violations.iter().any(|v| v.message.value().contains("sys")),
         "Unused Python import 'sys' should be flagged"
@@ -202,9 +188,9 @@ def main():
 // ─── find_unused_imports (path-based) ─────────────────────
 
 #[test]
-fn find_unused_imports_nonexistent_file_returns_empty() {
+fn find_unused_imports_nonexistent_file_returns_error() {
     use shared::common::taxonomy_path_vo::FilePath;
     let path = FilePath::new("/nonexistent/path/file.rs").unwrap();
     let result = sut().find_unused_imports(&path);
-    assert!(result.is_empty());
+    assert!(result.is_err(), "Nonexistent file should return Err");
 }

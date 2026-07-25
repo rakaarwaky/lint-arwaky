@@ -2,6 +2,7 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_import_resolver, utility_import_symbol_extractor};
 
@@ -16,12 +17,16 @@ pub struct UnusedImportRuleChecker;
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let Some(content) =
-            shared::common::utility_file_handler::read_file_generic(path.value()).ok()
-        else {
-            return vec![];
-        };
+    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, ImportError> {
+        let content =
+            shared::common::utility_file_handler::read_file_generic(path.value()).map_err(|_| {
+                ImportError::module_resolution(
+                    path.value().to_string(),
+                    Some(shared::common::taxonomy_common_vo::ErrorMessage::new(
+                        "File could not be read for unused import analysis",
+                    )),
+                )
+            })?;
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(&content);
         let exported_symbols = utility_import_symbol_extractor::extract_exported_symbols(&content);
         let used_symbols =
@@ -44,14 +49,20 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 unused.push(name_str.to_string());
             }
         }
-        unused.into_iter().map(LintMessage::new).collect()
+        Ok(unused.into_iter().map(LintMessage::new).collect())
     }
 
-    fn check_unused_imports(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
+    fn check_unused_imports(
+        &self,
+        file: &str,
+        content: &str,
+    ) -> Result<Vec<LintResult>, ImportError> {
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(content);
         let exported_symbols = utility_import_symbol_extractor::extract_exported_symbols(content);
         let used_symbols =
             utility_import_symbol_extractor::extract_used_symbols(content, &imported_aliases);
+
+        let mut violations = Vec::new();
 
         for alias in imported_aliases.keys() {
             // Skip __future__ imports — they affect parsing behavior, not runtime usage.
@@ -103,6 +114,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 ));
             }
         }
+        Ok(violations)
     }
 }
 

@@ -2,7 +2,6 @@
 // Tests cycle detection logic using temp files with cross-layer imports.
 
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_common_vo::{BooleanVO, Count};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -119,11 +118,10 @@ async fn no_cross_layer_imports_no_violations() {
     let layer_map = two_layer_map();
     let files = FilePathList::new(vec![file_a]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_cycles(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_cycles(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
@@ -142,11 +140,10 @@ async fn disabled_config_returns_empty() {
     let layer_map = two_layer_map();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_cycles(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_cycles(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),

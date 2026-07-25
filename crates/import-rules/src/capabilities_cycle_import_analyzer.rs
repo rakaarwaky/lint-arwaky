@@ -1,7 +1,7 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -9,6 +9,7 @@ use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
 use shared::taxonomy_definition_vo::LayerMapVO;
@@ -46,11 +47,10 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
+    ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
         let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string());
-        results.values.extend(cycle_violations);
+        Ok(cycle_violations)
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {

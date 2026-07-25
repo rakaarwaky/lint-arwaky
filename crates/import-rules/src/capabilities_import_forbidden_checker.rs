@@ -1,3 +1,11 @@
+// PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
+// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+//
+// Barrel resolution: when direct module-path matching fails (e.g. import
+// through __init__.py / mod.rs / index.ts hides the original file name),
+// resolves each imported symbol through the barrel file to detect the
+// original source file and its layer prefix.
+
 use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
@@ -6,20 +14,13 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_path_normalizer;
 use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use std::collections::HashSet;
-
-// PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
-//
-// Barrel resolution: when direct module-path matching fails (e.g. import
-// through __init__.py / mod.rs / index.ts hides the original file name),
-// resolves each imported symbol through the barrel file to detect the
-// original source file and its layer prefix.
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -40,8 +41,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
+    ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let root_dir_str = root_dir.to_string();
 
@@ -104,7 +104,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
             })
             .collect();
 
-        results.values.extend(file_violations);
+        Ok(LintResultList::new(file_violations))
     }
 }
 

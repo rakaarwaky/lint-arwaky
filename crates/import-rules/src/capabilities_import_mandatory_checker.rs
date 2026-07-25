@@ -6,6 +6,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_import_resolver;
 use shared::taxonomy_common_vo::LineNumber;
@@ -40,8 +41,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
+    ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
         let aes202_exceptions: HashSet<String> = config
@@ -105,7 +105,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
-        results.values.extend(file_violations);
+        Ok(LintResultList::new(file_violations))
     }
 }
 

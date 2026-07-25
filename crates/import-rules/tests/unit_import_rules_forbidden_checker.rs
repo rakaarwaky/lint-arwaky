@@ -70,11 +70,10 @@ async fn taxonomy_importing_nothing_passes() {
     let layer_map = layer_map_with_taxonomy_forbidden();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(results.is_empty(), "Taxonomy with no imports should pass");
 }
@@ -95,11 +94,10 @@ pub struct Foo;
     let layer_map = layer_map_with_taxonomy_forbidden();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         !results.is_empty(),
@@ -122,11 +120,10 @@ pub struct Bar;
     let layer_map = layer_map_with_taxonomy_forbidden();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         !results.is_empty(),
@@ -157,11 +154,10 @@ pub struct Foo;
     let layer_map = layer_map_with_taxonomy_forbidden();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
@@ -181,11 +177,10 @@ async fn forbidden_violation_severity_is_critical() {
     let layer_map = layer_map_with_taxonomy_forbidden();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     for v in &results.values {
         assert_eq!(

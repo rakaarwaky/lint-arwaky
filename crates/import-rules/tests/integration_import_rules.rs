@@ -105,15 +105,17 @@ use shared::cli_commands::taxonomy_result_vo::LintResult;
 pub struct FooChecker;
 
 impl IUnusedImportProtocol for FooChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {
         let content = std::fs::read_to_string(path.value()).unwrap_or_default();
-        if content.is_empty() { return vec![]; }
-        vec![LintMessage::new("scanned")]
+        if content.is_empty() { return Ok(vec![]); }
+        Ok(vec![LintMessage::new("scanned")])
     }
-    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+    fn check_unused_imports(&self, file: &str, content: &str) -> Result<Vec<LintResult>, shared::import_rules::taxonomy_import_error::ImportError> {
         if content.contains("unused") {
-            v.push(LintResult::new_arch(file, 1, "AES203",
-                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import"));
+            Ok(vec![LintResult::new_arch(file, 1, "AES203",
+                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import")])
+        } else {
+            Ok(Vec::new())
         }
     }
 }

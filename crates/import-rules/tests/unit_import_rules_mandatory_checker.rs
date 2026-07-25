@@ -2,7 +2,6 @@
 // Uses temp files because the checker reads from disk internally.
 
 use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -77,11 +76,10 @@ impl IUnusedImportProtocol for MyChecker {
     let layer_map = layer_map_with_mandatory_contract();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
@@ -107,11 +105,10 @@ pub struct MyChecker {
     let layer_map = layer_map_with_mandatory_contract();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         !results.is_empty(),
@@ -140,11 +137,10 @@ async fn excepted_file_skips_mandatory_check() {
     let layer_map = layer_map_with_mandatory_contract();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
@@ -164,11 +160,10 @@ async fn mandatory_violation_severity_is_high() {
     let layer_map = layer_map_with_mandatory_contract();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     for v in &results.values {
         assert_eq!(
@@ -190,11 +185,10 @@ async fn taxonomy_file_not_checked_for_contract_mandatory() {
     let layer_map = layer_map_with_mandatory_contract();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
