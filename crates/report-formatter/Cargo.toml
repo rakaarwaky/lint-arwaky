@@ -1,6 +1,6 @@
 [package]
 name = "report-formatter-lint-arwaky"
-version = "1.10.106"
+version = "1.10.114"
 edition = "2021"
 description = "Report formatting capabilities (text, JSON, SARIF, JUnit) implementing IReportFormatterProtocol."
 license = "MIT"
