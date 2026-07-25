@@ -1,6 +1,6 @@
 [package]
 name = "shared-lint-arwaky"
-version = "1.10.114"
+version = "1.10.115"
 edition = "2021"
 description = "Foundation crate: cross-cutting taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`) and contract (`_port`, `_protocol`, `_aggregate`) types shared by every feature crate."
 license = "MIT"

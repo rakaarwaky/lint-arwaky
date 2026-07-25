@@ -2,6 +2,14 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 1.10.115 (2026-07-25)
+
+### Fixed
+
+- **Agent Prompt Report Convention**: Corrected report template paths across all 23 prompt profiles in `.agents/prompts/*.md` to use `.agents/report/todo-<feature>-<role>-<timestamp>.md`.
+
+---
+
 ## 1.10.114 (2026-07-25)
 
 ### Added
