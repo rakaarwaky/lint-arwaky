@@ -312,6 +312,31 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
 // ─── Barrel Import Resolution ─────────────────────────────
 //
 // Barrel files (__init__.py, index.ts, mod.rs) re-export symbols from
+
+/// Check if a filename is a barrel/re-export file.
+/// Barrel files are entry points that re-export symbols from submodules.
+/// Import checkers should skip them for unused/dummy checks because
+/// re-exports are intentional public API, not unused imports.
+///
+/// Recognized barrel files:
+/// - Python: `__init__.py`
+/// - Rust: `mod.rs`, `lib.rs`, `main.rs`
+/// - TypeScript/JavaScript: `index.ts`, `index.js`, `index.tsx`, `index.jsx`
+pub fn is_barrel_file(filename: &str) -> bool {
+    matches!(
+        filename,
+        "__init__.py"
+            | "mod.rs"
+            | "lib.rs"
+            | "main.rs"
+            | "index.ts"
+            | "index.js"
+            | "index.tsx"
+            | "index.jsx"
+    )
+}
+
+// Barrel files (__init__.py, index.ts, mod.rs) re-export symbols from
 // their original source files. When an import goes through a barrel file,
 // the module path hides the original file name and its layer prefix.
 //
@@ -338,9 +363,26 @@ fn normalize_module_path(module_path: &str) -> String {
         .trim_start_matches("./")
         .trim_start_matches("../")
         .replace('.', "/")
+        .replace("::", "/")  // Rust path separator
+}
+
+/// Try to find a barrel file at the given base path with all candidate names.
+fn try_barrel_candidates(dir: &Path, candidates: &[&str]) -> Option<String> {
+    for candidate in candidates {
+        let barrel_path = dir.join(candidate);
+        if barrel_path.exists() {
+            return Some(barrel_path.to_string_lossy().to_string());
+        }
+    }
+    None
 }
 
 /// Find the barrel file (__init__.py, index.ts, mod.rs) for a module path.
+///
+/// Handles three path conventions:
+/// - Python: `modules.shared.src.server` → `modules/shared/src/server/__init__.py`
+/// - Rust:   `shared::import_rules::Type` → tries parent dir `shared/import_rules/`
+/// - Rust crate paths: `shared::import_rules` → also tries `crates/shared/src/import-rules/`
 ///
 /// # Examples
 /// - `("modules.shared.src.server", "/workspace")` →
@@ -361,12 +403,72 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
         "mod.rs",
     ];
 
-    for candidate in &barrel_candidates {
-        let barrel_path = module_dir.join(candidate);
-        if barrel_path.exists() {
-            return Some(barrel_path.to_string_lossy().to_string());
+    // 1. Try direct path (for Python/TS paths: modules/shared/src/server/)
+    if let Some(found) = try_barrel_candidates(&module_dir, &barrel_candidates) {
+        return Some(found);
+    }
+
+    // 2. Try parent directory (for Rust paths ending with type name:
+    //    "shared/import_rules/Type" → "shared/import_rules/")
+    if let Some(parent) = module_dir.parent() {
+        if let Some(found) = try_barrel_candidates(parent, &barrel_candidates) {
+            return Some(found);
         }
     }
+
+    // 3. Try under crates/{crate}/src/ for Rust workspace paths
+    //    e.g. "shared::import_rules" → "crates/shared/src/import-rules/mod.rs"
+    //    Also handles hyphens: Rust replaces `-` with `_` in module paths,
+    //    so if the underscore path doesn't exist, try the hyphen variant.
+    let segments: Vec<&str> = clean_path.split('/').collect();
+    if let Some(first_seg) = segments.first() {
+        // Try both underscore (Rust module name) and hyphen (filesystem name)
+        let crate_names = [*first_seg, &first_seg.replace('_', "-")];
+
+        for (idx, &crate_name) in crate_names.iter().enumerate() {
+            // Skip duplicate (only matters when first_seg has no underscore)
+            if idx == 1 && crate_name == crate_names[0] {
+                continue;
+            }
+            let crate_src = base.join("crates").join(crate_name).join("src");
+            let remainder: Vec<&str> = segments.iter().skip(1).copied().collect();
+
+            // Try with full remainder
+            if !remainder.is_empty() {
+                // Try underscore remainder first, then hyphen
+                let remainder_opts = [remainder.join("/"), remainder.join("/").replace('_', "-")];
+                for (rem_idx, rem) in remainder_opts.iter().enumerate() {
+                    // Skip duplicate remainder (when there's no underscore)
+                    if rem_idx == 1 && *rem == remainder_opts[0] {
+                        continue;
+                    }
+                    let full_dir = crate_src.join(rem);
+                    if let Some(found) = try_barrel_candidates(&full_dir, &barrel_candidates) {
+                        return Some(found);
+                    }
+                }
+            }
+
+            // Try parent of remainder (in case last segment is a type name)
+            if remainder.len() > 1 {
+                let remainder_str = remainder.join("/");
+                let parent_path = Path::new(&remainder_str);
+                if let Some(parent_dir) = parent_path.parent() {
+                    let dir = crate_src.join(parent_dir);
+                    if let Some(found) = try_barrel_candidates(&dir, &barrel_candidates) {
+                        return Some(found);
+                    }
+                    // Also try hyphen variant of parent
+                    let parent_hyphen = parent_dir.to_string_lossy().replace('_', "-");
+                    let dir_hyphen = crate_src.join(&parent_hyphen);
+                    if let Some(found) = try_barrel_candidates(&dir_hyphen, &barrel_candidates) {
+                        return Some(found);
+                    }
+                }
+            }
+        }
+    }
+
     None
 }
 

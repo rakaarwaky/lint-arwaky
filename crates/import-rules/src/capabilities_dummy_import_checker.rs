@@ -4,10 +4,11 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::common::utility_layer_detector;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
+use shared::import_rules::utility_import_resolver;
+use shared::import_rules::AesImportViolation;
+use shared::import_rules::IDummyImportCheckerProtocol;
+use shared::import_rules::ImportError;
 use shared::taxonomy_definition_vo::LayerMapVO;
 use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::taxonomy_message_vo::LintMessage;
@@ -36,6 +37,14 @@ struct DummyFileContext {
 
 impl DummyFileContext {
     fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
+        // Skip barrel files — they only re-export symbols, no dummy patterns.
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if utility_import_resolver::is_barrel_file(basename) {
+            return None;
+        }
         let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
         let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
         let lang = LanguageVO::from_path(file);

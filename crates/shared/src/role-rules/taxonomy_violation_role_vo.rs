@@ -163,22 +163,6 @@ fn write_violation(
                         logic to the constructor."
             )
         }
-        AesRoleViolation::AgentNoAggregate { reason } => {
-            let why = resolve_why(
-                reason,
-                "file has 'agent_' prefix but no _aggregate import — this file is \
-                 broken/useless. Either it is not a real agent (rename or delete), or \
-                 a proper aggregate contract has not been created yet (create the \
-                 aggregate first, then implement it here)",
-            );
-            write!(
-                f,
-                "AES405 AGENT_ROLE: Agent file has no _aggregate implementation.\n\
-                        WHY? {why}\n\
-                        FIX: Rename the file if it is not an agent, delete if obsolete, \
-                        or create the required aggregate contract first then implement it here."
-            )
-        }
         AesRoleViolation::AgentNoImplementor { reason } => {
             let why = resolve_why(
                 reason,
@@ -361,9 +345,6 @@ pub enum AesRoleViolation {
         reason: Option<LintMessage>,
     },
     // AES405 — Agent role
-    AgentNoAggregate {
-        reason: Option<LintMessage>,
-    },
     AgentNoImplementor {
         reason: Option<LintMessage>,
     },

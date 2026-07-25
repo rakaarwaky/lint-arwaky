@@ -13,13 +13,13 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_constant::DEFAULT_SKIP_DIRS;
+use shared::import_rules::DEFAULT_SKIP_DIRS;
+use shared::import_rules::ICycleImportProtocol;
+use shared::import_rules::IDummyImportCheckerProtocol;
+use shared::import_rules::IImportForbiddenProtocol;
+use shared::import_rules::IImportMandatoryProtocol;
+use shared::import_rules::IImportRunnerAggregate;
+use shared::import_rules::IUnusedImportProtocol;
 use shared::taxonomy_definition_vo::LayerMapVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -92,7 +92,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                         return local_results;
                     }
                 };
-                if let Ok(unused) = deps.unused
+                if let Ok(unused) = deps
+                    .unused
                     .check_unused_imports(file.value(), &content)
                 {
                     local_results.extend(unused);
@@ -170,12 +171,11 @@ impl ImportOrchestrator {
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {
                 Ok(fp) => files.push(fp),
-                Err(_) => {
-                    eprintln!(
-                        "[warn] invalid file path: '{}'",
-                        path.to_string_lossy()
-                    );
-                }
+                Err(e) => eprintln!(
+                    "[warn] invalid file path '{}': {}",
+                    path.to_string_lossy(),
+                    e
+                ),
             }
         }
         FilePathList::new(files)
@@ -196,28 +196,26 @@ impl ImportOrchestrator {
                 return;
             }
         };
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    self.walk_dir(&path, files, true);
-                } else if path.is_file() {
-                    if self.is_ignored(&path) {
-                        continue;
-                    }
-                    if let Some(ext) = path.extension() {
-                        if matches!(
-                            ext.to_str(),
-                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                        ) {
-                            match FilePath::new(path.to_string_lossy().to_string()) {
-                        Ok(fp) => files.push(fp),
-                        Err(_) => {
-                            eprintln!(
-                                "[warn] invalid file path: '{}'",
-                                path.to_string_lossy()
-                            );
-                        }
-                    }
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                self.walk_dir(&path, files, true);
+            } else if path.is_file() {
+                if self.is_ignored(&path) {
+                    continue;
+                }
+                if let Some(ext) = path.extension() {
+                    if matches!(
+                        ext.to_str(),
+                        Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                    ) {
+                        match FilePath::new(path.to_string_lossy().to_string()) {
+                            Ok(fp) => files.push(fp),
+                            Err(e) => eprintln!(
+                                "[warn] invalid file path '{}': {}",
+                                path.to_string_lossy(),
+                                e
+                            ),
                         }
                     }
                 }

@@ -5,6 +5,7 @@ use crate::common::taxonomy_source_vo::SourceContentVO;
 
 pub trait IAgentRoleChecker: Send + Sync {
     /// AES405: enforce agent type composition.
+    /// Aggregate import is enforced by mandatory checker (AES202), not here.
     /// Rule 1 — ≥ 1 struct must implement an aggregate trait.
     /// Rule 2 — max 3 types (struct + enum).
     fn check_agent_routing(

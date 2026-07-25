@@ -18,3 +18,21 @@ pub mod utility_import_module_parser;
 pub mod utility_import_resolver;
 pub mod utility_import_symbol_extractor;
 pub mod utility_path_normalizer;
+
+// ─── Re-exports ────────────────────────────────────────────
+// Barrel re-export pattern: allows consumers to import directly 
+
+// ── Contract traits ──
+pub use contract_cycle_import_protocol::ICycleImportProtocol;
+pub use contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+pub use contract_import_forbidden_protocol::IImportForbiddenProtocol;
+pub use contract_import_mandatory_protocol::IImportMandatoryProtocol;
+pub use contract_import_runner_aggregate::IImportRunnerAggregate;
+pub use contract_unused_import_protocol::IUnusedImportProtocol;
+
+// ── Taxonomy types ──
+pub use taxonomy_dependency_edge_vo::DependencyEdge;
+pub use taxonomy_import_constant::DEFAULT_SKIP_DIRS;
+pub use taxonomy_import_error::ImportError;
+pub use taxonomy_violation_import_vo::AesImportViolation;
+

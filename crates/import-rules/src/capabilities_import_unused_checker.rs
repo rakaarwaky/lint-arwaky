@@ -1,10 +1,11 @@
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_import_resolver, utility_import_symbol_extractor};
+use shared::import_rules::utility_import_resolver;
+use shared::import_rules::utility_import_symbol_extractor;
+use shared::import_rules::AesImportViolation;
+use shared::import_rules::IUnusedImportProtocol;
+use shared::import_rules::ImportError;
 
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
 // Uses utility functions directly — no IImportParserProtocol.
@@ -18,6 +19,10 @@ pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, ImportError> {
+        // Skip barrel files — re-exports are intentional public API, not unused imports.
+        if utility_import_resolver::is_barrel_file(&path.basename()) {
+            return Ok(Vec::new());
+        }
         let content =
             shared::common::utility_file_handler::read_file_generic(path.value()).map_err(|_| {
                 ImportError::module_resolution(
@@ -57,6 +62,14 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         file: &str,
         content: &str,
     ) -> Result<Vec<LintResult>, ImportError> {
+        // Skip barrel files — re-exports are intentional public API, not unused imports.
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if utility_import_resolver::is_barrel_file(basename) {
+            return Ok(Vec::new());
+        }
         let imported_aliases = utility_import_symbol_extractor::extract_imported_aliases(content);
         let exported_symbols = utility_import_symbol_extractor::extract_exported_symbols(content);
         let used_symbols =

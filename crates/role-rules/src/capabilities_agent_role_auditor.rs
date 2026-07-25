@@ -3,17 +3,17 @@
 //
 // ALGORITHM:
 //   check_agent_routing (per language):
-//     1. Guard: file must import from a _aggregate module.
-//        If missing → flag AgentNoAggregate.
-//     2. Collect all type declarations (struct/enum/class/interface).
+//     1. Collect all type declarations (struct/enum/class/interface).
 //        Skip #[cfg(test)] blocks (Rust).
-//     3. Rule 3 — Max 3 types. If exceeded → flag AgentTooManyTypes.
-//     4. Rule 2 — At least 1 implementor required:
-//          Rust:   impl <Trait> for <Struct>  (trait from _aggregate)
-//          Python: class <Name>(<AggregateABC>):
-//          TS:     class <Name> implements <IAggregate>
+//     2. Rule 1 — Max 3 types. If exceeded → flag AgentTooManyTypes.
+//     3. Rule 2 — At least 1 implementor required:
+//          Rust:   impl <Trait> for <Struct>
+//          Python: class <Name>(<Parent>):  (any parent = implementor)
+//          TS:     class <Name> implements <IProtocol> (any implements = implementor)
 //        If none → flag AgentNoImplementor.
-//     5. Rule 1 — Internal helper types without aggregate impl are ALLOWED.
+//     4. Internal helper types without implementor pattern are ALLOWED.
+//
+//   Note: aggregate import is enforced by mandatory checker (AES202), not here.
 //
 //   check_any_type_annotation:
 //     Line-by-line scan for `: any`, `: Any`, `-> any`, `-> Any`,
@@ -73,18 +73,8 @@ impl AgentRoleChecker {
     // ─── Rust ──────────────────────────────────────────────
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = content.contains("use ") && content.contains("_aggregate::");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
         // Collect all structs & enums (skip #[cfg(test)])
         let mut in_cfg_test = false;
@@ -173,42 +163,8 @@ impl AgentRoleChecker {
     // ─── TypeScript / JavaScript ───────────────────────────
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = content.contains("import ") && content.contains("_aggregate");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
-
-        // Collect names imported from _aggregate
-        let aggregate_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                t.starts_with("import ") && t.contains("_aggregate")
-            })
-            .flat_map(|l| {
-                if let Some(start) = l.find('{') {
-                    if let Some(end) = l.find('}') {
-                        l[start + 1..end]
-                            .split(',')
-                            .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                            .filter(|s| !s.is_empty())
-                            .collect::<Vec<&str>>()
-                    } else {
-                        vec![]
-                    }
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
         let mut type_names: Vec<&str> = Vec::new();
         let mut implementor_found = false;
@@ -227,17 +183,9 @@ impl AgentRoleChecker {
                 }
                 type_names.push(name);
 
-                if let Some(pos) = rest.find("implements ") {
-                    let after = &rest[pos + 11..];
-                    let before_brace = after.split('{').next().unwrap_or(after);
-                    let implements: Vec<&str> = before_brace
-                        .split(',')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                    if implements.iter().any(|imp| aggregate_names.contains(imp)) {
-                        implementor_found = true;
-                    }
+                // Any implements clause = implementor found (aggregate check is AES202's job)
+                if rest.contains("implements ") {
+                    implementor_found = true;
                 }
                 continue;
             }
@@ -299,40 +247,8 @@ impl AgentRoleChecker {
     // ─── Python ────────────────────────────────────────────
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = (content.contains("import ") || content.contains("from "))
-            && content.contains("_aggregate");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
-
-        // Collect names imported from _aggregate
-        let aggregate_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_aggregate")
-            })
-            .flat_map(|l| {
-                if let Some(pos) = l.find("import ") {
-                    let after = &l[pos + 7..];
-                    after
-                        .split(',')
-                        .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<&str>>()
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
         let mut type_names: Vec<&str> = Vec::new();
         let mut implementor_found = false;
@@ -355,23 +271,14 @@ impl AgentRoleChecker {
             }
             type_names.push(name);
 
-            // parse parents from inside (...)
-            let parents: Vec<&str> = if let Some(start) = t.find('(') {
+            // Any inheritance = implementor found (aggregate check is AES202's job)
+            if let Some(start) = t.find('(') {
                 if let Some(end) = t.find(')') {
-                    t[start + 1..end]
-                        .split(',')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .collect()
-                } else {
-                    vec![]
+                    let parents = &t[start + 1..end];
+                    if !parents.trim().is_empty() {
+                        implementor_found = true;
+                    }
                 }
-            } else {
-                vec![]
-            };
-
-            if parents.iter().any(|p| aggregate_names.contains(p)) {
-                implementor_found = true;
             }
         }
 

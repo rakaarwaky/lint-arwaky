@@ -38,24 +38,6 @@ impl IRoleAggregate for MyOrchestrator {
     );
 }
 
-// ─── check_agent_routing: Rust — AgentNoAggregate ────
-
-#[test]
-fn rust_agent_without_aggregate_import_flagged() {
-    let content = r#"
-pub struct MyOrchestrator {}
-
-impl MyOrchestrator {
-    pub fn run(&self) {}
-}
-"#;
-    let source = make_source("agent_my_orchestrator.rs", content);
-    let mut violations = Vec::new();
-    checker().check_agent_routing(&source, "agent", &mut violations);
-    assert_eq!(violations.len(), 1);
-    assert_eq!(violations[0].code.code(), "AES405");
-}
-
 // ─── check_agent_routing: Rust — AgentNoImplementor ──
 
 #[test]

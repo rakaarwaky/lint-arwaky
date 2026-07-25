@@ -3,7 +3,7 @@ use crate::agent_import_orchestrator::{ImportOrchestrator, ImportOrchestratorDep
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::IImportRunnerAggregate;
 use std::sync::Arc;
 
 pub struct ImportContainer {
