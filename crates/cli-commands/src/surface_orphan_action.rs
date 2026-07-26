@@ -5,7 +5,6 @@ use shared::cli_commands::Format;
 use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
-
 use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;
 
@@ -91,7 +90,9 @@ pub fn handle_scan_orphan(
             .parse::<ConfigLanguage>()
             .unwrap_or(ConfigLanguage::Rust);
         let ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
-        let (_, results) = orphan_orchestrator.scan_orphans(&ws.path, ignored.values());
+        // Build the orphan analyzer from THIS workspace's real config (layers + enabled)
+        let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&ws.path.value);
+        let (_, results) = orphan_analyzer.scan_orphans(&ws.path, ignored.values());
 
         let filtered: Vec<_> = results
             .into_iter()
@@ -138,14 +139,16 @@ pub fn handle_scan_orphan(
 
 fn scan_single_root(
     root: &str,
-    orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
+    _orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     format: Format,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
     let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
-    let (_, results) = orphan_orchestrator.scan_orphans(&scan_root, ignored.values());
+    // Build the orphan analyzer from the SCAN target's real config (layers + enabled)
+    let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&scan_root.value);
+    let (_, results) = orphan_analyzer.scan_orphans(&scan_root, ignored.values());
 
     let violations: Vec<ViolationItem> = results
         .iter()

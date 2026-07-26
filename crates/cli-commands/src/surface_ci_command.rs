@@ -5,9 +5,9 @@ use std::sync::Arc;
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{FilePath, Severity, Threshold};
 
+use shared::config_system::IConfigOrchestratorAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
-use shared::orphan_detector::IOrphanAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
 pub fn handle_ci(
@@ -15,7 +15,7 @@ pub fn handle_ci(
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
@@ -48,7 +48,9 @@ pub fn handle_ci(
     let role_res = rt.block_on(role_orchestrator.run_audit(&root));
     results.extend(role_res);
 
-    let (_, orphan_res) = orphan_orchestrator.scan_orphans(&root, &[]);
+    let ignored = config_orchestrator.ignored_paths(&root);
+    let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&root.value);
+    let (_, orphan_res) = orphan_analyzer.scan_orphans(&root, ignored.values());
     results.extend(orphan_res);
 
     let score = code_analysis_linter.calc_score(&results);

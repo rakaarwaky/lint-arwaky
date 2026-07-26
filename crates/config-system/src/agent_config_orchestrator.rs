@@ -207,6 +207,13 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .read_config(project_root, language)
             .await
     }
+
+    fn create_orphan_analyzer(&self, project_root: &str) -> Arc<dyn shared::orphan_detector::IOrphanAggregate> {
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = self.load_config_sync(&fp);
+        Arc::new(orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(config))
+            .analyzer()
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

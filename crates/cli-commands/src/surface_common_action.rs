@@ -63,9 +63,7 @@ pub fn run_ci_analysis(
     role_orchestrator: Arc<
         dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate,
     >,
-    orphan_orchestrator: Arc<
-        dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
-    >,
+    config_orchestrator: Arc<dyn shared::config_system::IConfigOrchestratorAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
@@ -74,7 +72,7 @@ pub fn run_ci_analysis(
         import_orchestrator,
         naming_orchestrator,
         role_orchestrator,
-        orphan_orchestrator,
+        config_orchestrator,
         path,
         threshold,
     )

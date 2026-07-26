@@ -193,13 +193,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
                     });
 
-                // Get ignored paths from config orchestrator
+                // Get ignored paths from config orchestrator and build per-target orphan analyzer
                 let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
-
-                let (_, results) = self
-                    .deps
-                    .orphan_orchestrator
-                    .scan_orphans(&fp, ignored.values());
+                let orphan_analyzer = self.deps.config_orchestrator.create_orphan_analyzer(&fp.value);
+                let (_, results) = orphan_analyzer.scan_orphans(&fp, ignored.values());
 
                 serde_json::json!({
                     "status": "success",

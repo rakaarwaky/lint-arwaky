@@ -92,7 +92,7 @@ fn main() -> ExitCode {
             container.import_orchestrator.clone(),
             container.naming_orchestrator.clone(),
             container.role_orchestrator.clone(),
-            container.orphan_orchestrator.clone(),
+            container.multi_project_orchestrator.clone(),
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             Threshold::new(threshold),
         ),
