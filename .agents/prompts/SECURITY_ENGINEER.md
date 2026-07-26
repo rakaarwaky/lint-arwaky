@@ -15,7 +15,7 @@ Follow this sequence for every review task. Do not skip steps.
 
 ## Plan Output
 
-Write the plan to `.agents/plans/<feature>-<role>-<timestamp>.md` (no `todo-` prefix). Follow the structure below.
+Write the plan to `.agents/plans/<feature>-<role>-<timestamp>.md`. Follow the structure below.
 
 ## Plan Structure
 
