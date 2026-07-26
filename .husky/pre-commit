@@ -1,32 +1,16 @@
 #!/usr/bin/env bash
-# Lint Arwaky Pre-Commit Hook — self-lint only, 0 violations to pass
+# Lint Arwaky Pre-Commit Hook — full quality gates via gates.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-LOCAL_BIN="$REPO_ROOT/target/release/lint-arwaky-cli"
 
-if [ -x "$LOCAL_BIN" ]; then
-    LINT_CMD="$LOCAL_BIN"
-else
-    LINT_CMD="lint-arwaky-cli"
-fi
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  Lint Arwaky Quality Gates (pre-commit)"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  lint-arwaky self-scan (0 violations required)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+cd "$REPO_ROOT"
 
-OUTPUT=$("$LINT_CMD" scan "$REPO_ROOT" 2>&1) || true
-echo "$OUTPUT"
-
-VIOLATIONS=$(echo "$OUTPUT" | grep -oP 'Total:\s*\K[0-9]+' || echo "0")
-
-if [ "$VIOLATIONS" -eq 0 ]; then
-    echo "✅ 0 violations — commit allowed."
-    exit 0
-else
-    echo ""
-    echo "❌ $VIOLATIONS violations found — commit BLOCKED."
-    exit 1
-fi
+# Run gates.sh — format, clippy, self-lint, AES codes, tests
+bash scripts/gates.sh
