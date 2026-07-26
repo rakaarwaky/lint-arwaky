@@ -62,7 +62,7 @@ async fn fr002_capability_with_contract_passes() {
         dir.path(),
         "capabilities_with_contract.rs",
         r#"
-use shared::orphan_detector::IContractOrphanProtocol;
+use contract::IConnectionProtocol;
 pub struct WithContract;
 "#,
     );
