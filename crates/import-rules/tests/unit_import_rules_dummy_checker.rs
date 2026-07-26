@@ -248,10 +248,10 @@ fn handle_command() {
 #[test]
 fn taxonomy_import_only_in_dummy_flagged() {
     let content = r#"
-use shared::common::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 
 fn _use_mandatory_imports() {
-    let _ = FilePath::new("x");
+    let _ = Severity::MEDIUM;
 }
 "#;
     let file = FilePath::new("surface_view.rs").unwrap();

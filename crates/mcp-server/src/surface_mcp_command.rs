@@ -28,19 +28,15 @@ impl LintArwakyMcpServer {
 #[tool_handler]
 impl ServerHandler for LintArwakyMcpServer {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::default(),
-            capabilities: ServerCapabilities {
-                tools: Some(ToolsCapability { list_changed: None }),
-                ..Default::default()
-            },
-            server_info: Implementation {
-                name: "lint-arwaky".to_string(),
-                version: env!("CARGO_PKG_VERSION").to_string(),
-                ..Default::default()
-            },
-            instructions: None,
-        }
+        let mut builder = ServerCapabilities::builder();
+        builder.tools = Some(ToolsCapability::default());
+        let capabilities = builder.build();
+        ServerInfo::new(capabilities)
+            .with_server_info(Implementation::new(
+                "lint-arwaky",
+                env!("CARGO_PKG_VERSION"),
+            ))
+            .with_protocol_version(ProtocolVersion::default())
     }
 }
 

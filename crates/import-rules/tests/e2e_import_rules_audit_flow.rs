@@ -90,6 +90,7 @@ pub enum Severity { Low, Medium, High, Critical }
         src,
         "capabilities_severity_checker.rs",
         r#"
+use shared::import_rules::contract_import_mandatory_protocol::IMandatoryImportProtocol;
 use shared::import_rules::IUnusedImportProtocol;
 use shared::common::{
     FilePath,

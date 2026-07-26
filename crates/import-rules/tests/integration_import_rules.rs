@@ -90,34 +90,31 @@ async fn clean_project_produces_zero_violations() {
         "pub struct Foo {\n    pub value: String,\n}\n",
     );
 
-    // Capabilities file — imports contract with real logic
+    // Capabilities file — imports contract (mandatory) + taxonomy for real logic
     write_temp_rs(
         dir.path(),
         "capabilities_foo_checker.rs",
         r#"
-use shared::import_rules::IUnusedImportProtocol;
-use shared::common::{
-    FilePath,
-    LintMessage,
-};
-
-use shared::cli_commands::LintResult;
+use shared::import_rules::contract_import_mandatory_protocol::IMandatoryImportProtocol;
+use shared::common::FilePath;
 
 pub struct FooChecker;
 
-impl IUnusedImportProtocol for FooChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {
-        let content = std::fs::read_to_string(path.value()).unwrap_or_default();
-        if content.is_empty() { return Ok(vec![]); }
-        Ok(vec![LintMessage::new("scanned")])
+impl IMandatoryImportProtocol for FooChecker {
+    fn rule_name(&self) -> shared::common::Identity {
+        shared::common::Identity::new("AES202")
     }
-    fn check_unused_imports(&self, file: &str, content: &str) -> Result<Vec<LintResult>, shared::import_rules::taxonomy_import_error::ImportError> {
-        if content.contains("unused") {
-            Ok(vec![LintResult::new_arch(file, 1, "AES203",
-                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import")])
-        } else {
-            Ok(Vec::new())
-        }
+    async fn run_mandatory_imports(
+        &self,
+        _config: &shared::config_system::ArchitectureConfig,
+        _layer_map: &shared::common::LayerMapVO,
+        _files: &shared::common::FilePathList,
+        _root_dir: &FilePath,
+    ) -> Result<shared::cli_commands::LintResultList, shared::import_rules::ImportError> {
+        let path = FilePath::new("test".to_string()).unwrap();
+        // Real logic: use FilePath to demonstrate import usage
+        let _ = !path.value().is_empty();
+        Ok(shared::cli_commands::LintResultList::new(Vec::new()))
     }
 }
 "#,

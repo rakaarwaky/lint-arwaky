@@ -21,7 +21,7 @@ shared.workspace = true
 [dev-dependencies]
 tokio.workspace = true
 tempfile = "3"
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [[bench]]
 name = "bench_orphan_detector_graph"

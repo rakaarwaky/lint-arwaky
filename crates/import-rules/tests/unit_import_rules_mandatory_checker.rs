@@ -60,13 +60,12 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 async fn capabilities_with_contract_import_passes() {
     let dir = tempfile::tempdir().unwrap();
     let content = r#"
-use shared::import_rules::IUnusedImportProtocol;
+use shared::contract::IConnectionProtocol;
 
 pub struct MyChecker;
 
-impl IUnusedImportProtocol for MyChecker {
-    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> { vec![] }
-    fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {}
+impl IConnectionProtocol for MyChecker {
+    fn validate(&self) -> bool { true }
 }
 "#;
     let file = write_temp_rs(dir.path(), "capabilities_my_checker.rs", content);

@@ -208,11 +208,18 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .await
     }
 
-    fn create_orphan_analyzer(&self, project_root: &str) -> Arc<dyn shared::orphan_detector::IOrphanAggregate> {
+    fn create_orphan_analyzer(
+        &self,
+        project_root: &str,
+    ) -> Arc<dyn shared::orphan_detector::IOrphanAggregate> {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = self.load_config_sync(&fp);
-        Arc::new(orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(config))
-            .analyzer()
+        Arc::new(
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
+                config,
+            ),
+        )
+        .analyzer()
     }
 }
 
