@@ -2,11 +2,7 @@
 // Layer: Capabilities (TextFormatter)
 
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::{
-    Format,
-    LintResult,
-    ScanReport,
-};
+use shared::cli_commands::{Format, LintResult, ScanReport};
 
 use shared::common::Severity;
 use shared::report_formatter::IReportFormatterProtocol;

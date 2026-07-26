@@ -2,11 +2,7 @@
 //
 // Formats ScanReport into JUnit XML format.
 use crate::utility_report_format::format_report_default;
-use shared::cli_commands::{
-    Format,
-    LintResult,
-    ScanReport,
-};
+use shared::cli_commands::{Format, LintResult, ScanReport};
 
 use shared::common::DisplayContent;
 use shared::report_formatter::IReportFormatterProtocol;

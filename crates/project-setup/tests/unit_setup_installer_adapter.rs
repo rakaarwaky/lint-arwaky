@@ -2,11 +2,7 @@
 // Layer: Capabilities (SetupInstallerAdapter)
 
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
-use shared::project_setup::{
-    ISetupInstallerProtocol,
-    SetupError,
-};
-
+use shared::project_setup::{ISetupInstallerProtocol, SetupError};
 
 fn adapter() -> SetupInstallerAdapter {
     SetupInstallerAdapter::new()

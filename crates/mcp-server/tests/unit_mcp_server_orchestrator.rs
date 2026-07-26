@@ -4,9 +4,7 @@ use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::McpServerOrchestrator
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use rmcp::handler::server::wrapper::Parameters;
 use shared::mcp_server::IMcpServerAggregate;
-use shared::mcp_server::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use shared::mcp_server::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 // ─── Helper ──────────────────────────────────────────────────────────
 

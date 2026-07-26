@@ -6,9 +6,7 @@ use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstal
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::project_setup::SetupManagementAggregate;
-use shared::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol,
-};
+use shared::project_setup::{ISetupInstallerProtocol, ISetupManagementProtocol};
 use std::sync::Arc;
 
 // ─── Verify SetupInstallerAdapter implements ISetupInstallerProtocol ──

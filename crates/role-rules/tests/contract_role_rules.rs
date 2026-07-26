@@ -11,15 +11,9 @@ use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecke
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 
 use shared::role_rules::{
-    IAgentRoleChecker,
-    ICapabilitiesRoleChecker,
-    IContractRoleChecker,
-    IRoleRunnerAggregate,
-    ISurfaceRoleChecker,
-    ITaxonomyRoleChecker,
-    IUtilityRoleChecker,
+    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
+    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
-
 
 // ─── IAgentRoleChecker ──────────────────────────────
 

@@ -112,7 +112,9 @@ pub fn extract_import_modules_resolved(
                         continue;
                     }
                     // Try barrel resolution
-                    if let Some(resolved) = utility_import_resolver::resolve_barrel_import(prefix, name, root_dir) {
+                    if let Some(resolved) =
+                        utility_import_resolver::resolve_barrel_import(prefix, name, root_dir)
+                    {
                         resolved_modules.push((
                             SymbolName::new(prefix),
                             SymbolName::new(resolved.resolved_file),
@@ -130,7 +132,9 @@ pub fn extract_import_modules_resolved(
                     .unwrap_or(module_path);
                 if !name.is_empty() && name != "*" {
                     // Try barrel resolution
-                    if let Some(resolved) = utility_import_resolver::resolve_barrel_import(prefix, name, root_dir) {
+                    if let Some(resolved) =
+                        utility_import_resolver::resolve_barrel_import(prefix, name, root_dir)
+                    {
                         resolved_modules.push((
                             SymbolName::new(prefix),
                             SymbolName::new(resolved.resolved_file),
@@ -165,13 +169,18 @@ pub fn extract_import_modules_resolved(
                                     continue;
                                 }
                                 // Try barrel resolution
-                                if let Some(resolved) = utility_import_resolver::resolve_barrel_import(module, name, root_dir) {
+                                if let Some(resolved) =
+                                    utility_import_resolver::resolve_barrel_import(
+                                        module, name, root_dir,
+                                    )
+                                {
                                     resolved_modules.push((
                                         SymbolName::new(module),
                                         SymbolName::new(resolved.resolved_file),
                                     ));
                                 } else {
-                                    resolved_modules.push((SymbolName::new(module), SymbolName::new(module)));
+                                    resolved_modules
+                                        .push((SymbolName::new(module), SymbolName::new(module)));
                                 }
                             }
                         }
@@ -181,13 +190,16 @@ pub fn extract_import_modules_resolved(
                     let name = import_part.trim();
                     if !name.is_empty() && name != "default" {
                         // Try barrel resolution
-                        if let Some(resolved) = utility_import_resolver::resolve_barrel_import(module, name, root_dir) {
+                        if let Some(resolved) =
+                            utility_import_resolver::resolve_barrel_import(module, name, root_dir)
+                        {
                             resolved_modules.push((
                                 SymbolName::new(module),
                                 SymbolName::new(resolved.resolved_file),
                             ));
                         } else {
-                            resolved_modules.push((SymbolName::new(module), SymbolName::new(module)));
+                            resolved_modules
+                                .push((SymbolName::new(module), SymbolName::new(module)));
                         }
                     }
                 }
@@ -215,13 +227,20 @@ pub fn extract_import_modules_resolved(
                                     continue;
                                 }
                                 // Try barrel resolution
-                                if let Some(resolved) = utility_import_resolver::resolve_barrel_import(req_module, name, root_dir) {
+                                if let Some(resolved) =
+                                    utility_import_resolver::resolve_barrel_import(
+                                        req_module, name, root_dir,
+                                    )
+                                {
                                     resolved_modules.push((
                                         SymbolName::new(req_module),
                                         SymbolName::new(resolved.resolved_file),
                                     ));
                                 } else {
-                                    resolved_modules.push((SymbolName::new(req_module), SymbolName::new(req_module)));
+                                    resolved_modules.push((
+                                        SymbolName::new(req_module),
+                                        SymbolName::new(req_module),
+                                    ));
                                 }
                             }
                         }

@@ -9,11 +9,8 @@ use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
 use shared::git_hooks::{
-    IDiffProtocol,
-    GitHooksAggregate,
+    GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol, IHookManagerProtocol,
     IHookProtocol,
-    IHookManagerProtocol,
-    HookManagementOrchestratorAggregate,
 };
 
 use std::sync::Arc;

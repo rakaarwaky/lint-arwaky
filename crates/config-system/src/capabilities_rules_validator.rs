@@ -1,8 +1,5 @@
 use shared::config_system::{
-    IConfigValidatorProtocol,
-    AdapterStatus,
-    ProjectConfig,
-    ValidationResult,
+    AdapterStatus, IConfigValidatorProtocol, ProjectConfig, ValidationResult,
 };
 
 use shared::common::AdapterName;

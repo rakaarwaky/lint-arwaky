@@ -1,13 +1,8 @@
 use shared::common::FilePath;
-use shared::tui::{
-    IActionHandlerProtocol,
-    ILintExecutorProtocol,
-    LintExecutionResult,
-    ScanUpdate,
-};
+use shared::tui::{IActionHandlerProtocol, ILintExecutorProtocol, LintExecutionResult, ScanUpdate};
 
-use shared::tui::{AppState, PanelFocus, PreviewMode};
 use shared::tui::TuiEvent;
+use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.

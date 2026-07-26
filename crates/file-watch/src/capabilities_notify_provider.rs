@@ -2,16 +2,9 @@ use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
-use shared::common::{
-    BooleanVO,
-    LintMessage,
-};
+use shared::common::{BooleanVO, LintMessage};
 
-use shared::file_watch::{
-    IWatchProviderProtocol,
-    WatchServiceError,
-    WatchConfig,
-};
+use shared::file_watch::{IWatchProviderProtocol, WatchConfig, WatchServiceError};
 
 use shared::file_watch::{WatchEvent, WatchEventKind};
 use tokio::sync::broadcast;

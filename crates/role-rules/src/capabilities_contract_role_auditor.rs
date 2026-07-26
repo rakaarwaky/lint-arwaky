@@ -1,8 +1,5 @@
 use shared::cli_commands::LintResult;
-use shared::common::{
-    Language,
-    Severity,
-};
+use shared::common::{Language, Severity};
 
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::utility_signature_parser::{
@@ -10,10 +7,7 @@ use shared::common::utility_signature_parser::{
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared::role_rules::{
-    IContractRoleChecker,
-    AesRoleViolation,
-};
+use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
 
 use shared::common::SourceContentVO;
 

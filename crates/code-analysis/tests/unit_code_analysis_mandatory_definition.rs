@@ -3,16 +3,9 @@
 
 use code_analysis_lint_arwaky::MandatoryDefinitionChecker;
 use shared::cli_commands::LintResult;
-use shared::code_analysis::{
-    IMandatoryClassProtocol,
-    IDeadInheritanceProtocol,
-};
+use shared::code_analysis::{IDeadInheritanceProtocol, IMandatoryClassProtocol};
 
-use shared::common::{
-    BooleanVO,
-    LayerDefinition,
-};
-
+use shared::common::{BooleanVO, LayerDefinition};
 
 fn checker() -> MandatoryDefinitionChecker {
     MandatoryDefinitionChecker::new()

@@ -1,10 +1,7 @@
-use shared::common::{
-    SuccessStatus,
-    FilePath,
-};
+use shared::common::{FilePath, SuccessStatus};
 
-use shared::git_hooks::IHookManagerProtocol;
 use shared::git_hooks::utility_git_io as git_io;
+use shared::git_hooks::IHookManagerProtocol;
 
 // PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 

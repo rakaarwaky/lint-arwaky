@@ -19,7 +19,7 @@ pub use contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
 
 // ── Taxonomy types ──
 pub use taxonomy_git_diff_data_vo::GitDiffDataVO;
-pub use taxonomy_git_diff_data_vo::GitDiffStatus;
 pub use taxonomy_git_diff_data_vo::GitDiffSideVO;
+pub use taxonomy_git_diff_data_vo::GitDiffStatus;
 pub use taxonomy_git_diff_data_vo::HookIgnoreUpdateVO;
 pub use taxonomy_hook_error::GitHookError;

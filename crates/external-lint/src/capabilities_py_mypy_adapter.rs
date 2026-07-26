@@ -13,32 +13,19 @@
 
 use async_trait::async_trait;
 use regex::Regex;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
+use shared::external_lint::utility_external_lint::{
+    default_working_dir, has_python_files, noop_apply_fix,
+};
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files, noop_apply_fix};
 
 use shared::common::{
-    AdapterName,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    LocationList,
-    ComplianceStatus,
-    LintMessage,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
 
 use std::sync::Arc;
@@ -69,6 +56,8 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         let cmd = vec![
             executable,
             path.value.clone(),
+            "--exclude".to_string(),
+            "tests".to_string(),
             "--no-error-summary".to_string(),
             "--pretty".to_string(),
             "false".to_string(),

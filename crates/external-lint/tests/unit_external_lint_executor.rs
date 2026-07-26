@@ -2,12 +2,7 @@
 
 use external_lint_lint_arwaky::ExternalLintExecutor;
 use shared::common::{
-    ICommandExecutorProtocol,
-    AdapterName,
-    PatternList,
-    Timeout,
-    FilePath,
-    ResponseData,
+    AdapterName, FilePath, ICommandExecutorProtocol, PatternList, ResponseData, Timeout,
 };
 
 use shared::external_lint::IExternalLintExecutorProtocol;

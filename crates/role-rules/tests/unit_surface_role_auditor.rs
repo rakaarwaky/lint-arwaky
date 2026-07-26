@@ -2,8 +2,8 @@
 // Layer: Capabilities (SurfaceRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::role_rules::ISurfaceRoleChecker;
 use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::ISurfaceRoleChecker;
 
 fn checker() -> SurfaceRoleChecker {
     SurfaceRoleChecker::new()

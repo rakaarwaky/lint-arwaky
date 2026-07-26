@@ -4,11 +4,7 @@
 use code_analysis_lint_arwaky::{has_critical, CodeAnalysisContainer};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::ICodeAnalysisAggregate;
-use shared::common::{
-    FilePath,
-    Severity,
-};
-
+use shared::common::{FilePath, Severity};
 
 fn orchestrator() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
     CodeAnalysisContainer::new().code_analysis_linter()

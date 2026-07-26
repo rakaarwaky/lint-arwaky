@@ -13,31 +13,16 @@
 //     must be updated manually via cargo update)
 
 use async_trait::async_trait;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
+
+use shared::common::{FilePath, Severity};
 
 use shared::common::{
-    FilePath,
-    Severity,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
-
 use shared::external_lint::utility_external_lint::resolve_cargo_lock_working_dir;
-use shared::common::{
-    AdapterName,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    LocationList,
-    ComplianceStatus,
-    LintMessage,
-};
 
 use std::path::Path;
 use tracing::debug;

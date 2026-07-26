@@ -11,19 +11,19 @@ pub mod utility_setup_io;
 
 // ── Contract traits ──
 pub use contract_setup_aggregate::SetupManagementAggregate;
-pub use contract_setup_protocol::ISetupManagementProtocol;
 pub use contract_setup_protocol::ISetupInstallerProtocol;
+pub use contract_setup_protocol::ISetupManagementProtocol;
 pub use contract_tool_executor_protocol::IToolExecutorProtocol;
 
 // ── Taxonomy types ──
-pub use contract_tool_executor_protocol::ToolOutput;
-pub use contract_setup_protocol::InstallPackagesResult;
 pub use contract_setup_aggregate::SetupMgmtProtocol;
-pub use taxonomy_language_vo::ProjectLanguage;
+pub use contract_setup_protocol::InstallPackagesResult;
+pub use contract_tool_executor_protocol::ToolOutput;
 pub use taxonomy_language_vo::LanguageSource;
-pub use taxonomy_setup_contract_vo::SetupError;
+pub use taxonomy_language_vo::ProjectLanguage;
+pub use taxonomy_setup_contract_vo::CreateConfigDirResult;
 pub use taxonomy_setup_contract_vo::McpBinaryNameVO;
 pub use taxonomy_setup_contract_vo::ProjectLanguageVO;
 pub use taxonomy_setup_contract_vo::ProjectLanguagesVO;
+pub use taxonomy_setup_contract_vo::SetupError;
 pub use taxonomy_setup_contract_vo::WriteConfigResult;
-pub use taxonomy_setup_contract_vo::CreateConfigDirResult;

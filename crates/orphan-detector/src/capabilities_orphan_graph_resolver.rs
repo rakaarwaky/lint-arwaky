@@ -1,19 +1,13 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
 use regex::Regex;
 use shared::code_analysis::{
-    FileDefinitionMap,
-    GraphAnalysisContext,
-    ImportGraph,
-    InboundLinkMap,
-    InheritanceMap,
+    FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
 };
 
-use shared::orphan_detector::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::{
-    OrphanEntryPatternListVO, OrphanFileListVO,
-};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_io;
+use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 

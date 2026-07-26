@@ -2,11 +2,7 @@
 // "Configurable watch roots and ignore patterns."
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::{
-    IWatchProviderProtocol,
-    WatchConfig,
-};
-
+use shared::file_watch::{IWatchProviderProtocol, WatchConfig};
 
 #[test]
 fn frd_004_watch_config_custom_path() {

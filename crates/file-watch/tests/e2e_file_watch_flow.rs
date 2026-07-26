@@ -8,27 +8,16 @@ use std::time::Duration;
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use shared::file_watch::{
-    IChangeAnalyzerProtocol,
-    IWatchProviderProtocol,
-    WatchConfig,
-    WatchEventKind,
+    IChangeAnalyzerProtocol, IWatchProviderProtocol, WatchConfig, WatchEventKind,
 };
-
 
 // ─── Mock linter that records calls ─────────────────────────
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
-
+use shared::common::{DisplayContent, FilePath};
 
 struct RecordingLinter;
 impl ICodeAnalysisAggregate for RecordingLinter {

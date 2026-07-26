@@ -1,14 +1,7 @@
 use shared::cli_commands::LintResult;
-use shared::code_analysis::{
-    ILineCheckerProtocol,
-    AesCodeAnalysisViolation,
-};
+use shared::code_analysis::{AesCodeAnalysisViolation, ILineCheckerProtocol};
 
-use shared::common::{
-    Severity,
-    LayerDefinition,
-};
-
+use shared::common::{LayerDefinition, Severity};
 
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:

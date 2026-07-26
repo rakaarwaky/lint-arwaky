@@ -1,18 +1,9 @@
-use shared::common::{
-    SuccessStatus,
-    FilePath,
-    DescriptionVO,
-};
+use shared::common::{DescriptionVO, FilePath, SuccessStatus};
 
-use shared::git_hooks::{
-    IHookProtocol,
-    IHookManagerProtocol,
-};
+use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
 
-use shared::git_hooks::{
-    GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
-};
 use shared::git_hooks::GitHookError;
+use shared::git_hooks::{GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)

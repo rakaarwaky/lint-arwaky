@@ -1,23 +1,16 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection
-use shared::code_analysis::{
-    OrphanIndicatorResult,
-    ReachabilityResult,
-};
+use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
-use shared::orphan_detector::{
-    ICapabilitiesOrphanProtocol,
-    AesOrphanViolation,
-};
+use shared::orphan_detector::{AesOrphanViolation, ICapabilitiesOrphanProtocol};
 
 use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan_detector::{extract_struct_names, extract_trait_names};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_workspace_scanner::{check_wired_in_container, find_workspace_root};
+use shared::orphan_detector::utility_workspace_scanner::{
+    check_wired_in_container, find_workspace_root,
+};
 
 use std::sync::Mutex;
 

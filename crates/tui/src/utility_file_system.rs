@@ -1,8 +1,5 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
+use shared::common::{DisplayContent, FilePath};
 
 use shared::tui::FileEntry;
 use std::io::Write;

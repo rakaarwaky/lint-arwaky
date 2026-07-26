@@ -12,33 +12,19 @@
 //   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
 
 use serde_json::Value;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 
-use shared::common::{
-    ScanError,
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, ScanError, Severity};
 
+use shared::external_lint::utility_external_lint::{
+    canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
+};
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir};
 
 use shared::common::{
-    AdapterName,
-    ErrorMessage,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    ComplianceStatus,
-    LintMessage,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
 };
 
 use std::path::Path;

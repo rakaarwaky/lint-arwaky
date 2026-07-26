@@ -2,11 +2,7 @@
 // Layer: Integration (uses real TuiContainer components).
 
 use shared::tui::{
-    IActionHandlerProtocol,
-    ILintExecutorProtocol,
-    ITuiAggregate,
-    AppState,
-    TuiEvent,
+    AppState, IActionHandlerProtocol, ILintExecutorProtocol, ITuiAggregate, TuiEvent,
 };
 
 use std::sync::Arc;

@@ -2,23 +2,14 @@
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    LayerDefinition,
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, LayerDefinition, Severity};
 
+use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
 use shared::naming_rules::INamingConventionChecker;
 use shared::naming_rules::{
     ADAPTER_NAME, LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
 };
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-};
-
 
 // ─── Unit Tests: Happy Path — Valid File Naming ─────────────────────
 

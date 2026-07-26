@@ -1,39 +1,26 @@
 use shared::cli_commands::LintResult;
 use shared::code_analysis::{
-    GraphAnalysisContext,
-    ImportGraph,
-    OrphanIndicatorResult,
-    ReachabilityResult,
+    GraphAnalysisContext, ImportGraph, OrphanIndicatorResult, ReachabilityResult,
 };
 
 use shared::common::FilePath;
 
 use shared::common::Severity;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_detector::{
-    IOrphanAggregate,
-    IOrphanGraphResolverProtocol,
-};
+use shared::orphan_detector::{IOrphanAggregate, IOrphanGraphResolverProtocol};
 
+use shared::orphan_detector::OrphanFileListVO;
 use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
-use shared::orphan_detector::OrphanFileListVO;
 
+use shared::common::{
+    AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
+    LocationList, ScopeRef,
+};
 use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
-};
-use shared::common::{
-    AdapterName,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    LayerNameVO,
-    LocationList,
-    ScopeRef,
-    LintMessage,
-    DescriptionVO,
 };
 
 use std::collections::HashSet;

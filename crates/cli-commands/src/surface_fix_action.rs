@@ -9,10 +9,7 @@
 // Fixable violations: AES101 (naming), AES203 (unused imports), AES304 (bypass)
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::code_analysis::ICodeAnalysisAggregate;
-use shared::common::{
-    ExitCode,
-    FilePath,
-};
+use shared::common::{ExitCode, FilePath};
 
 use std::path::PathBuf;
 use std::sync::Arc;

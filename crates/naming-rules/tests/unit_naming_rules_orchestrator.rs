@@ -7,17 +7,11 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 };
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-use shared::common::{
-    LayerMapVO,
-    FilePath,
-    FilePathList,
-};
+use shared::common::{FilePath, FilePathList, LayerMapVO};
 
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
 use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 use std::collections::HashMap;
 use std::sync::Arc;
 

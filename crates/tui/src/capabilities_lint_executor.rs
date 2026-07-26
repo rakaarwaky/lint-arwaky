@@ -8,21 +8,13 @@ use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::git_hooks::IHookManagerProtocol;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::{
-    MaintenanceCommandsAggregate,
-    DependencyReport,
-};
+use shared::maintenance::{DependencyReport, MaintenanceCommandsAggregate};
 
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use shared::project_setup::SetupManagementAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
-use shared::tui::{
-    ILintExecutorProtocol,
-    ActionFlags,
-    AdapterInfo,
-    LintExecutionResult,
-};
+use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
 
 use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
@@ -32,11 +24,7 @@ use std::sync::Arc;
 // with user-facing output formatting.
 
 use shared::auto_fix::LintFixOrchestratorAggregate;
-use shared::file_watch::{
-    IChangeAnalyzerProtocol,
-    IWatchProviderProtocol,
-};
-
+use shared::file_watch::{IChangeAnalyzerProtocol, IWatchProviderProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

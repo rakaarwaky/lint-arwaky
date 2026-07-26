@@ -1,7 +1,4 @@
-use shared::common::{
-    AdapterNameList,
-    AdapterName,
-};
+use shared::common::{AdapterName, AdapterNameList};
 
 use shared::external_lint::IExternalLintSelectorProtocol;
 

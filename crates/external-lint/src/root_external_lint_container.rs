@@ -11,10 +11,7 @@ use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use shared::code_analysis::ILinterAdapterProtocol;
-use shared::external_lint::{
-    IExternalLintAggregate,
-    IExternalLintExecutorProtocol,
-};
+use shared::external_lint::{IExternalLintAggregate, IExternalLintExecutorProtocol};
 
 use shared::common::Timeout;
 

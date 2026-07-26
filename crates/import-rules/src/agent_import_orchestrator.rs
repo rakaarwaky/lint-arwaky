@@ -7,23 +7,12 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    ScanError,
-    ErrorMessage,
-    FilePath,
-    FilePathList,
-    ContentString,
-};
+use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::{
-    DEFAULT_SKIP_DIRS,
-    ICycleImportProtocol,
-    IDummyImportCheckerProtocol,
-    IImportForbiddenProtocol,
-    IImportMandatoryProtocol,
-    IImportRunnerAggregate,
-    IUnusedImportProtocol,
+    ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
+    IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol, DEFAULT_SKIP_DIRS,
 };
 
 use shared::common::LayerMapVO;
@@ -68,12 +57,18 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
         let (mandatory_result, forbidden_result) = tokio::join!(
-            self.deps
-                .mandatory
-                .run_mandatory_imports(&self.config, &self.layer_map, &files, &root_dir),
-            self.deps
-                .forbidden
-                .check_forbidden_imports(&self.config, &self.layer_map, &files, &root_dir),
+            self.deps.mandatory.run_mandatory_imports(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir
+            ),
+            self.deps.forbidden.check_forbidden_imports(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir
+            ),
         );
         let mandatory_results = mandatory_result?;
         let forbidden_results = forbidden_result?;
@@ -90,28 +85,19 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 let content = match std::fs::read_to_string(file.value()) {
                     Ok(c) => c,
                     Err(e) => {
-                        eprintln!(
-                            "[warn] skipping unreadable file '{}': {}",
-                            file.value(),
-                            e
-                        );
+                        eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
                         return local_results;
                     }
                 };
-                if let Ok(unused) = deps
-                    .unused
-                    .check_unused_imports(file.value(), &content)
-                {
+                if let Ok(unused) = deps.unused.check_unused_imports(file.value(), &content) {
                     local_results.extend(unused);
                 }
 
                 let content_str = ContentString::new(content);
-                if let Ok(dummy) = deps.dummy.check_all_dummy(
-                    file,
-                    &content_str,
-                    &root_dir_clone,
-                    layer_map,
-                ) {
+                if let Ok(dummy) =
+                    deps.dummy
+                        .check_all_dummy(file, &content_str, &root_dir_clone, layer_map)
+                {
                     local_results.extend(dummy);
                 }
                 local_results
@@ -123,7 +109,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(forbidden_results.values);
         results.values.extend(file_violations);
 
-        let cycle_violations = self.deps
+        let cycle_violations = self
+            .deps
             .cycle
             .check_cycles(&self.config, &self.layer_map, &files, &root_dir)
             .await?;
@@ -194,11 +181,7 @@ impl ImportOrchestrator {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(e) => {
-                eprintln!(
-                    "[warn] cannot read directory '{}': {}",
-                    dir.display(),
-                    e
-                );
+                eprintln!("[warn] cannot read directory '{}': {}", dir.display(), e);
                 return;
             }
         };

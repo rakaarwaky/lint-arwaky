@@ -2,11 +2,7 @@
 // Layer: Capabilities (SarifFormatter)
 
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
-use shared::cli_commands::{
-    Format,
-    LintResult,
-    ScanReport,
-};
+use shared::cli_commands::{Format, LintResult, ScanReport};
 
 use shared::common::Severity;
 use shared::report_formatter::IReportFormatterProtocol;

@@ -2,27 +2,16 @@
 use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, Severity};
 
 use shared::common::utility_layer_detector;
+use shared::common::{LayerMapVO, LayerNameVO, LintMessage};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::ISuffixPrefixChecker;
-use shared::naming_rules::{
-    RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
-};
-use shared::naming_rules::NamingViolation;
 use shared::naming_rules::utility_naming_checker::string_filename_result;
 use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-    LintMessage,
-};
-
+use shared::naming_rules::ISuffixPrefixChecker;
+use shared::naming_rules::NamingViolation;
+use shared::naming_rules::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

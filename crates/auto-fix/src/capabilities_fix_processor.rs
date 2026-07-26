@@ -1,21 +1,11 @@
 // PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IArchLintProtocol, tracks fix results
-use shared::auto_fix::{
-    IFixProtocol,
-    FixApplied,
-    FixResult,
-};
+use shared::auto_fix::{FixApplied, FixResult, IFixProtocol};
 
 use shared::auto_fix::utility_symbol_renamer;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{
-    FilePath,
-    AdapterName,
-    Count,
-    LineNumber,
-    ErrorCode,
-    LintMessage,
-    DescriptionVO,
+    AdapterName, Count, DescriptionVO, ErrorCode, FilePath, LineNumber, LintMessage,
 };
 
 use std::sync::Arc;

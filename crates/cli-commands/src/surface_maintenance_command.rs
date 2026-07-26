@@ -5,10 +5,7 @@
 //   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
 //   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
 
-use shared::common::{
-    ExitCode,
-    FilePath,
-};
+use shared::common::{ExitCode, FilePath};
 
 use shared::maintenance::MaintenanceCommandsAggregate;
 use std::sync::Arc;

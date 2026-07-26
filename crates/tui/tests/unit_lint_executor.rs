@@ -1,10 +1,7 @@
 // PURPOSE: Unit tests for LintExecutor — wraps all lint aggregates.
 // Layer: Capabilities (LintExecutor)
 
-use shared::tui::{
-    ILintExecutorProtocol,
-    ActionFlags,
-};
+use shared::tui::{ActionFlags, ILintExecutorProtocol};
 
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 

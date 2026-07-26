@@ -16,10 +16,7 @@ use shared::maintenance::MaintenanceCommandsAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use shared::project_setup::SetupManagementAggregate;
-use shared::report_formatter::{
-    IReportFormatterAggregate,
-    IReportFormatterProtocol,
-};
+use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
 
 use shared::role_rules::IRoleRunnerAggregate;
 

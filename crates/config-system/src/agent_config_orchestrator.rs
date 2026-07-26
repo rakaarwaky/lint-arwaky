@@ -1,21 +1,11 @@
 use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
-use shared::common::{
-    PatternList,
-    FilePath,
-};
+use shared::common::{FilePath, PatternList};
 
 use shared::config_system::{
-    IConfigOrchestratorAggregate,
-    IConfigReaderProtocol,
-    IConfigValidatorProtocol,
-    IWorkspaceDetectorProtocol,
-    ConfigError,
-    ConfigLanguage,
-    ArchitectureConfig,
-    WorkspaceInfo,
-    ConfigResult,
-    ConfigSource,
+    ArchitectureConfig, ConfigError, ConfigLanguage, ConfigResult, ConfigSource,
+    IConfigOrchestratorAggregate, IConfigReaderProtocol, IConfigValidatorProtocol,
+    IWorkspaceDetectorProtocol, WorkspaceInfo,
 };
 
 use shared::config_system::utility_config_defaults::default_config_for_language;

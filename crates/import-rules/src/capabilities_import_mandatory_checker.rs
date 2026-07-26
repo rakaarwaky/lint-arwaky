@@ -1,24 +1,16 @@
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, Severity};
 
 use shared::common::utility_layer_detector;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_import_resolver;
-use shared::import_rules::{
-    AesImportViolation,
-    IImportMandatoryProtocol,
-    ImportError,
-};
+use shared::import_rules::{AesImportViolation, IImportMandatoryProtocol, ImportError};
 
 use shared::common::LineNumber;
-use shared::common::{LayerDefinition, LayerMapVO};
-use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared::common::SymbolName;
+use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared::common::{LayerDefinition, LayerMapVO};
 use std::collections::HashSet;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
@@ -230,11 +222,7 @@ impl ArchImportMandatoryChecker {
                         .any(|(_, l)| l.value().contains(req_layer_str))
                 } else {
                     import_lines.iter().any(|(_, l)| {
-                        utility_import_resolver::import_matches_scope(
-                            l,
-                            &req_layer,
-                            &req_suffixes,
-                        )
+                        utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes)
                     })
                 };
 
@@ -308,9 +296,11 @@ impl ArchImportMandatoryChecker {
 
             for symbol_name in &symbols {
                 // Resolve symbol through barrel file to find original source file stem
-                let Some(resolved) =
-                    utility_import_resolver::resolve_barrel_import(module_val, symbol_name, root_dir)
-                else {
+                let Some(resolved) = utility_import_resolver::resolve_barrel_import(
+                    module_val,
+                    symbol_name,
+                    root_dir,
+                ) else {
                     continue;
                 };
 

@@ -1,8 +1,5 @@
 // PURPOSE: ConfigCommandsSurface — CLI surface for config show
-use shared::common::{
-    ExitCode,
-    FilePath,
-};
+use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::IConfigOrchestratorAggregate;
 use std::sync::Arc;

@@ -1,19 +1,9 @@
-use shared::code_analysis::{
-    InboundLinkMap,
-    OrphanIndicatorResult,
-};
+use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
 use shared::common::utility_layer_detector;
-use shared::orphan_detector::{
-    IUtilityOrphanProtocol,
-    AesOrphanViolation,
-};
-
+use shared::orphan_detector::{AesOrphanViolation, IUtilityOrphanProtocol};
 
 // Layers that are valid consumers of utility files
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];

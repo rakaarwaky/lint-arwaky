@@ -11,35 +11,17 @@
 //   - Only reports added lines (+ prefix) as violations, not context lines
 
 use async_trait::async_trait;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
+
+use shared::common::{AdapterError, FilePath, ICommandExecutorProtocol, Severity};
 
 use shared::common::{
-    ICommandExecutorProtocol,
-    AdapterError,
-    FilePath,
-    Severity,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
+    LocationList, PatternList,
 };
-
 use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
-use shared::common::{
-    AdapterName,
-    ErrorMessage,
-    ColumnNumber,
-    LineNumber,
-    PatternList,
-    ErrorCode,
-    LocationList,
-    ComplianceStatus,
-    LintMessage,
-};
 
 use std::path::Path;
 use std::sync::Arc;

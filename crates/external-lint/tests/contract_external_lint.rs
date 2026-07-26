@@ -6,11 +6,8 @@ use external_lint_lint_arwaky::*;
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::ICommandExecutorProtocol;
 use shared::external_lint::{
-    IExternalLintAggregate,
-    IExternalLintExecutorProtocol,
-    IExternalLintSelectorProtocol,
+    IExternalLintAggregate, IExternalLintExecutorProtocol, IExternalLintSelectorProtocol,
 };
-
 
 // ─── ILinterAdapterProtocol Implementations ───────────────
 

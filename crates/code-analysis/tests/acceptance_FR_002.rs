@@ -3,11 +3,7 @@
 
 use code_analysis_lint_arwaky::ArchLineChecker;
 use shared::code_analysis::ILineCheckerProtocol;
-use shared::common::{
-    Count,
-    LayerDefinition,
-};
-
+use shared::common::{Count, LayerDefinition};
 
 fn make_def_with_min(min: i64) -> LayerDefinition {
     LayerDefinition {

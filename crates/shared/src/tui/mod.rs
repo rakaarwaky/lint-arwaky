@@ -26,8 +26,8 @@ pub use contract_tui_aggregate::ITuiAggregate;
 // ── Taxonomy types ──
 pub use taxonomy_action_flags_vo::ActionFlags;
 pub use taxonomy_adapter_info_vo::AdapterInfo;
-pub use taxonomy_file_entry_vo::FileEntry;
 pub use taxonomy_file_entry_vo::AesLayer;
+pub use taxonomy_file_entry_vo::FileEntry;
 pub use taxonomy_lint_result_vo::LintExecutionResult;
 pub use taxonomy_scan_update_vo::ScanUpdate;
 pub use taxonomy_state_vo::AppState;

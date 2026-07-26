@@ -2,21 +2,11 @@
 // Covers: execute, run_fix, manual_report.
 
 use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
-use shared::auto_fix::{
-    LintFixOrchestratorAggregate,
-    IFixProtocol,
-    FixApplied,
-    FixResult,
-};
+use shared::auto_fix::{FixApplied, FixResult, IFixProtocol, LintFixOrchestratorAggregate};
 
 use shared::cli_commands::LintResult;
 use shared::common::{Count, LineNumber};
-use shared::common::{
-    ErrorCode,
-    LintMessage,
-    FilePath,
-    Severity,
-};
+use shared::common::{ErrorCode, FilePath, LintMessage, Severity};
 
 use std::sync::Arc;
 

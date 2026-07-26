@@ -1,11 +1,7 @@
 use code_analysis_lint_arwaky::{
     capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
 };
-use shared::code_analysis::{
-    IBypassCheckerProtocol,
-    ILineCheckerProtocol,
-};
-
+use shared::code_analysis::{IBypassCheckerProtocol, ILineCheckerProtocol};
 
 // ─── Contract Tests: Trait Implementation Verification ──────
 

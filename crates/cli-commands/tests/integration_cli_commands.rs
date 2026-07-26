@@ -4,10 +4,7 @@
 //! are wired correctly and can be constructed without panics.
 
 use cli_commands_lint_arwaky::root_cli_container::CliContainer;
-use shared::cli_commands::{
-    Format,
-    ScanReport,
-};
+use shared::cli_commands::{Format, ScanReport};
 
 use shared::report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;

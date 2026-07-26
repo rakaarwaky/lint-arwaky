@@ -3,9 +3,7 @@ use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidato
 use shared::common::AdapterName;
 use shared::common::{Count, Score};
 use shared::config_system::IConfigValidatorProtocol;
-use shared::config_system::{
-    AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
-};
+use shared::config_system::{AdapterEntry, AdapterStatus, ProjectConfig, Thresholds};
 
 fn make_validator() -> ConfigRulesValidator {
     ConfigRulesValidator::new()

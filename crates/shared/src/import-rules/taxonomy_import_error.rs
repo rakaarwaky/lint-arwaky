@@ -66,23 +66,23 @@ pub enum ImportError {
 impl fmt::Display for ImportError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ImportError::ModuleResolution { module, reason } => {
-                match reason {
-                    Some(r) => write!(f, "Module '{}' cannot be resolved: {}", module, r),
-                    None => write!(f, "Module '{}' cannot be resolved", module),
-                }
-            }
+            ImportError::ModuleResolution { module, reason } => match reason {
+                Some(r) => write!(f, "Module '{}' cannot be resolved: {}", module, r),
+                None => write!(f, "Module '{}' cannot be resolved", module),
+            },
             ImportError::SymbolNotFound { module, symbol } => {
                 write!(f, "Symbol '{}' not found in module '{}'", symbol, module)
             }
-            ImportError::CircularDependency { cycle, file } => {
-                match file {
-                    Some(path) => write!(f, "Circular dependency '{}' at '{}'", cycle, path),
-                    None => write!(f, "Circular dependency: {}", cycle),
-                }
-            }
+            ImportError::CircularDependency { cycle, file } => match file {
+                Some(path) => write!(f, "Circular dependency '{}' at '{}'", cycle, path),
+                None => write!(f, "Circular dependency: {}", cycle),
+            },
             ImportError::InvalidConfiguration { layer, message } => {
-                write!(f, "Invalid import configuration for layer '{}': {}", layer, message)
+                write!(
+                    f,
+                    "Invalid import configuration for layer '{}': {}",
+                    layer, message
+                )
             }
         }
     }

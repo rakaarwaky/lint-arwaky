@@ -4,10 +4,7 @@
 
 use orphan_detector_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
 use shared::code_analysis::{FileDefinitionMap, InheritanceMap};
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
 use shared::orphan_detector::IContractOrphanProtocol;
 use std::collections::HashMap;

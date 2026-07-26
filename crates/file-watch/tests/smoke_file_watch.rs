@@ -6,26 +6,14 @@ use std::sync::Arc;
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
-use shared::file_watch::{
-    IChangeAnalyzerProtocol,
-    IWatchAggregate,
-    WatchConfig,
-};
-
+use shared::file_watch::{IChangeAnalyzerProtocol, IWatchAggregate, WatchConfig};
 
 // Minimal mock linter for smoke.
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
-
+use shared::common::{DisplayContent, FilePath};
 
 struct SmokeLinter;
 impl ICodeAnalysisAggregate for SmokeLinter {

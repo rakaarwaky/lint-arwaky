@@ -6,10 +6,7 @@
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
-use shared::git_hooks::{
-    IHookProtocol,
-    IHookManagerProtocol,
-};
+use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
 
 use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;

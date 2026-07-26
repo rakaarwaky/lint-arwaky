@@ -5,20 +5,9 @@
 
 use std::collections::BTreeMap;
 
-use shared::cli_commands::{
-    Format,
-    LintResult,
-};
+use shared::cli_commands::{Format, LintResult};
 
-use shared::common::{
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    LintMessage,
-    FilePath,
-    Severity,
-};
-
+use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
 /// Minimal violation item for display. Uses existing VOs — no duplicate String wrappers.
 #[derive(Debug, Clone)]

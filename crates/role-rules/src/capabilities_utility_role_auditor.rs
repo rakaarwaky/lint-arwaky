@@ -13,10 +13,7 @@
 
 use shared::cli_commands::LintResult;
 use shared::common::Severity;
-use shared::role_rules::{
-    IUtilityRoleChecker,
-    AesRoleViolation,
-};
+use shared::role_rules::{AesRoleViolation, IUtilityRoleChecker};
 
 use shared::common::SourceContentVO;
 

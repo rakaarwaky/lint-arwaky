@@ -11,20 +11,14 @@
 //
 // This is the least "lint-like" crate — it handles ops, not code quality.
 // All I/O is delegated to IMaintenanceCheckerProtocol (capabilities layer).
-use shared::common::{
-    JobId,
-    FilePath,
-};
+use shared::common::{FilePath, JobId};
 
-use shared::maintenance::{
-    MaintenanceCommandsAggregate,
-    IMaintenanceCheckerProtocol,
-};
+use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggregate};
 
+use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
-use shared::maintenance::MaintenanceStatsVO;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

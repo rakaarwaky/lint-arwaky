@@ -4,18 +4,10 @@
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 use shared::common::{BooleanVO, Count, PatternList};
-use shared::common::{
-    LayerDefinition,
-    LayerNameVO,
-    FilePath,
-    FilePathList,
-};
+use shared::common::{FilePath, FilePathList, LayerDefinition, LayerNameVO};
 
 use shared::config_system::ArchitectureConfig;
-use shared::import_rules::{
-    ICycleImportProtocol,
-    DependencyEdge,
-};
+use shared::import_rules::{DependencyEdge, ICycleImportProtocol};
 
 use std::collections::HashMap;
 use std::io::Write;

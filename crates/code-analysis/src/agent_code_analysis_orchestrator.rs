@@ -17,36 +17,25 @@
 //   4. Run duplication check using pre-read entries (AES305)
 //   5. Return aggregated LintResult list
 
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
 use shared::code_analysis::{
-    IBypassCheckerProtocol,
-    IMandatoryClassProtocol,
-    ICodeAnalysisAggregate,
-    ICodeMetricAnalyzerProtocol,
-    IDeadInheritanceProtocol,
-    ILineCheckerProtocol,
+    IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
+    IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
 
-
 use shared::code_analysis::CodeAnalysisRuleVO;
-use shared::common::{BooleanVO, Score};
-use shared::common::DisplayContent;
-use shared::common::{DirectoryPath, FilePath};
-use shared::common::Severity;
 use shared::common::utility_compliance_score::compute_score;
 use shared::common::utility_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
 };
+use shared::common::DisplayContent;
+use shared::common::Severity;
+use shared::common::{BooleanVO, Score};
+use shared::common::{DirectoryPath, FilePath};
+use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-};
 
 use std::path::Path;
 use std::sync::Arc;

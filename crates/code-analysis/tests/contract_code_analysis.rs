@@ -4,13 +4,9 @@ use code_analysis_lint_arwaky::{
     root_code_analysis_container::CodeAnalysisContainer, CodeAnalysisOrchestrator,
 };
 use shared::code_analysis::{
-    IBypassCheckerProtocol,
+    IBypassCheckerProtocol, ICodeAnalysisAggregate, IDeadInheritanceProtocol, ILineCheckerProtocol,
     IMandatoryClassProtocol,
-    ICodeAnalysisAggregate,
-    IDeadInheritanceProtocol,
-    ILineCheckerProtocol,
 };
-
 
 // ─── BypassChecker implements IBypassCheckerProtocol ───────
 

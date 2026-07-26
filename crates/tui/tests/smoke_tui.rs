@@ -1,11 +1,7 @@
 // PURPOSE: Smoke test — verify the tui crate boots and responds within 5 seconds.
 // Layer: Smoke (must complete < 5s).
 
-use shared::tui::{
-    ITuiAggregate,
-    AppState,
-    TuiEvent,
-};
+use shared::tui::{AppState, ITuiAggregate, TuiEvent};
 
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;

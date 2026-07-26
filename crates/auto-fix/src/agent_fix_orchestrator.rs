@@ -13,11 +13,7 @@
 //   - AES203 (unused import):    YES — safe to remove the import line
 //   - AES304 (bypass comment):   YES — safe to remove the bypass comment
 //   - All others:               NO  — require manual review
-use shared::auto_fix::{
-    LintFixOrchestratorAggregate,
-    IFixProtocol,
-    FixResult,
-};
+use shared::auto_fix::{FixResult, IFixProtocol, LintFixOrchestratorAggregate};
 
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;

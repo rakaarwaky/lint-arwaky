@@ -1,12 +1,7 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
 // Wiring: IHookManagerProtocol → GitHookAdapter (capabilities layer)
-use shared::git_hooks::{
-    IDiffProtocol,
-    GitHooksAggregate,
-    IHookProtocol,
-    IHookManagerProtocol,
-};
+use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 
 use std::sync::Arc;
 

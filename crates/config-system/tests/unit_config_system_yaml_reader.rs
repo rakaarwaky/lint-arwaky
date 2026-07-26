@@ -1,10 +1,7 @@
 // Unit tests for ConfigYamlReader — config file discovery and XDG fallback.
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::common::FilePath;
-use shared::config_system::{
-    IConfigReaderProtocol,
-    ConfigLanguage,
-};
+use shared::config_system::{ConfigLanguage, IConfigReaderProtocol};
 
 use std::fs;
 use tempfile::TempDir;

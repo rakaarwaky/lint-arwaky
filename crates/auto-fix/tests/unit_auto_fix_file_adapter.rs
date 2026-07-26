@@ -3,10 +3,7 @@
 
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use shared::auto_fix::IFileAdapterProtocol;
-use shared::common::{
-    FilePath,
-    ContentString,
-};
+use shared::common::{ContentString, FilePath};
 
 use std::io::Write;
 use tempfile::NamedTempFile;

@@ -1,27 +1,14 @@
 use shared::cli_commands::LintResult;
-use shared::common::{
-    LanguageVO,
-    FilePath,
-    Severity,
-    ContentString,
-};
+use shared::common::{ContentString, FilePath, LanguageVO, Severity};
 
 use shared::common::utility_layer_detector;
 use shared::import_rules::utility_dummy_detector;
 use shared::import_rules::utility_import_resolver;
-use shared::import_rules::{
-    AesImportViolation,
-    IDummyImportCheckerProtocol,
-    ImportError,
-};
+use shared::import_rules::{AesImportViolation, IDummyImportCheckerProtocol, ImportError};
 
 use shared::common::LayerMapVO;
 use shared::common::{Identity, LayerNameVO, LineNumber};
-use shared::common::{
-    LintMessage,
-    SymbolName,
-};
-
+use shared::common::{LintMessage, SymbolName};
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -37,10 +24,7 @@ struct DummyFileContext {
     lines: Vec<String>,
     lang: LanguageVO,
     layer_name: String,
-    dummy_ranges: Vec<(
-        LineNumber,
-        LineNumber,
-    )>,
+    dummy_ranges: Vec<(LineNumber, LineNumber)>,
     dummy_impl_traits: Vec<String>,
 }
 

@@ -4,19 +4,12 @@ use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 use shared::code_analysis::{
-    IBypassCheckerProtocol,
-    IMandatoryClassProtocol,
-    ICodeAnalysisAggregate,
-    ICodeMetricAnalyzerProtocol,
-    IDeadInheritanceProtocol,
-    ILineCheckerProtocol,
+    IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
+    IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
 
 use shared::common::FilePath;
-use shared::config_system::{
-    IConfigOrchestratorAggregate,
-    ArchitectureConfig,
-};
+use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
 use shared::common::LayerMapVO;
 use std::sync::Arc;

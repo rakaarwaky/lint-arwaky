@@ -12,34 +12,18 @@
 
 use async_trait::async_trait;
 use serde_json::Value;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
+
+use shared::common::{AdapterError, FilePath, Severity};
 
 use shared::common::{
-    AdapterError,
-    FilePath,
-    Severity,
-};
-
-use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
-use shared::common::{
-    AdapterName,
-    ErrorMessage,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
     LocationList,
-    ComplianceStatus,
-    LintMessage,
 };
+use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
+use shared::external_lint::IExternalLintExecutorProtocol;
 
 use std::sync::Arc;
 
@@ -69,6 +53,8 @@ impl ILinterAdapterProtocol for RuffAdapter {
             executable,
             "check".to_string(),
             path.value.clone(),
+            "--exclude".to_string(),
+            "tests".to_string(),
             "--output-format=json".to_string(),
             "--exit-zero".to_string(),
             "--no-cache".to_string(),

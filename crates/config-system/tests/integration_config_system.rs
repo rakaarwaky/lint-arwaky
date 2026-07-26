@@ -1,10 +1,7 @@
 // Integration tests — full DI wiring via ConfigContainer.
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use shared::common::FilePath;
-use shared::config_system::{
-    ConfigLanguage,
-    ProjectConfig,
-};
+use shared::config_system::{ConfigLanguage, ProjectConfig};
 
 use std::fs;
 use tempfile::TempDir;

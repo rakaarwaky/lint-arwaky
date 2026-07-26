@@ -1,11 +1,11 @@
 use shared::common::ExitCode;
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
+use shared::cli_commands::Format;
 use shared::common::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
 use shared::common::LayerMapVO;
+use shared::config_system::IConfigOrchestratorAggregate;
 
 use crate::surface_output_component::{output_violations, ViolationItem};
 

@@ -3,11 +3,7 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 
 use shared::code_analysis::ICodeAnalysisAggregate;
-use shared::common::{
-    FilePath,
-    Severity,
-    Threshold,
-};
+use shared::common::{FilePath, Severity, Threshold};
 
 use shared::import_rules::IImportRunnerAggregate;
 use shared::naming_rules::INamingRunnerAggregate;

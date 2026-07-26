@@ -1,8 +1,4 @@
-use shared::project_setup::{
-    ISetupInstallerProtocol,
-    SetupError,
-};
-
+use shared::project_setup::{ISetupInstallerProtocol, SetupError};
 
 // PURPOSE: SetupInstallerAdapter — capabilities adapter for executing npm/pip install commands
 //

@@ -1,8 +1,4 @@
-use shared::common::{
-    FilePath,
-    ContentString,
-};
-
+use shared::common::{ContentString, FilePath};
 
 // PURPOSE: FileAdapter — capabilities layer for file I/O operations
 use shared::auto_fix::IFileAdapterProtocol;

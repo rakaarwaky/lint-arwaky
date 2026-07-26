@@ -11,18 +11,11 @@
 //
 // The orchestrator itself contains no git logic — it's pure composition.
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    SuccessStatus,
-    FilePath,
-};
+use shared::common::{FilePath, SuccessStatus};
 
 use shared::git_hooks::{
-    IDiffProtocol,
-    GitHooksAggregate,
-    IHookProtocol,
-    IHookManagerProtocol,
-    HookManagementOrchestratorAggregate,
-    GitHookError,
+    GitHookError, GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol,
+    IHookManagerProtocol, IHookProtocol,
 };
 
 use std::sync::Arc;

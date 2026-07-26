@@ -2,16 +2,10 @@
 //! ReportFormatterOrchestrator — agent layer that coordinates report formatting.
 //! Implements IReportFormatterAggregate by delegating to the appropriate
 //! capabilities formatter based on the requested format.
-use shared::cli_commands::{
-    Format,
-    ScanReport,
-};
+use shared::cli_commands::{Format, ScanReport};
 
 use shared::common::DisplayContent;
-use shared::report_formatter::{
-    IReportFormatterAggregate,
-    IReportFormatterProtocol,
-};
+use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
 
 use std::sync::Arc;
 

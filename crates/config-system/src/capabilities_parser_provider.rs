@@ -1,11 +1,6 @@
 // PURPOSE: ConfigParserProvider — IConfigParserProtocol implementation for YAML and TOML config parsing
 use shared::common::FilePath;
-use shared::config_system::{
-    IConfigParserProtocol,
-    ConfigError,
-    ConfigKey,
-    ProjectConfig,
-};
+use shared::config_system::{ConfigError, ConfigKey, IConfigParserProtocol, ProjectConfig};
 
 use shared::common::ErrorMessage;
 

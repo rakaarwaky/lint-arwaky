@@ -12,10 +12,7 @@ use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::Taxonomy
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use shared::common::FilePath;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_detector::{
-    IOrphanAggregate,
-    OrphanFileListVO,
-};
+use shared::orphan_detector::{IOrphanAggregate, OrphanFileListVO};
 
 use std::sync::Arc;
 

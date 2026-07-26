@@ -6,25 +6,14 @@ use std::sync::Arc;
 
 use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::{
-    IWatchProviderProtocol,
-    IWatchAggregate,
-    WatchConfig,
-};
-
+use shared::file_watch::{IWatchAggregate, IWatchProviderProtocol, WatchConfig};
 
 // Mock linter that tracks invocation count.
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
+use shared::common::{DisplayContent, FilePath};
 
 use std::sync::atomic::AtomicUsize;
 

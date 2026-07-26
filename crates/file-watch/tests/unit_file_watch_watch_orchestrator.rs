@@ -9,27 +9,16 @@ use std::sync::Arc;
 
 use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::{
-    IWatchProviderProtocol,
-    IWatchAggregate,
-};
-
+use shared::file_watch::{IWatchAggregate, IWatchProviderProtocol};
 
 // ─── Mock ICodeAnalysisAggregate ────────────────────────────
 // Minimal stub so WatchOrchestrator can be constructed.
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
-
+use shared::common::{DisplayContent, FilePath};
 
 struct MockLinter;
 

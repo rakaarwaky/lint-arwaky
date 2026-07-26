@@ -4,10 +4,7 @@
 
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use shared::code_analysis::InboundLinkMap;
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
 use shared::orphan_detector::IUtilityOrphanProtocol;
 use std::collections::HashMap;

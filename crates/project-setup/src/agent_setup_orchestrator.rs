@@ -10,22 +10,12 @@
 //   - Language detection and config template loading
 //   - Config file writing and XDG config dir creation
 use async_trait::async_trait;
-use shared::cli_commands::{
-    TransportProtocol,
-    TransportUrlVO,
-};
+use shared::cli_commands::{TransportProtocol, TransportUrlVO};
 
-use shared::common::{
-    EnvContentVO,
-    McpConfigVO,
-    SuccessStatus,
-    DirectoryPath,
-};
+use shared::common::{DirectoryPath, EnvContentVO, McpConfigVO, SuccessStatus};
 
 use shared::project_setup::{
-    SetupManagementAggregate,
-    ISetupManagementProtocol,
-    ProjectLanguagesVO,
+    ISetupManagementProtocol, ProjectLanguagesVO, SetupManagementAggregate,
 };
 
 use std::collections::HashMap;

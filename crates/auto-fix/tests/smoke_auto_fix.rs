@@ -5,26 +5,14 @@ use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::{
-    IFileAdapterProtocol,
-    IFixProtocol,
-};
+use shared::auto_fix::{IFileAdapterProtocol, IFixProtocol};
 
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-};
+use shared::common::{DisplayContent, FilePath};
 
 use std::sync::Arc;
 

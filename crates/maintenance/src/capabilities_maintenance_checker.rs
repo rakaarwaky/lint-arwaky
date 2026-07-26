@@ -1,16 +1,7 @@
-use shared::common::{
-    AdapterName,
-    ErrorMessage,
-};
+use shared::common::{AdapterName, ErrorMessage};
 
+use shared::common::{ComplianceStatus, DescriptionVO, FilePath, FilePathList};
 use shared::common::{Count, Score};
-use shared::common::{
-    ComplianceStatus,
-    FilePath,
-    FilePathList,
-    DescriptionVO,
-};
-
 
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
 //
@@ -25,13 +16,13 @@ use shared::common::{
 //   7. doctor: check tool installations and config presence.
 
 use shared::common::utility_command_runner as proc_io;
+use shared::maintenance::utility_dependency_io as dep_io;
 use shared::maintenance::IMaintenanceCheckerProtocol;
+use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,
 };
-use shared::maintenance::MaintenanceStatsVO;
-use shared::maintenance::utility_dependency_io as dep_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -4,13 +4,7 @@
 
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    LayerDefinition,
-    LayerMapVO,
-    LayerNameVO,
-    FilePath,
-    FilePathList,
-};
+use shared::common::{FilePath, FilePathList, LayerDefinition, LayerMapVO, LayerNameVO};
 
 use shared::config_system::ArchitectureConfig;
 use shared::naming_rules::INamingConventionChecker;

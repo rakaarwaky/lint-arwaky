@@ -3,25 +3,17 @@ use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, Severity};
 
 use shared::common::utility_layer_detector;
+use shared::common::{LayerMapVO, LayerNameVO, LintMessage};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::INamingConventionChecker;
-use shared::naming_rules::{
-    LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
-};
-use shared::naming_rules::NamingViolation;
 use shared::naming_rules::utility_naming_checker::get_stem;
 use shared::naming_rules::utility_naming_checker::string_filename_result;
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-    LintMessage,
+use shared::naming_rules::INamingConventionChecker;
+use shared::naming_rules::NamingViolation;
+use shared::naming_rules::{
+    LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
 };
 
 use std::sync::OnceLock;

@@ -5,19 +5,10 @@
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::LintResultList;
 use shared::common::{
-    PatternList,
-    SuffixPolicyVO,
-    LayerDefinition,
-    LayerMapVO,
-    LayerNameVO,
-    FilePath,
-    FilePathList,
+    FilePath, FilePathList, LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO,
 };
 
-use shared::config_system::{
-    ArchitectureConfig,
-    NamingRuleVO,
-};
+use shared::config_system::{ArchitectureConfig, NamingRuleVO};
 
 use shared::naming_rules::ISuffixPrefixChecker;
 use std::collections::HashMap;

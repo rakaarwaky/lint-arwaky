@@ -3,8 +3,8 @@
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use shared::common::FilePath;
-use shared::role_rules::IAgentRoleChecker;
 use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::IAgentRoleChecker;
 
 fn checker() -> AgentRoleChecker {
     AgentRoleChecker::new()

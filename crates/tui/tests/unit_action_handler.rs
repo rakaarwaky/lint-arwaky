@@ -1,10 +1,7 @@
 // PURPOSE: Unit tests for ActionHandler — central event dispatch logic.
 // Layer: Capabilities (ActionHandler)
 
-use shared::tui::{
-    AppState,
-    TuiEvent,
-};
+use shared::tui::{AppState, TuiEvent};
 
 use std::sync::Arc;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;

@@ -10,14 +10,9 @@ use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRu
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 
 use shared::import_rules::{
-    ICycleImportProtocol,
-    IDummyImportCheckerProtocol,
-    IImportForbiddenProtocol,
-    IImportMandatoryProtocol,
-    IImportRunnerAggregate,
-    IUnusedImportProtocol,
+    ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
+    IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
-
 
 // ─── AES201: Forbidden Import Protocol ────────────────────
 

@@ -1,10 +1,5 @@
 use shared::common::FilePath;
-use shared::config_system::{
-    IConfigReaderProtocol,
-    ConfigError,
-    ConfigLanguage,
-    ConfigSource,
-};
+use shared::config_system::{ConfigError, ConfigLanguage, ConfigSource, IConfigReaderProtocol};
 
 use shared::config_system::utility_config_io as config_io;
 

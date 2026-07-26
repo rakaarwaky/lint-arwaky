@@ -7,19 +7,14 @@ use shared::code_analysis::LinterOperationError;
 use shared::common::ICommandExecutorProtocol;
 use shared::common::{AdapterError, ScanError};
 use shared::common::{
-    AdapterName,
-    ErrorMessage,
-    PatternList,
-    Timeout,
-    ComplianceStatus,
-    FilePath,
-    ResponseData,
+    AdapterName, ComplianceStatus, ErrorMessage, FilePath, PatternList, ResponseData, Timeout,
 };
 
 use shared::external_lint::IExternalLintExecutorProtocol;
 
-use shared::external_lint::utility_external_lint::{canonicalize_path, resolve_js_cmd, resolve_js_working_dir};
-
+use shared::external_lint::utility_external_lint::{
+    canonicalize_path, resolve_js_cmd, resolve_js_working_dir,
+};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

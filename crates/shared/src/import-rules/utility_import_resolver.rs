@@ -363,7 +363,7 @@ fn normalize_module_path(module_path: &str) -> String {
         .trim_start_matches("./")
         .trim_start_matches("../")
         .replace('.', "/")
-        .replace("::", "/")  // Rust path separator
+        .replace("::", "/") // Rust path separator
 }
 
 /// Try to find a barrel file at the given base path with all candidate names.
@@ -558,8 +558,7 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                             if part.is_empty() {
                                 continue;
                             }
-                            let exported_name =
-                                part.split(" as ").last().unwrap_or(part).trim();
+                            let exported_name = part.split(" as ").last().unwrap_or(part).trim();
                             reexports.insert(exported_name.to_string(), module_stem.clone());
                         }
                     }
@@ -580,11 +579,7 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                 // pub use submodule::{A, B};
                 let prefix = &use_part[..brace_pos];
                 // Extract module stem: "features::auth" → "auth"
-                let module_stem = prefix
-                    .rsplit("::")
-                    .next()
-                    .unwrap_or(prefix)
-                    .to_string();
+                let module_stem = prefix.rsplit("::").next().unwrap_or(prefix).to_string();
                 let inner = use_part[brace_pos + 3..].trim_end_matches('}');
                 for name in inner.split(',') {
                     let name = name.trim().split(" as ").last().unwrap_or("").trim();
@@ -671,11 +666,7 @@ pub fn resolve_barrel_import(
 /// resolve_barrel_symbol("modules.shared.src.server", "IBlenderConnectionProtocol", "/workspace")
 /// → Some("contract_connection_protocol")
 /// ```
-pub fn resolve_barrel_symbol(
-    module_path: &str,
-    symbol: &str,
-    root_dir: &str,
-) -> Option<String> {
+pub fn resolve_barrel_symbol(module_path: &str, symbol: &str, root_dir: &str) -> Option<String> {
     resolve_barrel_import(module_path, symbol, root_dir).map(|r| r.resolved_file)
 }
 

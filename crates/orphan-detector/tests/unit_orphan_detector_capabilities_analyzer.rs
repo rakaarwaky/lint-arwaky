@@ -4,10 +4,7 @@
 
 use orphan_detector_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
 use shared::code_analysis::ReachabilityResult;
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
 use shared::orphan_detector::ICapabilitiesOrphanProtocol;
 use std::collections::HashSet;

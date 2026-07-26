@@ -10,9 +10,9 @@ use naming_rules_lint_arwaky::{
 };
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;
+use shared::common::LayerMapVO;
 use shared::config_system::ArchitectureConfig;
 use shared::naming_rules::INamingRunnerAggregate;
-use shared::common::LayerMapVO;
 
 // ─── Integration Tests: DI Container Wiring ────────────────────────
 

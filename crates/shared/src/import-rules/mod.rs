@@ -20,7 +20,7 @@ pub mod utility_import_symbol_extractor;
 pub mod utility_path_normalizer;
 
 // ─── Re-exports ────────────────────────────────────────────
-// Barrel re-export pattern: allows consumers to import directly 
+// Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
 pub use contract_cycle_import_protocol::ICycleImportProtocol;
@@ -35,4 +35,3 @@ pub use taxonomy_dependency_edge_vo::DependencyEdge;
 pub use taxonomy_import_constant::DEFAULT_SKIP_DIRS;
 pub use taxonomy_import_error::ImportError;
 pub use taxonomy_violation_import_vo::AesImportViolation;
-

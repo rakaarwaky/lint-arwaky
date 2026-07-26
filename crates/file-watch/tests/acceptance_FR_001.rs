@@ -4,11 +4,7 @@
 use std::time::Duration;
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::{
-    IWatchProviderProtocol,
-    WatchConfig,
-};
-
+use shared::file_watch::{IWatchProviderProtocol, WatchConfig};
 
 #[tokio::test]
 async fn frd_001_recursive_watch_detects_nested_file_change() {

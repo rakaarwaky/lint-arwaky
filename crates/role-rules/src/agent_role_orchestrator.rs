@@ -15,20 +15,12 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::LintResult;
-use shared::common::{
-    FilePath,
-    FilePathList,
-};
+use shared::common::{FilePath, FilePathList};
 
 use shared::common::utility_language_detector::detect_language;
 use shared::role_rules::{
-    IAgentRoleChecker,
-    ICapabilitiesRoleChecker,
-    IContractRoleChecker,
-    IRoleRunnerAggregate,
-    ISurfaceRoleChecker,
-    ITaxonomyRoleChecker,
-    IUtilityRoleChecker,
+    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
+    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
 
 use shared::common::{ContentString, SourceContentVO};
@@ -72,10 +64,7 @@ impl IRoleRunnerAggregate for RoleOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl RoleOrchestrator {
-    pub fn new(
-        deps: RoleCheckerDeps,
-        config: &shared::config_system::ArchitectureConfig,
-    ) -> Self {
+    pub fn new(deps: RoleCheckerDeps, config: &shared::config_system::ArchitectureConfig) -> Self {
         let ignored_paths: Vec<String> = config
             .ignored_paths
             .values
@@ -95,6 +84,11 @@ impl RoleOrchestrator {
             Some(n) => n.to_string_lossy(),
             None => std::borrow::Cow::Borrowed(""),
         };
+        // Default-excluded directories (build artifacts, deps, test dirs) are
+        // always skipped even when no config `ignored_paths` is present.
+        if dir_name == "tests" {
+            return true;
+        }
         self.ignored_paths.iter().any(|ignored| {
             s.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
         })

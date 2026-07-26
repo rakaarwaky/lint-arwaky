@@ -16,12 +16,7 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Terminal;
-use shared::tui::{
-    ITuiAggregate,
-    ScanUpdate,
-    AppState,
-    TuiEvent,
-};
+use shared::tui::{AppState, ITuiAggregate, ScanUpdate, TuiEvent};
 
 use std::io::stdout;
 use std::sync::Arc;

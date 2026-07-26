@@ -1,9 +1,7 @@
 // Unit tests for WorkspaceDetector — language detection and workspace discovery.
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use shared::common::FilePath;
-use shared::config_system::{
-    IWorkspaceDetectorProtocol, WorkspaceType,
-};
+use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
 use std::fs;
 use tempfile::TempDir;
 

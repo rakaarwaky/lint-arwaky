@@ -11,9 +11,7 @@ use shared::config_system::IConfigOrchestratorAggregate;
 use shared::git_hooks::GitHooksAggregate;
 use shared::maintenance::MaintenanceCommandsAggregate;
 use shared::mcp_server::IMcpServerAggregate;
-use shared::mcp_server::{
-    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use shared::mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 

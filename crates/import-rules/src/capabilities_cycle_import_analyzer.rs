@@ -2,29 +2,15 @@
 use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::cli_commands::LintResult;
-use shared::common::{
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, Severity};
 
 use shared::common::utility_layer_detector;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_cycle_detector;
 use shared::import_rules::utility_import_module_parser;
-use shared::import_rules::{
-    AesImportViolation,
-    DependencyEdge,
-    ICycleImportProtocol,
-    ImportError,
-};
+use shared::import_rules::{AesImportViolation, DependencyEdge, ICycleImportProtocol, ImportError};
 
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-    LintMessage,
-    SymbolName,
-};
+use shared::common::{LayerMapVO, LayerNameVO, LintMessage, SymbolName};
 
 use std::collections::HashMap;
 
@@ -125,7 +111,10 @@ impl DependencyCycleAnalyzer {
                 // ── Barrel-aware module extraction ──
                 // For imports through barrel files, resolve to original source
                 // so dependency graph reflects actual file-to-file dependencies.
-                let resolved_modules = utility_import_module_parser::extract_import_modules_resolved(&content, root_dir);
+                let resolved_modules =
+                    utility_import_module_parser::extract_import_modules_resolved(
+                        &content, root_dir,
+                    );
 
                 let modules: Vec<SymbolName> = resolved_modules
                     .into_iter()
@@ -162,8 +151,14 @@ impl DependencyCycleAnalyzer {
                         module_value
                     };
                     // Try standard detection first, then fallback to filesystem scan
-                    let target_layer = utility_layer_detector::detect_module_layer(module_path, &layer_keys)
-                        .or_else(|| utility_layer_detector::resolve_module_path_to_layer(module_path, root_dir));
+                    let target_layer =
+                        utility_layer_detector::detect_module_layer(module_path, &layer_keys)
+                            .or_else(|| {
+                                utility_layer_detector::resolve_module_path_to_layer(
+                                    module_path,
+                                    root_dir,
+                                )
+                            });
 
                     if let Some(target_layer) = target_layer {
                         let target_layer_str = match target_layer.split('(').next() {

@@ -1,21 +1,12 @@
 // PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
-use shared::code_analysis::{
-    OrphanIndicatorResult,
-    ReachabilityResult,
-};
+use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
-use shared::orphan_detector::{
-    ISurfacesOrphanProtocol,
-    AesOrphanViolation,
-};
+use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
 
-use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::common::LayerDefinition;
+use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -6,8 +6,8 @@
 // - Rule 3: Max 3 type declarations per file
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
-use shared::role_rules::ICapabilitiesRoleChecker;
 use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::ICapabilitiesRoleChecker;
 
 fn checker() -> CapabilitiesRoleChecker {
     CapabilitiesRoleChecker::new()

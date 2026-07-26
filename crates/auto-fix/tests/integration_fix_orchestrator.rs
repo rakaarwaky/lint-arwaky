@@ -6,24 +6,13 @@ use std::sync::Arc;
 use auto_fix_lint_arwaky::{
     agent_fix_orchestrator::FixOrchestrator, capabilities_fix_processor::LintFixProcessor,
 };
-use shared::auto_fix::{
-    LintFixOrchestratorAggregate,
-    IFixProtocol,
-};
+use shared::auto_fix::{IFixProtocol, LintFixOrchestratorAggregate};
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
 use shared::common::{BooleanVO, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-    Severity,
-};
-
+use shared::common::{DisplayContent, FilePath, Severity};
 
 fn test_file_path() -> FilePath {
     FilePath::new("test.rs").unwrap()

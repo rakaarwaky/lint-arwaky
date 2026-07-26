@@ -7,11 +7,7 @@
 //     against threshold, and returns pass/fail exit code. Detects CRITICAL violations
 //     as auto-fail regardless of score.
 use shared::code_analysis::ICodeAnalysisAggregate;
-use shared::common::{
-    ExitCode,
-    FilePath,
-    Threshold,
-};
+use shared::common::{ExitCode, FilePath, Threshold};
 
 use std::sync::Arc;
 

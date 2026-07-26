@@ -1,10 +1,7 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
 use crate::agent_import_orchestrator::{ImportOrchestrator, ImportOrchestratorDeps};
 use shared::common::FilePath;
-use shared::config_system::{
-    IConfigOrchestratorAggregate,
-    ArchitectureConfig,
-};
+use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
 use shared::import_rules::IImportRunnerAggregate;
 use std::sync::Arc;

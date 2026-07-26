@@ -459,8 +459,9 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
 
         // ── Handle `from X import Y` (single-line or multi-line paren) ──
         if trimmed.starts_with("from ") {
-            if let Some((_, after_import)) =
-                trimmed.strip_prefix("from ").and_then(|s| s.split_once(" import "))
+            if let Some((_, after_import)) = trimmed
+                .strip_prefix("from ")
+                .and_then(|s| s.split_once(" import "))
             {
                 let import_line_no = i as i64 + 1;
 
@@ -508,10 +509,7 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
                     };
 
                     if !used_name.is_empty() && used_name != "*" {
-                        symbols.push((
-                            SymbolName::new(used_name),
-                            LineNumber::new(import_line_no),
-                        ));
+                        symbols.push((SymbolName::new(used_name), LineNumber::new(import_line_no)));
                     }
                 }
             }
@@ -536,10 +534,7 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
                 };
 
                 if !used_name.is_empty() && used_name != "*" {
-                    symbols.push((
-                        SymbolName::new(used_name),
-                        LineNumber::new(import_line_no),
-                    ));
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(import_line_no)));
                 }
             }
         }

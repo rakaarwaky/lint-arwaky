@@ -2,11 +2,7 @@
 // Layer: Capabilities (JunitFormatter)
 
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
-use shared::cli_commands::{
-    Format,
-    LintResult,
-    ScanReport,
-};
+use shared::cli_commands::{Format, LintResult, ScanReport};
 
 use shared::common::Severity;
 use shared::report_formatter::IReportFormatterProtocol;

@@ -4,12 +4,7 @@
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
 use shared::common::{BooleanVO, Count, PatternList};
-use shared::common::{
-    LayerDefinition,
-    LayerNameVO,
-    FilePath,
-    FilePathList,
-};
+use shared::common::{FilePath, FilePathList, LayerDefinition, LayerNameVO};
 
 use shared::config_system::ArchitectureConfig;
 use std::collections::HashMap;

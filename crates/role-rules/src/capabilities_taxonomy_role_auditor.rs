@@ -1,20 +1,11 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
 use shared::cli_commands::LintResult;
-use shared::common::{
-    Language,
-    Severity,
-};
+use shared::common::{Language, Severity};
 
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::{
-    ITaxonomyRoleChecker,
-    AesRoleViolation,
-};
+use shared::role_rules::{AesRoleViolation, ITaxonomyRoleChecker};
 
-use shared::common::{
-    SymbolName,
-    SourceContentVO,
-};
+use shared::common::{SourceContentVO, SymbolName};
 
 use std::path::Path;
 

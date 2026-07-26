@@ -5,11 +5,7 @@
 //
 // Use-case: pre-commit hooks and CI workflows that want per-file diff analysis.
 use shared::code_analysis::ICodeAnalysisAggregate;
-use shared::common::{
-    ExitCode,
-    GitBranchName,
-    FilePath,
-};
+use shared::common::{ExitCode, FilePath, GitBranchName};
 
 use shared::git_hooks::GitHooksAggregate;
 use std::sync::Arc;

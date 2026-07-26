@@ -4,10 +4,7 @@
 // Speed: ms
 
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
-use shared::common::{
-    GitBranchName,
-    FilePath,
-};
+use shared::common::{FilePath, GitBranchName};
 
 use shared::git_hooks::IDiffProtocol;
 

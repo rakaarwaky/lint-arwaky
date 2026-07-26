@@ -3,10 +3,7 @@
 
 use external_lint_lint_arwaky::ExternalLintContainer;
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    AdapterName,
-    FilePath,
-};
+use shared::common::{AdapterName, FilePath};
 
 use std::fs;
 

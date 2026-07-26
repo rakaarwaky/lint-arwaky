@@ -4,12 +4,8 @@
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use shared::cli_commands::LintResultList;
 use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{FilePath, FilePathList, LayerNameVO};
 use shared::common::{LayerDefinition, LayerMapVO};
-use shared::common::{
-    LayerNameVO,
-    FilePath,
-    FilePathList,
-};
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::IImportForbiddenProtocol;

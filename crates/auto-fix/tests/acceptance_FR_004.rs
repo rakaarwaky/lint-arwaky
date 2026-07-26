@@ -6,17 +6,10 @@ use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::IFixProtocol;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::code_analysis::{
-    ICodeAnalysisAggregate,
-    CodeAnalysisRuleVO,
-};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
+use shared::common::{DisplayContent, FilePath, Severity};
 use shared::common::{LineNumber, Score};
-use shared::common::{
-    DisplayContent,
-    FilePath,
-    Severity,
-};
 
 use std::io::Write;
 use std::sync::Arc;

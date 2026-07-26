@@ -1,16 +1,10 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
-use shared::cli_commands::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::{
-    ExitCode,
-    FilePath,
-};
+use shared::cli_commands::Format;
+use shared::common::{ExitCode, FilePath};
 
-use shared::config_system::{
-    IConfigOrchestratorAggregate,
-    ConfigLanguage,
-};
+use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
 
 use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;

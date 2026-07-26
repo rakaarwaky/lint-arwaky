@@ -1,18 +1,8 @@
-use shared::common::{
-    LintMessage,
-    FilePath,
-    Severity,
-    ErrorMessage,
-};
+use shared::common::{ErrorMessage, FilePath, LintMessage, Severity};
 
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_import_symbol_extractor;
-use shared::import_rules::{
-    AesImportViolation,
-    IUnusedImportProtocol,
-    ImportError,
-};
-
+use shared::import_rules::{AesImportViolation, IUnusedImportProtocol, ImportError};
 
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports (Rust/Python/JS)
 // Uses utility functions directly — no IImportParserProtocol.
@@ -30,8 +20,8 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content =
-            shared::common::utility_file_handler::read_file_generic(path.value()).map_err(|_| {
+        let content = shared::common::utility_file_handler::read_file_generic(path.value())
+            .map_err(|_| {
                 ImportError::module_resolution(
                     path.value().to_string(),
                     Some(ErrorMessage::new(
@@ -91,11 +81,8 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 continue;
             }
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                let line_num = utility_import_resolver::find_import_line_number(
-                    content,
-                    alias_str,
-                )
-                .value() as usize;
+                let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
+                    .value() as usize;
                 violations.push(LintResult::new_arch(
                     file,
                     line_num,

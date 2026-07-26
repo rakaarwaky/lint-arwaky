@@ -19,11 +19,7 @@ use async_trait::async_trait;
 use futures::future;
 use shared::cli_commands::LintResultList;
 use shared::code_analysis::ILinterAdapterProtocol;
-use shared::common::{
-    AdapterNameList,
-    AdapterName,
-    FilePath,
-};
+use shared::common::{AdapterName, AdapterNameList, FilePath};
 
 use shared::config_system::utility_config_parser::parse_adapter_names_from_yaml;
 use shared::external_lint::IExternalLintAggregate;
@@ -64,7 +60,10 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                         Some(n) => n,
                         None => continue,
                     };
-                    if !matches!(name, "node_modules" | "target" | ".git" | "Graph-It-Live") {
+                    if !matches!(
+                        name,
+                        "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
+                    ) {
                         let _ = detect_languages(&path, has_rs, has_py, has_js);
                     }
                 } else if let Some(ext) = path.extension() {

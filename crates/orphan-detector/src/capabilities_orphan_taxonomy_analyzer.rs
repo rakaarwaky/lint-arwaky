@@ -1,21 +1,12 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
-use shared::code_analysis::{
-    InboundLinkMap,
-    OrphanIndicatorResult,
-};
+use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 
-use shared::common::{
-    FilePath,
-    Severity,
-};
+use shared::common::{FilePath, Severity};
 
-use shared::orphan_detector::{
-    ITaxonomyOrphanProtocol,
-    AesOrphanViolation,
-};
+use shared::orphan_detector::{AesOrphanViolation, ITaxonomyOrphanProtocol};
 
-use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::common::LayerDefinition;
+use shared::orphan_detector::utility_orphan_filename::file_stem;
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 

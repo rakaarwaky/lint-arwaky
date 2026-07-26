@@ -7,16 +7,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::common::{
-    ExitCode,
-    FilePath,
-};
+use shared::common::{ExitCode, FilePath};
 
-use shared::file_watch::{
-    IWatchAggregate,
-    WatchConfig,
-};
-
+use shared::file_watch::{IWatchAggregate, WatchConfig};
 
 pub struct WatchCommandsSurface {}
 

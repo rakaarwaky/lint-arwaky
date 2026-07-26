@@ -4,10 +4,7 @@ use crate::capabilities_lint_executor::LintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
 use file_watch::FileWatchContainer;
 use maintenance::root_maintenance_container::MaintenanceContainer;
-use shared::tui::{
-    IActionHandlerProtocol,
-    ITuiAggregate,
-};
+use shared::tui::{IActionHandlerProtocol, ITuiAggregate};
 
 use std::sync::Arc;
 

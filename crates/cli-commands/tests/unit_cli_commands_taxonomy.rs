@@ -3,10 +3,7 @@
 use shared::cli_commands::Format;
 use shared::cli_commands::{ScanMode, ScanRequest, ScanTarget};
 use shared::common::{DirectoryPath, FilePath};
-use shared::common::{
-    Severity,
-    Threshold,
-};
+use shared::common::{Severity, Threshold};
 
 use std::str::FromStr;
 

@@ -250,11 +250,18 @@ mod tests {
     #[test]
     fn test_resolve_module_path_to_layer() {
         // Test with blender-arwaky structure
-        let result =
-            resolve_module_path_to_layer("modules.shared.src.server", "/home/raka/mcp-arwaky/blender-arwaky");
-        assert!(result.is_some(), "Should detect layer from server directory");
+        let result = resolve_module_path_to_layer(
+            "modules.shared.src.server",
+            "/home/raka/mcp-arwaky/blender-arwaky",
+        );
         assert!(
-            result.as_ref().unwrap() == "contract" || result.as_ref().unwrap() == "taxonomy" || result.as_ref().unwrap() == "utility",
+            result.is_some(),
+            "Should detect layer from server directory"
+        );
+        assert!(
+            result.as_ref().unwrap() == "contract"
+                || result.as_ref().unwrap() == "taxonomy"
+                || result.as_ref().unwrap() == "utility",
             "Detected layer should be contract, taxonomy, or utility"
         );
     }

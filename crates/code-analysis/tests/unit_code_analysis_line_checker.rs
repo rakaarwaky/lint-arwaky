@@ -3,8 +3,8 @@
 use code_analysis_lint_arwaky::ArchLineChecker;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::ILineCheckerProtocol;
-use shared::common::{Count, PatternList};
 use shared::common::LayerDefinition;
+use shared::common::{Count, PatternList};
 
 fn checker() -> ArchLineChecker {
     ArchLineChecker::new()

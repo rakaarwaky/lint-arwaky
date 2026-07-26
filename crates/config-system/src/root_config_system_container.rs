@@ -1,8 +1,6 @@
 use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
 use shared::config_system::{
-    IConfigOrchestratorAggregate,
-    IConfigParserProtocol,
-    IConfigReaderProtocol,
+    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
     IConfigValidatorProtocol,
 };
 

@@ -1,11 +1,7 @@
 // PURPOSE: Unit tests for TuiOrchestrator — agent layer orchestration.
 // Layer: Agent (TuiOrchestrator)
 
-use shared::tui::{
-    ITuiAggregate,
-    AppState,
-    TuiEvent,
-};
+use shared::tui::{AppState, ITuiAggregate, TuiEvent};
 
 use std::sync::Arc;
 use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;

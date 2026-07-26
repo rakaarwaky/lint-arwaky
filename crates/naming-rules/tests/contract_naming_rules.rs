@@ -7,10 +7,8 @@ use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConv
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 
-use shared::naming_rules::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
 use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 
 // ─── INamingConventionChecker ─────────────────────────────
 

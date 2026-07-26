@@ -35,7 +35,10 @@ fn main() {
     let _s: HashSet<i32> = HashSet::new();
 }
 "#;
-    assert!(sut().check_unused_imports("test.rs", content).unwrap().is_empty());
+    assert!(sut()
+        .check_unused_imports("test.rs", content)
+        .unwrap()
+        .is_empty());
 }
 
 // ─── Unused Import Detection ──────────────────────────────
@@ -81,7 +84,10 @@ fn main() {
 
 #[test]
 fn empty_file_produces_no_violations() {
-    assert!(sut().check_unused_imports("empty.rs", "").unwrap().is_empty());
+    assert!(sut()
+        .check_unused_imports("empty.rs", "")
+        .unwrap()
+        .is_empty());
 }
 
 #[test]
@@ -91,7 +97,10 @@ fn main() {
     println!("hello world");
 }
 "#;
-    assert!(sut().check_unused_imports("no_imports.rs", content).unwrap().is_empty());
+    assert!(sut()
+        .check_unused_imports("no_imports.rs", content)
+        .unwrap()
+        .is_empty());
 }
 
 #[test]
@@ -127,7 +136,9 @@ impl IUnusedImportProtocol for MyChecker {
     fn check_unused_imports(&self, _file: &str, _content: &str, _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>) {}
 }
 "#;
-    let violations = sut().check_unused_imports("trait_impl.rs", content).unwrap();
+    let violations = sut()
+        .check_unused_imports("trait_impl.rs", content)
+        .unwrap();
     assert!(
         !violations
             .iter()

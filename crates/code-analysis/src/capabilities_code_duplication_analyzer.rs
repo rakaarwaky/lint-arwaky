@@ -1,7 +1,4 @@
-use shared::code_analysis::{
-    ICodeMetricAnalyzerProtocol,
-    AesCodeAnalysisViolation,
-};
+use shared::code_analysis::{AesCodeAnalysisViolation, ICodeMetricAnalyzerProtocol};
 
 use shared::common::LintMessage;
 use shared::config_system::ArchitectureConfig;

@@ -49,7 +49,14 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
 
                 if matches!(
                     name,
-                    "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                    "target"
+                        | ".git"
+                        | "node_modules"
+                        | "dist"
+                        | "build"
+                        | "__pycache__"
+                        | ".venv"
+                        | "tests"
                 ) {
                     continue;
                 }
@@ -91,7 +98,7 @@ pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
             let path = std::path::Path::new(entry_path.value());
             if path.is_dir() {
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if name == "target" || name == ".git" || name == "node_modules" {
+                if name == "target" || name == ".git" || name == "node_modules" || name == "tests" {
                     continue;
                 }
                 collect_source_files(path, files);

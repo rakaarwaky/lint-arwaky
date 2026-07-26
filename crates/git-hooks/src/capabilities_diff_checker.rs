@@ -1,16 +1,11 @@
 use std::collections::HashSet;
 
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    GitBranchName,
-    FilePath,
-    FilePathList,
-    RenamedFileList,
-};
+use shared::common::{FilePath, FilePathList, GitBranchName, RenamedFileList};
 
 use shared::file_watch::GitDiffResultVO;
-use shared::git_hooks::IDiffProtocol;
 use shared::git_hooks::utility_git_io as git_io;
+use shared::git_hooks::IDiffProtocol;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
 

@@ -15,12 +15,9 @@
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
 
 use shared::cli_commands::LintResult;
-use shared::common::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::{
-    ICapabilitiesRoleChecker,
-    AesRoleViolation,
-};
+use shared::common::Severity;
+use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
 
 use shared::common::SourceContentVO;
 
@@ -151,8 +148,6 @@ impl CapabilitiesRoleChecker {
                 AesRoleViolation::CapabilityNoImplementor { reason: None },
             ));
         }
-
-    
     }
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -245,8 +240,6 @@ impl CapabilitiesRoleChecker {
                 AesRoleViolation::CapabilityNoImplementor { reason: None },
             ));
         }
-
-
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
@@ -312,6 +305,5 @@ impl CapabilitiesRoleChecker {
                 AesRoleViolation::CapabilityNoImplementor { reason: None },
             ));
         }
-
     }
 }

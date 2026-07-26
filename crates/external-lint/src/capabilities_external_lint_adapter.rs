@@ -2,23 +2,17 @@ use std::path::PathBuf;
 
 use shared::code_analysis::LinterOperationError;
 use shared::common::{
-    ICommandExecutorProtocol,
-    AdapterError,
-    ScanError,
-    AdapterName,
-    ErrorMessage,
-    PatternList,
-    Timeout,
-    ComplianceStatus,
+    AdapterError, AdapterName, ComplianceStatus, ErrorMessage, ICommandExecutorProtocol,
+    PatternList, ScanError, Timeout,
 };
 
-use shared::common::{DirectoryPath, FilePath};
 use shared::common::ResponseData;
+use shared::common::{DirectoryPath, FilePath};
+use shared::external_lint::utility_external_lint_io as ext_io;
 use shared::external_lint::{
     IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
     IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };
-use shared::external_lint::utility_external_lint_io as ext_io;
 
 pub struct ExternalLintUtilityAdapter;
 

@@ -2,24 +2,13 @@
 
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::LintResultList;
-use shared::common::{
-    LayerDefinition,
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, LayerDefinition, Severity};
 
+use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::ISuffixPrefixChecker;
-use shared::naming_rules::{
-    ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT,
-};
 use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
-use shared::common::{
-    LayerMapVO,
-    LayerNameVO,
-};
-
+use shared::naming_rules::ISuffixPrefixChecker;
+use shared::naming_rules::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Unit Tests: Happy Path — Allowed Suffixes ──────────────────────
 

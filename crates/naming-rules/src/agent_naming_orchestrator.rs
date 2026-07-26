@@ -1,21 +1,12 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    ScanError,
-    ErrorMessage,
-    FilePath,
-};
+use shared::common::{ErrorMessage, FilePath, ScanError};
 
+use shared::common::{LayerMapVO, PatternList};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
 use shared::naming_rules::INamingRunnerAggregate;
-use shared::common::{
-    PatternList,
-    LayerMapVO,
-};
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -85,21 +76,25 @@ impl INamingRunnerAggregate for NamingOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl NamingOrchestrator {
     pub fn new(deps: NamingOrchestratorDeps) -> Self {
-        let ignored_patterns = PatternList {
-            values: deps
-                .config
-                .ignored_paths
-                .values
-                .iter()
-                .map(|fp| {
-                    fp.value
-                        .trim_start_matches("./")
-                        .trim_start_matches('/')
-                        .trim_end_matches('/')
-                        .to_string()
-                })
-                .collect(),
-        };
+        let mut values: Vec<String> = deps
+            .config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| {
+                fp.value
+                    .trim_start_matches("./")
+                    .trim_start_matches('/')
+                    .trim_end_matches('/')
+                    .to_string()
+            })
+            .collect();
+        // Default-excluded directories are skipped even without config `ignored_paths`.
+        // `tests` must never be linted (test scaffolding is not production code).
+        if !values.iter().any(|v| v == "tests") {
+            values.push("tests".to_string());
+        }
+        let ignored_patterns = PatternList { values };
         Self {
             deps,
             ignored_patterns,

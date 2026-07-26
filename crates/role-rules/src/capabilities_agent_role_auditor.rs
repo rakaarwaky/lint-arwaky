@@ -20,18 +20,11 @@
 //     `Any<`, `Any[`, `any[` patterns. Flags each as AES405 AnyType.
 
 use shared::cli_commands::LintResult;
-use shared::common::Severity;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::{
-    IAgentRoleChecker,
-    AesRoleViolation,
-};
+use shared::common::Severity;
+use shared::role_rules::{AesRoleViolation, IAgentRoleChecker};
 
-use shared::common::{
-    SymbolName,
-    SourceContentVO,
-};
-
+use shared::common::{SourceContentVO, SymbolName};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -8,13 +8,9 @@ use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 
 use shared::git_hooks::{
-    IDiffProtocol,
-    GitHooksAggregate,
+    GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol, IHookManagerProtocol,
     IHookProtocol,
-    IHookManagerProtocol,
-    HookManagementOrchestratorAggregate,
 };
-
 
 // ─── DiffChecker implements IDiffProtocol ─────────────────
 

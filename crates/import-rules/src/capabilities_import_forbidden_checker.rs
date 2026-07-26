@@ -8,24 +8,16 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{
-    FilePath,
-    FilePathList,
-    Severity,
-};
+use shared::common::{FilePath, FilePathList, Severity};
 
 use shared::common::utility_layer_detector;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_path_normalizer;
-use shared::import_rules::{
-    AesImportViolation,
-    IImportForbiddenProtocol,
-    ImportError,
-};
+use shared::import_rules::{AesImportViolation, IImportForbiddenProtocol, ImportError};
 
+use shared::common::{Identity, LayerNameVO, LineContentVO, LineNumber};
 use shared::common::{LayerDefinition, LayerMapVO};
-use shared::common::{Identity, LayerNameVO, LineNumber, LineContentVO};
 use std::collections::HashSet;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -131,10 +123,8 @@ impl ArchImportForbiddenChecker {
         &self,
         file: &str,
         layer_name: &str,
-        definition: &LayerDefinition,    import_lines: &[(
-        LineNumber,
-        LineContentVO,
-    )],
+        definition: &LayerDefinition,
+        import_lines: &[(LineNumber, LineContentVO)],
         root_dir: &str,
         violations: &mut Vec<LintResult>,
     ) {
@@ -174,8 +164,7 @@ impl ArchImportForbiddenChecker {
             // all imported symbols and resolves each through barrel files.
             for forbidden in &forbidden_list {
                 let forbidden_identity = Identity::new(forbidden);
-                let (layer, suffixes) =
-                    utility_import_resolver::resolve_scope(&forbidden_identity);
+                let (layer, suffixes) = utility_import_resolver::resolve_scope(&forbidden_identity);
 
                 // First: check direct module path match (existing behavior)
                 let mut is_forbidden = if suffixes.is_empty() {
@@ -190,11 +179,7 @@ impl ArchImportForbiddenChecker {
                             }
                         })
                 } else {
-                    utility_import_resolver::import_matches_scope(
-                        line,
-                        &layer,
-                        &suffixes,
-                    )
+                    utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
                 };
 
                 // Second: barrel resolution fallback — check if any imported symbol
@@ -202,11 +187,12 @@ impl ArchImportForbiddenChecker {
                 if !is_forbidden {
                     for sym in &symbol_names {
                         if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
-                            module_val,
-                            sym,
-                            root_dir,
+                            module_val, sym, root_dir,
                         ) {
-                            if resolved.matches_layer(layer.value()) && (suffixes.is_empty() || suffixes.iter().any(|s| resolved.has_suffix(s.value()))) {
+                            if resolved.matches_layer(layer.value())
+                                && (suffixes.is_empty()
+                                    || suffixes.iter().any(|s| resolved.has_suffix(s.value())))
+                            {
                                 is_forbidden = true;
                                 break;
                             }
@@ -251,10 +237,7 @@ impl ArchImportForbiddenChecker {
         file: &str,
         basename: &str,
         config: &ArchitectureConfig,
-        import_lines: &[(
-            LineNumber,
-            LineContentVO,
-        )],
+        import_lines: &[(LineNumber, LineContentVO)],
         violations: &mut Vec<LintResult>,
     ) {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {

@@ -12,33 +12,21 @@
 
 use async_trait::async_trait;
 use serde_json::Value;
-use shared::cli_commands::{
-    LintResult,
-    LintResultList,
-};
+use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::code_analysis::{
-    ILinterAdapterProtocol,
-    LinterOperationError,
-};
+use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 
 use shared::common::{
-    FilePath,
-    Severity,
-    AdapterName,
-    ColumnNumber,
-    LineNumber,
-    ErrorCode,
-    LocationList,
-    ComplianceStatus,
-    LintMessage,
+    AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, FilePath, LineNumber, LintMessage,
+    LocationList, Severity,
 };
 
 use std::sync::Arc;
 
+use shared::external_lint::utility_external_lint::{
+    default_working_dir, has_python_files, noop_apply_fix,
+};
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files, noop_apply_fix};
-
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -66,6 +54,8 @@ impl ILinterAdapterProtocol for BanditAdapter {
             executable,
             "-r".to_string(),
             path.value.clone(),
+            "--exclude".to_string(),
+            "tests".to_string(),
             "--format".to_string(),
             "json".to_string(),
             "--exit-zero".to_string(),
