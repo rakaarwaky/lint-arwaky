@@ -2,7 +2,7 @@
 // adapter selection throughput under various language combinations.
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
@@ -28,7 +28,7 @@ fn bench_select_adapters(c: &mut Criterion) {
             BenchmarkId::new("select_adapters", name),
             &(rs, py, js),
             |b, &(rs, py, js)| {
-                b.iter(|| black_box(selector.select_adapters(rs, py, js)));
+                b.iter(|| std::hint::black_box(selector.select_adapters(rs, py, js)));
             },
         );
     }
@@ -46,7 +46,7 @@ fn bench_container_creation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(external_lint_lint_arwaky::ExternalLintContainer::new());
+                    std::hint::black_box(external_lint_lint_arwaky::ExternalLintContainer::new());
                 }
             });
         });
@@ -66,7 +66,7 @@ fn bench_adapter_names(c: &mut Criterion) {
             let aggregate = container.aggregate();
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(aggregate.adapter_names());
+                    std::hint::black_box(aggregate.adapter_names());
                 }
             });
         });

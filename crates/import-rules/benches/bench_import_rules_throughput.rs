@@ -2,7 +2,7 @@
 // Requirement: Check 1000 files in < 2 seconds (FRD non-functional requirement).
 // Best practices: significance_level(0.05), sample_size(30+), throughput, scaling
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
@@ -70,13 +70,12 @@ fn bench_unused_import_check(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     for (i, content) in files.iter().enumerate() {
-                        checker.check_unused_imports(
-                            &format!("file_{}.rs", i),
-                            content,
-                            &mut violations,
-                        );
+                        let result = checker
+                            .check_unused_imports(&format!("file_{}.rs", i), content)
+                            .unwrap();
+                        violations.extend(result);
                     }
-                    black_box(&violations);
+                    std::hint::black_box(&violations);
                 });
             },
         );
@@ -111,9 +110,13 @@ fn bench_dummy_import_check(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     for (file, content) in files {
-                        checker.check_all_dummy(file, content, &mut violations, &root, &layer_map);
+                        violations.extend(
+                            checker
+                                .check_all_dummy(file, content, &root, &layer_map)
+                                .unwrap(),
+                        );
                     }
-                    black_box(&violations);
+                    std::hint::black_box(&violations);
                 });
             },
         );
@@ -145,9 +148,13 @@ fn bench_dummy_all_vs_individual(c: &mut Criterion) {
         b.iter(|| {
             let mut violations = Vec::new();
             for (file, content) in &contents {
-                checker.check_all_dummy(file, content, &mut violations, &root, &layer_map);
+                violations.extend(
+                    checker
+                        .check_all_dummy(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
             }
-            black_box(&violations);
+            std::hint::black_box(&violations);
         });
     });
 
@@ -155,13 +162,33 @@ fn bench_dummy_all_vs_individual(c: &mut Criterion) {
         b.iter(|| {
             let mut violations = Vec::new();
             for (file, content) in &contents {
-                checker.check_dummy_imports(file, content, &mut violations, &root, &layer_map);
-                checker.check_dummy_functions(file, content, &mut violations, &root, &layer_map);
-                checker.check_dummy_impls(file, content, &mut violations, &root, &layer_map);
-                checker.check_taxonomy_intent(file, content, &mut violations, &root, &layer_map);
-                checker.check_surface_logic(file, content, &mut violations, &root, &layer_map);
+                violations.extend(
+                    checker
+                        .check_dummy_imports(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
+                violations.extend(
+                    checker
+                        .check_dummy_functions(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
+                violations.extend(
+                    checker
+                        .check_dummy_impls(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
+                violations.extend(
+                    checker
+                        .check_taxonomy_intent(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
+                violations.extend(
+                    checker
+                        .check_surface_logic(file, content, &root, &layer_map)
+                        .unwrap(),
+                );
             }
-            black_box(&violations);
+            std::hint::black_box(&violations);
         });
     });
 
@@ -192,7 +219,11 @@ fn bench_full_orchestrator(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("audit", file_count),
             &file_count,
-            |b, _| b.iter(|| black_box(rt.block_on(async { orch.run_audit(&target).await }))),
+            |b, _| {
+                b.iter(|| {
+                    std::hint::black_box(rt.block_on(async { orch.run_audit(&target).await }))
+                })
+            },
         );
     }
     group.finish();
@@ -231,7 +262,7 @@ fn bench_cycle_analyzer(c: &mut Criterion) {
         group.throughput(Throughput::Elements(file_count as u64));
 
         group.bench_with_input(BenchmarkId::new("scan", file_count), &files, |b, fls| {
-            b.iter(|| black_box(analyzer.scan(&config, &layer_map, fls, &root)))
+            b.iter(|| std::hint::black_box(analyzer.scan(&config, &layer_map, fls, &root)))
         });
     }
     group.finish();

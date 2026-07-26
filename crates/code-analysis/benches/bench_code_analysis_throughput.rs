@@ -5,7 +5,7 @@
 use code_analysis_lint_arwaky::{
     ArchLineChecker, BypassChecker, CodeDuplicationAnalyzer, MandatoryDefinitionChecker,
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
@@ -61,7 +61,7 @@ fn bench_bypass_checker(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     checker.check_bypass_comments("bench.rs", data, &mut violations);
-                    black_box(violations)
+                    std::hint::black_box(violations)
                 })
             },
         );
@@ -87,7 +87,7 @@ fn bench_line_checker(c: &mut Criterion) {
                 b.iter(|| {
                     let mut violations = Vec::new();
                     checker.check_line_counts("bench.rs", Some(&def), data, &mut violations);
-                    black_box(violations)
+                    std::hint::black_box(violations)
                 })
             },
         );
@@ -121,7 +121,7 @@ fn bench_mandatory_checker(c: &mut Criterion) {
                         data,
                         &mut violations,
                     );
-                    black_box(violations)
+                    std::hint::black_box(violations)
                 })
             },
         );
@@ -148,7 +148,11 @@ fn bench_duplication_analyzer(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("check_file_similarity_entries", file_count),
             &entries,
-            |b, data| b.iter(|| black_box(analyzer.check_file_similarity_entries(data, 5, 50.0))),
+            |b, data| {
+                b.iter(|| {
+                    std::hint::black_box(analyzer.check_file_similarity_entries(data, 5, 50.0))
+                })
+            },
         );
     }
     group.finish();

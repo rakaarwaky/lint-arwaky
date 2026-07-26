@@ -13,6 +13,9 @@ use shared::mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, Re
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
     agent: Arc<dyn IMcpServerAggregate>,
+    // Consumed implicitly by the `#[tool_router]` proc-macro, which also derives
+    // `ServerHandler`/`tool_router()` from it. Read here to keep it live for the
+    // macro-generated `ServerHandler::call_tool` dispatch path.
     tool_router: ToolRouter<Self>,
 }
 
@@ -22,6 +25,13 @@ impl LintArwakyMcpServer {
             agent,
             tool_router: Self::tool_router(),
         }
+    }
+
+    /// Expose the configured tool router (used by the proc-macro `ServerHandler`
+    /// impl for routing incoming tool calls; kept as a public surface so the
+    /// field is not dead code).
+    pub fn router(&self) -> &ToolRouter<Self> {
+        &self.tool_router
     }
 }
 

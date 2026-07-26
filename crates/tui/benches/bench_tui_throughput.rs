@@ -2,7 +2,7 @@
 // Layer: Benchmark (performance validation).
 // Best practices: significance_level(0.05), sample_size(30+), avoid instantiation inside iter
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;
@@ -34,7 +34,7 @@ fn bench_component_instantiation(c: &mut Criterion) {
                 for _ in 0..count {
                     let (executor, handler) = build_tui_stack();
                     let _orchestrator = TuiOrchestrator::new(handler);
-                    black_box((_orchestrator, executor));
+                    std::hint::black_box((_orchestrator, executor));
                 }
             });
         });

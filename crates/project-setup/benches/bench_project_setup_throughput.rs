@@ -2,7 +2,7 @@
 // Layer: Benchmark (performance validation).
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 
 fn bench_container_instantiation(c: &mut Criterion) {
@@ -15,7 +15,7 @@ fn bench_container_instantiation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(SetupContainer::new());
+                    std::hint::black_box(SetupContainer::new());
                 }
             });
         });

@@ -3,7 +3,7 @@
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
@@ -22,12 +22,12 @@ fn bench_parse_config_yaml(c: &mut Criterion) {
     group.bench_with_input(
         BenchmarkId::new("small", "10_lines"),
         &yaml_small,
-        |b, yaml| b.iter(|| black_box(parse_config_yaml(yaml))),
+        |b, yaml| b.iter(|| std::hint::black_box(parse_config_yaml(yaml))),
     );
     group.bench_with_input(
         BenchmarkId::new("large", "100_rules"),
         &yaml_large,
-        |b, yaml| b.iter(|| black_box(parse_config_yaml(yaml))),
+        |b, yaml| b.iter(|| std::hint::black_box(parse_config_yaml(yaml))),
     );
     group.finish();
 }
@@ -43,7 +43,7 @@ fn bench_workspace_detect(c: &mut Criterion) {
         BenchmarkId::new("detect", "rust_project"),
         &fp,
         |b, path| {
-            b.iter(|| black_box(detector.detect(path)));
+            b.iter(|| std::hint::black_box(detector.detect(path)));
         },
     );
     group.finish();
@@ -69,7 +69,7 @@ fn bench_validate_thresholds(c: &mut Criterion) {
                 ..Default::default()
             };
             let validator = ConfigRulesValidator::new();
-            b.iter(|| black_box(validator.validate_thresholds(&config)))
+            b.iter(|| std::hint::black_box(validator.validate_thresholds(&config)))
         });
     }
     group.finish();
@@ -91,7 +91,7 @@ fn bench_load_config_sync(c: &mut Criterion) {
         &root,
         |b, path| {
             let orch = ConfigContainer::new().orchestrator();
-            b.iter(|| black_box(orch.load_config_sync(path)))
+            b.iter(|| std::hint::black_box(orch.load_config_sync(path)))
         },
     );
     group.finish();

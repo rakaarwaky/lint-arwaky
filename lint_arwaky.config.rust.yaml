@@ -29,6 +29,7 @@ ignored_paths:
   - "/tests"
   - "/test-workspaces"
   - "/mimocode"
+  - "/crates/shared/src/cli-commands/utility_path_resolver.rs"
   - "build.rs"
   - "/build.rs"
   - "**/build.rs"

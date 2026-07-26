@@ -3,7 +3,7 @@
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement,
 //                 real data instead of empty vectors
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
@@ -65,7 +65,7 @@ fn bench_text_format(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("results", result_count),
             &report,
-            |b, report| b.iter(|| black_box(text.format_text(report))),
+            |b, report| b.iter(|| std::hint::black_box(text.format_text(report))),
         );
     }
     group.finish();
@@ -82,7 +82,7 @@ fn bench_sarif_format(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("results", result_count),
             &results,
-            |b, results| b.iter(|| black_box(sarif.format_sarif(results))),
+            |b, results| b.iter(|| std::hint::black_box(sarif.format_sarif(results))),
         );
     }
     group.finish();
@@ -99,7 +99,7 @@ fn bench_junit_format(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("results", result_count),
             &results,
-            |b, results| b.iter(|| black_box(junit.format_junit(results))),
+            |b, results| b.iter(|| std::hint::black_box(junit.format_junit(results))),
         );
     }
     group.finish();
