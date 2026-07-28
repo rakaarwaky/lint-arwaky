@@ -21,7 +21,8 @@ use shared::cli_commands::LintResultList;
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
-use shared::config_system::utility_config_parser::parse_adapter_names_from_yaml;
+use shared::common::utility_file_handler::is_path_ignored;
+use shared::config_system::utility_config_parser::{parse_adapter_names_from_yaml, parse_config_yaml_with_warnings};
 use shared::external_lint::IExternalLintAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -48,6 +49,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             has_rs: &mut bool,
             has_py: &mut bool,
             has_js: &mut bool,
+            ignored: &[String],
         ) -> std::io::Result<()> {
             let entries = match std::fs::read_dir(dir) {
                 Ok(e) => e,
@@ -56,6 +58,9 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
+                    if shared::common::utility_file_handler::is_ignored_dir(&path, ignored) {
+                        continue;
+                    }
                     let name = match path.file_name().and_then(|n| n.to_str()) {
                         Some(n) => n,
                         None => continue,
@@ -64,7 +69,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                         name,
                         "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
                     ) {
-                        let _ = detect_languages(&path, has_rs, has_py, has_js);
+                        let _ = detect_languages(&path, has_rs, has_py, has_js, ignored);
                     }
                 } else if let Some(ext) = path.extension() {
                     match ext.to_str() {
@@ -82,6 +87,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         }
 
         let root_path = std::path::Path::new(&path.value);
+        let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js);
         if root_path.is_file() {
             if let Some(ext) = root_path.extension() {
                 match ext.to_str() {
@@ -92,7 +98,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 }
             }
         } else {
-            let _ = detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js);
+            let _ = detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js, &ignored_paths);
         }
 
         let mut adapter_names = Vec::with_capacity(9);
@@ -158,6 +164,9 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         for values in results.into_iter().flatten() {
             all.extend(values);
         }
+        if !ignored_paths.is_empty() {
+            all.retain(|v| !is_path_ignored(&v.file.value, &ignored_paths));
+        }
         LintResultList::new(all)
     }
 
@@ -181,49 +190,60 @@ impl ExternalLintOrchestrator {
 
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
 /// Returns parsed adapter names if any config file is found, else None.
-fn load_configured_adapter_names(
-    root_path: &Path,
-    has_rs: bool,
-    has_py: bool,
-    has_js: bool,
-) -> Option<Vec<String>> {
-    let config_names: Vec<String> = {
-        let mut names = Vec::new();
-        names.push("lint_arwaky.config.yaml".to_string());
-        if has_js {
-            names.push("lint_arwaky.config.javascript.yaml".to_string());
-        }
-        if has_py {
-            names.push("lint_arwaky.config.python.yaml".to_string());
-        }
-        if has_rs {
-            names.push("lint_arwaky.config.rust.yaml".to_string());
-        }
-        names
-    };
+fn config_file_names(has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
+    let mut names = vec!["lint_arwaky.config.yaml".to_string()];
+    if has_js {
+        names.push("lint_arwaky.config.javascript.yaml".to_string());
+    }
+    if has_py {
+        names.push("lint_arwaky.config.python.yaml".to_string());
+    }
+    if has_rs {
+        names.push("lint_arwaky.config.rust.yaml".to_string());
+    }
+    names
+}
 
+fn walk_up_find_config<T>(root_path: &Path, has_rs: bool, has_py: bool, has_js: bool, mut extract: impl FnMut(&str) -> Option<T>) -> Option<T> {
+    let config_names = config_file_names(has_rs, has_py, has_js);
     let start = if root_path.is_file() {
         root_path.parent().unwrap_or(root_path)
     } else {
         root_path
     };
-
     let mut current: Option<&Path> = Some(start);
     while let Some(dir) = current {
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists() {
                 if let Ok(content) = std::fs::read_to_string(&cfg_path) {
-                    let adapters = parse_adapter_names_from_yaml(&content);
-                    if !adapters.is_empty() {
-                        return Some(adapters);
+                    if let Some(result) = extract(&content) {
+                        return Some(result);
                     }
                 }
             }
         }
-        // Do not walk up past the root
         current = dir.parent().filter(|&p| p != dir);
     }
-
     None
+}
+
+fn load_ignored_paths_from_config(root_path: &Path, has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
+    walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
+        let (config, _) = parse_config_yaml_with_warnings(content);
+        let paths: Vec<String> = config.ignored_paths.values.iter().map(|fp| fp.value.clone()).collect();
+        if paths.is_empty() { None } else { Some(paths) }
+    }).unwrap_or_default()
+}
+
+fn load_configured_adapter_names(
+    root_path: &Path,
+    has_rs: bool,
+    has_py: bool,
+    has_js: bool,
+) -> Option<Vec<String>> {
+    walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
+        let adapters = parse_adapter_names_from_yaml(content);
+        if adapters.is_empty() { None } else { Some(adapters) }
+    })
 }
