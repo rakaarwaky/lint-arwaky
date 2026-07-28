@@ -82,3 +82,17 @@ git commit -m "feat({scope}): {description of changes}"
 git push origin develop
 gh pr create --base main --head develop --title "feat({scope}): {title}" --body "{summary of report}"
 ```
+
+## Branch Strategy
+
+| Step | Action |
+|------|--------|
+| 1 | Commit changes to `develop` branch |
+| 2 | Push `develop` to remote: `git push origin develop` |
+| 3 | Create PR from `develop` → `main`: `gh pr create --base main --head develop` |
+| 4 | After PR approved and merged → switch back to `develop` for next cycle |
+
+**Rules:**
+- Never commit directly to `main`
+- Always create PR from `develop` to `main`
+- Do NOT delete `develop` branch after merge to `main`
