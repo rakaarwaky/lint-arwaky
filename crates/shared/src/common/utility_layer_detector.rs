@@ -250,19 +250,19 @@ mod tests {
     #[test]
     fn test_resolve_module_path_to_layer() {
         // Test with blender-arwaky structure
+        // modules/shared/src/common/ has contract_* and taxonomy_* files
         let result = resolve_module_path_to_layer(
-            "modules.shared.src.server",
+            "modules.shared.src.common",
             "/home/raka/mcp-arwaky/blender-arwaky",
         );
         assert!(
             result.is_some(),
-            "Should detect layer from server directory"
+            "Should detect layer from common directory (has contract_* and taxonomy_* files)"
         );
         assert!(
             result.as_ref().unwrap() == "contract"
-                || result.as_ref().unwrap() == "taxonomy"
-                || result.as_ref().unwrap() == "utility",
-            "Detected layer should be contract, taxonomy, or utility"
+                || result.as_ref().unwrap() == "taxonomy",
+            "Detected layer should be contract or taxonomy"
         );
     }
 }
