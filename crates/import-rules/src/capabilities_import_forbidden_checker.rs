@@ -16,7 +16,7 @@ use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_path_normalizer;
 use shared::import_rules::{AesImportViolation, IImportForbiddenProtocol, ImportError};
 
-use shared::common::{Identity, LayerNameVO, LineContentVO, LineNumber};
+use shared::common::{Identity, LayerNameVO, LineContentVO, LineNumber, LintMessage};
 use shared::common::{LayerDefinition, LayerMapVO};
 use std::collections::HashSet;
 
@@ -223,7 +223,10 @@ impl ArchImportForbiddenChecker {
                             source_layer: layer_name_vo.clone(),
                             forbidden_layer: LayerNameVO::new(forbidden.clone()),
                             allowed,
-                            reason: None,
+                            reason: Some(LintMessage::new(format!(
+                                "File imports from '{}' which resolves to forbidden layer '{}'. Source file is in layer '{}'.",
+                                module_val, forbidden, layer_name
+                            ))),
                         }
                         .to_string(),
                     ));
@@ -307,7 +310,10 @@ impl ArchImportForbiddenChecker {
                                     source_layer: LayerNameVO::new(rule_layer_str.clone()),
                                     forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                     allowed,
-                                    reason: None,
+                                    reason: Some(LintMessage::new(format!(
+                                        "Scope rule violation: file imports from '{}' which resolves to forbidden layer '{}'.",
+                                        module_val, forbidden
+                                    ))),
                                 }
                                 .to_string(),
                             ));

@@ -9,7 +9,7 @@ use shared::import_rules::{AesImportViolation, IImportMandatoryProtocol, ImportE
 
 use shared::common::LineNumber;
 use shared::common::SymbolName;
-use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO, LintMessage};
 use shared::common::{LayerDefinition, LayerMapVO};
 use std::collections::HashSet;
 
@@ -174,7 +174,10 @@ impl ArchImportMandatoryChecker {
                     AesImportViolation::MissingImport {
                         source_layer: LayerNameVO::new(source_layer.to_string()),
                         required: SymbolName::new(required.clone()),
-                        reason: None,
+                        reason: Some(LintMessage::new(format!(
+                            "File '{}' in layer '{}' is missing required import '{}'.",
+                            basename, source_layer, required
+                        ))),
                     }
                     .to_string(),
                 ));
@@ -245,7 +248,10 @@ impl ArchImportMandatoryChecker {
                         AesImportViolation::MissingImport {
                             source_layer: LayerNameVO::new(rule_layer_str.clone()),
                             required: SymbolName::new(required.clone()),
-                            reason: None,
+                            reason: Some(LintMessage::new(format!(
+                                "File '{}' in scope '{}' is missing required import '{}'.",
+                                basename, rule_layer_str, required
+                            ))),
                         }
                         .to_string(),
                     ));
