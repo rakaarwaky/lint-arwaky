@@ -14,6 +14,7 @@ pub fn handle_scan_external(
     format: Format,
     external_lint: Arc<dyn IExternalLintAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    filter: Option<String>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -32,11 +33,17 @@ pub fn handle_scan_external(
         Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let results = rt.block_on(external_lint.scan_all(&root_fp));
-    let violations: Vec<ViolationItem> = results
+    let mut violations: Vec<ViolationItem> = results
         .values
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
     let has_violations = !violations.is_empty();
     output_violations(
         &violations,

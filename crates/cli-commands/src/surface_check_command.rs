@@ -85,7 +85,14 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
                 root.clone()
             }
         };
-        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        let mut all_violations = rt.block_on(run_all_linters_json(&target_path));
+
+        // Apply filter by AES rule code (e.g. AES101, AES304)
+        if let Some(ref filter_str) = opts.filter {
+            let filter_upper = filter_str.to_uppercase();
+            all_violations.retain(|v| v.code.code().contains(&filter_upper));
+        }
+
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
             ExitCode::OK
@@ -94,7 +101,14 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         }
     } else {
         let target_path = root.clone();
-        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        let mut all_violations = rt.block_on(run_all_linters_json(&target_path));
+
+        // Apply filter by AES rule code (e.g. AES101, AES304)
+        if let Some(ref filter_str) = opts.filter {
+            let filter_upper = filter_str.to_uppercase();
+            all_violations.retain(|v| v.code.code().contains(&filter_upper));
+        }
+
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
             ExitCode::OK
