@@ -128,11 +128,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
-        // Search upward for config file (up to 3 levels)
+        // Search upward for config file (up to 5 levels)
         let mut current = root.to_path_buf();
         let mut depth = 0;
         let mut config = None;
-        while !current.as_os_str().is_empty() && depth < 3 {
+        while !current.as_os_str().is_empty() && depth < 5 {
             for filename in language.config_file_names() {
                 let candidate = current.join(filename);
                 if let Ok(content) = std::fs::read_to_string(&candidate) {

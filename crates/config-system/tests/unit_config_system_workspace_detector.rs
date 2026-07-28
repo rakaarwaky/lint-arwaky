@@ -183,6 +183,87 @@ async fn discover_members_from_within_workspace_dir() {
     assert_eq!(members.len(), 2);
 }
 
+// ─── Regression: Phase 3.4 — File paths deep inside modules/packages/crates ─────
+
+/// A file nested under `modules/<member>/src/` should still detect Python.
+/// This was broken before the fix because the parent-chain walk didn't check
+/// for workspace markers, and the depth limit was too shallow.
+#[test]
+fn detect_python_from_file_deep_in_modules_src() {
+    let tmp = TempDir::new().unwrap();
+    let file = tmp
+        .path()
+        .join("modules")
+        .join("security")
+        .join("src")
+        .join("capabilities_archive_guard.py");
+    fs::create_dir_all(file.parent().unwrap()).unwrap();
+    fs::write(&file, "# test\n").unwrap();
+    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
+    assert_eq!(make_detector().detect(&fp), WorkspaceType::Python);
+}
+
+/// A file nested under `crates/<member>/src/` should detect Rust.
+#[test]
+fn detect_rust_from_file_deep_in_crates_src() {
+    let tmp = TempDir::new().unwrap();
+    let file = tmp
+        .path()
+        .join("crates")
+        .join("my-crate")
+        .join("src")
+        .join("lib.rs");
+    fs::create_dir_all(file.parent().unwrap()).unwrap();
+    fs::write(&file, "fn main() {}\n").unwrap();
+    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
+    assert_eq!(make_detector().detect(&fp), WorkspaceType::Rust);
+}
+
+/// A file nested under `packages/<member>/src/` should detect TypeScript.
+#[test]
+fn detect_typescript_from_file_deep_in_packages_src() {
+    let tmp = TempDir::new().unwrap();
+    let file = tmp
+        .path()
+        .join("packages")
+        .join("my-pkg")
+        .join("src")
+        .join("index.ts");
+    fs::create_dir_all(file.parent().unwrap()).unwrap();
+    fs::write(&file, "export const x = 1;\n").unwrap();
+    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
+    assert_eq!(make_detector().detect(&fp), WorkspaceType::TypeScript);
+}
+
+/// A file nested 4 levels deep under modules should still detect Python.
+/// This tests the increased depth limit (from 2 to 5).
+#[test]
+fn detect_python_from_file_very_deep_in_modules() {
+    let tmp = TempDir::new().unwrap();
+    let file = tmp
+        .path()
+        .join("modules")
+        .join("security")
+        .join("src")
+        .join("sub")
+        .join("deep")
+        .join("test.py");
+    fs::create_dir_all(file.parent().unwrap()).unwrap();
+    fs::write(&file, "# test\n").unwrap();
+    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
+    assert_eq!(make_detector().detect(&fp), WorkspaceType::Python);
+}
+
+/// A plain file NOT under any workspace directory should return Unknown.
+#[test]
+fn detect_unknown_for_file_not_in_workspace() {
+    let tmp = TempDir::new().unwrap();
+    let file = tmp.path().join("random_script.py");
+    fs::write(&file, "# test\n").unwrap();
+    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
+    assert_eq!(make_detector().detect(&fp), WorkspaceType::Unknown);
+}
+
 #[test]
 fn default_and_new_are_equivalent() {
     let a = WorkspaceDetector::new();
