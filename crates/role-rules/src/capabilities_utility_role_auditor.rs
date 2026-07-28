@@ -269,7 +269,13 @@ impl UtilityRoleChecker {
     fn _check_python_utility(&self, content: &str, file: &str, violations: &mut Vec<LintResult>) {
         let stripped = Self::python_strip_comments_docstrings(content);
 
-        if stripped.contains("class ") || stripped.contains("def ") {
+        let has_class_or_def = stripped.lines().any(|l| {
+            let trimmed = l.trim();
+            // Only flag if `class ` or `def ` appears at the START of a line
+            // (not inside string literals or variable names)
+            trimmed.starts_with("class ") || trimmed.starts_with("def ")
+        });
+        if has_class_or_def {
             violations.push(LintResult::new_arch(
                 file,
                 0,

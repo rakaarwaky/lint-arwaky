@@ -176,7 +176,11 @@ impl TaxonomyRoleChecker {
                     }
                     continue;
                 }
-                if type_candidate.starts_with(p) || type_candidate == *p {
+                if type_candidate == *p
+                    || (type_candidate.starts_with(p)
+                        && !type_candidate[p.len()..]
+                            .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
+                {
                     let primitive_clean = p.trim_end_matches('<');
                     let lang = if is_rs {
                         Language::Rust

@@ -36,8 +36,13 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
 
         let mut unused: Vec<String> = Vec::new();
         for alias in imported_aliases.keys() {
+            // Skip __future__ imports — they affect parsing behavior, not runtime usage.
+            let alias_str = alias.value();
+            if unused_import_is_future_import(&content, alias_str) {
+                continue;
+            }
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                unused.push(alias.value().to_string());
+                unused.push(alias_str.to_string());
             }
         }
         let rust_js_imports = utility_import_symbol_extractor::extract_rust_js_imports(&content);

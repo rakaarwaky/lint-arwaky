@@ -70,7 +70,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         'outer: for agg_name in &aggregate_traits {
             for cf in &candidates {
                 let c = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
-                if c.contains(agg_name.as_str()) {
+                if Self::content_contains_word(&c, agg_name) {
                     any_called = true;
                     break 'outer;
                 }
@@ -108,6 +108,11 @@ impl Default for AgentOrphanAnalyzer {
 }
 
 impl AgentOrphanAnalyzer {
+    /// Check if `text` contains `word` as a whole word (not substring).
+    fn content_contains_word(text: &str, word: &str) -> bool {
+        text.split(|c: char| !c.is_alphanumeric() && c != '_')
+            .any(|w| w == word)
+    }
     pub fn new() -> Self {
         Self {}
     }
@@ -164,11 +169,18 @@ impl AgentOrphanAnalyzer {
         traits
     }
 
-    /// Cached regex for Rust impl with optional generics (Bug 12: impl<T> Trait for Struct)
+    /// Cached regex for Rust impl with optional generics.
+    /// Handles nested angle brackets like `<T: Into<U>>` via balanced `<>` matching.
     fn re_impl_generic() -> Option<&'static Regex> {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"impl\s*(?:<[^>]+>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok())
-            .as_ref()
+        // Use `[^<>]*(?:<[^<>]*>[^<>]*)*` for one level of nested angle brackets.
+        RE.get_or_init(|| {
+            Regex::new(
+                r"impl\s*(?:<[^<>]*(?:<[^<>]*>[^<>]*)*>)?\s+([A-Za-z0-9_]+)\s+for\s+",
+            )
+            .ok()
+        })
+        .as_ref()
     }
 
     fn re_dyn() -> Option<&'static Regex> {

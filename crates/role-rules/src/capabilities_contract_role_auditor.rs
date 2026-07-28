@@ -1,5 +1,5 @@
 use shared::cli_commands::LintResult;
-use shared::common::{Language, Severity};
+use shared::common::{Language, LintMessage, Severity};
 
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::utility_signature_parser::{
@@ -77,9 +77,14 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = AesRoleViolation::ContractPrimitive { reason: None }
-                    .with_language(lang)
-                    .to_string();
+                let msg = AesRoleViolation::ContractPrimitive {
+                    reason: Some(LintMessage::new(format!(
+                        "Forbidden primitive types in signature: {}",
+                        forbidden.join(", ")
+                    ))),
+                }
+                .with_language(lang)
+                .to_string();
                 violations.push(LintResult::new_arch(
                     file,
                     line_no,
@@ -97,9 +102,14 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = AesRoleViolation::ContractPrimitive { reason: None }
-                    .with_language(lang)
-                    .to_string();
+                let msg = AesRoleViolation::ContractPrimitive {
+                    reason: Some(LintMessage::new(format!(
+                        "Forbidden primitive types in signature: {}",
+                        forbidden.join(", ")
+                    ))),
+                }
+                .with_language(lang)
+                .to_string();
                 violations.push(LintResult::new_arch(
                     file,
                     line_no,
@@ -116,9 +126,14 @@ impl ContractRoleChecker {
             if forbidden.is_empty() {
                 continue;
             }
-            let msg = AesRoleViolation::ContractPrimitive { reason: None }
-                .with_language(lang)
-                .to_string();
+            let msg = AesRoleViolation::ContractPrimitive {
+                reason: Some(LintMessage::new(format!(
+                    "Forbidden primitive types in signature: {}",
+                    forbidden.join(", ")
+                ))),
+            }
+            .with_language(lang)
+            .to_string();
             violations.push(LintResult::new_arch(
                 file,
                 line_no,

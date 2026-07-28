@@ -110,7 +110,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 }
                 let c = orphan_io::read_file_safe(cf);
                 for trait_name in &trait_names {
-                    if c.contains(trait_name.as_str()) {
+                    if Self::content_contains_word(&c, trait_name) {
                         called_by_impl_or_user = true;
                         break;
                     }
@@ -157,7 +157,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 }
                 let c = orphan_io::read_file_safe(cf);
                 for trait_name in &trait_names {
-                    if c.contains(trait_name.as_str()) {
+                    if Self::content_contains_word(&c, trait_name) {
                         called_by_surface_or_container = true;
                         break;
                     }
@@ -204,6 +204,12 @@ impl ContractOrphanAnalyzer {
         Self {
             search_cache: Mutex::new(None),
         }
+    }
+
+    /// Check if `text` contains `word` as a whole word (not as a substring).
+    fn content_contains_word(text: &str, word: &str) -> bool {
+        text.split(|c: char| !c.is_alphanumeric() && c != '_')
+            .any(|w| w == word)
     }
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
@@ -336,7 +342,7 @@ impl ContractOrphanAnalyzer {
             // Rust: impl Trait for Type / impl<T> Trait for Type
             if trimmed.starts_with("impl")
                 && trimmed.contains(" for ")
-                && trimmed.contains(trait_name)
+                && Self::content_contains_word(trimmed, trait_name)
             {
                 return true;
             }
