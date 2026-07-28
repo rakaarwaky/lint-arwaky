@@ -106,13 +106,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 .extension()
                 .and_then(|e| e.to_str())
                 .unwrap_or("");
-            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                if !shared::common::utility_file_handler::is_path_ignored(
+            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+                && !shared::common::utility_file_handler::is_path_ignored(
                     &root_path.to_string_lossy(),
                     ignored,
-                ) {
-                    all_files.push(root_dir.value().to_string());
-                }
+                )
+            {
+                all_files.push(root_dir.value().to_string());
             }
         }
         let files_vo = OrphanFileListVO::new(all_files);
