@@ -269,11 +269,15 @@ impl AgentRoleChecker {
         // Note: aggregate import is enforced by mandatory checker (AES202), not here.
         // AES405 only checks type composition rules.
 
+        let lines: Vec<&str> = content.lines().collect();
         let mut type_names: Vec<&str> = Vec::new();
         let mut implementor_found = false;
+        let mut i = 0;
 
-        for l in content.lines() {
-            let t = l.trim();
+        while i < lines.len() {
+            let t = lines[i].trim();
+            i += 1;
+
             if !t.starts_with("class ") {
                 continue;
             }
@@ -291,10 +295,33 @@ impl AgentRoleChecker {
             type_names.push(name);
 
             // Any inheritance = implementor found (aggregate check is AES202's job)
+            // Handle both single-line and multi-line class declarations
             if let Some(start) = t.find('(') {
-                if let Some(end) = t.find(')') {
-                    let parents = &t[start + 1..end];
-                    if !parents.trim().is_empty() {
+                let after_paren = &t[start + 1..];
+
+                if let Some(end) = after_paren.find(')') {
+                    // Single-line: class Name(Parent1, Parent2):
+                    let parents = after_paren[..end].trim();
+                    if !parents.is_empty() {
+                        implementor_found = true;
+                    }
+                } else {
+                    // Multi-line: class Name(\n    Parent1,\n    Parent2,\n):
+                    // Collect text from subsequent lines until closing ')'
+                    let mut paren_text = String::from(after_paren);
+                    while i < lines.len() {
+                        let next = lines[i];
+                        i += 1;
+                        if let Some(end) = next.find(')') {
+                            paren_text.push_str(&next[..end]);
+                            break;
+                        }
+                        paren_text.push_str(next);
+                        if next.trim().starts_with("class ") {
+                            break;
+                        }
+                    }
+                    if !paren_text.trim().is_empty() {
                         implementor_found = true;
                     }
                 }

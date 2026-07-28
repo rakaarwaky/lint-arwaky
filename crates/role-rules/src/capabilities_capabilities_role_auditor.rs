@@ -268,14 +268,17 @@ impl CapabilitiesRoleChecker {
         // ── Collect all classes with parents (inheritance) ──────
         let mut class_count: usize = 0;
         let mut implementor_found = false;
+        let mut i = 0;
 
-        for l in &lines {
-            let t = l.trim();
+        while i < lines.len() {
+            let t = lines[i].trim();
+            i += 1;
+
             if !t.starts_with("class ") {
                 continue;
             }
 
-            // parse: class Name(Parent1, Parent2):
+            // parse: class Name(Parent1, Parent2):  or multi-line version
             let after_class = &t[6..]; // skip "class "
             let name = after_class
                 .split(|c: char| ['(', ':', ' '].contains(&c))
@@ -289,11 +292,33 @@ impl CapabilitiesRoleChecker {
 
             class_count += 1;
 
-            // check for inheritance (any parent = implementor)
+            // check for inheritance — handle single-line and multi-line class declarations
             if let Some(start) = t.find('(') {
-                if let Some(end) = t.find(')') {
-                    let parents = &t[start + 1..end];
-                    if !parents.trim().is_empty() {
+                let after_paren = &t[start + 1..];
+
+                if let Some(end) = after_paren.find(')') {
+                    // Single-line: class Name(Parent1, Parent2):
+                    let parents = after_paren[..end].trim();
+                    if !parents.is_empty() {
+                        implementor_found = true;
+                    }
+                } else {
+                    // Multi-line: class Name(\n    Parent1,\n    Parent2,\n):
+                    // Collect text from subsequent lines until closing ')'
+                    let mut paren_text = String::from(after_paren);
+                    while i < lines.len() {
+                        let next = lines[i];
+                        i += 1;
+                        if let Some(end) = next.find(')') {
+                            paren_text.push_str(&next[..end]);
+                            break;
+                        }
+                        paren_text.push_str(next);
+                        if next.trim().starts_with("class ") {
+                            break;
+                        }
+                    }
+                    if !paren_text.trim().is_empty() {
                         implementor_found = true;
                     }
                 }
