@@ -115,6 +115,22 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 all_files.push(root_dir.value().to_string());
             }
         }
+
+        // Normalize all file paths to be relative to workspace root so that
+        // inbound_links (built by the graph resolver) and orphan analyzers
+        // use a consistent path format.
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let all_files: Vec<String> = all_files
+            .into_iter()
+            .map(|f| {
+                std::path::Path::new(&f)
+                    .strip_prefix(&top_root)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or(f)
+            })
+            .collect();
+
         let files_vo = OrphanFileListVO::new(all_files);
         let context = self.build_orphan_graph_context(&files_vo, root_dir);
         let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
