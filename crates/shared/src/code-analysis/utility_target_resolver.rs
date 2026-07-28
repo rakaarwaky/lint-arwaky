@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_target_utility — pure utility functions for path resolution and source detection
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use crate::common::utility_file_handler::walk_source_files;
+use crate::common::utility_file_handler::{is_path_ignored, is_source_file, walk_source_files};
 use std::path::Path;
 
 /// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.
@@ -45,7 +45,7 @@ fn has_source_files(dir: &Path) -> bool {
     false
 }
 
-/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree.
+/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree or single file.
 pub fn collect_source_files(
     root_dir: &Path,
     _dir_path: &DirectoryPath,
@@ -54,6 +54,18 @@ pub fn collect_source_files(
     let mut files = Vec::new();
     if root_dir.is_dir() {
         walk_source_files(root_dir, &mut files, ignored);
+    } else if root_dir.is_file() {
+        // Handle single file scan — include the file directly if it's a source file
+        if let Some(ext) = root_dir.extension().and_then(|e| e.to_str()) {
+            if is_source_file(ext) {
+                let rel_path = root_dir.to_string_lossy();
+                if !is_path_ignored(&rel_path, ignored) {
+                    if let Ok(fp) = FilePath::new(rel_path.to_string()) {
+                        files.push(fp);
+                    }
+                }
+            }
+        }
     }
     files
 }
