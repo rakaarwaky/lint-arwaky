@@ -45,7 +45,14 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             let stripped = Self::strip_visibility(t);
             if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(')
             {
-                // Skip if followed by impl block or attribute (intentional placeholder)
+                // Skip unit structs with derive attribute — #[derive(...)] provides impl
+                let has_derive = i > 0
+                    && lines[i - 1].trim().starts_with("#[derive(");
+                if has_derive {
+                    i += 1;
+                    continue;
+                }
+                // Skip if followed by impl block (intentional placeholder)
                 let mut next_idx = i + 1;
                 while next_idx < lines.len() {
                     let next_t = lines[next_idx].trim();
@@ -72,7 +79,16 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                 continue;
             }
             // Python: empty class `class Foo: pass` (single line or multi-line)
+            // Skip abstract classes: class Foo(ABC):, class Foo(Protocol):, or with metaclass=ABCMeta
             if t.starts_with("class ") || t.starts_with("class\t") {
+                let is_abstract = t.contains("(ABC)")
+                    || t.contains("(Protocol)")
+                    || t.contains("metaclass=ABCMeta")
+                    || t.contains("ABCMeta");
+                if is_abstract {
+                    i += 1;
+                    continue;
+                }
                 if t.ends_with(": pass") || t.ends_with(":pass") {
                     violations.push(LintResult::new_arch(
                         file,
