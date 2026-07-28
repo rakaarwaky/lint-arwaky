@@ -100,6 +100,20 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     all_files = list.values.iter().map(|f| f.value.clone()).collect();
                 }
             }
+        } else if root_path.is_file() {
+            // Single file scan — include the file directly
+            let ext = root_path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("");
+            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+                if !shared::common::utility_file_handler::is_path_ignored(
+                    &root_path.to_string_lossy(),
+                    ignored,
+                ) {
+                    all_files.push(root_dir.value().to_string());
+                }
+            }
         }
         let files_vo = OrphanFileListVO::new(all_files);
         let context = self.build_orphan_graph_context(&files_vo, root_dir);
