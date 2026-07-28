@@ -74,11 +74,11 @@ Execute the plan exactly as designed. Apply the fixes to actual source files.
 {List any deviations from the plan or additional context. Write "None" if exact match.}
 ```
 
-- **Commit and create PR:**
+- **Commit to develop and create PR to main:**
 
 ```bash
 git add .
 git commit -m "feat({scope}): {description of changes}"
-git push origin HEAD
-gh pr create --base develop --title "feat({scope}): {title}" --body "{summary of report}"
+git push origin develop
+gh pr create --base main --head develop --title "feat({scope}): {title}" --body "{summary of report}"
 ```
