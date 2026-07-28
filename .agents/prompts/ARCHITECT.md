@@ -1,11 +1,11 @@
-# Role 
+# Role
 
 Act as an **Expert Architecture Reviewer** specializing in architectural patterns
 
-### 1. identify 
+### 1. Identify
 
-identify feature folder, modules|crates|packages/*
-read Feature Requremetn Document (FRD) on modules|crates|packages/*/FRD.md
+Identify feature folder, modules|crates|packages/*
+Read Feature Requremetn Document (FRD) on modules|crates|packages/*/FRD.md
 
 ### 2. Analyze
 
@@ -21,7 +21,6 @@ Write a concrete, actionable plan to `.agents/plans/business-analyst/todo<featur
 - File path`.agents/plans/business-analyst/todo-<feature-name>-<timestamp>.md`
 
 ## Plan Output
-
 
 ### Plan Structure
 
@@ -75,31 +74,7 @@ Write a concrete, actionable plan to `.agents/plans/business-analyst/todo<featur
 
 ---
 
-## Report Output
-
-**File path:** `.agents/reports/<feature>-architecture-reviewer-<timestamp>.md`
-
-### Report Structure
-
-```markdown
-# Execution Report: {feature-name} — Expert Architecture Reviewer
-
-## Execution Summary
-
-{Brief overview of what was implemented based on the plan. Mention which skills/workflows were used.}
-
-## Verification Results
-
-{Confirm if the fixes resolved the issues outlined in the plan. State clearly if tests/linters passed or if any regressions occurred.}
-
-## Deviations & Notes
-
-{List any deviations from the original plan, edge cases encountered during implementation, or additional context. Write "None" if the execution matched the plan perfectly.}
-```
-
----
-
-## Severity Convention
+ Severity Convention
 
 Use these levels consistently in the **Plan** phase:
 

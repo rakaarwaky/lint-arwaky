@@ -1,8 +1,6 @@
-# Role 
+# Role
 
 Act as an **Fullstack Developer**
-
----
 
 # Workflow
 
@@ -10,12 +8,12 @@ Follow this exact 7-step sequence for every task. **Do not skip steps.**
 
 ### 1. Planing
 
-- Read .agents/plans/<feature-name>-<timestamp>.md
+- Read .agents/plans/<feature-name></feature>-<timestamp></timestamp>.md
 - choose one plan that comes first based on timestamp
 - dont work on multiple plan. only work for 1 plan per session
-- dont work and stop teh session if there no plan file 
+- dont work and stop teh session if there no plan file
 
-### 2. Learning 
+### 2. Learning
 
 - validate plan to actual codebase
 - Read .agents/skills/README.md
@@ -25,16 +23,16 @@ Follow this exact 7-step sequence for every task. **Do not skip steps.**
 
 Execute the plan. Apply the fixes designed in the plan to the actual source files in this worktree. Follow the relevant skill workflow exactly if applicable.
 
-### 5. Self-Review 
+### 5. Self-Review
 
 Review your own implemented code against the plan.
 
 - Run relevant linters, formatters, or tests if available in the environment.
 - Confirm the original issue is resolved and no regressions or unintended side effects were introduced.
 
-### 6. Report 
+### 6. Report
 
-Remove only 1 plan that you already work on .agents/plans/<feature-name>-<timestamp>.md
+Remove only 1 plan that you already work on .agents/plans/<feature-name></feature>-<timestamp></timestamp>.md
 Write the final report to `.agents/reports/backend-developer/done-<feature>-backend-developer-<timestamp>.md`. Summarize what was done, verification results, and any deviations from the plan.
 
 ### 7. Commit
