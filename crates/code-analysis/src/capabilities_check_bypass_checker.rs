@@ -20,7 +20,7 @@ use shared::code_analysis::{
 
 use shared::code_analysis::utility_column_index;
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
-use shared::common::{PatternList, Severity};
+use shared::common::{LintMessage, PatternList, Severity};
 
 use shared::common::utility_value_object_generator;
 
@@ -179,7 +179,13 @@ impl IBypassCheckerProtocol for BypassChecker {
                     line_number,
                     "AES304",
                     Severity::CRITICAL,
-                    AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                    AesCodeAnalysisViolation::BypassComment {
+                        reason: Some(LintMessage::new(format!(
+                            "Found forbidden bypass attribute: '{}'",
+                            code_trim.lines().next().unwrap_or(code_trim)
+                        ))),
+                    }
+                    .to_string(),
                 ));
                 i += 1;
                 continue;
@@ -208,19 +214,33 @@ impl IBypassCheckerProtocol for BypassChecker {
                         && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
+                        let reason =
+                            Some(LintMessage::new(format!("Found forbidden bypass token: '{}'", token)));
                         let vo = match Self::classify_token(token) {
                             ViolationKind::UnwrapExpect => {
-                                AesCodeAnalysisViolation::UnwrapExpect { reason: None }
+                                AesCodeAnalysisViolation::UnwrapExpect {
+                                    reason: reason.clone(),
+                                }
                             }
                             ViolationKind::Panic => {
-                                AesCodeAnalysisViolation::Panic { reason: None }
+                                AesCodeAnalysisViolation::Panic {
+                                    reason: reason.clone(),
+                                }
                             }
-                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo { reason: None },
+                            ViolationKind::Todo => {
+                                AesCodeAnalysisViolation::Todo {
+                                    reason: reason.clone(),
+                                }
+                            }
                             ViolationKind::Unimplemented => {
-                                AesCodeAnalysisViolation::Unimplemented { reason: None }
+                                AesCodeAnalysisViolation::Unimplemented {
+                                    reason: reason.clone(),
+                                }
                             }
                             ViolationKind::BypassComment => {
-                                AesCodeAnalysisViolation::BypassComment { reason: None }
+                                AesCodeAnalysisViolation::BypassComment {
+                                    reason: reason.clone(),
+                                }
                             }
                         };
 
@@ -250,7 +270,13 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                            AesCodeAnalysisViolation::BypassComment {
+                                reason: Some(LintMessage::new(format!(
+                                    "Found forbidden bypass pattern: '{}'",
+                                    token
+                                ))),
+                            }
+                            .to_string(),
                         ));
 
                         matched = true;
@@ -273,8 +299,12 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Unimplemented { reason: None }
-                                    .to_string(),
+                                AesCodeAnalysisViolation::Unimplemented {
+                                    reason: Some(LintMessage::new(
+                                        "Found forbidden Python pattern: 'raise NotImplementedError'",
+                                    )),
+                                }
+                                .to_string(),
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch(
@@ -282,26 +312,37 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                                AesCodeAnalysisViolation::Panic {
+                                    reason: Some(LintMessage::new(
+                                        "Found forbidden Python pattern: 'assert False'",
+                                    )),
+                                }
+                                .to_string(),
                             ));
                         }
                     }
                     Language::JavaScript | Language::TypeScript => {
                         let throw_patterns = [
-                            "throw new error",
-                            "throw new typeerror",
-                            "throw new rangeerror",
-                            "throw new referenceerror",
-                            "throw new syntaxerror",
+                            ("throw new error", "throw new Error(...)"),
+                            ("throw new typeerror", "throw new TypeError(...)"),
+                            ("throw new rangeerror", "throw new RangeError(...)"),
+                            ("throw new referenceerror", "throw new ReferenceError(...)"),
+                            ("throw new syntaxerror", "throw new SyntaxError(...)"),
                         ];
 
-                        if throw_patterns.iter().any(|p| code_lower.contains(p)) {
+                        if let Some((_, display)) = throw_patterns.iter().find(|(p, _)| code_lower.contains(p)) {
                             violations.push(LintResult::new_arch(
                                 file,
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                                AesCodeAnalysisViolation::Panic {
+                                    reason: Some(LintMessage::new(format!(
+                                        "Found forbidden JS/TS pattern: '{}'",
+                                        display
+                                    ))),
+                                }
+                                .to_string(),
                             ));
                         }
                     }
