@@ -190,22 +190,17 @@ impl ExternalLintOrchestrator {
 
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
 /// Returns parsed adapter names if any config file is found, else None.
-fn config_file_names(has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
-    let mut names = vec!["lint_arwaky.config.yaml".to_string()];
-    if has_js {
-        names.push("lint_arwaky.config.javascript.yaml".to_string());
-    }
-    if has_py {
-        names.push("lint_arwaky.config.python.yaml".to_string());
-    }
-    if has_rs {
-        names.push("lint_arwaky.config.rust.yaml".to_string());
-    }
-    names
+fn all_config_file_names() -> Vec<String> {
+    vec![
+        "lint_arwaky.config.yaml".to_string(),
+        "lint_arwaky.config.python.yaml".to_string(),
+        "lint_arwaky.config.rust.yaml".to_string(),
+        "lint_arwaky.config.javascript.yaml".to_string(),
+    ]
 }
 
-fn walk_up_find_config<T>(root_path: &Path, has_rs: bool, has_py: bool, has_js: bool, mut extract: impl FnMut(&str) -> Option<T>) -> Option<T> {
-    let config_names = config_file_names(has_rs, has_py, has_js);
+fn walk_up_find_config<T>(root_path: &Path, _has_rs: bool, _has_py: bool, _has_js: bool, mut extract: impl FnMut(&str) -> Option<T>) -> Option<T> {
+    let config_names = all_config_file_names();
     let start = if root_path.is_file() {
         root_path.parent().unwrap_or(root_path)
     } else {
