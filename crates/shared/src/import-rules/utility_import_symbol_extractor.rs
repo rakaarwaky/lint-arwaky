@@ -140,7 +140,12 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
                     continue;
                 }
 
-                for name in import_part.split(',') {
+                // Strip structural parentheses from multi-line imports: `from X import (A, B)`
+                let import_body = import_part.trim().trim_matches(|c| c == '(' || c == ')');
+                if import_body.is_empty() {
+                    continue;
+                }
+                for name in import_body.split(',') {
                     let name = name.trim();
                     if name.is_empty() || name == "*" {
                         continue;
@@ -303,7 +308,11 @@ pub fn extract_exported_symbols_for_file(content: &str, file_path: &str) -> Hash
             let trimmed = line.trim();
             if trimmed.starts_with("from ") && trimmed.contains(" import ") {
                 if let Some((_, import_part)) = trimmed.split_once(" import ") {
-                    for name in import_part.split(',') {
+                    let import_body = import_part.trim().trim_matches(|c| c == '(' || c == ')');
+                    if import_body.is_empty() {
+                        continue;
+                    }
+                    for name in import_body.split(',') {
                         let name = name.trim().split(" as ").last().unwrap_or("").trim();
                         if !name.is_empty() && name != "*" {
                             exported.insert(Identity::new(name));
