@@ -21,7 +21,7 @@
 
 use shared::cli_commands::LintResult;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::common::Severity;
+use shared::common::{LintMessage, Severity};
 use shared::role_rules::{AesRoleViolation, IAgentRoleChecker};
 
 use shared::common::{SourceContentVO, SymbolName};
@@ -67,9 +67,7 @@ impl Default for AgentRoleChecker {
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    // ─── Rust ──────────────────────────────────────────────
+    }        // ─── Rust ──────────────────────────────────────────────
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // Note: aggregate import is enforced by mandatory checker (AES202), not here.
@@ -124,6 +122,7 @@ impl AgentRoleChecker {
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -132,7 +131,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (struct/enum) in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -152,7 +156,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.",
+                        file
+                    ))),
+                },
             ));
         }
 
@@ -215,6 +224,7 @@ impl AgentRoleChecker {
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -223,7 +233,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -236,7 +251,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.",
+                        file
+                    ))),
+                },
             ));
         }
 
@@ -283,6 +303,7 @@ impl AgentRoleChecker {
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -291,7 +312,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} classes in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -304,7 +330,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
+                        file
+                    ))),
+                },
             ));
         }
 

@@ -89,7 +89,12 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
                         0,
                         "AES406",
                         Severity::HIGH,
-                        AesRoleViolation::SurfaceRoleViolation { reason: None },
+                        AesRoleViolation::SurfaceRoleViolation {
+                            reason: Some(LintMessage::new(format!(
+                                "File {} has too many function declarations (exceeds 15): found {}",
+                                file, count
+                            ))),
+                        },
                     ));
                     return;
                 }
@@ -254,7 +259,12 @@ impl SurfaceRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AesRoleViolation::NoDomainLogic { reason: None }),
+                message: LintMessage::new(AesRoleViolation::NoDomainLogic {
+                    reason: Some(LintMessage::new(format!(
+                        "Passive surface {} has {} control flow statements (max 3)",
+                        f.value, control_flow_count
+                    ))),
+                }),
                 source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,

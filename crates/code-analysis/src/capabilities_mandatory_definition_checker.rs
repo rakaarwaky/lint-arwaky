@@ -5,7 +5,7 @@ use shared::code_analysis::{
 
 use shared::code_analysis::utility_bypass_detector::skip_cfg_test_block;
 use shared::code_analysis::utility_mandatory_checker::rust_declares_type;
-use shared::common::{LayerDefinition, Severity};
+use shared::common::{LayerDefinition, LintMessage, Severity};
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
@@ -72,7 +72,14 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        AesCodeAnalysisViolation::DeadInheritance { reason: None }.to_string(),
+                        AesCodeAnalysisViolation::DeadInheritance {
+                            reason: Some(LintMessage::new(format!(
+                                "Unit struct declared on line {} in {} without impl or derive",
+                                i + 1,
+                                file
+                            ))),
+                        }
+                        .to_string(),
                     ));
                 }
                 i += 1;
@@ -95,7 +102,14 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        AesCodeAnalysisViolation::DeadInheritance { reason: None }.to_string(),
+                        AesCodeAnalysisViolation::DeadInheritance {
+                            reason: Some(LintMessage::new(format!(
+                                "Empty Python class on line {} in {} (': pass')",
+                                i + 1,
+                                file
+                            ))),
+                        }
+                        .to_string(),
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -105,7 +119,15 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                             i + 1,
                             "AES303",
                             Severity::MEDIUM,
-                            AesCodeAnalysisViolation::DeadInheritance { reason: None }.to_string(),
+                            AesCodeAnalysisViolation::DeadInheritance {
+                                reason: Some(LintMessage::new(format!(
+                                    "Empty Python class on line {} in {} (body is '{}')",
+                                    i + 1,
+                                    file,
+                                    next
+                                ))),
+                            }
+                            .to_string(),
                         ));
                     }
                 }
@@ -117,7 +139,14 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,
-                    AesCodeAnalysisViolation::DeadInheritance { reason: None }.to_string(),
+                    AesCodeAnalysisViolation::DeadInheritance {
+                        reason: Some(LintMessage::new(format!(
+                            "Empty JS/TS class/interface on line {} in {}",
+                            i + 1,
+                            file
+                        ))),
+                    }
+                    .to_string(),
                 ));
             }
             i += 1;
@@ -182,8 +211,13 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 file,
                 0,
                 "AES303",
-                Severity::HIGH,
-                AesCodeAnalysisViolation::MandatoryClassDefinition { reason: None }.to_string(),
+                Severity::HIGH,                    AesCodeAnalysisViolation::MandatoryClassDefinition {
+                        reason: Some(LintMessage::new(format!(
+                            "File {} has no class/struct/enum/trait definition",
+                            file
+                        ))),
+                    }
+                    .to_string(),
             ));
         }
     }

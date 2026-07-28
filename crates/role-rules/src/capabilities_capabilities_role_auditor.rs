@@ -15,6 +15,7 @@
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
 
 use shared::cli_commands::LintResult;
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::Severity;
 use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
@@ -123,7 +124,10 @@ impl CapabilitiesRoleChecker {
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
                     count: type_count,
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (struct + enum), max 3 allowed",
+                        type_count
+                    ))),
                 },
             ));
             return; // no further check needed
@@ -135,7 +139,10 @@ impl CapabilitiesRoleChecker {
         let has_implementor = struct_names.iter().any(|s| {
             content.lines().any(|l| {
                 let t = l.trim();
-                t.starts_with("impl ") && t.contains(&format!("for {s}"))
+                t.starts_with("impl ")
+                    && (t.contains(&format!("for {} ", s))
+                        || t.contains(&format!("for {}{{", s))
+                        || t.contains(&format!("for {} {{", s)))
             })
         });
 
@@ -145,7 +152,12 @@ impl CapabilitiesRoleChecker {
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.",
+                        file
+                    ))),
+                },
             ));
         }
     }
@@ -224,7 +236,10 @@ impl CapabilitiesRoleChecker {
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
                     count: type_count,
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (class/interface/enum), max 3 allowed",
+                        type_count
+                    ))),
                 },
             ));
             return;
@@ -237,7 +252,12 @@ impl CapabilitiesRoleChecker {
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with 'implements' keyword found in {}. At least one class must implement an interface/protocol.",
+                        file
+                    ))),
+                },
             ));
         }
     }
@@ -289,7 +309,10 @@ impl CapabilitiesRoleChecker {
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
                     count: class_count,
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} classes, max 3 allowed",
+                        class_count
+                    ))),
                 },
             ));
             return;
@@ -302,7 +325,12 @@ impl CapabilitiesRoleChecker {
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
+                        file
+                    ))),
+                },
             ));
         }
     }
