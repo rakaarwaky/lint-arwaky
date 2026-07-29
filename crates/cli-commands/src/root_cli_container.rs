@@ -12,6 +12,9 @@ use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtoc
 
 use shared::role_rules::IRoleRunnerAggregate;
 
+// Ensure utility_path_resolver is reachable from entry point for AES504 orphan detection
+use crate::utility_path_resolver;
+
 pub struct CliContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
@@ -26,6 +29,9 @@ pub struct CliContainer {
 
 impl CliContainer {
     pub fn new_default() -> Self {
+        // Ensure utility_path_resolver is reachable from entry point (AES504)
+        let _workspace_root = utility_path_resolver::find_workspace_root(".");
+
         // Create config orchestrator — single source of truth for config
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.orchestrator();

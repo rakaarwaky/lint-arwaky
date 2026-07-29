@@ -1,6 +1,6 @@
 [package]
 name = "external-lint-lint-arwaky"
-version = "1.10.115"
+version = "1.10.116"
 edition = "2021"
 description = "Adapters for external linters — Rust (clippy, rustfmt, cargo-audit), Python (ruff, mypy, bandit), JavaScript/TypeScript (eslint, prettier, tsc). Invoked via stdio."
 license = "MIT"
