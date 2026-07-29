@@ -102,10 +102,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             }
         } else if root_path.is_file() {
             // Single file scan — include the file directly
-            let ext = root_path
-                .extension()
-                .and_then(|e| e.to_str())
-                .unwrap_or("");
+            let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
                 && !shared::common::utility_file_handler::is_path_ignored(
                     &root_path.to_string_lossy(),
@@ -132,8 +129,16 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             .collect();
 
         let files_vo = OrphanFileListVO::new(all_files);
-        let context = self.build_orphan_graph_context(&files_vo, root_dir);
-        let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
+
+        // Expand workspace files BEFORE building the graph context so that the
+        // import graph has all workspace files to resolve cross-file imports.
+        // Without this, single-file scans build a graph from only 1 file,
+        // causing orphan detection to miss connections to container/surface files.
+        let expanded_files = self._expand_workspace_files(&files_vo, root_dir);
+        let expanded_vo = OrphanFileListVO::new(expanded_files);
+
+        let context = self.build_orphan_graph_context(&expanded_vo, root_dir);
+        let results = self.check_orphans_with_context(&expanded_vo, root_dir, &context);
         (context, results)
     }
 
