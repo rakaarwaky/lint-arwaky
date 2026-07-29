@@ -83,7 +83,9 @@ pub fn handle_scan_orphan(
             .unwrap_or(ConfigLanguage::Rust);
         let ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
         // Build the orphan analyzer from THIS workspace's real config (layers + enabled)
-        let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&ws.path.value);
+        let orphan_analyzer = orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+            &config_orchestrator, &ws.path.value,
+        ).analyzer();
         let (_, results) = orphan_analyzer.scan_orphans(&ws.path, ignored.values());
 
         // scan_orphans returns file paths relative to the workspace top_root
@@ -164,8 +166,9 @@ fn scan_single_root(
     let scan_root = crate::surface_common_action::resolve_file_path(root);
     let lang = crate::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
-    // Build the orphan analyzer from the SCAN target's real config (layers + enabled)
-    let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&scan_root.value);
+    let orphan_analyzer = orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+        config_orchestrator, &scan_root.value,
+    ).analyzer();
     let (_, results) = orphan_analyzer.scan_orphans(&scan_root, ignored.values());
 
     let mut violations: Vec<ViolationItem> = results

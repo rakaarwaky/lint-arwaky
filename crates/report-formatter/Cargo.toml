@@ -12,12 +12,12 @@ workspace = true
 
 [dependencies]
 shared.workspace = true
-code_analysis.workspace = true
 async-trait.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
+code_analysis.workspace = true
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 tokio.workspace = true

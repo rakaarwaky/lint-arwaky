@@ -8,7 +8,7 @@ static DEFAULT_TS_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
 
 pub fn default_aes_config() -> ArchitectureConfig {
     DEFAULT_RUST_CONFIG
-        .get_or_init(|| parse_config_yaml(include_str!("../../../../lint_arwaky.config.rust.yaml")))
+        .get_or_init(|| parse_config_yaml(include_str!("../../config/lint_arwaky.config.rust.yaml")))
         .clone()
 }
 
@@ -17,13 +17,13 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
         "rust" => default_aes_config(),
         "python" => DEFAULT_PYTHON_CONFIG
             .get_or_init(|| {
-                parse_config_yaml(include_str!("../../../../lint_arwaky.config.python.yaml"))
+                parse_config_yaml(include_str!("../../config/lint_arwaky.config.python.yaml"))
             })
             .clone(),
         "javascript" | "typescript" => DEFAULT_TS_CONFIG
             .get_or_init(|| {
                 parse_config_yaml(include_str!(
-                    "../../../../lint_arwaky.config.javascript.yaml"
+                    "../../config/lint_arwaky.config.javascript.yaml"
                 ))
             })
             .clone(),

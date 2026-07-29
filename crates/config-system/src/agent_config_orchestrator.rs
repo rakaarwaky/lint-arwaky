@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
 use shared::common::{FilePath, PatternList};
-
 use shared::config_system::{
     ArchitectureConfig, ConfigError, ConfigLanguage, ConfigResult, ConfigSource,
     IConfigOrchestratorAggregate, IConfigReaderProtocol, IConfigValidatorProtocol,
@@ -206,20 +205,6 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .config_reader
             .read_config(project_root, language)
             .await
-    }
-
-    fn create_orphan_analyzer(
-        &self,
-        project_root: &str,
-    ) -> Arc<dyn shared::orphan_detector::IOrphanAggregate> {
-        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
-        let config = self.load_config_sync(&fp);
-        Arc::new(
-            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
-                config,
-            ),
-        )
-        .analyzer()
     }
 }
 

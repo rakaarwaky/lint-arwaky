@@ -1,4 +1,4 @@
-// build.rs — copy config YAML files from workspace root into OUT_DIR at build time
+// build.rs — copy config YAML files from crate-local config/ dir into OUT_DIR
 use std::fs;
 use std::path::Path;
 
@@ -12,24 +12,20 @@ fn main() {
         Err(e) => panic!("CARGO_MANIFEST_DIR not set: {e}"),
     };
 
-    // CARGO_MANIFEST_DIR = .../lint-arwaky/crates/shared
-    // Workspace root = 2 parent levels up (shared → crates → lint-arwaky)
-    let workspace_root = match Path::new(&manifest_dir).ancestors().nth(2) {
-        Some(p) => p,
-        None => panic!("cannot reach workspace root from manifest dir"),
-    };
+    // Config files live in <manifest>/config/ (within the crate, safe for crates.io)
+    let config_dir = Path::new(&manifest_dir).join("config");
 
     for name in &[
         "lint_arwaky.config.rust.yaml",
         "lint_arwaky.config.python.yaml",
         "lint_arwaky.config.javascript.yaml",
     ] {
-        let src = workspace_root.join(name);
+        let src = config_dir.join(name);
         let dst = Path::new(&out_dir).join(name);
 
         if !src.exists() {
             panic!(
-                "Config file not found at {:?}. Check that config files are in the workspace root.",
+                "Config file not found at {:?}. Check that config/ is in the crate root.",
                 src
             );
         }
@@ -39,8 +35,7 @@ fn main() {
         }
     }
 
-    // Re-run on config changes
-    println!("cargo:rerun-if-changed=lint_arwaky.config.rust.yaml");
-    println!("cargo:rerun-if-changed=lint_arwaky.config.python.yaml");
-    println!("cargo:rerun-if-changed=lint_arwaky.config.javascript.yaml");
+    println!("cargo:rerun-if-changed=config/lint_arwaky.config.rust.yaml");
+    println!("cargo:rerun-if-changed=config/lint_arwaky.config.python.yaml");
+    println!("cargo:rerun-if-changed=config/lint_arwaky.config.javascript.yaml");
 }
