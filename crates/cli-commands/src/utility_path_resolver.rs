@@ -80,15 +80,24 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
     ".".to_string()
 }
 
-/// Detect if a path is a workspace root (has Cargo.toml with [workspace]).
-pub fn is_workspace_root(path: &str) -> bool {
-    let cargo_toml = std::path::Path::new(path).join("Cargo.toml");
-    if cargo_toml.exists() {
-        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-            return content.contains("[workspace]");
+/// Detect if a path is a leaf member directory (not a workspace root and not a group of members).
+/// A leaf member has a marker file AND does NOT contain subdirectories that are also members.
+pub fn is_leaf_member_path(path: &str) -> bool {
+    if !is_member_path(path) {
+        return false;
+    }
+    let p = std::path::Path::new(path);
+    if let Ok(entries) = std::fs::read_dir(p) {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                let sub_path = entry.path();
+                if is_member_path(&sub_path.to_string_lossy()) {
+                    return false;
+                }
+            }
         }
     }
-    false
+    true
 }
 
 /// Detect if a path is a member directory (not a workspace root).
