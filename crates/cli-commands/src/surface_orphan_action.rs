@@ -72,26 +72,12 @@ pub fn handle_scan_orphan(
         workspaces
     };
 
-    let cwd = std::env::current_dir().unwrap_or_default();
+    let _cwd = std::env::current_dir().unwrap_or_default();
     let is_specific_member = member.is_some();
 
     let mut all_violations: Vec<ViolationItem> = Vec::new();
-    let workspace_canonicals: Vec<_> = workspaces
-        .iter()
-        .map(|ws| {
-            let raw = std::path::Path::new(&ws.path.value);
-            let canonical = raw.canonicalize().ok();
-            let fallback = if raw.is_absolute() {
-                raw.to_path_buf()
-            } else {
-                cwd.join(raw)
-            };
-            let fallback = std::fs::canonicalize(&fallback).unwrap_or(fallback);
-            (canonical, fallback)
-        })
-        .collect();
 
-    for (ws, (ws_canonical, ws_fallback)) in workspaces.iter().zip(workspace_canonicals.iter()) {
+    for ws in workspaces.iter() {
         let lang = ws
             .workspace_type
             .parse::<ConfigLanguage>()
@@ -101,15 +87,30 @@ pub fn handle_scan_orphan(
         let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&ws.path.value);
         let (_, results) = orphan_analyzer.scan_orphans(&ws.path, ignored.values());
 
+        // scan_orphans returns file paths relative to the workspace top_root
+        // (found by find_workspace_root). We need to find the workspace member
+        // prefix to filter results belonging to this specific workspace.
+        let ws_top_root = shared::common::utility_file_handler::find_workspace_root(&ws.path.value);
+        let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
+            std::path::Path::new(&ws.path.value)
+                .strip_prefix(top_root)
+                .ok()
+                .map(|p| p.to_string_lossy().to_string())
+        });
+
         let filtered: Vec<_> = results
             .into_iter()
             .filter(|r| {
-                let abs = cwd.join(&r.file.value);
-                let canonical_result = abs.canonicalize().unwrap_or(abs);
-                ws_canonical
-                    .as_ref()
-                    .map(|c| canonical_result.starts_with(c))
-                    .unwrap_or_else(|| canonical_result.starts_with(ws_fallback))
+                // File paths from scan_orphans are relative to workspace top_root.
+                // ws_prefix is the workspace relative to top_root.
+                // A file belongs to this workspace if its path starts with ws_prefix.
+                if let Some(ref prefix) = ws_prefix {
+                    r.file.value.starts_with(prefix.as_str())
+                        && (r.file.value.len() == prefix.len()
+                            || r.file.value[prefix.len()..].starts_with('/'))
+                } else {
+                    true
+                }
             })
             .collect();
 
