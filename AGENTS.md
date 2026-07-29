@@ -8,9 +8,14 @@ See also [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ```bash
 # Build everything
-cargo build --release
+CARGO_INCREMENTAL=0 cargo build --release
 
-# Self-lint
+# Faster local dev (uses sccache cache)
+CARGO_INCREMENTAL=0 cargo check -p <crate>   # type-check only
+CARGO_INCREMENTAL=0 cargo clippy -p <crate>  # lint only
+cargo nextest run -p <crate>                # tests (3× faster than cargo test)
+
+# Self-lint (use default incremental for speed on small edits)
 cargo run --bin lint-arwaky-cli -- scan .
 
 # Scan
@@ -22,15 +27,24 @@ cargo run --bin lint-arwaky-mcp
 # Run TUI launcher
 cargo run --bin lint-arwaky-tui
 
-# Per-crate build/check/test
-cargo build -p import_rules_lint_arwaky
-cargo check -p naming_rules_lint_arwaky
-cargo test -p code_analysis_lint_arwaky
+# Per-crate build/check/test (with sccache)
+CARGO_INCREMENTAL=0 cargo build -p import_rules_lint_arwaky
+CARGO_INCREMENTAL=0 cargo check -p naming_rules_lint_arwaky
+cargo nextest run -p code_analysis_lint_arwaky --lib --tests
 
-# Tests
-cargo test --workspace        # all
-cargo test -p import_rules_lint_arwaky    # single crate
-cargo test --lib <name_fragment>  # single test by name
+# Tests (gates script already sets CARGO_INCREMENTAL=0)
+bash scripts/gates.sh                    # all gates
+cargo nextest run --workspace --lib --tests  # all tests, 3× faster
+cargo test -p import_rules_lint_arwaky          # fallback per crate
+cargo test --lib <name_fragment>                # single test by name
+```
+
+## Format & lint
+
+```bash
+cargo fmt --all
+CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
+CARGO_INCREMENTAL=0 cargo clippy -p import_rules -- -D warnings  # per crate
 ```
 
 ## Testing with test projects

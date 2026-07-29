@@ -89,19 +89,22 @@ fn identify_orphan_entry_points_finds_main_and_lib() {
         .contains(&"src/capabilities_foo.rs".to_string()));
 }
 
-// ─── Ignored paths are filtered ───────────────────────────
+// ─── Orphan file with no inbound links is flagged ──────────
 
 #[test]
-fn check_orphans_respects_ignored_paths() {
-    let config = ArchitectureConfig {
-        ignored_paths: shared::common::taxonomy_paths_vo::FilePathList::new(vec![
-            shared::common::taxonomy_path_vo::FilePath::new("src/generated".to_string()).unwrap(),
-        ]),
-        ..Default::default()
-    };
+fn check_orphans_flags_taxonomy_file_with_no_inbound_links() {
+    let config = ArchitectureConfig::default();
     let analyzer = build_analyzer(config);
-    let files = OrphanFileListVO::new(vec!["src/generated/taxonomy_auto_vo.rs".to_string()]);
+    let files = OrphanFileListVO::new(vec!["src/taxonomy_auto_vo.rs".to_string()]);
     let root = FilePath::new("/tmp/project".to_string()).unwrap();
     let results = analyzer.check_orphans(&files, &root);
-    assert!(results.is_empty());
+    // The taxonomy file has no inbound links (other files importing it),
+    // so it should be flagged as orphan (AES501 or AES503).
+    assert!(!results.is_empty(), "Orphan file should produce violations");
+    let codes: Vec<&str> = results.iter().map(|r| r.code.code()).collect();
+    assert!(
+        codes.contains(&"AES501"),
+        "Expected AES501 (taxonomy orphan), got: {:?}",
+        codes
+    );
 }

@@ -6,6 +6,7 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::path::Path;
 use std::sync::Arc;
 
+use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_source_files};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
@@ -42,8 +43,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         if !self.config.enabled.value {
             return Ok(Vec::new());
         }
-        let path = Path::new(target.value());
-        if !path.exists() {
+        if !path_exists(target.value()) {
             return Err(ScanError::new(
                 FilePath::new(target.value().to_string()).unwrap_or_default(),
                 ErrorMessage::new(format!("Target path does not exist: {}", target.value())),
@@ -82,7 +82,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .par_iter()
             .flat_map(|file| {
                 let mut local_results = Vec::new();
-                let content = match std::fs::read_to_string(file.value()) {
+                let content = match read_file_sync(file.value()) {
                     Ok(c) => c,
                     Err(e) => {
                         eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
@@ -141,26 +141,18 @@ impl ImportOrchestrator {
         }
     }
 
-    fn is_ignored(&self, p: &Path) -> bool {
-        let dir_name = p
-            .file_name()
-            .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_default();
-        if DEFAULT_SKIP_DIRS.contains(&dir_name.as_str()) || dir_name.starts_with('.') {
-            return true;
-        }
-        let path_str = p.to_string_lossy();
-        self.ignored_paths.iter().any(|ignored| {
-            path_str.contains(ignored.as_str())
-                || dir_name.contains(ignored.trim_start_matches('/'))
-        })
-    }
-
     fn collect_files(&self, target: &FilePath) -> FilePathList {
         let path = Path::new(target.value());
         let mut files = Vec::new();
         if path.is_dir() {
-            self.walk_dir(path, &mut files, false);
+            let mut ignored = self.ignored_paths.clone();
+            for d in DEFAULT_SKIP_DIRS {
+                let entry = format!("/{}", d);
+                if !ignored.contains(&entry) {
+                    ignored.push(entry);
+                }
+            }
+            walk_source_files(path, &mut files, &ignored);
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {
                 Ok(fp) => files.push(fp),
@@ -172,43 +164,5 @@ impl ImportOrchestrator {
             }
         }
         FilePathList::new(files)
-    }
-
-    fn walk_dir(&self, dir: &Path, files: &mut Vec<FilePath>, is_subdir: bool) {
-        if is_subdir && self.is_ignored(dir) {
-            return;
-        }
-        let entries = match std::fs::read_dir(dir) {
-            Ok(e) => e,
-            Err(e) => {
-                eprintln!("[warn] cannot read directory '{}': {}", dir.display(), e);
-                return;
-            }
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                self.walk_dir(&path, files, true);
-            } else if path.is_file() {
-                if self.is_ignored(&path) {
-                    continue;
-                }
-                if let Some(ext) = path.extension() {
-                    if matches!(
-                        ext.to_str(),
-                        Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                    ) {
-                        match FilePath::new(path.to_string_lossy().to_string()) {
-                            Ok(fp) => files.push(fp),
-                            Err(e) => eprintln!(
-                                "[warn] invalid file path '{}': {}",
-                                path.to_string_lossy(),
-                                e
-                            ),
-                        }
-                    }
-                }
-            }
-        }
     }
 }

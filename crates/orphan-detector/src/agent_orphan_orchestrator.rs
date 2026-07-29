@@ -252,8 +252,6 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
-        let root_dir_str = root_dir.value().to_string();
-
         files
             .values
             .par_iter()
@@ -264,13 +262,13 @@ impl ArchOrphanAnalyzer {
                     &alive_result,
                     &layer_keys,
                     &all_files,
-                    &root_dir_str,
                     &top_root_str,
                 )
             })
             .collect()
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn _process_file(
         &self,
         f: &str,
@@ -278,13 +276,12 @@ impl ArchOrphanAnalyzer {
         alive_result: &ReachabilityResult,
         layer_keys: &[String],
         all_files: &[String],
-        root_dir_str: &str,
         top_root_str: &str,
     ) -> Option<LintResult> {
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
         let abs_f_str = abs_f.to_string_lossy().to_string();
-        let file_fp = FilePath::new(abs_f_str).ok()?;
+        let file_fp = FilePath::new(&abs_f_str).ok()?;
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
         let base_layer =
             shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;

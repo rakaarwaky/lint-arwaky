@@ -1,0 +1,6 @@
+[build]
+rustc-wrapper = "sccache"
+
+# For sccache to work, disable incremental on full builds:
+#   CARGO_INCREMENTAL=0 cargo build
+# Local dev (small changes) is faster with default incremental.

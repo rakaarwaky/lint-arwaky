@@ -167,7 +167,23 @@ pub fn scan_directory(
 pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
-    walk_source_files_inner(&root, files, ignored, &mut visited, &root)
+    let restrict = workspace_restrict(&root);
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root, &restrict)
+}
+
+const WORKSPACE_DIRS: [&str; 3] = ["crates", "packages", "modules"];
+
+/// Returns Some(set) of allowed workspace directory names if root contains
+/// any of crates/packages/modules. When set, only those subdirectories are
+/// scanned — everything else at root level is skipped (avoids walking
+/// test-workspaces, scripts, docs, etc.).
+fn workspace_restrict(root: &Path) -> Option<HashSet<&str>> {
+    let allowed: HashSet<&str> = WORKSPACE_DIRS
+        .iter()
+        .filter(|d| root.join(d).is_dir())
+        .copied()
+        .collect();
+    if allowed.is_empty() { None } else { Some(allowed) }
 }
 
 fn walk_source_files_inner(
@@ -176,10 +192,23 @@ fn walk_source_files_inner(
     ignored: &[String],
     visited: &mut HashSet<PathBuf>,
     root: &Path,
+    workspace_restrict: &Option<HashSet<&str>>,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
+
+            // At root level: only descend into workspace dirs (crates/packages/modules)
+            if dir == root {
+                if let Some(ref restrict) = workspace_restrict {
+                    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                        if path.is_dir() && !restrict.contains(name) {
+                            continue;
+                        }
+                    }
+                }
+            }
+
             if is_ignored_dir(&path, ignored) {
                 continue;
             }
@@ -195,7 +224,7 @@ fn walk_source_files_inner(
                         }
                         if let Ok(target_meta) = target.metadata() {
                             if target_meta.is_dir() {
-                                walk_source_files_inner(&target, files, ignored, visited, root);
+                                walk_source_files_inner(&target, files, ignored, visited, root, workspace_restrict);
                             } else if target_meta.is_file() {
                                 collect_source_file(&target, files);
                             }
@@ -216,7 +245,7 @@ fn walk_source_files_inner(
                 if !visited.insert(canonical) {
                     continue;
                 }
-                walk_source_files_inner(&path, files, ignored, visited, root);
+                walk_source_files_inner(&path, files, ignored, visited, root, workspace_restrict);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
                 if is_source_file(ext) {
                     collect_source_file(&path, files);
@@ -234,7 +263,8 @@ pub fn walk_rs_files
     (dir: &Path, cb: &mut dyn FnMut(PathBuf), ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
-    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root)
+    let restrict = workspace_restrict(&root);
+    walk_rs_files_inner(&root, cb, ignored, &mut visited, &root, &restrict)
 }
 
 fn walk_rs_files_inner(
@@ -243,10 +273,23 @@ fn walk_rs_files_inner(
     ignored: &[String],
     visited: &mut HashSet<PathBuf>,
     root: &Path,
+    workspace_restrict: &Option<HashSet<&str>>,
 ) {
     if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let p = entry.path();
+
+            // At root level: only descend into workspace dirs (crates/packages/modules)
+            if dir == root {
+                if let Some(ref restrict) = workspace_restrict {
+                    if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                        if p.is_dir() && !restrict.contains(name) {
+                            continue;
+                        }
+                    }
+                }
+            }
+
             if is_ignored_dir(&p, ignored) {
                 continue;
             }
@@ -262,7 +305,7 @@ fn walk_rs_files_inner(
                         }
                         if let Ok(target_meta) = target.metadata() {
                             if target_meta.is_dir() {
-                                walk_rs_files_inner(&target, cb, ignored, visited, root);
+                                walk_rs_files_inner(&target, cb, ignored, visited, root, workspace_restrict);
                             } else if target_meta.is_file()
                                 && target.starts_with(root)
                                 && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))
@@ -280,7 +323,7 @@ fn walk_rs_files_inner(
                 if !visited.insert(canonical) {
                     continue;
                 }
-                walk_rs_files_inner(&p, cb, ignored, visited, root);
+                walk_rs_files_inner(&p, cb, ignored, visited, root, workspace_restrict);
             } else if matches!(p.extension().and_then(|e| e.to_str()), Some("rs")) {
                 cb(p);
             }

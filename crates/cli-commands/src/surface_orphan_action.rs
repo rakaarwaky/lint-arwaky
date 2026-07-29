@@ -72,7 +72,6 @@ pub fn handle_scan_orphan(
         workspaces
     };
 
-    let _cwd = std::env::current_dir().unwrap_or_default();
     let is_specific_member = member.is_some();
 
     let mut all_violations: Vec<ViolationItem> = Vec::new();
@@ -90,9 +89,13 @@ pub fn handle_scan_orphan(
         // scan_orphans returns file paths relative to the workspace top_root
         // (found by find_workspace_root). We need to find the workspace member
         // prefix to filter results belonging to this specific workspace.
-        let ws_top_root = shared::common::utility_file_handler::find_workspace_root(&ws.path.value);
+        // Use absolute paths for correct strip_prefix comparison.
+        let cwd = std::env::current_dir().unwrap_or_default();
+        let ws_abs = cwd.join(&ws.path.value);
+        let ws_top_root =
+            shared::common::utility_file_handler::find_workspace_root(&ws_abs.to_string_lossy());
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
-            std::path::Path::new(&ws.path.value)
+            ws_abs
                 .strip_prefix(top_root)
                 .ok()
                 .map(|p| p.to_string_lossy().to_string())

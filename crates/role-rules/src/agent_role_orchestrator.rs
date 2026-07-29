@@ -24,6 +24,7 @@ use shared::role_rules::{
 };
 
 use shared::common::{ContentString, SourceContentVO};
+use shared::common::utility_file_handler::{read_file_sync, walk_source_files};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -78,41 +79,13 @@ impl RoleOrchestrator {
         }
     }
 
-    fn is_ignored(&self, p: &Path) -> bool {
-        let s = p.to_string_lossy();
-        let dir_name = match p.file_name() {
-            Some(n) => n.to_string_lossy(),
-            None => std::borrow::Cow::Borrowed(""),
-        };
-        // Default-excluded directories (build artifacts, deps, test dirs) are
-        // always skipped even when no config `ignored_paths` is present.
-        if dir_name == "tests" {
-            return true;
-        }
-        self.ignored_paths.iter().any(|ignored| {
-            s.contains(ignored.as_str()) || dir_name.contains(ignored.trim_start_matches('/'))
-        })
-    }
-
-    /// Run all AES401-406 role checks across all collected files.
-    ///
-    /// For each file, extracts the filename prefix (first underscore segment) to
-    /// determine which AES layer it belongs to, then dispatches to the appropriate
-    /// checker. Each layer has specific rules:
-    ///   - agent: type composition, any-type annotations
-    ///   - surface: function count, smart vs utility vs passive classification
-    ///   - utility: stateless standalone function checks
-    ///   - contract: protocol differentiation
-    ///   - capabilities: routing checks
-    ///   - taxonomy: entity, error, event, constant checks
-    ///   - root: no role checks (pure DI wiring)
     pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
         if !self.config.enabled.value {
             return;
         }
 
         for file in files {
-            let content = std::fs::read_to_string(file).unwrap_or_default();
+            let content = read_file_sync(file).unwrap_or_default();
             let filename = Path::new(file)
                 .file_name()
                 .and_then(|n| n.to_str())
@@ -200,37 +173,12 @@ impl RoleOrchestrator {
         let path = Path::new(target.value());
         let mut files = Vec::new();
         if path.is_dir() {
-            self.walk_dir(path, &mut files, true);
+            walk_source_files(path, &mut files, &self.ignored_paths);
         } else if path.is_file() {
             if let Ok(p) = FilePath::new(path.to_string_lossy().to_string()) {
                 files.push(p);
             }
         }
         FilePathList::new(files)
-    }
-
-    fn walk_dir(&self, dir: &Path, files: &mut Vec<FilePath>, is_subdir: bool) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    if is_subdir && self.is_ignored(&path) {
-                        continue;
-                    }
-                    self.walk_dir(&path, files, true);
-                } else if path.is_file() {
-                    if let Some(ext) = path.extension() {
-                        if matches!(
-                            ext.to_str(),
-                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                        ) {
-                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
-                                files.push(fp);
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

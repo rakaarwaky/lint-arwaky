@@ -180,14 +180,29 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         }
     }
 
-    // Filter: only keep violations whose file path is within the target directory
+    // Filter: only keep violations whose file path is within the target directory.
+    // File paths from subprocesses may be relative to the workspace top_root
+    // (found by find_workspace_root), not relative to CWD.
     if let Some(canonical_target) = &target_canonical {
         all.retain(|v| {
             let file_path = std::path::Path::new(&v.file.value);
-            std::fs::canonicalize(file_path)
-                .or_else(|_| std::env::current_dir().map(|cwd| cwd.join(file_path)))
-                .map(|canonical_file| canonical_file.starts_with(canonical_target))
-                .unwrap_or(false)
+            // First try direct canonicalize
+            if let Ok(canonical) = std::fs::canonicalize(file_path) {
+                return canonical.starts_with(canonical_target);
+            }
+            // Try joining with CWD
+            if let Ok(cwd) = std::env::current_dir() {
+                let joined = cwd.join(file_path);
+                let cwd_joined = std::fs::canonicalize(&joined).unwrap_or(joined);
+                if cwd_joined.starts_with(canonical_target) {
+                    return true;
+                }
+            }
+            // Try joining with target directory (for paths relative to workspace top_root)
+            if let Ok(target_joined) = std::fs::canonicalize(canonical_target.join(file_path)) {
+                return target_joined.starts_with(canonical_target);
+            }
+            false
         });
     }
 

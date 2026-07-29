@@ -15,37 +15,16 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
-ignored_paths:
   - "/target"
   - "/.git"
-  - "/.github"
-  - "/scratch"
   - "/node_modules"
-  - "/.opencode"
-  - "/.mimocode"
-  - "/scripts"
   - ".min.js"
   - ".min.css"
   - "/.dsc_cache"
   - "/tests"
-  - "/test-workspaces"
-  - "/mimocode"
   - "build.rs"
   - "/build.rs"
   - "**/build.rs"
-  - "/.agents"
-  - "/benches"
-  - "./output"
-  - "/dist"
-  - "/build"
-  - "/.tsbuildinfo"
-  - "/.next"
-  - "/coverage"
-  - "/__pycache__"
-  - "/.venv"
-  - "/venv"
-  - "/.mypy_cache"
-  - "/.ruff_cache"
 
 architecture:
   enabled: true
