@@ -122,10 +122,9 @@ run_gate "AES Codes (test-workspaces >= 24)" bash -c '
 ' &
 AES_CODES_PID=$!
 
-# Single cargo test invocation — one compilation for all 17 crates
+# Single cargo nextest invocation — 3× faster than cargo test
 run_gate "Tests (workspace)" bash -c '
-    # Exclude acceptance_FR_001 (pre-existing binary issue, not our code)
-    cargo test --workspace --lib --tests 2>&1 | tail -5
+    cargo nextest run --workspace --lib --tests 2>&1 | tail -5
     echo "  tests completed"
 ' &
 TEST_PID=$!
