@@ -5,18 +5,17 @@
 ## Structure
 
 .agents/skills/
-├── add-docs-<language>              # USE when you work on documentation
-├── cleanup-files-<language>         # USE when you work on formatting
-├── consolidate-files-<language>     # USE when you work on consolidation
-├── create-agent-<language>          # USE when you work on Agent layer
-├── create-capabilities-<language>   # USE when you work on Capabilities layer
-├── create-contract-<language>       # USE when you work on Contract layer
-├── create-surface-<language>        # USE when you work on Surface layer
-├── create-taxonomy-<language>       # USE when you work on Taxonomy layer
-├── create-test-<language>           # USE when you work on Test
-├── fix-bypass-<language>            # USE when you remove bypass
-└── lint-arwaky-<language>           # USE when you run scan vioaltion
-
+├── add-docs-<language></language>              # USE when you work on documentation
+├── cleanup-files-<language></language>         # USE when you work on formatting
+├── consolidate-files-<language></language>     # USE when you work on consolidation
+├── create-agent-<language></language>          # USE when you work on Agent layer
+├── create-capabilities-<language></language>   # USE when you work on Capabilities layer
+├── create-contract-<language></language>       # USE when you work on Contract layer
+├── create-surface-<language></language>        # USE when you work on Surface layer
+├── create-taxonomy-<language></language>       # USE when you work on Taxonomy layer
+├── create-test-<language></language>           # USE when you work on Test
+├── fix-bypass-<language></language>            # USE when you remove bypass
+└── lint-arwaky-<language></language>           # USE when you run scan vioaltion
 
 ## Naming Convention
 
@@ -24,7 +23,6 @@ All skills follow the pattern `<action>-<language>`:
 
 - **Action**: What the skill does (create, fix, cleanup, add, lint, etc.)
 - **Language**: Target language (`python` or `rust` or `typescript`)
-
 
 ## Usage
 
