@@ -221,11 +221,20 @@ impl ArchOrphanAnalyzer {
             .deps
             .resolver
             .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);
+        // Compute top_root early so alive_result can use absolute paths (matching
+        // the format used by _process_file for file_fp — fixes path format mismatch
+        // that caused false-positive AES506/AES503 orphan violations)
+        let root_path = std::path::Path::new(root_dir.value());
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
         let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()
-                .filter_map(|s| FilePath::new(s.clone()).ok())
+                .filter_map(|s| {
+                    let abs = top_root.join(s);
+                    FilePath::new(abs.to_string_lossy().to_string()).ok()
+                })
                 .collect(),
         );
         let layer_keys: Vec<String> = self
@@ -239,9 +248,6 @@ impl ArchOrphanAnalyzer {
         // file_vo.values are relative to top_root (workspace root), but sub-analyzers
         // (contract, agent, utility) use orphan_io::read_file_safe() which needs
         // paths resolvable from CWD. Make them absolute by prepending top_root.
-        let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
         let top_root_str = top_root.to_string_lossy().to_string();
 
         let all_files: Vec<String> = file_vo
@@ -268,7 +274,6 @@ impl ArchOrphanAnalyzer {
             .collect()
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn _process_file(
         &self,
         f: &str,

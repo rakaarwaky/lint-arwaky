@@ -1,17 +1,25 @@
 // PURPOSE: main entry point for lint-arwaky-cli — parses args, initializes DI, dispatches commands
-use std::env;
-use std::process::ExitCode;
-
 use cli_commands::root_cli_container::CliContainer;
 use cli_commands::surface_check_command;
 use cli_commands::surface_ci_command;
+use cli_commands::surface_config_command;
+use cli_commands::surface_external_action;
 use cli_commands::surface_fix_action;
+use cli_commands::surface_import_action;
+use cli_commands::surface_maintenance_command;
+use cli_commands::surface_naming_action;
+use cli_commands::surface_orphan_action;
 use cli_commands::surface_plugin_command;
+use cli_commands::surface_quality_action;
+use cli_commands::surface_role_action;
+use cli_commands::surface_setup_command;
 use cli_commands::surface_watch_command;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_common_error::ExitCode as DomainExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_threshold_vo::Threshold;
+use std::env;
+use std::process::ExitCode;
 
 pub struct CliMainEntry {}
 
@@ -107,9 +115,7 @@ fn main() -> ExitCode {
                 Ok(r) => r,
                 Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
-            rt.block_on(cli_commands::surface_maintenance_command::handle_doctor(
-                orchestrator,
-            ))
+            rt.block_on(surface_maintenance_command::handle_doctor(orchestrator))
         }
         Commands::Orphan {
             path,
@@ -119,7 +125,7 @@ fn main() -> ExitCode {
             let path_obj = std::path::Path::new(&path);
             if path_obj.is_file() {
                 // Single file mode
-                let surface = cli_commands::surface_check_command::CheckCommandsSurface::new(
+                let surface = surface_check_command::CheckCommandsSurface::new(
                     container.report_formatter.clone(),
                     None,
                 );
@@ -127,7 +133,7 @@ fn main() -> ExitCode {
                 DomainExitCode::OK
             } else {
                 // Directory mode — scan all files
-                cli_commands::surface_orphan_action::handle_scan_orphan(
+                surface_orphan_action::handle_scan_orphan(
                     Some(FilePath::new(path).unwrap_or_default()),
                     member,
                     format,
@@ -138,48 +144,40 @@ fn main() -> ExitCode {
                 )
             }
         }
-        Commands::ScanQuality { path, format } => {
-            cli_commands::surface_quality_action::handle_scan_quality(
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                format,
-                container.multi_project_orchestrator.clone(),
-                filter.clone(),
-            )
-        }
-        Commands::ScanImport { path, format } => {
-            cli_commands::surface_import_action::handle_scan_import(
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                format,
-                container.import_orchestrator.clone(),
-                container.report_formatter.clone(),
-                filter.clone(),
-            )
-        }
-        Commands::ScanNaming { path, format } => {
-            cli_commands::surface_naming_action::handle_scan_naming(
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                format,
-                container.naming_orchestrator.clone(),
-                container.report_formatter.clone(),
-                filter.clone(),
-            )
-        }
-        Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
+        Commands::ScanQuality { path, format } => surface_quality_action::handle_scan_quality(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
+            container.multi_project_orchestrator.clone(),
+            filter.clone(),
+        ),
+        Commands::ScanImport { path, format } => surface_import_action::handle_scan_import(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
+            container.import_orchestrator.clone(),
+            container.report_formatter.clone(),
+            filter.clone(),
+        ),
+        Commands::ScanNaming { path, format } => surface_naming_action::handle_scan_naming(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
+            container.naming_orchestrator.clone(),
+            container.report_formatter.clone(),
+            filter.clone(),
+        ),
+        Commands::ScanRole { path, format } => surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
             filter.clone(),
         ),
-        Commands::ScanExternal { path, format } => {
-            cli_commands::surface_external_action::handle_scan_external(
-                path.map(|p| FilePath::new(p).unwrap_or_default()),
-                format,
-                container.external_lint.clone(),
-                container.report_formatter.clone(),
-                filter.clone(),
-            )
-        }
+        Commands::ScanExternal { path, format } => surface_external_action::handle_scan_external(
+            path.map(|p| FilePath::new(p).unwrap_or_default()),
+            format,
+            container.external_lint.clone(),
+            container.report_formatter.clone(),
+            filter.clone(),
+        ),
         Commands::Security { path } => {
             let maintenance_container =
                 maintenance::root_maintenance_container::MaintenanceContainer::new();
@@ -191,7 +189,7 @@ fn main() -> ExitCode {
                 Ok(r) => r,
                 Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
-            rt.block_on(cli_commands::surface_maintenance_command::handle_security(
+            rt.block_on(surface_maintenance_command::handle_security(
                 orchestrator,
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
             ))
@@ -207,12 +205,10 @@ fn main() -> ExitCode {
                 Ok(r) => r,
                 Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
-            rt.block_on(
-                cli_commands::surface_maintenance_command::handle_dependencies(
-                    orchestrator,
-                    path.map(|p| FilePath::new(p).unwrap_or_default()),
-                ),
-            )
+            rt.block_on(surface_maintenance_command::handle_dependencies(
+                orchestrator,
+                path.map(|p| FilePath::new(p).unwrap_or_default()),
+            ))
         }
         Commands::Watch { path } => {
             let fwatch_container = file_watch::FileWatchContainer::new();
@@ -280,7 +276,7 @@ fn main() -> ExitCode {
         Commands::Init => {
             let setup_container =
                 project_setup::root_project_setup_container::SetupContainer::new();
-            cli_commands::surface_setup_command::handle_init(setup_container.aggregate())
+            surface_setup_command::handle_init(setup_container.aggregate())
         }
         Commands::Install { sudo } => {
             let setup_container =
@@ -293,14 +289,12 @@ fn main() -> ExitCode {
                 Ok(r) => r,
                 Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
-            rt.block_on(cli_commands::surface_setup_command::handle_install(
+            rt.block_on(surface_setup_command::handle_install(
                 setup_orchestrator,
                 sudo,
             ))
         }
-        Commands::McpConfig { client } => {
-            cli_commands::surface_setup_command::handle_mcp_config(&client)
-        }
+        Commands::McpConfig { client } => surface_setup_command::handle_mcp_config(&client),
         Commands::ConfigShow => {
             let config_container =
                 config_system::root_config_system_container::ConfigContainer::new();
@@ -312,7 +306,7 @@ fn main() -> ExitCode {
                 Ok(r) => r,
                 Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
             };
-            rt.block_on(cli_commands::surface_config_command::handle_config_show(
+            rt.block_on(surface_config_command::handle_config_show(
                 config_orchestrator,
             ))
         }

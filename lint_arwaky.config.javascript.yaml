@@ -26,7 +26,6 @@ ignored_paths:
   - "/build.rs"
   - "**/build.rs"
   - "/benches"
-  - "./output"
   - "/dist"
   - "/build"
   - "/.tsbuildinfo"
