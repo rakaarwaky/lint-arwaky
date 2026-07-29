@@ -6,8 +6,8 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_source_files};
 use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_source_files};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
 use shared::config_system::ArchitectureConfig;

@@ -183,7 +183,11 @@ fn workspace_restrict(root: &Path) -> Option<HashSet<&str>> {
         .filter(|d| root.join(d).is_dir())
         .copied()
         .collect();
-    if allowed.is_empty() { None } else { Some(allowed) }
+    if allowed.is_empty() {
+        None
+    } else {
+        Some(allowed)
+    }
 }
 
 fn walk_source_files_inner(
@@ -224,7 +228,14 @@ fn walk_source_files_inner(
                         }
                         if let Ok(target_meta) = target.metadata() {
                             if target_meta.is_dir() {
-                                walk_source_files_inner(&target, files, ignored, visited, root, workspace_restrict);
+                                walk_source_files_inner(
+                                    &target,
+                                    files,
+                                    ignored,
+                                    visited,
+                                    root,
+                                    workspace_restrict,
+                                );
                             } else if target_meta.is_file() {
                                 collect_source_file(&target, files);
                             }
@@ -305,7 +316,14 @@ fn walk_rs_files_inner(
                         }
                         if let Ok(target_meta) = target.metadata() {
                             if target_meta.is_dir() {
-                                walk_rs_files_inner(&target, cb, ignored, visited, root, workspace_restrict);
+                                walk_rs_files_inner(
+                                    &target,
+                                    cb,
+                                    ignored,
+                                    visited,
+                                    root,
+                                    workspace_restrict,
+                                );
                             } else if target_meta.is_file()
                                 && target.starts_with(root)
                                 && matches!(target.extension().and_then(|e| e.to_str()), Some("rs"))

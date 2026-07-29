@@ -23,8 +23,8 @@ use shared::role_rules::{
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
 
-use shared::common::{ContentString, SourceContentVO};
 use shared::common::utility_file_handler::{read_file_sync, walk_source_files};
+use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 

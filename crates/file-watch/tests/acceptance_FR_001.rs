@@ -82,15 +82,34 @@ async fn frd_001_non_recursive_watch_ignores_nested() {
     // Write to root — SHOULD trigger event.
     std::fs::write(root.join("visible.rs"), "fn visible() {}").ok();
 
-    // We expect at most the root-level event.
-    let event = tokio::time::timeout(Duration::from_secs(2), rx.recv()).await;
-    if let Ok(Ok(e)) = event {
-        assert!(
-            e.path.contains("visible.rs"),
-            "Expected root-level event, got: {}",
-            e.path
-        );
+    // Drain all events within a window, checking across all received events.
+    // inotify may report the parent directory instead of the file, and events
+    // may arrive out of order, so check all events across the full timeout.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(3);
+    let mut found_root = false;
+    let mut found_nested = false;
+    while tokio::time::Instant::now() < deadline {
+        match tokio::time::timeout(Duration::from_millis(200), rx.recv()).await {
+            Ok(Ok(e)) => {
+                if e.path.contains("visible.rs") || e.path == root.to_string_lossy().as_ref() {
+                    found_root = true;
+                }
+                if e.path.contains("hidden.rs") || e.path.contains("/sub/") || e.path.contains("\\sub\\") {
+                    found_nested = true;
+                }
+            }
+            Ok(Err(_)) => break,
+            Err(_) => continue,
+        }
     }
+    assert!(
+        found_root,
+        "Expected root-level event for visible.rs or root directory, got none"
+    );
+    assert!(
+        !found_nested,
+        "Got unexpected nested event for sub/hidden.rs; nested should not fire in non-recursive mode"
+    );
 
     provider.stop().await.ok();
     let _ = std::fs::remove_dir_all(&root);
