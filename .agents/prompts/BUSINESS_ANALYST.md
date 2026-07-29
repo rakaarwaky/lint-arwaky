@@ -24,6 +24,7 @@ Follow this exact sequence. **Do not skip steps.**
 
 - Read `RULES_AES.md` especially Group 2 (Import) and Group 4 (Role) to understand business logic constraints
 - Map each FRD requirement to concrete file(s) in the codebase
+- Each FR equal as 1 file capabilties + 1 contract protocol (surface feature like cli and mcp is exception)
 
 ### 3. Analyze
 
