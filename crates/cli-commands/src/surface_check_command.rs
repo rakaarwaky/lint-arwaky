@@ -52,8 +52,9 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member =
-        opts.member.is_some() || crate::utility_path_resolver::is_member_path(&root);
+    let is_specific_member = opts.member.is_some()
+        || crate::utility_path_resolver::is_member_path(&root)
+        || !crate::utility_path_resolver::is_workspace_root(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {

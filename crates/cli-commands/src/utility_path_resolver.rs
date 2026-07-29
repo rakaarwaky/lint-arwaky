@@ -80,6 +80,17 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
     ".".to_string()
 }
 
+/// Detect if a path is a workspace root (has Cargo.toml with [workspace]).
+pub fn is_workspace_root(path: &str) -> bool {
+    let cargo_toml = std::path::Path::new(path).join("Cargo.toml");
+    if cargo_toml.exists() {
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+            return content.contains("[workspace]");
+        }
+    }
+    false
+}
+
 /// Detect if a path is a member directory (not a workspace root).
 /// Returns true if the path is a single crate/module/package member:
 /// - Rust: Cargo.toml without [workspace]
