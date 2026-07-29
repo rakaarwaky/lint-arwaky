@@ -1,6 +1,6 @@
 [package]
 name = "orphan-detector-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 edition = "2021"
 description = "Unreachable/dead component detector covering AES501–AES506. Flags roles, capabilities, and surfaces that are never wired into an entry point."
 license = "MIT"

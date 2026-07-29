@@ -2,6 +2,20 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 1.11.0 (2026-07-30)
+
+### Changed
+
+- **Architecture Cleanup**: Removed all internal cross-crate dependencies — every feature crate now depends only on `shared` for contracts and taxonomy types (except UI crates `cli-commands`, `mcp-server`, `tui`).
+- **Orphan Decoupling**: Removed `create_orphan_analyzer` from `IConfigOrchestratorAggregate` trait — orphan creation moved entirely to caller crates via `OrphanContainer::from_orchestrator`.
+- **Config Embedding**: Moved `lint_arwaky.config.*.yaml` files into `crates/shared/config/` and `crates/project-setup/config/` for crates.io publish compatibility.
+- **Dead Dependency Removal**: Removed unused `code_analysis` dependency from `git-hooks` crate; moved to `[dev-dependencies]` in `report-formatter`.
+- **Gates Optimization**: Switched `cargo test` → `cargo nextest` in `gates.sh` (~35% faster test execution).
+- **Added missing fields**: Added `repository`, `publish = true`, `[lints] workspace = true` to `tui` crate Cargo.toml.
+- **Bumped version**: 1.10.116 → 1.11.0 across all 17 workspace crates.
+
+---
+
 ## 1.10.115 (2026-07-25)
 
 ### Fixed

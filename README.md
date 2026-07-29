@@ -31,7 +31,7 @@ bash scripts/install.local.sh
 
 # Verify
 lint-arwaky-cli version
-# Expected: Lint Arwaky v1.10.116
+# Expected: Lint Arwaky v1.11.0
 ```
 
 Clones the repository, runs `cargo build --release`, and installs binaries to `~/.cargo/bin`. Requires Rust 1.70+ and Cargo.

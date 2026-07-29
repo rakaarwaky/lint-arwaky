@@ -187,7 +187,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auto-fix-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "criterion",
  "serde",
@@ -484,7 +484,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
 name = "cli-commands-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -548,7 +548,7 @@ dependencies = [
 
 [[package]]
 name = "code-analysis-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -610,7 +610,7 @@ checksum = "cc14f565cf027a105f7a44ccf9e5b424348421a1d8952a8fc9d499d313107789"
 
 [[package]]
 name = "config-system-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -1092,7 +1092,7 @@ dependencies = [
 
 [[package]]
 name = "external-lint-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1158,7 +1158,7 @@ dependencies = [
 
 [[package]]
 name = "file-watch-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -1414,7 +1414,7 @@ dependencies = [
 
 [[package]]
 name = "git-hooks-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -2549,7 +2549,7 @@ dependencies = [
 
 [[package]]
 name = "import-rules-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -2857,7 +2857,7 @@ dependencies = [
 
 [[package]]
 name = "lint_arwaky-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2961,7 +2961,7 @@ dependencies = [
 
 [[package]]
 name = "maintenance-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -2994,7 +2994,7 @@ dependencies = [
 
 [[package]]
 name = "mcp-server-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3101,7 +3101,7 @@ dependencies = [
 
 [[package]]
 name = "naming-rules-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -3351,7 +3351,7 @@ dependencies = [
 
 [[package]]
 name = "orphan-detector-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "criterion",
  "once_cell",
@@ -3664,7 +3664,7 @@ dependencies = [
 
 [[package]]
 name = "project-setup-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -4018,7 +4018,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "report-formatter-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "code-analysis-lint-arwaky",
@@ -4121,7 +4121,7 @@ dependencies = [
 
 [[package]]
 name = "role-rules-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
@@ -4479,7 +4479,7 @@ dependencies = [
 
 [[package]]
 name = "shared-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5223,7 +5223,7 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tui-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 dependencies = [
  "anyhow",
  "arboard",

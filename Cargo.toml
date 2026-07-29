@@ -7,22 +7,22 @@ members = ["crates/*"]
 
 [workspace.dependencies]
 # Workspace member crates (version required for crates.io publish)
-shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.10.116" }
-naming_rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "1.10.116" }
-import_rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "1.10.116" }
-code_analysis = { package = "code-analysis-lint-arwaky", path = "crates/code-analysis", version = "1.10.116" }
-auto_fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "1.10.116" }
-cli_commands = { package = "cli-commands-lint-arwaky", path = "crates/cli-commands", version = "1.10.116" }
-config_system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "1.10.116" }
-file_watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "1.10.116" }
-git_hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "1.10.116" }
-external_lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "1.10.116" }
-mcp_server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.10.116" }
-orphan_detector = { package = "orphan-detector-lint-arwaky", path = "crates/orphan-detector", version = "1.10.116" }
-project_setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.10.116" }
-maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.10.116" }
-role_rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "1.10.116" }
-report_formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.10.116" }
+shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.11.0" }
+naming_rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "1.11.0" }
+import_rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "1.11.0" }
+code_analysis = { package = "code-analysis-lint-arwaky", path = "crates/code-analysis", version = "1.11.0" }
+auto_fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "1.11.0" }
+cli_commands = { package = "cli-commands-lint-arwaky", path = "crates/cli-commands", version = "1.11.0" }
+config_system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "1.11.0" }
+file_watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "1.11.0" }
+git_hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "1.11.0" }
+external_lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "1.11.0" }
+mcp_server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.11.0" }
+orphan_detector = { package = "orphan-detector-lint-arwaky", path = "crates/orphan-detector", version = "1.11.0" }
+project_setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.11.0" }
+maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.11.0" }
+role_rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "1.11.0" }
+report_formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.11.0" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }
@@ -56,11 +56,11 @@ rayon = "1.10"
 ratatui = "0.30.2"
 crossterm = "0.29.0"
 arboard = "3"
-tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.10.116" }
+tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.11.0" }
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 edition = "2021"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 27 Agentic Engineering System (AES) rules."
 license = "MIT"

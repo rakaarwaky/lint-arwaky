@@ -1,6 +1,6 @@
 [package]
 name = "file-watch-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 edition = "2021"
 description = "Filesystem watcher built on `notify` + debouncer; re-runs the lint pipeline on Rust/JS/Python file mutations."
 license = "MIT"

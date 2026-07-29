@@ -1,6 +1,6 @@
 [package]
 name = "role-rules-lint-arwaky"
-version = "1.10.116"
+version = "1.11.0"
 edition = "2021"
 description = "Architectural role-layer violation checks covering AES401–AES406 (taxonomy, contract, capability, surface, root wiring)."
 license = "MIT"
