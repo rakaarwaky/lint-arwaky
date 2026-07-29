@@ -15,10 +15,13 @@ use shared::orphan_detector::{
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 
+use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::{
     AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
     LocationList, ScopeRef,
 };
+use shared::config_system::taxonomy_config_vo::OrphanRuleVO;
 use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
@@ -131,7 +134,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // Expand workspace files BEFORE building the graph context so that the
         // import graph has all workspace files to resolve cross-file imports.
         // Without this, single-file scans build a graph from only 1 file,
-        // causing orphan detection to miss connections to container/surface files.        let expanded_files = self._expand_workspace_files(&files_vo, root_dir);
+        // causing orphan detection to miss connections to container/surface files.
+        let expanded_files = self._expand_workspace_files(&files_vo, root_dir);
         let expanded_vo = OrphanFileListVO::new(expanded_files);
 
         let context = self.build_orphan_graph_context(&expanded_vo, root_dir);
@@ -231,7 +235,23 @@ impl ArchOrphanAnalyzer {
             .map(|k| k.value.to_string())
             .collect();
 
-        let all_files: Vec<String> = file_vo.values.clone();
+        // Convert all_files to absolute paths so sub-analyzers can read file contents.
+        // file_vo.values are relative to top_root (workspace root), but sub-analyzers
+        // (contract, agent, utility) use orphan_io::read_file_safe() which needs
+        // paths resolvable from CWD. Make them absolute by prepending top_root.
+        let root_path = std::path::Path::new(root_dir.value());
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root_str = top_root.to_string_lossy().to_string();
+
+        let all_files: Vec<String> = file_vo
+            .values
+            .iter()
+            .map(|rel| {
+                let abs = top_root.join(rel);
+                abs.to_string_lossy().to_string()
+            })
+            .collect();
         let root_dir_str = root_dir.value().to_string();
 
         files
@@ -245,6 +265,7 @@ impl ArchOrphanAnalyzer {
                     &layer_keys,
                     &all_files,
                     &root_dir_str,
+                    &top_root_str,
                 )
             })
             .collect()
@@ -258,72 +279,48 @@ impl ArchOrphanAnalyzer {
         layer_keys: &[String],
         all_files: &[String],
         root_dir_str: &str,
+        top_root_str: &str,
     ) -> Option<LintResult> {
-        let file_fp = FilePath::new(f.to_string()).ok()?;
+        // Resolve relative path to absolute so sub-analyzers can read file contents
+        let abs_f = std::path::Path::new(top_root_str).join(f);
+        let abs_f_str = abs_f.to_string_lossy().to_string();
+        let file_fp = FilePath::new(abs_f_str).ok()?;
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
-        let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
-        if base_layer.is_none() {
-            if f.contains("orphan") || f.contains("taxonomy") || f.contains("utility") {
-                eprintln!(
-                    "[DEBUG] _process_file SKIP (no layer): f={}, filename={}",
-                    f, filename
-                );
-            }
-            return None;
-        }
-        let base_layer = base_layer?;
+        let base_layer =
+            shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
         let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
             &base_layer,
             file_fp.value(),
             layer_keys,
         );
-        let definition = match shared::common::utility_layer_detector::get_layer_def(
-            &layer_str,
-            &self.config.layers,
-        ) {
-            Some(d) => d.clone(),
-            None => {
-                eprintln!(
-                    "[DEBUG] _process_file SKIP (no layer def): f={}, layer_str={}",
-                    f, layer_str
-                );
-                return None;
-            }
-        };
+        let definition =
+            shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers)
+                .cloned()
+                .unwrap_or_else(|| LayerDefinition {
+                    orphan: OrphanRuleVO {
+                        check_orphan: BooleanVO::new(true),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });
 
         let basename = file_fp.basename();
         if definition.exceptions.values.contains(&basename) {
-            if f.contains("orphan") {
-                eprintln!("[DEBUG] _process_file SKIP (exception): f={}", f);
-            }
             return None;
         }
         if !definition.orphan.check_orphan.value {
-            if f.contains("orphan") {
-                eprintln!(
-                    "[DEBUG] _process_file SKIP (check_orphan=false): f={}, layer={}",
-                    f, layer_str
-                );
-            }
             return None;
         }
 
-        if f.contains("orphan") || f.contains("taxonomy_orphan") {
-            eprintln!(
-                "[DEBUG] _process_file CHECKING: f={}, layer={}, check_orphan=true",
-                f, layer_str
-            );
-        }
-
         let layer_vo = LayerNameVO::new(&layer_str);
-        let res =
-            self._evaluate_layer(f, context, alive_result, &layer_vo, all_files, root_dir_str);
-        if f.contains("orphan") {
-            eprintln!(
-                "[DEBUG] _process_file RESULT: f={}, is_orphan={}, reason={}",
-                f, res.is_orphan, res.reason
-            );
-        }
+        let res = self._evaluate_layer(
+            &abs_f_str,
+            context,
+            alive_result,
+            &layer_vo,
+            all_files,
+            top_root_str,
+        );
         if res.is_orphan {
             let code = match layer_str.to_lowercase() {
                 s if s.contains(LAYER_TAXONOMY) => "AES501",
@@ -385,7 +382,7 @@ impl ArchOrphanAnalyzer {
         alive_result: &ReachabilityResult,
         layer_vo: &LayerNameVO,
         all_files: &[String],
-        root_dir: &str,
+        top_root: &str,
     ) -> OrphanIndicatorResult {
         // Barrel file exceptions — package markers and re-export files, not logic
         if f.ends_with("__init__.py")
@@ -406,8 +403,9 @@ impl ArchOrphanAnalyzer {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
         };
+        // Use top_root as the root directory (absolute path so file operations work)
         let root = FilePath {
-            value: root_dir.to_string(),
+            value: top_root.to_string(),
         };
 
         if layer_str.contains(LAYER_TAXONOMY) {
