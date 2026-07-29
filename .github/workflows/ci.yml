@@ -30,6 +30,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - name: Install sccache
+        run: cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets -- -D warnings
 
@@ -39,6 +41,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install sccache
+        run: cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release
 
@@ -49,6 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install sccache
+        run: cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-nextest
@@ -64,6 +70,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Install sccache
+        run: cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
 
       - name: Build CLI
