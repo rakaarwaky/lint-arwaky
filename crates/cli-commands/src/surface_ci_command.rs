@@ -49,9 +49,12 @@ pub fn handle_ci(
     results.extend(role_res);
 
     let ignored = config_orchestrator.ignored_paths(&root);
-    let orphan_analyzer = orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
-        &config_orchestrator, &root.value,
-    ).analyzer();
+    let orphan_analyzer =
+        orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+            &config_orchestrator,
+            &root.value,
+        )
+        .analyzer();
     let (_, orphan_res) = orphan_analyzer.scan_orphans(&root, ignored.values());
     results.extend(orphan_res);
 
