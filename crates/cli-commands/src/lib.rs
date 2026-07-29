@@ -17,3 +17,4 @@ pub mod surface_quality_action;
 pub mod surface_role_action;
 pub mod surface_setup_command;
 pub mod surface_watch_command;
+pub mod utility_path_resolver;
