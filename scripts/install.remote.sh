@@ -104,20 +104,41 @@ install_if_missing mypy "mypy" "pip_install mypy"
 install_if_missing ruff "ruff" "pip_install ruff"
 install_if_missing bandit "bandit" "pip_install bandit"
 
-# 3. Install binaries from crates.io / git
+# 3. Install binaries — try GitHub Release first (no build required)
 echo -e "\n${BOLD}[3/6] Installing binaries...${NC}"
-if cargo install lint_arwaky-arwaky --force 2>/dev/null; then
-    echo -e "  ${GREEN}✓ Installed lint_arwaky-arwaky from crates.io${NC}"
-elif [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/Cargo.toml" ]; then
-    echo "  Building from local repository..."
-    RUST_MIN_STACK=33554432 cargo build --release --manifest-path "$PROJECT_ROOT/Cargo.toml"
-    for BIN in "${BINARIES[@]}"; do
-        install -m 0755 "$PROJECT_ROOT/target/release/$BIN" "$INSTALL_BIN/$BIN"
-        echo "  -> $INSTALL_BIN/$BIN"
-    done
+
+# Detect architecture
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64)   ARCH="x86_64";;
+    aarch64|arm64) ARCH="aarch64";;
+    *)        echo "  [warn] Unknown architecture $ARCH, defaulting to x86_64"; ARCH="x86_64";;
+esac
+
+# Try GitHub Release download (pre-built binary, no cargo needed)
+echo "  Attempting pre-built binary download..."
+DOWNLOAD_URL="https://github.com/rakaarwaky/lint-arwaky/releases/download/v1.10.116/lint-arwaky-v1.10.116-linux-${ARCH}.tar.gz"
+if curl -fsSL "$DOWNLOAD_URL" -o /tmp/lint-arwaky.tar.gz 2>/dev/null; then
+    tar xzf /tmp/lint-arwaky.tar.gz -C "$INSTALL_BIN" lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui 2>/dev/null && {
+        chmod +x "$INSTALL_BIN"/lint-arwaky-*
+        echo -e "  ${GREEN}✓ Installed pre-built binaries from GitHub Release${NC}"
+        rm -f /tmp/lint-arwaky.tar.gz
+    }
 else
-    echo "  Installing from git repository..."
-    cargo install --git https://github.com/rakaarwaky/lint-arwaky.git --force
+    echo "  [skip] Pre-built binary not available for $ARCH, trying cargo install..."
+    if cargo install lint_arwaky-arwaky --force 2>/dev/null; then
+        echo -e "  ${GREEN}✓ Installed lint_arwaky-arwaky from crates.io${NC}"
+    elif [ -n "$PROJECT_ROOT" ] && [ -f "$PROJECT_ROOT/Cargo.toml" ]; then
+        echo "  Building from local repository..."
+        RUST_MIN_STACK=33554432 cargo build --release --manifest-path "$PROJECT_ROOT/Cargo.toml"
+        for BIN in "${BINARIES[@]}"; do
+            install -m 0755 "$PROJECT_ROOT/target/release/$BIN" "$INSTALL_BIN/$BIN"
+            echo "  -> $INSTALL_BIN/$BIN"
+        done
+    else
+        echo "  Installing from git repository..."
+        cargo install --git https://github.com/rakaarwaky/lint-arwaky.git --force
+    fi
 fi
 
 # 4. Install documentation
