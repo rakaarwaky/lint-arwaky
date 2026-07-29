@@ -1,8 +1,7 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::{ContentString, FilePath};
 
 // PURPOSE: FileAdapter — capabilities layer for file I/O operations
-use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
+use shared::auto_fix::IFileAdapterProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

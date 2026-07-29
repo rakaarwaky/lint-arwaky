@@ -17,3 +17,31 @@ pub mod utility_file_reader;
 pub mod utility_language_mapper;
 pub mod utility_mandatory_checker;
 pub mod utility_target_resolver;
+
+// ─── Re-exports ────────────────────────────────────────────
+// Barrel re-export pattern: allows consumers to import directly
+
+// ── Contract traits ──
+pub use contract_adapter_protocol::ILinterAdapterProtocol;
+pub use contract_bypass_checker_protocol::IBypassCheckerProtocol;
+pub use contract_class_protocol::IMandatoryClassProtocol;
+pub use contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+pub use contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+pub use contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+pub use contract_line_protocol::ILineCheckerProtocol;
+
+// ── Taxonomy types ──
+pub use taxonomy_analysis_vo::FileDefinitionMap;
+pub use taxonomy_analysis_vo::GraphAnalysisContext;
+pub use taxonomy_analysis_vo::ImportGraph;
+pub use taxonomy_analysis_vo::InboundLinkMap;
+pub use taxonomy_analysis_vo::InheritanceMap;
+pub use taxonomy_analysis_vo::OrphanIndicatorResult;
+pub use taxonomy_analysis_vo::ReachabilityResult;
+pub use taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+pub use taxonomy_code_analysis_rule_vo::MandatoryImportRuleVO;
+pub use taxonomy_operation_error::LinterOperationError;
+pub use taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+pub use taxonomy_violation_code_analysis_vo::Language;
+pub use taxonomy_violation_code_analysis_vo::ViolationKind;
+pub use taxonomy_violation_code_analysis_vo::WORD_PATTERN_TOKENS;

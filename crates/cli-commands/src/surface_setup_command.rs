@@ -7,8 +7,8 @@
 //
 // Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
 
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::common::ExitCode;
+use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
 pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {

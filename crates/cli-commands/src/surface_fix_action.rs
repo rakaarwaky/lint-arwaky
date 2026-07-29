@@ -7,10 +7,10 @@
 // actually applied (real mode) or just simulated (dry-run).
 //
 // Fixable violations: AES101 (naming), AES203 (unused imports), AES304 (bypass)
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{ExitCode, FilePath};
+
 use std::path::PathBuf;
 use std::sync::Arc;
 

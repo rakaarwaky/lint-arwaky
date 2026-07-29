@@ -1,10 +1,10 @@
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::cli_commands::Format;
+use shared::common::FilePath;
+use shared::import_rules::IImportRunnerAggregate;
 
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
@@ -13,7 +13,8 @@ pub fn handle_scan_import(
     path: Option<FilePath>,
     format: Format,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    filter: Option<String>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -38,10 +39,16 @@ pub fn handle_scan_import(
             return ExitCode::RUNTIME_ERROR;
         }
     };
-    let violations: Vec<ViolationItem> = results
+    let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
         ExitCode::OK

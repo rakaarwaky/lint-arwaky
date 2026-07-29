@@ -199,15 +199,11 @@ pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
     while let Some(pos) = haystack[start..].find(needle) {
         let abs = start + pos;
 
-        // Determine which string literal (if any) this occurrence falls inside.
-        // We scan backwards from `abs` to find the opening quote that is not
-        // escaped and not inside a comment.
         let opening_quote = match find_enclosing_string_start(haystack, abs) {
             Some(q) => q,
-            None => return false, // not inside a string — real usage
+            None => return false,
         };
 
-        // Verify the quote is an actual string delimiter (not escaped)
         let before_quote = &haystack[..opening_quote];
         let backslash_count = before_quote
             .chars()
@@ -215,11 +211,9 @@ pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
             .take_while(|c| *c == '\\')
             .count();
         if backslash_count % 2 != 0 {
-            // Quote is escaped — treat as real usage
             return false;
         }
 
-        // Check if this is a comment line (starts with //, #, or /*)
         let line_start = find_line_start(haystack, abs);
         let line_prefix = &haystack[line_start..abs];
         if line_prefix.trim().starts_with("//")
@@ -227,23 +221,18 @@ pub fn is_symbol_only_in_strings(haystack: &str, needle: &str) -> bool {
             || line_prefix.trim().starts_with("#")
             || line_prefix.trim().ends_with("/*")
         {
-            // Inside a comment — skip, not real usage
             start = abs + needle.len();
             found_anywhere = true;
             continue;
         }
 
-        // It's inside a string literal — skip, not real usage
         start = abs + needle.len();
         found_anywhere = true;
     }
 
-    // If we never found the symbol outside strings/comments, return true
     found_anywhere
 }
 
-/// Find the position of the opening double-quote that encloses the character
-/// at `pos`. Returns None if `pos` is not inside a string literal.
 fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
     let mut depth = 0usize;
     let mut in_string = false;
@@ -259,7 +248,6 @@ fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
 
         if in_string {
             if ch == '"' && i > string_start {
-                // Check not escaped
                 let before = &haystack[..i];
                 let bs = before.chars().rev().take_while(|c| *c == '\\').count();
                 if bs % 2 == 0 {
@@ -270,7 +258,6 @@ fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
                 }
             }
         } else if ch == '"' {
-            // Check not escaped
             let before = &haystack[..i];
             let bs = before.chars().rev().take_while(|c| *c == '\\').count();
             if bs % 2 == 0 {
@@ -290,17 +277,10 @@ fn find_enclosing_string_start(haystack: &str, pos: usize) -> Option<usize> {
     None
 }
 
-/// Find the start of the line containing position `pos`.
 fn find_line_start(haystack: &str, pos: usize) -> usize {
     haystack[..pos].rfind('\n').map(|n| n + 1).unwrap_or(0)
 }
 
-/// Iterate `lines`, invoking `is_header(trimmed_line)` to identify function
-/// definitions and `body_extent(start, lines)` to compute the body end line
-/// for that definition. Returns `[(start_line, end_line), ...]` of all ranges.
-///
-/// The two language-specific differences (Rust/JS brace-counting vs. Python
-/// indent-based termination) live in the closures passed in.
 fn collect_ranges<F, G>(
     lines: &[&str],
     is_header: F,
@@ -324,7 +304,6 @@ where
     ranges
 }
 
-/// Brace-counting body extenter for Rust/JS-like brace-delimited languages.
 fn brace_extent(start: usize, lines: &[&str]) -> usize {
     let mut depth = 0usize;
     let mut end = start + 1;
@@ -340,9 +319,6 @@ fn brace_extent(start: usize, lines: &[&str]) -> usize {
     end
 }
 
-/// Indent-based body extenter for Python. Returns the line *after* the
-/// `def` block ends (the next non-empty, non-comment line at the same or
-/// shallower indent).
 fn indent_extent(start: usize, lines: &[&str]) -> usize {
     let mut end = start + 1;
     let indent = lines[start].len() - lines[start].trim_start().len();
@@ -452,35 +428,100 @@ fn rust_imported_symbol_from_part(part: &str) -> Option<String> {
     Some(name.to_string())
 }
 
+/// Parse Python import statements and extract imported symbol names.
+///
+/// Handles:
+/// - Single-line:  `from X import A, B`
+/// - Multi-line:   `from X import (\n  A,\n  B,\n)`
+/// - Single-line paren: `from X import (A, B)`
+/// - Plain import: `import X, Y`
+///
+/// Skips:
+/// - `from __future__ import ...` (compiler directives, not real imports)
 pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
     let mut symbols = Vec::new();
+    let mut i = 0usize;
 
-    for (idx, line) in lines.iter().enumerate() {
-        let trimmed = line.trim();
+    while i < lines.len() {
+        let trimmed = lines[i].trim();
 
-        if let Some(import_part) = trimmed
-            .strip_prefix("from ")
-            .and_then(|s| s.split_once(" import ").map(|(_, p)| p))
-        {
-            for name in import_part.split(',') {
-                let name = name.trim();
-                if name.is_empty() || name == "*" {
-                    continue;
-                }
-
-                let used_name = match name.split_once(" as ") {
-                    Some((_, alias)) => alias.trim(),
-                    None => name.split_whitespace().next().unwrap_or_default(),
-                };
-
-                if !used_name.is_empty() && used_name != "*" {
-                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
-                }
-            }
+        // Skip non-import lines
+        if !trimmed.starts_with("from ") && !trimmed.starts_with("import ") {
+            i += 1;
             continue;
         }
 
+        // ── Skip __future__ imports — compiler directives, not real imports ──
+        if trimmed.starts_with("from __future__") {
+            i += 1;
+            continue;
+        }
+
+        // ── Handle `from X import Y` (single-line or multi-line paren) ──
+        if trimmed.starts_with("from ") {
+            if let Some((_, after_import)) = trimmed
+                .strip_prefix("from ")
+                .and_then(|s| s.split_once(" import "))
+            {
+                let import_line_no = i as i64 + 1;
+
+                // Count parens to detect multi-line
+                let open_parens = after_import.matches('(').count();
+                let close_parens = after_import.matches(')').count();
+
+                let full_import_part: String = if open_parens > 0 && open_parens != close_parens {
+                    // ── Multi-line parenthesized import ──
+                    // Accumulate lines until parens balance
+                    let mut accum = String::from(after_import);
+                    let mut running_open = open_parens;
+                    let mut running_close = close_parens;
+
+                    while i + 1 < lines.len() {
+                        i += 1;
+                        let next_line = lines[i].trim();
+                        accum.push(' ');
+                        accum.push_str(next_line);
+                        running_open += next_line.matches('(').count();
+                        running_close += next_line.matches(')').count();
+                        if running_open <= running_close {
+                            break;
+                        }
+                    }
+
+                    accum
+                } else {
+                    // ── Single-line import (with or without parens) ──
+                    after_import.to_string()
+                };
+
+                // Strip all parentheses, then split by comma
+                let clean = full_import_part.replace(['(', ')'], " ");
+
+                for name in clean.split(',') {
+                    let name = name.trim();
+                    if name.is_empty() || name == "*" {
+                        continue;
+                    }
+
+                    let used_name = match name.split_once(" as ") {
+                        Some((_, alias)) => alias.trim(),
+                        None => name.split_whitespace().next().unwrap_or_default(),
+                    };
+
+                    if !used_name.is_empty() && used_name != "*" {
+                        symbols.push((SymbolName::new(used_name), LineNumber::new(import_line_no)));
+                    }
+                }
+            }
+
+            i += 1;
+            continue;
+        }
+
+        // ── Handle `import X, Y` (single-line only) ──
         if let Some(rest) = trimmed.strip_prefix("import ") {
+            let import_line_no = i as i64 + 1;
+
             for module in rest.split(',') {
                 let module = module.trim();
                 if module.is_empty() {
@@ -493,10 +534,12 @@ pub fn python_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> 
                 };
 
                 if !used_name.is_empty() && used_name != "*" {
-                    symbols.push((SymbolName::new(used_name), LineNumber::new(idx as i64 + 1)));
+                    symbols.push((SymbolName::new(used_name), LineNumber::new(import_line_no)));
                 }
             }
         }
+
+        i += 1;
     }
 
     symbols
@@ -659,7 +702,6 @@ fn function_body<'a>(lines: &'a [&'a str], start: usize) -> (usize, Vec<&'a str>
 }
 
 fn function_body_is_dummy(lines: &[&str]) -> bool {
-    // Collect the body lines (skip the fn signature line at index 0)
     let body_lines: Vec<&str> = lines
         .iter()
         .skip(1)
@@ -671,7 +713,6 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
         return true;
     }
 
-    // Single-line body like `{ 42 }` or `{ return x; }` — not dummy
     if body_lines.len() == 1 {
         let single = body_lines[0];
         if single.starts_with('{') && single.ends_with('}') {
@@ -681,7 +722,6 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
         return is_short_marker(single);
     }
 
-    // Multi-line body: join and check
     let body: String = body_lines.join(" ");
     let trimmed = body.trim();
     if trimmed == "{}" || trimmed == "{ }" {

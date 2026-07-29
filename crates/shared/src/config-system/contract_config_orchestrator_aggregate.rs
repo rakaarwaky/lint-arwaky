@@ -5,7 +5,9 @@ use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use crate::config_system::taxonomy_source_vo::{ConfigResult, ConfigSource};
+use crate::orphan_detector::IOrphanAggregate;
 use async_trait::async_trait;
+use std::sync::Arc;
 
 #[async_trait]
 pub trait IConfigOrchestratorAggregate: Send + Sync {
@@ -45,4 +47,11 @@ pub trait IConfigOrchestratorAggregate: Send + Sync {
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> Result<Option<ConfigSource>, ConfigError>;
+
+    /// Build an orphan analyzer from the config orchestrator for a given target path.
+    ///
+    /// This loads the real config (layers + enabled) for the target workspace,
+    /// not the frozen CWD config. Surface layer should use this instead of
+    /// importing OrphanContainer directly from root crate.
+    fn create_orphan_analyzer(&self, project_root: &str) -> Arc<dyn IOrphanAggregate>;
 }

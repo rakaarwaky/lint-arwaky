@@ -1,8 +1,6 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::taxonomy_config_error::ConfigError;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::common::FilePath;
+use shared::config_system::{ConfigError, ConfigLanguage, ConfigSource, IConfigReaderProtocol};
+
 use shared::config_system::utility_config_io as config_io;
 
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk

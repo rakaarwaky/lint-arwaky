@@ -17,3 +17,34 @@ pub mod utility_config_defaults;
 pub mod utility_config_io;
 pub mod utility_config_merger;
 pub mod utility_config_parser;
+
+// ─── Re-exports ────────────────────────────────────────────
+// Barrel re-export pattern: allows consumers to import directly
+
+// ── Contract traits ──
+pub use contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+pub use contract_parser_protocol::IConfigParserProtocol;
+pub use contract_reader_protocol::IConfigReaderProtocol;
+pub use contract_validator_protocol::IConfigValidatorProtocol;
+pub use contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+pub use contract_workspace_detector_protocol::WorkspaceType;
+
+// ── Taxonomy types ──
+pub use taxonomy_config_error::ConfigError;
+pub use taxonomy_config_language_vo::ConfigLanguage;
+pub use taxonomy_config_vo::ArchitectureConfig;
+pub use taxonomy_config_vo::ArchitectureRule;
+pub use taxonomy_config_vo::NamingRuleVO;
+pub use taxonomy_config_vo::OrphanRuleVO;
+pub use taxonomy_config_vo::RoleRuleVO;
+pub use taxonomy_identifier_vo::ConfigKey;
+pub use taxonomy_multi_project_summary_vo::AggregatedResults;
+pub use taxonomy_multi_project_summary_vo::ProjectResult;
+pub use taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+pub use taxonomy_setting_vo::AdapterEntry;
+pub use taxonomy_setting_vo::AdapterStatus;
+pub use taxonomy_setting_vo::ProjectConfig;
+pub use taxonomy_setting_vo::Thresholds;
+pub use taxonomy_source_vo::ConfigResult;
+pub use taxonomy_source_vo::ConfigSource;
+pub use taxonomy_validation_vo::ValidationResult;

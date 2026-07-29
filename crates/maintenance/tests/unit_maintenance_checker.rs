@@ -2,8 +2,8 @@
 // Layer: Capabilities (target ≥ 70% coverage).
 
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::common::FilePath;
+use shared::maintenance::IMaintenanceCheckerProtocol;
 
 fn sut() -> MaintenanceChecker {
     MaintenanceChecker::new()

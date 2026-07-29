@@ -2,8 +2,8 @@
 // Requirement: Imports pointing to dummy/stub code are detected.
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::FilePath;
+use shared::config_system::ArchitectureConfig;
 use std::io::Write;
 
 fn write_file(dir: &std::path::Path, name: &str, content: &str) {
@@ -19,7 +19,7 @@ async fn fr004_dummy_function_emits_aes204() {
         dir.path(),
         "capabilities_dummy.rs",
         r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -48,10 +48,13 @@ async fn fr004_dummy_trait_impl_emits_aes204() {
         dir.path(),
         "capabilities_stub_impl.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::IUnusedImportProtocol;
+use shared::common::{
+    FilePath,
+    LintMessage,
+};
+
+use shared::cli_commands::LintResult;
 
 pub struct StubChecker;
 
@@ -85,10 +88,13 @@ async fn fr004_real_impl_passes() {
         dir.path(),
         "capabilities_real.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::IUnusedImportProtocol;
+use shared::common::{
+    FilePath,
+    LintMessage,
+};
+
+use shared::cli_commands::LintResult;
 
 pub struct RealChecker;
 

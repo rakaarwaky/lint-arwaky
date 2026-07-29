@@ -2,7 +2,7 @@
 // Layer: Acceptance (FRD requirement validation).
 
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::cli_commands::taxonomy_protocol_vo::{TransportProtocol, TransportUrlVO};
+use shared::cli_commands::{TransportProtocol, TransportUrlVO};
 
 fn container() -> SetupContainer {
     SetupContainer::new()

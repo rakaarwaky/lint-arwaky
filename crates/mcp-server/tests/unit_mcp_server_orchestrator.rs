@@ -3,10 +3,8 @@
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::McpServerOrchestrator;
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use rmcp::handler::server::wrapper::Parameters;
-use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use shared::mcp_server::IMcpServerAggregate;
+use shared::mcp_server::{ExecuteCommandArgs, ListCommandsArgs, ReadSkillArgs};
 
 // ─── Helper ──────────────────────────────────────────────────────────
 

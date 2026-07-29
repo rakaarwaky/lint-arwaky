@@ -2,10 +2,9 @@
 // Source files must declare at least one primary symbol.
 
 use code_analysis_lint_arwaky::MandatoryDefinitionChecker;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::common::taxonomy_common_vo::BooleanVO;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::code_analysis::{IDeadInheritanceProtocol, IMandatoryClassProtocol};
+
+use shared::common::{BooleanVO, LayerDefinition};
 
 fn make_def() -> LayerDefinition {
     LayerDefinition {

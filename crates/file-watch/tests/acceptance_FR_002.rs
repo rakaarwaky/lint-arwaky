@@ -2,8 +2,8 @@
 // "Debounced event aggregation so rapid changes do not trigger multiple lint runs."
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
+use shared::file_watch::IChangeAnalyzerProtocol;
+use shared::file_watch::{WatchEvent, WatchEventKind};
 
 #[test]
 fn frd_002_rapid_changes_deduplicated_to_single_event() {

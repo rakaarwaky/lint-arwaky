@@ -2,18 +2,7 @@
 name: create-agent-python
 description: "Create and validate Python agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, max 3 types per file, aggregate ABC contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-  tags:
-    [
-      python,
-      aes,
-      agent,
-      aggregate,
-      structure,
-      3-block-structure,
-      di,
-      orchestration,
-      vo,
-    ]
+  tags: [python, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
   triggers:
     - "create agent python"
     - "add agent python"
@@ -32,116 +21,80 @@ metadata:
 
 # create-agent-python
 
-## Purpose
+Agent = orchestration only. No I/O, no business logic, no domain computation, no local domain data.
 
-Create and validate Python **agent layer** files following AES rules.
+**Allowed imports:** `shared/*` — taxonomy VOs, constants, aggregate ABCs, protocol ABCs.
+**Forbidden imports:** `capabilities_*`, `agent_*`, `surface_*`, concrete `utility_*`.
 
-An agent file contains **orchestration / pipeline execution only**.
+**Allowed ops:** `for`/`while`/`async for`, `if/else`/`match`, `try/except`/`raise`, `asyncio.wait_for`, collecting results into shared VOs.
+**Forbidden ops:** `open()`, `Path()`, `os.*`, `requests.*`, `httpx.*`, `sqlite3.*`, `asyncpg.*`, stdout/stderr write, env mutation, global state mutation.
 
-Agents coordinate capabilities into executable flows. They control sequence and movement, not business calculation.
+## 3-Block Structure
 
-Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+```text
+# Block 1: Class Definition & Constructor
+# Block 2: Aggregate Method Implementation
+# Block 3: Dunder Methods, Factories, Helpers
+```
 
-Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be completely ignorant of Capabilities implementations.
+Method placement:
 
-## Definition of Done
+```text
+Module-level def?                    → EXTRACT to *_utility.py
+@abstractmethod in aggregate ABC?    → Block 2
+Dunder / factory @classmethod?       → Block 3
+@staticmethod pure + no class dep?   → EXTRACT to *_utility.py
+Private helper (uses self)?          → Block 3
+```
 
-1. At least one class inherits an aggregate ABC in Block 2 (AES405 Rule 2).
-2. Block 2 contains ONLY aggregate ABC method implementations.
-3. Dunder methods, factory classmethods, private helpers in Block 3.
-4. Zero I/O, zero business logic, zero domain computation.
-5. No locally defined domain data structures.
-6. Service dependencies use DI via aggregate/protocol interfaces.
-7. Value/configuration fields use shared VOs.
-8. Aggregate signatures use shared VOs for domain data.
-9. Total class count ≤ 3 (AES405 Rule 3).
-10. `python -c "import <module>"` passes.
+## Helper vs Utility
 
-## References
+Keep in Block 3 if ANY: uses `self`, coupled to this class, factory, agent-specific logic, single-use.
+Extract to utility only if ALL: no `self`/`cls`, pure, no side effects, domain-agnostic, reusable.
+I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + domain-specific = capabilities.
 
-| File                                  | Content                                                |
-| ------------------------------------- | ------------------------------------------------------ |
-| `references/layer-boundaries.md`      | Allowed/Forbidden imports and dependencies             |
-| `references/3-block-structure.md`     | Block 1/2/3 definitions, method placement rules        |
-| `references/helper-vs-utility.md`     | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/computation-detection.md` | Computation detection rules                            |
-| `references/error-handling.md`        | Error handling rules                                   |
-| `references/primitive-vo-policy.md`   | Primitive policy table, VO rules                       |
-| `references/examples.md`              | All BAD/GOOD code examples                             |
-| `references/commands.md`              | Quick heuristic check commands                         |
-| `references/checklist.md`             | Verification checklist                                 |
+## Computation, Errors, VOs
+
+**Computation forbidden:** arithmetic, totals, averages, `.reduce`/`.fold`, parsing, normalization. Allowed: iteration to call deps, routing results, propagating errors.
+
+**Error rules:**
+- Rule 1: Never silently discard — no `checker.check() or ""`.
+- Rule 2: Analysis orchestration → return `list[<ResultVO>]`, catch per-item into VO.
+- Rule 3: Execution orchestration → return `Result[...]`.
+- Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
+
+**VO rules:** `str`/`int`/`float` forbidden for domain fields/contracts. `bool` for semantic toggles only.
+
+See `templates/bad_*.py` / `templates/good_*.py` for examples.
 
 ## Templates
 
-| File                                   | Purpose                       |
-| -------------------------------------- | ----------------------------- |
-| `templates/agent_name.py`              | New agent implementation file |
-| `templates/contract_name_aggregate.py` | New aggregate ABC definition  |
+| File | Purpose |
+| --- | --- |
+| `templates/agent_name_orchestrator.py` | Full agent (3-block) |
+| `templates/contract_name_aggregate.py` | Aggregate ABC |
+| `templates/block1_class_constructor.py` | Block 1 pattern |
+| `templates/block2_aggregate_method.py` | Block 2 pattern |
+| `templates/block3_dunder_helpers.py` | Block 3 pattern |
 
 ## Workflow
 
-### Step 1: Analyze File
+1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.
+2. Agent class inherits aggregate ABC? If no → create `contract_<name>_aggregate.py`.
+3. Enforce 3-Block.
+4. ≥1 aggregate ABC, ≤3 classes, DI via protocols, shared VOs.
+5. No forbidden imports, no I/O, no computation.
+6. No silent errors, no raw primitives in contracts, no magic constants.
+7. `python -c "import <module>"`.
 
-Read the file and ask: **"Is this orchestration only?"**
+## Checklist
 
-If yes → keep as agent. If it contains computation → capabilities, domain data → taxonomy.
-
-### Step 2: Check for Missing Aggregate
-
-Does the agent class inherit an aggregate ABC? If no → create one.
-
-### Step 3: Create Aggregate File if Missing
-
-Create `contract_<name>_aggregate.py` in the appropriate shared domain folder.
-
-### Step 4: Enforce 3-Block Structure
-
-Reorganize: class definition + `__init__` → aggregate methods → dunders/factories/helpers.
-
-### Step 5: Verify Type Discipline
-
-At least one class inherits an aggregate ABC, max 3 total classes, DI via protocol interfaces, shared VOs.
-
-### Step 6: Verify Helper vs Utility Boundary
-
-See `references/helper-vs-utility.md` for the decision tree.
-
-### Step 7: Verify Layer Compliance
-
-No forbidden imports, no I/O, no business logic, no domain computation.
-
-### Step 8: Verify Error Handling, VO, and Constants
-
-See `references/error-handling.md` and `references/primitive-vo-policy.md`.
-
-### Step 9: Verify Compilation
-
-```bash
-python -c "import <module>"
-```
-
-## Quick Commands
-
-```bash
-# List aggregate ABC implementations
-grep -n "class.*I[A-Za-z0-9_]*Aggregate" modules/*/src/agent_*.py
-
-# Check computation patterns
-grep -n "sum(\|len(\|\.iter\(\)\|\.map(" modules/*/src/agent_*.py
-
-# Check forbidden imports (agent must only depend on taxonomy + contract + utility)
-grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/agent_*.py
-```
-
-## Common Mistakes
-
-- Putting domain computation in agents.
-- Putting business logic in agents.
-- Putting I/O in agents.
-- Defining domain data classes in agent files.
-- Using concrete service types as constructor fields.
-- Putting private helpers in the aggregate ABC.
-- Placing dunder methods before the aggregate ABC methods.
-- Mixing Block 2 and Block 3 responsibilities.
-- Silent error swallowing with `or ""` or `or 0`.
-- Magic constants in agent logic.
+- [ ] Block 1 → 2 → 3 order followed.
+- [ ] Block 2: ONLY aggregate ABC method implementations.
+- [ ] Block 3: dunders, factories, private helpers.
+- [ ] ≥1 class inherits aggregate ABC; ≤3 total classes.
+- [ ] No local domain data; DI via protocol interfaces; shared VOs.
+- [ ] Zero I/O, zero business logic, zero domain computation.
+- [ ] No forbidden imports.
+- [ ] Aggregate registered in shared `__init__.py`.
+- [ ] `python -c "import <module>"` passes.

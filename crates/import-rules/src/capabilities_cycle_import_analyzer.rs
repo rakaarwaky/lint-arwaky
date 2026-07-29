@@ -1,20 +1,17 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::{FilePath, FilePathList, Severity};
+
 use shared::common::utility_layer_detector;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::{utility_cycle_detector, utility_import_module_parser};
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::utility_cycle_detector;
+use shared::import_rules::utility_import_module_parser;
+use shared::import_rules::{AesImportViolation, DependencyEdge, ICycleImportProtocol, ImportError};
+
+use shared::common::{LayerMapVO, LayerNameVO, LintMessage, SymbolName};
+
 use std::collections::HashMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -46,11 +43,10 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
-        results: &mut LintResultList,
-    ) {
+    ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
         let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string());
-        results.values.extend(cycle_violations);
+        Ok(cycle_violations)
     }
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName> {
@@ -74,7 +70,7 @@ impl DependencyCycleAnalyzer {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &[String],
-        _root_dir: &str,
+        root_dir: &str,
     ) -> Vec<LintResult> {
         if !config.enabled.value {
             return vec![];
@@ -112,7 +108,18 @@ impl DependencyCycleAnalyzer {
                     None => return None,
                 };
 
-                let modules = utility_import_module_parser::extract_import_modules(&content);
+                // ── Barrel-aware module extraction ──
+                // For imports through barrel files, resolve to original source
+                // so dependency graph reflects actual file-to-file dependencies.
+                let resolved_modules =
+                    utility_import_module_parser::extract_import_modules_resolved(
+                        &content, root_dir,
+                    );
+
+                let modules: Vec<SymbolName> = resolved_modules
+                    .into_iter()
+                    .map(|(_, resolved)| resolved)
+                    .collect();
                 let mut local_edges = Vec::new();
                 let mut has_cross_layer = false;
                 for module in modules {
@@ -143,9 +150,17 @@ impl DependencyCycleAnalyzer {
                     } else {
                         module_value
                     };
-                    if let Some(target_layer) =
+                    // Try standard detection first, then fallback to filesystem scan
+                    let target_layer =
                         utility_layer_detector::detect_module_layer(module_path, &layer_keys)
-                    {
+                            .or_else(|| {
+                                utility_layer_detector::resolve_module_path_to_layer(
+                                    module_path,
+                                    root_dir,
+                                )
+                            });
+
+                    if let Some(target_layer) = target_layer {
                         let target_layer_str = match target_layer.split('(').next() {
                             Some(p) => p.to_string(),
                             None => target_layer,

@@ -2,7 +2,7 @@
 // are safely ignored or warned about without crashing the run."
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 use std::fs;
 
 /// FRD-EXT-001: Missing tools are safely ignored without crashing the run.

@@ -7,20 +7,20 @@
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
 use std::borrow::Cow;
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::{
-    AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
-};
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{CodeAnalysisRuleVO, IBypassCheckerProtocol};
+
 use shared::code_analysis::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
+use shared::code_analysis::{
+    AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
+};
+
 use shared::code_analysis::utility_column_index;
 use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::{LintMessage, PatternList, Severity};
 
 use shared::common::utility_value_object_generator;
 
@@ -179,7 +179,13 @@ impl IBypassCheckerProtocol for BypassChecker {
                     line_number,
                     "AES304",
                     Severity::CRITICAL,
-                    AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                    AesCodeAnalysisViolation::BypassComment {
+                        reason: Some(LintMessage::new(format!(
+                            "Found forbidden bypass attribute: '{}'",
+                            code_trim.lines().next().unwrap_or(code_trim)
+                        ))),
+                    }
+                    .to_string(),
                 ));
                 i += 1;
                 continue;
@@ -208,19 +214,29 @@ impl IBypassCheckerProtocol for BypassChecker {
                         && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
+                        let reason = Some(LintMessage::new(format!(
+                            "Found forbidden bypass token: '{}'",
+                            token
+                        )));
                         let vo = match Self::classify_token(token) {
-                            ViolationKind::UnwrapExpect => {
-                                AesCodeAnalysisViolation::UnwrapExpect { reason: None }
-                            }
-                            ViolationKind::Panic => {
-                                AesCodeAnalysisViolation::Panic { reason: None }
-                            }
-                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo { reason: None },
+                            ViolationKind::UnwrapExpect => AesCodeAnalysisViolation::UnwrapExpect {
+                                reason: reason.clone(),
+                            },
+                            ViolationKind::Panic => AesCodeAnalysisViolation::Panic {
+                                reason: reason.clone(),
+                            },
+                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo {
+                                reason: reason.clone(),
+                            },
                             ViolationKind::Unimplemented => {
-                                AesCodeAnalysisViolation::Unimplemented { reason: None }
+                                AesCodeAnalysisViolation::Unimplemented {
+                                    reason: reason.clone(),
+                                }
                             }
                             ViolationKind::BypassComment => {
-                                AesCodeAnalysisViolation::BypassComment { reason: None }
+                                AesCodeAnalysisViolation::BypassComment {
+                                    reason: reason.clone(),
+                                }
                             }
                         };
 
@@ -250,7 +266,13 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            AesCodeAnalysisViolation::BypassComment { reason: None }.to_string(),
+                            AesCodeAnalysisViolation::BypassComment {
+                                reason: Some(LintMessage::new(format!(
+                                    "Found forbidden bypass pattern: '{}'",
+                                    token
+                                ))),
+                            }
+                            .to_string(),
                         ));
 
                         matched = true;
@@ -273,8 +295,12 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Unimplemented { reason: None }
-                                    .to_string(),
+                                AesCodeAnalysisViolation::Unimplemented {
+                                    reason: Some(LintMessage::new(
+                                        "Found forbidden Python pattern: 'raise NotImplementedError'",
+                                    )),
+                                }
+                                .to_string(),
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch(
@@ -282,26 +308,39 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                                AesCodeAnalysisViolation::Panic {
+                                    reason: Some(LintMessage::new(
+                                        "Found forbidden Python pattern: 'assert False'",
+                                    )),
+                                }
+                                .to_string(),
                             ));
                         }
                     }
                     Language::JavaScript | Language::TypeScript => {
                         let throw_patterns = [
-                            "throw new error",
-                            "throw new typeerror",
-                            "throw new rangeerror",
-                            "throw new referenceerror",
-                            "throw new syntaxerror",
+                            ("throw new error", "throw new Error(...)"),
+                            ("throw new typeerror", "throw new TypeError(...)"),
+                            ("throw new rangeerror", "throw new RangeError(...)"),
+                            ("throw new referenceerror", "throw new ReferenceError(...)"),
+                            ("throw new syntaxerror", "throw new SyntaxError(...)"),
                         ];
 
-                        if throw_patterns.iter().any(|p| code_lower.contains(p)) {
+                        if let Some((_, display)) =
+                            throw_patterns.iter().find(|(p, _)| code_lower.contains(p))
+                        {
                             violations.push(LintResult::new_arch(
                                 file,
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic { reason: None }.to_string(),
+                                AesCodeAnalysisViolation::Panic {
+                                    reason: Some(LintMessage::new(format!(
+                                        "Found forbidden JS/TS pattern: '{}'",
+                                        display
+                                    ))),
+                                }
+                                .to_string(),
                             ));
                         }
                     }

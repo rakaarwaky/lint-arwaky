@@ -3,29 +3,28 @@
 //
 // ALGORITHM:
 //   check_agent_routing (per language):
-//     1. Guard: file must import from a _aggregate module.
-//        If missing → flag AgentNoAggregate.
-//     2. Collect all type declarations (struct/enum/class/interface).
+//     1. Collect all type declarations (struct/enum/class/interface).
 //        Skip #[cfg(test)] blocks (Rust).
-//     3. Rule 3 — Max 3 types. If exceeded → flag AgentTooManyTypes.
-//     4. Rule 2 — At least 1 implementor required:
-//          Rust:   impl <Trait> for <Struct>  (trait from _aggregate)
-//          Python: class <Name>(<AggregateABC>):
-//          TS:     class <Name> implements <IAggregate>
+//     2. Rule 1 — Max 3 types. If exceeded → flag AgentTooManyTypes.
+//     3. Rule 2 — At least 1 implementor required:
+//          Rust:   impl <Trait> for <Struct>
+//          Python: class <Name>(<Parent>):  (any parent = implementor)
+//          TS:     class <Name> implements <IProtocol> (any implements = implementor)
 //        If none → flag AgentNoImplementor.
-//     5. Rule 1 — Internal helper types without aggregate impl are ALLOWED.
+//     4. Internal helper types without implementor pattern are ALLOWED.
+//
+//   Note: aggregate import is enforced by mandatory checker (AES202), not here.
 //
 //   check_any_type_annotation:
 //     Line-by-line scan for `: any`, `: Any`, `-> any`, `-> Any`,
 //     `Any<`, `Any[`, `any[` patterns. Flags each as AES405 AnyType.
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::{LintMessage, Severity};
+use shared::role_rules::{AesRoleViolation, IAgentRoleChecker};
+
+use shared::common::{SourceContentVO, SymbolName};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -68,23 +67,11 @@ impl Default for AgentRoleChecker {
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    // ─── Rust ──────────────────────────────────────────────
+    } // ─── Rust ──────────────────────────────────────────────
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = content.contains("use ") && content.contains("_aggregate::");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
         // Collect all structs & enums (skip #[cfg(test)])
         let mut in_cfg_test = false;
@@ -135,6 +122,7 @@ impl AgentRoleChecker {
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -143,7 +131,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (struct/enum) in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -163,7 +156,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.",
+                        file
+                    ))),
+                },
             ));
         }
 
@@ -173,42 +171,8 @@ impl AgentRoleChecker {
     // ─── TypeScript / JavaScript ───────────────────────────
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = content.contains("import ") && content.contains("_aggregate");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
-
-        // Collect names imported from _aggregate
-        let aggregate_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                t.starts_with("import ") && t.contains("_aggregate")
-            })
-            .flat_map(|l| {
-                if let Some(start) = l.find('{') {
-                    if let Some(end) = l.find('}') {
-                        l[start + 1..end]
-                            .split(',')
-                            .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                            .filter(|s| !s.is_empty())
-                            .collect::<Vec<&str>>()
-                    } else {
-                        vec![]
-                    }
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
         let mut type_names: Vec<&str> = Vec::new();
         let mut implementor_found = false;
@@ -227,17 +191,9 @@ impl AgentRoleChecker {
                 }
                 type_names.push(name);
 
-                if let Some(pos) = rest.find("implements ") {
-                    let after = &rest[pos + 11..];
-                    let before_brace = after.split('{').next().unwrap_or(after);
-                    let implements: Vec<&str> = before_brace
-                        .split(',')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .collect();
-                    if implements.iter().any(|imp| aggregate_names.contains(imp)) {
-                        implementor_found = true;
-                    }
+                // Any implements clause = implementor found (aggregate check is AES202's job)
+                if rest.contains("implements ") {
+                    implementor_found = true;
                 }
                 continue;
             }
@@ -268,6 +224,7 @@ impl AgentRoleChecker {
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -276,7 +233,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -289,7 +251,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.",
+                        file
+                    ))),
+                },
             ));
         }
 
@@ -299,46 +266,18 @@ impl AgentRoleChecker {
     // ─── Python ────────────────────────────────────────────
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // Guard: must have _aggregate import
-        let has_aggregate_import = (content.contains("import ") || content.contains("from "))
-            && content.contains("_aggregate");
-        if !has_aggregate_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES405",
-                Severity::MEDIUM,
-                AesRoleViolation::AgentNoAggregate { reason: None },
-            ));
-            return;
-        }
+        // Note: aggregate import is enforced by mandatory checker (AES202), not here.
+        // AES405 only checks type composition rules.
 
-        // Collect names imported from _aggregate
-        let aggregate_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_aggregate")
-            })
-            .flat_map(|l| {
-                if let Some(pos) = l.find("import ") {
-                    let after = &l[pos + 7..];
-                    after
-                        .split(',')
-                        .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<&str>>()
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
-
+        let lines: Vec<&str> = content.lines().collect();
         let mut type_names: Vec<&str> = Vec::new();
         let mut implementor_found = false;
+        let mut i = 0;
 
-        for l in content.lines() {
-            let t = l.trim();
+        while i < lines.len() {
+            let t = lines[i].trim();
+            i += 1;
+
             if !t.starts_with("class ") {
                 continue;
             }
@@ -355,28 +294,43 @@ impl AgentRoleChecker {
             }
             type_names.push(name);
 
-            // parse parents from inside (...)
-            let parents: Vec<&str> = if let Some(start) = t.find('(') {
-                if let Some(end) = t.find(')') {
-                    t[start + 1..end]
-                        .split(',')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .collect()
-                } else {
-                    vec![]
-                }
-            } else {
-                vec![]
-            };
+            // Any inheritance = implementor found (aggregate check is AES202's job)
+            // Handle both single-line and multi-line class declarations
+            if let Some(start) = t.find('(') {
+                let after_paren = &t[start + 1..];
 
-            if parents.iter().any(|p| aggregate_names.contains(p)) {
-                implementor_found = true;
+                if let Some(end) = after_paren.find(')') {
+                    // Single-line: class Name(Parent1, Parent2):
+                    let parents = after_paren[..end].trim();
+                    if !parents.is_empty() {
+                        implementor_found = true;
+                    }
+                } else {
+                    // Multi-line: class Name(\n    Parent1,\n    Parent2,\n):
+                    // Collect text from subsequent lines until closing ')'
+                    let mut paren_text = String::from(after_paren);
+                    while i < lines.len() {
+                        let next = lines[i];
+                        i += 1;
+                        if let Some(end) = next.find(')') {
+                            paren_text.push_str(&next[..end]);
+                            break;
+                        }
+                        paren_text.push_str(next);
+                        if next.trim().starts_with("class ") {
+                            break;
+                        }
+                    }
+                    if !paren_text.trim().is_empty() {
+                        implementor_found = true;
+                    }
+                }
             }
         }
 
         // Rule 3: max 3 types
         if type_names.len() > 3 {
+            let names_str: String = type_names.join(", ");
             violations.push(LintResult::new_arch(
                 file,
                 0,
@@ -385,7 +339,12 @@ impl AgentRoleChecker {
                 AesRoleViolation::AgentTooManyTypes {
                     count: type_names.len(),
                     names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} classes in {}, max 3 allowed: [{}]",
+                        type_names.len(),
+                        file,
+                        names_str
+                    ))),
                 },
             ));
             return;
@@ -398,7 +357,12 @@ impl AgentRoleChecker {
                 0,
                 "AES405",
                 Severity::MEDIUM,
-                AesRoleViolation::AgentNoImplementor { reason: None },
+                AesRoleViolation::AgentNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
+                        file
+                    ))),
+                },
             ));
         }
 

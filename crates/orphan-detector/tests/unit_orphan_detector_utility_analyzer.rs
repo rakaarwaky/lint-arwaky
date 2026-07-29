@@ -3,10 +3,10 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::IUtilityOrphanProtocol;
+use shared::code_analysis::InboundLinkMap;
+use shared::common::{FilePath, Severity};
+
+use shared::orphan_detector::IUtilityOrphanProtocol;
 use std::collections::HashMap;
 
 fn analyzer() -> UtilityOrphanAnalyzer {

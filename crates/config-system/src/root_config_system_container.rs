@@ -1,8 +1,9 @@
 use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
+use shared::config_system::{
+    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
+    IConfigValidatorProtocol,
+};
+
 use std::sync::Arc;
 
 pub struct ConfigContainer {

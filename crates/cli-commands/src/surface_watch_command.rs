@@ -7,10 +7,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::common::{ExitCode, FilePath};
+
+use shared::file_watch::{IWatchAggregate, WatchConfig};
 
 pub struct WatchCommandsSurface {}
 

@@ -4,7 +4,7 @@
 // Speed: ms–s
 
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 // ─── Container Construction ───────────────────────────────
 

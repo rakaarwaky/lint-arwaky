@@ -2,9 +2,8 @@
 // Files must have minimum length to avoid empty placeholders.
 
 use code_analysis_lint_arwaky::ArchLineChecker;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::common::taxonomy_common_vo::Count;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::code_analysis::ILineCheckerProtocol;
+use shared::common::{Count, LayerDefinition};
 
 fn make_def_with_min(min: i64) -> LayerDefinition {
     LayerDefinition {

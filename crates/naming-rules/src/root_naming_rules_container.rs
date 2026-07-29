@@ -1,13 +1,11 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
 use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::common::FilePath;
+use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+
+use shared::common::LayerMapVO;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

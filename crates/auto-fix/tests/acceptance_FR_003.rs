@@ -3,14 +3,12 @@
 // Scope: All supported languages.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::contract_fix_protocol::IFixProtocol;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::Score;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::auto_fix::IFixProtocol;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
+
+use shared::common::{DisplayContent, FilePath, Score, Severity};
+
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;

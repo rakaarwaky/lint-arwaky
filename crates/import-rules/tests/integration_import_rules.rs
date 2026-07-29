@@ -3,12 +3,10 @@
 // and the orchestrator runs the complete pipeline.
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{FilePath, FilePathList, LayerDefinition, LayerNameVO};
+
+use shared::config_system::ArchitectureConfig;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -92,29 +90,31 @@ async fn clean_project_produces_zero_violations() {
         "pub struct Foo {\n    pub value: String,\n}\n",
     );
 
-    // Capabilities file — imports contract with real logic
+    // Capabilities file — imports contract (mandatory) + taxonomy for real logic
     write_temp_rs(
         dir.path(),
         "capabilities_foo_checker.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::contract_import_mandatory_protocol::IMandatoryImportProtocol;
+use shared::common::FilePath;
 
 pub struct FooChecker;
 
-impl IUnusedImportProtocol for FooChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
-        let content = std::fs::read_to_string(path.value()).unwrap_or_default();
-        if content.is_empty() { return vec![]; }
-        vec![LintMessage::new("scanned")]
+impl IMandatoryImportProtocol for FooChecker {
+    fn rule_name(&self) -> shared::common::Identity {
+        shared::common::Identity::new("AES202")
     }
-    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
-        if content.contains("unused") {
-            v.push(LintResult::new_arch(file, 1, "AES203",
-                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import"));
-        }
+    async fn run_mandatory_imports(
+        &self,
+        _config: &shared::config_system::ArchitectureConfig,
+        _layer_map: &shared::common::LayerMapVO,
+        _files: &shared::common::FilePathList,
+        _root_dir: &FilePath,
+    ) -> Result<shared::cli_commands::LintResultList, shared::import_rules::ImportError> {
+        let path = FilePath::new("test".to_string()).unwrap();
+        // Real logic: use FilePath to demonstrate import usage
+        let _ = !path.value().is_empty();
+        Ok(shared::cli_commands::LintResultList::new(Vec::new()))
     }
 }
 "#,
@@ -195,7 +195,7 @@ async fn dummy_function_detected_through_full_pipeline() {
         dir.path(),
         "capabilities_dummy.rs",
         r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -229,7 +229,7 @@ async fn multiple_violation_types_aggregated() {
         "capabilities_multi.rs",
         r#"
 use std::collections::HashMap;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");

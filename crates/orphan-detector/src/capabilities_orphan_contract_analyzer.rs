@@ -1,12 +1,11 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection
 use regex::Regex;
-use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_detector::contract_orphan_protocol::IContractOrphanProtocol;
-use shared::orphan_detector::taxonomy_violation_orphan_vo::AesOrphanViolation;
+use shared::code_analysis::{FileDefinitionMap, InheritanceMap, OrphanIndicatorResult};
+
+use shared::common::{FilePath, Severity};
+
+use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol};
+
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
@@ -111,7 +110,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 }
                 let c = orphan_io::read_file_safe(cf);
                 for trait_name in &trait_names {
-                    if c.contains(trait_name.as_str()) {
+                    if Self::content_contains_word(&c, trait_name) {
                         called_by_impl_or_user = true;
                         break;
                     }
@@ -158,7 +157,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 }
                 let c = orphan_io::read_file_safe(cf);
                 for trait_name in &trait_names {
-                    if c.contains(trait_name.as_str()) {
+                    if Self::content_contains_word(&c, trait_name) {
                         called_by_surface_or_container = true;
                         break;
                     }
@@ -205,6 +204,12 @@ impl ContractOrphanAnalyzer {
         Self {
             search_cache: Mutex::new(None),
         }
+    }
+
+    /// Check if `text` contains `word` as a whole word (not as a substring).
+    fn content_contains_word(text: &str, word: &str) -> bool {
+        text.split(|c: char| !c.is_alphanumeric() && c != '_')
+            .any(|w| w == word)
     }
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
@@ -337,7 +342,7 @@ impl ContractOrphanAnalyzer {
             // Rust: impl Trait for Type / impl<T> Trait for Type
             if trimmed.starts_with("impl")
                 && trimmed.contains(" for ")
-                && trimmed.contains(trait_name)
+                && Self::content_contains_word(trimmed, trait_name)
             {
                 return true;
             }

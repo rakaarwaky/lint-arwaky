@@ -6,17 +6,17 @@ use auto_fix::root_auto_fix_container::AutoFixContainer;
 use git_hooks::root_git_hooks_container::GitContainer;
 use maintenance::root_maintenance_container::MaintenanceContainer;
 use project_setup::root_project_setup_container::SetupContainer;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::external_lint::IExternalLintAggregate;
+use shared::git_hooks::GitHooksAggregate;
+use shared::import_rules::IImportRunnerAggregate;
+use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::orphan_detector::IOrphanAggregate;
+use shared::project_setup::SetupManagementAggregate;
+use shared::role_rules::IRoleRunnerAggregate;
 
 pub struct McpContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,

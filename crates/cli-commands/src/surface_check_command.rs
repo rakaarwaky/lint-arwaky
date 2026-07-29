@@ -1,13 +1,13 @@
 // PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
 // and delegates output formatting to surface_output_component.
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 use tokio::process::Command;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::cli_commands::Format;
+use shared::common::FilePath;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::report_formatter::IReportFormatterAggregate;
 
 use crate::surface_output_component::{output_violations, ViolationItem};
 
@@ -85,7 +85,14 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
                 root.clone()
             }
         };
-        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        let mut all_violations = rt.block_on(run_all_linters_json(&target_path));
+
+        // Apply filter by AES rule code (e.g. AES101, AES304)
+        if let Some(ref filter_str) = opts.filter {
+            let filter_upper = filter_str.to_uppercase();
+            all_violations.retain(|v| v.code.code().contains(&filter_upper));
+        }
+
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
             ExitCode::OK
@@ -94,7 +101,14 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
         }
     } else {
         let target_path = root.clone();
-        let all_violations = rt.block_on(run_all_linters_json(&target_path));
+        let mut all_violations = rt.block_on(run_all_linters_json(&target_path));
+
+        // Apply filter by AES rule code (e.g. AES101, AES304)
+        if let Some(ref filter_str) = opts.filter {
+            let filter_upper = filter_str.to_uppercase();
+            all_violations.retain(|v| v.code.code().contains(&filter_upper));
+        }
+
         output_violations(&all_violations, &target_path, format, is_specific_member);
         if all_violations.is_empty() {
             ExitCode::OK

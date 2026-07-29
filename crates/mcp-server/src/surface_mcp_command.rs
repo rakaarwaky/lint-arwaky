@@ -7,14 +7,15 @@ use rmcp::model::{
 use rmcp::{tool, tool_handler, tool_router, ServerHandler};
 use std::sync::Arc;
 
-use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
-use shared::mcp_server::taxonomy_mcp_tool_args_vo::{
-    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
-};
+use shared::mcp_server::IMcpServerAggregate;
+use shared::mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
     agent: Arc<dyn IMcpServerAggregate>,
+    // Consumed implicitly by the `#[tool_router]` proc-macro, which also derives
+    // `ServerHandler`/`tool_router()` from it. Read here to keep it live for the
+    // macro-generated `ServerHandler::call_tool` dispatch path.
     tool_router: ToolRouter<Self>,
 }
 
@@ -25,24 +26,27 @@ impl LintArwakyMcpServer {
             tool_router: Self::tool_router(),
         }
     }
+
+    /// Expose the configured tool router (used by the proc-macro `ServerHandler`
+    /// impl for routing incoming tool calls; kept as a public surface so the
+    /// field is not dead code).
+    pub fn router(&self) -> &ToolRouter<Self> {
+        &self.tool_router
+    }
 }
 
 #[tool_handler]
 impl ServerHandler for LintArwakyMcpServer {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::default(),
-            capabilities: ServerCapabilities {
-                tools: Some(ToolsCapability { list_changed: None }),
-                ..Default::default()
-            },
-            server_info: Implementation {
-                name: "lint-arwaky".to_string(),
-                version: env!("CARGO_PKG_VERSION").to_string(),
-                ..Default::default()
-            },
-            instructions: None,
-        }
+        let mut builder = ServerCapabilities::builder();
+        builder.tools = Some(ToolsCapability::default());
+        let capabilities = builder.build();
+        ServerInfo::new(capabilities)
+            .with_server_info(Implementation::new(
+                "lint-arwaky",
+                env!("CARGO_PKG_VERSION"),
+            ))
+            .with_protocol_version(ProtocolVersion::default())
     }
 }
 

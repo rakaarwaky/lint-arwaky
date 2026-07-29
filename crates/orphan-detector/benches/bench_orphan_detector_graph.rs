@@ -4,7 +4,7 @@
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement,
 //                 input scaling analysis, algorithmic comparison
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
@@ -62,7 +62,7 @@ fn bench_build_graph_context(c: &mut Criterion) {
         let file_vo = vec![OrphanFileListVO::new(files)];
         group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(BenchmarkId::new("files", size), &file_vo, |b, data| {
-            b.iter(|| black_box(resolver.build_graph_context(data, root.value())));
+            b.iter(|| std::hint::black_box(resolver.build_graph_context(data, root.value())));
         });
     }
     group.finish();
@@ -80,7 +80,7 @@ fn bench_identify_entry_points(c: &mut Criterion) {
         let file_vo = vec![OrphanFileListVO::new(files)];
         group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(BenchmarkId::new("files", size), &file_vo, |b, data| {
-            b.iter(|| black_box(resolver.identify_entry_points(data, &[])));
+            b.iter(|| std::hint::black_box(resolver.identify_entry_points(data, &[])));
         });
     }
     group.finish();
@@ -100,7 +100,7 @@ fn bench_check_orphans(c: &mut Criterion) {
         let file_vo = OrphanFileListVO::new(files);
         group.throughput(Throughput::Elements(size as u64));
         group.bench_with_input(BenchmarkId::new("files", size), &file_vo, |b, data| {
-            b.iter(|| black_box(analyzer.check_orphans(data, &root)));
+            b.iter(|| std::hint::black_box(analyzer.check_orphans(data, &root)));
         });
     }
     group.finish();
@@ -137,7 +137,7 @@ fn bench_trace_reachability(c: &mut Criterion) {
                             }
                         }
                     }
-                    black_box(reachable);
+                    std::hint::black_box(reachable);
                 });
             },
         );
@@ -171,7 +171,7 @@ fn bench_expand_workspace_files(c: &mut Criterion) {
                         result.push(f.clone());
                     }
                 }
-                black_box(result);
+                std::hint::black_box(result);
             });
         });
 
@@ -189,7 +189,7 @@ fn bench_expand_workspace_files(c: &mut Criterion) {
                             result.push(f.clone());
                         }
                     }
-                    black_box(result);
+                    std::hint::black_box(result);
                 });
             },
         );
@@ -224,7 +224,7 @@ fn bench_alive_set_construction(c: &mut Criterion) {
                                     .collect(),
                             );
                     }
-                    black_box(());
+                    std::hint::black_box(());
                 });
             },
         );
@@ -242,7 +242,7 @@ fn bench_alive_set_construction(c: &mut Criterion) {
                                 .collect(),
                         );
                     for _ in 0..100 {
-                        black_box(&_alive_set);
+                        std::hint::black_box(&_alive_set);
                     }
                 });
             },
@@ -272,7 +272,7 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
             b.iter(|| {
                 let vo = OrphanFileListVO::new(data.clone());
                 let results = analyzer.check_orphans_with_context(&vo, &root, &context);
-                black_box(results);
+                std::hint::black_box(results);
             });
         });
 
@@ -281,7 +281,7 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
             b.iter(|| {
                 let vo = OrphanFileListVO::new(data.clone());
                 let results = analyzer.check_orphans_with_context(&vo, &root, &context);
-                black_box(results);
+                std::hint::black_box(results);
             });
         });
     }
@@ -307,7 +307,7 @@ fn bench_graph_context_reuse(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("no_reuse", size), &file_vo, |b, data| {
             b.iter(|| {
                 let results = analyzer.check_orphans(data, &root);
-                black_box(results);
+                std::hint::black_box(results);
             });
         });
 
@@ -316,7 +316,7 @@ fn bench_graph_context_reuse(c: &mut Criterion) {
             let context = analyzer.build_orphan_graph_context(data, &root);
             b.iter(|| {
                 let results = analyzer.check_orphans_with_context(data, &root, &context);
-                black_box(results);
+                std::hint::black_box(results);
             });
         });
     }
@@ -340,7 +340,7 @@ fn bench_throughput_files_per_second(c: &mut Criterion) {
             BenchmarkId::new("files_per_second", size),
             &file_vo,
             |b, data| {
-                b.iter(|| black_box(analyzer.check_orphans(data, &root)));
+                b.iter(|| std::hint::black_box(analyzer.check_orphans(data, &root)));
             },
         );
     }

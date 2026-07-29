@@ -6,10 +6,9 @@
 //   - run_ci_analysis: CI pipeline that runs code analysis, computes score, compares
 //     against threshold, and returns pass/fail exit code. Detects CRITICAL violations
 //     as auto-fail regardless of score.
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_threshold_vo::Threshold;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{ExitCode, FilePath, Threshold};
+
 use std::sync::Arc;
 
 pub fn create_runtime() -> Result<tokio::runtime::Runtime, ExitCode> {
@@ -64,9 +63,7 @@ pub fn run_ci_analysis(
     role_orchestrator: Arc<
         dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate,
     >,
-    orphan_orchestrator: Arc<
-        dyn shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate,
-    >,
+    config_orchestrator: Arc<dyn shared::config_system::IConfigOrchestratorAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
@@ -75,7 +72,7 @@ pub fn run_ci_analysis(
         import_orchestrator,
         naming_orchestrator,
         role_orchestrator,
-        orphan_orchestrator,
+        config_orchestrator,
         path,
         threshold,
     )

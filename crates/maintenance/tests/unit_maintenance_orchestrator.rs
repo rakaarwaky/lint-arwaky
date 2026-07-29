@@ -6,9 +6,9 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
 };
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::common::taxonomy_job_id_vo::JobId;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::common::FilePath;
+use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggregate};
+
 use std::sync::Arc;
 
 fn sut() -> MaintenanceCommandsOrchestrator {

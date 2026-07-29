@@ -1,16 +1,14 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_common_vo::LanguageVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_source_vo::ContentString;
+use shared::cli_commands::LintResult;
+use shared::common::{ContentString, FilePath, LanguageVO, Severity};
+
 use shared::common::utility_layer_detector;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
-use shared::taxonomy_definition_vo::LayerMapVO;
-use shared::taxonomy_layer_vo::{Identity, LayerNameVO};
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_name_vo::SymbolName;
+use shared::import_rules::utility_import_resolver;
+use shared::import_rules::{AesImportViolation, IDummyImportCheckerProtocol, ImportError};
+
+use shared::common::LayerMapVO;
+use shared::common::{Identity, LayerNameVO, LineNumber};
+use shared::common::{LintMessage, SymbolName};
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -26,15 +24,20 @@ struct DummyFileContext {
     lines: Vec<String>,
     lang: LanguageVO,
     layer_name: String,
-    dummy_ranges: Vec<(
-        shared::taxonomy_common_vo::LineNumber,
-        shared::taxonomy_common_vo::LineNumber,
-    )>,
+    dummy_ranges: Vec<(LineNumber, LineNumber)>,
     dummy_impl_traits: Vec<String>,
 }
 
 impl DummyFileContext {
     fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
+        // Skip barrel files — they only re-export symbols, no dummy patterns.
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if utility_import_resolver::is_barrel_file(basename) {
+            return None;
+        }
         let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
         let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
         let lang = LanguageVO::from_path(file);
@@ -82,90 +85,101 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
-    ) {
-        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
-            Self::_check_dummy_imports(file.value(), &ctx, violations, layer_map);
-        }
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Ok(violations)
     }
 
     fn check_dummy_functions(
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
-    ) {
-        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
-            Self::_check_dummy_functions(file.value(), &ctx, violations);
-        }
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
+        Ok(violations)
     }
 
     fn check_dummy_impls(
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
-    ) {
-        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
-            Self::_check_dummy_impls(file.value(), &ctx, violations);
-        }
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
+        Ok(violations)
     }
 
     fn check_taxonomy_intent(
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
-    ) {
-        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
-            Self::_check_taxonomy_intent(file.value(), &ctx, violations);
-        }
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Ok(violations)
     }
 
     fn check_layer_contract_intent(
         &self,
         _file: &FilePath,
         _content: &ContentString,
-        _violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         _layer_map: &LayerMapVO,
-    ) {
+    ) -> Result<Vec<LintResult>, ImportError> {
+        Ok(Vec::new())
     }
 
     fn check_surface_logic(
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         _layer_map: &LayerMapVO,
-    ) {
-        Self::_check_surface_logic(file.value(), content.value(), violations);
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let mut violations = Vec::new();
+        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
+        Ok(violations)
     }
 
     fn check_all_dummy(
         &self,
         file: &FilePath,
         content: &ContentString,
-        violations: &mut Vec<LintResult>,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
-    ) {
-        if let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) {
-            Self::_check_dummy_imports(file.value(), &ctx, violations, layer_map);
-            Self::_check_dummy_functions(file.value(), &ctx, violations);
-            Self::_check_dummy_impls(file.value(), &ctx, violations);
-            Self::_check_taxonomy_intent(file.value(), &ctx, violations);
-            Self::_check_surface_logic(file.value(), content.value(), violations);
-        }
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
+        Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
+        Ok(violations)
     }
 }
 
@@ -192,6 +206,10 @@ impl DummyImportChecker {
 
         for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
+            // Skip __future__ imports — they affect parsing behavior, not runtime usage.
+            if is_future_import(&lines, &symbol_str) {
+                continue;
+            }
             if utility_dummy_detector::symbol_used_real(
                 &lines,
                 &symbol_str,
@@ -405,4 +423,17 @@ impl DummyImportChecker {
             }
         }
     }
+}
+
+/// Check if any line matches `from __future__ import ...symbol...`.
+/// These are special Python constructs that affect parsing behavior and should not be
+/// flagged as dummy imports — they have no runtime symbol usage.
+fn is_future_import(lines: &[&str], symbol: &str) -> bool {
+    lines.iter().any(|line| {
+        let trimmed = line.trim();
+        trimmed.starts_with("from __future__ import ")
+            && (trimmed == format!("from __future__ import {}", symbol)
+                || trimmed.contains(format!(", {}", symbol).as_str())
+                || trimmed.contains(format!(" {},", symbol).as_str()))
+    })
 }

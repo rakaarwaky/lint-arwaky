@@ -3,16 +3,15 @@ use crate::capabilities_check_bypass_checker::BypassChecker;
 use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::code_analysis::{
+    IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
+    IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
+};
+
+use shared::common::FilePath;
+use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+
+use shared::common::LayerMapVO;
 use std::sync::Arc;
 
 pub struct CodeAnalysisContainer {

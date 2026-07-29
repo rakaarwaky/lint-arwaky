@@ -2,7 +2,7 @@
 // Uses criterion. Register in Cargo.toml with harness = false.
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
@@ -29,7 +29,7 @@ fn bench_analyze_dedup(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("dedup_30pct_unique", size),
             &events,
-            |b, data| b.iter(|| black_box(analyzer.analyze(data.clone()))),
+            |b, data| b.iter(|| std::hint::black_box(analyzer.analyze(data.clone()))),
         );
     }
     group.finish();
@@ -56,7 +56,7 @@ fn bench_filter_lintable(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("filter_mixed", size),
             &events,
-            |b, data| b.iter(|| black_box(analyzer.filter_lintable(data.clone()))),
+            |b, data| b.iter(|| std::hint::black_box(analyzer.filter_lintable(data.clone()))),
         );
     }
     group.finish();
@@ -79,7 +79,7 @@ fn bench_is_lintable(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("is_lintable", path.to_string()),
             path,
-            |b, p| b.iter(|| black_box(ChangeAnalyzer::is_lintable(p))),
+            |b, p| b.iter(|| std::hint::black_box(ChangeAnalyzer::is_lintable(p))),
         );
     }
     group.finish();

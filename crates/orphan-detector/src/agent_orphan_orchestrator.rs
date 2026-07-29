@@ -1,32 +1,28 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use shared::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use shared::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{
+    GraphAnalysisContext, ImportGraph, OrphanIndicatorResult, ReachabilityResult,
+};
 
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::contract_orphan_protocol::{
+use shared::common::FilePath;
+
+use shared::common::Severity;
+use shared::config_system::ArchitectureConfig;
+use shared::orphan_detector::{IOrphanAggregate, IOrphanGraphResolverProtocol};
+
+use shared::orphan_detector::OrphanFileListVO;
+use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
-use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 
-use shared::role_rules::taxonomy_layer_names_constant::{
+use shared::common::{
+    AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
+    LocationList, ScopeRef,
+};
+use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::ColumnNumber;
-use shared::taxonomy_common_vo::LineNumber;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_layer_vo::LayerNameVO;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_lint_vo::ScopeRef;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_suggestion_vo::DescriptionVO;
+
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -104,10 +100,45 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                     all_files = list.values.iter().map(|f| f.value.clone()).collect();
                 }
             }
+        } else if root_path.is_file() {
+            // Single file scan — include the file directly
+            let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+                && !shared::common::utility_file_handler::is_path_ignored(
+                    &root_path.to_string_lossy(),
+                    ignored,
+                )
+            {
+                all_files.push(root_dir.value().to_string());
+            }
         }
+
+        // Normalize all file paths to be relative to workspace root so that
+        // inbound_links (built by the graph resolver) and orphan analyzers
+        // use a consistent path format.
+        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let all_files: Vec<String> = all_files
+            .into_iter()
+            .map(|f| {
+                std::path::Path::new(&f)
+                    .strip_prefix(&top_root)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or(f)
+            })
+            .collect();
+
         let files_vo = OrphanFileListVO::new(all_files);
-        let context = self.build_orphan_graph_context(&files_vo, root_dir);
-        let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
+
+        // Expand workspace files BEFORE building the graph context so that the
+        // import graph has all workspace files to resolve cross-file imports.
+        // Without this, single-file scans build a graph from only 1 file,
+        // causing orphan detection to miss connections to container/surface files.
+        let expanded_files = self._expand_workspace_files(&files_vo, root_dir);
+        let expanded_vo = OrphanFileListVO::new(expanded_files);
+
+        let context = self.build_orphan_graph_context(&expanded_vo, root_dir);
+        let results = self.check_orphans_with_context(&expanded_vo, root_dir, &context);
         (context, results)
     }
 
@@ -121,10 +152,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             return Vec::new();
         }
 
-        let all_workspace_files = self._expand_workspace_files(files, root_dir);
-        let file_vo = OrphanFileListVO::new(all_workspace_files);
-
-        self._check_orphans_inner(files, root_dir, context, &file_vo)
+        // Files are already expanded before graph context build (in scan_orphans),
+        // so file_vo is the same as files — no need to expand again.
+        self._check_orphans_inner(files, root_dir, context, files)
     }
 }
 

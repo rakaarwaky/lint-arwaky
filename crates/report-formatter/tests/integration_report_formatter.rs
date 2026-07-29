@@ -8,10 +8,10 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::taxonomy_format_vo::Format;
-use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
-use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
-use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
+use shared::cli_commands::{Format, ScanReport};
+
+use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
+
 use std::sync::Arc;
 
 fn build_full_orchestrator() -> ReportFormatterOrchestrator {

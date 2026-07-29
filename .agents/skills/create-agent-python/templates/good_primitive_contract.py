@@ -1,0 +1,3 @@
+class I<NameOrchestrator>Aggregate(ABC):
+    @abstractmethod
+    def execute(self, request: <ScanRequest>VO) -> list[<ResultVO>]: ...

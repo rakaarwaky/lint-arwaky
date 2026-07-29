@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn container() -> MaintenanceContainer {
     MaintenanceContainer::new()

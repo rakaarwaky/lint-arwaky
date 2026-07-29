@@ -3,11 +3,10 @@ use code_analysis_lint_arwaky::{
     capabilities_mandatory_definition_checker::MandatoryDefinitionChecker,
     root_code_analysis_container::CodeAnalysisContainer, CodeAnalysisOrchestrator,
 };
-use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
+use shared::code_analysis::{
+    IBypassCheckerProtocol, ICodeAnalysisAggregate, IDeadInheritanceProtocol, ILineCheckerProtocol,
+    IMandatoryClassProtocol,
+};
 
 // ─── BypassChecker implements IBypassCheckerProtocol ───────
 

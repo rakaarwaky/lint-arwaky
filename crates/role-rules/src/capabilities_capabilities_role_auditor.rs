@@ -1,26 +1,26 @@
 // PURPOSE: CapabilitiesRoleChecker — AES403: enforce capability type composition.
 //
-// ALGORITHM (per language):
-//   1. Guard: file must import from a _protocol module.
-//      If missing → flag CapabilityNoProtocol.
-//   2. Collect all type declarations (struct/enum/class/interface).
-//      Skip #[cfg(test)] blocks (Rust).
-//   3. Rule 3 — Max 3 types. If exceeded → flag CapabilityTooManyTypes.
-//   4. Rule 2 — At least 1 implementor required:
+// ALGORITHM (applied uniformly across Rust, Python, TypeScript):
+//   1. Collect all type declarations (struct/class/enum/interface).
+//      Skip #[cfg(test)] blocks (Rust only).
+//   2. Rule 1 — Max 3 type declarations per file. If exceeded → flag CapabilityTooManyTypes.
+//      Checked first; if violated, skip implementor check entirely.
+//   3. Rule 2 — Must have ≥ 1 implementor:
 //        Rust:   impl <Trait> for <Struct>
-//        Python: class <Name>(<ABCProtocol>):
+//        Python: class <Name>(<Parent>):
 //        TS:     class <Name> implements <IProtocol>
 //      If none → flag CapabilityNoImplementor.
-//   5. Rule 1 — Internal helper types without trait impl are ALLOWED.
+//   4. Internal helper types (without implementor pattern) are ALLOWED and not flagged.
 //
-// NOTE: The layer guard is redundant with the caller but kept for defensive programming.
+// NOTE: Import checking is handled by import-rules crate, not role-rules.
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::Severity;
+use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
+
+use shared::common::SourceContentVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -67,23 +67,10 @@ impl CapabilitiesRoleChecker {
     }
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: must have _protocol import ──────────────────
-        let has_proto_import = content.contains("use ") && content.contains("_protocol::");
-        if !has_proto_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES403",
-                Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoProtocol { reason: None },
-            ));
-            return;
-        }
-
-        // ── Collect all structs & enums (skip #[cfg(test)]) ──
+        // ── Collect all type declarations (struct/enum), skip #[cfg(test)] ──
         let mut in_cfg_test = false;
-        let mut type_names: Vec<&str> = Vec::new(); // all structs + enums
-        let mut struct_names: Vec<&str> = Vec::new(); // only structs
+        let mut type_count: usize = 0;
+        let mut struct_names: Vec<&str> = Vec::new(); // structs only (for implementor check)
 
         for l in content.lines() {
             let t = l.trim();
@@ -108,7 +95,7 @@ impl CapabilitiesRoleChecker {
                     if let Some(name) = words.get(idx + 1) {
                         let name = name.trim_end_matches(';').trim_end_matches('{');
                         if !name.is_empty() && !name.starts_with('_') {
-                            type_names.push(name);
+                            type_count += 1;
                             struct_names.push(name);
                         }
                     }
@@ -121,35 +108,41 @@ impl CapabilitiesRoleChecker {
                     if let Some(name) = words.get(idx + 1) {
                         let name = name.trim_end_matches(';').trim_end_matches('{');
                         if !name.is_empty() && !name.starts_with('_') {
-                            type_names.push(name);
+                            type_count += 1;
                         }
                     }
                 }
             }
         }
 
-        // ── RULE 3: max 3 types (struct + enum) ──────────────
-        if type_names.len() > 3 {
+        // ── RULE 1: max 3 types (struct + enum) ──────────────
+        if type_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
                 0,
                 "AES403",
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
-                    count: type_names.len(),
-                    reason: None,
+                    count: type_count,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (struct + enum), max 3 allowed",
+                        type_count
+                    ))),
                 },
             ));
             return; // no further check needed
         }
 
-        // ── RULE 2: must have ≥ 1 struct implementor protocol ──
+        // ── RULE 2: must have ≥ 1 struct implementor ──
         //    Implementor = has "impl <Trait> for <StructName>"
         //    (not merely "for item in collection")
         let has_implementor = struct_names.iter().any(|s| {
             content.lines().any(|l| {
                 let t = l.trim();
-                t.starts_with("impl ") && t.contains(&format!("for {s}"))
+                t.starts_with("impl ")
+                    && (t.contains(&format!("for {} ", s))
+                        || t.contains(&format!("for {}{{", s))
+                        || t.contains(&format!("for {} {{", s)))
             })
         });
 
@@ -159,62 +152,20 @@ impl CapabilitiesRoleChecker {
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.",
+                        file
+                    ))),
+                },
             ));
         }
-
-        // ── RULE 1: internal struct without trait impl → NOT flagged ──
-        // (no loop that flags individual structs anymore)
     }
 
     fn _check_ts_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: must have _protocol import ──────────────────
-        let has_proto_import = content.contains("import ") && content.contains("_protocol");
-        if !has_proto_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES403",
-                Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoProtocol { reason: None },
-            ));
-            return;
-        }
-
-        // ── Collect names imported from _protocol ────────────────
-        //    example: import { IPaymentService, ILogger } from '../payment_protocol'
-        //    → proto_names = ["IPaymentService", "ILogger"]
-        let proto_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                t.starts_with("import ") && t.contains("_protocol")
-            })
-            .flat_map(|l| {
-                // extract content inside { ... }
-                if let Some(start) = l.find('{') {
-                    if let Some(end) = l.find('}') {
-                        l[start + 1..end]
-                            .split(',')
-                            .map(|s| {
-                                // handle "IPaymentService as IPay"
-                                s.trim().split(" as ").next().unwrap_or("").trim()
-                            })
-                            .filter(|s| !s.is_empty())
-                            .collect::<Vec<&str>>()
-                    } else {
-                        vec![]
-                    }
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
-
         let lines: Vec<&str> = content.lines().collect();
 
         // ── Collect all type declarations (class/interface/enum) ────
-        //    type alias → not counted; inline parsing, no struct needed
         let mut type_count: usize = 0;
         let mut implementor_found = false;
 
@@ -237,16 +188,9 @@ impl CapabilitiesRoleChecker {
                 }
                 type_count += 1;
 
-                // parse implements
-                if let Some(pos) = rest.find("implements ") {
-                    let after = &rest[pos + 11..];
-                    let before_brace = after.split('{').next().unwrap_or(after);
-                    if before_brace
-                        .split(',')
-                        .any(|imp| proto_names.contains(&imp.trim()))
-                    {
-                        implementor_found = true;
-                    }
+                // check for "implements" keyword (any implements = implementor)
+                if rest.contains("implements ") {
+                    implementor_found = true;
                 }
                 continue;
             }
@@ -283,7 +227,7 @@ impl CapabilitiesRoleChecker {
             }
         }
 
-        // ── RULE 3: max 3 types ──────────────────────────────
+        // ── RULE 1: max 3 types ──────────────────────────────
         if type_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
@@ -292,83 +236,49 @@ impl CapabilitiesRoleChecker {
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
                     count: type_count,
-                    reason: None,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} types (class/interface/enum), max 3 allowed",
+                        type_count
+                    ))),
                 },
             ));
             return;
         }
 
         // ── RULE 2: must have ≥ 1 implementor ──────────────────
-        //    Implementor = class that has "implements X"
-        //    where X is in proto_names (imported from _protocol)
         if !implementor_found {
             violations.push(LintResult::new_arch(
                 file,
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with 'implements' keyword found in {}. At least one class must implement an interface/protocol.",
+                        file
+                    ))),
+                },
             ));
         }
-
-        // ── RULE 1: internal class without implements → NOT flagged ──
     }
 
     fn _check_python_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
-        // ── Guard: must have _protocol import ──────────────────
-        let has_proto_import = (content.contains("import ") || content.contains("from "))
-            && content.contains("_protocol");
-        if !has_proto_import {
-            violations.push(LintResult::new_arch(
-                file,
-                0,
-                "AES403",
-                Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoProtocol { reason: None },
-            ));
-            return;
-        }
-
-        // ── Collect names imported from _protocol ────────────────
-        //    example: from shared.some_protocol import ISomeService, IOther
-        //    → proto_names = {"ISomeService", "IOther"}
-        let proto_names: Vec<&str> = content
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                (t.starts_with("from ") || t.starts_with("import ")) && t.contains("_protocol")
-            })
-            .flat_map(|l| {
-                // extract the part after "import"
-                if let Some(pos) = l.find("import ") {
-                    let after = &l[pos + 7..]; // len("import ") = 7
-                    after
-                        .split(',')
-                        .map(|s| s.trim().split(" as ").next().unwrap_or("").trim())
-                        .filter(|s| !s.is_empty())
-                        .collect::<Vec<&str>>()
-                } else {
-                    vec![]
-                }
-            })
-            .collect();
-
         let lines: Vec<&str> = content.lines().collect();
 
-        // ── Collect all classes (parents only) ──────────────────
-        struct PyClass<'a> {
-            parents: Vec<&'a str>,
-        }
+        // ── Collect all classes with parents (inheritance) ──────
+        let mut class_count: usize = 0;
+        let mut implementor_found = false;
+        let mut i = 0;
 
-        let mut classes: Vec<PyClass> = Vec::new();
+        while i < lines.len() {
+            let t = lines[i].trim();
+            i += 1;
 
-        for l in &lines {
-            let t = l.trim();
             if !t.starts_with("class ") {
                 continue;
             }
 
-            // parse: class Name(Parent1, Parent2):
+            // parse: class Name(Parent1, Parent2):  or multi-line version
             let after_class = &t[6..]; // skip "class "
             let name = after_class
                 .split(|c: char| ['(', ':', ' '].contains(&c))
@@ -380,59 +290,73 @@ impl CapabilitiesRoleChecker {
                 continue;
             }
 
-            // parse parents from inside (...)
-            let parents: Vec<&str> = if let Some(start) = t.find('(') {
-                if let Some(end) = t.find(')') {
-                    t[start + 1..end]
-                        .split(',')
-                        .map(|s| s.trim())
-                        .filter(|s| !s.is_empty())
-                        .collect()
-                } else {
-                    vec![]
-                }
-            } else {
-                vec![]
-            };
+            class_count += 1;
 
-            classes.push(PyClass { parents });
+            // check for inheritance — handle single-line and multi-line class declarations
+            if let Some(start) = t.find('(') {
+                let after_paren = &t[start + 1..];
+
+                if let Some(end) = after_paren.find(')') {
+                    // Single-line: class Name(Parent1, Parent2):
+                    let parents = after_paren[..end].trim();
+                    if !parents.is_empty() {
+                        implementor_found = true;
+                    }
+                } else {
+                    // Multi-line: class Name(\n    Parent1,\n    Parent2,\n):
+                    // Collect text from subsequent lines until closing ')'
+                    let mut paren_text = String::from(after_paren);
+                    while i < lines.len() {
+                        let next = lines[i];
+                        i += 1;
+                        if let Some(end) = next.find(')') {
+                            paren_text.push_str(&next[..end]);
+                            break;
+                        }
+                        paren_text.push_str(next);
+                        if next.trim().starts_with("class ") {
+                            break;
+                        }
+                    }
+                    if !paren_text.trim().is_empty() {
+                        implementor_found = true;
+                    }
+                }
+            }
         }
 
-        let total_types = classes.len();
-
-        // ── RULE 3: max 3 types ──────────────────────────────
-        if total_types > 3 {
+        // ── RULE 1: max 3 types ──────────────────────────────
+        if class_count > 3 {
             violations.push(LintResult::new_arch(
                 file,
                 0,
                 "AES403",
                 Severity::HIGH,
                 AesRoleViolation::CapabilityTooManyTypes {
-                    count: total_types,
-                    reason: None,
+                    count: class_count,
+                    reason: Some(LintMessage::new(format!(
+                        "Found {} classes, max 3 allowed",
+                        class_count
+                    ))),
                 },
             ));
             return;
         }
 
-        // ── RULE 2: must have ≥ 1 ABC implementor ─────────────
-        //    Implementor = class that inherits from a name
-        //    imported from _protocol
-        //    example: class PaymentCap(ISomeService):  ← implementor
-        let has_implementor = classes
-            .iter()
-            .any(|c| c.parents.iter().any(|p| proto_names.contains(p)));
-
-        if !has_implementor {
+        // ── RULE 2: must have ≥ 1 implementor ────────────────
+        if !implementor_found {
             violations.push(LintResult::new_arch(
                 file,
                 0,
                 "AES403",
                 Severity::MEDIUM,
-                AesRoleViolation::CapabilityNoImplementor { reason: None },
+                AesRoleViolation::CapabilityNoImplementor {
+                    reason: Some(LintMessage::new(format!(
+                        "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
+                        file
+                    ))),
+                },
             ));
         }
-
-        // ── RULE 1: internal class without ABC → NOT flagged ──
     }
 }

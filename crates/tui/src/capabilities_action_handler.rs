@@ -1,10 +1,8 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::tui::contract_action_handler_protocol::IActionHandlerProtocol;
-use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
-use shared::tui::taxonomy_scan_update_vo::ScanUpdate;
-use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
-use shared::tui::taxonomy_tui_event::TuiEvent;
+use shared::common::FilePath;
+use shared::tui::{IActionHandlerProtocol, ILintExecutorProtocol, LintExecutionResult, ScanUpdate};
+
+use shared::tui::TuiEvent;
+use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.

@@ -5,9 +5,9 @@ use config_system_lint_arwaky::agent_config_orchestrator::{
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::common::FilePath;
+use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+
 use std::fs;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -157,6 +157,106 @@ async fn config_cache_returns_same_arc_on_second_load() {
         .load_config_for_language(&fp, ConfigLanguage::Rust)
         .await;
     assert_eq!(r1.source.path, r2.source.path);
+}
+
+// ─── Regression: Phase 3.4 — Config loading from deeply nested file paths ─────
+
+/// `load_config_sync` should find the config file when scanning a file
+/// nested 4 levels deep under the project root (file.py → src → security → modules → root).
+/// This was broken before the fix because the upward search depth was limited to 3.
+#[test]
+fn load_config_sync_finds_config_from_deep_file_path() {
+    let tmp = TempDir::new().unwrap();
+    // Create config at project root
+    fs::write(
+        tmp.path().join("lint_arwaky.config.python.yaml"),
+        "architecture:\n  enabled: false\n  rules: []\n",
+    )
+    .unwrap();
+    // Create deeply nested file: modules/security/src/capabilities_handler.py
+    let nested_file = tmp
+        .path()
+        .join("modules")
+        .join("security")
+        .join("src")
+        .join("capabilities_handler.py");
+    fs::create_dir_all(nested_file.parent().unwrap()).unwrap();
+    fs::write(&nested_file, "def handle(): pass\n").unwrap();
+
+    let fp = FilePath::new(nested_file.to_string_lossy().to_string()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
+    // Config has enabled: false, so we verify it was loaded (not the default which has enabled: true)
+    assert!(!config.enabled.value);
+}
+
+/// `load_config_sync` should find the config from a file nested 4 levels deep
+/// (the original bug scenario: modules/security/src/capabilities_archive_guard.py).
+/// Config is at project root, 4 levels up from the file.
+#[test]
+fn load_config_sync_finds_config_from_very_deep_file_path() {
+    let tmp = TempDir::new().unwrap();
+    fs::write(
+        tmp.path().join("lint_arwaky.config.python.yaml"),
+        "architecture:\n  enabled: false\n  rules: []\n",
+    )
+    .unwrap();
+    // Path: modules/security/src/test.py (4 levels up to root)
+    let deep_file = tmp
+        .path()
+        .join("modules")
+        .join("security")
+        .join("src")
+        .join("test.py");
+    fs::create_dir_all(deep_file.parent().unwrap()).unwrap();
+    fs::write(&deep_file, "# test\n").unwrap();
+
+    let fp = FilePath::new(deep_file.to_string_lossy().to_string()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
+    assert!(!config.enabled.value);
+}
+
+/// `load_config_sync` returns default config (enabled) when no config file exists,
+/// even for deeply nested file paths.
+#[test]
+fn load_config_sync_returns_defaults_for_deep_file_with_no_config() {
+    let tmp = TempDir::new().unwrap();
+    let deep_file = tmp
+        .path()
+        .join("modules")
+        .join("security")
+        .join("src")
+        .join("capabilities_handler.py");
+    fs::create_dir_all(deep_file.parent().unwrap()).unwrap();
+    fs::write(&deep_file, "def handle(): pass\n").unwrap();
+
+    let fp = FilePath::new(deep_file.to_string_lossy().to_string()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
+    // Default config has enabled: true
+    assert!(config.enabled.value);
+}
+
+/// `load_config_sync` should find the Rust config for a deeply nested file
+/// under crates/.
+#[test]
+fn load_config_sync_finds_rust_config_from_deep_crate_file() {
+    let tmp = TempDir::new().unwrap();
+    fs::write(
+        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        "architecture:\n  enabled: false\n  rules: []\n",
+    )
+    .unwrap();
+    let nested_file = tmp
+        .path()
+        .join("crates")
+        .join("my-crate")
+        .join("src")
+        .join("lib.rs");
+    fs::create_dir_all(nested_file.parent().unwrap()).unwrap();
+    fs::write(&nested_file, "fn main() {}\n").unwrap();
+
+    let fp = FilePath::new(nested_file.to_string_lossy().to_string()).unwrap();
+    let config = make_orchestrator().load_config_sync(&fp);
+    assert!(!config.enabled.value);
 }
 
 #[test]

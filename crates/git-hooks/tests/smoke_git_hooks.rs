@@ -4,7 +4,7 @@
 // Speed: < 5s
 
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 #[tokio::test]
 async fn git_hooks_crate_boots_and_responds() {

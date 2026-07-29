@@ -3,9 +3,9 @@
 // Maps to: FRD Success Indicator #2
 
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
-use shared::common::taxonomy_git_vo::GitBranchName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::common::{FilePath, GitBranchName};
+
+use shared::git_hooks::IDiffProtocol;
 
 /// FRD-002: Diff on empty/non-repo path returns zero changed files
 #[tokio::test]

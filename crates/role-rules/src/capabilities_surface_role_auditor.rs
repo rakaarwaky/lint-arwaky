@@ -1,22 +1,18 @@
 use regex::Regex;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_language_vo::Language as DetLang;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{LintResult, LintResultList};
+
+use shared::common::Language as DetLang;
+use shared::common::{FilePath, Severity};
+
 use shared::common::utility_language_detector::{
     detect_language_info, detect_language_info_from_source,
 };
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::taxonomy_layer_names_vo::layer_surfaces;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_adapter_name_vo::AdapterName;
-use shared::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use shared::taxonomy_definition_vo::LayerDefinition;
-use shared::taxonomy_error_vo::ErrorCode;
-use shared::taxonomy_lint_vo::LocationList;
-use shared::taxonomy_message_vo::LintMessage;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::common::AdapterName;
+use shared::common::{ColumnNumber, LineNumber};
+use shared::common::{ErrorCode, LayerDefinition, LintMessage, LocationList, SourceContentVO};
+use shared::role_rules::layer_surfaces;
+use shared::role_rules::AesRoleViolation;
+use shared::role_rules::ISurfaceRoleChecker;
 
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
 //
@@ -49,25 +45,25 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
     fn check_smart_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_utility_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_passive_surface(
         &self,
         _source: &SourceContentVO,
-        _violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        _violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
     }
     fn check_fn_count_limit(
         &self,
         source: &SourceContentVO,
-        violations: &mut Vec<shared::cli_commands::taxonomy_result_vo::LintResult>,
+        violations: &mut Vec<shared::cli_commands::LintResult>,
     ) {
         let content = source.content.value();
         let file = source.file_path.value();
@@ -93,7 +89,12 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
                         0,
                         "AES406",
                         Severity::HIGH,
-                        AesRoleViolation::SurfaceRoleViolation { reason: None },
+                        AesRoleViolation::SurfaceRoleViolation {
+                            reason: Some(LintMessage::new(format!(
+                                "File {} has too many function declarations (exceeds 15): found {}",
+                                file, count
+                            ))),
+                        },
                     ));
                     return;
                 }
@@ -258,7 +259,12 @@ impl SurfaceRoleChecker {
                 line: LineNumber::new(0),
                 column: ColumnNumber::new(0),
                 code: ErrorCode::raw(code),
-                message: LintMessage::new(AesRoleViolation::NoDomainLogic { reason: None }),
+                message: LintMessage::new(AesRoleViolation::NoDomainLogic {
+                    reason: Some(LintMessage::new(format!(
+                        "Passive surface {} has {} control flow statements (max 3)",
+                        f.value, control_flow_count
+                    ))),
+                }),
                 source: Some(AdapterName::raw("architecture")),
                 severity: Severity::HIGH,
                 enclosing_scope: None,

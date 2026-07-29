@@ -2,13 +2,12 @@
 // Exercises: container → orchestrator → processor → file I/O → result.
 
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
-use shared::common::taxonomy_common_vo::{BooleanVO, Score};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
+
+use shared::common::{BooleanVO, Score};
+use shared::common::{DisplayContent, FilePath, Severity};
+
 use std::io::Write;
 use std::sync::Arc;
 use tempfile::NamedTempFile;

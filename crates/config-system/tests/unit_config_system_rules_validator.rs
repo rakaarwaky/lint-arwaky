@@ -1,11 +1,9 @@
 // Unit tests for ConfigRulesValidator — adapter enablement and threshold validation.
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{Count, Score};
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::taxonomy_setting_vo::{
-    AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
-};
+use shared::common::AdapterName;
+use shared::common::{Count, Score};
+use shared::config_system::IConfigValidatorProtocol;
+use shared::config_system::{AdapterEntry, AdapterStatus, ProjectConfig, Thresholds};
 
 fn make_validator() -> ConfigRulesValidator {
     ConfigRulesValidator::new()

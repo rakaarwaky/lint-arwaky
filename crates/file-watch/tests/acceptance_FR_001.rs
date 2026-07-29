@@ -4,8 +4,7 @@
 use std::time::Duration;
 
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
-use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::file_watch::{IWatchProviderProtocol, WatchConfig};
 
 #[tokio::test]
 async fn frd_001_recursive_watch_detects_nested_file_change() {
@@ -31,20 +30,28 @@ async fn frd_001_recursive_watch_detects_nested_file_change() {
     let nested_file = nested.join("module.rs");
     std::fs::write(&nested_file, "pub fn hello() {}").expect("write nested file");
 
-    // Assert: event received for nested file.
-    let event = tokio::time::timeout(Duration::from_secs(3), rx.recv()).await;
-    match event {
-        Ok(Ok(e)) => {
-            assert!(
-                e.path.contains("module.rs"),
-                "Expected nested file event, got: {}",
-                e.path
-            );
-        }
-        _ => {
-            eprintln!("WARN: Nested event not received (CI inotify delay).");
+    // Assert: event received for nested file within the window.
+    // Drain events for the full timeout — inotify may deliver directory-create
+    // events ahead of the nested file event, so check across all received events.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(3);
+    let mut found = false;
+    while tokio::time::Instant::now() < deadline {
+        match tokio::time::timeout(Duration::from_millis(200), rx.recv()).await {
+            // Event received: check if it's the nested file we created.
+            Ok(Ok(e)) => {
+                if e.path.contains("module.rs") {
+                    found = true;
+                    break;
+                }
+            }
+            // Channel closed (or lagged) — no more events will arrive.
+            Ok(Err(_)) => break,
+            // Timeout: keep polling until the deadline (inotify may deliver
+            // the nested file event after the directory-create event).
+            Err(_) => continue,
         }
     }
+    assert!(found, "Expected nested file event for module.rs");
 
     // Cleanup.
     provider.stop().await.ok();

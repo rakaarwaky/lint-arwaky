@@ -1,12 +1,11 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
+use shared::cli_commands::Format;
+use shared::common::{ExitCode, FilePath};
+
+use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;
 
 pub fn handle_scan_orphan(
@@ -15,7 +14,8 @@ pub fn handle_scan_orphan(
     format: Format,
     orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    filter: Option<String>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -42,7 +42,13 @@ pub fn handle_scan_orphan(
     let workspaces = rt.block_on(config_orchestrator.discover_workspaces(&root_fp));
 
     if workspaces.is_empty() {
-        return scan_single_root(&root, &orphan_orchestrator, &config_orchestrator, format);
+        return scan_single_root(
+            &root,
+            &orphan_orchestrator,
+            &config_orchestrator,
+            format,
+            &filter,
+        );
     }
 
     let workspaces = if let Some(ref member_name) = member {
@@ -91,7 +97,9 @@ pub fn handle_scan_orphan(
             .parse::<ConfigLanguage>()
             .unwrap_or(ConfigLanguage::Rust);
         let ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
-        let (_, results) = orphan_orchestrator.scan_orphans(&ws.path, ignored.values());
+        // Build the orphan analyzer from THIS workspace's real config (layers + enabled)
+        let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&ws.path.value);
+        let (_, results) = orphan_analyzer.scan_orphans(&ws.path, ignored.values());
 
         let filtered: Vec<_> = results
             .into_iter()
@@ -122,6 +130,12 @@ pub fn handle_scan_orphan(
         root.clone()
     };
 
+    // Apply filter by AES rule code
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        all_violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
     output_violations(
         &all_violations,
         &target,
@@ -138,19 +152,27 @@ pub fn handle_scan_orphan(
 
 fn scan_single_root(
     root: &str,
-    orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
+    _orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     format: Format,
+    filter: &Option<String>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
     let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
-    let (_, results) = orphan_orchestrator.scan_orphans(&scan_root, ignored.values());
+    // Build the orphan analyzer from the SCAN target's real config (layers + enabled)
+    let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&scan_root.value);
+    let (_, results) = orphan_analyzer.scan_orphans(&scan_root, ignored.values());
 
-    let violations: Vec<ViolationItem> = results
+    let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
 
     output_violations(&violations, root, format, is_member_path(root));
 

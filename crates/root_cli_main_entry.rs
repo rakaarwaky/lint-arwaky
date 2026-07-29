@@ -92,7 +92,7 @@ fn main() -> ExitCode {
             container.import_orchestrator.clone(),
             container.naming_orchestrator.clone(),
             container.role_orchestrator.clone(),
-            container.orphan_orchestrator.clone(),
+            container.multi_project_orchestrator.clone(),
             path.map(|p| FilePath::new(p).unwrap_or_default()),
             Threshold::new(threshold),
         ),
@@ -134,6 +134,7 @@ fn main() -> ExitCode {
                     container.orphan_orchestrator.clone(),
                     container.multi_project_orchestrator.clone(),
                     container.report_formatter.clone(),
+                    filter.clone(),
                 )
             }
         }
@@ -142,6 +143,7 @@ fn main() -> ExitCode {
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
                 format,
                 container.multi_project_orchestrator.clone(),
+                filter.clone(),
             )
         }
         Commands::ScanImport { path, format } => {
@@ -150,6 +152,7 @@ fn main() -> ExitCode {
                 format,
                 container.import_orchestrator.clone(),
                 container.report_formatter.clone(),
+                filter.clone(),
             )
         }
         Commands::ScanNaming { path, format } => {
@@ -158,6 +161,7 @@ fn main() -> ExitCode {
                 format,
                 container.naming_orchestrator.clone(),
                 container.report_formatter.clone(),
+                filter.clone(),
             )
         }
         Commands::ScanRole { path, format } => cli_commands::surface_role_action::handle_scan_role(
@@ -165,6 +169,7 @@ fn main() -> ExitCode {
             format,
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
+            filter.clone(),
         ),
         Commands::ScanExternal { path, format } => {
             cli_commands::surface_external_action::handle_scan_external(
@@ -172,6 +177,7 @@ fn main() -> ExitCode {
                 format,
                 container.external_lint.clone(),
                 container.report_formatter.clone(),
+                filter.clone(),
             )
         }
         Commands::Security { path } => {

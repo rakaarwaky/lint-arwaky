@@ -1,6 +1,6 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use shared::project_setup::{ISetupManagementProtocol, SetupManagementAggregate};
+
 use std::sync::Arc;
 
 pub struct SetupContainer {

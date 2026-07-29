@@ -1,8 +1,7 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;
-use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::taxonomy_definition_vo::LayerDefinition;
+use shared::cli_commands::LintResult;
+use shared::code_analysis::{AesCodeAnalysisViolation, ILineCheckerProtocol};
+
+use shared::common::{LayerDefinition, LintMessage, Severity};
 
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:
@@ -56,7 +55,12 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 format!(
                     "{} (min: {}).",
-                    AesCodeAnalysisViolation::FileTooShort { reason: None },
+                    AesCodeAnalysisViolation::FileTooShort {
+                        reason: Some(LintMessage::new(format!(
+                            "File has {} lines, less than minimum {} lines",
+                            count, def.code_analysis.min_lines.value
+                        ))),
+                    },
                     def.code_analysis.min_lines.value
                 ),
             ));
@@ -70,7 +74,12 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 format!(
                     "{} (max: {}).",
-                    AesCodeAnalysisViolation::FileTooLarge { reason: None },
+                    AesCodeAnalysisViolation::FileTooLarge {
+                        reason: Some(LintMessage::new(format!(
+                            "File has {} lines, exceeding maximum {} lines",
+                            count, def.code_analysis.max_lines.value
+                        ))),
+                    },
                     def.code_analysis.max_lines.value
                 ),
             ));

@@ -1,17 +1,13 @@
 use async_trait::async_trait;
 use futures::stream::{self, StreamExt};
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::taxonomy_config_error::ConfigError;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use shared::config_system::taxonomy_source_vo::ConfigResult;
-use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::common::{FilePath, PatternList};
+
+use shared::config_system::{
+    ArchitectureConfig, ConfigError, ConfigLanguage, ConfigResult, ConfigSource,
+    IConfigOrchestratorAggregate, IConfigReaderProtocol, IConfigValidatorProtocol,
+    IWorkspaceDetectorProtocol, WorkspaceInfo,
+};
+
 use shared::config_system::utility_config_defaults::default_config_for_language;
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use std::collections::HashMap;
@@ -132,11 +128,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
-        // Search upward for config file (up to 3 levels)
+        // Search upward for config file (up to 5 levels)
         let mut current = root.to_path_buf();
         let mut depth = 0;
         let mut config = None;
-        while !current.as_os_str().is_empty() && depth < 3 {
+        while !current.as_os_str().is_empty() && depth < 5 {
             for filename in language.config_file_names() {
                 let candidate = current.join(filename);
                 if let Ok(content) = std::fs::read_to_string(&candidate) {
@@ -210,6 +206,20 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .config_reader
             .read_config(project_root, language)
             .await
+    }
+
+    fn create_orphan_analyzer(
+        &self,
+        project_root: &str,
+    ) -> Arc<dyn shared::orphan_detector::IOrphanAggregate> {
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let config = self.load_config_sync(&fp);
+        Arc::new(
+            orphan_detector::root_orphan_detector_container::OrphanContainer::new_with_config(
+                config,
+            ),
+        )
+        .analyzer()
     }
 }
 

@@ -66,16 +66,16 @@ Target Path
 
 ### FR-004: Capability Protocol Implementation (AES403)
 
-- **Description**: Audit capability files (`capabilities_*` / `capability_*`) for correct protocol implementation and composition constraints.
+- **Description**: Audit capability files (`capabilities_*` / `capability_*`) for protocol implementation and composition constraints.
 - **Input**: Source content value object (file path + content + language).
 - **Output**: Violations.
 - **Business Rules**:
-  - **Rule 1**: File must import from a protocol module. Violation: "missing protocol import".
-  - **Rule 2**: At least 1 struct/class must implement the imported protocol (`impl Trait for Struct` in Rust, `class Name(Protocol)` in Python, `class Name implements IProtocol` in TS). Violation: "missing protocol implementor".
-  - **Rule 3**: Max 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types".
-  - Internal helper types (structs without protocol impl) are allowed and not flagged.
-- **Edge Cases**: Capability file with protocol import but no implementation (abstract capability) — flagged by Rule 2. File with exactly 3 types — passes Rule 3.
-- **Error Handling**: Files that cannot be parsed for imports/types produce no violations (fail-safe).
+  - **Rule 1**: Max 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip implementor check.
+  - **Rule 2**: At least 1 struct/class must implement a protocol (`impl Trait for Struct` in Rust, `class Name(Parent)` in Python, `class Name implements IProtocol` in TS). Violation: "missing protocol implementor".
+  - Internal helper types (structs/classes without protocol impl) are allowed and not flagged.
+  - **Note**: Protocol import checking is handled by the import-rules crate, not role-rules. This rule only checks implementation, not imports.
+- **Edge Cases**: Capability file with no implementor — flagged by Rule 2. File with exactly 3 types — passes Rule 1. File with >3 types — flagged by Rule 1 only (implementor check skipped).
+- **Error Handling**: Files that cannot be parsed for types produce no violations (fail-safe).
 
 ### FR-005: Utility Purity (AES404)
 
@@ -140,27 +140,28 @@ Target Path
 
 ## API Contract
 
+
 | Function                             | Input                                           | Output                     | Description                           |
-| ------------------------------------ | ----------------------------------------------- | -------------------------- | ------------------------------------- |
+| -------------------------------------- | ------------------------------------------------- | ---------------------------- | --------------------------------------- |
 | Run role enforcement audit           | Target file path                                | Lint results               | Run all role checks on target path    |
-| Get auditor name                     | —                                               | String                     | Returns "role-rules"                  |
-| Dispatch all files to layer checkers | File list, lint result collector                | —                          | Dispatch all files to layer checkers  |
-| Taxonomy entity primitive check      | Source content, lint result collector           | —                          | AES401 entity primitive check         |
-| Taxonomy error primitive check       | Source content, lint result collector           | —                          | AES401 error primitive check          |
-| Taxonomy event primitive check       | Source content, lint result collector           | —                          | AES401 event primitive check          |
-| Taxonomy constant purity check       | Source content, lint result collector           | —                          | AES401 constant purity check          |
+| Get auditor name                     | —                                              | String                     | Returns "role-rules"                  |
+| Dispatch all files to layer checkers | File list, lint result collector                | —                         | Dispatch all files to layer checkers  |
+| Taxonomy entity primitive check      | Source content, lint result collector           | —                         | AES401 entity primitive check         |
+| Taxonomy error primitive check       | Source content, lint result collector           | —                         | AES401 error primitive check          |
+| Taxonomy event primitive check       | Source content, lint result collector           | —                         | AES401 event primitive check          |
+| Taxonomy constant purity check       | Source content, lint result collector           | —                         | AES401 constant purity check          |
 | Contract protocol primitive check    | Source content                                  | Lint results               | AES402 protocol primitive check       |
 | Contract aggregate primitive check   | Source content                                  | Lint results               | AES402 aggregate primitive check      |
-| Capability composition check         | Source content, root dir, lint result collector | —                          | AES403 capability composition check   |
-| Utility purity check                 | Source content, lint result collector           | —                          | AES404 utility purity check           |
-| Agent composition check              | Source content, root dir, lint result collector | —                          | AES405 agent composition check        |
-| Surface global function count        | Source content, lint result collector           | —                          | AES406 global function count          |
-| Smart surface checks                 | Source content, lint result collector           | —                          | AES406 smart surface checks           |
-| Utility surface checks               | Source content, lint result collector           | —                          | AES406 utility surface checks         |
-| Passive surface checks               | Source content, lint result collector           | —                          | AES406 passive surface checks         |
+| Capability composition check         | Source content, root dir, lint result collector | —                         | AES403 capability composition check   |
+| Utility purity check                 | Source content, lint result collector           | —                         | AES404 utility purity check           |
+| Agent composition check              | Source content, root dir, lint result collector | —                         | AES405 agent composition check        |
+| Surface global function count        | Source content, lint result collector           | —                         | AES406 global function count          |
+| Smart surface checks                 | Source content, lint result collector           | —                         | AES406 smart surface checks           |
+| Utility surface checks               | Source content, lint result collector           | —                         | AES406 utility surface checks         |
+| Passive surface checks               | Source content, lint result collector           | —                         | AES406 passive surface checks         |
 | Create DI container with config      | Architecture configuration                      | Role enforcement container | DI container with config              |
 | Create DI from config orchestrator   | Config orchestrator reference, root dir         | Role enforcement container | Canonical DI from config orchestrator |
-| Expose orchestrator                  | —                                               | Role runner aggregate      | Expose orchestrator as trait object   |
+| Expose orchestrator                  | —                                              | Role runner aggregate      | Expose orchestrator as trait object   |
 
 ## Integration Points
 
@@ -184,30 +185,30 @@ Target Path
 
 ## Test Scenarios / QA Checklist
 
-- [ ] AES401: Taxonomy entity file with `String` field — violation reported at exact line.
-- [ ] AES401: Taxonomy entity file with custom value object field — no violation (custom VO, not primitive).
-- [ ] AES401: Taxonomy constant file with constant declaration only — no violation.
-- [ ] AES401: Taxonomy constant file with function definition — violation (function in constant file).
-- [ ] AES402: Contract protocol with `String` in method signature — violation.
-- [ ] AES402: Contract protocol with custom value object in method signature — no violation.
-- [ ] AES402: Contract aggregate with zero methods — no violations.
-- [ ] AES403: Capability file with no protocol import — missing protocol import violation.
-- [ ] AES403: Capability file with protocol import but no implementor — missing protocol implementor violation.
-- [ ] AES403: Capability file with 4 type declarations — too many types violation.
-- [ ] AES403: Capability file with 3 types including helper struct — passes (helper not counted if no protocol impl).
-- [ ] AES404: Utility file with struct definition — violation.
-- [ ] AES404: Utility file with only function definitions — no violation.
-- [ ] AES404: Utility file with struct inside comment — noise stripped, no violation.
-- [ ] AES405: Agent file with no aggregate import — missing aggregate import violation.
-- [ ] AES405: Agent file with aggregate import but no implementor — missing aggregate implementor violation.
-- [ ] AES406: Smart surface with 16 functions — violation (global limit applies).
-- [ ] AES406: Passive surface with 11 public methods in one class — violation.
-- [ ] AES406: Utility surface with 4 control-flow statements — domain logic violation.
-- [ ] AES406: Smart surface with control-flow statements — no domain logic violation (exempt).
-- [ ] Root layer file — completely skipped, zero violations.
-- [ ] Config disabled — zero violations for entire scan.
-- [ ] Config with `ignored_paths: ["test/"]` — test directory files produce no violations.
-- [ ] Multi-language workspace: same rule applied correctly across Rust, Python, TS files.
+- [ ]  AES401: Taxonomy entity file with `String` field — violation reported at exact line.
+- [ ]  AES401: Taxonomy entity file with custom value object field — no violation (custom VO, not primitive).
+- [ ]  AES401: Taxonomy constant file with constant declaration only — no violation.
+- [ ]  AES401: Taxonomy constant file with function definition — violation (function in constant file).
+- [ ]  AES402: Contract protocol with `String` in method signature — violation.
+- [ ]  AES402: Contract protocol with custom value object in method signature — no violation.
+- [ ]  AES402: Contract aggregate with zero methods — no violations.
+- [ ]  AES403: Capability file with no protocol import — missing protocol import violation.
+- [ ]  AES403: Capability file with protocol import but no implementor — missing protocol implementor violation.
+- [ ]  AES403: Capability file with 4 type declarations — too many types violation.
+- [ ]  AES403: Capability file with 3 types including helper struct — passes (helper not counted if no protocol impl).
+- [ ]  AES404: Utility file with struct definition — violation.
+- [ ]  AES404: Utility file with only function definitions — no violation.
+- [ ]  AES404: Utility file with struct inside comment — noise stripped, no violation.
+- [ ]  AES405: Agent file with no aggregate import — missing aggregate import violation.
+- [ ]  AES405: Agent file with aggregate import but no implementor — missing aggregate implementor violation.
+- [ ]  AES406: Smart surface with 16 functions — violation (global limit applies).
+- [ ]  AES406: Passive surface with 11 public methods in one class — violation.
+- [ ]  AES406: Utility surface with 4 control-flow statements — domain logic violation.
+- [ ]  AES406: Smart surface with control-flow statements — no domain logic violation (exempt).
+- [ ]  Root layer file — completely skipped, zero violations.
+- [ ]  Config disabled — zero violations for entire scan.
+- [ ]  Config with `ignored_paths: ["test/"]` — test directory files produce no violations.
+- [ ]  Multi-language workspace: same rule applied correctly across Rust, Python, TS files.
 
 ## Assumptions & Constraints
 
@@ -220,15 +221,16 @@ Target Path
 
 ## Glossary
 
+
 | Term                | Definition                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------ |
-| **AES**             | Architecture Enforcement Standard — the 7-layer coding convention                                |
-| **Smart surface**   | Surface with `_command`, `_controller`, `_page`, `_entry` suffix — may contain orchestration     |
-| **Utility surface** | Surface with `_hook`, `_store`, `_action`, `_screen`, `_router` suffix — supports smart surfaces |
-| **Passive surface** | Any surface file not classified as Smart or Utility — presentation-only                          |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| **AES**             | Architecture Enforcement Standard — the 7-layer coding convention                               |
+| **Smart surface**   | Surface with`_command`, `_controller`, `_page`, `_entry` suffix — may contain orchestration     |
+| **Utility surface** | Surface with`_hook`, `_store`, `_action`, `_screen`, `_router` suffix — supports smart surfaces |
+| **Passive surface** | Any surface file not classified as Smart or Utility — presentation-only                         |
 | **Primitive type**  | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures              |
 | **Noise stripping** | Removal of comments, docstrings, macros, and template literals before rule checking              |
-| **VO**              | Value Object — a typed wrapper around a primitive that replaces raw types in signatures          |
+| **VO**              | Value Object — a typed wrapper around a primitive that replaces raw types in signatures         |
 
 ## Reference
 

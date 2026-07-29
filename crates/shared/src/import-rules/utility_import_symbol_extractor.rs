@@ -134,7 +134,18 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
         if trimmed.starts_with("from ") && trimmed.contains(" import ") {
             if let Some((from_part, import_part)) = trimmed.split_once(" import ") {
                 let module = from_part[5..].trim();
-                for name in import_part.split(',') {
+
+                // Skip __future__ imports — compiler directives, not real imports
+                if module == "__future__" {
+                    continue;
+                }
+
+                // Strip structural parentheses from multi-line imports: `from X import (A, B)`
+                let import_body = import_part.trim().trim_matches(|c| c == '(' || c == ')');
+                if import_body.is_empty() {
+                    continue;
+                }
+                for name in import_body.split(',') {
                     let name = name.trim();
                     if name.is_empty() || name == "*" {
                         continue;
@@ -210,6 +221,26 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
             continue;
         }
 
+        // TypeScript/JavaScript: `export { A, B } from './module'` (re-export)
+        if trimmed.starts_with("export ") && trimmed.contains(" from ") {
+            if let Some(brace_start) = trimmed.find('{') {
+                if let Some(brace_end) = trimmed.find('}') {
+                    let inner = &trimmed[brace_start + 1..brace_end];
+                    for part in inner.split(',') {
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+                        let name = part.split(" as ").last().unwrap_or(part).trim();
+                        if !name.is_empty() {
+                            aliases.insert(Identity::new(name), Identity::new(name));
+                        }
+                    }
+                }
+            }
+            continue;
+        }
+
         // JavaScript: `const X = require('Y')` or `const { A, B } = require('Y')`
         if let Some(rest) = trimmed.strip_prefix("const ") {
             if let Some(eq_pos) = rest.find('=') {
@@ -249,8 +280,103 @@ pub fn extract_imported_aliases(content: &str) -> HashMap<Identity, Identity> {
     aliases
 }
 
+/// Extract exported symbols from file content.
+/// Backward-compatible wrapper that calls `extract_exported_symbols_for_file` with an empty path.
 pub fn extract_exported_symbols(content: &str) -> HashSet<Identity> {
+    extract_exported_symbols_for_file(content, "")
+}
+
+/// File-aware exported symbol extraction.
+///
+/// Detects symbols that are explicitly exported or re-exported from a file.
+/// This prevents barrel files (`__init__.py`, `index.ts`, `mod.rs`) from having
+/// their re-exported symbols flagged as "unused" (AES203).
+///
+/// Handles:
+/// - Python `__all__ = [...]`
+/// - Python `__init__.py` re-exports: `from .module import X`
+/// - TS/JS re-exports: `export { X } from './module'`
+/// - Rust re-exports: `pub use module::X;`
+pub fn extract_exported_symbols_for_file(content: &str, file_path: &str) -> HashSet<Identity> {
     let mut exported = HashSet::new();
+
+    let is_init_py = file_path.ends_with("__init__.py");
+
+    // ── Python __init__.py: `from .module import X` is a re-export ──
+    if is_init_py {
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("from ") && trimmed.contains(" import ") {
+                if let Some((_, import_part)) = trimmed.split_once(" import ") {
+                    let import_body = import_part.trim().trim_matches(|c| c == '(' || c == ')');
+                    if import_body.is_empty() {
+                        continue;
+                    }
+                    for name in import_body.split(',') {
+                        let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                        if !name.is_empty() && name != "*" {
+                            exported.insert(Identity::new(name));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── TS/JS: `export { X } from './module'` ──
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("export ") && trimmed.contains(" from ") {
+            if let Some(brace_start) = trimmed.find('{') {
+                if let Some(brace_end) = trimmed.find('}') {
+                    let inner = &trimmed[brace_start + 1..brace_end];
+                    for part in inner.split(',') {
+                        let part = part.trim();
+                        if part.is_empty() {
+                            continue;
+                        }
+                        let name = part.split(" as ").last().unwrap_or(part).trim();
+                        if !name.is_empty() {
+                            exported.insert(Identity::new(name));
+                        }
+                    }
+                }
+            }
+            // export * from './module' → wildcard, mark all as exported
+            if trimmed.contains("export *") {
+                exported.insert(Identity::new("*"));
+            }
+        }
+    }
+
+    // ── Rust: `pub use module::X;` or `pub use module::{A, B};` ──
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with("pub use ") || trimmed.starts_with("pub(crate) use ") {
+            let use_part = trimmed
+                .trim_start_matches("pub(crate) use ")
+                .trim_start_matches("pub use ")
+                .trim_end_matches(';')
+                .trim();
+
+            if let Some(brace_pos) = use_part.find("::{") {
+                let inner = use_part[brace_pos + 3..].trim_end_matches('}');
+                for name in inner.split(',') {
+                    let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                    if !name.is_empty() && name != "*" {
+                        exported.insert(Identity::new(name));
+                    }
+                }
+            } else {
+                let name = use_part.rsplit("::").next().unwrap_or("").trim();
+                if !name.is_empty() && name != "*" {
+                    exported.insert(Identity::new(name));
+                }
+            }
+        }
+    }
+
+    // ── Python __all__ ──
     let code_lines = content
         .lines()
         .filter(|l| !l.trim().starts_with('#'))
@@ -269,6 +395,7 @@ pub fn extract_exported_symbols(content: &str) -> HashSet<Identity> {
             }
         }
     }
+
     exported
 }
 

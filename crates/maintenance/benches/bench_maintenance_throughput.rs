@@ -2,7 +2,7 @@
 // Layer: Benchmark (criterion, runs at release gate / nightly).
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
     MaintenanceCommandsOrchestrator, MaintenanceDeps,
 };
@@ -20,7 +20,7 @@ fn bench_orchestrator_instantiation(c: &mut Criterion) {
             b.iter(|| {
                 for _ in 0..count {
                     let checker = Arc::new(MaintenanceChecker::new());
-                    black_box(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
+                    std::hint::black_box(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
                         checker,
                     }));
                 }
@@ -40,7 +40,7 @@ fn bench_checker_instantiation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(MaintenanceChecker::new());
+                    std::hint::black_box(MaintenanceChecker::new());
                 }
             });
         });

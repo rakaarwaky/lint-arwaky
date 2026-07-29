@@ -2,12 +2,10 @@
 // Creates a multi-file workspace, runs the full orchestrator, asserts on real output.
 
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::{BooleanVO, Count, PatternList};
+use shared::common::{FilePath, FilePathList, LayerDefinition, LayerNameVO};
+
+use shared::config_system::ArchitectureConfig;
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -92,23 +90,29 @@ pub enum Severity { Low, Medium, High, Critical }
         src,
         "capabilities_severity_checker.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::import_rules::contract_import_mandatory_protocol::IMandatoryImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
+use shared::common::{
+    FilePath,
+    LintMessage,
+};
+
+use shared::cli_commands::LintResult;
 
 pub struct SeverityChecker;
 
 impl IUnusedImportProtocol for SeverityChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {
         let content = std::fs::read_to_string(path.value()).unwrap_or_default();
-        if content.is_empty() { return vec![]; }
-        vec![LintMessage::new("scanned")]
+        if content.is_empty() { return Ok(vec![]); }
+        Ok(vec![LintMessage::new("scanned")])
     }
-    fn check_unused_imports(&self, file: &str, content: &str, v: &mut Vec<LintResult>) {
+    fn check_unused_imports(&self, file: &str, content: &str) -> Result<Vec<LintResult>, shared::import_rules::taxonomy_import_error::ImportError> {
         if content.contains("unused") {
-            v.push(LintResult::new_arch(file, 1, "AES203",
-                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import"));
+            Ok(vec![LintResult::new_arch(file, 1, "AES203",
+                shared::common::taxonomy_severity_vo::Severity::MEDIUM, "unused import")])
+        } else {
+            Ok(Vec::new())
         }
     }
 }
@@ -120,7 +124,7 @@ impl IUnusedImportProtocol for SeverityChecker {
         src,
         "agent_severity_orchestrator.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 use std::sync::Arc;
 
 pub struct SeverityOrchestrator {
@@ -168,7 +172,7 @@ pub struct Bad;
         src,
         "capabilities_good.rs",
         r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 pub struct Good;
 "#,
     );
@@ -196,7 +200,7 @@ async fn full_audit_detects_unused_and_dummy_together() {
         "capabilities_messy.rs",
         r#"
 use std::collections::HashMap;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");

@@ -2,10 +2,10 @@
 // Tests dummy function detection, dummy impl detection, taxonomy intent, surface logic.
 
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::common::{ContentString, FilePath};
+
+use shared::common::LayerMapVO;
+use shared::import_rules::IDummyImportCheckerProtocol;
 
 fn sut() -> DummyImportChecker {
     DummyImportChecker::new()
@@ -24,7 +24,7 @@ fn root_dir() -> FilePath {
 #[test]
 fn detects_rust_dummy_function() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -36,9 +36,9 @@ fn real_logic() {
 "#;
     let file = FilePath::new("capabilities_test_checker.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_functions(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -57,9 +57,9 @@ fn real_function() {
 "#;
     let file = FilePath::new("capabilities_real.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_functions(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         violations.is_empty(),
@@ -80,9 +80,9 @@ def real_logic():
 "#;
     let file = FilePath::new("capabilities_test_checker.py").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_functions(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -95,7 +95,7 @@ def real_logic():
 #[test]
 fn detects_empty_trait_impl() {
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 struct MyChecker;
 
@@ -110,9 +110,9 @@ impl IUnusedImportProtocol for MyChecker {
 "#;
     let file = FilePath::new("capabilities_stub.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_impls(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -123,7 +123,7 @@ impl IUnusedImportProtocol for MyChecker {
 #[test]
 fn real_trait_impl_not_flagged() {
     let content = r#"
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::IUnusedImportProtocol;
 
 struct MyChecker;
 
@@ -142,9 +142,9 @@ impl IUnusedImportProtocol for MyChecker {
 "#;
     let file = FilePath::new("capabilities_real_impl.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_impls(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         violations.is_empty(),
@@ -157,7 +157,7 @@ impl IUnusedImportProtocol for MyChecker {
 #[test]
 fn import_only_used_in_dummy_function_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn _use_mandatory_imports() {
     let _ = FilePath::new("x");
@@ -169,9 +169,9 @@ fn real_logic() {
 "#;
     let file = FilePath::new("capabilities_dummy_import.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_imports(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -182,7 +182,7 @@ fn real_logic() {
 #[test]
 fn import_used_in_real_logic_not_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 
 fn real_logic() {
     let path = FilePath::new("real/path.rs").unwrap();
@@ -191,9 +191,9 @@ fn real_logic() {
 "#;
     let file = FilePath::new("capabilities_real_usage.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_imports(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         violations.is_empty(),
@@ -213,9 +213,9 @@ fn handle_command() {
 "#;
     let file = FilePath::new("surface_command_handler.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_surface_logic(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -233,9 +233,9 @@ fn handle_command() {
 "#;
     let file = FilePath::new("surface_command_handler.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_surface_logic(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         violations.is_empty(),
@@ -248,17 +248,17 @@ fn handle_command() {
 #[test]
 fn taxonomy_import_only_in_dummy_flagged() {
     let content = r#"
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 
 fn _use_mandatory_imports() {
-    let _ = FilePath::new("x");
+    let _ = Severity::MEDIUM;
 }
 "#;
     let file = FilePath::new("surface_view.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_taxonomy_intent(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_taxonomy_intent(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     assert!(
         !violations.is_empty(),
@@ -277,9 +277,9 @@ fn _use_mandatory_imports() {
 "#;
     let file = FilePath::new("capabilities_x.rs").unwrap();
     let cs = ContentString::new(content.to_string());
-    let mut violations = Vec::new();
-
-    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    let violations = sut()
+        .check_dummy_functions(&file, &cs, &root_dir(), &empty_layer_map())
+        .unwrap();
 
     for v in &violations {
         assert_eq!(v.code.code(), "AES204");
@@ -293,11 +293,26 @@ fn empty_content_no_violations() {
     let file = FilePath::new("capabilities_empty.rs").unwrap();
     let cs = ContentString::new(String::new());
     let mut violations = Vec::new();
-
-    sut().check_dummy_functions(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
-    sut().check_dummy_impls(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
-    sut().check_dummy_imports(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
-    sut().check_surface_logic(&file, &cs, &mut violations, &root_dir(), &empty_layer_map());
+    violations.extend(
+        sut()
+            .check_dummy_functions(&file, &cs, &root_dir(), &empty_layer_map())
+            .unwrap(),
+    );
+    violations.extend(
+        sut()
+            .check_dummy_impls(&file, &cs, &root_dir(), &empty_layer_map())
+            .unwrap(),
+    );
+    violations.extend(
+        sut()
+            .check_dummy_imports(&file, &cs, &root_dir(), &empty_layer_map())
+            .unwrap(),
+    );
+    violations.extend(
+        sut()
+            .check_surface_logic(&file, &cs, &root_dir(), &empty_layer_map())
+            .unwrap(),
+    );
 
     assert!(violations.is_empty());
 }

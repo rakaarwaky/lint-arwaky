@@ -1,5 +1,5 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::project_setup::contract_tool_executor_protocol::{IToolExecutorProtocol, ToolOutput};
+use shared::common::FilePath;
+use shared::project_setup::{IToolExecutorProtocol, ToolOutput};
 
 // PURPOSE: ToolExecutorAdapter — IToolExecutorProtocol implementation for running external tools
 use std::process::Command;

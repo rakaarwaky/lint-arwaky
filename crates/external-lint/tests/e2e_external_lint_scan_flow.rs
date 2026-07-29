@@ -3,7 +3,7 @@
 // External tools may not be installed; the system must handle that gracefully.
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 use std::fs;
 
 #[tokio::test]

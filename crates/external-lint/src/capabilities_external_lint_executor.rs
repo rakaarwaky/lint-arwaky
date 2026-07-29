@@ -3,17 +3,14 @@
 
 use std::sync::Arc;
 
-use shared::code_analysis::taxonomy_operation_error::LinterOperationError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_adapter_error::{AdapterError, ScanError};
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::code_analysis::LinterOperationError;
+use shared::common::ICommandExecutorProtocol;
+use shared::common::{AdapterError, ScanError};
+use shared::common::{
+    AdapterName, ComplianceStatus, ErrorMessage, FilePath, PatternList, ResponseData, Timeout,
+};
+
+use shared::external_lint::IExternalLintExecutorProtocol;
 
 use shared::external_lint::utility_external_lint::{
     canonicalize_path, resolve_js_cmd, resolve_js_working_dir,

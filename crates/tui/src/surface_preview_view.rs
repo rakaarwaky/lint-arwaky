@@ -13,7 +13,7 @@ use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
 use ratatui::Frame;
-use shared::tui::taxonomy_state_vo::{AppState, PanelFocus, PreviewMode};
+use shared::tui::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;
 

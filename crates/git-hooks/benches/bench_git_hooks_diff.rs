@@ -4,7 +4,7 @@
 // Speed: s–min (release gate / nightly)
 // Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -18,7 +18,7 @@ fn bench_get_default_branch(c: &mut Criterion) {
     group.sample_size(30);
 
     group.bench_function("check", |b| {
-        b.iter(|| black_box(rt.block_on(checker.get_default_branch(&path))))
+        b.iter(|| std::hint::black_box(rt.block_on(checker.get_default_branch(&path))))
     });
 }
 
@@ -31,7 +31,7 @@ fn bench_get_changed_files(c: &mut Criterion) {
     group.sample_size(30);
 
     group.bench_function("check", |b| {
-        b.iter(|| black_box(rt.block_on(checker.get_changed_files(&path, &branch))))
+        b.iter(|| std::hint::black_box(rt.block_on(checker.get_changed_files(&path, &branch))))
     });
 }
 
@@ -43,7 +43,7 @@ fn bench_get_diff(c: &mut Criterion) {
     group.sample_size(30);
 
     group.bench_function("check", |b| {
-        b.iter(|| black_box(rt.block_on(checker.get_diff(&path))))
+        b.iter(|| std::hint::black_box(rt.block_on(checker.get_diff(&path))))
     });
 }
 
@@ -55,7 +55,7 @@ fn bench_run_git_diff_check(c: &mut Criterion) {
     group.sample_size(30);
 
     group.bench_function("check", |b| {
-        b.iter(|| black_box(rt.block_on(checker.run_git_diff_check(&path))))
+        b.iter(|| std::hint::black_box(rt.block_on(checker.run_git_diff_check(&path))))
     });
 }
 
@@ -68,7 +68,7 @@ fn bench_container_construction(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    black_box(
+                    std::hint::black_box(
                         git_hooks_lint_arwaky::root_git_hooks_container::GitContainer::new_default(
                         ),
                     );

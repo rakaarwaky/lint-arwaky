@@ -11,11 +11,11 @@
 //        - Python: class ClassName(, def function_name(
 //     4. Flag violation if any found
 
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::cli_commands::LintResult;
+use shared::common::Severity;
+use shared::role_rules::{AesRoleViolation, IUtilityRoleChecker};
+
+use shared::common::SourceContentVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -269,7 +269,13 @@ impl UtilityRoleChecker {
     fn _check_python_utility(&self, content: &str, file: &str, violations: &mut Vec<LintResult>) {
         let stripped = Self::python_strip_comments_docstrings(content);
 
-        if stripped.contains("class ") || stripped.contains("def ") {
+        let has_class_or_def = stripped.lines().any(|l| {
+            let trimmed = l.trim();
+            // Only flag if `class ` or `def ` appears at the START of a line
+            // (not inside string literals or variable names)
+            trimmed.starts_with("class ") || trimmed.starts_with("def ")
+        });
+        if has_class_or_def {
             violations.push(LintResult::new_arch(
                 file,
                 0,

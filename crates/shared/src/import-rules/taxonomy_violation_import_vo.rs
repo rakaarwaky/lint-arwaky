@@ -57,70 +57,71 @@ impl fmt::Display for AesImportViolation {
                         String::new(),
                     )
                 };
-                let dynamic_why = match reason {
-                    Some(r) => r.to_string(),
-                    None => {
-                        let src = source_layer.value();
-                        if src == "taxonomy(vo)" {
-                            "Taxonomy Value Objects (VO) must remain completely pure and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
-                        } else if src == "taxonomy(entity)"
-                            || src == "taxonomy(error)"
-                            || src == "taxonomy(event)"
-                        {
-                            "Taxonomy Entities, Errors, and Events can only import taxonomy VOs/constants and are forbidden from importing agents, surfaces, contracts, utility, or capabilities.".to_string()
-                        } else if src == "taxonomy(constant)" {
-                            "Taxonomy Constants must remain pure static value declarations and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
-                        } else if src == "contract(protocol)" {
-                            "Contract Protocols represent pure interface definitions and are forbidden from importing agents, surfaces, capabilities, utility, aggregates, or root components.".to_string()
-                        } else if src == "contract(aggregate)" {
-                            "Contract Aggregates represent high-level composition/DI contracts and must not import agents, surfaces, capabilities, utility, or root components.".to_string()
-                        } else if src == "utility" {
-                            "Utility files contain stateless standalone functions and must only import taxonomy. They cannot import agents, surfaces, contracts, capabilities, or root components.".to_string()
-                        } else if src == "capabilities" {
-                            "Capabilities implement domain business logic and must never depend on agents, UI/surfaces, or other capabilities.".to_string()
-                        } else if src == "agent(container)" {
-                            "Agent Containers handle dependency injection and are forbidden from importing UI/surfaces or root components.".to_string()
-                        } else if src == "agent(orchestrator)" {
-                            "Agent Orchestrators coordinate flows and are forbidden from importing UI/surfaces, capabilities, or root components.".to_string()
-                        } else if src == "agent(lifecycle)" {
-                            "Agent Lifecycles manage agent states and are forbidden from importing orchestrators/containers, capabilities, surfaces, or root components.".to_string()
-                        } else if src == "surfaces(command)"
-                            || src == "surfaces(controller)"
-                            || src == "surfaces(page)"
-                            || src == "surfaces(entry)"
-                        {
-                            "Smart Surfaces act as user/CLI entry points and must never import agents, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).".to_string()
-                        } else if src == "surfaces(hook)"
-                            || src == "surfaces(store)"
-                            || src == "surfaces(action)"
-                            || src == "surfaces(screen)"
-                            || src == "surfaces(router)"
-                        {
-                            "Surface utility components (hooks, stores, routers) manage local state and must never import agents, capabilities, or ports/protocols.".to_string()
-                        } else if src == "surfaces(component)"
-                            || src == "surfaces(view)"
-                            || src == "surfaces(layout)"
-                        {
-                            "Passive Surface components (views, layouts) render UI and are forbidden from importing agents, contracts, capabilities, or smart surfaces.".to_string()
-                        } else if src.starts_with("taxonomy") {
-                            "Taxonomy must remain pure and free from framework/layer dependencies to ensure domain model integrity.".to_string()
-                        } else if src.starts_with("contract") {
-                            "Contract interfaces represent pure specifications and must not depend on capabilities, utility, or agent implementations.".to_string()
-                        } else if src.starts_with("agent") {
-                            "Agent orchestrators and containers must never depend on the UI/surface layer to maintain clean separation of concerns.".to_string()
-                        } else if src.starts_with("surfaces") {
-                            "Surfaces are external I/O boundaries and must never bypass contract aggregates to depend on capabilities, agent internals, or utility.".to_string()
-                        } else {
-                            format!("Layer '{}' must not depend on '{}' to maintain architectural boundaries.", source_layer, forbidden_layer)
-                        }
+                let dynamic_why = {
+                    let src = source_layer.value();
+                    if src == "taxonomy(vo)" {
+                        "Taxonomy Value Objects (VO) must remain completely pure and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
+                    } else if src == "taxonomy(entity)"
+                        || src == "taxonomy(error)"
+                        || src == "taxonomy(event)"
+                    {
+                        "Taxonomy Entities, Errors, and Events can only import taxonomy VOs/constants and are forbidden from importing agents, surfaces, contracts, utility, or capabilities.".to_string()
+                    } else if src == "taxonomy(constant)" {
+                        "Taxonomy Constants must remain pure static value declarations and cannot import agents, surfaces, contracts, utility, capabilities, or root components.".to_string()
+                    } else if src == "contract(protocol)" {
+                        "Contract Protocols represent pure interface definitions and are forbidden from importing agents, surfaces, capabilities, utility, aggregates, or root components.".to_string()
+                    } else if src == "contract(aggregate)" {
+                        "Contract Aggregates represent high-level composition/DI contracts and must not import agents, surfaces, capabilities, utility, or root components.".to_string()
+                    } else if src == "utility" {
+                        "Utility files contain stateless standalone functions and must only import taxonomy. They cannot import agents, surfaces, contracts, capabilities, or root components.".to_string()
+                    } else if src == "capabilities" {
+                        "Capabilities implement domain business logic and must never depend on agents, UI/surfaces, or other capabilities.".to_string()
+                    } else if src == "agent(container)" {
+                        "Agent Containers handle dependency injection and are forbidden from importing UI/surfaces or root components.".to_string()
+                    } else if src == "agent(orchestrator)" {
+                        "Agent Orchestrators coordinate flows and are forbidden from importing UI/surfaces, capabilities, or root components.".to_string()
+                    } else if src == "agent(lifecycle)" {
+                        "Agent Lifecycles manage agent states and are forbidden from importing orchestrators/containers, capabilities, surfaces, or root components.".to_string()
+                    } else if src == "surfaces(command)"
+                        || src == "surfaces(controller)"
+                        || src == "surfaces(page)"
+                        || src == "surfaces(entry)"
+                    {
+                        "Smart Surfaces act as user/CLI entry points and must never import agents, capabilities, or ports/protocols directly (must use ServiceContainerAggregate).".to_string()
+                    } else if src == "surfaces(hook)"
+                        || src == "surfaces(store)"
+                        || src == "surfaces(action)"
+                        || src == "surfaces(screen)"
+                        || src == "surfaces(router)"
+                    {
+                        "Surface utility components (hooks, stores, routers) manage local state and must never import agents, capabilities, or ports/protocols.".to_string()
+                    } else if src == "surfaces(component)"
+                        || src == "surfaces(view)"
+                        || src == "surfaces(layout)"
+                    {
+                        "Passive Surface components (views, layouts) render UI and are forbidden from importing agents, contracts, capabilities, or smart surfaces.".to_string()
+                    } else if src.starts_with("taxonomy") {
+                        "Taxonomy must remain pure and free from framework/layer dependencies to ensure domain model integrity.".to_string()
+                    } else if src.starts_with("contract") {
+                        "Contract interfaces represent pure specifications and must not depend on capabilities, utility, or agent implementations.".to_string()
+                    } else if src.starts_with("agent") {
+                        "Agent orchestrators and containers must never depend on the UI/surface layer to maintain clean separation of concerns.".to_string()
+                    } else if src.starts_with("surfaces") {
+                        "Surfaces are external I/O boundaries and must never bypass contract aggregates to depend on capabilities, agent internals, or utility.".to_string()
+                    } else {
+                        format!("Layer '{}' must not depend on '{}' to maintain architectural boundaries.", source_layer, forbidden_layer)
                     }
+                };
+                let supplement = match reason.as_ref() {
+                    Some(r) => format!("\n  Context: {}", r),
+                    None => String::new(),
                 };
                 write!(
                     f,
                     "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                        WHY? {}\n\
+                        WHY? {}{}\n\
                         FIX: Remove the import or refactor to use one of the allowed layers: [{}]{}",
-                    source_layer, forbidden_layer, dynamic_why, allowed_str, fix_extra
+                    source_layer, forbidden_layer, dynamic_why, supplement, allowed_str, fix_extra
                 )
             }
             AesImportViolation::MissingImport {

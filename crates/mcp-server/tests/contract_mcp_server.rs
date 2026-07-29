@@ -3,7 +3,7 @@
 
 use mcp_server_lint_arwaky::agent_mcp_server_orchestrator::McpServerOrchestrator;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use shared::mcp_server::contract_mcp_server_aggregate::IMcpServerAggregate;
+use shared::mcp_server::IMcpServerAggregate;
 
 // ─── Contract: McpServerOrchestrator implements IMcpServerAggregate ───
 

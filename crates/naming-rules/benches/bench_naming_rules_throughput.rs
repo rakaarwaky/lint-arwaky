@@ -2,7 +2,7 @@
 // Layer: Benchmark
 // NFR: Check 1000 files in < 1 second
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
@@ -95,7 +95,7 @@ fn bench_naming_convention_checker(c: &mut Criterion) {
                         checker
                             .check_file_naming(&config, &layer_map, files, &root, &mut results)
                             .await;
-                        black_box(results)
+                        std::hint::black_box(results)
                     })
                 });
             },
@@ -129,7 +129,7 @@ fn bench_suffix_prefix_checker(c: &mut Criterion) {
                         checker
                             .check_domain_suffixes(&config, &layer_map, files, &root, &mut results)
                             .await;
-                        black_box(results)
+                        std::hint::black_box(results)
                     })
                 });
             },
@@ -176,7 +176,7 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
                         .await;
 
                     naming_results.values.extend(suffix_results.values);
-                    black_box(naming_results)
+                    std::hint::black_box(naming_results)
                 })
             });
         });
@@ -206,7 +206,7 @@ fn bench_sequential_vs_parallel(c: &mut Criterion) {
                     );
 
                     naming_results.values.extend(suffix_results.values);
-                    black_box(naming_results)
+                    std::hint::black_box(naming_results)
                 })
             });
         });
@@ -258,7 +258,7 @@ fn bench_throughput_files_per_second(c: &mut Criterion) {
                         );
 
                         naming_results.values.extend(suffix_results.values);
-                        black_box(naming_results)
+                        std::hint::black_box(naming_results)
                     })
                 });
             },
@@ -310,7 +310,7 @@ fn bench_invalid_names_overhead(c: &mut Criterion) {
                         );
 
                         naming_results.values.extend(suffix_results.values);
-                        black_box(naming_results)
+                        std::hint::black_box(naming_results)
                     })
                 });
             },

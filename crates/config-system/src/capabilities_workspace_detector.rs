@@ -1,7 +1,6 @@
 use async_trait::async_trait;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
+use shared::common::FilePath;
+use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -30,7 +29,16 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
         let mut current = path_buf;
         let mut depth = 0;
-        while !current.as_os_str().is_empty() && depth < 2 {
+        while !current.as_os_str().is_empty() && depth < 5 {
+            // Check for workspace directory markers (modules, packages, crates) in parent chain
+            if let Some(parent) = current.parent() {
+                match parent.file_name().and_then(|n| n.to_str()) {
+                    Some("modules") => return WorkspaceType::Python,
+                    Some("packages") => return WorkspaceType::TypeScript,
+                    Some("crates") => return WorkspaceType::Rust,
+                    _ => {}
+                }
+            }
             if let Some(lang) = Self::check_dir_for_language(&current) {
                 return lang;
             }

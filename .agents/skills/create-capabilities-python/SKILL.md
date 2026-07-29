@@ -2,209 +2,83 @@
 name: create-capabilities-python
 description: "Create and validate Python capabilities layer files following AES rules: concrete implementation of behavior (business logic + external adaptation), 3-block structure, max 3 types per file, protocol ABC contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-  tags:
-    [
-      python,
-      aes,
-      capability,
-      protocol,
-      structure,
-      3-block-structure,
-      di,
-      vo,
-      role-naming,
-    ]
+  tags: [python, aes, capabilities, protocol, 3-block-structure, di, vo]
   triggers:
-    - "create capability python"
-    - "add capability python"
-    - "fix capability structure python"
+    - "create capabilities python"
+    - "add capabilities python"
+    - "fix capabilities structure python"
     - "create protocol python"
-    - "capability missing protocol python"
+    - "capabilities missing protocol python"
+    - "validate capabilities logic python"
     - "check capabilities python"
     - "audit capabilities python"
   dependencies: []
   related:
     - create-agent-python
-    - create-contract-python
     - create-taxonomy-python
+    - create-contract-python
 ---
-
 # create-capabilities-python
 
-## Purpose
+Capabilities = concrete protocol ABC implementation. File: `capabilities_<domain>_<role>.py`.
 
-Create and validate Python **capabilities layer** files following AES rules.
+**Allowed imports:** Taxonomy, Contract (`_protocol` only), Utility.
+**Forbidden:** `agent_*`, other `capabilities_*`, `surface_*`, local domain models, magic constants.
 
-A capabilities file contains the **concrete implementation** of the system's behavior. This layer encapsulates both:
+## Role Naming
 
-- **Business logic**: computations, validations, transformations, assessments
-- **External adaptation**: database access, third-party API calls, file system access
+**Internal:** validator, assessor, calculator, resolver, classifier, selector, mapper, transformer, policy, enricher, evaluator, analyzer, scorer, grader, ranker, filter, checker, reviewer, approver, rejector
 
-Capabilities hide these implementations behind Contracts, keeping behavior modular, swappable, and fully isolated from orchestration.
+**External:** repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
 
-A capabilities file must:
+## AES403 Rules
 
-- implement at least one domain protocol ABC (via class inheritance),
-- follow strict 3-block structure,
-- use dependency injection for service collaborators,
-- use shared VOs for domain data,
-- use Utility standalone functions for low-level technical operations.
+- Rule 1: Internal helper classes without ABC → ALLOWED.
+- Rule 2: ≥1 class inherits a protocol ABC.
+- Rule 3: Total class count ≤ 3.
 
-## Role Naming (ARCHITECTURE §8)
+## 3-Block Structure
 
-Capabilities use role suffixes describing their concern. Two families:
+```text
+# Block 1: Class Definition & Constructor
+# Block 2: Protocol ABC Method Implementation
+# Block 3: Dunder Methods, Factories, Helpers
+```
 
-**Internal (business logic):**
+Method placement: `@abstractmethod` → Block 2. Dunder/factory/private → Block 3. Stateless free function → extract to `*utility_.py`.
 
-validator, assessor, calculator, resolver, classifier, selector, mapper, transformer, policy, enricher, evaluator, analyzer, scorer, grader, ranker, filter, checker, reviewer, approver, rejector
+## Helper vs Utility
 
-**External (adaptation):**
-
-repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
-
-File: `capabilities_<domain>_<role>.py`
-
-## Dependencies (ARCHITECTURE §8)
-
-- **May depend on:** Taxonomy, Contract, Utility.
-- **Must NOT depend on / import:** other Capabilities, Agent.
-
-Note: use the Utility layer for I/O, network, and database access.
-
-## Special Rules (ARCHITECTURE §8)
-
-- **No Inter-Capability Dependency:** a capability never imports or calls another capability. They are standalone execution units.
-- **Pipeline Aggregation:** multiple capabilities are composed into a sequential pipeline by the **Agent layer**, not by themselves.
-- **Shared Logic Extraction (DRY):** if several capabilities need the same technical mechanics, extract it into a reusable standalone function in the **Utility layer**. Capabilities must not duplicate technical code.
-- **Contract Implementation:** the capability inherits the protocol ABC defined in the Contract layer. The file MUST import from `_protocol` module only. Example: `from shared.role_rules.contract_<name>_protocol import I<Name>`
-- **State Ownership:** the capability owns business and technical state within its execution scope.
-- **Utility Delegation:** low-level technical operations call Utility standalone functions, passing state/data as arguments.
-- **No Orchestration:** no flow control across capabilities (looping/branching between capabilities) and no error-escalation policy. Execute one responsibility, return a result.
-- **No Domain Definition:** do not define domain models (Entities, Value Objects); only consume and produce Taxonomy.
-- **Constant Extraction:** extract reusable constants (magic strings, numbers, patterns) into `taxonomy_<domain>_constant.py` in shared. Capabilities must not contain magic constants.
-
-## AES403 — Capability Composition Rules
-
-See `references/capabilities-roles.md` for the full AES403 rules: Rule 1 (internal helpers allowed), Rule 2 (at least one implementor required), Rule 3 (max 3 types per file), detection patterns, and guard check.
-
-## Definition of Done
-
-1. At least one class inherits a protocol ABC in Block 2 (Rule 2).
-2. Block 2 contains ONLY domain protocol method implementations.
-3. Dunder methods, factory classmethods, private helpers in Block 3.
-4. No locally defined domain models — Entities/Value Objects are consumed from Taxonomy, not defined here.
-5. Service dependencies use DI via protocol interfaces.
-6. Value/configuration fields use shared VOs.
-7. No inter-capability dependencies (capabilities must not import other capabilities or Agent).
-8. Low-level technical operations delegate to Utility standalone functions.
-9. Reusable constants extracted to `taxonomy_<domain>_constant.py` in shared.
-10. Total class count ≤ 3 (Rule 3).
-11. File imports from `_protocol` module only.
-12. `python -c "import <module>"` passes.
-
-## References
-
-Read these files for detailed rules:
-
-| File                                | Content                                                |
-| ----------------------------------- | ------------------------------------------------------ |
-| `references/layer-boundaries.md`    | Allowed/Forbidden imports and dependencies             |
-| `references/3-block-structure.md`   | Block 1/2/3 definitions, method placement rules        |
-| `references/helper-vs-utility.md`   | Helper vs utility decision, I/O Blocker, decision tree |
-| `references/primitive-vo-policy.md` | Primitive policy table, VO construction rules          |
-| `references/error-handling.md`      | Error handling rules with examples                     |
-| `references/examples.md`            | All BAD/GOOD code examples                             |
-| `references/commands.md`            | Quick heuristic check commands                         |
-| `references/checklist.md`           | Verification checklist                                 |
-| `references/capabilities-roles.md`  | AES403 capabilities roles (helpers, implementor, type count) |
+Keep in Block 3 if ANY: uses `self`, domain-specific, single consumer, factory.
+Extract to utility only if ALL: no `self`, pure, no side effects, domain-agnostic, ≥2 consumers.
+I/O: stateless + I/O + domain-agnostic = utility OK.
 
 ## Templates
 
-Use these templates when creating new files:
 
-| File                                  | Purpose                              |
-| ------------------------------------- | ------------------------------------ |
-| `templates/capabilities_name.py`      | New capabilities implementation file |
-| `templates/contract_name_protocol.py` | New protocol ABC definition          |
+| File                                  | Purpose                |
+| --------------------------------------- | ------------------------ |
+| `templates/capabilities_name.py`      | 3-block implementation |
+| `templates/contract_name_protocol.py` | Protocol ABC           |
 
 ## Workflow
 
-### Step 1: Analyze File Responsibility
+1. Confirm implements protocol behavior (not orchestration/data/mechanics).
+2. File imports from `_protocol` module — if missing → flag `CapabilityNoProtocol`.
+3. Create `contract_<name>_protocol.py` if missing.
+4. Enforce 3-Block.
+5. AES403: ≥1 protocol inheritor, ≤3 classes, DI via protocols, shared VOs.
+6. No forbidden imports, no inter-capability deps, no local domain models.
+7. `python -c "import <module>"`.
 
-Read the file and ask: **"Does this implement protocol behavior?"**
+## Checklist
 
-If yes → keep as capabilities. If no → check if it's orchestration (→ agent), domain data (→ taxonomy), or pure technical mechanics (→ utility).
-
-### Step 2: Check Protocol Import (AES403 Guard)
-
-The file MUST import from a `_protocol` module. If missing → flag `CapabilityNoProtocol`.
-
-```python
-from shared.role_rules.contract_<name>_protocol import I<Name>
-```
-
-### Step 3: Create Protocol File if Missing
-
-Create `contract_<name>_protocol.py` in the appropriate shared domain folder.
-
-### Step 4: Enforce 3-Block Structure
-
-Reorganize: class definition + `__init__` → protocol methods → dunders/factories/helpers.
-
-### Step 5: Verify AES403 Compliance
-
-- **Rule 1:** Internal helper classes without ABC inheritance are ALLOWED (never flagged).
-- **Rule 2:** At least one class must inherit a protocol ABC (`class Name(Protocol):`).
-- **Rule 3:** Total class count ≤ 3.
-
-### Step 6: Verify Type Discipline
-
-At least one class inherits a protocol ABC, max 3 total classes, DI via protocol interfaces, shared VOs.
-
-### Step 7: Verify Helper vs Utility Boundary
-
-See `references/helper-vs-utility.md` for the decision tree.
-
-### Step 8: Verify Layer Compliance
-
-No forbidden imports (Agent, other capabilities), no inter-capability dependencies, no business logic leakage, no domain model definition.
-
-### Step 9: Verify Error Handling, VO, and Constants
-
-See `references/error-handling.md` and `references/primitive-vo-policy.md`.
-
-### Step 10: Verify Compilation
-
-```bash
-python -c "import <module>"
-```
-
-## Quick Commands
-
-```bash
-# Check forbidden imports (no agent, no other capabilities)
-grep -n "^\s*from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/capabilities_*.py
-
-# List protocol ABC implementations
-grep -n "class.*I[A-Za-z0-9_]*Protocol" modules/*/src/capabilities_*.py
-
-# Check _protocol import (guard)
-grep -n "from.*capabilities_\|from.*agent_\|from.*surface_" modules/*/src/capabilities_*.py
-```
-
-## Common Mistakes
-
-- Importing other capabilities or Agent directly.
-- Defining domain models (Entities, Value Objects) in capabilities files.
-- Using concrete service types as constructor fields.
-- Putting private helpers in the protocol ABC.
-- Putting constructors in the protocol ABC.
-- Placing dunder methods before the domain protocol methods.
-- Mixing Block 2 and Block 3 responsibilities.
-- Flow control across capabilities / error-escalation policy (orchestration).
-- Silent error swallowing with `or ""` or `or 0`.
-- Magic constants in capabilities logic (extract to `taxonomy_<domain>_constant.py`).
-- Not delegating low-level technical operations to Utility.
-- Importing from the wrong module instead of `_protocol`.
-- Having no class that inherits a protocol ABC (Rule 2 violation).
-- Exceeding 3 total classes in a file (Rule 3 violation).
+- [ ]  Block 1 → 2 → 3 order followed.
+- [ ]  Block 2: ONLY protocol ABC method implementations.
+- [ ]  ≥1 class inherits protocol ABC; ≤3 total classes.
+- [ ]  Imports from `_protocol` module only.
+- [ ]  No local domain models, no agent/capability imports.
+- [ ]  DI via protocol interfaces; shared VOs for fields and signatures.
+- [ ]  Constants → `taxonomy_<domain>_constant.py`.
+- [ ]  Low-level ops → Utility.
+- [ ]  `python -c "import <module>"` passes.

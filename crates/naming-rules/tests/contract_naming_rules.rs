@@ -7,10 +7,8 @@ use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConv
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 
-use shared::naming_rules::contract_naming_checker_protocol::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 
 // ─── INamingConventionChecker ─────────────────────────────
 
@@ -66,8 +64,8 @@ fn container_produces_orchestrator_as_aggregate() {
 
 #[test]
 fn container_exposes_checker_references() {
-    use shared::common::taxonomy_definition_vo::LayerMapVO;
-    use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+    use shared::common::LayerMapVO;
+    use shared::config_system::ArchitectureConfig;
     use std::sync::Arc;
 
     let config = Arc::new(ArchitectureConfig::default());

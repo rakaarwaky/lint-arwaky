@@ -5,10 +5,10 @@
 
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffStatus, HookIgnoreUpdateVO};
+use shared::common::FilePath;
+use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
+
+use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 
 fn sut() -> HookManager {

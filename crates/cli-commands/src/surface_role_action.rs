@@ -1,10 +1,10 @@
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_format_vo::Format;
 use shared::cli_commands::utility_path_resolver::is_member_path;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::cli_commands::Format;
+use shared::common::FilePath;
+use shared::role_rules::IRoleRunnerAggregate;
 
 use crate::surface_common_action;
 use crate::surface_output_component::{output_violations, ViolationItem};
@@ -13,7 +13,8 @@ pub fn handle_scan_role(
     path: Option<FilePath>,
     format: Format,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate>,
+    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    filter: Option<String>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -32,10 +33,16 @@ pub fn handle_scan_role(
         Err(_) => return ExitCode::RUNTIME_ERROR,
     };
     let results = rt.block_on(role_orchestrator.run_audit(&root_fp));
-    let violations: Vec<ViolationItem> = results
+    let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
     output_violations(&violations, &root, format, is_member_path(&root));
     if violations.is_empty() {
         ExitCode::OK

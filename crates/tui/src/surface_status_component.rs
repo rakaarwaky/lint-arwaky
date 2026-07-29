@@ -7,7 +7,7 @@ use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use ratatui::Frame;
-use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::AppState;
 
 pub struct StatusComponent;
 

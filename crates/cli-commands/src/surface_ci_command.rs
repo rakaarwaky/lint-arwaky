@@ -1,22 +1,21 @@
 // PURPOSE: CI entry point — surface action for CI threshold validation across all 5 linters
-use shared::common::taxonomy_common_error::ExitCode;
+use shared::common::ExitCode;
 use std::sync::Arc;
 
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_threshold_vo::Threshold;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{FilePath, Severity, Threshold};
+
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::import_rules::IImportRunnerAggregate;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::role_rules::IRoleRunnerAggregate;
 
 pub fn handle_ci(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
@@ -49,7 +48,9 @@ pub fn handle_ci(
     let role_res = rt.block_on(role_orchestrator.run_audit(&root));
     results.extend(role_res);
 
-    let (_, orphan_res) = orphan_orchestrator.scan_orphans(&root, &[]);
+    let ignored = config_orchestrator.ignored_paths(&root);
+    let orphan_analyzer = config_orchestrator.create_orphan_analyzer(&root.value);
+    let (_, orphan_res) = orphan_analyzer.scan_orphans(&root, ignored.values());
     results.extend(orphan_res);
 
     let score = code_analysis_linter.calc_score(&results);

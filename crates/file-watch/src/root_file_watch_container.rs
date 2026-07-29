@@ -4,8 +4,8 @@ use std::sync::Arc;
 use crate::agent_watch_orchestrator::WatchOrchestrator;
 use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::capabilities_notify_provider::NotifyWatchProvider;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::file_watch::IWatchProviderProtocol;
 
 pub struct FileWatchContainer {
     provider: Arc<dyn IWatchProviderProtocol>,

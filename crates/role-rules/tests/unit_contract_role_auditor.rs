@@ -2,8 +2,8 @@
 // Layer: Capabilities (ContractRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::IContractRoleChecker;
 
 fn checker() -> ContractRoleChecker {
     ContractRoleChecker::new()

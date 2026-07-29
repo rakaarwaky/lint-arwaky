@@ -1,16 +1,13 @@
 // PURPOSE: OrphanGraphResolver — build graph context and identify entry points for orphan analysis.
 use regex::Regex;
-use shared::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
-use shared::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
-use shared::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use shared::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::{
-    OrphanEntryPatternListVO, OrphanFileListVO,
+use shared::code_analysis::{
+    FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
 };
+
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_io;
+use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
@@ -196,12 +193,18 @@ impl OrphanGraphResolver {
         // This ensures that when scanning a subfolder, imports from other crates are visible
         let mut all_workspace_files: Vec<String> = files.to_vec();
         let mut seen: HashSet<String> = files.iter().cloned().collect();
+        let root_path_obj = std::path::Path::new(&workspace_root);
         for src_dir in crate_src_dirs.values() {
             let workspace_files =
                 shared::orphan_detector::utility_orphan_io::scan_directory_recursive(src_dir);
             for f in workspace_files {
-                if seen.insert(f.clone()) {
-                    all_workspace_files.push(f);
+                // Normalize to relative path for consistency with initial files
+                let rel = std::path::Path::new(&f)
+                    .strip_prefix(root_path_obj)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or(f);
+                if seen.insert(rel.clone()) {
+                    all_workspace_files.push(rel);
                 }
             }
         }
@@ -222,8 +225,12 @@ impl OrphanGraphResolver {
                             || name.ends_with(".js"))
                         && !seen.contains(&path_str)
                     {
-                        seen.insert(path_str.clone());
-                        all_workspace_files.push(path_str);
+                        let rel = std::path::Path::new(&path_str)
+                            .strip_prefix(root_path_obj)
+                            .map(|p| p.to_string_lossy().to_string())
+                            .unwrap_or(path_str.clone());
+                        seen.insert(rel.clone());
+                        all_workspace_files.push(rel);
                     }
                 }
             }
@@ -480,6 +487,27 @@ impl OrphanGraphResolver {
                     || workspace_modules.contains(&dep)
                     || matches!(dep.as_str(), "crate" | "self" | "super");
                 if !is_known_local {
+                    // NEW: Try Python dotted absolute paths (e.g., modules.shared.src.asset.utility.utility_polyhaven)
+                    // These start with workspace dirs like modules/, packages/, crates/ but the first segment
+                    // (e.g., "modules") is not a known crate name, so they get skipped above.
+                    // We resolve them by extracting the last segment (module filename stem) and looking it up
+                    // in module_to_file, which maps stems to their full file paths.
+                    if full_import.contains('.') {
+                        if let Some(last_seg) = full_import.rsplit('.').next() {
+                            if let Some(target) = module_to_file.get(last_seg) {
+                                if target != f {
+                                    import_graph
+                                        .entry(f.clone())
+                                        .or_default()
+                                        .push(target.clone());
+                                    inbound_links
+                                        .entry(target.clone())
+                                        .or_default()
+                                        .push(f.clone());
+                                }
+                            }
+                        }
+                    }
                     continue;
                 }
 

@@ -2,16 +2,12 @@
 // Covers: execute, run_fix, manual_report.
 
 use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::auto_fix::contract_fix_protocol::IFixProtocol;
-use shared::auto_fix::taxonomy_fix_applied_event::FixApplied;
-use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_common_vo::{Count, LineNumber};
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::auto_fix::{FixApplied, FixResult, IFixProtocol, LintFixOrchestratorAggregate};
+
+use shared::cli_commands::LintResult;
+use shared::common::{Count, LineNumber};
+use shared::common::{ErrorCode, FilePath, LintMessage, Severity};
+
 use std::sync::Arc;
 
 fn fixable_codes_static() -> &'static [ErrorCode] {

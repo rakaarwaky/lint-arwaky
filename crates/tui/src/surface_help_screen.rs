@@ -5,7 +5,7 @@
 // The actual help content is rendered by PreviewView in HelpOverlay mode.
 use ratatui::layout::Rect;
 use ratatui::Frame;
-use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::AppState;
 
 pub struct HelpScreen;
 

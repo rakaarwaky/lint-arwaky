@@ -81,17 +81,29 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
 }
 
 /// Detect if a path is a member directory (not a workspace root).
-/// Returns true only if the path itself has a Cargo.toml without [workspace],
-/// meaning it's a single crate member, not a multi-member workspace or a directory container.
+/// Returns true if the path is a single crate/module/package member:
+/// - Rust: Cargo.toml without [workspace]
+/// - Python: __init__.py or pyproject.toml present
+/// - TypeScript: package.json present
 pub fn is_member_path(path: &str) -> bool {
     let p = std::path::Path::new(path);
 
-    // If path itself has Cargo.toml without [workspace], it's a member crate
+    // Rust: Cargo.toml without [workspace] → single crate member
     let cargo_toml = p.join("Cargo.toml");
     if cargo_toml.exists() {
         if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
             return !content.contains("[workspace]");
         }
+        return true;
+    }
+
+    // Python: __init__.py or pyproject.toml → module member
+    if p.join("__init__.py").exists() || p.join("pyproject.toml").exists() {
+        return true;
+    }
+
+    // TypeScript: package.json → package member
+    if p.join("package.json").exists() {
         return true;
     }
 

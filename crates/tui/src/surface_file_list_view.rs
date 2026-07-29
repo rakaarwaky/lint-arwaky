@@ -10,8 +10,8 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
 use ratatui::Frame;
-use shared::tui::taxonomy_file_entry_vo::AesLayer;
-use shared::tui::taxonomy_state_vo::{AppState, PanelFocus};
+use shared::tui::AesLayer;
+use shared::tui::{AppState, PanelFocus};
 
 pub struct FileListView;
 

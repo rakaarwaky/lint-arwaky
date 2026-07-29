@@ -5,9 +5,9 @@
 //   - security:   vulnerability scan via cargo-audit (Rust) or bandit (Python)
 //   - deps:       dependency report from Cargo.lock / pyproject.toml / requirements.txt
 
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::common::{ExitCode, FilePath};
+
+use shared::maintenance::MaintenanceCommandsAggregate;
 use std::sync::Arc;
 
 fn status_icon(is_ok: bool) -> &'static str {

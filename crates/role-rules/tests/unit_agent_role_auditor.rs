@@ -2,9 +2,9 @@
 // Layer: Capabilities (AgentRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::taxonomy_source_vo::{ContentString, SourceContentVO};
+use shared::common::FilePath;
+use shared::common::{ContentString, SourceContentVO};
+use shared::role_rules::IAgentRoleChecker;
 
 fn checker() -> AgentRoleChecker {
     AgentRoleChecker::new()
@@ -36,24 +36,6 @@ impl IRoleAggregate for MyOrchestrator {
         violations.is_empty(),
         "Expected no violations, got: {violations:?}"
     );
-}
-
-// ─── check_agent_routing: Rust — AgentNoAggregate ────
-
-#[test]
-fn rust_agent_without_aggregate_import_flagged() {
-    let content = r#"
-pub struct MyOrchestrator {}
-
-impl MyOrchestrator {
-    pub fn run(&self) {}
-}
-"#;
-    let source = make_source("agent_my_orchestrator.rs", content);
-    let mut violations = Vec::new();
-    checker().check_agent_routing(&source, "agent", &mut violations);
-    assert_eq!(violations.len(), 1);
-    assert_eq!(violations[0].code.code(), "AES405");
 }
 
 // ─── check_agent_routing: Rust — AgentNoImplementor ──

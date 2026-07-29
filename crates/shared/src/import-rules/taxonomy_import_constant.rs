@@ -52,4 +52,5 @@ pub const DEFAULT_SKIP_DIRS: &[&str] = &[
     "build",
     ".venv",
     "__pycache__",
+    "tests",
 ];

@@ -15,13 +15,12 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::common::{ExitCode, FilePath};
+
+use shared::file_watch::{
+    IChangeAnalyzerProtocol, IWatchAggregate, IWatchProviderProtocol, WatchConfig,
+};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct WatchOrchestrator {

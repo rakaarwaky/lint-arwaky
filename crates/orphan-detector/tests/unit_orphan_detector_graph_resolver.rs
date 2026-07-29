@@ -3,10 +3,8 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
-use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::taxonomy_orphan_contract_vo::{
-    OrphanEntryPatternListVO, OrphanFileListVO,
-};
+use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 
 fn resolver() -> OrphanGraphResolver {
     OrphanGraphResolver::new()

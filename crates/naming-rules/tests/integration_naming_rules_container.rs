@@ -8,11 +8,11 @@ use naming_rules_lint_arwaky::{
     capabilities_suffix_prefix_checker::SuffixPrefixChecker,
     root_naming_rules_container::NamingContainer,
 };
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::cli_commands::LintResult;
+use shared::common::FilePath;
+use shared::common::LayerMapVO;
+use shared::config_system::ArchitectureConfig;
+use shared::naming_rules::INamingRunnerAggregate;
 
 // ─── Integration Tests: DI Container Wiring ────────────────────────
 

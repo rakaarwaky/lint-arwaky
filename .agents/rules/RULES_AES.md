@@ -9,42 +9,42 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 
 | Code   | Name                | Severity | Group  | Description                                                                                |
 | -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
-| AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 2 words. |
+| AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words. |
 | AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                |
 
 
-| Code   | Name             | Severity | Group  | Description                                                                  |
-| -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------ |
-| AES201 | Forbidden Import | CRITICAL | Import | Cross-layer imports must comply with allowed/mandatory/forbidden rules.      |
-| AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                          |
-| AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                             |
-| AES204 | Dummy Import     | MEDIUM   | Import | Import string matches a forbidden dummy pattern (e.g. orphan detector test). |
-| AES205 | Circular Import  | HIGH     | Import | Circular dependency between layers — must be unidirectional bottom-up.      |
+| Code   | Name             | Severity | Group  | Description                                                                                    |
+| -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------ |
+| AES201 | Forbidden Import | CRITICAL | Import | Cross-layer imports must comply with allowed/mandatory/forbidden rules.                        |
+| AES202 | Mandatory Import | HIGH     | Import | File is missing required imports defined by config.                                            |
+| AES203 | Unused Import    | MEDIUM   | Import | Symbol is imported but never used in file scope.                                               |
+| AES204 | Dummy Import     | HIGH     | Import | Import string matches a forbidden dummy pattern; symbol used only in dummy functions or stubs. |
+| AES205 | Circular Import  | CRITICAL | Import | Circular dependency between layers — must be unidirectional bottom-up.                        |
 
 
-| Code   | Name                 | Severity | Group   | Description                                                                        |
-| -------- | ---------------------- | ---------- | --------- | ------------------------------------------------------------------------------------ |
-| AES301 | File Maximum Limit   | LOW      | Quality | File exceeds maximum allowed line count (default: 1000).                           |
-| AES302 | File Minimum Limit   | LOW      | Quality | File is below minimum required line count (default: 5).                            |
-| AES303 | Mandatory Definition | HIGH     | Quality | File missing struct/enum/trait/class definition, or definition is empty.           |
-| AES304 | Bypass Comment       | CRITICAL | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc). |
-| AES305 | Duplication Code     | MEDIUM   | Quality | Duplicate code blocks detected across files.                                       |
+| Code   | Name                 | Severity      | Group   | Description                                                                        |
+| -------- | ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------ |
+| AES301 | File Maximum Limit   | HIGH          | Quality | File exceeds maximum allowed line count (default: 1000).                           |
+| AES302 | File Minimum Limit   | HIGH          | Quality | File is below minimum required line count (default: 5).                            |
+| AES303 | Mandatory Definition | HIGH / MEDIUM | Quality | File missing struct/enum/trait/class definition, or definition is empty.           |
+| AES304 | Bypass Comment       | CRITICAL      | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc). |
+| AES305 | Duplication Code     | MEDIUM        | Quality | Duplicate code blocks detected across files.                                       |
 
 
 | Code   | Name              | Severity | Group | Description                                                                                     |
 | -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
 | AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
 | AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
-| AES403 | Capabilities Role | HIGH     | Role  | Capability has no protocol implementation.                                                      |
-| AES404 | Utility Role      | HIGH     | Role  | Utility violates stateless function rules, contains trait impls                                 |
-| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains state, direct capabilities imports, inline I/O, or single execution goal. |
-| AES406 | Surface Role      | MEDIUM   | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
+| AES403 | Capabilities Role | HIGH     | Role  | Capability exceeds max 3 type declarations or has no protocol implementation.                   |
+| AES404 | Utility Role      | MEDIUM   | Role  | Utility violates stateless function rules, contains trait impls                                 |
+| AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
+| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
 
 
 | Code   | Name                | Severity | Group  | Description                                                                                                                                       |
 | -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | AES501 | Taxonomy Orphan     | LOW      | Orphan | Taxonomy file has no inbound imports from any contract file.                                                                                      |
-| AES502 | Contract Orphan     | LOW      | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                        |
+| AES502 | Contract Orphan     | MEDIUM   | Orphan | Contract protocol not implemented by capabilities or not called by agent; aggregate not called by surface.                                        |
 | AES503 | Capabilities Orphan | MEDIUM   | Orphan | Capability not wired in any container AND unreachable in import graph.                                                                            |
 | AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                 |
 | AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                 |
@@ -83,15 +83,15 @@ Suffix must match the layer definition. Three sub-checks:
 #### Suffix Policy per Layer
 
 
-| Layer          | Policy   | Allowed Suffixes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Forbidden Suffixes                                                                                     |
-| ---------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `root`         | strict   | `_entry`, `_container`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | N/A                                                                                                    |
-| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | N/A                                                                                                    |
-| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | N/A                                                                                                    |
-| `utility`      | flexible | `_parser`, `_splitter`, `_trimmer`, `_slugifier`, `_sanitizer`, `_normalizer`, `_extractor`, `_replacer`, `_converter`, `_counter`, `_resolver`, `_detector`, `_builder`, `_joiner`, `_serializer`, `_deserializer`, `_encoder`, `_decoder`, `_hasher`, `_generator`, `_formatter`, `_comparator`, `_differ`, `_matcher`, `_checker`, `_calculator`, `_mapper`, `_merger`, `_grouper`, `_sorter`, `_deduplicator`, `_printer`                                                                                                                                                               | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`                           |
-| `capabilities` | flexible | `_checker`, `_analyzer`, `_processor`, `_evaluator`, `_resolver`, `_validator`, `_formatter`, `_executor`, `_transformer`, `_calculator`, `_builder`, `_compiler`, `_classifier`, `_extractor`, `_reporter`, `_mapper`, `_filter`, `_collector`, `_comparator`, `_scorer`, `_inspector`, `_reviewer`, `_assessor`, `_auditor`, `_helper`, `_repository`, `_gateway`, `_client`, `_provider`, `_fetcher`, `_reader`, `_writer`, `_scanner`, `_publisher`, `_subscriber`, `_adapter`, `_connector`, `_uploader`, `_downloader`, `_sender`, `_receiver`, `_dispatcher`, `_watcher`, `_monitor` | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility` |
-| `agent`        | strict   | `_orchestrator`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | N/A                                                                                                    |
-| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen`                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | N/A                                                                                                    |
+| Layer          | Policy   | Allowed Suffixes                                                                                                         | Forbidden Suffixes                                                                                     |
+| ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `root`         | strict   | `_entry`, `_container`                                                                                                   | N/A                                                                                                    |
+| `taxonomy`     | strict   | `_vo`, `_entity`, `_error`, `_event`, `_constant`                                                                        | N/A                                                                                                    |
+| `contract`     | strict   | `_protocol`, `_aggregate`                                                                                                | N/A                                                                                                    |
+| `utility`      | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_protocol`, `_aggregate`                           |
+| `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility` |
+| `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                    |
+| `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                    |
 
 ---
 
@@ -143,17 +143,22 @@ Symbol is imported but never used in file scope. Detected via AST analysis acros
 
 ### AES204 — Dummy Import
 
-**Severity:** MEDIUM
+**Severity:** HIGH
 
-Import statement matches a forbidden dummy pattern. Used to detect fake/redundant imports that exist only to satisfy the linter but serve no real purpose.
+Import statement matches a forbidden dummy pattern. Used to detect fake/redundant imports that exist only to satisfy the linter but serve no real purpose. Includes four sub-checks:
 
-**Example:** `use output_report::taxonomy_*;` in non-output-report files (orphan detection test material).
+1. **Dummy imports** — imported symbols only used inside `_use_mandatory_imports` dummy functions (dead code to silence import warnings)
+2. **Dummy functions** — `_use_mandatory_imports` function ranges flagged as dead code
+3. **Dummy trait impls** — trait implementations with empty/todo bodies that violate contract abstraction
+4. **Surface logic bypass** — surface-layer code calling domain logic directly (`lint_path(`, `compute_score(`, `has_critical(`, `walk_rs_files(`) — `Severity: MEDIUM`
+
+**FIX:** Use imported symbols in real logic, remove `_use_mandatory_imports` functions, implement contract methods with real behavior.
 
 ---
 
 ### AES205 — Circular Import
 
-**Severity:** HIGH
+**Severity:** CRITICAL
 
 Circular dependency detected between layers. Layer dependencies must be unidirectional (bottom-up).
 Allowed direction: `taxonomy → contract / utility → capabilities → agent → surface → root`.
@@ -165,7 +170,7 @@ Any back-edge or cross-layer cycle is a violation.
 
 ### AES301 — File Maximum Limit
 
-**Severity:** LOW
+**Severity:** HIGH
 
 File exceeds maximum allowed line count (default: 1000).
 
@@ -175,7 +180,7 @@ File exceeds maximum allowed line count (default: 1000).
 
 ### AES302 — File Minimum Limit
 
-**Severity:** LOW
+**Severity:** HIGH
 
 File is below minimum required line count (default: 5).
 
@@ -185,14 +190,14 @@ File is below minimum required line count (default: 5).
 
 ### AES303 — Mandatory Definition
 
-**Severity:** HIGH
+**Severity:** HIGH (sub-check 1) / MEDIUM (sub-check 2)
 
 File must have at least one struct/enum/trait/class definition, and definitions must not be empty.
 
 Two sub-checks:
 
-1. **Missing definition** — file has no struct/enum/trait/class at all
-2. **Empty definition** — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
+1. **Missing definition** (`Severity: HIGH`) — file has no struct/enum/trait/class at all
+2. **Empty / dead definition** (`Severity: MEDIUM`) — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
 
 
 | Checker                  | Method                               | Path                                                     |
@@ -213,11 +218,20 @@ Forbidden bypass patterns detected:
 - `#[allow(...)]`
 - `unwrap()` / `expect()`
 - `panic!`
+- `todo`
+- `unimplemented`
+- `unreachable`
 - `noqa`
 - `type: ignore`
 - `eslint-disable`
 - `ts-ignore`
 - `ts-expect-error`
+- `FIXME`
+- `HACK`
+- `XXX`
+- `raise NotImplementedError` (Python)
+- `assert False` (Python)
+- `throw new Error(...)` (JS/TS)
 
 **FIX:** Use proper error handling.
 
@@ -241,8 +255,8 @@ Duplicate code blocks detected across files within the project scope.
 
 Constant purity violation or primitive usage in domain models. Two sub-checks:
 
-1. **Constant purity** — `_constant` files must only contain `pub const` / `pub static` declarations
-2. **Primitive in taxonomy** — `_entity`, `_error`, `_event` files must not use direct primitive types (e.g. `String`, `i32`, `int`) in field declarations. `_vo` files ARE allowed to use primitives directly.
+1. **Constant purity** — `_constant` files must only contain const  declarations
+2. **Primitive in taxonomy** — `_entity`, `_error`, `_event` files must not use direct primitive types (e.g. `String`, `i32`, `int`) in field declarations. `_vo` _constant files are allowed to use primitives directly.
 
 **FIX:** Replace primitives with taxonomy value objects.
 
@@ -262,12 +276,15 @@ Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in co
 
 ### AES403 — Capabilities Role
 
-**Severity:** HIGH
+**Severity:** HIGH / MEDIUM
 
-Capability routing and protocol enforcement. Two sub-checks:
+Capability routing and protocol enforcement. Two sub-checks — each with its own severity:
 
-1. **Missing protocol implementation** — capability file must implement at least one `_protocol` contract
-2. **Single routing bottleneck** — orchestrator dispatch must not route all calls to a single capability
+
+| Sub-check                   | Severity   | Description                                                                    |
+| ----------------------------- | ------------ | -------------------------------------------------------------------------------- |
+| **CapabilityTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations                                          |
+| **CapabilityNoImplementor** | **MEDIUM** | No struct/class in the capability file implements a`_protocol` contract trait. |
 
 **FIX:** Ensure capability implements its protocol; split routing across multiple capabilities.
 
@@ -275,7 +292,7 @@ Capability routing and protocol enforcement. Two sub-checks:
 
 ### AES404 — Utility Role
 
-**Severity:** HIGH
+**Severity:** MEDIUM
 
 Utility role boundary violation. Utility files must contain stateless standalone functions only. They must not contain stateful objects, struct/class state, trait implementations, or contract implementations. Furthermore, Utility files may only depend on Taxonomy, and must not import any other layer (`contract`, `capabilities`, `agent`, `surface`, `root`).
 
@@ -285,9 +302,18 @@ Utility role boundary violation. Utility files must contain stateless standalone
 
 ### AES405 — Agent Role
 
-**Severity:** MEDIUM
+**Severity:** MEDIUM / HIGH
 
-Checks:
+Checks — each with its own severity:
+
+
+| Sub-check              | Severity   | Description                                                                       |
+| ------------------------ | ------------ | ----------------------------------------------------------------------------------- |
+| **AgentTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations (struct/enum/class/interface).               |
+| **AgentNoImplementor** | **MEDIUM** | No struct/class implements an aggregate trait.                                    |
+| **AnyType annotation** | **MEDIUM** | `: Any`, `Any<`, `Any[` patterns detected in agent code; must use concrete types. |
+
+Additional checks:
 
 - **Non-stateless execution** — state assignment outside `__init__` / constructor
 - **Direct capabilities imports** — agent must not import capabilities directly; must communicate via contract protocols/aggregates
@@ -301,7 +327,7 @@ Checks:
 
 ### AES406 — Surface Role
 
-**Severity:** MEDIUM
+**Severity:** HIGH
 
 Checks:
 
@@ -323,7 +349,7 @@ Taxonomy file (VO, entity, error, event, constant) has no inbound imports from a
 
 ### AES502 — Contract Orphan
 
-**Severity:** LOW
+**Severity:** MEDIUM
 
 Contract trait not implemented by the expected layer:
 
@@ -336,7 +362,7 @@ Contract trait not implemented by the expected layer:
 
 **Severity:** MEDIUM
 
-Capability file not wired in any `_container` AND unreachable in the import graph.
+Capability file not wired in any `_container`
 
 ---
 
@@ -344,7 +370,7 @@ Capability file not wired in any `_container` AND unreachable in the import grap
 
 **Severity:** MEDIUM
 
-Utility file is not imported or consumed by any capability, agent, or surface layer (or is only imported by other utility files).
+Utility file is not imported or consumed by any capability, agent, or surface layer or is only imported by other utility files.
 
 ---
 
@@ -352,7 +378,9 @@ Utility file is not imported or consumed by any capability, agent, or surface la
 
 **Severity:** HIGH
 
-Agent orchestrator not called by any `surface_` file or entry point. Suffix `_orchestrator` is checked.
+Agent orchestrator file not wired in any _container
+
+**Suffix checked:** `_orchestrator`
 
 ---
 
@@ -362,6 +390,6 @@ Agent orchestrator not called by any `surface_` file or entry point. Suffix `_or
 
 Orphan detection per category:
 
-- **Smart** (`_command` / `_controller` / `_page` / `_entry`) — must be imported by entry or router
+- **Smart** (`_command` / `_controller` / `_page` / `_entry`) — must be imported by entry
 - **Utility** (`_hook` / `_store` / `_action` / `_screen` / `_router`) — must be imported by smart surface
 - **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface

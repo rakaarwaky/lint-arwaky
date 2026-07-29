@@ -1,7 +1,7 @@
 // PURPOSE: ConfigCommandsSurface — CLI surface for config show
-use shared::common::taxonomy_common_error::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::common::{ExitCode, FilePath};
+
+use shared::config_system::IConfigOrchestratorAggregate;
 use std::sync::Arc;
 
 /// Redact sensitive values from config content.

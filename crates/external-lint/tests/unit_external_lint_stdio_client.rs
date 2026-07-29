@@ -1,10 +1,7 @@
 // PURPOSE: Unit tests for StdioClient — subprocess execution via tokio::process.
 
 use external_lint_lint_arwaky::StdioClient;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::{FilePath, ICommandExecutorProtocol, PatternList, Timeout};
 
 fn sut() -> StdioClient {
     StdioClient::new(Timeout::new(10.0))

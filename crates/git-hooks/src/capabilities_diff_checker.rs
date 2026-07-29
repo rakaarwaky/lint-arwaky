@@ -1,13 +1,11 @@
 use std::collections::HashSet;
 
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_git_vo::GitBranchName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_paths_vo::RenamedFileList;
-use shared::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::cli_commands::LintResultList;
+use shared::common::{FilePath, FilePathList, GitBranchName, RenamedFileList};
+
+use shared::file_watch::GitDiffResultVO;
 use shared::git_hooks::utility_git_io as git_io;
+use shared::git_hooks::IDiffProtocol;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
 

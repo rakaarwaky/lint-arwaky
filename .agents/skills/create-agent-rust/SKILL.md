@@ -2,18 +2,7 @@
 name: create-agent-rust
 description: "Create and validate Rust agent layer files following AES rules: orchestration-only, zero I/O, zero business logic, zero domain computation, 3-block structure, max 3 types per file, aggregate contracts, DI for service dependencies, and shared VOs for domain data."
 metadata:
-  tags:
-    [
-      rust,
-      aes,
-      agent,
-      aggregate,
-      structure,
-      3-block-structure,
-      di,
-      orchestration,
-      vo,
-    ]
+  tags: [rust, aes, agent, aggregate, structure, 3-block-structure, di, orchestration, vo]
   triggers:
     - "create agent rust"
     - "add agent rust"
@@ -32,117 +21,81 @@ metadata:
 
 # create-agent-rust
 
-## Purpose
+Agent = orchestration only. No I/O, no business logic, no domain computation, no local domain data.
 
-Create and validate Rust **agent layer** files following AES rules.
+**Allowed imports:** `shared::*` — taxonomy VOs, constants, aggregate traits, protocol traits.
+**Forbidden imports:** `capabilities_*`, `agent_*`, `surface_*`.
 
-An agent file contains **orchestration / pipeline execution only**.
+**Allowed ops:** `for`/`while`/`loop`, `if/else`/`match`, `?`/`match Err`, `tokio::join!`/`.await`, collecting results into shared VOs.
+**Forbidden ops:** `std::fs`, `File::open`, `reqwest`, `hyper`, `sqlx`, `rusqlite`, stdout/stderr write, env mutation, global state mutation.
 
-Agents coordinate capabilities into executable flows. They control sequence and movement, not business calculation.
+## 3-Block Structure
 
-Agents MUST NOT contain I/O, business logic, domain rules, domain computation, or domain data definitions.
+```text
+// Block 1: Struct Definition
+// Block 2: Aggregate Trait Implementation
+// Block 3: Constructors, Std Traits, Helpers
+```
 
-Agents depend ONLY on Taxonomy, Contract, and Utility layers. They must be completely ignorant of Capabilities implementations.
+Method placement:
 
-## Definition of Done
+```text
+Free function (outside impl)?               → EXTRACT to *_utility.rs
+In aggregate trait?                         → Block 2
+std trait impl (Default/Clone/Display)?     → Block 3
+fn new() / constructor?                     → Block 3
+Private helper (uses &self)?                → Block 3
+Pure fn, no struct dep?                     → EXTRACT to *_utility.rs
+```
 
-1. At least one struct implements an aggregate trait in Block 2 (AES405 Rule 2).
-2. Block 2 contains ONLY the aggregate trait implementation.
-3. Constructors, std trait impls, private helpers in Block 3.
-4. Zero I/O, zero business logic, zero domain computation.
-5. No locally defined domain data structures.
-6. Service dependencies use DI via `Arc<dyn Trait>`.
-7. Value/configuration fields use shared VOs.
-8. Aggregate signatures use shared VOs for domain data.
-9. Total struct + enum ≤ 3 (AES405 Rule 3).
-10. `cargo check -p <crate-name>` passes.
+## Helper vs Utility
 
-## References
+Keep in Block 3 if ANY: uses `&self`, coupled to this struct, constructor, agent-specific logic, single-use.
+Extract to utility only if ALL: no `self`/`Self`, pure, no side effects, domain-agnostic, reusable.
+I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + domain-specific = capabilities.
 
-| File                                  | Content                                                 |
-| ------------------------------------- | ------------------------------------------------------- |
-| `references/layer-boundaries.md`      | Allowed/Forbidden imports and dependencies              |
-| `references/3-block-structure.md`     | Block 1/2/3 definitions, trait placement rules          |
-| `references/helper-vs-utility.md`     | Helper vs utility decision, I/O Blocker, decision tree  |
-| `references/computation-detection.md` | Computation detection rules, forbidden/allowed patterns |
-| `references/error-handling.md`        | Error handling rules                                    |
-| `references/primitive-vo-policy.md`   | Primitive policy table, VO rules                        |
-| `references/examples.md`              | All BAD/GOOD code examples                              |
-| `references/commands.md`              | Quick heuristic check commands                          |
-| `references/checklist.md`             | Verification checklist                                  |
+## Computation, Errors, VOs
+
+**Computation forbidden:** arithmetic, totals, averages, `.sum()`/`.fold()`, parsing, normalization.
+Allowed: iteration to call deps, routing results, propagating errors.
+e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f| f.size()).sum()` = capabilities.
+
+**Error rules:**
+- Rule 1: Never silently discard — no `checker.check().unwrap_or_default()`.
+- Rule 2: Analysis orchestration → `Vec<<ResultVO>>`, match per-item into VO.
+- Rule 3: Execution orchestration → `Result<ExecutionReport, AgentExecutionError>`.
+- Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
+
+**VO rules:** `String`/`i32`..`u64`/`f32`/`f64`/`char` forbidden for domain fields/contracts. `bool` for toggles; `&str` for borrowed non-domain input only.
 
 ## Templates
 
-| File                                   | Purpose                        |
-| -------------------------------------- | ------------------------------ |
-| `templates/agent_name.rs`              | New agent implementation file  |
-| `templates/contract_name_aggregate.rs` | New aggregate trait definition |
-| `templates/mod.rs`                     | Module registration            |
+| File | Purpose |
+| --- | --- |
+| `templates/agent_name.rs` | Full agent (3-block) |
+| `templates/contract_name_aggregate.rs` | Aggregate trait |
+| `templates/mod.rs` | Module registration |
 
 ## Workflow
 
-### Step 1: Analyze File
+1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.
+2. Struct implements aggregate trait? If no → create `contract_<name>_aggregate.rs`.
+3. Enforce 3-Block.
+4. ≥1 aggregate trait, ≤3 types (struct+enum), `Arc<dyn Trait>` for DI, shared VOs.
+5. Generic aggregate methods: object-safe or `where Self: Sized`.
+6. No forbidden imports, no I/O, no computation.
+7. No silent errors, no raw primitives in contracts, no magic constants.
+8. `cargo check -p <crate-name>`.
 
-Read the file and ask: **"Is this orchestration only?"**
+## Checklist
 
-If yes → keep as agent. If it contains computation → capabilities, domain data → taxonomy.
-
-### Step 2: Check for Missing Aggregate
-
-Does the agent struct implement an aggregate trait? If no → create one.
-
-### Step 3: Create Aggregate File if Missing
-
-Create `contract_<name>_aggregate.rs` in the appropriate shared domain folder.
-
-### Step 4: Enforce 3-Block Structure
-
-Reorganize: struct definition → aggregate trait impl → constructors/std traits/helpers.
-
-### Step 5: Verify Type Discipline
-
-At least one struct implements an aggregate trait, max 3 total types (struct + enum), DI via `Arc<dyn Trait>`, shared VOs.
-
-### Step 6: Verify Helper vs Utility Boundary
-
-See `references/helper-vs-utility.md` for the decision tree.
-
-### Step 7: Verify Layer Compliance
-
-No forbidden imports, no I/O, no business logic, no domain computation.
-
-### Step 8: Verify Error Handling, VO, and Constants
-
-See `references/error-handling.md` and `references/primitive-vo-policy.md`.
-
-### Step 9: Verify Compilation
-
-```bash
-cargo check -p <crate-name>
-```
-
-## Quick Commands
-
-```bash
-# List aggregate trait implementations
-rg -n "impl\s+I[A-Za-z0-9_]+Aggregate\s+for" crates/<crate>/src/agent_*.rs
-
-# Check computation patterns
-rg "\.sum\(\)|\.len\(\)|\.map\(|\.fold\(" crates/<crate>/src/agent_*.rs
-
-# Check forbidden imports (agent must only depend on taxonomy + contract + utility)
-rg "^\s*use\s+.*(capabilities_)" crates/<crate>/src/agent_*.rs
-```
-
-## Common Mistakes
-
-- Putting domain computation in agents.
-- Putting business logic in agents.
-- Putting I/O in agents.
-- Defining domain data structs in agent files.
-- Using concrete service types as struct fields.
-- Putting private helpers in the aggregate trait.
-- Placing std trait impls before the aggregate trait.
-- Mixing Block 2 and Block 3 responsibilities.
-- Silent error swallowing with `unwrap_or_default()`.
-- Magic constants in agent logic.
+- [ ] Block 1 → 2 → 3 order followed.
+- [ ] Block 2: ONLY aggregate trait implementation.
+- [ ] Block 3: constructors, std traits, private helpers.
+- [ ] ≥1 struct implements aggregate trait; ≤3 total types.
+- [ ] No local domain data; `Arc<dyn Trait>` for DI; shared VOs.
+- [ ] Zero I/O, zero business logic, zero domain computation.
+- [ ] No forbidden imports.
+- [ ] Generic aggregate methods object-safe or `where Self: Sized`.
+- [ ] Aggregate registered in shared crate `mod.rs`.
+- [ ] `cargo check -p <crate-name>` passes.

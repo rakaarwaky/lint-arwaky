@@ -23,13 +23,13 @@ fn mcp_container_has_all_required_fields() {
 
 #[test]
 fn mcp_container_fields_are_arc_dyn_traits() {
-    use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-    use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-    use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-    use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-    use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-    use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+    use shared::code_analysis::ICodeAnalysisAggregate;
+    use shared::config_system::IConfigOrchestratorAggregate;
+    use shared::external_lint::IExternalLintAggregate;
+    use shared::import_rules::IImportRunnerAggregate;
+    use shared::naming_rules::INamingRunnerAggregate;
+    use shared::orphan_detector::IOrphanAggregate;
+    use shared::role_rules::IRoleRunnerAggregate;
     use std::sync::Arc;
 
     fn _assert_arc_types(_c: &McpContainer) {

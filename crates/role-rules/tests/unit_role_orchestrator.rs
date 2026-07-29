@@ -29,7 +29,7 @@ fn build_orchestrator() -> RoleOrchestrator {
 
 #[test]
 fn orchestrator_name_via_trait() {
-    use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+    use shared::role_rules::IRoleRunnerAggregate;
     let orch = build_orchestrator();
     let name: &dyn IRoleRunnerAggregate = &orch;
     assert_eq!(name.name(), "role-rules");

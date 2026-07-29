@@ -1,5 +1,5 @@
 // PURPOSE: AutoFixContainer — wiring for auto-fix feature (root layer, wiring only)
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::LintFixOrchestratorAggregate;
 use std::sync::Arc;
 
 #[derive(Clone)]

@@ -2,9 +2,9 @@
 // Covers: read_file, write_file, path_exists (happy path, edge, error).
 
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
-use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
+use shared::auto_fix::IFileAdapterProtocol;
+use shared::common::{ContentString, FilePath};
+
 use std::io::Write;
 use tempfile::NamedTempFile;
 

@@ -4,8 +4,8 @@
 // Speed: ms
 
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::common::FilePath;
+use shared::git_hooks::IHookManagerProtocol;
 
 fn sut_in_non_repo() -> GitHookAdapter {
     GitHookAdapter::new(FilePath::new("/tmp/nonexistent_repo_test_xyz").unwrap_or_default())

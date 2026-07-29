@@ -8,7 +8,7 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use ratatui::Frame;
-use shared::tui::taxonomy_state_vo::AppState;
+use shared::tui::AppState;
 
 pub struct PathScreen;
 

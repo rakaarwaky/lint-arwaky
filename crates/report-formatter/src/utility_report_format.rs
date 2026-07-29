@@ -1,7 +1,7 @@
 // PURPOSE: Stateless utility functions for report formatting (AES406)
 // Pure functions only — no domain types, structs, or enums belong here
 
-use shared::cli_commands::taxonomy_scan_report_vo::ScanReport;
+use shared::cli_commands::ScanReport;
 
 /// Default report formatter — produces a simple text summary.
 ///

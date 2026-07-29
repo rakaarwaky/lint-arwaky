@@ -1,23 +1,21 @@
 use crate::utility_report_formatter::{
     format_config_result, format_dependency_report, format_doctor_report, format_results,
 };
-use shared::auto_fix::taxonomy_fix_vo::FixResult;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
-use shared::maintenance::taxonomy_doctor_vo::DependencyReport;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::orphan_detector::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol;
-use shared::tui::taxonomy_action_flags_vo::ActionFlags;
-use shared::tui::taxonomy_adapter_info_vo::AdapterInfo;
-use shared::tui::taxonomy_lint_result_vo::LintExecutionResult;
+use shared::auto_fix::FixResult;
+use shared::cli_commands::LintResultList;
+use shared::code_analysis::ICodeAnalysisAggregate;
+use shared::config_system::IConfigOrchestratorAggregate;
+use shared::external_lint::IExternalLintAggregate;
+use shared::git_hooks::IHookManagerProtocol;
+use shared::import_rules::IImportRunnerAggregate;
+use shared::maintenance::{DependencyReport, MaintenanceCommandsAggregate};
+
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::orphan_detector::IOrphanAggregate;
+use shared::project_setup::SetupManagementAggregate;
+use shared::role_rules::IRoleRunnerAggregate;
+use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
+
 use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
 
@@ -25,9 +23,8 @@ use std::sync::Arc;
 // Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
 // with user-facing output formatting.
 
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
+use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::file_watch::{IChangeAnalyzerProtocol, IWatchProviderProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -559,9 +556,9 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult,
         std::sync::mpsc::Receiver<shared::tui::taxonomy_watch_message_vo::WatchMessage>,
     ) {
-        use shared::common::taxonomy_path_vo::FilePath;
-        use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
-        use shared::tui::taxonomy_watch_message_vo::WatchMessage;
+        use shared::common::FilePath;
+        use shared::file_watch::WatchConfig;
+        use shared::tui::WatchMessage;
 
         // Run initial scan
         let fp = FilePath::new(path.to_string()).unwrap_or_default();

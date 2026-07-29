@@ -1,12 +1,12 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared::cli_commands::LintResult;
+use shared::common::{Language, LintMessage, Severity};
+
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::taxonomy_violation_role_vo::AesRoleViolation;
-use shared::taxonomy_name_vo::SymbolName;
-use shared::taxonomy_source_vo::SourceContentVO;
+use shared::role_rules::{AesRoleViolation, ITaxonomyRoleChecker};
+
+use shared::common::{SourceContentVO, SymbolName};
+
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -159,7 +159,12 @@ impl TaxonomyRoleChecker {
                             };
                             let msg = AesRoleViolation::PrimitiveUsage {
                                 primitive: SymbolName::new(primitive_clean),
-                                reason: None,
+                                reason: Some(LintMessage::new(format!(
+                                    "Primitive type '{}' used on line {} of {}",
+                                    primitive_clean,
+                                    i + 1,
+                                    file
+                                ))),
                             }
                             .with_language(lang)
                             .to_string();
@@ -176,7 +181,11 @@ impl TaxonomyRoleChecker {
                     }
                     continue;
                 }
-                if type_candidate.starts_with(p) || type_candidate == *p {
+                if type_candidate == *p
+                    || (type_candidate.starts_with(p)
+                        && !type_candidate[p.len()..]
+                            .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
+                {
                     let primitive_clean = p.trim_end_matches('<');
                     let lang = if is_rs {
                         Language::Rust
@@ -187,7 +196,12 @@ impl TaxonomyRoleChecker {
                     };
                     let msg = AesRoleViolation::PrimitiveUsage {
                         primitive: SymbolName::new(primitive_clean),
-                        reason: None,
+                        reason: Some(LintMessage::new(format!(
+                            "Primitive type '{}' used on line {} of {}",
+                            primitive_clean,
+                            i + 1,
+                            file
+                        ))),
                     }
                     .with_language(lang)
                     .to_string();
@@ -270,7 +284,15 @@ impl TaxonomyRoleChecker {
                     i + 1,
                     "AES401",
                     Severity::HIGH,
-                    AesRoleViolation::ConstantPurity { reason: None }.to_string(),
+                    AesRoleViolation::ConstantPurity {
+                        reason: Some(LintMessage::new(format!(
+                            "Non-constant declaration '{}' found in constant file on line {} of {}",
+                            t,
+                            i + 1,
+                            file
+                        ))),
+                    }
+                    .to_string(),
                 ));
             }
         }

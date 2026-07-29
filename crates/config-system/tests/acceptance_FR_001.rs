@@ -1,6 +1,6 @@
 // FR-001 — Project Config Discovery
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::FilePath;
 use std::fs;
 use tempfile::TempDir;
 
@@ -51,4 +51,4 @@ async fn us1_config_in_parent_directory_is_found() {
         .contains("lint_arwaky.config.rust.yaml"));
 }
 
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::config_system::ConfigLanguage;

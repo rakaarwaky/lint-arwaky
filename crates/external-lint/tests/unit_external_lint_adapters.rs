@@ -2,14 +2,12 @@
 // file-extension filtering logic (no subprocess execution).
 
 use external_lint_lint_arwaky::*;
-use shared::code_analysis::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::code_analysis::ILinterAdapterProtocol;
+use shared::common::{
+    AdapterName, FilePath, ICommandExecutorProtocol, PatternList, ResponseData, Timeout,
+};
+
+use shared::external_lint::IExternalLintExecutorProtocol;
 use std::sync::Arc;
 
 // ─── Mock Executor (returns empty JSON) ───────────────────

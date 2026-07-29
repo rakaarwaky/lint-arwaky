@@ -42,7 +42,7 @@ report_formatter.workspace = true
 regex.workspace = true
 
 [dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 shared.workspace = true
 tokio.workspace = true

@@ -6,21 +6,16 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_adapter_error::ScanError;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_constant::DEFAULT_SKIP_DIRS;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::{
+    ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
+    IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol, DEFAULT_SKIP_DIRS,
+};
+
+use shared::common::LayerMapVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -61,30 +56,22 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
-        let (mandatory_results, forbidden_results) = tokio::join!(
-            async {
-                let mut r = LintResultList::new(Vec::new());
-                self.deps
-                    .mandatory
-                    .run_mandatory_imports(&self.config, &self.layer_map, &files, &root_dir, &mut r)
-                    .await;
-                r
-            },
-            async {
-                let mut r = LintResultList::new(Vec::new());
-                self.deps
-                    .forbidden
-                    .check_forbidden_imports(
-                        &self.config,
-                        &self.layer_map,
-                        &files,
-                        &root_dir,
-                        &mut r,
-                    )
-                    .await;
-                r
-            }
+        let (mandatory_result, forbidden_result) = tokio::join!(
+            self.deps.mandatory.run_mandatory_imports(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir
+            ),
+            self.deps.forbidden.check_forbidden_imports(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir
+            ),
         );
+        let mandatory_results = mandatory_result?;
+        let forbidden_results = forbidden_result?;
 
         let root_dir_clone = root_dir.clone();
         let deps = &self.deps;
@@ -95,18 +82,23 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .par_iter()
             .flat_map(|file| {
                 let mut local_results = Vec::new();
-                if let Ok(content) = std::fs::read_to_string(file.value()) {
-                    deps.unused
-                        .check_unused_imports(file.value(), &content, &mut local_results);
+                let content = match std::fs::read_to_string(file.value()) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
+                        return local_results;
+                    }
+                };
+                if let Ok(unused) = deps.unused.check_unused_imports(file.value(), &content) {
+                    local_results.extend(unused);
+                }
 
-                    let content_str = ContentString::new(content);
-                    deps.dummy.check_all_dummy(
-                        file,
-                        &content_str,
-                        &mut local_results,
-                        &root_dir_clone,
-                        layer_map,
-                    );
+                let content_str = ContentString::new(content);
+                if let Ok(dummy) =
+                    deps.dummy
+                        .check_all_dummy(file, &content_str, &root_dir_clone, layer_map)
+                {
+                    local_results.extend(dummy);
                 }
                 local_results
             })
@@ -117,16 +109,12 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(forbidden_results.values);
         results.values.extend(file_violations);
 
-        self.deps
+        let cycle_violations = self
+            .deps
             .cycle
-            .check_cycles(
-                &self.config,
-                &self.layer_map,
-                &files,
-                &root_dir,
-                &mut results,
-            )
-            .await;
+            .check_cycles(&self.config, &self.layer_map, &files, &root_dir)
+            .await?;
+        results.values.extend(cycle_violations);
         Ok(results.values)
     }
 
@@ -174,8 +162,13 @@ impl ImportOrchestrator {
         if path.is_dir() {
             self.walk_dir(path, &mut files, false);
         } else if path.is_file() {
-            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
-                files.push(fp);
+            match FilePath::new(path.to_string_lossy().to_string()) {
+                Ok(fp) => files.push(fp),
+                Err(e) => eprintln!(
+                    "[warn] invalid file path '{}': {}",
+                    path.to_string_lossy(),
+                    e
+                ),
             }
         }
         FilePathList::new(files)
@@ -185,23 +178,33 @@ impl ImportOrchestrator {
         if is_subdir && self.is_ignored(dir) {
             return;
         }
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    self.walk_dir(&path, files, true);
-                } else if path.is_file() {
-                    if self.is_ignored(&path) {
-                        continue;
-                    }
-                    if let Some(ext) = path.extension() {
-                        if matches!(
-                            ext.to_str(),
-                            Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
-                        ) {
-                            if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
-                                files.push(fp);
-                            }
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("[warn] cannot read directory '{}': {}", dir.display(), e);
+                return;
+            }
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                self.walk_dir(&path, files, true);
+            } else if path.is_file() {
+                if self.is_ignored(&path) {
+                    continue;
+                }
+                if let Some(ext) = path.extension() {
+                    if matches!(
+                        ext.to_str(),
+                        Some("rs" | "py" | "js" | "ts" | "jsx" | "tsx")
+                    ) {
+                        match FilePath::new(path.to_string_lossy().to_string()) {
+                            Ok(fp) => files.push(fp),
+                            Err(e) => eprintln!(
+                                "[warn] invalid file path '{}': {}",
+                                path.to_string_lossy(),
+                                e
+                            ),
                         }
                     }
                 }

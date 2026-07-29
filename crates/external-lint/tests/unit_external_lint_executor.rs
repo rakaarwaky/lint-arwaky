@@ -1,13 +1,11 @@
 // PURPOSE: Unit tests for ExternalLintExecutor — command execution with error mapping.
 
 use external_lint_lint_arwaky::ExternalLintExecutor;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
+use shared::common::{
+    AdapterName, FilePath, ICommandExecutorProtocol, PatternList, ResponseData, Timeout,
+};
+
+use shared::external_lint::IExternalLintExecutorProtocol;
 use std::sync::Arc;
 
 // ─── Mock Executor ────────────────────────────────────────

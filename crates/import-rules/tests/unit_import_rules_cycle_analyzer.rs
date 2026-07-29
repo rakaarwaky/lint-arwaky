@@ -2,15 +2,12 @@
 // Tests cycle detection logic using temp files with cross-layer imports.
 
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::common::{BooleanVO, Count};
+use shared::common::{FilePath, FilePathList, LayerMapVO, LayerNameVO};
+
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::{DependencyEdge, ICycleImportProtocol};
+
 use std::collections::HashMap;
 use std::io::Write;
 
@@ -119,11 +116,10 @@ async fn no_cross_layer_imports_no_violations() {
     let layer_map = two_layer_map();
     let files = FilePathList::new(vec![file_a]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_cycles(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_cycles(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),
@@ -142,11 +138,10 @@ async fn disabled_config_returns_empty() {
     let layer_map = two_layer_map();
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let mut results = LintResultList::new(Vec::new());
-
-    sut()
-        .check_cycles(&config, &layer_map, &files, &root, &mut results)
-        .await;
+    let results = sut()
+        .check_cycles(&config, &layer_map, &files, &root)
+        .await
+        .unwrap();
 
     assert!(
         results.is_empty(),

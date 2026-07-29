@@ -1,16 +1,13 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
 use async_trait::async_trait;
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_adapter_error::ScanError;
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::taxonomy_common_vo::PatternList;
-use shared::taxonomy_definition_vo::LayerMapVO;
+use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::{ErrorMessage, FilePath, ScanError};
+
+use shared::common::{LayerMapVO, PatternList};
+use shared::config_system::ArchitectureConfig;
+use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
+
 use std::path::Path;
 use std::sync::Arc;
 
@@ -79,21 +76,25 @@ impl INamingRunnerAggregate for NamingOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl NamingOrchestrator {
     pub fn new(deps: NamingOrchestratorDeps) -> Self {
-        let ignored_patterns = PatternList {
-            values: deps
-                .config
-                .ignored_paths
-                .values
-                .iter()
-                .map(|fp| {
-                    fp.value
-                        .trim_start_matches("./")
-                        .trim_start_matches('/')
-                        .trim_end_matches('/')
-                        .to_string()
-                })
-                .collect(),
-        };
+        let mut values: Vec<String> = deps
+            .config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| {
+                fp.value
+                    .trim_start_matches("./")
+                    .trim_start_matches('/')
+                    .trim_end_matches('/')
+                    .to_string()
+            })
+            .collect();
+        // Default-excluded directories are skipped even without config `ignored_paths`.
+        // `tests` must never be linted (test scaffolding is not production code).
+        if !values.iter().any(|v| v == "tests") {
+            values.push("tests".to_string());
+        }
+        let ignored_patterns = PatternList { values };
         Self {
             deps,
             ignored_patterns,
