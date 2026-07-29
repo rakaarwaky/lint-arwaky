@@ -158,6 +158,18 @@ if [ -n "$PROJECT_ROOT" ] && [ -d "$PROJECT_ROOT/.agents" ]; then
     echo "  Synced .agents/ directory from local source"
 fi
 
+# 5b. Setup shell aliases (lac, lat, lam) if missing
+for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$RC_FILE" ] && ! grep -q "alias lac=" "$RC_FILE"; then
+        echo "" >> "$RC_FILE"
+        echo "# Lint Arwaky Aliases" >> "$RC_FILE"
+        echo "alias lac=\"lint-arwaky-cli\"" >> "$RC_FILE"
+        echo "alias lat=\"lint-arwaky-tui\"" >> "$RC_FILE"
+        echo "alias lam=\"lint-arwaky-mcp\"" >> "$RC_FILE"
+        echo -e "  ${GREEN}✓${NC} Shell aliases added to $RC_FILE"
+    fi
+done
+
 # 6. Verification & Summary
 echo -e "\n${BOLD}[6/6] Verifying installation...${NC}"
 
