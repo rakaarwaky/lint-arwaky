@@ -111,11 +111,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             {
                 all_files.push(root_dir.value().to_string());
             }
-        }        // Normalize all file paths to be relative to workspace root so that
-        // inbound_links (built by the graph resolver) and orphan analyzers
-        // use a consistent path format.
+        } // Normalize all file paths to be relative to workspace root so that
+          // inbound_links (built by the graph resolver) and orphan analyzers
+          // use a consistent path format.
         let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());        let all_files: Vec<String> = all_files
+            .unwrap_or_else(|| root_path.to_path_buf());
+        let all_files: Vec<String> = all_files
             .into_iter()
             .map(|f| {
                 std::path::Path::new(&f)
@@ -215,13 +216,15 @@ impl ArchOrphanAnalyzer {
         let entry_points = self
             .deps
             .resolver
-            .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);        let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
+            .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);
+        let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()
                 .filter_map(|s| FilePath::new(s.clone()).ok())
                 .collect(),
-        );        let layer_keys: Vec<String> = self
+        );
+        let layer_keys: Vec<String> = self
             .config
             .layers
             .keys()
