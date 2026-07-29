@@ -1,6 +1,10 @@
 [build]
 rustc-wrapper = "sccache"
 
+[target.x86_64-unknown-linux-gnu]
+linker = "cc"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
 # For sccache to work, disable incremental on full builds:
 #   CARGO_INCREMENTAL=0 cargo build
 # Local dev (small changes) is faster with default incremental.
