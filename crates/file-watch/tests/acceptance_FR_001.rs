@@ -94,7 +94,10 @@ async fn frd_001_non_recursive_watch_ignores_nested() {
                 if e.path.contains("visible.rs") || e.path == root.to_string_lossy().as_ref() {
                     found_root = true;
                 }
-                if e.path.contains("hidden.rs") || e.path.contains("/sub/") || e.path.contains("\\sub\\") {
+                if e.path.contains("hidden.rs")
+                    || e.path.contains("/sub/")
+                    || e.path.contains("\\sub\\")
+                {
                     found_nested = true;
                 }
             }
