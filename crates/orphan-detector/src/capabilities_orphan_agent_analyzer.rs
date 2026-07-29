@@ -175,10 +175,7 @@ impl AgentOrphanAnalyzer {
         static RE: OnceLock<Option<Regex>> = OnceLock::new();
         // Use `[^<>]*(?:<[^<>]*>[^<>]*)*` for one level of nested angle brackets.
         RE.get_or_init(|| {
-            Regex::new(
-                r"impl\s*(?:<[^<>]*(?:<[^<>]*>[^<>]*)*>)?\s+([A-Za-z0-9_]+)\s+for\s+",
-            )
-            .ok()
+            Regex::new(r"impl\s*(?:<[^<>]*(?:<[^<>]*>[^<>]*)*>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok()
         })
         .as_ref()
     }

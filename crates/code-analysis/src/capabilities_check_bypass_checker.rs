@@ -214,24 +214,20 @@ impl IBypassCheckerProtocol for BypassChecker {
                         && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
-                        let reason =
-                            Some(LintMessage::new(format!("Found forbidden bypass token: '{}'", token)));
+                        let reason = Some(LintMessage::new(format!(
+                            "Found forbidden bypass token: '{}'",
+                            token
+                        )));
                         let vo = match Self::classify_token(token) {
-                            ViolationKind::UnwrapExpect => {
-                                AesCodeAnalysisViolation::UnwrapExpect {
-                                    reason: reason.clone(),
-                                }
-                            }
-                            ViolationKind::Panic => {
-                                AesCodeAnalysisViolation::Panic {
-                                    reason: reason.clone(),
-                                }
-                            }
-                            ViolationKind::Todo => {
-                                AesCodeAnalysisViolation::Todo {
-                                    reason: reason.clone(),
-                                }
-                            }
+                            ViolationKind::UnwrapExpect => AesCodeAnalysisViolation::UnwrapExpect {
+                                reason: reason.clone(),
+                            },
+                            ViolationKind::Panic => AesCodeAnalysisViolation::Panic {
+                                reason: reason.clone(),
+                            },
+                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo {
+                                reason: reason.clone(),
+                            },
                             ViolationKind::Unimplemented => {
                                 AesCodeAnalysisViolation::Unimplemented {
                                     reason: reason.clone(),
@@ -330,7 +326,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                             ("throw new syntaxerror", "throw new SyntaxError(...)"),
                         ];
 
-                        if let Some((_, display)) = throw_patterns.iter().find(|(p, _)| code_lower.contains(p)) {
+                        if let Some((_, display)) =
+                            throw_patterns.iter().find(|(p, _)| code_lower.contains(p))
+                        {
                             violations.push(LintResult::new_arch(
                                 file,
                                 line_number,

@@ -46,8 +46,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
             if stripped.starts_with("struct ") && stripped.ends_with(';') && !stripped.contains('(')
             {
                 // Skip unit structs with derive attribute — #[derive(...)] provides impl
-                let has_derive = i > 0
-                    && lines[i - 1].trim().starts_with("#[derive(");
+                let has_derive = i > 0 && lines[i - 1].trim().starts_with("#[derive(");
                 if has_derive {
                     i += 1;
                     continue;
@@ -211,13 +210,14 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 file,
                 0,
                 "AES303",
-                Severity::HIGH,                    AesCodeAnalysisViolation::MandatoryClassDefinition {
-                        reason: Some(LintMessage::new(format!(
-                            "File {} has no class/struct/enum/trait definition",
-                            file
-                        ))),
-                    }
-                    .to_string(),
+                Severity::HIGH,
+                AesCodeAnalysisViolation::MandatoryClassDefinition {
+                    reason: Some(LintMessage::new(format!(
+                        "File {} has no class/struct/enum/trait definition",
+                        file
+                    ))),
+                }
+                .to_string(),
             ));
         }
     }

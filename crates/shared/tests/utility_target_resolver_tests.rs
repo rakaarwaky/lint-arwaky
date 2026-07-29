@@ -115,12 +115,15 @@ fn collect_source_files_directory_returns_files() {
     let files = collect_source_files(&src_dir, &dir_path, &[]);
 
     assert_eq!(files.len(), 2);
-    let names: Vec<&str> = files.iter().map(|f| {
-        std::path::Path::new(&f.value)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("")
-    }).collect();
+    let names: Vec<&str> = files
+        .iter()
+        .map(|f| {
+            std::path::Path::new(&f.value)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("")
+        })
+        .collect();
     assert!(names.contains(&"capabilities_handler.py"));
     assert!(names.contains(&"capabilities_handler.rs"));
 }

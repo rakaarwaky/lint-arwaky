@@ -22,7 +22,9 @@ use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
 use shared::common::utility_file_handler::is_path_ignored;
-use shared::config_system::utility_config_parser::{parse_adapter_names_from_yaml, parse_config_yaml_with_warnings};
+use shared::config_system::utility_config_parser::{
+    parse_adapter_names_from_yaml, parse_config_yaml_with_warnings,
+};
 use shared::external_lint::IExternalLintAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -98,7 +100,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 }
             }
         } else {
-            let _ = detect_languages(root_path, &mut has_rs, &mut has_py, &mut has_js, &ignored_paths);
+            let _ = detect_languages(
+                root_path,
+                &mut has_rs,
+                &mut has_py,
+                &mut has_js,
+                &ignored_paths,
+            );
         }
 
         let mut adapter_names = Vec::with_capacity(9);
@@ -199,7 +207,13 @@ fn all_config_file_names() -> Vec<String> {
     ]
 }
 
-fn walk_up_find_config<T>(root_path: &Path, _has_rs: bool, _has_py: bool, _has_js: bool, mut extract: impl FnMut(&str) -> Option<T>) -> Option<T> {
+fn walk_up_find_config<T>(
+    root_path: &Path,
+    _has_rs: bool,
+    _has_py: bool,
+    _has_js: bool,
+    mut extract: impl FnMut(&str) -> Option<T>,
+) -> Option<T> {
     let config_names = all_config_file_names();
     let start = if root_path.is_file() {
         root_path.parent().unwrap_or(root_path)
@@ -223,12 +237,27 @@ fn walk_up_find_config<T>(root_path: &Path, _has_rs: bool, _has_py: bool, _has_j
     None
 }
 
-fn load_ignored_paths_from_config(root_path: &Path, has_rs: bool, has_py: bool, has_js: bool) -> Vec<String> {
+fn load_ignored_paths_from_config(
+    root_path: &Path,
+    has_rs: bool,
+    has_py: bool,
+    has_js: bool,
+) -> Vec<String> {
     walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
         let (config, _) = parse_config_yaml_with_warnings(content);
-        let paths: Vec<String> = config.ignored_paths.values.iter().map(|fp| fp.value.clone()).collect();
-        if paths.is_empty() { None } else { Some(paths) }
-    }).unwrap_or_default()
+        let paths: Vec<String> = config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|fp| fp.value.clone())
+            .collect();
+        if paths.is_empty() {
+            None
+        } else {
+            Some(paths)
+        }
+    })
+    .unwrap_or_default()
 }
 
 fn load_configured_adapter_names(
@@ -239,6 +268,10 @@ fn load_configured_adapter_names(
 ) -> Option<Vec<String>> {
     walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
         let adapters = parse_adapter_names_from_yaml(content);
-        if adapters.is_empty() { None } else { Some(adapters) }
+        if adapters.is_empty() {
+            None
+        } else {
+            Some(adapters)
+        }
     })
 }

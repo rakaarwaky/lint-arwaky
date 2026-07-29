@@ -67,7 +67,7 @@ impl Default for AgentRoleChecker {
 impl AgentRoleChecker {
     pub fn new() -> Self {
         Self {}
-    }        // ─── Rust ──────────────────────────────────────────────
+    } // ─── Rust ──────────────────────────────────────────────
 
     fn _check_rust_routing(&self, file: &str, content: &str, violations: &mut Vec<LintResult>) {
         // Note: aggregate import is enforced by mandatory checker (AES202), not here.

@@ -260,8 +260,7 @@ mod tests {
             "Should detect layer from common directory (has contract_* and taxonomy_* files)"
         );
         assert!(
-            result.as_ref().unwrap() == "contract"
-                || result.as_ref().unwrap() == "taxonomy",
+            result.as_ref().unwrap() == "contract" || result.as_ref().unwrap() == "taxonomy",
             "Detected layer should be contract or taxonomy"
         );
     }

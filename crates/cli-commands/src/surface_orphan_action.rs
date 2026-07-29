@@ -42,7 +42,13 @@ pub fn handle_scan_orphan(
     let workspaces = rt.block_on(config_orchestrator.discover_workspaces(&root_fp));
 
     if workspaces.is_empty() {
-        return scan_single_root(&root, &orphan_orchestrator, &config_orchestrator, format, &filter);
+        return scan_single_root(
+            &root,
+            &orphan_orchestrator,
+            &config_orchestrator,
+            format,
+            &filter,
+        );
     }
 
     let workspaces = if let Some(ref member_name) = member {
