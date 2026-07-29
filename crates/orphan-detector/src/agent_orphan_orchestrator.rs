@@ -152,10 +152,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             return Vec::new();
         }
 
-        let all_workspace_files = self._expand_workspace_files(files, root_dir);
-        let file_vo = OrphanFileListVO::new(all_workspace_files);
-
-        self._check_orphans_inner(files, root_dir, context, &file_vo)
+        // Files are already expanded before graph context build (in scan_orphans),
+        // so file_vo is the same as files — no need to expand again.
+        self._check_orphans_inner(files, root_dir, context, files)
     }
 }
 
