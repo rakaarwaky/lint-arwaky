@@ -2,136 +2,112 @@
 name: create-contract-python
 description: "Create and validate Python contract layer files in shared domain: pure ABC definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
 metadata:
-  tags: [python, aes, contract, protocol, aggregate, abc, shared, di, vo]
+  tags: [python, aes, contract, protocol, aggregate, abc, vo]
   triggers:
     - "create contract python"
     - "add contract python"
     - "create protocol python"
     - "create aggregate python"
-    - "fix contract python"
+    - "contract missing python"
+    - "validate contract python"
     - "check contract python"
-    - "audit contract python"
   dependencies: []
   related:
-    - create-taxonomy-python
     - create-capabilities-python
     - create-agent-python
+    - create-taxonomy-python
 ---
 
 # create-contract-python
 
-## Purpose
+Contract layer = **pure ABC definitions** for the shared domain. No implementation. No layer imports. File: `contract_<concept>_<suffix>.py`.
 
-Create and validate Python **contract layer** files in shared domain.
+## Contract Roles
 
-Contracts are pure ABC definitions.
+| Suffix | Implemented By | Used By | Example |
+| --- | --- | --- | --- |
+| `_protocol` | Capabilities | Agent | `contract_import_forbidden_protocol.py` |
+| `_aggregate` | Agent | Surface | `contract_import_runner_aggregate.py` |
 
-They define the **WHAT**: public promises, stable interfaces, polymorphism boundaries, DI boundaries.
-
-They MUST NOT define the **HOW**: no implementation, no private helpers, no I/O, no business logic, no layer imports.
-
-Two contract suffixes serve different roles:
-
-- `_protocol` → implemented by Capabilities (inbound behavior interface)
-- `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
-
-## AES402 — Contract Primitive Restriction
-
-### Protocol Check (AES402)
-Scan `_protocol` files for raw primitives in method signatures. Flag `str`, `int`, `float`, `bool`, `list`, `dict` in parameter types and return types. Method signatures must use VOs.
-
-### Aggregate Check (AES402)
-Same primitive scan on `_aggregate` files. All method signatures must use VOs for domain data.
-
-**Skip rules:** Lines containing internal VO wrappers are excluded. Lines starting with `def` in comments are excluded after noise stripping.
+Interface naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
 ## Definition of Done
 
 1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
-2. Contract contains only ABC definitions.
-3. Contract contains no method implementations or default method bodies.
-4. Contract contains no private helper signatures.
-5. ABC inherits from `ABC`.
-6. All methods use `@abstractmethod` decorator.
-7. Contract imports only taxonomy and contract types.
-8. Contract signatures use shared VOs for domain data.
-9. New contract module is registered in `__init__.py`.
+2. Contains only ABC class definitions — no method implementations.
+3. No private helper method signatures.
+4. All methods have proper type annotations.
+5. Contracts exported/importable cleanly.
+6. Imports only taxonomy and other contract types.
+7. Signatures use shared VOs for domain data.
+8. Error types from shared taxonomy.
+9. Module registered in shared `__init__.py`.
 10. `python -c "import <module>"` passes.
-11. **AES402:** Protocol method signatures have no raw primitives.
-12. **AES402:** Aggregate method signatures have no raw primitives.
 
-## References
+---
 
-| File                                | Content                                |
-| ----------------------------------- | -------------------------------------- |
-| `references/contract-roles.md`      | Two suffix types and naming convention |
-| `references/purity-imports.md`      | AES201 import restrictions             |
-| `references/abc-structure-rules.md` | 7 ABC structure rules                  |
-| `references/primitive-vo-policy.md` | Primitive policy table                 |
-| `references/examples.md`            | All BAD/GOOD code examples             |
-| `references/commands.md`            | Quick heuristic check commands         |
-| `references/checklist.md`           | Verification checklist                 |
+## Purity and Import Restrictions (AES201)
+
+| Contract File | May Import From | Must Not Import From |
+| --- | --- | --- |
+| `contract_*_protocol.py` | taxonomy types, other contract types | capabilities, agents, surface, root |
+| `contract_*_aggregate.py` | taxonomy types, other contract types | capabilities, agents, surface, root |
+
+---
+
+## Interface Structure Rules
+
+1. Contracts contain ABC class definitions only.
+2. No method implementations (`@abstractmethod` body is `...` or `pass`).
+3. No private helper signatures.
+4. All methods MUST have proper type annotations.
+5. ABC classes MUST inherit `ABC` from `abc` module.
+6. Error types from shared taxonomy.
+7. Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
+
+---
+
+## VO Rules
+
+Contract signatures must use shared VOs, not raw primitives.
+
+| Primitive | Rule |
+| --- | --- |
+| `str`, `int`, `float` | Forbidden for domain fields/contract values. Use VO. |
+| `bool` | Allowed for semantic toggles only. |
+| `list[str]`, `dict` | Forbidden for domain collections. Use VO. |
+
+---
 
 ## Templates
 
-| File                                   | Purpose                      |
-| -------------------------------------- | ---------------------------- |
-| `templates/contract_name_protocol.py`  | New protocol ABC definition  |
-| `templates/contract_name_aggregate.py` | New aggregate ABC definition |
+| File | Purpose |
+| --- | --- |
+| `templates/contract_name_protocol.py` | Protocol ABC definition |
+| `templates/contract_name_aggregate.py` | Aggregate ABC definition |
+
+---
 
 ## Workflow
 
-### Step 1: Determine the Contract Role
+1. **Determine role** — Which layer implements this? Capabilities → `_protocol`. Agent → `_aggregate`.
+2. **Identify public methods** — Golden Rule: called by outer layers? YES → keep. NO → private helper (not in contract).
+3. **Create file** → `contract_<concept>_<suffix>.py` in shared domain.
+4. **Register** → update `__init__.py`.
+5. **Verify** → `python -c "import <module>"`.
 
-Ask: **"Which layer will implement this interface?"**
+---
 
-| Implemented By | Suffix       |
-| -------------- | ------------ |
-| Capabilities   | `_protocol`  |
-| Agent          | `_aggregate` |
+## Verification Checklist
 
-### Step 2: Identify Public Methods
-
-Apply the Golden Rule: Is this method called by outer layers? YES → keep in contract. NO → make it a private helper.
-
-### Step 3: Create Contract File
-
-Create `contract_<concept>_<suffix>.py` in the appropriate shared domain folder.
-
-### Step 4: Register Module
-
-Update the domain `__init__.py`.
-
-### Step 5: Verify
-
-```bash
-python -c "import <module>"
-```
-
-## Quick Commands
-
-```bash
-# List contract ABCs
-grep -n "^class I[A-Za-z0-9_]*Protocol\|^class I[A-Za-z0-9_]*Aggregate" modules/shared/src/**/contract_*.py
-
-# Check forbidden imports
-grep -n "from.*capabilities_|from.*agent_|from.*surface_" modules/shared/src/*/contract_*.py
-
-# AES402: Check protocol method signatures for raw primitives
-grep -n "def\s\+\w\+(.*\(str\|int\|float\|bool\|list\|dict\)" modules/shared/src/*/contract_*_protocol.py
-
-# AES402: Check aggregate method signatures for raw primitives
-grep -n "def\s\+\w\+(.*\(str\|int\|float\|bool\|list\|dict\)" modules/shared/src/*/contract_*_aggregate.py
-```
-
-## Common Mistakes
-
-- Putting implementation logic in contract files.
-- Adding default method bodies to contract ABCs.
-- Importing concrete layer types into contracts.
-- Using wrong suffix for contract files.
-- Leaking implementation details into contract ABCs.
-- Forgetting `@abstractmethod` decorators on methods.
-- Forgetting to inherit from `ABC`.
-- Using raw `str` for domain values in contract signatures.
-- Forgetting to register contract modules in `__init__.py`.
+- [ ] Correct suffix: `_protocol` or `_aggregate`.
+- [ ] Only ABC class definitions — no implementations.
+- [ ] No private helper signatures.
+- [ ] All methods type-annotated.
+- [ ] ABC inherits from `abc.ABC`.
+- [ ] Imports only taxonomy and contract types.
+- [ ] No import from capabilities, agents, surface.
+- [ ] Signatures use shared VOs.
+- [ ] Error types from shared taxonomy.
+- [ ] Registered in shared `__init__.py`.
+- [ ] `python -c "import <module>"` passes.

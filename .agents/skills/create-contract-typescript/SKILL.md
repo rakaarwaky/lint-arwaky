@@ -2,136 +2,112 @@
 name: create-contract-typescript
 description: "Create and validate TypeScript contract layer files in shared domain: pure interface definitions for protocols and aggregates. Contracts define public promises only, with no implementation, no layer imports, and domain-safe VO-based signatures."
 metadata:
-  tags:
-    [typescript, aes, contract, protocol, aggregate, interface, shared, di, vo]
+  tags: [typescript, aes, contract, protocol, aggregate, interface, vo]
   triggers:
     - "create contract typescript"
     - "add contract typescript"
     - "create protocol typescript"
     - "create aggregate typescript"
-    - "fix contract typescript"
+    - "contract missing typescript"
+    - "validate contract typescript"
     - "check contract typescript"
-    - "audit contract typescript"
   dependencies: []
   related:
-    - create-taxonomy-typescript
     - create-capabilities-typescript
     - create-agent-typescript
+    - create-taxonomy-typescript
 ---
 
 # create-contract-typescript
 
-## Purpose
+Contract layer = **pure interface definitions** for the shared domain. No implementation. No layer imports. File: `contract_<concept>_<suffix>.ts`.
 
-Create and validate TypeScript **contract layer** files in shared domain.
+## Contract Roles
 
-Contracts are pure interface definitions.
+| Suffix | Implemented By | Used By | Example |
+| --- | --- | --- | --- |
+| `_protocol` | Capabilities | Agent | `contract_import_forbidden_protocol.ts` |
+| `_aggregate` | Agent | Surface | `contract_import_runner_aggregate.ts` |
 
-They define the **WHAT**: public promises, stable interfaces, polymorphism boundaries, DI boundaries.
-
-They MUST NOT define the **HOW**: no implementation, no private helpers, no I/O, no business logic, no layer imports.
-
-Two contract suffixes serve different roles:
-
-- `_protocol` → implemented by Capabilities (inbound behavior interface)
-- `_aggregate` → implemented by Agent (facade for Surface to access feature behavior)
-
-## AES402 — Contract Primitive Restriction
-
-### Protocol Check (AES402)
-Scan `_protocol` files for raw primitives in method signatures. Flag `string`, `number`, `boolean`, `any`, `Array`, `Record` in parameter types and return types. Method signatures must use VOs.
-
-### Aggregate Check (AES402)
-Same primitive scan on `_aggregate` files. All method signatures must use VOs for domain data.
-
-**Skip rules:** Lines containing internal VO wrappers are excluded. Lines starting with `function` in comments are excluded after noise stripping.
+Interface naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
 ## Definition of Done
 
 1. Contract file uses correct suffix: `_protocol` or `_aggregate`.
-2. Contract contains only interface definitions.
-3. Contract contains no method implementations or private helper signatures.
-4. Interface is exported with `export interface`.
-5. Methods have proper TypeScript type annotations.
-6. Contract imports only taxonomy and contract types.
-7. Contract signatures use shared VOs for domain data.
-8. New contract module is registered in `index.ts`.
-9. `npx tsc --noEmit` passes.
-10. **AES402:** Protocol method signatures have no raw primitives.
-11. **AES402:** Aggregate method signatures have no raw primitives.
+2. Contains only interface definitions — no class implementations.
+3. No private helper method signatures.
+4. All methods have proper TypeScript type annotations.
+5. Interfaces exported with `export interface`.
+6. Imports only taxonomy and other contract types.
+7. Signatures use shared VOs for domain data.
+8. Error types from shared taxonomy.
+9. Module registered in shared `index.ts`.
+10. `npx tsc --noEmit` passes.
 
-## References
+---
 
-| File                                      | Content                                |
-| ----------------------------------------- | -------------------------------------- |
-| `references/contract-roles.md`            | Two suffix types and naming convention |
-| `references/purity-imports.md`            | AES201 import restrictions             |
-| `references/interface-structure-rules.md` | 7 interface structure rules            |
-| `references/primitive-vo-policy.md`       | Primitive policy table                 |
-| `references/examples.md`                  | All BAD/GOOD code examples             |
-| `references/commands.md`                  | Quick heuristic check commands         |
-| `references/checklist.md`                 | Verification checklist                 |
+## Purity and Import Restrictions (AES201)
+
+| Contract File | May Import From | Must Not Import From |
+| --- | --- | --- |
+| `contract_*_protocol.ts` | taxonomy types, other contract types | capabilities, agents, surface, root |
+| `contract_*_aggregate.ts` | taxonomy types, other contract types | capabilities, agents, surface, root |
+
+---
+
+## Interface Structure Rules
+
+1. Contracts contain interface definitions only.
+2. No method implementations.
+3. No private helper signatures.
+4. All methods MUST have proper TypeScript type annotations.
+5. Interfaces MUST be exported with `export interface`.
+6. Error types from shared taxonomy.
+7. Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
+
+---
+
+## VO Rules
+
+Contract signatures must use shared VOs, not raw primitives.
+
+| Primitive | Rule |
+| --- | --- |
+| `string`, `number` | Forbidden for domain fields/contract values. Use VO. |
+| `boolean` | Allowed for semantic toggles only. |
+| `string[]`, `Record<string, T>` | Forbidden for domain collections/data. Use VO. |
+
+---
 
 ## Templates
 
-| File                                   | Purpose                            |
-| -------------------------------------- | ---------------------------------- |
-| `templates/contract_name_protocol.ts`  | New protocol interface definition  |
-| `templates/contract_name_aggregate.ts` | New aggregate interface definition |
+| File | Purpose |
+| --- | --- |
+| `templates/contract_name_protocol.ts` | Protocol interface definition |
+| `templates/contract_name_aggregate.ts` | Aggregate interface definition |
+
+---
 
 ## Workflow
 
-### Step 1: Determine the Contract Role
+1. **Determine role** — Which layer implements this? Capabilities → `_protocol`. Agent → `_aggregate`.
+2. **Identify public methods** — Golden Rule: called by outer layers? YES → keep. NO → private helper (not in interface).
+3. **Create file** → `contract_<concept>_<suffix>.ts` in shared domain.
+4. **Register** → update `index.ts`.
+5. **Verify** → `npx tsc --noEmit`.
 
-Ask: **"Which layer will implement this interface?"**
+---
 
-| Implemented By | Suffix       |
-| -------------- | ------------ |
-| Capabilities   | `_protocol`  |
-| Agent          | `_aggregate` |
+## Verification Checklist
 
-### Step 2: Identify Public Methods
-
-Apply the Golden Rule: Is this method called by outer layers? YES → keep in contract. NO → make it a private helper.
-
-### Step 3: Create Contract File
-
-Create `contract_<concept>_<suffix>.ts` in the appropriate shared domain folder.
-
-### Step 4: Register Module
-
-Update the domain `index.ts`.
-
-### Step 5: Verify
-
-```bash
-npx tsc --noEmit
-```
-
-## Quick Commands
-
-```bash
-# List contract interfaces
-grep -n "^export interface I[A-Za-z0-9_]*Protocol\|^export interface I[A-Za-z0-9_]*Aggregate" packages/shared/src/**/contract_*.ts
-
-# Check forbidden imports
-grep -n "from.*capabilities_|from.*agent_|from.*surface_" packages/shared/src/*/contract_*.ts
-
-# AES402: Check protocol method signatures for raw primitives
-grep -n "\w\+(.*\(string\|number\|boolean\|any\)" packages/shared/src/*/contract_*_protocol.ts
-
-# AES402: Check aggregate method signatures for raw primitives
-grep -n "\w\+(.*\(string\|number\|boolean\|any\)" packages/shared/src/*/contract_*_aggregate.ts
-```
-
-## Common Mistakes
-
-- Putting implementation logic in contract files.
-- Adding method implementations to contract interfaces.
-- Importing concrete layer types into contracts.
-- Using wrong suffix for contract files.
-- Leaking implementation details into contract interfaces.
-- Missing type annotations on methods.
-- Using raw `string` for domain values in contract signatures.
-- Forgetting to register contract modules in `index.ts`.
-- Forgetting to export interfaces with `export interface`.
+- [ ] Correct suffix: `_protocol` or `_aggregate`.
+- [ ] Only interface definitions — no implementations.
+- [ ] No private helper signatures.
+- [ ] All methods type-annotated.
+- [ ] Interfaces exported with `export interface`.
+- [ ] Imports only taxonomy and contract types.
+- [ ] No import from capabilities, agents, surface.
+- [ ] Signatures use shared VOs.
+- [ ] Error types from shared taxonomy.
+- [ ] Registered in shared `index.ts`.
+- [ ] `npx tsc --noEmit` passes.

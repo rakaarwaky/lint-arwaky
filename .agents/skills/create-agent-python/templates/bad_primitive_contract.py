@@ -1,0 +1,3 @@
+class I<NameOrchestrator>Aggregate(ABC):
+    @abstractmethod
+    def execute(self, files: list[str]) -> list[str]: ...

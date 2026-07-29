@@ -2,16 +2,7 @@
 name: create-utility-typescript
 description: "Create and validate TypeScript utility layer files following AES rules: stateless standalone functions, no class, no interface impl, pure functions, domain-agnostic, reusable across modules."
 metadata:
-  tags:
-    [
-      typescript,
-      aes,
-      utility,
-      shared,
-      stateless,
-      pure-function,
-      domain-agnostic,
-    ]
+  tags: [typescript, aes, utility, shared, stateless, pure-function, domain-agnostic]
   triggers:
     - "create utility typescript"
     - "add utility typescript"
@@ -28,146 +19,86 @@ metadata:
 
 # create-utility-typescript
 
-## Purpose
+Utility layer = **stateless standalone functions**. No class, no `this`, no domain rules. Pure, domain-agnostic, reusable. File: `utility_<domain>_<role>.ts` (or `taxonomy_<domain>_utility.ts` in shared).
 
-Create and validate TypeScript **utility layer** files inside `packages/shared/src/<domain>/`.
-
-A utility file contains **stateless standalone functions**. It exists so that Capabilities, Agents, and Surfaces can remain clean and expressive by delegating low-level technical mechanics to reusable helpers.
-
-A utility file must:
-
-- contain ONLY exported functions (no class, no interface),
-- be completely stateless (no instance state, no class properties),
-- be pure (input A always produces output B),
-- be domain-agnostic (no business rules, no domain knowledge),
-- be reusable across multiple modules.
-
-## Role Naming (ARCHITECTURE §7)
-
-Utility role suffixes describe the technical responsibility:
+## Role Naming
 
 parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer, converter, counter, resolver, detector, builder, joiner, serializer, deserializer, encoder, decoder, hasher, generator, formatter, comparator, differ, matcher, checker, calculator, mapper, merger, grouper, sorter, deduplicator, printer
 
-File: `utility_<domain>_<role>.ts`
-
-## Dependencies (ARCHITECTURE §7)
-
-- **May depend on:** Taxonomy only.
-- **Must NOT depend on / import:** Capabilities, Agent, Surface, Contract, other Utility (except shared taxonomy utilities).
-
-## Special Rules (ARCHITECTURE §7)
-
-- **Stateless Only:** no class definitions, no `this`, no instance state.
-- **Pure Functions:** input A always produces output B. No randomness, no global state mutation, no I/O side effects (unless domain-agnostic + reusable).
-- **No Business Decisions:** utility does not know business rules, domain constraints, or architecture policies.
-- **No Interface Implementation:** utility never implements a protocol or aggregate interface.
-- **I/O Allowed:** stateless + I/O + domain-agnostic + reusable = valid utility (e.g., `walkSourceFiles`, `readFileContent`).
-- **Standalone Functions Only:** no classes, no methods. Just `export function` declarations.
-- **No Magic Constants:** extract reusable constants into `taxonomy_<domain>_constant.ts` in shared.
-
 ## Definition of Done
 
-1. NO class definition — only exported functions.
-2. All functions are stateless (no `this`, no instance state).
-3. Functions are pure: input A always produces output B.
-4. Functions are domain-agnostic: no business rules, no architecture knowledge.
-5. Functions are reusable across multiple modules.
-6. No magic constants — use shared taxonomy constants.
-7. Only depends on Taxonomy layer.
-8. `npx tsc --noEmit` passes.
+1. Only exported functions — no class definitions.
+2. No `this` keyword, no class properties, no instance state.
+3. Pure: same input → same output (except I/O utilities).
+4. Domain-agnostic: no business rules, no architecture knowledge.
+5. Reusable: used by ≥2 modules (otherwise keep as private helper).
+6. I/O allowed only if stateless + domain-agnostic + reusable.
+7. No import from Capabilities, Agent, Surface, Contract.
+8. May import from Taxonomy only.
+9. `npx tsc --noEmit` passes.
 
-## References
+---
 
-Read these files for detailed rules:
+## Stateless Rules
 
-| File                             | Content                                         |
-| -------------------------------- | ----------------------------------------------- |
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies      |
-| `references/stateless-rules.md`  | Stateless, pure, domain-agnostic decision rules |
-| `references/examples.md`         | All BAD/GOOD code examples                      |
-| `references/commands.md`         | Quick heuristic check commands                  |
+1. **No classes** — no `class`, no `this`, no instance state.
+2. **Pure functions** — deterministic: same input → same output. No `Math.random()`, no `Date.now()`, no global mutable state.
+3. **Domain-agnostic** — must NOT know about: architecture layer names (agent, capabilities, contract), business domain rules, specific capability logic.
+4. **Reusable** — if only one module uses it → keep as private helper in that module.
+
+### I/O Exception
+
+Utility CAN perform I/O if ALL conditions met: stateless (no `this`), domain-agnostic, reusable across multiple modules.
+
+---
+
+## Keep vs Extract Decision
+
+**Keep as private helper** if ANY: accesses `this`/instance state, domain-specific, only one consumer.
+
+**Extract to utility** only if ALL: stateless, pure (I/O allowed), domain-agnostic, ≥2 consumers.
+
+---
+
+## Layer Boundaries
+
+| Allowed | Forbidden |
+| --- | --- |
+| Stateless exported functions | Class definitions |
+| Pure computation (input → output) | `this` keyword / instance state |
+| I/O (if domain-agnostic + reusable) | Business rules / domain knowledge |
+| Taxonomy imports (`shared/taxonomy_*`) | Import from Capabilities, Agent, Surface |
+| File walking, pattern matching, parsing | Protocol/aggregate implementation |
+| Environment access (if stateless + reusable) | Magic constants (→ `taxonomy_*_constant.ts`) |
+
+---
 
 ## Templates
 
-Use these templates when creating new files:
+| File | Purpose |
+| --- | --- |
+| `templates/utility_name.ts` | Utility function module template |
 
-| File                          | Purpose                         |
-| ----------------------------- | ------------------------------- |
-| `templates/utility_name.ts`   | New utility implementation file |
+---
 
 ## Workflow
 
-### Step 1: Analyze Code Responsibility
+1. **Confirm reusability** — Is this used by ≥2 modules? If no → keep as private helper.
+2. **Confirm stateless** — No `this`, no class, no global mutation?
+3. **Confirm domain-agnostic** — No business rules, no architecture knowledge?
+4. **Create file** → `utility_<domain>_<role>.ts`.
+5. **Register** → update `index.ts`.
+6. **Verify** → `npx tsc --noEmit`.
 
-Read the code and ask: **"Is this a stateless, pure, domain-agnostic function?"**
+---
 
-If yes → extract to utility. If no → check if it's business logic (→ capabilities), orchestration (→ agent), or domain data (→ taxonomy).
+## Verification Checklist
 
-### Step 2: Check Reusability
-
-Is the function used by multiple modules? Or will it be useful in the future?
-
-- **Single-use + domain-specific** → keep as private helper in the layer file
-- **Reusable + domain-agnostic** → extract to utility
-
-### Step 3: Verify Stateless Purity
-
-Does the function have ANY of these?
-
-- `this` keyword
-- Access to class properties
-- Random number generation
-- System clock access
-- Global state mutation
-- Business rule knowledge
-
-If YES → NOT a utility. Keep as private helper.
-
-### Step 4: Verify Domain Agnosticism
-
-Does the function know about:
-
-- Architecture layer names?
-- Business domain rules?
-- Specific capability logic?
-
-If YES → NOT a utility. Domain-specific code belongs in capabilities.
-
-### Step 5: Create Utility File
-
-Write the exported functions following the template. No classes.
-
-### Step 6: Update Module Registration
-
-Add export to the appropriate shared domain `index.ts`.
-
-### Step 7: Verify Compilation
-
-```bash
-npx tsc --noEmit
-```
-
-## Quick Commands
-
-```bash
-# Check for forbidden patterns (class, this)
-grep -rn "^class \|this\." packages/shared/src/<domain>/utility_*.ts
-
-# List all utility functions
-grep -rn "^export function" packages/shared/src/<domain>/utility_*.ts
-
-# Check imports in utilities (should only use taxonomy)
-grep -rn "^import" packages/shared/src/<domain>/utility_*.ts
-```
-
-## Common Mistakes
-
-- Adding class definitions to utility files.
-- Implementing interface contracts in utility files.
-- Using `this` or accessing class properties.
-- Including business logic or domain rules.
-- Using magic constants instead of shared taxonomy constants.
-- Importing Capabilities, Agent, or Surface modules.
-- Creating functions that are only used by one module (keep as private helper).
-- Mixing pure functions with stateful operations.
-- Adding I/O to domain-specific functions (must be domain-agnostic + reusable).
+- [ ] Only exported functions — no class definitions.
+- [ ] No `this`, no instance state.
+- [ ] Pure / deterministic (or I/O with domain-agnostic + reusable justification).
+- [ ] Domain-agnostic — no business rules, no layer-name knowledge.
+- [ ] Used by ≥2 modules (otherwise keep as private helper).
+- [ ] No import from Capabilities, Agent, Surface, Contract.
+- [ ] No magic constants (extracted to `taxonomy_*_constant.ts`).
+- [ ] `npx tsc --noEmit` passes.

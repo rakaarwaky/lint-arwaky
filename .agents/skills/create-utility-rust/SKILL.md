@@ -2,17 +2,7 @@
 name: create-utility-rust
 description: "Create and validate Rust utility layer files following AES rules: stateless standalone functions, no struct, no trait impl, pure functions, domain-agnostic, reusable across modules."
 metadata:
-  tags:
-    [
-      rust,
-      aes,
-      utility,
-      stateless,
-      pure-functions,
-      domain-agnostic,
-      reusability,
-      taxonomy,
-    ]
+  tags: [rust, aes, utility, stateless, pure-functions, domain-agnostic, reusability, taxonomy]
   triggers:
     - "create utility rust"
     - "add utility rust"
@@ -27,179 +17,86 @@ metadata:
 
 # create-utility-rust
 
-## Purpose
+Utility layer = **stateless standalone functions**. No struct, no `impl`, no domain rules. Pure, domain-agnostic, reusable. File: `utility_<domain>_<role>.rs`.
 
-Create and validate Rust **utility layer** files following AES rules.
+## Role Naming
 
-A utility file contains **stateless standalone functions**. It exists so that Capabilities, Agents, and Surfaces can remain clean and expressive by delegating low-level technical mechanics to reusable helpers.
-
-A utility file must:
-
-- contain ONLY free functions (no struct, no `impl` blocks),
-- be completely stateless (no `&self`, no field access),
-- be pure (input A always produces output B),
-- be domain-agnostic (no business rules, no domain knowledge),
-- be reusable across multiple modules.
-
-## Role Naming (ARCHITECTURE §7)
-
-Utility role suffixes describe the technical responsibility:
-
-parser
-splitter
-trimmer
-slugifier
-sanitizer
-normalizer
-extractor
-replacer
-converter
-counter
-resolver
-detector
-builder
-joiner
-serializer
-deserializer
-encoder
-decoder
-hasher
-generator
-formatter
-comparator
-differ
-matcher
-checker
-calculator
-mapper
-merger
-grouper
-sorter
-deduplicator
-printer
-
-File: `utility_<domain>_<role>.rs`
-
-## Dependencies (ARCHITECTURE §7)
-
-- **May depend on:** Taxonomy only.
-- **Must NOT depend on / import:** Capabilities, Agent, Surface, Contract, other Utility (except shared taxonomy utilities).
-
-## Special Rules (ARCHITECTURE §7)
-
-- **Stateless Only:** no struct fields, no `&self`, no instance state.
-- **Pure Functions:** input A always produces output B. No randomness, no global state mutation, no I/O side effects (unless domain-agnostic + reusable).
-- **No Business Decisions:** utility does not know business rules, domain constraints, or architecture policies.
-- **No Contract Implementation:** utility never implements a protocol or aggregate trait.
-- **I/O Allowed:** stateless + I/O + domain-agnostic + reusable = valid utility (e.g., `walk_source_files`, `read_file_content`).
-- **Standalone Functions Only:** no methods, no impl blocks, no structs. Just `pub fn` declarations.
-- **No Magic Constants:** extract reusable constants into `taxonomy_<domain>_constant.rs` in shared.
+parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer, converter, counter, resolver, detector, builder, joiner, serializer, deserializer, encoder, decoder, hasher, generator, formatter, comparator, differ, matcher, checker, calculator, mapper, merger, grouper, sorter, deduplicator, printer
 
 ## Definition of Done
 
-1. NO struct definition — only free functions.
-2. NO `impl` blocks — no trait implementations.
-3. All functions are stateless (no `&self`, no field access).
-4. Functions are pure: input A always produces output B.
-5. Functions are domain-agnostic: no business rules, no architecture knowledge.
-6. Functions are reusable across multiple modules.
-7. No magic constants — use shared taxonomy constants.
-8. Only depends on Taxonomy layer.
+1. Only free functions — no `struct`, no `impl` blocks.
+2. No `&self`, no struct fields, no instance state.
+3. Pure: same input → same output (except I/O utilities).
+4. Domain-agnostic: no business rules, no architecture knowledge.
+5. Reusable: used by ≥2 modules (otherwise keep as private helper).
+6. I/O allowed only if stateless + domain-agnostic + reusable.
+7. No `use` from Capabilities, Agent, Surface, Contract modules.
+8. May use from Taxonomy only.
 9. `cargo check -p <crate-name>` passes.
 
-## References
+---
 
-Read these files for detailed rules:
+## Stateless Rules
 
-| File                             | Content                                         |
-| -------------------------------- | ----------------------------------------------- |
-| `references/layer-boundaries.md` | Allowed/Forbidden imports and dependencies      |
-| `references/stateless-rules.md`  | Stateless, pure, domain-agnostic decision rules |
-| `references/examples.md`         | All BAD/GOOD code examples                      |
-| `references/commands.md`         | Quick heuristic check commands                  |
+1. **No structs** — no `struct`, no `impl`, no `&self`.
+2. **Pure functions** — deterministic: same input → same output. No `rand`, no `SystemTime::now()`, no global mutable state.
+3. **Domain-agnostic** — must NOT know about: architecture layer names (agent, capabilities, contract), business domain rules, specific capability logic.
+4. **Reusable** — if only one module uses it → keep as private helper in that module.
+
+### I/O Exception
+
+Utility CAN perform I/O if ALL conditions met: stateless (no `self`), domain-agnostic, reusable across multiple modules.
+
+---
+
+## Keep vs Extract Decision
+
+**Keep as private helper** if ANY: accesses `&self`/struct state, domain-specific, only one consumer.
+
+**Extract to utility** only if ALL: stateless, pure (I/O allowed), domain-agnostic, ≥2 consumers.
+
+---
+
+## Layer Boundaries
+
+| Allowed | Forbidden |
+| --- | --- |
+| Stateless free functions (`pub fn`) | Struct definitions |
+| Pure computation (input → output) | `&self` / `self` / struct state |
+| I/O (if domain-agnostic + reusable) | Business rules / domain knowledge |
+| Taxonomy imports (`shared::taxonomy_*`) | `use` from Capabilities, Agent, Surface |
+| File walking, pattern matching, parsing | Trait implementations |
+| Environment access (if stateless + reusable) | Magic constants (→ `taxonomy_*_constant.rs`) |
+
+---
 
 ## Templates
 
-Use these templates when creating new files:
+| File | Purpose |
+| --- | --- |
+| `templates/utility_name.rs` | Utility function module template |
 
-| File                        | Purpose                         |
-| --------------------------- | ------------------------------- |
-| `templates/utility_name.rs` | New utility implementation file |
-| `templates/mod.rs`          | Module registration             |
+---
 
 ## Workflow
 
-### Step 1: Analyze Code Responsibility
+1. **Confirm reusability** — Is this used by ≥2 modules? If no → keep as private helper.
+2. **Confirm stateless** — No `self`, no struct, no global mutation?
+3. **Confirm domain-agnostic** — No business rules, no architecture knowledge?
+4. **Create file** → `utility_<domain>_<role>.rs`.
+5. **Register** → update `mod.rs`.
+6. **Verify** → `cargo check -p <crate-name>`.
 
-Read the code and ask: **"Is this a stateless, pure, domain-agnostic function?"**
+---
 
-If yes → extract to utility. If no → check if it's business logic (→ capabilities), orchestration (→ agent), or domain data (→ taxonomy).
+## Verification Checklist
 
-### Step 2: Check Reusability
-
-Is the function used by multiple modules? Or will it be useful in the future?
-
-- **Single-use + domain-specific** → keep as private helper in Block 3 (capabilities/agent)
-- **Reusable + domain-agnostic** → extract to utility
-
-### Step 3: Verify Stateless Purity
-
-Does the function have ANY of these?
-
-- `&self` parameter
-- Access to struct fields
-- Random number generation
-- System clock access
-- Global state mutation
-- Business rule knowledge
-
-If YES → NOT a utility. Keep as private helper.
-
-### Step 4: Verify Domain Agnosticism
-
-Does the function know about:
-
-- Architecture layer names?
-- Business domain rules?
-- Specific capability logic?
-
-If YES → NOT a utility. Domain-specific code belongs in capabilities.
-
-### Step 5: Create Utility File
-
-Write the free functions following the template. No struct, no impl blocks.
-
-### Step 6: Update Module Registration
-
-Add `pub mod utility_<name>;` to the appropriate shared domain `mod.rs`.
-
-### Step 7: Verify Compilation
-
-```bash
-cargo check -p <crate-name>
-```
-
-## Quick Commands
-
-```bash
-# Check for forbidden patterns (struct, impl, &self)
-rg "pub struct|impl\s+.*\{|fn\s+.*&self" crates/shared/src/<domain>/utility_*.rs
-
-# List all utility functions
-rg "^pub fn" crates/shared/src/<domain>/utility_*.rs
-
-# Check imports in utilities (should only use shared::taxonomy)
-rg "^\s*use\s+" crates/shared/src/<domain>/utility_*.rs
-```
-
-## Common Mistakes
-
-- Adding struct definitions to utility files.
-- Implementing trait protocols in utility files.
-- Using `&self` or accessing struct fields.
-- Including business logic or domain rules.
-- Using magic constants instead of shared taxonomy constants.
-- Importing Capabilities, Agent, or Surface modules.
-- Creating functions that are only used by one module (keep as private helper).
-- Mixing pure functions with stateful operations.
-- Adding I/O to domain-specific functions (must be domain-agnostic + reusable).
+- [ ] Only free functions — no struct, no impl.
+- [ ] No `&self`, no instance state.
+- [ ] Pure / deterministic (or I/O with domain-agnostic + reusable justification).
+- [ ] Domain-agnostic — no business rules, no layer-name knowledge.
+- [ ] Used by ≥2 modules (otherwise keep as private helper).
+- [ ] No `use` from Capabilities, Agent, Surface, Contract.
+- [ ] No magic constants (extracted to `taxonomy_*_constant.rs`).
+- [ ] `cargo check -p <crate-name>` passes.
