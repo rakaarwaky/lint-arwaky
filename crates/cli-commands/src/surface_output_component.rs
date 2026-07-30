@@ -168,17 +168,13 @@ fn render_text(
             }
             for (file_path, file_results) in &file_violations {
                 println!("  {file_path}:");
+                // Group by code and show count
+                let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
                 for r in file_results {
-                    let loc = match (r.line.value(), r.column.value()) {
-                        (l, c) if l > 0 && c > 0 => format!("line:{}:{}", l, c),
-                        (l, _) if l > 0 => format!("line:{}", l),
-                        _ => String::new(),
-                    };
-                    if loc.is_empty() {
-                        println!("    [{}]", r.code.code());
-                    } else {
-                        println!("    [{}] {}", r.code.code(), loc);
-                    }
+                    *code_counts.entry(r.code.code().to_string()).or_insert(0) += 1;
+                }
+                for (code, count) in &code_counts {
+                    println!("    [{code}] {count}");
                 }
             }
             println!();
@@ -359,9 +355,9 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 
 // ─── Private helpers (UI-only) ──────────────────────────────
 
-/// Make a file path relative to the scan target directory.
-/// Handles both absolute and relative paths by canonicalizing both.
-/// e.g. ("/home/raka/.../cli_commands/src/foo.py", "test-workspaces/modules/cli_commands") → "src/foo.py"
+/// Make a file path relative to the workspace root.
+/// Walks up from both paths to find the common workspace root (contains crates/, packages/, modules/).
+/// e.g. ("/home/raka/.../cli_commands/src/foo.py", "/home/raka/.../cli_commands") → "cli_commands/src/foo.py"
 fn make_relative(file_path: &str, target: &str) -> String {
     // Canonicalize both paths to handle absolute vs relative mismatch
     let canon_file = std::fs::canonicalize(file_path)
@@ -371,24 +367,70 @@ fn make_relative(file_path: &str, target: &str) -> String {
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| target.to_string());
 
+    // Find the common workspace root by walking up from both paths
+    let workspace_root = find_common_workspace_root(&canon_file, &canon_target);
+
+    if let Some(root) = &workspace_root {
+        // Try stripping workspace root from file path
+        if let Some(rest) = canon_file.strip_prefix(root) {
+            let rest = rest.trim_start_matches('/');
+            if !rest.is_empty() {
+                return rest.to_string();
+            }
+        }
+    }
+
+    // Fallback: try stripping target (member scan)
     if let Some(rest) = canon_file.strip_prefix(&canon_target) {
         let rest = rest.trim_start_matches('/');
         if !rest.is_empty() {
             return rest.to_string();
         }
     }
-    // Fallback: try direct strip (same format paths)
-    if let Some(rest) = file_path.strip_prefix(target) {
-        let rest = rest.trim_start_matches('/');
-        if !rest.is_empty() {
-            return rest.to_string();
-        }
-    }
+
     // Final fallback: use basename
     std::path::Path::new(file_path)
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| file_path.to_string())
+}
+
+/// Walk up from both paths to find the common workspace root.
+fn find_common_workspace_root(path1: &str, path2: &str) -> Option<String> {
+    let mut dirs1: Vec<std::path::PathBuf> = vec![];
+    let mut p = std::path::PathBuf::from(path1);
+    while let Some(parent) = p.parent() {
+        let parent_path = parent.to_path_buf();
+        dirs1.push(parent_path.clone());
+        if parent_path.join("crates").is_dir()
+            || parent_path.join("packages").is_dir()
+            || parent_path.join("modules").is_dir()
+        {
+            break;
+        }
+        p = parent.to_path_buf();
+    }
+
+    let mut dirs2: Vec<std::path::PathBuf> = vec![];
+    let mut p = std::path::PathBuf::from(path2);
+    while let Some(parent) = p.parent() {
+        let parent_path = parent.to_path_buf();
+        dirs2.push(parent_path.clone());
+        if parent_path.join("crates").is_dir()
+            || parent_path.join("packages").is_dir()
+            || parent_path.join("modules").is_dir()
+        {
+            break;
+        }
+        p = parent.to_path_buf();
+    }
+
+    // Find the deepest common directory
+    dirs1
+        .iter()
+        .rev()
+        .find(|d| dirs2.contains(d))
+        .map(|p| p.to_string_lossy().to_string())
 }
 
 fn lang_tag(path: &str) -> &str {
