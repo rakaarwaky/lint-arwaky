@@ -183,6 +183,20 @@ impl ArchOrphanAnalyzer {
                     if !is_dir_entry {
                         continue;
                     }
+                    // Skip ignored workspace members (e.g. tests/, target/)
+                    let member_dir = top_root.join(ws_dir).join(&name);
+                    if shared::common::utility_file_handler::is_ignored_dir(
+                        &member_dir,
+                        &self
+                            .config
+                            .ignored_paths
+                            .values
+                            .iter()
+                            .map(|v| v.value.clone())
+                            .collect::<Vec<_>>(),
+                    ) {
+                        continue;
+                    }
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
                         let workspace_files =
@@ -190,6 +204,19 @@ impl ArchOrphanAnalyzer {
                                 &src_dir,
                             );
                         for f in workspace_files {
+                            // Skip ignored paths (e.g. tests/, target/)
+                            if shared::common::utility_file_handler::is_path_ignored(
+                                &f,
+                                &self
+                                    .config
+                                    .ignored_paths
+                                    .values
+                                    .iter()
+                                    .map(|v| v.value.clone())
+                                    .collect::<Vec<_>>(),
+                            ) {
+                                continue;
+                            }
                             let rel = std::path::Path::new(&f)
                                 .strip_prefix(&top_root)
                                 .map(|p| p.to_string_lossy().to_string())
@@ -198,6 +225,31 @@ impl ArchOrphanAnalyzer {
                                 result.push(rel);
                             }
                         }
+                    }
+                }
+                // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
+                let root_files =
+                    shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&ws_path);
+                for f in root_files {
+                    // Skip ignored paths (e.g. tests/, target/)
+                    if shared::common::utility_file_handler::is_path_ignored(
+                        &f,
+                        &self
+                            .config
+                            .ignored_paths
+                            .values
+                            .iter()
+                            .map(|v| v.value.clone())
+                            .collect::<Vec<_>>(),
+                    ) {
+                        continue;
+                    }
+                    let rel = std::path::Path::new(&f)
+                        .strip_prefix(&top_root)
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or(f);
+                    if seen.insert(rel.clone()) {
+                        result.push(rel);
                     }
                 }
             }

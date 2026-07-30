@@ -268,6 +268,24 @@ impl OrphanGraphResolver {
                     }
                 }
             }
+            // Python __init__.py -> map by parent directory name (same as mod.rs for Python packages)
+            if stem == "__init__" {
+                if let Some(parent_dir) = f.rsplit('/').nth(1) {
+                    module_to_file.insert(parent_dir.to_string(), f.clone());
+                    let normalized = parent_dir.replace('-', "_");
+                    if normalized != parent_dir {
+                        module_to_file.insert(normalized, f.clone());
+                    }
+                    if let Some(grandparent) = f.rsplit('/').nth(2) {
+                        let composite = format!("{}/{}", grandparent, parent_dir);
+                        module_to_file.insert(composite.clone(), f.clone());
+                        let normalized_composite = composite.replace('-', "_");
+                        if normalized_composite != composite {
+                            module_to_file.insert(normalized_composite, f.clone());
+                        }
+                    }
+                }
+            }
         }
 
         // Perf 8: Single-pass file reading
