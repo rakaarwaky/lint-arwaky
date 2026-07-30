@@ -495,9 +495,15 @@ impl OrphanGraphResolver {
                 if let Some(colon) = dep.find("::") {
                     dep = dep[..colon].to_string();
                 }
-                let is_known_local = module_to_file.contains_key(&dep)
-                    || (workspace_modules.contains(&dep) && !full_import.contains('.'))
-                    || matches!(dep.as_str(), "crate" | "self" | "super");
+                // Exclude workspace directory names from known_local check.
+                // These bare keys come from __init__.py / mod.rs parent-dir mappings
+                // (e.g., modules/__init__.py → key "modules"), not actual importable modules.
+                let is_workspace_dir = matches!(dep.as_str(), "crates" | "packages" | "modules");
+                let is_known_local = !is_workspace_dir
+                    && (module_to_file.contains_key(&dep)
+                        || (workspace_modules.contains(&dep) && !full_import.contains('.'))
+                        || matches!(dep.as_str(), "crate" | "self" | "super"));
+
                 if !is_known_local {
                     // Python dotted absolute paths (e.g., modules.cli.src, modules.shared.src.asset)
                     if full_import.contains('.') {
@@ -555,20 +561,11 @@ impl OrphanGraphResolver {
                         }
 
                         // Step 3: Always resolve individual names from `from X import (Y, Z)`
-                        // Limit search to current line to avoid matching "import" in comments
-                        let line_end = content[cap_end..]
-                            .find('\n')
-                            .map(|p| cap_end + p)
-                            .unwrap_or(content.len());
-                        if let Some(import_pos) = content[cap_end..line_end].find("import") {
+                        // Search for "import" in remaining content (may span multiple lines)
+                        if let Some(import_pos) = content[cap_end..].find("import") {
                             let stmt_start = cap_end + import_pos + 6; // skip "import"
-                            let stmt_end = content[stmt_start..]
-                                .find('\n')
-                                .map(|p| stmt_start + p)
-                                .unwrap_or(content.len());
-                            let stmt_slice = &content[stmt_start..stmt_end];
 
-                            let names: Vec<&str> = if stmt_slice.contains('(') {
+                            let names: Vec<&str> = {
                                 // Multi-line: collect from rest of content until ')'
                                 let after_paren = &content[stmt_start..];
                                 if let Some(close) = after_paren.find(')') {
@@ -582,18 +579,22 @@ impl OrphanGraphResolver {
                                         })
                                         .collect()
                                 } else {
-                                    vec![]
+                                    // Single-line: `import Y, Z` (no paren, search to end of line)
+                                    let stmt_end = after_paren
+                                        .find('\n')
+                                        .map(|p| stmt_start + p)
+                                        .unwrap_or(content.len());
+                                    let stmt_slice = &content[stmt_start..stmt_end];
+                                    stmt_slice
+                                        .split(',')
+                                        .map(|s| s.trim())
+                                        .filter(|s| {
+                                            !s.is_empty()
+                                                && s.chars()
+                                                    .all(|c| c.is_alphanumeric() || c == '_')
+                                        })
+                                        .collect()
                                 }
-                            } else {
-                                // Single-line: `import Y, Z`
-                                stmt_slice
-                                    .split(',')
-                                    .map(|s| s.trim())
-                                    .filter(|s| {
-                                        !s.is_empty()
-                                            && s.chars().all(|c| c.is_alphanumeric() || c == '_')
-                                    })
-                                    .collect()
                             };
 
                             for name in names {
@@ -966,6 +967,7 @@ impl OrphanGraphResolver {
             InboundLinkMap::new(inbound_links),
             InheritanceMap::new(inheritance_map),
             FileDefinitionMap::new(file_definitions),
+            all_workspace_files,
         )
     }
 

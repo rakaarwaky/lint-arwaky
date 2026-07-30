@@ -266,10 +266,19 @@ impl ArchOrphanAnalyzer {
             shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
                 configured,
             );
+
+        // FR-001: Orphan detection must always identify entry points from ALL workspace files
+        // (not just the scanned module). This ensures cross-module imports are resolved correctly.
+        // When scanning modules/cli/, root_cli_main_entry.py in modules/ is still used as an
+        // entry point, so surface files imported by it are not falsely flagged as orphans.
+        let all_files = &context.all_workspace_files;
+
+        let entry_points_vo = OrphanFileListVO::new(all_files.clone());
         let entry_points = self
             .deps
             .resolver
-            .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);
+            .identify_entry_points(std::slice::from_ref(&entry_points_vo), &[configured_vo]);
+
         // Compute top_root early so alive_result can use absolute paths (matching
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)

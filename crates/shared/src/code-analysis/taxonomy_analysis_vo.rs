@@ -26,6 +26,10 @@ pub struct GraphAnalysisContext {
     pub inbound_links: InboundLinkMap,
     pub inheritance_map: InheritanceMap,
     pub file_definitions: FileDefinitionMap,
+    /// All workspace files used to build the graph — needed for entry point detection
+    /// across modules (FR-001). When scanning modules/cli/, this includes root_cli_main_entry.py
+    /// from modules/ so surface files imported by it are not falsely flagged as orphans.
+    pub all_workspace_files: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -196,12 +200,14 @@ impl GraphAnalysisContext {
         inbound_links: InboundLinkMap,
         inheritance_map: InheritanceMap,
         file_definitions: FileDefinitionMap,
+        all_workspace_files: Vec<String>,
     ) -> Self {
         Self {
             import_graph,
             inbound_links,
             inheritance_map,
             file_definitions,
+            all_workspace_files,
         }
     }
 }
