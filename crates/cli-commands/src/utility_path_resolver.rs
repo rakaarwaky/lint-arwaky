@@ -61,7 +61,21 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
                     .trim_start_matches('/');
                 if let Some(real_member) = deeper.split('/').next() {
                     if !real_member.is_empty() && !skip_dirs.contains(&real_member) {
+                        // If it has a file extension, it's a file — the root IS the member
+                        if real_member.contains('.') {
+                            if let Some(root_member) = normalized_root.rsplit('/').next() {
+                                if !root_member.is_empty() {
+                                    return root_member.to_string();
+                                }
+                            }
+                        }
                         return real_member.to_string();
+                    }
+                }
+                // Nothing meaningful after skip dir — use root's last component
+                if let Some(root_member) = normalized_root.rsplit('/').next() {
+                    if !root_member.is_empty() {
+                        return root_member.to_string();
                     }
                 }
             }
@@ -82,14 +96,21 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
 
 /// Detect if a path is a leaf member directory (not a workspace root and not a group of members).
 /// A leaf member has a marker file AND does NOT contain subdirectories that are also members.
+/// Skips common source directories (src, lib, bin, tests, benches, examples) to avoid
+/// false negatives when a member's src/ contains __init__.py.
 pub fn is_leaf_member_path(path: &str) -> bool {
     if !is_member_path(path) {
         return false;
     }
+    let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
     let p = std::path::Path::new(path);
     if let Ok(entries) = std::fs::read_dir(p) {
         for entry in entries.flatten() {
             if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                let dir_name = entry.file_name().to_string_lossy().to_string();
+                if skip_dirs.contains(&dir_name.as_str()) {
+                    continue;
+                }
                 let sub_path = entry.path();
                 if is_member_path(&sub_path.to_string_lossy()) {
                     return false;

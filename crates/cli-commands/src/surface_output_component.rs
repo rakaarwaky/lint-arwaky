@@ -134,6 +134,9 @@ fn render_text(
     println!("Target: {target_path}");
     println!();
 
+    // Normalize target_path for relative path computation
+    let norm_target = target_path.trim_end_matches('/');
+
     let mut total = 0usize;
     for (member_name, results) in grouped {
         total += results.len();
@@ -157,13 +160,11 @@ fn render_text(
             println!("[{member_name}] — violations by file");
             println!();
 
-            // Group violations by file path
+            // Group violations by relative file path (relative to scan target)
             let mut file_violations: BTreeMap<String, Vec<&&ViolationItem>> = BTreeMap::new();
             for r in results {
-                file_violations
-                    .entry(r.file.value.clone())
-                    .or_default()
-                    .push(r);
+                let rel_path = make_relative(&r.file.value, norm_target);
+                file_violations.entry(rel_path).or_default().push(r);
             }
             for (file_path, file_results) in &file_violations {
                 println!("  {file_path}:");
@@ -357,6 +358,38 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 }
 
 // ─── Private helpers (UI-only) ──────────────────────────────
+
+/// Make a file path relative to the scan target directory.
+/// Handles both absolute and relative paths by canonicalizing both.
+/// e.g. ("/home/raka/.../cli_commands/src/foo.py", "test-workspaces/modules/cli_commands") → "src/foo.py"
+fn make_relative(file_path: &str, target: &str) -> String {
+    // Canonicalize both paths to handle absolute vs relative mismatch
+    let canon_file = std::fs::canonicalize(file_path)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| file_path.to_string());
+    let canon_target = std::fs::canonicalize(target)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| target.to_string());
+
+    if let Some(rest) = canon_file.strip_prefix(&canon_target) {
+        let rest = rest.trim_start_matches('/');
+        if !rest.is_empty() {
+            return rest.to_string();
+        }
+    }
+    // Fallback: try direct strip (same format paths)
+    if let Some(rest) = file_path.strip_prefix(target) {
+        let rest = rest.trim_start_matches('/');
+        if !rest.is_empty() {
+            return rest.to_string();
+        }
+    }
+    // Final fallback: use basename
+    std::path::Path::new(file_path)
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| file_path.to_string())
+}
 
 fn lang_tag(path: &str) -> &str {
     if path.ends_with(".rs") {
