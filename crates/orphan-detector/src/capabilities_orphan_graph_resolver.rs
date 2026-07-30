@@ -85,7 +85,8 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                         shared::orphan_detector::utility_orphan_filename::file_stem(basename);
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
-                            || basename.ends_with(pattern)
+                            || (basename.ends_with(pattern)
+                                && pattern.starts_with('_'))
                             || stem == *pattern
                             || stem.starts_with(pattern.as_str())
                             || stem.ends_with(pattern.as_str())
@@ -328,7 +329,13 @@ impl OrphanGraphResolver {
                         parent.join(&mod_name).join("__init__.py"),
                     ];
                     for candidate in &candidates {
-                        if shared::orphan_detector::utility_orphan_io::is_file(candidate) {
+                        // Bug 8 fix: Resolve against workspace_root to be CWD-independent
+                        let abs_candidate = if candidate.is_relative() {
+                            root_path.join(candidate)
+                        } else {
+                            candidate.clone()
+                        };
+                        if shared::orphan_detector::utility_orphan_io::is_file(&abs_candidate) {
                             if let Some(path_str) = candidate.to_str() {
                                 let resolved = path_str.to_string();
                                 if resolved != *f {
@@ -685,83 +692,32 @@ impl OrphanGraphResolver {
                     continue;
                 }
 
-                // Bug 7 fix: Only add edge if dep exists in module_to_file or is known external
-                // prevents non-file nodes (e.g., "os", "serde") from corrupting the graph
-                let is_external_dep =
-                    !module_to_file.contains_key(&dep) && !workspace_modules.contains(&dep);
-                if is_external_dep {
-                    // Skip unknown external deps — don't add ghost nodes to graph
-                    continue;
-                }
-                // Only add edge for known local modules
-                if module_to_file.contains_key(&dep) {
-                    import_graph.entry(f.clone()).or_default().push(dep.clone());
-                    inbound_links.entry(dep).or_default().push(f.clone());
-                }
-            }
-
-            // Pass 3c: TypeScript/JavaScript imports
-            if f.ends_with(".ts") || f.ends_with(".js") {
-                if let Some(ts_import_re) = utility_orphan_regex_patterns::ts_import_re() {
-                    for cap in ts_import_re.captures_iter(&content) {
-                        // Try to extract import path from groups:
-                        // Group 2 = named import path `import { X } from './path'`
-                        // Group 5 = default+named path `import Def, { X } from './path'`
-                        // Group 7 = default import path `import X from './path'`
-                        // Group 9 = namespace import path `import * as X from './path'`
-                        // Group 10 = side-effect import path `import './path'`
-                        let import_path = cap
-                            .get(2)
-                            .or_else(|| cap.get(5))
-                            .or_else(|| cap.get(7))
-                            .or_else(|| cap.get(9))
-                            .or_else(|| cap.get(10));
-
-                        if let Some(path_m) = import_path {
-                            let raw = path_m.as_str();
-                            // Only resolve relative imports (start with '.')
-                            // Package imports (e.g., 'react', 'lodash') are external
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
-                                {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
-                                }
-                            }
-                        }
+                // Bug 10 fix: Instead of adding edge with stem (which may not be a real file path),
+                // resolve dep to the actual file path via module_to_file lookup.
+                if let Some(target) = module_to_file.get(&dep) {
+                    if target != f {
+                        import_graph.entry(f.clone()).or_default().push(target.clone());
+                        inbound_links.entry(target.clone()).or_default().push(f.clone());
                     }
-                }
-
-                // Pass 3d: TypeScript/JavaScript export re-exports
-                if let Some(ts_export_re) = utility_orphan_regex_patterns::ts_export_re() {
-                    for cap in ts_export_re.captures_iter(&content) {
-                        // Group 2 = named export path `export { X } from './path'`
-                        // Group 3 = re-export all path `export * from './path'`
-                        let import_path = cap.get(2).or_else(|| cap.get(3));
-
-                        if let Some(path_m) = import_path {
-                            let raw = path_m.as_str();
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
-                                {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
+                } else if workspace_modules.contains(&dep) && !full_import.contains('.') {
+                    // dep is a workspace crate name — try to find its entry point
+                    for (dir_name, src_dir) in &crate_src_dirs {
+                        if dir_name == &dep || dir_name.replace('-', "_") == dep {
+                            for entry_file in &["lib.rs", "__init__.py", "main.rs", "main.py", "index.ts", "index.js"] {
+                                let entry_path = src_dir.join(entry_file);
+                                if shared::orphan_detector::utility_orphan_io::is_file(&entry_path) {
+                                    let rel = entry_path
+                                        .strip_prefix(root_path)
+                                        .map(|p| p.to_string_lossy().to_string())
+                                        .unwrap_or_else(|_| entry_path.to_string_lossy().to_string());
+                                    if rel != *f {
+                                        import_graph.entry(f.clone()).or_default().push(rel.clone());
+                                        inbound_links.entry(rel).or_default().push(f.clone());
+                                    }
+                                    break;
                                 }
                             }
+                            break;
                         }
                     }
                 }

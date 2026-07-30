@@ -20,11 +20,10 @@ pub fn build_crate_module_index(
             {
                 continue;
             }
-            let canonical_path = match std::fs::canonicalize(&path_str) {
-                Ok(p) => p,
-                Err(_) => std::path::PathBuf::from(&path_str),
-            };
-            let stem = canonical_path
+            // Bug 9/NFR fix: Avoid per-file canonicalize syscall — use path as-is
+            // scan_directory_recursive already returns paths within canonical_src.
+            let path = std::path::Path::new(&path_str);
+            let stem = path
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or_default()
@@ -32,30 +31,29 @@ pub fn build_crate_module_index(
             if stem.is_empty() {
                 continue;
             }
-            let canon_str = canonical_path.to_string_lossy().to_string();
-            let rel_path = canonical_path
+            let rel_path = path
                 .strip_prefix(&canonical_src)
-                .unwrap_or(&canonical_path);
+                .unwrap_or(path);
             let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
             let normalized_rel =
                 shared::orphan_detector::utility_orphan_detector::normalize_module_path(
                     &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
                 );
-            module_map.insert(normalized_rel, canon_str.clone());
-            module_map.insert(stem.clone(), canon_str.clone());
+            module_map.insert(normalized_rel, path_str.clone());
+            module_map.insert(stem.clone(), path_str.clone());
             module_map.insert(
                 shared::orphan_detector::utility_orphan_detector::normalize_module_component(&stem),
-                canon_str.clone(),
+                path_str.clone(),
             );
             if stem == "mod" || stem == "__init__" || stem == "index" {
-                if let Some(parent_dir) = canonical_path.parent().and_then(|p| p.file_name()) {
+                if let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
                     let parent = parent_dir.to_string_lossy().to_string();
-                    module_map.insert(parent.clone(), canon_str.clone());
+                    module_map.insert(parent.clone(), path_str.clone());
                     module_map.insert(
                         shared::orphan_detector::utility_orphan_detector::normalize_module_component(
                             &parent,
                         ),
-                        canon_str.clone(),
+                        path_str.clone(),
                     );
                 }
             }
