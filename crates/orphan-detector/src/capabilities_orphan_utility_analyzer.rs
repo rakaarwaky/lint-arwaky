@@ -187,8 +187,12 @@ impl UtilityOrphanAnalyzer {
         }
 
         // Check for inline fully qualified calls: module_name::function()
-        if content.contains(&format!("{}::", module_name)) {
-            return true;
+        // Use line-by-line check to avoid false positives (e.g., "io::" matching "std::io::")
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if self.path_contains_module(trimmed, module_name) {
+                return true;
+            }
         }
 
         // Check for grouped imports: use { module_name, ... }

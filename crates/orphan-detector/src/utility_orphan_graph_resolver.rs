@@ -173,14 +173,17 @@ pub fn resolve_ts_relative(
     let base = std::path::Path::new(current_file).parent()?;
     let joined = base.join(import_path);
 
-    // TS imports omit extension — try .ts, .js, /index.ts, /index.js, .tsx, .jsx
+    // TS imports omit extension — try appending .ts, .js, .tsx, .jsx, /index.ts, /index.js
+    // Use format! instead of with_extension to handle paths containing dots
+    // (e.g., "./utils/helper.v2" → "helper.v2.ts", NOT "helper.ts")
+    let joined_str = joined.to_string_lossy();
     let candidates: Vec<std::path::PathBuf> = vec![
-        joined.with_extension("ts"),
-        joined.with_extension("js"),
+        std::path::PathBuf::from(format!("{}.ts", joined_str)),
+        std::path::PathBuf::from(format!("{}.js", joined_str)),
+        std::path::PathBuf::from(format!("{}.tsx", joined_str)),
+        std::path::PathBuf::from(format!("{}.jsx", joined_str)),
         joined.join("index.ts"),
         joined.join("index.js"),
-        joined.with_extension("tsx"),
-        joined.with_extension("jsx"),
     ];
 
     for cand in &candidates {

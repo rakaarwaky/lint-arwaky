@@ -72,6 +72,22 @@ impl InboundLinkMap {
             }
         }
 
+        // Fast path: strip absolute workspace prefix to get relative path.
+        // Graph resolver stores relative keys (e.g., "crates/shared/src/foo.rs")
+        // but analyzers may query with absolute paths (e.g., "/home/user/project/crates/shared/src/foo.rs").
+        // This O(1) lookup avoids the O(n) suffix scan below.
+        if result.is_none() {
+            for marker in &["/crates/", "/packages/", "/modules/"] {
+                if let Some(pos) = path.find(marker) {
+                    let rel = &path[pos + 1..]; // skip leading '/'
+                    if let Some(v) = self.mapping.get(rel) {
+                        result = Some(v);
+                        break;
+                    }
+                }
+            }
+        }
+
         // Try with ./ in the middle (graph resolver may add this)
         // e.g., /home/user/project/./crates/... instead of /home/user/project/crates/...
         if let Some(pos) = path.find("/crates/") {

@@ -178,7 +178,9 @@ impl TaxonomyOrphanAnalyzer {
                 matches!(ext, "rs" | "py" | "ts" | "js")
             }) {
                 let content = shared::orphan_detector::utility_orphan_io::read_file_safe(f);
-                if content.contains(stem) {
+                if shared::orphan_detector::utility_orphan_detector::contains_delimited(
+                        &content, stem,
+                    ) {
                     importers.insert(f.clone());
                 }
             }

@@ -29,12 +29,18 @@ pub fn import_re() -> Option<&'static Regex> {
     .as_ref()
 }
 
-/// Regex for Python relative imports: `from . import X` or `from .module import X`
+/// Regex for Python relative imports:
+/// - `from . import X` (no module name)
+/// - `from . import (X, Y)` (parenthesized multi-line)
+/// - `from .module_name import X` (with module name)
+/// - `from ..parent_module import X` (parent package)
+/// Groups: 1=dots(paren), 2=module_name(paren), 3=names(paren),
+///         4=dots(inline), 5=module_name(inline), 6=names(inline)
 pub fn python_relative_import_re() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?s)from\s+(\.{1,3})\s+import\s*\(([^)]+)\)|from\s+(\.{1,3})\s+import\s+([^\n]+)",
+            r"(?s)from\s+(\.{1,3})\s+([a-zA-Z_][a-zA-Z0-9_.]*)?\s*import\s*\(([^)]+)\)|from\s+(\.{1,3})\s+([a-zA-Z_][a-zA-Z0-9_.]*)?\s*import\s+([^\n]+)",
         )
         .ok()
     })
@@ -70,9 +76,9 @@ pub fn ts_export_re() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| {
         // Match: export { X, Y } from './path', export * from './path'
-        Regex::new(
-            r#"\bexport\s+(?:\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]|\*\s*from\s*['"]([^'"]+)['"])?"#,
-        )
+Regex::new(
+                r#"\bexport\s+(?:\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]|\*\s*from\s*['"]([^'"]+)['"])"#,
+            )
         .ok()
     })
     .as_ref()
