@@ -510,7 +510,7 @@ harness = false
 The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned. The orchestrator dispatches to 6 layer-specific analyzers (taxonomy, contract, capabilities, utility, agent, surfaces) and produces lint violations.
 
 ``` `
-Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
+Entry Points ( *_entry.*, *_container.*)
         │
         ▼
 ┌─────────────────────┐
@@ -545,7 +545,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Input**: List of file paths and optional configured entry point patterns from the architecture configuration.
 - **Output**: Set of entry point file paths.
 - **Business Rules**:
-  - Default entry point patterns: `main.rs`, `lib.rs`, `main.py`, `__main__.py`, `main.ts`, `main.js`, `index.ts`, `index.js`, `*_container.*`, `*_entry.*`.
+  - Default entry point patterns: ``*_container.*`, `*_entry.*`.
   - Merges configured additional entry point patterns from each layer definition in the architecture configuration.
   - Deduplicates and sorts the final list.
 - **Edge Cases**: Workspace with zero entry points results in all files flagged as orphans. Workspace with entry points in non-standard locations requires config override.
@@ -650,8 +650,9 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## API Contract
 
+
 | Function                           | Input                                                                 | Output                     | Description                                       |
-| ---------------------------------- | --------------------------------------------------------------------- | -------------------------- | ------------------------------------------------- |
+| ------------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------- |
 | Build orphan graph context         | File list, root directory                                             | Graph analysis context     | Build full import graph for the workspace         |
 | Identify orphan entry points       | File list                                                             | Set of entry point paths   | Discover all valid entry points                   |
 | Full orphan scan                   | File list, root directory                                             | Lint results               | Full orphan scan with graph construction          |
@@ -662,7 +663,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 | Check utility orphan               | File path, root directory, all files, reverse link map                | Orphan indicator result    | Check single utility file for orphan status       |
 | Check agent orphan                 | File path, root directory, all files                                  | Orphan indicator result    | Check single agent file for orphan status         |
 | Check surface orphan               | File path, root directory, reachable file set, layer definition       | Orphan indicator result    | Check single surface file for orphan status       |
-| Create default DI container        | —                                                                     | Orphan detection container | Default dependency injection container            |
+| Create default DI container        | —                                                                    | Orphan detection container | Default dependency injection container            |
 | Create DI container with config    | Architecture configuration                                            | Orphan detection container | DI container with custom config                   |
 | Create DI from config orchestrator | Config orchestrator reference, root directory                         | Orphan detection container | Canonical DI from config orchestrator             |
 
@@ -691,21 +692,21 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## Test Scenarios / QA Checklist
 
-- [ ] Workspace with 100 files, 5 orphans across 3 layers — all 5 detected, 0 false positives.
-- [ ] Python nested `__init__.py` packages — barrel files skipped, not flagged as orphan.
-- [ ] TypeScript barrel `index.ts` re-exports — barrel files skipped.
-- [ ] Rust `mod.rs` re-exports — barrel files skipped.
-- [ ] Circular imports between two capabilities — both reachable, neither flagged.
-- [ ] Contract protocol with implementation but zero callers — still flagged as orphan.
-- [ ] Agent file with no aggregate implementation — flagged as HIGH severity orphan.
-- [ ] Surface dependency chain: Smart → Utility → Passive — all alive. Remove Smart import — Utility + Passive flagged.
-- [ ] Config with `check_orphan: false` for a layer — no violations for that layer.
-- [ ] Config with exceptions list — excepted files produce no violations.
-- [ ] Config with `ignored_paths` — excluded paths produce no violations.
-- [ ] Workspace with zero entry points — all non-barrel files flagged as orphans.
-- [ ] Cross-crate imports (crate A imports from crate B) — graph resolves correctly.
-- [ ] 10,000 file workspace completes in under 5 seconds.
-- [ ] Configuration disabled — full orphan scan returns empty immediately.
+- [ ]  Workspace with 100 files, 5 orphans across 3 layers — all 5 detected, 0 false positives.
+- [ ]  Python nested `__init__.py` packages — barrel files skipped, not flagged as orphan.
+- [ ]  TypeScript barrel `index.ts` re-exports — barrel files skipped.
+- [ ]  Rust `mod.rs` re-exports — barrel files skipped.
+- [ ]  Circular imports between two capabilities — both reachable, neither flagged.
+- [ ]  Contract protocol with implementation but zero callers — still flagged as orphan.
+- [ ]  Agent file with no aggregate implementation — flagged as HIGH severity orphan.
+- [ ]  Surface dependency chain: Smart → Utility → Passive — all alive. Remove Smart import — Utility + Passive flagged.
+- [ ]  Config with `check_orphan: false` for a layer — no violations for that layer.
+- [ ]  Config with exceptions list — excepted files produce no violations.
+- [ ]  Config with `ignored_paths` — excluded paths produce no violations.
+- [ ]  Workspace with zero entry points — all non-barrel files flagged as orphans.
+- [ ]  Cross-crate imports (crate A imports from crate B) — graph resolves correctly.
+- [ ]  10,000 file workspace completes in under 5 seconds.
+- [ ]  Configuration disabled — full orphan scan returns empty immediately.
 
 ## Assumptions & Constraints
 
@@ -718,15 +719,16 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## Glossary
 
-| Term             | Definition                                                                 |
-| ---------------- | -------------------------------------------------------------------------- |
-| **Orphan**       | A source file not transitively reachable from any entry point              |
-| **Entry point**  | A file that anchors the reachability graph (main, lib, container, entry)   |
-| **Barrel file**  | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)   |
-| **Alive file**   | A file reachable via BFS from any entry point through the import graph     |
+
+| Term             | Definition                                                                  |
+| ------------------ | ----------------------------------------------------------------------------- |
+| **Orphan**       | A source file not transitively reachable from any entry point               |
+| **Entry point**  | A file that anchors the reachability graph (main, lib, container, entry)    |
+| **Barrel file**  | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)    |
+| **Alive file**   | A file reachable via BFS from any entry point through the import graph      |
 | **AES**          | Architecture Enforcement Standard — the 7-layer coding convention          |
 | **DI**           | Dependency Injection — wiring implementations to trait/interface contracts |
-| **Inbound link** | A file that imports the target file (reverse import edge)                  |
+| **Inbound link** | A file that imports the target file (reverse import edge)                   |
 
 ## Reference
 
@@ -814,15 +816,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if !self.config.enabled.value {
             return Vec::new();
         }
-
+        // build_orphan_graph_context already calls _expand_workspace_files internally,
+        // so we pass the original files directly to avoid redundant directory scanning.
+        let context = self.build_orphan_graph_context(files, root_dir);
+        // Re-expand for _check_orphans_inner which needs the full file list
         let all_workspace_files = self._expand_workspace_files(files, root_dir);
-
         let file_vo = OrphanFileListVO::new(all_workspace_files);
-        let context = self
-            .deps
-            .resolver
-            .build_graph_context(std::slice::from_ref(&file_vo), root_dir.value());
-
         self._check_orphans_inner(files, root_dir, &context, &file_vo)
     }
 
@@ -1009,10 +1008,17 @@ impl ArchOrphanAnalyzer {
             shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
                 configured,
             );
+
+        // FR-001: Orphan detection must always identify entry points from ALL workspace files
+        // (not just the scanned module). This ensures cross-module imports are resolved correctly.
+        // When scanning modules/cli/, root_cli_main_entry.py in modules/ is still used as an
+        // entry point, so surface files imported by it are not falsely flagged as orphans.
+        let all_files = &context.all_workspace_files;
+        let entry_points_vo = OrphanFileListVO::new(all_files.clone());
         let entry_points = self
             .deps
             .resolver
-            .identify_entry_points(std::slice::from_ref(file_vo), &[configured_vo]);
+            .identify_entry_points(std::slice::from_ref(&entry_points_vo), &[configured_vo]);
         // Compute top_root early so alive_result can use absolute paths (matching
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)
@@ -1358,9 +1364,16 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
             .collect();
 
         let mut any_called = false;
+        // Cache candidate file contents to avoid re-reading for each aggregate trait.
+        // Without this: N aggregates × M candidates = N×M read_file_safe calls.
+        // With cache: M reads total.
+        let mut content_cache: std::collections::HashMap<&String, String> =
+            std::collections::HashMap::new();
         'outer: for agg_name in &aggregate_traits {
             for cf in &candidates {
-                let c = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
+                let c = content_cache.entry(cf).or_insert_with(|| {
+                    shared::orphan_detector::utility_orphan_io::read_file_safe(cf)
+                });
                 if Self::content_contains_word(&c, agg_name) {
                     any_called = true;
                     break 'outer;
@@ -1510,13 +1523,9 @@ use shared::orphan_detector::utility_workspace_scanner::{
     check_wired_in_container, find_workspace_root,
 };
 
-use std::sync::Mutex;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CapabilitiesOrphanAnalyzer {
-    container_cache: Mutex<Option<(std::path::PathBuf, Vec<std::path::PathBuf>)>>,
-}
+pub struct CapabilitiesOrphanAnalyzer {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -1561,7 +1570,6 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             // Search for container files in workspace root (cached)
             let root = std::path::Path::new(root_dir.value());
             if let Ok(workspace_root) = find_workspace_root(root) {
-                let _container_files = self.cached_container_files(&workspace_root);
                 let wired = check_wired_in_container(&workspace_root, &identifiers);
                 if wired {
                     return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
@@ -1591,49 +1599,7 @@ impl Default for CapabilitiesOrphanAnalyzer {
 
 impl CapabilitiesOrphanAnalyzer {
     pub fn new() -> Self {
-        Self {
-            container_cache: Mutex::new(None),
-        }
-    }
-
-    fn cached_container_files(
-        &self,
-        workspace_root: &std::path::Path,
-    ) -> Option<Vec<std::path::PathBuf>> {
-        if let Ok(mut guard) = self.container_cache.lock() {
-            if let Some((cached_root, cached_files)) = &*guard {
-                if cached_root == workspace_root {
-                    return Some(cached_files.clone());
-                }
-            }
-            // Cache miss: find container files
-            let mut container_files = Vec::new();
-            for dir_name in &["crates", "packages", "modules"] {
-                let dir = workspace_root.join(dir_name);
-                if dir.is_dir() {
-                    let files =
-                        shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&dir);
-                    for file_path in &files {
-                        if let Some(name) = std::path::Path::new(file_path)
-                            .file_name()
-                            .and_then(|n| n.to_str())
-                        {
-                            if name.ends_with("_container.rs")
-                                || name.ends_with("_container.py")
-                                || name.ends_with("_container.ts")
-                                || name.ends_with("_container.js")
-                            {
-                                container_files.push(std::path::PathBuf::from(file_path));
-                            }
-                        }
-                    }
-                }
-            }
-            *guard = Some((workspace_root.to_path_buf(), container_files.clone()));
-            Some(container_files)
-        } else {
-            None
-        }
+        Self {}
     }
 }
 ```
@@ -2116,10 +2082,14 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                         shared::orphan_detector::utility_orphan_filename::file_stem(basename);
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
-                            || basename.ends_with(pattern)
                             || stem == *pattern
-                            || stem.starts_with(pattern.as_str())
-                            || stem.ends_with(pattern.as_str())
+                            || (pattern.starts_with('_') && stem.ends_with(pattern.as_str()))
+                            || (pattern.starts_with('.') && basename.ends_with(pattern.as_str()))
+                            || (pattern.ends_with(".rs")
+                                || pattern.ends_with(".py")
+                                || pattern.ends_with(".ts")
+                                || pattern.ends_with(".js"))
+                                && basename.ends_with(pattern.as_str())
                     })
                 })
                 .cloned()
@@ -2231,46 +2201,55 @@ impl OrphanGraphResolver {
         let files = &all_workspace_files;
 
         // Build a lookup: module_name -> file_path for crate:: resolution
-        let mut module_to_file: HashMap<String, String> = HashMap::new();
+        // Use Vec<String> to handle multiple files with the same stem across crates.
+        // Resolution prefers files in the same crate as the importer (crate-aware).
+        let mut module_to_file: HashMap<String, Vec<String>> = HashMap::new();
         for f in files {
             let stem = file_stem(f);
-            // Bug 3 fix: Use first-write-wins to prevent HashMap collision
-            // when multiple crates have files with the same stem (e.g., helper.rs)
-            if !module_to_file.contains_key(&stem) {
-                module_to_file.insert(stem.clone(), f.clone());
-            }
+            module_to_file
+                .entry(stem.clone())
+                .or_default()
+                .push(f.clone());
             if let Some(parent) = f.rsplit('/').nth(1) {
                 let module_path = format!("{}/{}", parent, stem);
-                if !module_to_file.contains_key(&module_path) {
-                    module_to_file.insert(module_path.clone(), f.clone());
-                    let normalized_path = module_path.replace('-', "_");
-                    if normalized_path != module_path
-                        && !module_to_file.contains_key(&normalized_path)
-                    {
-                        module_to_file.insert(normalized_path, f.clone());
-                    }
+                module_to_file
+                    .entry(module_path.clone())
+                    .or_default()
+                    .push(f.clone());
+                let normalized_path = module_path.replace('-', "_");
+                if normalized_path != module_path {
+                    module_to_file
+                        .entry(normalized_path)
+                        .or_default()
+                        .push(f.clone());
                 }
             }
-            // Bug 3 fix: mod.rs -> map by parent directory name (first-write-wins)
+            // mod.rs -> map by parent directory name
             if stem == "mod" {
                 if let Some(parent_dir) = f.rsplit('/').nth(1) {
-                    if !module_to_file.contains_key(parent_dir) {
-                        module_to_file.insert(parent_dir.to_string(), f.clone());
-                        let normalized = parent_dir.replace('-', "_");
-                        if normalized != parent_dir && !module_to_file.contains_key(&normalized) {
-                            module_to_file.insert(normalized, f.clone());
-                        }
+                    module_to_file
+                        .entry(parent_dir.to_string())
+                        .or_default()
+                        .push(f.clone());
+                    let normalized = parent_dir.replace('-', "_");
+                    if normalized != parent_dir {
+                        module_to_file
+                            .entry(normalized)
+                            .or_default()
+                            .push(f.clone());
                     }
                     if let Some(grandparent) = f.rsplit('/').nth(2) {
                         let composite = format!("{}/{}", grandparent, parent_dir);
-                        if !module_to_file.contains_key(&composite) {
-                            module_to_file.insert(composite.clone(), f.clone());
-                            let normalized_composite = composite.replace('-', "_");
-                            if normalized_composite != composite
-                                && !module_to_file.contains_key(&normalized_composite)
-                            {
-                                module_to_file.insert(normalized_composite, f.clone());
-                            }
+                        module_to_file
+                            .entry(composite.clone())
+                            .or_default()
+                            .push(f.clone());
+                        let normalized_composite = composite.replace('-', "_");
+                        if normalized_composite != composite {
+                            module_to_file
+                                .entry(normalized_composite)
+                                .or_default()
+                                .push(f.clone());
                         }
                     }
                 }
@@ -2278,23 +2257,29 @@ impl OrphanGraphResolver {
             // Python __init__.py -> map by parent directory name (same as mod.rs for Python packages)
             if stem == "__init__" {
                 if let Some(parent_dir) = f.rsplit('/').nth(1) {
-                    if !module_to_file.contains_key(parent_dir) {
-                        module_to_file.insert(parent_dir.to_string(), f.clone());
-                        let normalized = parent_dir.replace('-', "_");
-                        if normalized != parent_dir && !module_to_file.contains_key(&normalized) {
-                            module_to_file.insert(normalized, f.clone());
-                        }
+                    module_to_file
+                        .entry(parent_dir.to_string())
+                        .or_default()
+                        .push(f.clone());
+                    let normalized = parent_dir.replace('-', "_");
+                    if normalized != parent_dir {
+                        module_to_file
+                            .entry(normalized)
+                            .or_default()
+                            .push(f.clone());
                     }
                     if let Some(grandparent) = f.rsplit('/').nth(2) {
                         let composite = format!("{}/{}", grandparent, parent_dir);
-                        if !module_to_file.contains_key(&composite) {
-                            module_to_file.insert(composite.clone(), f.clone());
-                            let normalized_composite = composite.replace('-', "_");
-                            if normalized_composite != composite
-                                && !module_to_file.contains_key(&normalized_composite)
-                            {
-                                module_to_file.insert(normalized_composite, f.clone());
-                            }
+                        module_to_file
+                            .entry(composite.clone())
+                            .or_default()
+                            .push(f.clone());
+                        let normalized_composite = composite.replace('-', "_");
+                        if normalized_composite != composite {
+                            module_to_file
+                                .entry(normalized_composite)
+                                .or_default()
+                                .push(f.clone());
                         }
                     }
                 }
@@ -2359,7 +2344,13 @@ impl OrphanGraphResolver {
                         parent.join(&mod_name).join("__init__.py"),
                     ];
                     for candidate in &candidates {
-                        if shared::orphan_detector::utility_orphan_io::is_file(candidate) {
+                        // Bug 8 fix: Resolve against workspace_root to be CWD-independent
+                        let abs_candidate = if candidate.is_relative() {
+                            root_path.join(candidate)
+                        } else {
+                            candidate.clone()
+                        };
+                        if shared::orphan_detector::utility_orphan_io::is_file(&abs_candidate) {
                             if let Some(path_str) = candidate.to_str() {
                                 let resolved = path_str.to_string();
                                 if resolved != *f {
@@ -2397,26 +2388,9 @@ impl OrphanGraphResolver {
                         let mut resolved = false;
                         for i in (1..segments.len()).rev() {
                             let composite = segments[..i].join("/");
-                            if let Some(file_path) = module_to_file.get(composite.as_str()) {
-                                if file_path != f {
-                                    import_graph
-                                        .entry(f.clone())
-                                        .or_default()
-                                        .push(file_path.clone());
-                                    inbound_links
-                                        .entry(file_path.clone())
-                                        .or_default()
-                                        .push(f.clone());
-                                    resolved = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if resolved {
-                            continue;
-                        }
-                        for seg in segments[..segments.len() - 1].iter().rev() {
-                            if let Some(file_path) = module_to_file.get(*seg) {
+                            if let Some(file_path) =
+                                Self::resolve_module(&module_to_file, composite.as_str(), f)
+                            {
                                 if file_path != f {
                                     import_graph
                                         .entry(f.clone())
@@ -2436,7 +2410,7 @@ impl OrphanGraphResolver {
                         }
                     }
                     if let Some(seg) = segments.first() {
-                        if let Some(file_path) = module_to_file.get(*seg) {
+                        if let Some(file_path) = Self::resolve_module(&module_to_file, seg, f) {
                             if file_path != f {
                                 import_graph
                                     .entry(f.clone())
@@ -2459,7 +2433,9 @@ impl OrphanGraphResolver {
                         let mut found = false;
                         for i in (1..segments.len()).rev() {
                             let composite = segments[..i].join("/");
-                            if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                            if let Some(file_path) =
+                                Self::resolve_module(&module_to_file, composite.as_str(), f)
+                            {
                                 if file_path != f {
                                     import_graph
                                         .entry(f.clone())
@@ -2478,7 +2454,7 @@ impl OrphanGraphResolver {
                             continue;
                         }
                         for seg in segments[..segments.len() - 1].iter().rev() {
-                            if let Some(resolved) = module_to_file.get(*seg) {
+                            if let Some(resolved) = Self::resolve_module(&module_to_file, seg, f) {
                                 if resolved != f {
                                     import_graph
                                         .entry(f.clone())
@@ -2493,7 +2469,7 @@ impl OrphanGraphResolver {
                             }
                         }
                     } else if let Some(seg) = segments.first() {
-                        if let Some(resolved) = module_to_file.get(*seg) {
+                        if let Some(resolved) = Self::resolve_module(&module_to_file, seg, f) {
                             if resolved != f {
                                 import_graph
                                     .entry(f.clone())
@@ -2560,7 +2536,9 @@ impl OrphanGraphResolver {
                         } else {
                             // Step 2: Try last segment as filename stem
                             if let Some(last_seg) = full_import.rsplit('.').next() {
-                                if let Some(target) = module_to_file.get(last_seg) {
+                                if let Some(target) =
+                                    Self::resolve_module(&module_to_file, last_seg, f)
+                                {
                                     if target != f {
                                         utility_orphan_graph_resolver::add_edge(
                                             &mut import_graph,
@@ -2617,7 +2595,8 @@ impl OrphanGraphResolver {
 
                             for name in names {
                                 // Try stem lookup first
-                                if let Some(target) = module_to_file.get(name) {
+                                if let Some(target) = Self::resolve_module(&module_to_file, name, f)
+                                {
                                     if target != f {
                                         utility_orphan_graph_resolver::add_edge(
                                             &mut import_graph,
@@ -2631,7 +2610,9 @@ impl OrphanGraphResolver {
                                 // Try composite dotted path → last segment
                                 let full_name_path = format!("{}.{}", full_import, name);
                                 for seg in full_name_path.rsplit('.') {
-                                    if let Some(target) = module_to_file.get(seg) {
+                                    if let Some(target) =
+                                        Self::resolve_module(&module_to_file, seg, f)
+                                    {
                                         if target != f {
                                             utility_orphan_graph_resolver::add_edge(
                                                 &mut import_graph,
@@ -2716,83 +2697,51 @@ impl OrphanGraphResolver {
                     continue;
                 }
 
-                // Bug 7 fix: Only add edge if dep exists in module_to_file or is known external
-                // prevents non-file nodes (e.g., "os", "serde") from corrupting the graph
-                let is_external_dep =
-                    !module_to_file.contains_key(&dep) && !workspace_modules.contains(&dep);
-                if is_external_dep {
-                    // Skip unknown external deps — don't add ghost nodes to graph
-                    continue;
-                }
-                // Only add edge for known local modules
-                if module_to_file.contains_key(&dep) {
-                    import_graph.entry(f.clone()).or_default().push(dep.clone());
-                    inbound_links.entry(dep).or_default().push(f.clone());
-                }
-            }
-
-            // Pass 3c: TypeScript/JavaScript imports
-            if f.ends_with(".ts") || f.ends_with(".js") {
-                if let Some(ts_import_re) = utility_orphan_regex_patterns::ts_import_re() {
-                    for cap in ts_import_re.captures_iter(&content) {
-                        // Try to extract import path from groups:
-                        // Group 2 = named import path `import { X } from './path'`
-                        // Group 5 = default+named path `import Def, { X } from './path'`
-                        // Group 7 = default import path `import X from './path'`
-                        // Group 9 = namespace import path `import * as X from './path'`
-                        // Group 10 = side-effect import path `import './path'`
-                        let import_path = cap
-                            .get(2)
-                            .or_else(|| cap.get(5))
-                            .or_else(|| cap.get(7))
-                            .or_else(|| cap.get(9))
-                            .or_else(|| cap.get(10));
-
-                        if let Some(path_m) = import_path {
-                            let raw = path_m.as_str();
-                            // Only resolve relative imports (start with '.')
-                            // Package imports (e.g., 'react', 'lodash') are external
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
-                                {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
-                                }
-                            }
-                        }
+                // Bug 10 fix: Instead of adding edge with stem (which may not be a real file path),
+                // resolve dep to the actual file path via module_to_file lookup.
+                if let Some(target) = Self::resolve_module(&module_to_file, &dep, f) {
+                    if target != f {
+                        import_graph
+                            .entry(f.clone())
+                            .or_default()
+                            .push(target.clone());
+                        inbound_links
+                            .entry(target.clone())
+                            .or_default()
+                            .push(f.clone());
                     }
-                }
-
-                // Pass 3d: TypeScript/JavaScript export re-exports
-                if let Some(ts_export_re) = utility_orphan_regex_patterns::ts_export_re() {
-                    for cap in ts_export_re.captures_iter(&content) {
-                        // Group 2 = named export path `export { X } from './path'`
-                        // Group 3 = re-export all path `export * from './path'`
-                        let import_path = cap.get(2).or_else(|| cap.get(3));
-
-                        if let Some(path_m) = import_path {
-                            let raw = path_m.as_str();
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
+                } else if workspace_modules.contains(&dep) && !full_import.contains('.') {
+                    // dep is a workspace crate name — try to find its entry point
+                    for (dir_name, src_dir) in &crate_src_dirs {
+                        if dir_name == &dep || dir_name.replace('-', "_") == dep {
+                            for entry_file in &[
+                                "lib.rs",
+                                "__init__.py",
+                                "main.rs",
+                                "main.py",
+                                "index.ts",
+                                "index.js",
+                            ] {
+                                let entry_path = src_dir.join(entry_file);
+                                if shared::orphan_detector::utility_orphan_io::is_file(&entry_path)
                                 {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
+                                    let rel = entry_path
+                                        .strip_prefix(root_path)
+                                        .map(|p| p.to_string_lossy().to_string())
+                                        .unwrap_or_else(|_| {
+                                            entry_path.to_string_lossy().to_string()
+                                        });
+                                    if rel != *f {
+                                        import_graph
+                                            .entry(f.clone())
+                                            .or_default()
+                                            .push(rel.clone());
+                                        inbound_links.entry(rel).or_default().push(f.clone());
+                                    }
+                                    break;
                                 }
                             }
+                            break;
                         }
                     }
                 }
@@ -2801,15 +2750,15 @@ impl OrphanGraphResolver {
             // Pass 3b: Python relative imports (`from . import X`, `from .module import X`)
             if let Some(rel_re) = utility_orphan_regex_patterns::python_relative_import_re() {
                 for cap in rel_re.captures_iter(&content) {
-                    // Group 1 = dots (parenthesized variant), Group 3 = dots (inline variant)
-                    let dots = cap.get(1).or_else(|| cap.get(3));
-                    // Group 2 = names (parenthesized variant), Group 4 = names (inline variant)
-                    let names_raw = cap.get(2).or_else(|| cap.get(4));
+                    // Groups: 1=dots(paren), 2=module_name(paren), 3=names(paren),
+                    //         4=dots(inline), 5=module_name(inline), 6=names(inline)
+                    let dots = cap.get(1).or_else(|| cap.get(4));
+                    let module_name = cap.get(2).or_else(|| cap.get(5));
+                    let names_raw = cap.get(3).or_else(|| cap.get(6));
                     let (Some(dots_m), Some(names_m)) = (dots, names_raw) else {
                         continue;
                     };
                     let dot_count = dots_m.as_str().len(); // 1=., 2=.., 3=...
-                    let names_str = names_m.as_str();
 
                     // Resolve base directory: . = current file dir, .. = parent, ... = grandparent
                     let file_path = std::path::Path::new(f);
@@ -2821,7 +2770,57 @@ impl OrphanGraphResolver {
                     }
                     let Some(base) = base_dir else { continue };
 
-                    // Parse imported names
+                    // If module name present (e.g., `from .module_name import X`),
+                    // resolve it as a file or package directory first
+                    if let Some(mod_name) = module_name {
+                        let mod_str = mod_name.as_str();
+                        // Try as file in base directory
+                        for ext in &[".py", ".rs", ".ts", ".js"] {
+                            let candidate = base.join(format!("{}{}", mod_str, ext));
+                            if shared::orphan_detector::utility_orphan_io::is_file(&candidate) {
+                                let cand_rel = candidate
+                                    .strip_prefix(root_path)
+                                    .map(|p| p.to_string_lossy().to_string())
+                                    .unwrap_or_else(|_| candidate.to_string_lossy().to_string());
+                                if cand_rel != *f {
+                                    utility_orphan_graph_resolver::add_edge(
+                                        &mut import_graph,
+                                        &mut inbound_links,
+                                        f,
+                                        &cand_rel,
+                                    );
+                                }
+                                break;
+                            }
+                        }
+                        // Try as package directory (__init__.py or mod.rs)
+                        let pkg_dir = base.join(mod_str);
+                        for marker in &["__init__.py", "mod.rs"] {
+                            if shared::orphan_detector::utility_orphan_io::is_file(
+                                &pkg_dir.join(marker),
+                            ) {
+                                let cand_rel = pkg_dir
+                                    .join(marker)
+                                    .strip_prefix(root_path)
+                                    .map(|p| p.to_string_lossy().to_string())
+                                    .unwrap_or_else(|_| {
+                                        pkg_dir.join(marker).to_string_lossy().to_string()
+                                    });
+                                if cand_rel != *f {
+                                    utility_orphan_graph_resolver::add_edge(
+                                        &mut import_graph,
+                                        &mut inbound_links,
+                                        f,
+                                        &cand_rel,
+                                    );
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    // Parse imported names (for `from . import X, Y` or `from .module import X`)
+                    let names_str = names_m.as_str();
                     let names: Vec<&str> = names_str
                         .split(|c: char| c == ',' || c == '(' || c == ')' || c.is_whitespace())
                         .map(|s| s.trim())
@@ -2832,7 +2831,7 @@ impl OrphanGraphResolver {
 
                     for name in names {
                         // Try module_to_file lookup (stem match)
-                        if let Some(target) = module_to_file.get(name) {
+                        if let Some(target) = Self::resolve_module(&module_to_file, name, f) {
                             if target != f {
                                 utility_orphan_graph_resolver::add_edge(
                                     &mut import_graph,
@@ -2867,66 +2866,6 @@ impl OrphanGraphResolver {
                 }
             }
 
-            // Pass 3c: TypeScript/JavaScript imports
-            if f.ends_with(".ts")
-                || f.ends_with(".js")
-                || f.ends_with(".tsx")
-                || f.ends_with(".jsx")
-            {
-                if let Some(ts_re) = utility_orphan_regex_patterns::ts_import_re() {
-                    for cap in ts_re.captures_iter(&content) {
-                        // Group 2 = named path, 5 = default+named path, 7 = default path,
-                        // 9 = namespace path, 11 = side-effect path
-                        let import_path = cap
-                            .get(2)
-                            .or_else(|| cap.get(5))
-                            .or_else(|| cap.get(7))
-                            .or_else(|| cap.get(9))
-                            .or_else(|| cap.get(11));
-                        if let Some(path_m) = import_path {
-                            let raw = path_m.as_str();
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
-                                {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-                if let Some(ts_re) = utility_orphan_regex_patterns::ts_export_re() {
-                    for cap in ts_re.captures_iter(&content) {
-                        // Group 2 = named export path, 3 = wildcard export path
-                        let export_path = cap.get(2).or_else(|| cap.get(3));
-                        if let Some(path_m) = export_path {
-                            let raw = path_m.as_str();
-                            if raw.starts_with('.') {
-                                if let Some(resolved) =
-                                    utility_orphan_graph_resolver::resolve_ts_relative(
-                                        f, raw, root_path,
-                                    )
-                                {
-                                    utility_orphan_graph_resolver::add_edge(
-                                        &mut import_graph,
-                                        &mut inbound_links,
-                                        f,
-                                        &resolved,
-                                    );
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             // Bug 12 fix: Only run class inheritance detection for Python files (.py)
             // prevents false matches in Rust/JS/TS files
             if f.ends_with(".py") {
@@ -2952,7 +2891,7 @@ impl OrphanGraphResolver {
                     // Try to resolve the re-exported module to a file
                     // First try the last segment (file stem)
                     if let Some(seg) = segments.last() {
-                        if let Some(file_path) = module_to_file.get(*seg) {
+                        if let Some(file_path) = Self::resolve_module(&module_to_file, seg, f) {
                             if file_path != f {
                                 utility_orphan_graph_resolver::add_edge(
                                     &mut import_graph,
@@ -2966,7 +2905,9 @@ impl OrphanGraphResolver {
                     // Also try composite path with / separator
                     if segments.len() >= 2 {
                         let composite = segments.join("/");
-                        if let Some(file_path) = module_to_file.get(composite.as_str()) {
+                        if let Some(file_path) =
+                            Self::resolve_module(&module_to_file, composite.as_str(), f)
+                        {
                             if file_path != f {
                                 utility_orphan_graph_resolver::add_edge(
                                     &mut import_graph,
@@ -2998,7 +2939,7 @@ impl OrphanGraphResolver {
 
                     // Try to resolve the re-exported module to a file
                     if let Some(seg) = segments.first() {
-                        if let Some(file_path) = module_to_file.get(*seg) {
+                        if let Some(file_path) = Self::resolve_module(&module_to_file, *seg, f) {
                             if file_path != f {
                                 utility_orphan_graph_resolver::add_edge(
                                     &mut import_graph,
@@ -3022,7 +2963,27 @@ impl OrphanGraphResolver {
             InboundLinkMap::new(inbound_links),
             InheritanceMap::new(inheritance_map),
             FileDefinitionMap::new(file_definitions),
+            all_workspace_files,
         )
+    }
+
+    /// Resolve a module key to the best-matching file path.
+    /// Prefers files in the same crate as the importer (crate-aware resolution).
+    fn resolve_module<'a>(
+        module_to_file: &'a HashMap<String, Vec<String>>,
+        key: &str,
+        importer: &str,
+    ) -> Option<&'a String> {
+        let candidates = module_to_file.get(key)?;
+        if candidates.len() == 1 {
+            return candidates.first();
+        }
+        // Prefer candidate in the same crate (2nd path segment: "crates/<name>/...")
+        let importer_crate = importer.split('/').nth(1);
+        candidates
+            .iter()
+            .find(|c| c.split('/').nth(1) == importer_crate)
+            .or(candidates.first())
     }
 }
 ```
@@ -3034,13 +2995,9 @@ impl OrphanGraphResolver {
 ```rust
 // PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
 use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
-
-use shared::common::{FilePath, Severity};
-
-use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
-
-use shared::common::LayerDefinition;
+use shared::common::{FilePath, LayerDefinition, Severity};
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
+use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -3056,27 +3013,60 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         alive_files: &ReachabilityResult,
         _definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
-        // Import graph only — no identifier-based fallback
         let is_reachable = alive_files.paths.contains(f);
-        if is_reachable {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
         let fp_val = f.value();
         let basename = file_basename(fp_val);
         let stem = file_stem(fp_val);
         let suffix = Self::get_surface_suffix(&basename);
         let category = Self::surface_category(&suffix);
 
+        // FR-009: Category-aware orphan detection
+        // Dependency chain: Entry → Smart → Utility → Passive
+        if is_reachable {
+            // Even if BFS-reachable, validate the import chain per FR-009:
+            // - Utility surfaces must be imported by a Smart surface (not just any file)
+            // - Passive surfaces must be imported by Smart OR Utility (not just Passive)
+            //
+            // NOTE: Full chain validation requires inbound_links (not available in
+            // current trait signature). Current implementation trusts BFS reachability
+            // as a necessary approximation. When trait is extended with inbound_links,
+            // add per-category importer validation here.
+            //
+            // TODO(FR-009): Extend ISurfacesOrphanProtocol with inbound_links param
+            // to enforce: passive imported only by passive → orphan.
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // Not BFS-reachable — determine severity by category
+        let severity = match category {
+            "smart" => Severity::HIGH,
+            "utility" => Severity::MEDIUM,
+            "passive" => Severity::LOW,
+            _ => Severity::MEDIUM,
+        };
+
+        let where_hint = match category {
+            "smart" => "entry point or container",
+            "utility" => "smart surface (command, controller, page, router)",
+            "passive" => "smart or utility surface",
+            _ => "the appropriate importer",
+        };
+
         OrphanIndicatorResult::new(
             true,
             AesOrphanViolation::SurfaceOrphan {
                 category,
-                stem,
-                reason: Some("Surface is unreachable from entry points.".into()),
+                stem: stem.clone(),
+                reason: Some(
+                    format!(
+                        "{} surface '{}' is not imported by any {}.",
+                        category, stem, where_hint
+                    )
+                    .into(),
+                ),
             }
             .to_string(),
-            Severity::HIGH,
+            severity,
         )
     }
 }
@@ -3102,8 +3092,8 @@ impl SurfacesOrphanAnalyzer {
     /// Surface category
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" => "smart",
-            "hook" | "store" | "action" | "screen" | "router" => "utility",
+            "command" | "controller" | "page" | "router" | "entry" => "smart",
+            "hook" | "store" | "action" | "screen" => "utility",
             "component" | "view" | "layout" => "passive",
             _ => "unknown",
         }
@@ -3296,7 +3286,9 @@ impl TaxonomyOrphanAnalyzer {
                 matches!(ext, "rs" | "py" | "ts" | "js")
             }) {
                 let content = shared::orphan_detector::utility_orphan_io::read_file_safe(f);
-                if content.contains(stem) {
+                if shared::orphan_detector::utility_orphan_detector::contains_delimited(
+                        &content, stem,
+                    ) {
                     importers.insert(f.clone());
                 }
             }
@@ -3505,8 +3497,12 @@ impl UtilityOrphanAnalyzer {
         }
 
         // Check for inline fully qualified calls: module_name::function()
-        if content.contains(&format!("{}::", module_name)) {
-            return true;
+        // Use line-by-line check to avoid false positives (e.g., "io::" matching "std::io::")
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if self.path_contains_module(trimmed, module_name) {
+                return true;
+            }
         }
 
         // Check for grouped imports: use { module_name, ... }
@@ -3700,11 +3696,10 @@ pub fn build_crate_module_index(
             {
                 continue;
             }
-            let canonical_path = match std::fs::canonicalize(&path_str) {
-                Ok(p) => p,
-                Err(_) => std::path::PathBuf::from(&path_str),
-            };
-            let stem = canonical_path
+            // Bug 9/NFR fix: Avoid per-file canonicalize syscall — use path as-is
+            // scan_directory_recursive already returns paths within canonical_src.
+            let path = std::path::Path::new(&path_str);
+            let stem = path
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or_default()
@@ -3712,30 +3707,29 @@ pub fn build_crate_module_index(
             if stem.is_empty() {
                 continue;
             }
-            let canon_str = canonical_path.to_string_lossy().to_string();
-            let rel_path = canonical_path
+            let rel_path = path
                 .strip_prefix(&canonical_src)
-                .unwrap_or(&canonical_path);
+                .unwrap_or(path);
             let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
             let normalized_rel =
                 shared::orphan_detector::utility_orphan_detector::normalize_module_path(
                     &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
                 );
-            module_map.insert(normalized_rel, canon_str.clone());
-            module_map.insert(stem.clone(), canon_str.clone());
+            module_map.insert(normalized_rel, path_str.clone());
+            module_map.insert(stem.clone(), path_str.clone());
             module_map.insert(
                 shared::orphan_detector::utility_orphan_detector::normalize_module_component(&stem),
-                canon_str.clone(),
+                path_str.clone(),
             );
             if stem == "mod" || stem == "__init__" || stem == "index" {
-                if let Some(parent_dir) = canonical_path.parent().and_then(|p| p.file_name()) {
+                if let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
                     let parent = parent_dir.to_string_lossy().to_string();
-                    module_map.insert(parent.clone(), canon_str.clone());
+                    module_map.insert(parent.clone(), path_str.clone());
                     module_map.insert(
                         shared::orphan_detector::utility_orphan_detector::normalize_module_component(
                             &parent,
                         ),
-                        canon_str.clone(),
+                        path_str.clone(),
                     );
                 }
             }
@@ -3855,14 +3849,17 @@ pub fn resolve_ts_relative(
     let base = std::path::Path::new(current_file).parent()?;
     let joined = base.join(import_path);
 
-    // TS imports omit extension — try .ts, .js, /index.ts, /index.js, .tsx, .jsx
+    // TS imports omit extension — try appending .ts, .js, .tsx, .jsx, /index.ts, /index.js
+    // Use format! instead of with_extension to handle paths containing dots
+    // (e.g., "./utils/helper.v2" → "helper.v2.ts", NOT "helper.ts")
+    let joined_str = joined.to_string_lossy();
     let candidates: Vec<std::path::PathBuf> = vec![
-        joined.with_extension("ts"),
-        joined.with_extension("js"),
+        std::path::PathBuf::from(format!("{}.ts", joined_str)),
+        std::path::PathBuf::from(format!("{}.js", joined_str)),
+        std::path::PathBuf::from(format!("{}.tsx", joined_str)),
+        std::path::PathBuf::from(format!("{}.jsx", joined_str)),
         joined.join("index.ts"),
         joined.join("index.js"),
-        joined.with_extension("tsx"),
-        joined.with_extension("jsx"),
     ];
 
     for cand in &candidates {
@@ -3917,12 +3914,18 @@ pub fn import_re() -> Option<&'static Regex> {
     .as_ref()
 }
 
-/// Regex for Python relative imports: `from . import X` or `from .module import X`
+/// Regex for Python relative imports:
+/// - `from . import X` (no module name)
+/// - `from . import (X, Y)` (parenthesized multi-line)
+/// - `from .module_name import X` (with module name)
+/// - `from ..parent_module import X` (parent package)
+/// Groups: 1=dots(paren), 2=module_name(paren), 3=names(paren),
+///         4=dots(inline), 5=module_name(inline), 6=names(inline)
 pub fn python_relative_import_re() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| {
         Regex::new(
-            r"(?s)from\s+(\.{1,3})\s+import\s*\(([^)]+)\)|from\s+(\.{1,3})\s+import\s+([^\n]+)",
+            r"(?s)from\s+(\.{1,3})\s+([a-zA-Z_][a-zA-Z0-9_.]*)?\s*import\s*\(([^)]+)\)|from\s+(\.{1,3})\s+([a-zA-Z_][a-zA-Z0-9_.]*)?\s*import\s+([^\n]+)",
         )
         .ok()
     })
@@ -3958,9 +3961,9 @@ pub fn ts_export_re() -> Option<&'static Regex> {
     static RE: OnceLock<Option<Regex>> = OnceLock::new();
     RE.get_or_init(|| {
         // Match: export { X, Y } from './path', export * from './path'
-        Regex::new(
-            r#"\bexport\s+(?:\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]|\*\s*from\s*['"]([^'"]+)['"])?"#,
-        )
+Regex::new(
+                r#"\bexport\s+(?:\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]|\*\s*from\s*['"]([^'"]+)['"])"#,
+            )
         .ok()
     })
     .as_ref()
@@ -4254,6 +4257,10 @@ pub struct GraphAnalysisContext {
     pub inbound_links: InboundLinkMap,
     pub inheritance_map: InheritanceMap,
     pub file_definitions: FileDefinitionMap,
+    /// All workspace files used to build the graph — needed for entry point detection
+    /// across modules (FR-001). When scanning modules/cli/, this includes root_cli_main_entry.py
+    /// from modules/ so surface files imported by it are not falsely flagged as orphans.
+    pub all_workspace_files: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -4297,6 +4304,22 @@ impl InboundLinkMap {
                 }
             } else {
                 result = Some(v);
+            }
+        }
+
+        // Fast path: strip absolute workspace prefix to get relative path.
+        // Graph resolver stores relative keys (e.g., "crates/shared/src/foo.rs")
+        // but analyzers may query with absolute paths (e.g., "/home/user/project/crates/shared/src/foo.rs").
+        // This O(1) lookup avoids the O(n) suffix scan below.
+        if result.is_none() {
+            for marker in &["/crates/", "/packages/", "/modules/"] {
+                if let Some(pos) = path.find(marker) {
+                    let rel = &path[pos + 1..]; // skip leading '/'
+                    if let Some(v) = self.mapping.get(rel) {
+                        result = Some(v);
+                        break;
+                    }
+                }
             }
         }
 
@@ -4408,12 +4431,14 @@ impl GraphAnalysisContext {
         inbound_links: InboundLinkMap,
         inheritance_map: InheritanceMap,
         file_definitions: FileDefinitionMap,
+        all_workspace_files: Vec<String>,
     ) -> Self {
         Self {
             import_graph,
             inbound_links,
             inheritance_map,
             file_definitions,
+            all_workspace_files,
         }
     }
 }

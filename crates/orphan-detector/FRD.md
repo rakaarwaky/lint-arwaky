@@ -5,7 +5,7 @@
 The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned. The orchestrator dispatches to 6 layer-specific analyzers (taxonomy, contract, capabilities, utility, agent, surfaces) and produces lint violations.
 
 ```
-Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
+Entry Points ( *_entry.*, *_container.*)
         │
         ▼
 ┌─────────────────────┐
@@ -40,7 +40,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 - **Input**: List of file paths and optional configured entry point patterns from the architecture configuration.
 - **Output**: Set of entry point file paths.
 - **Business Rules**:
-  - Default entry point patterns: `main.rs`, `lib.rs`, `main.py`, `__main__.py`, `main.ts`, `main.js`, `index.ts`, `index.js`, `*_container.*`, `*_entry.*`.
+  - Default entry point patterns: ``*_container.*`, `*_entry.*`.
   - Merges configured additional entry point patterns from each layer definition in the architecture configuration.
   - Deduplicates and sorts the final list.
 - **Edge Cases**: Workspace with zero entry points results in all files flagged as orphans. Workspace with entry points in non-standard locations requires config override.
@@ -145,8 +145,9 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## API Contract
 
+
 | Function                           | Input                                                                 | Output                     | Description                                       |
-| ---------------------------------- | --------------------------------------------------------------------- | -------------------------- | ------------------------------------------------- |
+| ------------------------------------ | ----------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------- |
 | Build orphan graph context         | File list, root directory                                             | Graph analysis context     | Build full import graph for the workspace         |
 | Identify orphan entry points       | File list                                                             | Set of entry point paths   | Discover all valid entry points                   |
 | Full orphan scan                   | File list, root directory                                             | Lint results               | Full orphan scan with graph construction          |
@@ -157,7 +158,7 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 | Check utility orphan               | File path, root directory, all files, reverse link map                | Orphan indicator result    | Check single utility file for orphan status       |
 | Check agent orphan                 | File path, root directory, all files                                  | Orphan indicator result    | Check single agent file for orphan status         |
 | Check surface orphan               | File path, root directory, reachable file set, layer definition       | Orphan indicator result    | Check single surface file for orphan status       |
-| Create default DI container        | —                                                                     | Orphan detection container | Default dependency injection container            |
+| Create default DI container        | —                                                                    | Orphan detection container | Default dependency injection container            |
 | Create DI container with config    | Architecture configuration                                            | Orphan detection container | DI container with custom config                   |
 | Create DI from config orchestrator | Config orchestrator reference, root directory                         | Orphan detection container | Canonical DI from config orchestrator             |
 
@@ -186,21 +187,21 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## Test Scenarios / QA Checklist
 
-- [ ] Workspace with 100 files, 5 orphans across 3 layers — all 5 detected, 0 false positives.
-- [ ] Python nested `__init__.py` packages — barrel files skipped, not flagged as orphan.
-- [ ] TypeScript barrel `index.ts` re-exports — barrel files skipped.
-- [ ] Rust `mod.rs` re-exports — barrel files skipped.
-- [ ] Circular imports between two capabilities — both reachable, neither flagged.
-- [ ] Contract protocol with implementation but zero callers — still flagged as orphan.
-- [ ] Agent file with no aggregate implementation — flagged as HIGH severity orphan.
-- [ ] Surface dependency chain: Smart → Utility → Passive — all alive. Remove Smart import — Utility + Passive flagged.
-- [ ] Config with `check_orphan: false` for a layer — no violations for that layer.
-- [ ] Config with exceptions list — excepted files produce no violations.
-- [ ] Config with `ignored_paths` — excluded paths produce no violations.
-- [ ] Workspace with zero entry points — all non-barrel files flagged as orphans.
-- [ ] Cross-crate imports (crate A imports from crate B) — graph resolves correctly.
-- [ ] 10,000 file workspace completes in under 5 seconds.
-- [ ] Configuration disabled — full orphan scan returns empty immediately.
+- [ ]  Workspace with 100 files, 5 orphans across 3 layers — all 5 detected, 0 false positives.
+- [ ]  Python nested `__init__.py` packages — barrel files skipped, not flagged as orphan.
+- [ ]  TypeScript barrel `index.ts` re-exports — barrel files skipped.
+- [ ]  Rust `mod.rs` re-exports — barrel files skipped.
+- [ ]  Circular imports between two capabilities — both reachable, neither flagged.
+- [ ]  Contract protocol with implementation but zero callers — still flagged as orphan.
+- [ ]  Agent file with no aggregate implementation — flagged as HIGH severity orphan.
+- [ ]  Surface dependency chain: Smart → Utility → Passive — all alive. Remove Smart import — Utility + Passive flagged.
+- [ ]  Config with `check_orphan: false` for a layer — no violations for that layer.
+- [ ]  Config with exceptions list — excepted files produce no violations.
+- [ ]  Config with `ignored_paths` — excluded paths produce no violations.
+- [ ]  Workspace with zero entry points — all non-barrel files flagged as orphans.
+- [ ]  Cross-crate imports (crate A imports from crate B) — graph resolves correctly.
+- [ ]  10,000 file workspace completes in under 5 seconds.
+- [ ]  Configuration disabled — full orphan scan returns empty immediately.
 
 ## Assumptions & Constraints
 
@@ -213,15 +214,16 @@ Entry Points (main.*, lib.rs, *_entry.*, *_container.*)
 
 ## Glossary
 
-| Term             | Definition                                                                 |
-| ---------------- | -------------------------------------------------------------------------- |
-| **Orphan**       | A source file not transitively reachable from any entry point              |
-| **Entry point**  | A file that anchors the reachability graph (main, lib, container, entry)   |
-| **Barrel file**  | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)   |
-| **Alive file**   | A file reachable via BFS from any entry point through the import graph     |
+
+| Term             | Definition                                                                  |
+| ------------------ | ----------------------------------------------------------------------------- |
+| **Orphan**       | A source file not transitively reachable from any entry point               |
+| **Entry point**  | A file that anchors the reachability graph (main, lib, container, entry)    |
+| **Barrel file**  | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)    |
+| **Alive file**   | A file reachable via BFS from any entry point through the import graph      |
 | **AES**          | Architecture Enforcement Standard — the 7-layer coding convention          |
 | **DI**           | Dependency Injection — wiring implementations to trait/interface contracts |
-| **Inbound link** | A file that imports the target file (reverse import edge)                  |
+| **Inbound link** | A file that imports the target file (reverse import edge)                   |
 
 ## Reference
 
