@@ -134,20 +134,69 @@ impl fmt::Display for AesOrphanViolation {
                 stem,
                 reason,
             } => {
-                let (where_hint, fix_hint) = match *category {
-                    "smart" => ("entry point or router", "an entry point (root_*_entry.rs, cli_*, mcp_*) or router file"),
-                    "utility" => ("smart surface", "a smart surface (command, controller, page)"),
-                    "passive" => ("smart or utility surface", "a smart surface (command, controller, page) or utility surface (hook, store, action, screen, router)"),
-                    _ => ("the appropriate importer", "an appropriate importer file"),
+                let (why_line, fix_line) = match *category {
+                    "smart" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the {} surface '{}' is not imported by any entry point or container such as root_*_entry.py/rs/ts.",
+                                category, stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' at the entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to utility surface (_hook/_store/_action/_screen) or passive (surface _component/_view/_layout) if it is in the wrong role.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    "utility" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the {} surface '{}' is not imported by any smart surface (command, controller, page, router).",
+                                category, stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' by a smart surface (command, controller, page, router) or an entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to passive (surface _component/_view/_layout) if it is in the wrong role.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    "passive" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the passive surface '{}' is not imported by any smart or utility surface.",
+                                stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' by a smart or utility surface. If this surface is dead code, delete the file and its module declaration.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    _ => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the unknown surface '{}' is not imported by any appropriate importer.",
+                                stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' in an appropriate importer file. If this surface is dead code, delete the file and its module declaration.",
+                            stem
+                        );
+                        (why, fix)
+                    }
                 };
-                let why = match reason.as_ref() {
-                    Some(r) => r.to_string(),
-                    None => format!(
-                        "{} surface '{}' is not imported by any {}.",
-                        category, stem, where_hint
-                    ),
-                };
-                write!(f, "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: Import '{}' in {}. If this surface is dead code, remove the file and its module declaration from lib.rs.", category, stem, why, stem, fix_hint)
+                write!(
+                    f,
+                    "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: {}",
+                    category, stem, why_line, fix_line
+                )
             }
         }
     }

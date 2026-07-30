@@ -50,11 +50,47 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             _ => Severity::MEDIUM,
         };
 
-        let where_hint = match category {
-            "smart" => "entry point or container",
-            "utility" => "smart surface (command, controller, page, router)",
-            "passive" => "smart or utility surface",
-            _ => "the appropriate importer",
+        let (reason_line, fix_line) = match category {
+            "smart" => (
+                format!(
+                    "the {} surface '{}' is not imported by any entry point or container such as root_*_entry.py/rs/ts.",
+                    category, stem
+                ),
+                format!(
+                    "Import '{}' at the entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to utility surface (_hook/_store/_action/_screen) or passive (surface _component/_view/_layout) if it is in the wrong role.",
+                    stem
+                ),
+            ),
+            "utility" => (
+                format!(
+                    "the {} surface '{}' is not imported by any smart surface (command, controller, page, router).",
+                    category, stem
+                ),
+                format!(
+                    "Import '{}' by a smart surface (command, controller, page, router) or an entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to passive (surface _component/_view/_layout) if it is in the wrong role.",
+                    stem
+                ),
+            ),
+            "passive" => (
+                format!(
+                    "the passive surface '{}' is not imported by any smart or utility surface.",
+                    stem
+                ),
+                format!(
+                    "Import '{}' by a smart or utility surface. If this surface is dead code, delete the file and its module declaration.",
+                    stem
+                ),
+            ),
+            _ => (
+                format!(
+                    "the unknown surface '{}' is not imported by any appropriate importer.",
+                    stem
+                ),
+                format!(
+                    "Import '{}' in an appropriate importer file. If this surface is dead code, delete the file and its module declaration.",
+                    stem
+                ),
+            ),
         };
 
         OrphanIndicatorResult::new(
@@ -62,15 +98,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             AesOrphanViolation::SurfaceOrphan {
                 category,
                 stem: stem.clone(),
-                reason: Some(
-                    format!(
-                        "{} surface '{}' is not imported by any {}.",
-                        category, stem, where_hint
-                    )
-                    .into(),
-                ),
+                reason: Some(reason_line.into()),
             }
-            .to_string(),
+            .to_string()
+                + "\nFIX: "
+                + &fix_line,
             severity,
         )
     }
@@ -97,7 +129,7 @@ impl SurfacesOrphanAnalyzer {
     /// Surface category
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" | "router" | "entry" => "smart",
+            "command" | "controller" | "page" | "router" => "smart",
             "hook" | "store" | "action" | "screen" => "utility",
             "component" | "view" | "layout" => "passive",
             _ => "unknown",
