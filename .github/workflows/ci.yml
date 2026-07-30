@@ -30,8 +30,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Install sccache
-        run: cargo install sccache --locked
+      - name: Install mold linker + sccache
+        run: |
+          sudo apt-get update && sudo apt-get install -y mold
+          cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets -- -D warnings
 
@@ -41,8 +43,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install sccache
-        run: cargo install sccache --locked
+      - name: Install mold linker + sccache
+        run: |
+          sudo apt-get update && sudo apt-get install -y mold
+          cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release
 
@@ -53,12 +57,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install sccache
-        run: cargo install sccache --locked
+      - name: Install mold + sccache + nextest
+        run: |
+          sudo apt-get update && sudo apt-get install -y mold
+          cargo install sccache --locked
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
       - uses: Swatinem/rust-cache@v2
-
-      - name: Install cargo-nextest
-        run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
 
       - name: Run tests
         run: cargo nextest run --workspace --lib --tests -j 2
@@ -70,8 +74,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install sccache
-        run: cargo install sccache --locked
+      - name: Install mold + sccache
+        run: |
+          sudo apt-get update && sudo apt-get install -y mold
+          cargo install sccache --locked
       - uses: Swatinem/rust-cache@v2
 
       - name: Build CLI
