@@ -43,6 +43,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         }
 
         // Not BFS-reachable — determine severity by category
+        // Message formatting is handled by Display impl in taxonomy_violation_orphan_vo.rs
         let severity = match category {
             "smart" => Severity::HIGH,
             "utility" => Severity::MEDIUM,
@@ -50,59 +51,14 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             _ => Severity::MEDIUM,
         };
 
-        let (reason_line, fix_line) = match category {
-            "smart" => (
-                format!(
-                    "the {} surface '{}' is not imported by any entry point or container such as root_*_entry.py/rs/ts.",
-                    category, stem
-                ),
-                format!(
-                    "Import '{}' at the entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to utility surface (_hook/_store/_action/_screen) or passive (surface _component/_view/_layout) if it is in the wrong role.",
-                    stem
-                ),
-            ),
-            "utility" => (
-                format!(
-                    "the {} surface '{}' is not imported by any smart surface (command, controller, page, router).",
-                    category, stem
-                ),
-                format!(
-                    "Import '{}' by a smart surface (command, controller, page, router) or an entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to passive (surface _component/_view/_layout) if it is in the wrong role.",
-                    stem
-                ),
-            ),
-            "passive" => (
-                format!(
-                    "the passive surface '{}' is not imported by any smart or utility surface.",
-                    stem
-                ),
-                format!(
-                    "Import '{}' by a smart or utility surface. If this surface is dead code, delete the file and its module declaration.",
-                    stem
-                ),
-            ),
-            _ => (
-                format!(
-                    "the unknown surface '{}' is not imported by any appropriate importer.",
-                    stem
-                ),
-                format!(
-                    "Import '{}' in an appropriate importer file. If this surface is dead code, delete the file and its module declaration.",
-                    stem
-                ),
-            ),
-        };
-
         OrphanIndicatorResult::new(
             true,
             AesOrphanViolation::SurfaceOrphan {
                 category,
                 stem: stem.clone(),
-                reason: Some(reason_line.into()),
+                reason: None, // Display impl generates WHY/FIX from category
             }
-            .to_string()
-                + "\nFIX: "
-                + &fix_line,
+            .to_string(),
             severity,
         )
     }
