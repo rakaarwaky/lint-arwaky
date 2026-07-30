@@ -167,7 +167,7 @@ fn render_text(
                 file_violations.entry(rel_path).or_default().push(r);
             }
             for (file_path, file_results) in &file_violations {
-                println!("  {file_path}:");
+                println!("  {file_path}");
                 // Group by code and show count
                 let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
                 for r in file_results {
@@ -205,7 +205,7 @@ fn render_text(
     } else if !is_single_file {
         // Mode 2 tip: scan specific file for detailed violations
         println!();
-        println!("Tip: Scan a specific file for detailed violations:");
+        println!("Tip: Scan specific files to get detailed violation messages:");
         println!("  lint-arwaky-cli scan <file-path>");
     }
     // Mode 3 (single file): no scan tip
