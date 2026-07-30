@@ -86,9 +86,9 @@ jobs:
       - name: AES Self-Lint
         run: |
           output=$(./target/debug/lint-arwaky-cli check . 2>&1)
-          violations=$(echo "$output" | grep "Violations:" | grep -oP "\d+")
-          echo "Violations: ${violations:-0}"
-          [ "${violations:-0}" = "0" ]
+          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
+          echo "Violations: ${violations}"
+          [ "${violations}" = "0" ]
 
       - name: AES Codes Check
         run: |
