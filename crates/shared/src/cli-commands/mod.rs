@@ -2,7 +2,6 @@
 pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub mod taxonomy_format_vo;
-pub mod taxonomy_position_vo;
 pub mod taxonomy_protocol_vo;
 pub mod taxonomy_result_vo;
 pub mod taxonomy_scan_report_vo;
@@ -17,7 +16,6 @@ pub use taxonomy_cli_vo::Commands;
 pub use taxonomy_command_catalog_vo::CommandCatalogVO;
 pub use taxonomy_command_catalog_vo::CommandMetadataVO;
 pub use taxonomy_format_vo::Format;
-pub use taxonomy_position_vo::Position;
 pub use taxonomy_protocol_vo::TransportEndpoint;
 pub use taxonomy_protocol_vo::TransportProtocol;
 pub use taxonomy_protocol_vo::TransportUrlVO;

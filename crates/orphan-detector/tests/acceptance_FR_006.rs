@@ -10,7 +10,7 @@ use std::collections::HashSet;
 /// AES503: Capability reachable from entry point is NOT orphan.
 #[test]
 fn fr006_reachable_capability_not_orphan() {
-    let a = CapabilitiesOrphanAnalyzer::new();
+    let a = CapabilitiesOrphanAnalyzer::default();
     let f = FilePath::new("src/capabilities_greeter_analyzer.rs".to_string()).unwrap();
     let root = FilePath::new("src".to_string()).unwrap();
     let alive = ReachabilityResult::new(HashSet::from([f.clone()]));
@@ -25,7 +25,7 @@ fn fr006_reachable_capability_not_orphan() {
 /// AES503: Capability NOT reachable from any entry point IS orphan.
 #[test]
 fn fr006_unreachable_capability_is_orphan() {
-    let a = CapabilitiesOrphanAnalyzer::new();
+    let a = CapabilitiesOrphanAnalyzer::default();
     let f = FilePath::new("src/capabilities_dead_analyzer.rs".to_string()).unwrap();
     let root = FilePath::new("src".to_string()).unwrap();
     let alive = ReachabilityResult::new(HashSet::new());

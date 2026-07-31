@@ -7,14 +7,42 @@ use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, File
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_graph_resolver;
 use shared::orphan_detector::utility_orphan_io;
-use shared::orphan_detector::utility_orphan_parser_dispatch;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
-// ─── Block 1: Struct Definition ───────────────────────────
+struct RustResolveCtx<'a> {
+    module_to_file: &'a HashMap<String, Vec<String>>,
+    workspace_modules: &'a HashSet<String>,
+    crate_module_index: &'a HashMap<String, HashMap<String, String>>,
+    crate_src_dirs: &'a HashMap<String, std::path::PathBuf>,
+}
 
-pub struct OrphanGraphResolver {}
+struct PythonResolveCtx<'a> {
+    module_to_file: &'a HashMap<String, Vec<String>>,
+    root_path: &'a std::path::Path,
+    workspace_root: &'a str,
+}
+
+pub struct OrphanGraphResolver {
+    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+}
+
+impl Default for OrphanGraphResolver {
+    fn default() -> Self {
+        Self::new(Arc::new(
+            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
+        ))
+    }
+}
+
+impl OrphanGraphResolver {
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
+        Self { parser_dispatcher }
+    }
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -102,17 +130,7 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for OrphanGraphResolver {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl OrphanGraphResolver {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     fn build_graph_context_inner(&self, files: &[String], root_dir: &str) -> GraphAnalysisContext {
         let mut import_graph: HashMap<String, Vec<String>> = HashMap::new();
         let mut inbound_links: HashMap<String, Vec<String>> = HashMap::new();
@@ -255,7 +273,7 @@ impl OrphanGraphResolver {
                 continue;
             }
 
-            match utility_orphan_parser_dispatch::parse_file(f, &content) {
+            match self.parser_dispatcher.parse_file(f, &content) {
                 // ─── Rust AST processing ─────────────────────
                 FileParseResultVO::Rust(result) => {
                     // Process mod declarations (replaces regex Pass 1 & 2)
@@ -318,15 +336,17 @@ impl OrphanGraphResolver {
                     }
 
                     // Process imports (replaces regex Pass 3, 5, 5b)
+                    let rust_ctx = RustResolveCtx {
+                        module_to_file: &module_to_file,
+                        workspace_modules: &workspace_modules,
+                        crate_module_index: &crate_module_index,
+                        crate_src_dirs: &crate_src_dirs,
+                    };
                     for imp in &result.imports {
                         self.resolve_rust_import(
                             f,
                             imp,
-                            &module_to_file,
-                            &workspace_modules,
-                            &crate_module_index,
-                            &crate_src_dirs,
-                            root_path,
+                            &rust_ctx,
                             &mut import_graph,
                             &mut inbound_links,
                         );
@@ -346,13 +366,16 @@ impl OrphanGraphResolver {
                     }
 
                     // Imports
+                    let py_ctx = PythonResolveCtx {
+                        module_to_file: &module_to_file,
+                        root_path,
+                        workspace_root: &workspace_root,
+                    };
                     for imp in &result.imports {
                         self.resolve_python_import(
                             f,
                             imp,
-                            &module_to_file,
-                            root_path,
-                            &workspace_root,
+                            &py_ctx,
                             &mut import_graph,
                             &mut inbound_links,
                         );
@@ -400,16 +423,11 @@ impl OrphanGraphResolver {
     }
 
     /// Resolve a Rust import using AST data.
-    #[allow(clippy::too_many_arguments)]
     fn resolve_rust_import(
         &self,
         current_file: &str,
         imp: &AstImportVO,
-        module_to_file: &HashMap<String, Vec<String>>,
-        workspace_modules: &HashSet<String>,
-        crate_module_index: &HashMap<String, HashMap<String, String>>,
-        crate_src_dirs: &HashMap<String, std::path::PathBuf>,
-        _root_path: &std::path::Path,
+        ctx: &RustResolveCtx<'_>,
         import_graph: &mut HashMap<String, Vec<String>>,
         inbound_links: &mut HashMap<String, Vec<String>>,
     ) {
@@ -424,7 +442,7 @@ impl OrphanGraphResolver {
                 for i in (1..segments.len()).rev() {
                     let composite = segments[1..i].join("/");
                     if let Some(file_path) =
-                        Self::resolve_module(module_to_file, &composite, current_file)
+                        Self::resolve_module(ctx.module_to_file, &composite, current_file)
                     {
                         if file_path != current_file {
                             utility_orphan_graph_resolver::add_edge(
@@ -438,7 +456,7 @@ impl OrphanGraphResolver {
                     }
                 }
                 if let Some(file_path) =
-                    Self::resolve_module(module_to_file, &segments[1], current_file)
+                    Self::resolve_module(ctx.module_to_file, &segments[1], current_file)
                 {
                     if file_path != current_file {
                         utility_orphan_graph_resolver::add_edge(
@@ -459,7 +477,7 @@ impl OrphanGraphResolver {
                 for i in (1..segments.len()).rev() {
                     let composite = segments[1..i].join("/");
                     if let Some(file_path) =
-                        Self::resolve_module(module_to_file, &composite, current_file)
+                        Self::resolve_module(ctx.module_to_file, &composite, current_file)
                     {
                         if file_path != current_file {
                             utility_orphan_graph_resolver::add_edge(
@@ -480,7 +498,7 @@ impl OrphanGraphResolver {
         if segments[0] == "self" {
             if segments.len() >= 2 {
                 if let Some(file_path) =
-                    Self::resolve_module(module_to_file, &segments[1], current_file)
+                    Self::resolve_module(ctx.module_to_file, &segments[1], current_file)
                 {
                     if file_path != current_file {
                         utility_orphan_graph_resolver::add_edge(
@@ -497,12 +515,14 @@ impl OrphanGraphResolver {
 
         // Workspace crate imports (e.g., shared::common::FilePath)
         let crate_name = &segments[0];
-        if workspace_modules.contains(crate_name.as_str())
-            || workspace_modules.contains(&crate_name.replace('-', "_"))
+        if ctx.workspace_modules.contains(crate_name.as_str())
+            || ctx
+                .workspace_modules
+                .contains(&crate_name.replace('-', "_"))
         {
             let normalized_crate = crate_name.replace('-', "_");
             if let Some(resolved) = utility_orphan_graph_resolver::resolve_workspace_module(
-                crate_module_index,
+                ctx.crate_module_index,
                 &normalized_crate,
                 &segments.iter().map(|s| s.as_str()).collect::<Vec<_>>()[1..],
                 current_file,
@@ -517,12 +537,12 @@ impl OrphanGraphResolver {
             }
 
             // Fallback: try crate src dir scan
-            let lookup_name = if crate_src_dirs.contains_key(crate_name.as_str()) {
+            let lookup_name = if ctx.crate_src_dirs.contains_key(crate_name.as_str()) {
                 crate_name.clone()
             } else {
                 normalized_crate
             };
-            if let Some(src_dir) = crate_src_dirs.get(&lookup_name) {
+            if let Some(src_dir) = ctx.crate_src_dirs.get(&lookup_name) {
                 let entries = utility_orphan_io::scan_directory(src_dir);
                 let module_name = segments.get(1).map(|s| s.as_str()).unwrap_or("");
                 for (_name, path_str, _is_dir) in entries {
@@ -552,7 +572,7 @@ impl OrphanGraphResolver {
         let dep = &segments[0];
         let is_workspace_dir = matches!(dep.as_str(), "crates" | "packages" | "modules");
         if !is_workspace_dir {
-            if let Some(target) = Self::resolve_module(module_to_file, dep, current_file) {
+            if let Some(target) = Self::resolve_module(ctx.module_to_file, dep, current_file) {
                 if target != current_file {
                     utility_orphan_graph_resolver::add_edge(
                         import_graph,
@@ -566,14 +586,11 @@ impl OrphanGraphResolver {
     }
 
     /// Resolve a Python import using structured parse data.
-    #[allow(clippy::too_many_arguments)]
     fn resolve_python_import(
         &self,
         current_file: &str,
         imp: &AstImportVO,
-        module_to_file: &HashMap<String, Vec<String>>,
-        root_path: &std::path::Path,
-        workspace_root: &str,
+        ctx: &PythonResolveCtx<'_>,
         import_graph: &mut HashMap<String, Vec<String>>,
         inbound_links: &mut HashMap<String, Vec<String>>,
     ) {
@@ -598,7 +615,7 @@ impl OrphanGraphResolver {
                     let candidate = base.join(format!("{}{}", module_part, ext));
                     if utility_orphan_io::is_file(&candidate) {
                         let cand_rel = candidate
-                            .strip_prefix(root_path)
+                            .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())
                             .unwrap_or_else(|_| candidate.to_string_lossy().to_string());
                         if cand_rel != current_file {
@@ -617,7 +634,7 @@ impl OrphanGraphResolver {
                     if utility_orphan_io::is_file(&pkg_dir.join(marker)) {
                         let cand_rel = pkg_dir
                             .join(marker)
-                            .strip_prefix(root_path)
+                            .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())
                             .unwrap_or_else(|_| pkg_dir.join(marker).to_string_lossy().to_string());
                         if cand_rel != current_file {
@@ -634,7 +651,9 @@ impl OrphanGraphResolver {
             }
 
             if let Some(last_seg) = imp.segments.last() {
-                if let Some(target) = Self::resolve_module(module_to_file, last_seg, current_file) {
+                if let Some(target) =
+                    Self::resolve_module(ctx.module_to_file, last_seg, current_file)
+                {
                     if target != current_file {
                         utility_orphan_graph_resolver::add_edge(
                             import_graph,
@@ -651,7 +670,7 @@ impl OrphanGraphResolver {
         // Absolute dotted imports (from modules.cli.src import X)
         if raw.contains('.') {
             let segments: Vec<&str> = raw.split('.').collect();
-            let mut walk_dir = std::path::PathBuf::from(workspace_root);
+            let mut walk_dir = std::path::PathBuf::from(ctx.workspace_root);
             let mut walk_ok = true;
             for seg in &segments {
                 walk_dir = walk_dir.join(seg);
@@ -665,7 +684,7 @@ impl OrphanGraphResolver {
                     let candidate = walk_dir.join(marker);
                     if utility_orphan_io::is_file(&candidate) {
                         let cand_rel = candidate
-                            .strip_prefix(root_path)
+                            .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())
                             .unwrap_or_else(|_| candidate.to_string_lossy().to_string());
                         if cand_rel != current_file {
@@ -680,7 +699,9 @@ impl OrphanGraphResolver {
                     }
                 }
             } else if let Some(last_seg) = segments.last() {
-                if let Some(target) = Self::resolve_module(module_to_file, last_seg, current_file) {
+                if let Some(target) =
+                    Self::resolve_module(ctx.module_to_file, last_seg, current_file)
+                {
                     if target != current_file {
                         utility_orphan_graph_resolver::add_edge(
                             import_graph,
@@ -695,7 +716,7 @@ impl OrphanGraphResolver {
         }
 
         // Simple module name
-        if let Some(target) = Self::resolve_module(module_to_file, raw, current_file) {
+        if let Some(target) = Self::resolve_module(ctx.module_to_file, raw, current_file) {
             if target != current_file {
                 utility_orphan_graph_resolver::add_edge(
                     import_graph,

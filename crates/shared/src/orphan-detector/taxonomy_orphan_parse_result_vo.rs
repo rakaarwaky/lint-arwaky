@@ -219,3 +219,21 @@ impl TsParseResultVO {
         self.used_identifiers.iter().any(|id| id == name)
     }
 }
+
+impl FileParseResultVO {
+    pub fn parse_path_content(path: &str, content: &str) -> Self {
+        let ext = std::path::Path::new(path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("");
+
+        match ext {
+            "rs" => Self::Rust(super::utility_orphan_rust_parser::parse_rust(content)),
+            "py" => Self::Python(super::utility_orphan_python_parser::parse_python(content)),
+            "ts" | "tsx" | "js" | "jsx" => {
+                Self::TypeScript(super::utility_orphan_ts_parser::parse_ts(content))
+            }
+            _ => Self::Unsupported,
+        }
+    }
+}

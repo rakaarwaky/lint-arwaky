@@ -4,6 +4,7 @@ pub mod capabilities_orphan_agent_analyzer;
 pub mod capabilities_orphan_capabilities_analyzer;
 pub mod capabilities_orphan_contract_analyzer;
 pub mod capabilities_orphan_graph_resolver;
+pub mod capabilities_orphan_parser_dispatcher;
 pub mod capabilities_orphan_surfaces_analyzer;
 pub mod capabilities_orphan_taxonomy_analyzer;
 pub mod capabilities_orphan_utility_analyzer;

@@ -6,15 +6,19 @@ use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_orphan_parser_dispatch;
 use shared::orphan_detector::utility_workspace_scanner::{
     check_wired_in_container, find_workspace_root,
 };
-use shared::orphan_detector::{AesOrphanViolation, ICapabilitiesOrphanProtocol};
+use shared::orphan_detector::{
+    AesOrphanViolation, ICapabilitiesOrphanProtocol, IOrphanParserProtocol,
+};
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CapabilitiesOrphanAnalyzer {}
+pub struct CapabilitiesOrphanAnalyzer {
+    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -49,7 +53,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         let content_ref = content.value();
 
         // AST-based identifier extraction
-        let identifiers = Self::extract_identifiers(fp, content_ref, &stem);
+        let identifiers = self.extract_identifiers(fp, content_ref, &stem);
 
         // Search for container files in workspace root
         let root = std::path::Path::new(root_dir.value());
@@ -64,7 +68,9 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             true,
             AesOrphanViolation::CapabilitiesOrphan {
                 stem,
-                reason: Some("Not reachable from any entry point.".into()),
+                reason: Some(
+                    "Capabilities file struct/trait is not wired in any container.".into(),
+                ),
             }
             .to_string(),
             Severity::MEDIUM,
@@ -76,21 +82,23 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(
+            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
+        ))
     }
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
+        Self { parser_dispatcher }
     }
 
     /// Extract identifiers (struct names, trait names, stem, PascalCase stem) using AST.
     /// Replaces extract_struct_names/extract_trait_names regex from shared utility.
-    fn extract_identifiers(file_path: &str, content: &str, stem: &str) -> Vec<String> {
+    fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
         let mut identifiers: Vec<String> = Vec::new();
 
-        match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+        match self.parser_dispatcher.parse_file(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 identifiers.extend(result.struct_names());
                 identifiers.extend(result.trait_names());

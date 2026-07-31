@@ -521,10 +521,13 @@ impl ArchOrphanAnalyzer {
         }
 
         if layer_str.contains(LAYER_SURFACES) {
-            return self
-                .deps
-                .surfaces_analyzer
-                .is_surface_orphan(&fp, &root, alive_result, None);
+            return self.deps.surfaces_analyzer.is_surface_orphan(
+                &fp,
+                &root,
+                alive_result,
+                &context.inbound_links,
+                None,
+            );
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)

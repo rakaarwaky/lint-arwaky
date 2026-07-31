@@ -7,7 +7,7 @@ use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 
 fn resolver() -> OrphanGraphResolver {
-    OrphanGraphResolver::new()
+    OrphanGraphResolver::default()
 }
 
 // ─── build_graph_context ──────────────────────────────────

@@ -1,7 +1,6 @@
 // PURPOSE: LintResult, LintResultList, FilePathSet — value objects for lint violation results
 use serde::{Deserialize, Serialize};
 
-use crate::cli_commands::taxonomy_position_vo::Position;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::ColumnNumber;
 use crate::common::taxonomy_common_vo::LineNumber;
@@ -82,12 +81,6 @@ impl LintResult {
         }
     }
 
-    pub fn position(&self) -> Position {
-        Position {
-            line: self.line.clone(),
-            column: self.column.clone(),
-        }
-    }
     pub fn identity(&self) -> Identity {
         Identity::new(format!(
             "{}:{}:{}:{:?}",

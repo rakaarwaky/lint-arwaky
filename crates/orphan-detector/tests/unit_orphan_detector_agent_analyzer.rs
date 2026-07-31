@@ -8,7 +8,7 @@ use shared::common::{FilePath, Severity};
 use shared::orphan_detector::IAgentOrphanProtocol;
 
 fn analyzer() -> AgentOrphanAnalyzer {
-    AgentOrphanAnalyzer::new()
+    AgentOrphanAnalyzer::default()
 }
 
 // ─── Happy path: agent aggregate called by container ──────

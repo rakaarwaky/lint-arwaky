@@ -7,7 +7,7 @@ use shared::common::FilePath;
 use shared::orphan_detector::IUtilityOrphanProtocol;
 
 fn make_utility_analyzer() -> UtilityOrphanAnalyzer {
-    UtilityOrphanAnalyzer::new()
+    UtilityOrphanAnalyzer::default()
 }
 
 #[test]

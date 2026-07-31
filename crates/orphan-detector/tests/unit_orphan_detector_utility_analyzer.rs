@@ -10,7 +10,7 @@ use shared::orphan_detector::IUtilityOrphanProtocol;
 use std::collections::HashMap;
 
 fn analyzer() -> UtilityOrphanAnalyzer {
-    UtilityOrphanAnalyzer::new()
+    UtilityOrphanAnalyzer::default()
 }
 
 fn make_inbound_links(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {

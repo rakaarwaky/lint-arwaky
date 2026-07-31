@@ -1,9 +1,12 @@
 use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
+use crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher;
 use shared::common::FilePath;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
-use shared::orphan_detector::{IOrphanAggregate, IOrphanGraphResolverProtocol};
+use shared::orphan_detector::{
+    IOrphanAggregate, IOrphanGraphResolverProtocol, IOrphanParserProtocol,
+};
 
 use std::sync::Arc;
 
@@ -30,7 +33,11 @@ impl OrphanContainer {
     }
 
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
-        let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new());
+        let parser_dispatcher: Arc<dyn IOrphanParserProtocol> =
+            Arc::new(OrphanParserDispatcher::new());
+        let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
+            Arc::new(OrphanGraphResolver::new(parser_dispatcher.clone()));
+
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             ArchOrphanDeps {
                 resolver,
@@ -38,16 +45,24 @@ impl OrphanContainer {
                     crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(),
                 ),
                 contract_analyzer: Arc::new(
-                    crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(),
+                    crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(
+                        parser_dispatcher.clone(),
+                    ),
                 ),
                 capabilities_analyzer: Arc::new(
-                    crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(),
+                    crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(
+                        parser_dispatcher.clone(),
+                    ),
                 ),
                 utility_analyzer: Arc::new(
-                    crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new(),
+                    crate::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer::new(
+                        parser_dispatcher.clone(),
+                    ),
                 ),
                 agent_analyzer: Arc::new(
-                    crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(),
+                    crate::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer::new(
+                        parser_dispatcher.clone(),
+                    ),
                 ),
                 surfaces_analyzer: Arc::new(
                     crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),

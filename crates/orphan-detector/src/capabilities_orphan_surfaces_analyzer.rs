@@ -1,7 +1,7 @@
 // PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection.
 // AST-based: uses inbound_links for FR-009 chain validation.
 
-use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
+use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, LayerDefinition, Severity};
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
@@ -18,6 +18,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         f: &FilePath,
         _root_dir: &FilePath,
         alive_files: &ReachabilityResult,
+        inbound_links: &InboundLinkMap,
         _definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
         let is_reachable = alive_files.paths.contains(f);
@@ -27,32 +28,131 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let suffix = file_suffix(&basename);
         let category = Self::surface_category(&suffix);
 
-        if is_reachable {
-            // KNOWN LIMITATION (FR-009): Full chain validation requires inbound_links
-            // to check: passive imported only by passive -> orphan.
-            // Current trait signature does not include inbound_links.
-            // BFS reachability is used as a necessary approximation.
-            // When ISurfacesOrphanProtocol is extended, add per-category importer check.
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        if !is_reachable {
+            let severity = match category {
+                "smart" => Severity::HIGH,
+                "utility" => Severity::MEDIUM,
+                "passive" => Severity::LOW,
+                _ => Severity::MEDIUM,
+            };
+
+            return OrphanIndicatorResult::new(
+                true,
+                AesOrphanViolation::SurfaceOrphan {
+                    category,
+                    stem: stem.clone(),
+                    reason: Some(
+                        format!("Surface '{}' is not reachable from any entry point.", stem).into(),
+                    ),
+                }
+                .to_string(),
+                severity,
+            );
         }
 
-        let severity = match category {
-            "smart" => Severity::HIGH,
-            "utility" => Severity::MEDIUM,
-            "passive" => Severity::LOW,
-            _ => Severity::MEDIUM,
-        };
+        // FR-009 surface chain validation using inbound_links
+        // Dependency chain: Entry -> Smart -> Utility -> Passive
+        if let Some(importers) = inbound_links.get_importers(fp_val) {
+            let non_self_importers: Vec<&String> =
+                importers.iter().filter(|imp| *imp != fp_val).collect();
 
-        OrphanIndicatorResult::new(
-            true,
-            AesOrphanViolation::SurfaceOrphan {
-                category,
-                stem: stem.clone(),
-                reason: None,
+            if category == "utility" && !non_self_importers.is_empty() {
+                let has_valid_consumer = non_self_importers.iter().any(|imp| {
+                    let imp_b = file_basename(imp);
+                    let imp_suf = file_suffix(&imp_b);
+                    let imp_cat = Self::surface_category(&imp_suf);
+                    imp_cat == "smart"
+                        || imp_b.ends_with("_container.rs")
+                        || imp_b.ends_with("_container.py")
+                        || imp_b.ends_with("_container.ts")
+                        || imp_b.ends_with("_container.js")
+                        || imp_b.ends_with("_entry.rs")
+                        || imp_b.ends_with("_entry.py")
+                        || imp_b.ends_with("_entry.ts")
+                        || imp_b.ends_with("_entry.js")
+                        || imp_b.starts_with("root_")
+                        || matches!(
+                            imp_b.as_str(),
+                            "main.rs"
+                                | "lib.rs"
+                                | "main.py"
+                                | "__main__.py"
+                                | "main.ts"
+                                | "main.js"
+                                | "index.ts"
+                                | "index.js"
+                        )
+                });
+
+                if !has_valid_consumer {
+                    return OrphanIndicatorResult::new(
+                        true,
+                        AesOrphanViolation::SurfaceOrphan {
+                            category,
+                            stem: stem.clone(),
+                            reason: Some(
+                                format!(
+                                    "Utility surface '{}' is not imported by any Smart surface.",
+                                    stem
+                                )
+                                .into(),
+                            ),
+                        }
+                        .to_string(),
+                        Severity::MEDIUM,
+                    );
+                }
+            } else if category == "passive" && !non_self_importers.is_empty() {
+                let has_valid_consumer = non_self_importers.iter().any(|imp| {
+                    let imp_b = file_basename(imp);
+                    let imp_suf = file_suffix(&imp_b);
+                    let imp_cat = Self::surface_category(&imp_suf);
+                    imp_cat == "smart"
+                        || imp_cat == "utility"
+                        || imp_b.ends_with("_container.rs")
+                        || imp_b.ends_with("_container.py")
+                        || imp_b.ends_with("_container.ts")
+                        || imp_b.ends_with("_container.js")
+                        || imp_b.ends_with("_entry.rs")
+                        || imp_b.ends_with("_entry.py")
+                        || imp_b.ends_with("_entry.ts")
+                        || imp_b.ends_with("_entry.js")
+                        || imp_b.starts_with("root_")
+                        || matches!(
+                            imp_b.as_str(),
+                            "main.rs"
+                                | "lib.rs"
+                                | "main.py"
+                                | "__main__.py"
+                                | "main.ts"
+                                | "main.js"
+                                | "index.ts"
+                                | "index.js"
+                        )
+                });
+
+                if !has_valid_consumer {
+                    return OrphanIndicatorResult::new(
+                        true,
+                        AesOrphanViolation::SurfaceOrphan {
+                            category,
+                            stem: stem.clone(),
+                            reason: Some(
+                                format!(
+                                    "Passive surface '{}' is not imported by any Smart or Utility surface.",
+                                    stem
+                                )
+                                .into(),
+                            ),
+                        }
+                        .to_string(),
+                        Severity::LOW,
+                    );
+                }
             }
-            .to_string(),
-            severity,
-        )
+        }
+
+        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
 

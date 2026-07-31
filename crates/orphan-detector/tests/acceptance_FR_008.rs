@@ -9,7 +9,7 @@ use std::fs;
 /// AES505: Agent aggregate called by a container is NOT orphan.
 #[test]
 fn fr008_agent_called_by_container_not_orphan() {
-    let a = AgentOrphanAnalyzer::new();
+    let a = AgentOrphanAnalyzer::default();
     let dir = tempfile::tempdir().unwrap();
 
     let agent = dir.path().join("agent_orphan_orchestrator.rs");
@@ -43,7 +43,7 @@ fn fr008_agent_called_by_container_not_orphan() {
 /// AES505: Agent aggregate NOT called by any surface/container IS orphan.
 #[test]
 fn fr008_agent_not_called_is_orphan() {
-    let a = AgentOrphanAnalyzer::new();
+    let a = AgentOrphanAnalyzer::default();
     let dir = tempfile::tempdir().unwrap();
 
     let agent = dir.path().join("agent_dead_orchestrator.rs");

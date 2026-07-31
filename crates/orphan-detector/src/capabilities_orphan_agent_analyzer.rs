@@ -4,12 +4,15 @@
 use shared::code_analysis::OrphanIndicatorResult;
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_detector::utility_orphan_parser_dispatch;
+use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::{AesOrphanViolation, IAgentOrphanProtocol};
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct AgentOrphanAnalyzer {}
+pub struct AgentOrphanAnalyzer {
+    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -29,7 +32,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         };
 
         // AST-based aggregate trait extraction
-        let aggregate_traits = Self::extract_aggregate_traits(fp, &content);
+        let aggregate_traits = self.extract_aggregate_traits(fp, &content);
         if aggregate_traits.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -51,48 +54,29 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                     || cb.ends_with("_entry.py")
                     || cb.ends_with("_entry.ts")
                     || cb.ends_with("_entry.js")
-                    || matches!(
-                        cb,
-                        "main.rs"
-                            | "lib.rs"
-                            | "main.py"
-                            | "__main__.py"
-                            | "main.ts"
-                            | "main.js"
-                            | "index.ts"
-                            | "index.js"
-                    )
+                    || cb == "main.rs"
+                    || cb == "main.py"
+                    || cb == "main.ts"
+                    || cb == "main.js"
             })
             .collect();
 
-        // Cache candidate file contents to avoid N×M re-reads
-        let mut content_cache: std::collections::HashMap<&String, String> =
-            std::collections::HashMap::new();
+        // Pass 1: Word-boundary search across candidate files
+        let is_referenced = candidates.iter().any(|cf| {
+            let candidate_content = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
+            aggregate_traits
+                .iter()
+                .any(|t| Self::content_contains_word(&candidate_content, t))
+        });
 
-        let mut any_called = false;
-        'outer: for agg_name in &aggregate_traits {
-            for cf in &candidates {
-                let c = content_cache.entry(cf).or_insert_with(|| {
-                    shared::orphan_detector::utility_orphan_io::read_file_safe(cf)
-                });
-                if Self::content_contains_word(c, agg_name) {
-                    any_called = true;
-                    break 'outer;
-                }
-            }
-        }
-
-        if !any_called {
+        if !is_referenced {
             return OrphanIndicatorResult::new(
                 true,
                 AesOrphanViolation::AgentOrphan {
                     agg_name: aggregate_traits.join(", "),
                     reason: Some(
-                        format!(
-                            "Agent orphan: aggregates [{}] not called by any surface.",
-                            aggregate_traits.join(", ")
-                        )
-                        .into(),
+                        "Agent file aggregate trait is not used by any surface, container, entry, or main file."
+                            .into(),
                     ),
                 }
                 .to_string(),
@@ -108,13 +92,15 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(
+            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
+        ))
     }
 }
 
 impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
+        Self { parser_dispatcher }
     }
 
     fn content_contains_word(text: &str, word: &str) -> bool {
@@ -124,8 +110,8 @@ impl AgentOrphanAnalyzer {
 
     /// Extract aggregate trait names using AST parser dispatch.
     /// Replaces 4 regex patterns (re_impl_generic, re_dyn, re_py_class, re_ts_implements).
-    fn extract_aggregate_traits(file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
+        let mut traits = match self.parser_dispatcher.parse_file(file_path, content) {
             FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
             FileParseResultVO::Python(result) => result.aggregate_names(),
             FileParseResultVO::TypeScript(result) => result.aggregate_names(),

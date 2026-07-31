@@ -10,7 +10,7 @@ use shared::orphan_detector::IContractOrphanProtocol;
 use std::collections::HashMap;
 
 fn analyzer() -> ContractOrphanAnalyzer {
-    ContractOrphanAnalyzer::new()
+    ContractOrphanAnalyzer::default()
 }
 
 fn empty_inheritance() -> InheritanceMap {

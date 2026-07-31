@@ -60,6 +60,7 @@ pub trait ISurfacesOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
+        inbound_links: &InboundLinkMap,
         definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult;
 }

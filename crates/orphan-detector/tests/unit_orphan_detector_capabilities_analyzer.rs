@@ -10,7 +10,7 @@ use shared::orphan_detector::ICapabilitiesOrphanProtocol;
 use std::collections::HashSet;
 
 fn analyzer() -> CapabilitiesOrphanAnalyzer {
-    CapabilitiesOrphanAnalyzer::new()
+    CapabilitiesOrphanAnalyzer::default()
 }
 
 // ─── Happy path: reachable capabilities file ──────────────

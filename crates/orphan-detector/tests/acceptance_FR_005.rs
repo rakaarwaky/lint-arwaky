@@ -15,7 +15,7 @@ fn empty_inh() -> InheritanceMap {
 /// AES502: Contract protocol with an impl in capabilities is NOT orphan.
 #[test]
 fn fr005_contract_with_impl_not_orphan() {
-    let a = ContractOrphanAnalyzer::new();
+    let a = ContractOrphanAnalyzer::default();
     let dir = tempfile::tempdir().unwrap();
 
     let contract = dir.path().join("contract_greeter_protocol.rs");
@@ -45,7 +45,7 @@ fn fr005_contract_with_impl_not_orphan() {
 /// AES502: Contract protocol with NO impl IS orphan.
 #[test]
 fn fr005_contract_without_impl_is_orphan() {
-    let a = ContractOrphanAnalyzer::new();
+    let a = ContractOrphanAnalyzer::default();
     let dir = tempfile::tempdir().unwrap();
 
     let contract = dir.path().join("contract_dead_protocol.rs");

@@ -6,9 +6,8 @@ use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::utility_orphan_io as orphan_io;
-use shared::orphan_detector::utility_orphan_parser_dispatch;
 use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
-use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol};
+use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -33,6 +32,7 @@ impl Default for SearchFilesCache {
 
 pub struct ContractOrphanAnalyzer {
     search_cache: Mutex<Option<SearchFilesCache>>,
+    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -53,7 +53,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         }
 
         // AST-based trait extraction
-        let trait_names = Self::extract_trait_names(fp, &content);
+        let trait_names = self.extract_trait_names(fp, &content);
         if trait_names.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -66,7 +66,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         }
 
         // Check 1: Implementation check via AST
-        let unimplemented = Self::find_unimplemented_traits(&trait_names, search_files.as_slice());
+        let unimplemented = self.find_unimplemented_traits(&trait_names, search_files.as_slice());
         if !unimplemented.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
@@ -163,20 +163,23 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(
+            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
+        ))
     }
 }
 
 impl ContractOrphanAnalyzer {
-    pub fn new() -> Self {
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
         Self {
             search_cache: Mutex::new(None),
+            parser_dispatcher,
         }
     }
 
     /// Extract trait/interface names using AST parser dispatch.
-    fn extract_trait_names(file_path: &str, content: &str) -> Vec<String> {
-        match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
+        match self.parser_dispatcher.parse_file(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.class_names(),
@@ -185,23 +188,27 @@ impl ContractOrphanAnalyzer {
     }
 
     /// Check which traits are NOT implemented using AST.
-    fn find_unimplemented_traits(trait_names: &[String], search_files: &[String]) -> Vec<String> {
+    fn find_unimplemented_traits(
+        &self,
+        trait_names: &[String],
+        search_files: &[String],
+    ) -> Vec<String> {
         trait_names
             .iter()
-            .filter(|trait_name| !Self::has_trait_implementation(search_files, trait_name))
+            .filter(|trait_name| !self.has_trait_implementation(search_files, trait_name))
             .cloned()
             .collect()
     }
 
     /// Check if any file implements the given trait, using AST.
-    fn has_trait_implementation(search_files: &[String], trait_name: &str) -> bool {
+    fn has_trait_implementation(&self, search_files: &[String], trait_name: &str) -> bool {
         for cf in search_files {
             let content = orphan_io::read_file_safe(cf);
             if content.is_empty() {
                 continue;
             }
 
-            match utility_orphan_parser_dispatch::parse_file(cf, &content) {
+            match self.parser_dispatcher.parse_file(cf, &content) {
                 FileParseResultVO::Rust(result) => {
                     if result.has_trait_impl(trait_name) {
                         return true;

@@ -1,11 +1,9 @@
-// PURPOSE: Import parsing utility functions — stateless, domain-agnostic, multi-consumer
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
 use crate::import_rules::utility_path_normalizer;
 use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::orphan_detector::utility_orphan_parser_dispatch;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -26,7 +24,7 @@ pub fn parse_import_lines_helper(
     content: &str,
 ) -> Vec<(LineNumber, LineContentVO)> {
     let mut result = Vec::new();
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(parse_result) => {
             for imp in &parse_result.imports {
                 result.push((

@@ -5,14 +5,13 @@ use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::orphan_detector::utility_orphan_parser_dispatch;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Import Alias Extraction (AST-based) ─────────
 
 pub fn extract_imported_aliases(file_path: &str, content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
                 if imp.is_glob {
@@ -65,7 +64,7 @@ pub fn extract_used_symbols(
     imported_aliases: &HashMap<Identity, Identity>,
 ) -> HashSet<Identity> {
     let mut used = HashSet::new();
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for alias in imported_aliases.keys() {
                 if result.is_identifier_used(alias.value()) {
@@ -96,7 +95,7 @@ pub fn extract_used_symbols(
 
 pub fn extract_exported_symbols(file_path: &str, content: &str) -> HashSet<Identity> {
     let mut exported = HashSet::new();
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
                 if imp.is_reexport {
@@ -142,7 +141,7 @@ pub fn extract_exported_symbols(file_path: &str, content: &str) -> HashSet<Ident
 
 pub fn extract_rust_js_imports(file_path: &str, content: &str) -> Vec<(SymbolName, LineNumber)> {
     let mut imports = Vec::new();
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
                 if imp.is_glob {
@@ -170,7 +169,7 @@ pub fn extract_rust_js_imports(file_path: &str, content: &str) -> Vec<(SymbolNam
 }
 
 pub fn is_name_used(file_path: &str, name: &str, content: &str, _exclude_line: usize) -> bool {
-    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+    match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => result.is_identifier_used(name),
         FileParseResultVO::Python(result) => result.is_identifier_used(name),
         FileParseResultVO::TypeScript(result) => result.is_identifier_used(name),

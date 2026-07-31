@@ -1,7 +1,6 @@
 pub mod contract_setup_aggregate;
 pub mod contract_setup_protocol;
 pub mod contract_tool_executor_protocol;
-pub mod taxonomy_language_vo;
 pub mod taxonomy_setup_contract_vo;
 pub mod utility_filesystem_checker;
 pub mod utility_setup_io;
@@ -19,8 +18,6 @@ pub use contract_tool_executor_protocol::IToolExecutorProtocol;
 pub use contract_setup_aggregate::SetupMgmtProtocol;
 pub use contract_setup_protocol::InstallPackagesResult;
 pub use contract_tool_executor_protocol::ToolOutput;
-pub use taxonomy_language_vo::LanguageSource;
-pub use taxonomy_language_vo::ProjectLanguage;
 pub use taxonomy_setup_contract_vo::CreateConfigDirResult;
 pub use taxonomy_setup_contract_vo::McpBinaryNameVO;
 pub use taxonomy_setup_contract_vo::ProjectLanguageVO;

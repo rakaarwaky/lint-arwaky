@@ -5,14 +5,16 @@ use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_detector::utility_orphan_parser_dispatch;
-use shared::orphan_detector::{AesOrphanViolation, IUtilityOrphanProtocol};
+use shared::orphan_detector::{AesOrphanViolation, IOrphanParserProtocol, IUtilityOrphanProtocol};
+use std::sync::Arc;
 
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct UtilityOrphanAnalyzer {}
+pub struct UtilityOrphanAnalyzer {
+    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -61,22 +63,22 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         }
 
-        // Phase 2: AST-based fallback — parse consumer files and check imports
-        let consumer_files: Vec<&String> = all_files
-            .iter()
-            .filter(|other_file| {
-                if *other_file == fp {
-                    return false;
-                }
-                let filename = utility_layer_detector::extract_filename(other_file);
-                utility_layer_detector::detect_layer_from_prefix(filename)
-                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
-                    .unwrap_or(false)
-            })
-            .collect();
+        // Phase 2: Fallback scan for consumer imports
+        for other_file in all_files {
+            if other_file == fp {
+                continue;
+            }
+            let filename = utility_layer_detector::extract_filename(other_file);
+            let is_consumer = utility_layer_detector::detect_layer_from_prefix(filename)
+                .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                .unwrap_or(false);
 
-        for other_file in consumer_files {
-            let other_content = shared::common::utility_file_handler::read_file_safe(other_file);
+            if !is_consumer {
+                continue;
+            }
+
+            let other_content =
+                shared::orphan_detector::utility_orphan_io::read_file_safe(other_file);
             if other_content.is_empty() {
                 continue;
             }
@@ -136,19 +138,21 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(
+            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
+        ))
     }
 }
 
 impl UtilityOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
+        Self { parser_dispatcher }
     }
 
     /// Check if a module is imported using AST parser dispatch.
     /// Replaces check_import_pattern (string matching) and import_tokens (regex).
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+        match FileParseResultVO::parse_path_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.imports.iter().any(|imp| {
                 imp.segments
                     .iter()

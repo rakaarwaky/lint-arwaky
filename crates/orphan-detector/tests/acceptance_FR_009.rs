@@ -2,10 +2,10 @@
 // Requirement: Surface layer files must be registered in the routing system or called from main entries.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
-use shared::code_analysis::ReachabilityResult;
+use shared::code_analysis::{InboundLinkMap, ReachabilityResult};
 use shared::common::FilePath;
 use shared::orphan_detector::ISurfacesOrphanProtocol;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 
 /// AES506: Surface reachable from entry point is NOT orphan.
@@ -15,8 +15,9 @@ fn fr009_reachable_surface_not_orphan() {
     let f = FilePath::new("src/surface_scan_command.rs".to_string()).unwrap();
     let root = FilePath::new("src".to_string()).unwrap();
     let alive = ReachabilityResult::new(HashSet::from([f.clone()]));
+    let inbound = InboundLinkMap::new(HashMap::new());
 
-    let result = a.is_surface_orphan(&f, &root, &alive, None);
+    let result = a.is_surface_orphan(&f, &root, &alive, &inbound, None);
     assert!(
         !result.is_orphan,
         "AES506 FAIL: reachable surface should not be orphan"
@@ -34,8 +35,9 @@ fn fr009_unreachable_surface_is_orphan() {
     let f = FilePath::new(surface.to_str().unwrap().to_string()).unwrap();
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let alive = ReachabilityResult::new(HashSet::new());
+    let inbound = InboundLinkMap::new(HashMap::new());
 
-    let result = a.is_surface_orphan(&f, &root, &alive, None);
+    let result = a.is_surface_orphan(&f, &root, &alive, &inbound, None);
     assert!(
         result.is_orphan,
         "AES506 FAIL: unreachable surface must be flagged"

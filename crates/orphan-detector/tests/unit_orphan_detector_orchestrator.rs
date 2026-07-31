@@ -19,12 +19,12 @@ use std::sync::Arc;
 fn build_analyzer(config: ArchitectureConfig) -> ArchOrphanAnalyzer {
     ArchOrphanAnalyzer::new(
         ArchOrphanDeps {
-            resolver: Arc::new(OrphanGraphResolver::new()),
+            resolver: Arc::new(OrphanGraphResolver::default()),
             taxonomy_analyzer: Arc::new(TaxonomyOrphanAnalyzer::new()),
-            contract_analyzer: Arc::new(ContractOrphanAnalyzer::new()),
-            capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new()),
-            utility_analyzer: Arc::new(UtilityOrphanAnalyzer::new()),
-            agent_analyzer: Arc::new(AgentOrphanAnalyzer::new()),
+            contract_analyzer: Arc::new(ContractOrphanAnalyzer::default()),
+            capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::default()),
+            utility_analyzer: Arc::new(UtilityOrphanAnalyzer::default()),
+            agent_analyzer: Arc::new(AgentOrphanAnalyzer::default()),
             surfaces_analyzer: Arc::new(SurfacesOrphanAnalyzer::new()),
         },
         config,
