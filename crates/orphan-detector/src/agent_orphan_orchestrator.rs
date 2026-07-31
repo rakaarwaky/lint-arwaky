@@ -174,7 +174,7 @@ impl ArchOrphanAnalyzer {
         let mut result: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = top_root.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
+            if filesystem::utility_io::is_dir(&ws_path) {
                 let entries = filesystem::utility_io::scan_directory(&ws_path);
                 for (name, _path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
@@ -195,7 +195,7 @@ impl ArchOrphanAnalyzer {
                         continue;
                     }
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
+                    if filesystem::utility_io::is_dir(&src_dir) {
                         let workspace_files = walk_recursive(&src_dir);
                         for f in workspace_files {
                             // Skip ignored paths (e.g. tests/, target/)
