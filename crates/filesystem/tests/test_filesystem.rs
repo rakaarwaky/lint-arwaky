@@ -3,7 +3,6 @@
 use filesystem_lint_arwaky::agent_filesystem_orchestrator::FilesystemOrchestrator;
 use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
-use filesystem_lint_arwaky::capabilities_file_cache::FileCache;
 use filesystem_lint_arwaky::capabilities_file_walker::{FileWalker, walk_recursive};
 use filesystem_lint_arwaky::capabilities_import_extractor::extract_imports;
 use shared::filesystem::taxonomy_filesystem_vo::MAX_LINT_FILE_BYTES;
@@ -59,26 +58,25 @@ fn fr001_walk_recursive_returns_paths() {
 
 #[test]
 fn fr002_cache_populate_and_get() {
-    let cache = FileCache::new();
     let root = test_root();
     let walker = FileWalker::new();
     let files = walker.walk(&root, &[], &["rs"]);
     assert!(!files.is_empty());
 
-    cache.populate(&files);
+    // Use global cache functions
+    filesystem_lint_arwaky::utility_filesystem_io::cache_populate(&files);
     // Should be able to get content for at least one file
     let first = &files[0];
-    assert!(cache.contains(&first.path));
-    let content = cache.get(&first.path).unwrap();
+    assert!(filesystem_lint_arwaky::utility_filesystem_io::cache_contains(&first.path));
+    let content = filesystem_lint_arwaky::utility_filesystem_io::cache_get(&first.path).unwrap();
     assert!(!content.is_empty());
 }
 
 #[test]
 fn fr002_cache_returns_none_for_missing() {
-    let cache = FileCache::new();
     let missing = PathBuf::from("/nonexistent/file.rs");
-    assert!(!cache.contains(&missing));
-    assert!(cache.get(&missing).is_none());
+    assert!(!filesystem_lint_arwaky::utility_filesystem_io::cache_contains(&missing));
+    assert!(filesystem_lint_arwaky::utility_filesystem_io::cache_get(&missing).is_none());
 }
 
 // ─── FR-003: AST Parsing ────────────────────────────────────
@@ -119,10 +117,9 @@ fn fr003_parse_all_parallel() {
     let root = test_root();
     let walker = FileWalker::new();
     let files = walker.walk(&root, &[], &["rs"]);
-    let cache = FileCache::new();
-    cache.populate(&files);
+    filesystem_lint_arwaky::utility_filesystem_io::cache_populate(&files);
 
-    parser.parse_all(&files, &|path| cache.get(path));
+    parser.parse_all(&files, &|path| filesystem_lint_arwaky::utility_filesystem_io::cache_get(path));
     // All files should have ASTs after parse_all
     let parsed = files.iter().filter(|f| parser.has_ast(&f.path)).count();
     assert_eq!(parsed, files.len());

@@ -8,6 +8,7 @@ use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::LayerNameVO;
 use crate::taxonomy_name_vo::SymbolName;
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 #[async_trait]
 pub trait ICycleImportProtocol: Send + Sync {
@@ -17,6 +18,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         layer_map: &LayerMapVO,
         files: &[FilePath],
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Vec<LintResult>;
 
     async fn check_cycles(
@@ -25,6 +27,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         layer_map: &LayerMapVO,
         files: &crate::common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<Vec<LintResult>, ImportError>;
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName>;

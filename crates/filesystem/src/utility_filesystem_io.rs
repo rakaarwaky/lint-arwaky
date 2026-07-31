@@ -366,36 +366,10 @@ pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::
     std::fs::write(path, contents)
 }
 
-// ─── Global File Cache (DashMap) ────────────────────────────
-// Matches shared::code_analysis::utility_file_reader pattern.
-
-use dashmap::DashMap;
-use std::sync::LazyLock;
-
-/// Global file cache — thread-safe, populated by filesystem service.
-static FILE_CACHE: LazyLock<DashMap<String, String>> = LazyLock::new(DashMap::new);
-
-/// Populate the global file cache.
-pub fn populate_cache(files: &[(String, String)]) {
-    for (path, content) in files {
-        FILE_CACHE.insert(path.clone(), content.clone());
-    }
-}
-
-/// Clear the global file cache.
-pub fn clear_cache() {
-    FILE_CACHE.clear();
-}
-
-/// Get a cached file content.
-pub fn get_cached(path: &str) -> Option<String> {
-    FILE_CACHE.get(path).map(|r| r.value().clone())
-}
-
 /// Read file content with cache fallback (matches shared::read_file_safe with cache).
 pub fn read_file_with_cache<P: AsRef<Path>>(path: P) -> String {
-    let path_str = path.as_ref().to_string_lossy().to_string();
-    if let Some(content) = FILE_CACHE.get(&path_str) {
+    let path_buf = path.as_ref().to_path_buf();
+    if let Some(content) = FILE_CACHE.get(&path_buf) {
         return content.value().clone();
     }
     std::fs::read_to_string(path).unwrap_or_default()
@@ -407,7 +381,8 @@ pub fn read_file_with_cache<P: AsRef<Path>>(path: P) -> String {
 /// - Err(message) if file is unreadable
 pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
     // Fast path: check global cache first
-    if let Some(content) = FILE_CACHE.get(path) {
+    let path_buf = std::path::PathBuf::from(path);
+    if let Some(content) = FILE_CACHE.get(&path_buf) {
         return Ok(Some(content.value().clone()));
     }
     // Slow path: direct I/O with size check
@@ -725,4 +700,48 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
         .join(".bin")
         .join(executable);
     local_bin.exists()
+}
+
+// ─── File Content Cache (DashMap) ──────────────────────────
+// Global file cache — read once, serve from memory.
+
+use dashmap::DashMap;
+use rayon::prelude::*;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use std::sync::LazyLock;
+
+static FILE_CACHE: LazyLock<DashMap<PathBuf, String>> = LazyLock::new(DashMap::new);
+
+/// Populate cache from file entries (parallel read).
+pub fn cache_populate(files: &[FileEntry]) {
+    files.par_iter().for_each(|entry| {
+        let content = match std::fs::read_to_string(&entry.path) {
+            Ok(c) => c,
+            Err(_) => return,
+        };
+        FILE_CACHE.insert(entry.path.clone(), content);
+    });
+}
+
+/// Get cached file content.
+pub fn cache_get(path: &PathBuf) -> Option<String> {
+    FILE_CACHE.get(path).map(|r| r.value().clone())
+}
+
+/// Check if file is in cache.
+pub fn cache_contains(path: &PathBuf) -> bool {
+    FILE_CACHE.contains_key(path)
+}
+
+/// Get total memory usage in bytes.
+pub fn cache_memory_bytes() -> usize {
+    FILE_CACHE
+        .iter()
+        .map(|e| e.key().as_os_str().len() + e.value().len())
+        .sum()
+}
+
+/// Clear all cached entries.
+pub fn cache_clear() {
+    FILE_CACHE.clear()
 }

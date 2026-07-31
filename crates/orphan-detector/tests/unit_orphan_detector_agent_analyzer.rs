@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // PURPOSE: Unit tests for AgentOrphanAnalyzer — AES505 agent orphan detection.
 // Layer: Capabilities (AgentOrphanAnalyzer)
 // Speed: ms
@@ -12,6 +13,12 @@ fn analyzer() -> AgentOrphanAnalyzer {
 }
 
 // ─── Happy path: agent aggregate called by container ──────
+
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files.iter().filter_map(|f| {
+        std::fs::read_to_string(f).ok().map(|c| (f.clone(), c))
+    }).collect()
+}
 
 #[test]
 fn agent_with_aggregate_called_by_container_is_not_orphan() {
@@ -39,7 +46,7 @@ fn agent_with_aggregate_called_by_container_is_not_orphan() {
         container_path.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_agent_orphan(&f, &root, &all_files);
+    let result = a.is_agent_orphan(&f, &root, &all_files, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 
@@ -67,7 +74,7 @@ fn agent_with_aggregate_not_called_is_orphan() {
         other_path.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_agent_orphan(&f, &root, &all_files);
+    let result = a.is_agent_orphan(&f, &root, &all_files, &build_content_map(&all_files));
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::HIGH);
     assert!(result.reason.contains("IDeadAggregate"));
@@ -91,7 +98,7 @@ fn agent_without_aggregate_traits_is_not_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![agent_path.to_str().unwrap().to_string()];
 
-    let result = a.is_agent_orphan(&f, &root, &all_files);
+    let result = a.is_agent_orphan(&f, &root, &all_files, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 
@@ -108,7 +115,7 @@ fn empty_agent_file_is_not_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![agent_path.to_str().unwrap().to_string()];
 
-    let result = a.is_agent_orphan(&f, &root, &all_files);
+    let result = a.is_agent_orphan(&f, &root, &all_files, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 

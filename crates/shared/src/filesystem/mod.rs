@@ -24,7 +24,6 @@ pub use taxonomy_filesystem_vo::ScanTiming;
 // ── Contract traits ──
 pub use contract_filesystem_protocol::IASTParserProtocol;
 pub use contract_filesystem_protocol::IDependencyGraphProtocol;
-pub use contract_filesystem_protocol::IFileCacheProtocol;
 pub use contract_filesystem_protocol::IFileWalkerProtocol;
 pub use contract_filesystem_protocol::IFilesystemServiceProtocol;
 pub use contract_filesystem_protocol::IImportExtractorProtocol;

@@ -56,6 +56,12 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 
 // ─── Happy Path: Mandatory Import Present ─────────────────
 
+fn build_content_map(files: &shared::common::taxonomy_paths_vo::FilePathList) -> std::collections::HashMap<String, String> {
+    files.values.iter().filter_map(|f| {
+        std::fs::read_to_string(f.value()).ok().map(|c| (f.value().to_string(), c))
+    }).collect()
+}
+
 #[tokio::test]
 async fn capabilities_with_contract_import_passes() {
     let dir = tempfile::tempdir().unwrap();
@@ -75,7 +81,7 @@ impl IConnectionProtocol for MyChecker {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -104,7 +110,7 @@ pub struct MyChecker {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -136,7 +142,7 @@ async fn excepted_file_skips_mandatory_check() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -159,7 +165,7 @@ async fn mandatory_violation_severity_is_high() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -184,7 +190,7 @@ async fn taxonomy_file_not_checked_for_contract_mandatory() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .run_mandatory_imports(&config, &layer_map, &files, &root)
+        .run_mandatory_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 

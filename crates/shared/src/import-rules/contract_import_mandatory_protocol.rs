@@ -8,9 +8,13 @@ use crate::import_rules::taxonomy_import_error::ImportError;
 use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 /// For each file, check that at least one import targets each layer in the `mandatory` set.
 /// Used by the import orchestrator as part of the AES202 gate.
+///
+/// `content_map` maps file path → file content. The orchestrator pre-reads files
+/// and passes the map so capabilities don't do I/O directly.
 #[async_trait]
 pub trait IImportMandatoryProtocol: Send + Sync {
     fn rule_name(&self) -> Identity;
@@ -20,5 +24,6 @@ pub trait IImportMandatoryProtocol: Send + Sync {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<LintResultList, ImportError>;
 }

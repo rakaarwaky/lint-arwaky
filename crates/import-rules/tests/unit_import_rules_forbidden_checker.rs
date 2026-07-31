@@ -69,7 +69,7 @@ async fn taxonomy_importing_nothing_passes() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -77,6 +77,12 @@ async fn taxonomy_importing_nothing_passes() {
 }
 
 // ─── Forbidden Import Detected ────────────────────────────
+
+fn build_content_map(files: &shared::common::taxonomy_paths_vo::FilePathList) -> std::collections::HashMap<String, String> {
+    files.values.iter().filter_map(|f| {
+        std::fs::read_to_string(f.value()).ok().map(|c| (f.value().to_string(), c))
+    }).collect()
+}
 
 #[tokio::test]
 async fn taxonomy_importing_capabilities_flagged() {
@@ -93,7 +99,7 @@ pub struct Foo;
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -119,7 +125,7 @@ pub struct Bar;
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -153,7 +159,7 @@ pub struct Foo;
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -176,7 +182,7 @@ async fn forbidden_violation_severity_is_critical() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_forbidden_imports(&config, &layer_map, &files, &root)
+        .check_forbidden_imports(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 

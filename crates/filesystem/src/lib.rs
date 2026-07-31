@@ -3,7 +3,6 @@
 // ── Capabilities (protocol implementations) ──
 pub mod capabilities_ast_parser;
 pub mod capabilities_dependency_graph;
-pub mod capabilities_file_cache;
 pub mod capabilities_file_walker;
 pub mod capabilities_import_extractor;
 
@@ -17,5 +16,4 @@ pub mod utility_filesystem_io;
 pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
 pub use capabilities_ast_parser::ASTParser;
 pub use capabilities_dependency_graph::DependencyGraph;
-pub use capabilities_file_cache::FileCache;
 pub use capabilities_file_walker::FileWalker;

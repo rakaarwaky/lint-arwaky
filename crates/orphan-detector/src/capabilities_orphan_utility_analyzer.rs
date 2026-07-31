@@ -6,6 +6,7 @@ use shared::common::utility_layer_detector;
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::{AesOrphanViolation, IOrphanParserProtocol, IUtilityOrphanProtocol};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 const CONSUMER_LAYERS: &[&str] = &[
@@ -34,6 +35,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         _root_dir: &FilePath,
         all_files: &[String],
         inbound_links: &InboundLinkMap,
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let module_name = match std::path::Path::new(fp)
@@ -86,7 +88,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            let other_content = filesystem::utility_filesystem_io::read_file_safe(other_file);
+            let other_content = content_map.get(other_file).cloned().unwrap_or_default();
             if other_content.is_empty() {
                 continue;
             }

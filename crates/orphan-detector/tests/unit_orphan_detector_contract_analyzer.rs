@@ -19,6 +19,12 @@ fn empty_inheritance() -> InheritanceMap {
 
 // ─── Happy path: contract with implementation ─────────────
 
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files.iter().filter_map(|f| {
+        std::fs::read_to_string(f).ok().map(|c| (f.clone(), c))
+    }).collect()
+}
+
 #[test]
 fn contract_protocol_with_implementation_is_not_orphan() {
     let a = analyzer();
@@ -45,7 +51,7 @@ fn contract_protocol_with_implementation_is_not_orphan() {
         impl_path.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 
@@ -66,7 +72,7 @@ fn contract_protocol_without_implementation_is_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![contract_path.to_str().unwrap().to_string()];
 
-    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files, &build_content_map(&all_files));
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::MEDIUM);
 }
@@ -84,7 +90,7 @@ fn empty_contract_file_is_not_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![contract_path.to_str().unwrap().to_string()];
 
-    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 

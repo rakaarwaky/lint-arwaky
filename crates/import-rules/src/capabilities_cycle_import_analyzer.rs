@@ -37,10 +37,11 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         layer_map: &LayerMapVO,
         files: &[FilePath],
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Vec<LintResult> {
         let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
         let root_str = root_dir.to_string();
-        self._scan(config, layer_map, &file_strs, &root_str)
+        self._scan(config, layer_map, &file_strs, &root_str, content_map)
     }
 
     async fn check_cycles(
@@ -49,9 +50,10 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string());
+        let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string(), content_map);
         Ok(cycle_violations)
     }
 
@@ -77,6 +79,7 @@ impl DependencyCycleAnalyzer {
         layer_map: &LayerMapVO,
         files: &[String],
         root_dir: &str,
+        content_map: &HashMap<String, String>,
     ) -> Vec<LintResult> {
         if !config.enabled.value {
             return vec![];
@@ -94,7 +97,7 @@ impl DependencyCycleAnalyzer {
                 {
                     return None;
                 }
-                let content = filesystem::utility_filesystem_io::read_file(file).ok()?;
+                let content = content_map.get(file)?.clone();
 
                 let filename = utility_layer_detector::extract_filename(file);
                 let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {

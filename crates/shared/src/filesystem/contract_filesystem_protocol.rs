@@ -10,13 +10,6 @@ pub trait IFileWalkerProtocol: Send + Sync {
     fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry>;
 }
 
-/// Protocol for reading and caching file contents.
-pub trait IFileCacheProtocol: Send + Sync {
-    fn populate(&self, files: &[FileEntry]);
-    fn get(&self, path: &PathBuf) -> Option<String>;
-    fn contains(&self, path: &PathBuf) -> bool;
-}
-
 /// Protocol for AST parsing.
 pub trait IASTParserProtocol: Send + Sync {
     fn parse(&self, path: &PathBuf, content: &str, language: Language) -> Option<()>;
@@ -43,5 +36,4 @@ pub trait IDependencyGraphProtocol: Send + Sync {
 pub trait IFilesystemServiceProtocol: Send + Sync {
     fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
     fn graph(&self) -> &dyn IDependencyGraphProtocol;
-    fn cache(&self) -> &dyn IFileCacheProtocol;
 }

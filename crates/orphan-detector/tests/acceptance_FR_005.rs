@@ -13,6 +13,12 @@ fn empty_inh() -> InheritanceMap {
 }
 
 /// AES502: Contract protocol with an impl in capabilities is NOT orphan.
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files.iter().filter_map(|f| {
+        std::fs::read_to_string(f).ok().map(|c| (f.clone(), c))
+    }).collect()
+}
+
 #[test]
 fn fr005_contract_with_impl_not_orphan() {
     let a = ContractOrphanAnalyzer::default();
@@ -35,7 +41,7 @@ fn fr005_contract_with_impl_not_orphan() {
         impl_file.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_contract_orphan(&f, &root, &empty_inh(), &all);
+    let result = a.is_contract_orphan(&f, &root, &empty_inh(), &all, &build_content_map(&all));
     assert!(
         !result.is_orphan,
         "AES502 FAIL: contract with implementation should not be orphan"
@@ -59,7 +65,7 @@ fn fr005_contract_without_impl_is_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all = vec![contract.to_str().unwrap().to_string()];
 
-    let result = a.is_contract_orphan(&f, &root, &empty_inh(), &all);
+    let result = a.is_contract_orphan(&f, &root, &empty_inh(), &all, &build_content_map(&all));
     assert!(
         result.is_orphan,
         "AES502 FAIL: contract without implementation must be flagged"

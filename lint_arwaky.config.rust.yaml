@@ -201,7 +201,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "capabilities_orphan_parser_dispatcher.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -316,6 +316,8 @@ architecture:
               purpose: "implement"
             - layer: "contract"
               purpose: "implement"
+            - layer: "utility"
+              purpose: "implement" 
             - layer: "capabilities"
               purpose: "implement"
             - layer: "agent"

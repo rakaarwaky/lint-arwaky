@@ -100,7 +100,7 @@ use shared::import_rules::IUnusedImportProtocol;
 struct MyChecker;
 
 impl IUnusedImportProtocol for MyChecker {
-    fn find_unused_imports(&self, _path: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, _path: &FilePath, _content: &str) -> Vec<LintMessage> {
         todo!()
     }
     fn check_unused_imports(&self, _file: &str, _content: &str, _v: &mut Vec<LintResult>) {
@@ -128,7 +128,7 @@ use shared::import_rules::IUnusedImportProtocol;
 struct MyChecker;
 
 impl IUnusedImportProtocol for MyChecker {
-    fn find_unused_imports(&self, _path: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, _path: &FilePath, _content: &str) -> Vec<LintMessage> {
         let result = do_real_work();
         result.into_iter().map(LintMessage::new).collect()
     }

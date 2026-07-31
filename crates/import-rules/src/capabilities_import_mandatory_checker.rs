@@ -13,7 +13,7 @@ use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryPr
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_import_resolver;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -41,6 +41,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
 
@@ -63,8 +64,8 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     return Vec::new();
                 }
 
-                let content = match filesystem::utility_filesystem_io::read_file(&f_str).ok() {
-                    Some(c) => c,
+                let content = match content_map.get(&f_str) {
+                    Some(c) => c.clone(),
                     None => return Vec::new(),
                 };
                 let file_content = FileContentVO::new(content);

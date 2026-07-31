@@ -2,7 +2,7 @@
 // AST-based: uses syn visitor for usage tracking. No dynamic regex. No DERIVE_MACROS whitelist.
 
 use shared::cli_commands::LintResult;
-use shared::common::{ErrorMessage, FilePath, LintMessage, Severity};
+use shared::common::{FilePath, LintMessage, Severity};
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
@@ -12,18 +12,10 @@ use shared::import_rules::utility_import_symbol_extractor;
 pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, ImportError> {
+    fn find_unused_imports(&self, path: &FilePath, content: &str) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content = filesystem::utility_filesystem_io::read_file(path.value()).map_err(|_| {
-            ImportError::module_resolution(
-                path.value().to_string(),
-                Some(ErrorMessage::new(
-                    "File could not be read for unused import analysis",
-                )),
-            )
-        })?;
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases(path.value(), &content);
         let exported_symbols =
@@ -111,7 +103,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                     continue;
                 }
             }
-            let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
+            let _line_num = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;
             let ast_line = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;

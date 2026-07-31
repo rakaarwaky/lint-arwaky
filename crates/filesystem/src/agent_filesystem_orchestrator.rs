@@ -4,7 +4,6 @@
 
 use crate::capabilities_ast_parser::ASTParser;
 use crate::capabilities_dependency_graph::DependencyGraph;
-use crate::capabilities_file_cache::FileCache;
 use crate::capabilities_file_walker::FileWalker;
 use crate::capabilities_import_extractor;
 use crate::utility_filesystem_io;
@@ -22,7 +21,6 @@ use std::time::Instant;
 /// Delegates all I/O and computation to capabilities layer.
 pub struct FilesystemOrchestrator {
     walker: FileWalker,
-    cache: FileCache,
     parser: ASTParser,
     graph: RwLock<DependencyGraph>,
 }
@@ -43,13 +41,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
         // Stage 2: Cache (FR-002)
         let t = Instant::now();
-        self.cache.populate(&files);
+        utility_filesystem_io::cache_populate(&files);
         timing.cache_ms = t.elapsed().as_millis() as u64;
 
         // Stage 3: Parse ASTs (FR-003)
         let t = Instant::now();
-        let cache_ref = &self.cache;
-        self.parser.parse_all(&files, &|path| cache_ref.get(path));
+        self.parser.parse_all(&files, &|path| utility_filesystem_io::cache_get(path));
         timing.parse_ms = t.elapsed().as_millis() as u64;
 
         // Stage 4: Extract imports (FR-004)
@@ -59,7 +56,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let mut parse_errors = 0;
 
         for file in &files {
-            if let Some(content) = self.cache.get(&file.path) {
+            if let Some(content) = utility_filesystem_io::cache_get(&file.path) {
                 let imports = capabilities_import_extractor::extract_imports(
                     &file.path,
                     &content,
@@ -112,10 +109,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── File Reading ──────────────────────────────────────────
 
-    fn read_file(&self, path: &Path) -> Option<String> {
-        // Check cache first, then fall back to disk
-        self.cache
-            .get(&path.to_path_buf())
+    fn get_file_content(&self, path: &PathBuf) -> Option<String> {
+        utility_filesystem_io::cache_get(path)
             .or_else(|| utility_filesystem_io::read_file(path).ok())
     }
 
@@ -123,12 +118,13 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::read_lintable_file(path)
     }
 
-    fn get_file_content(&self, path: &PathBuf) -> Option<String> {
-        self.cache.get(path)
+    fn read_file(&self, path: &Path) -> Option<String> {
+        utility_filesystem_io::cache_get(&path.to_path_buf())
+            .or_else(|| utility_filesystem_io::read_file(path).ok())
     }
 
     fn has_file(&self, path: &PathBuf) -> bool {
-        self.cache.contains(path)
+        utility_filesystem_io::cache_contains(path)
     }
 
     // ── File Discovery ────────────────────────────────────────
@@ -197,7 +193,6 @@ impl FilesystemOrchestrator {
     pub fn new() -> Self {
         Self {
             walker: FileWalker::new(),
-            cache: FileCache::new(),
             parser: ASTParser::new(),
             graph: RwLock::new(DependencyGraph::new()),
         }

@@ -26,6 +26,12 @@ fn make_inbound_links(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {
 
 // ─── Happy path: utility imported by capabilities ─────────
 
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files.iter().filter_map(|f| {
+        std::fs::read_to_string(f).ok().map(|c| (f.clone(), c))
+    }).collect()
+}
+
 #[test]
 fn utility_imported_by_capabilities_is_not_orphan() {
     let a = analyzer();
@@ -41,7 +47,7 @@ fn utility_imported_by_capabilities_is_not_orphan() {
         vec!["crates/orphan-detector/src/capabilities_orphan_capabilities_analyzer.rs"],
     )]);
 
-    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound, &build_content_map(&all_files));
     assert!(!result.is_orphan);
 }
 
@@ -55,7 +61,7 @@ fn utility_not_imported_is_orphan() {
     let all_files = vec!["crates/shared/src/orphan-detector/utility_dead.rs".to_string()];
     let inbound = make_inbound_links(vec![]);
 
-    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound, &build_content_map(&all_files));
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::MEDIUM);
 }
@@ -77,7 +83,7 @@ fn utility_imported_only_by_utilities_is_dead_code() {
         vec!["crates/shared/src/orphan-detector/utility_outer.rs"],
     )]);
 
-    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all_files, &inbound, &build_content_map(&all_files));
     assert!(result.is_orphan);
     assert!(result.reason.contains("only imported by other utility"));
 }

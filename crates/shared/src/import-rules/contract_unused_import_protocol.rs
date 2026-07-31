@@ -7,7 +7,8 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::import_rules::taxonomy_import_error::ImportError;
 
 pub trait IUnusedImportProtocol: Send + Sync {
-    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, ImportError>;
+    /// Find unused imports in a file. `content` is pre-read file content.
+    fn find_unused_imports(&self, path: &FilePath, content: &str) -> Result<Vec<LintMessage>, ImportError>;
 
     /// Check unused imports given file path and content.
     /// file_path is needed for AST parser dispatch (language detection by extension).

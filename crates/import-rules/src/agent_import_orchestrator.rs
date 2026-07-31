@@ -3,6 +3,7 @@
 
 use async_trait::async_trait;
 use rayon::iter::IntoParallelRefIterator;
+use std::collections::HashMap;
 use rayon::iter::ParallelIterator;
 use std::path::Path;
 use std::sync::Arc;
@@ -55,28 +56,34 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         }
 
         let files = self.collect_files(target);
-        eprintln!(
-            "ORCH_DEBUG: target={}, files={}",
-            target.value(),
-            files.values.len()
-        );
 
         let root_dir = filesystem::utility_filesystem_io::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
+
+        // Pre-read all file contents into a map so capabilities don't do I/O.
+        let content_map: HashMap<String, String> = files
+            .values
+            .iter()
+            .filter_map(|f| {
+                read_file(f.value()).ok().map(|c| (f.value().to_string(), c))
+            })
+            .collect();
 
         let (mandatory_result, forbidden_result) = tokio::join!(
             self.deps.mandatory.run_mandatory_imports(
                 &self.config,
                 &self.layer_map,
                 &files,
-                &root_dir
+                &root_dir,
+                &content_map,
             ),
             self.deps.forbidden.check_forbidden_imports(
                 &self.config,
                 &self.layer_map,
                 &files,
-                &root_dir
+                &root_dir,
+                &content_map,
             ),
         );
         let mandatory_results = mandatory_result?;
@@ -89,10 +96,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let file_violations: Vec<LintResult> =
             ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
                 let mut local_results = Vec::new();
-                let content = match read_file(file.value()) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
+                let content = match content_map.get(file.value()) {
+                    Some(c) => c.clone(),
+                    None => {
                         return local_results;
                     }
                 };
@@ -119,7 +125,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let cycle_violations = self
             .deps
             .cycle
-            .check_cycles(&self.config, &self.layer_map, &files, &root_dir)
+            .check_cycles(&self.config, &self.layer_map, &files, &root_dir, &content_map)
             .await?;
         results.values.extend(cycle_violations);
         Ok(results.values)

@@ -48,6 +48,12 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 
 // ─── detect_cycle_edges (pure logic) ─────────────────────
 
+fn build_content_map(files: &FilePathList) -> HashMap<String, String> {
+    files.values.iter().filter_map(|f| {
+        std::fs::read_to_string(f.value()).ok().map(|c| (f.value().to_string(), c))
+    }).collect()
+}
+
 #[test]
 fn no_edges_no_cycles() {
     let edges: Vec<DependencyEdge> = vec![];
@@ -117,7 +123,7 @@ async fn no_cross_layer_imports_no_violations() {
     let files = FilePathList::new(vec![file_a]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_cycles(&config, &layer_map, &files, &root)
+        .check_cycles(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 
@@ -139,7 +145,7 @@ async fn disabled_config_returns_empty() {
     let files = FilePathList::new(vec![file]);
     let root = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = sut()
-        .check_cycles(&config, &layer_map, &files, &root)
+        .check_cycles(&config, &layer_map, &files, &root, &build_content_map(&files))
         .await
         .unwrap();
 

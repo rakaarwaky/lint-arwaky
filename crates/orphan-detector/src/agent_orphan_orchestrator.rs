@@ -27,7 +27,7 @@ use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -309,6 +309,15 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
+        // Pre-read all file contents into a map so capabilities don't do I/O.
+        let content_map: HashMap<String, String> = all_files
+            .iter()
+            .filter_map(|f| {
+                let c = filesystem::utility_filesystem_io::read_file_safe(f);
+                if c.is_empty() { None } else { Some((f.clone(), c)) }
+            })
+            .collect();
+
         files
             .values
             .par_iter()
@@ -320,6 +329,7 @@ impl ArchOrphanAnalyzer {
                     &layer_keys,
                     &all_files,
                     &top_root_str,
+                    &content_map,
                 )
             })
             .collect()
@@ -333,6 +343,7 @@ impl ArchOrphanAnalyzer {
         layer_keys: &[String],
         all_files: &[String],
         top_root_str: &str,
+        content_map: &HashMap<String, String>,
     ) -> Option<LintResult> {
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
@@ -387,6 +398,7 @@ impl ArchOrphanAnalyzer {
             &layer_vo,
             all_files,
             top_root_str,
+            content_map,
         );
         if res.is_orphan {
             return Some(self._make_result(f, &res.reason, res.severity, code));
@@ -441,6 +453,7 @@ impl ArchOrphanAnalyzer {
         layer_vo: &LayerNameVO,
         all_files: &[String],
         top_root: &str,
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
         // Barrel file exceptions — package markers and re-export files, not logic
         if f.ends_with("__init__.py")
@@ -485,6 +498,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 &context.inheritance_map,
                 all_files,
+                content_map,
             );
         }
 
@@ -502,6 +516,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 all_files,
                 &context.inbound_links,
+                content_map,
             );
         }
 
@@ -509,7 +524,7 @@ impl ArchOrphanAnalyzer {
             return self
                 .deps
                 .agent_analyzer
-                .is_agent_orphan(&fp, &root, all_files);
+                .is_agent_orphan(&fp, &root, all_files, content_map);
         }
 
         if layer_str.contains(LAYER_SURFACES) {
