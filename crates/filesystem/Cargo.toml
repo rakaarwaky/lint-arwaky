@@ -38,6 +38,7 @@ anyhow = "1"
 
 # Shared types
 shared.workspace = true
+tokio = { workspace = true, features = ["sync", "rt"] }
 
 [dev-dependencies]
 tempfile = "3"

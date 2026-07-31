@@ -1215,6 +1215,7 @@ dependencies = [
  "rayon",
  "shared-lint-arwaky",
  "tempfile",
+ "tokio",
  "tree-sitter",
  "tree-sitter-javascript",
  "tree-sitter-python",
