@@ -55,7 +55,7 @@ pub fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
 }
 
 /// Collect a single source file path into the output vector.
-fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
+pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
     if let Some(path_str) = path.to_str()
         && let Ok(fp) = FilePath::new(path_str.to_string())
     {
@@ -347,4 +347,346 @@ fn _scan_directory_recursive(dir_path: &Path, files: &mut Vec<String>) {
 /// Write content to a file.
 pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
     std::fs::write(path, contents)
+}
+
+// ─── Global File Cache (DashMap) ────────────────────────────
+// Matches shared::code_analysis::utility_file_reader pattern.
+
+use dashmap::DashMap;
+use std::sync::LazyLock;
+
+/// Global file cache — thread-safe, populated by filesystem service.
+static FILE_CACHE: LazyLock<DashMap<String, String>> = LazyLock::new(DashMap::new);
+
+/// Populate the global file cache.
+pub fn populate_cache(files: &[(String, String)]) {
+    for (path, content) in files {
+        FILE_CACHE.insert(path.clone(), content.clone());
+    }
+}
+
+/// Clear the global file cache.
+pub fn clear_cache() {
+    FILE_CACHE.clear();
+}
+
+/// Get a cached file content.
+pub fn get_cached(path: &str) -> Option<String> {
+    FILE_CACHE.get(path).map(|r| r.value().clone())
+}
+
+/// Read file content with cache fallback (matches shared::read_file_safe with cache).
+pub fn read_file_with_cache<P: AsRef<Path>>(path: P) -> String {
+    let path_str = path.as_ref().to_string_lossy().to_string();
+    if let Some(content) = FILE_CACHE.get(&path_str) {
+        return content.value().clone();
+    }
+    std::fs::read_to_string(path).unwrap_or_default()
+}
+
+// ─── Path Helpers ───────────────────────────────────────────
+
+/// Get file basename (filename without directory).
+pub fn get_basename(path: &str) -> &str {
+    Path::new(path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(path)
+}
+
+/// Get file stem (filename without extension).
+pub fn get_file_stem(path: &str) -> &str {
+    Path::new(path)
+        .file_stem()
+        .and_then(|n| n.to_str())
+        .unwrap_or(path)
+}
+
+/// Get parent directory path.
+pub fn get_parent(path: &str) -> &str {
+    Path::new(path)
+        .parent()
+        .and_then(|p| p.to_str())
+        .unwrap_or(path)
+}
+
+// ─── is_source_file (str extension overload) ────────────────
+
+/// Check if an extension string is a recognized source file extension.
+/// Matches shared::common::utility_file_handler::is_source_file(ext: &str).
+pub fn is_source_ext(ext: &str) -> bool {
+    matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+}
+
+// ─── Workspace-aware Walking ────────────────────────────────
+
+/// Workspace-restricted directories.
+const WORKSPACE_DIRS: [&str; 3] = ["crates", "packages", "modules"];
+
+/// Walk source files with workspace restriction.
+/// Only walks into workspace member directories (crates/, packages/, modules/).
+pub fn walk_source_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let restrict = workspace_restrict(&root);
+    let mut visited = HashSet::new();
+    walk_source_files_inner(&root, files, ignored, &mut visited, &root, &restrict);
+}
+
+fn workspace_restrict(root: &Path) -> Option<HashSet<String>> {
+    let mut has_ws = false;
+    for d in &WORKSPACE_DIRS {
+        if root.join(d).is_dir() {
+            has_ws = true;
+            break;
+        }
+    }
+    if !has_ws {
+        return None;
+    }
+    let mut set = HashSet::new();
+    for entry in std::fs::read_dir(root).into_iter().flatten().flatten() {
+        if entry.file_type().map_or(false, |ft| ft.is_dir()) {
+            if let Some(name) = entry.file_name().to_str() {
+                set.insert(name.to_string());
+            }
+        }
+    }
+    Some(set)
+}
+
+fn walk_source_files_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+    root: &Path,
+    restrict: &Option<HashSet<String>>,
+) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if is_ignored_dir(&path, ignored) {
+                continue;
+            }
+            if let Ok(meta) = std::fs::symlink_metadata(&path) {
+                if meta.file_type().is_symlink() {
+                    if let Ok(target) = std::fs::canonicalize(&path) {
+                        if !target.starts_with(root) || !visited.insert(target.clone()) {
+                            continue;
+                        }
+                        if let Ok(tm) = target.metadata() {
+                            if tm.is_dir() {
+                                walk_source_files_inner(
+                                    &target, files, ignored, visited, root, restrict,
+                                );
+                            } else if tm.is_file()
+                                && target.starts_with(root)
+                                && is_source_file(&target)
+                            {
+                                collect_source_file(&target, files);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+            if path.is_dir() {
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if !visited.insert(canonical.clone()) {
+                    continue;
+                }
+                // Workspace restriction: only descend into allowed member dirs at root level
+                if dir == root {
+                    if let Some(r) = restrict {
+                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                            if !r.contains(name) {
+                                continue;
+                            }
+                        }
+                    }
+                }
+                walk_source_files_inner(&path, files, ignored, visited, root, restrict);
+            } else if is_source_file(&path) {
+                collect_source_file(&path, files);
+            }
+        }
+    }
+}
+
+/// Walk only .rs files.
+pub fn walk_rs_files(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::new();
+    walk_rs_files_inner(&root, files, ignored, &mut visited);
+}
+
+fn walk_rs_files_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if is_ignored_dir(&path, ignored) {
+                continue;
+            }
+            if path.is_dir() {
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if visited.insert(canonical) {
+                    walk_rs_files_inner(&path, files, ignored, visited);
+                }
+            } else if path.extension().and_then(|e| e.to_str()) == Some("rs") {
+                collect_source_file(&path, files);
+            }
+        }
+    }
+}
+
+/// Collect all source files (no workspace restriction).
+pub fn collect_all_source_files(dir: &Path, ignored_paths: &[String]) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let mut visited = HashSet::new();
+    collect_all_inner(&root, &mut files, ignored_paths, &mut visited);
+    files
+}
+
+fn collect_all_inner(
+    dir: &Path,
+    files: &mut Vec<FilePath>,
+    ignored: &[String],
+    visited: &mut HashSet<PathBuf>,
+) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if is_ignored_dir(&path, ignored) {
+                continue;
+            }
+            if path.is_dir() {
+                let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
+                if visited.insert(canonical) {
+                    collect_all_inner(&path, files, ignored, visited);
+                }
+            } else if is_source_file(&path) {
+                collect_source_file(&path, files);
+            }
+        }
+    }
+}
+
+/// Collect all raw source files (no workspace restriction, returns all paths).
+pub fn collect_all_source_files_raw(dir: &Path) -> Vec<FilePath> {
+    collect_all_source_files(dir, &[])
+}
+
+// ─── Orphan Detector IO ─────────────────────────────────────
+
+/// Read file with diagnostic error message.
+pub fn read_file_with_diagnostic(path: &str) -> Result<String, String> {
+    std::fs::read_to_string(path).map_err(|e| format!("Failed to read {}: {}", path, e))
+}
+
+/// List directory entries as (name, path, is_dir) tuples.
+pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = dir_path.read_dir() {
+        for dir_entry in read_dir.flatten() {
+            if let Some(name) = dir_entry.file_name().to_str() {
+                let path = dir_entry.path();
+                let is_dir = path.is_dir();
+                entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
+            }
+        }
+    }
+    entries
+}
+
+// ─── External Lint IO ───────────────────────────────────────
+
+/// Canonicalize a path string to absolute.
+pub fn canonicalize_path(path_str: &str) -> PathBuf {
+    let path = Path::new(path_str);
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .unwrap_or_else(|_| PathBuf::from("."))
+            .join(path)
+    }
+}
+
+/// Check if directory contains Python files.
+pub fn has_python_files(dir_path: &Path) -> bool {
+    dir_path
+        .read_dir()
+        .into_iter()
+        .flatten()
+        .flatten()
+        .any(|e| e.path().extension().and_then(|x| x.to_str()) == Some("py"))
+}
+
+/// Check if directory contains a config file.
+pub fn has_config_file(dir_path: &Path) -> bool {
+    const CONFIG_NAMES: [&str; 6] = [
+        ".eslintrc",
+        ".prettierrc",
+        "tsconfig.json",
+        "pyproject.toml",
+        "setup.cfg",
+        ".flake8",
+    ];
+    dir_path
+        .read_dir()
+        .into_iter()
+        .flatten()
+        .flatten()
+        .any(|e| {
+            let name = e.file_name();
+            CONFIG_NAMES.iter().any(|c| name == *c)
+                || name.to_string_lossy().ends_with(".config.js")
+                || name.to_string_lossy().ends_with(".config.ts")
+        })
+}
+
+/// Check if a Cargo.toml exists and return its directory.
+pub fn has_cargo_toml(path_str: &str) -> Option<String> {
+    let path = Path::new(path_str);
+    if path.join("Cargo.toml").exists() {
+        Some(path.to_string_lossy().to_string())
+    } else {
+        None
+    }
+}
+
+/// Check if a Cargo.lock exists and return its directory.
+pub fn has_cargo_lock(path_str: &str) -> Option<String> {
+    let path = Path::new(path_str);
+    if path.join("Cargo.lock").exists() {
+        Some(path.to_string_lossy().to_string())
+    } else {
+        None
+    }
+}
+
+/// Check if an executable is in PATH.
+pub fn is_executable_in_path(executable: &str) -> bool {
+    std::env::var("PATH")
+        .unwrap_or_default()
+        .split(':')
+        .any(|dir| {
+            let p = Path::new(dir).join(executable);
+            p.exists() && p.metadata().map_or(false, |m| m.is_file())
+        })
+}
+
+/// Check if an executable exists in local bin.
+pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
+    let local_bin = working_dir
+        .join("node_modules")
+        .join(".bin")
+        .join(executable);
+    local_bin.exists()
 }
