@@ -8,18 +8,17 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["contract_orphan_aggregate"]
-    B --> C["agent_orphan_orchestrator"]
-    C --> D["contract
-            filesystem_aggregate"]
-    D --> E["FileWalker + ASTParser + Graph"]
+    A["Surface"] -->|input| B["orphan_aggregate"]
+    B --> C["orphan_orchestrator"]
+    C --> D["filesystem_aggregate"]
+    D --> E["file_walker + ast_parser + graph"]
     E --> G["Vec FilePath + Imports + Graph"]
-    G --> H1["AES501 Taxonomy"]
-    G --> H2["AES502 Contract"]
-    G --> H3["AES503 Capabilities"]
-    G --> H4["AES504 Utility"]
-    G --> H5["AES505 Agent"]
-    G --> H6["AES506 Surface"]
+    G --> H1["taxonomy_analyzer"]
+    G --> H2["contract_analyzer"]
+    G --> H3["capabilities_analyzer"]
+    G --> H4["utility_analyzer"]
+    G --> H5["agent_analyzer"]
+    G --> H6["surface_analyzer"]
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -37,7 +36,6 @@ flowchart TD
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-
 ### FR-001: AST-Based Import Graph Construction
 
 - **Description**: Build a bidirectional import graph from all workspace source files using AST parsing for Rust and structured parsing for Python/TypeScript, resolving cross-crate and cross-language imports.

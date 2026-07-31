@@ -8,17 +8,16 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["contract_import_aggregate"]
-    B --> C["agent_import_orchestrator"]
-    C --> D["contract
-            filesystem_aggregate"]
-    D --> E["FileWalker"]
+    A["Surface"] -->|input| B["import_aggregate"]
+    B --> C["import_orchestrator"]
+    C --> D["filesystem_aggregate"]
+    D --> E["file_walker"]
     E --> G["Vec FilePath"]
-    G --> H1["AES201 Forbidden"]
-    G --> H2["AES202 Mandatory"]
-    G --> H3["AES203 Unused"]
-    G --> H4["AES204 Dummy"]
-    G --> H5["AES205 Cycle"]
+    G --> H1["forbidden_checker"]
+    G --> H2["mandatory_checker"]
+    G --> H3["unused_checker"]
+    G --> H4["dummy_checker"]
+    G --> H5["cycle_analyzer"]
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -34,8 +33,7 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```
-### FR-001: Layer Dependency Violation (AES201)
+```### FR-001: Layer Dependency Violation (AES201)
 
 - **Description**: Restricts imports based on the layer hierarchy. Lower layers must never import higher layers. Uses AST-based import extraction and barrel file resolution for accurate layer detection.
 - **Input**: Rust, Python, JS/TS source files, architecture configuration, layer map.

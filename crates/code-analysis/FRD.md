@@ -8,17 +8,16 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["contract_code_analysis_aggregate"]
-    B --> C["agent_code_analysis_orchestrator"]
-    C --> D["contract
-            filesystem_aggregate"]
-    D --> E["FileWalker"]
+    A["Surface"] -->|input| B["code_analysis_aggregate"]
+    B --> C["code_analysis_orchestrator"]
+    C --> D["filesystem_aggregate"]
+    D --> E["file_walker"]
     E --> G["Vec FilePath"]
-    G --> H1["AES301 Max Lines"]
-    G --> H2["AES302 Min Lines"]
-    G --> H3["AES303 Mandatory Def"]
-    G --> H4["AES304 Bypass"]
-    G --> H5["AES305 Duplication"]
+    G --> H1["max_line_checker"]
+    G --> H2["min_line_checker"]
+    G --> H3["mandatory_def_checker"]
+    G --> H4["bypass_checker"]
+    G --> H5["duplication_analyzer"]
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -34,8 +33,7 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```
-### FR-001: Maximum File Line Count (AES301)
+```### FR-001: Maximum File Line Count (AES301)
 
 - **Description**: Source files must not exceed the maximum allowed line count to prevent bloated, unmaintainable files.
 - **Input**: Source file path + content

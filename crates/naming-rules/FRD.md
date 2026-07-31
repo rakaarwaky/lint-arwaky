@@ -8,8 +8,7 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["contract
-naming_agregate"]
+    A["Surface"] -->|input| B["naming_agregate"]
     B --> C["naming_orchestrator"]
     C --> D["filesystem_aggregate"]
     D --> E["file_walker"]
@@ -29,7 +28,6 @@ naming_agregate"]
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-
 
 ## Functional Requirements
 
