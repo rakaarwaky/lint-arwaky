@@ -36,7 +36,9 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```### FR-001: AST-Based Import Graph Construction
+```
+
+### FR-001: AST-Based Import Graph Construction
 
 - **Description**: Build a bidirectional import graph from all workspace source files using AST parsing for Rust and structured parsing for Python/TypeScript, resolving cross-crate and cross-language imports.
 - **Input**: List of source file paths (`Vec<String>`) and workspace root directory.
