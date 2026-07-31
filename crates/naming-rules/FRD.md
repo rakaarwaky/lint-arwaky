@@ -8,17 +8,17 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 
 ```mermaid
 flowchart TD
-    A["Surface CLI"] -->|input| B["Contract Agent"]
-    B --> C["Orchestrator"]
-    C --> D["FilesystemAggregate"]
-    D --> E["FileWalker"]
-    E --> F["Vec FilePath"]
-    F --> G["For each file"]
-    G --> H1["AES101 Convention"]
-    G --> H2["AES102 Suffix"]
+    A["Surface"] -->|input| B["contract
+naming_agregate"]
+    B --> C["naming_orchestrator"]
+    C --> D["filesystem_aggregate"]
+    D --> E["file_walker"]
+    E --> G["Vec FilePath"]
+    G --> H1["naming_convention"]
+    G --> H2["suffix_prefix"]
     H1 --> I["Violations"]
     H2 --> I
-    I --> J["LintResultList"]
+    I --> J["LintResult"]
     J --> C
     C --> B
     B -->|output| A
@@ -30,17 +30,10 @@ flowchart TD
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
 
-**Key Rules:**
-- **AES101**: snake_case regex, min 3 words, unknown prefix detection
-- **AES102**: allowed/forbidden suffix per layer, strict suffix policy
-
-**Config:** architecture configuration → layer definitions, naming rules
-**Shared:** layer detection, stem/suffix extraction utilities
-
 
 ## Functional Requirements
 
-### FR-001: Naming Convention Consistency (AES101)
+### FR-001: Naming Convention  (AES101)
 
 - **Description**: Every file stem must be snake_case with at least 3 underscore-separated words in `prefix_concept_suffix` pattern.
 - **Input**: File path
@@ -58,7 +51,7 @@ flowchart TD
   - Files in unknown directories (no detectable layer) — fall back to AES000 unknown prefix check
 - **Error Handling**: Emit AES101 with the invalid stem, expected pattern, and minimum word count; emit AES000 with the unrecognized prefix and list of valid prefixes
 
-### FR-002: Suffix/Prefix Layer Alignment (AES102)
+### FR-002: Suffix/Prefix  (AES102)
 
 - **Description**: File suffix must align with the architectural layer it belongs to; forbidden suffixes from other layers are rejected.
 - **Input**: File path
@@ -79,8 +72,9 @@ flowchart TD
 
 ## API Contract
 
+
 | Function                                                 | Input                                             | Output                                 | Description                                                   |
-| -------------------------------------------------------- | ------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------- |
+| ---------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------- |
 | The naming convention checker's file naming check method | config, layer map, files, root directory, results | Mutates results                        | Scan all files; emit AES101/AES000 for naming violations      |
 | The suffix/prefix checker's domain suffix check method   | config, layer map, files, root directory, results | Mutates results                        | Scan all files; emit AES102 for forbidden/mismatched suffixes |
 | The naming runner aggregate's audit method               | target file path                                  | Result with lint results or scan error | Walk directory, filter source files, run both checkers        |
@@ -104,20 +98,21 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-| #   | Input                                                                                  | Expected Output                                          | Rule        |
-| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------- |
-| 1   | `capabilities_user_checker.rs`                                                         | No violation (valid 3-word snake_case with layer prefix) | AES101 pass |
-| 2   | `capabilities_UserChecker.rs`                                                          | AES101 — uppercase characters violate snake_case         | AES101      |
-| 3   | `capabilities_user.rs`                                                                 | AES101 — only 2 words (min is 3)                         | AES101      |
-| 4   | `capabilities-user-checker.rs`                                                         | AES101 — hyphens instead of underscores                  | AES101      |
-| 5   | `main.rs`                                                                              | No violation (barrel/entry exception)                    | exception   |
-| 6   | `mod.rs`                                                                               | No violation (barrel/entry exception)                    | exception   |
-| 7   | `capabilities_user_checker.rs` (taxonomy layer, suffix `_checker` not in allowed list) | AES102 — suffix mismatch                                 | AES102      |
-| 8   | `taxonomy_user_vo.rs` (taxonomy layer, suffix `_vo` allowed)                           | No violation                                             | AES102 pass |
-| 9   | `agent_helper.rs` (agent layer, `_helper` is forbidden)                                | AES102 — forbidden suffix                                | AES102      |
-| 10  | `custom_foo_bar.rs` (prefix `custom` not in the layer prefix list)                     | AES000 — unknown prefix                                  | AES000      |
-| 11  | `capabilities_user_checker.rs` (min_words configured to 5)                             | AES101 — only 3 words, need 5                            | AES101      |
-| 12  | `root_container.rs` (root layer, suffix `_container` allowed)                          | No violation                                             | AES102 pass |
+
+| #  | Input                                                                                  | Expected Output                                          | Rule        |
+| ---- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------- |
+| 1  | `capabilities_user_checker.rs`                                                         | No violation (valid 3-word snake_case with layer prefix) | AES101 pass |
+| 2  | `capabilities_UserChecker.rs`                                                          | AES101 — uppercase characters violate snake_case        | AES101      |
+| 3  | `capabilities_user.rs`                                                                 | AES101 — only 2 words (min is 3)                        | AES101      |
+| 4  | `capabilities-user-checker.rs`                                                         | AES101 — hyphens instead of underscores                 | AES101      |
+| 5  | `main.rs`                                                                              | No violation (barrel/entry exception)                    | exception   |
+| 6  | `mod.rs`                                                                               | No violation (barrel/entry exception)                    | exception   |
+| 7  | `capabilities_user_checker.rs` (taxonomy layer, suffix `_checker` not in allowed list) | AES102 — suffix mismatch                                | AES102      |
+| 8  | `taxonomy_user_vo.rs` (taxonomy layer, suffix `_vo` allowed)                           | No violation                                             | AES102 pass |
+| 9  | `agent_helper.rs` (agent layer, `_helper` is forbidden)                                | AES102 — forbidden suffix                               | AES102      |
+| 10 | `custom_foo_bar.rs` (prefix `custom` not in the layer prefix list)                     | AES000 — unknown prefix                                 | AES000      |
+| 11 | `capabilities_user_checker.rs` (min_words configured to 5)                             | AES101 — only 3 words, need 5                           | AES101      |
+| 12 | `root_container.rs` (root layer, suffix `_container` allowed)                          | No violation                                             | AES102 pass |
 
 ## Assumptions & Constraints
 

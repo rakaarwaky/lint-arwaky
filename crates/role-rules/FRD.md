@@ -8,12 +8,12 @@ The role-rules crate enforces architectural boundaries and responsibility rules 
 
 ```mermaid
 flowchart TD
-    A["Surface CLI"] -->|input| B["Contract Agent"]
-    B --> C["Orchestrator"]
-    C --> D["FilesystemAggregate"]
+    A["Surface"] -->|input| B["contract_role_aggregate"]
+    B --> C["agent_role_orchestrator"]
+    C --> D["contract
+            filesystem_aggregate"]
     D --> E["FileWalker"]
-    E --> F["Vec FilePath"]
-    F --> G["For each file"]
+    E --> G["Vec FilePath"]
     G --> H1["AES401 Taxonomy"]
     G --> H2["AES402 Contract"]
     G --> H3["AES403 Capabilities"]
@@ -26,7 +26,7 @@ flowchart TD
     H4 --> I
     H5 --> I
     H6 --> I
-    I --> J["LintResultList"]
+    I --> J["LintResult"]
     J --> C
     C --> B
     B -->|output| A
@@ -36,8 +36,7 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```
-### FR-001: File Collection and Classification
+```### FR-001: File Collection and Classification
 
 - **Description**: Walk the target directory, collect source files, and classify each by its filename prefix to determine its AES layer.
 - **Input**: Target file path (directory or single file) and architecture configuration.

@@ -8,12 +8,12 @@ The import-rules crate enforces correct structural boundaries and unidirectional
 
 ```mermaid
 flowchart TD
-    A["Surface CLI"] -->|input| B["Contract Agent"]
-    B --> C["Orchestrator"]
-    C --> D["FilesystemAggregate"]
+    A["Surface"] -->|input| B["contract_import_aggregate"]
+    B --> C["agent_import_orchestrator"]
+    C --> D["contract
+            filesystem_aggregate"]
     D --> E["FileWalker"]
-    E --> F["Vec FilePath"]
-    F --> G["For each file"]
+    E --> G["Vec FilePath"]
     G --> H1["AES201 Forbidden"]
     G --> H2["AES202 Mandatory"]
     G --> H3["AES203 Unused"]
@@ -24,7 +24,7 @@ flowchart TD
     H3 --> I
     H4 --> I
     H5 --> I
-    I --> J["LintResultList"]
+    I --> J["LintResult"]
     J --> C
     C --> B
     B -->|output| A
@@ -35,7 +35,6 @@ flowchart TD
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-
 ### FR-001: Layer Dependency Violation (AES201)
 
 - **Description**: Restricts imports based on the layer hierarchy. Lower layers must never import higher layers. Uses AST-based import extraction and barrel file resolution for accurate layer detection.

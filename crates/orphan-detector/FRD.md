@@ -8,12 +8,12 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 
 ```mermaid
 flowchart TD
-    A["Surface CLI"] -->|input| B["Contract Agent"]
-    B --> C["Orchestrator"]
-    C --> D["FilesystemAggregate"]
-    D --> E["FileWalker + FileCache + ASTParser + Graph"]
-    E --> F["Vec FilePath + Imports + Graph"]
-    F --> G["For each layer"]
+    A["Surface"] -->|input| B["contract_orphan_aggregate"]
+    B --> C["agent_orphan_orchestrator"]
+    C --> D["contract
+            filesystem_aggregate"]
+    D --> E["FileWalker + ASTParser + Graph"]
+    E --> G["Vec FilePath + Imports + Graph"]
     G --> H1["AES501 Taxonomy"]
     G --> H2["AES502 Contract"]
     G --> H3["AES503 Capabilities"]
@@ -26,7 +26,7 @@ flowchart TD
     H4 --> I
     H5 --> I
     H6 --> I
-    I --> J["LintResultList"]
+    I --> J["LintResult"]
     J --> C
     C --> B
     B -->|output| A
@@ -36,8 +36,7 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```
-### FR-001: AST-Based Import Graph Construction
+```### FR-001: AST-Based Import Graph Construction
 
 - **Description**: Build a bidirectional import graph from all workspace source files using AST parsing for Rust and structured parsing for Python/TypeScript, resolving cross-crate and cross-language imports.
 - **Input**: List of source file paths (`Vec<String>`) and workspace root directory.
