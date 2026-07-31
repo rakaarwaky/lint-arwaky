@@ -7,10 +7,12 @@ use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_file_cache::FileCache;
 use crate::capabilities_file_walker::FileWalker;
 use crate::capabilities_import_extractor;
+use crate::utility_io;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::*;
 use shared::filesystem::taxonomy_filesystem_vo::*;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::RwLock;
 use std::time::Instant;
 
@@ -28,6 +30,8 @@ pub struct FilesystemOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ───────────────
 
 impl IFilesystemAggregate for FilesystemOrchestrator {
+    // ── Scan (full pipeline) ─────────────────────────────────
+
     fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult {
         let extensions = Language::extensions();
         let mut timing = ScanTiming::default();
@@ -94,6 +98,31 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         }
     }
 
+    fn timing(&self) -> &ScanTiming {
+        static DEFAULT_TIMING: ScanTiming = ScanTiming {
+            walk_ms: 0,
+            cache_ms: 0,
+            parse_ms: 0,
+            extract_ms: 0,
+            graph_ms: 0,
+            total_ms: 0,
+        };
+        &DEFAULT_TIMING
+    }
+
+    // ── File Reading ──────────────────────────────────────────
+
+    fn read_file(&self, path: &Path) -> Option<String> {
+        // Check cache first, then fall back to disk
+        self.cache
+            .get(&path.to_path_buf())
+            .or_else(|| utility_io::read_file(path).ok())
+    }
+
+    fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String> {
+        utility_io::read_lintable_file(path)
+    }
+
     fn get_file_content(&self, path: &PathBuf) -> Option<String> {
         self.cache.get(path)
     }
@@ -102,9 +131,24 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         self.cache.contains(path)
     }
 
+    // ── File Discovery ────────────────────────────────────────
+
+    fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry> {
+        let extensions = Language::extensions();
+        self.walker.walk(&root.to_path_buf(), ignored, extensions)
+    }
+
+    fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath> {
+        let mut files = Vec::new();
+        utility_io::walk_source_files(root, &mut files, ignored);
+        files
+    }
+
     fn all_files(&self) -> &[FileEntry] {
         &[]
     }
+
+    // ── Import/Dependency ─────────────────────────────────────
 
     fn imports_for(&self, _path: &PathBuf) -> Vec<ImportEntry> {
         Vec::new()
@@ -126,16 +170,24 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         self.graph.read().unwrap().orphan_files()
     }
 
-    fn timing(&self) -> &ScanTiming {
-        static DEFAULT_TIMING: ScanTiming = ScanTiming {
-            walk_ms: 0,
-            cache_ms: 0,
-            parse_ms: 0,
-            extract_ms: 0,
-            graph_ms: 0,
-            total_ms: 0,
-        };
-        &DEFAULT_TIMING
+    // ── Path Queries ──────────────────────────────────────────
+
+    fn path_exists(&self, path: &Path) -> bool {
+        utility_io::path_exists(path)
+    }
+
+    fn is_dir(&self, path: &Path) -> bool {
+        utility_io::is_dir(path)
+    }
+
+    fn should_ignore(&self, path: &str, ignored: &[String]) -> bool {
+        utility_io::is_path_ignored(path, ignored)
+    }
+
+    // ── Workspace ─────────────────────────────────────────────
+
+    fn workspace_root(&self, start: &str) -> Option<PathBuf> {
+        utility_io::find_workspace_root(start)
     }
 }
 

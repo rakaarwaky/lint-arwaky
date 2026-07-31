@@ -63,11 +63,10 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     return Vec::new();
                 }
 
-                let content =
-                    match filesystem::utility_io::read_file(&f_str).ok() {
-                        Some(c) => c,
-                        None => return Vec::new(),
-                    };
+                let content = match filesystem::utility_io::read_file(&f_str).ok() {
+                    Some(c) => c,
+                    None => return Vec::new(),
+                };
                 let file_content = FileContentVO::new(content);
                 let import_lines: Vec<(LineNumber, LineContentVO)> =
                     utility_import_resolver::parse_import_lines_helper(

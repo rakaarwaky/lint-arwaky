@@ -16,15 +16,14 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content = filesystem::utility_io::read_file(path.value())
-            .map_err(|_| {
-                ImportError::module_resolution(
-                    path.value().to_string(),
-                    Some(ErrorMessage::new(
-                        "File could not be read for unused import analysis",
-                    )),
-                )
-            })?;
+        let content = filesystem::utility_io::read_file(path.value()).map_err(|_| {
+            ImportError::module_resolution(
+                path.value().to_string(),
+                Some(ErrorMessage::new(
+                    "File could not be read for unused import analysis",
+                )),
+            )
+        })?;
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases(path.value(), &content);
         let exported_symbols =
@@ -114,7 +113,8 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             }
             let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;
-            let ast_line = utility_import_resolver::find_import_line_number(content, alias_str).value() as usize;
+            let ast_line = utility_import_resolver::find_import_line_number(content, alias_str)
+                .value() as usize;
             violations.push(LintResult::new_arch(
                 file,
                 ast_line,

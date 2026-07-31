@@ -170,12 +170,11 @@ fn build_graph_context_subfolder_expands_to_workspace_files() {
     let subfolder_str = subfolder.to_string_lossy().to_string();
 
     // Get a few files from the subfolder
-    let files: Vec<String> =
-        filesystem::utility_io::scan_directory_recursive(&subfolder)
-            .into_iter()
-            .filter(|f| f.ends_with(".rs"))
-            .take(5)
-            .collect();
+    let files: Vec<String> = filesystem::utility_io::scan_directory_recursive(&subfolder)
+        .into_iter()
+        .filter(|f| f.ends_with(".rs"))
+        .take(5)
+        .collect();
 
     if files.is_empty() {
         return;

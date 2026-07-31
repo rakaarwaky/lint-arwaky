@@ -16,8 +16,8 @@ use shared::project_setup::SetupManagementAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
 
-use shared::tui::utility_tui_io as tui_io;
 use shared::filesystem::IFilesystemAggregate;
+use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
@@ -309,12 +309,13 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
-        let source_files =
-            match filesystem::utility_io::scan_directory_with_ignored(&dir_path, ignored.values())
-            {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
+        let source_files = match filesystem::utility_io::scan_directory_with_ignored(
+            &dir_path,
+            ignored.values(),
+        ) {
+            Ok(list) => list.values,
+            Err(_) => Vec::new(),
+        };
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
         let entries =

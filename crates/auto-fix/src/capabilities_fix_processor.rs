@@ -198,8 +198,7 @@ impl LintFixProcessor {
         if !filesystem::utility_io::path_exists(file_path) {
             return false;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok()
-        {
+        let content = match filesystem::utility_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return false,
         };
@@ -263,8 +262,7 @@ impl LintFixProcessor {
         if !filesystem::utility_io::path_exists(file_path) {
             return false;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok()
-        {
+        let content = match filesystem::utility_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return false,
         };
@@ -309,8 +307,7 @@ impl LintFixProcessor {
         if !filesystem::utility_io::path_exists(file_path) {
             return 0;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok()
-        {
+        let content = match filesystem::utility_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return 0,
         };

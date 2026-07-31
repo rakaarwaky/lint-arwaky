@@ -104,10 +104,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
-                && !filesystem::utility_io::is_path_ignored(
-                    &root_path.to_string_lossy(),
-                    ignored,
-                )
+                && !filesystem::utility_io::is_path_ignored(&root_path.to_string_lossy(), ignored)
             {
                 all_files.push(root_dir.value().to_string());
             }

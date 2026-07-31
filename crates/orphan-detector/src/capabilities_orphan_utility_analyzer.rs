@@ -86,8 +86,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            let other_content =
-                filesystem::utility_io::read_file_safe(other_file);
+            let other_content = filesystem::utility_io::read_file_safe(other_file);
             if other_content.is_empty() {
                 continue;
             }

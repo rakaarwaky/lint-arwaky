@@ -167,9 +167,7 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match filesystem::utility_io::read_lintable_file(
-                    &cargo_path.to_string_lossy(),
-                ) {
+                match filesystem::utility_io::read_lintable_file(&cargo_path.to_string_lossy()) {
                     Ok(Some(cargo_content)) => {
                         self.deps
                             .bypass_checker
