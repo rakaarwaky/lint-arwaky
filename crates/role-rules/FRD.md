@@ -11,8 +11,10 @@ flowchart TD
     A["Surface"] -->|input| B["role_aggregate"]
     B --> C["role_orchestrator"]
     C --> D["filesystem_aggregate"]
-    D --> E["file_walker + file_cache"]
-    E --> G["Vec FilePath + content"]
+    D --> E1["file_walker"]
+    D --> E2["file_cache"]
+    E1 --> G["Vec FilePath"]
+    E2 --> G
     G --> H1["taxonomy_checker"]
     G --> H2["contract_checker"]
     G --> H3["capabilities_checker"]

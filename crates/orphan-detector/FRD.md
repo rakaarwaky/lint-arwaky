@@ -11,10 +11,16 @@ flowchart TD
     A["Surface"] -->|input| B["orphan_aggregate"]
     B --> C["orphan_orchestrator"]
     C --> D["filesystem_aggregate"]
-    D --> E["file_walker + file_cache"]
-    D --> F["ast_parser + import_extractor + dependency_graph"]
-    E --> G["Vec FilePath + content + imports + graph"]
-    F --> G
+    D --> E1["file_walker"]
+    D --> E2["file_cache"]
+    D --> F1["ast_parser"]
+    D --> F2["import_extractor"]
+    D --> F3["dependency_graph"]
+    E1 --> G["Vec FilePath"]
+    E2 --> G
+    F1 --> G
+    F2 --> G
+    F3 --> G
     G --> H1["taxonomy_analyzer"]
     G --> H2["contract_analyzer"]
     G --> H3["capabilities_analyzer"]
