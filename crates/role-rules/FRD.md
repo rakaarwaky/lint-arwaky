@@ -13,14 +13,20 @@ flowchart TD
     C --> D["filesystem_aggregate"]
     D --> E1["file_walker"]
     D --> E2["file_cache"]
-    E1 --> G["Vec FilePath"]
-    E2 --> G
-    G --> H1["taxonomy_checker"]
-    G --> H2["contract_checker"]
-    G --> H3["capabilities_checker"]
-    G --> H4["utility_checker"]
-    G --> H5["agent_checker"]
-    G --> H6["surface_checker"]
+    E1 --> G1["Vec FileEntry"]
+    E2 --> G2["DashMap Path → String"]
+    G1 --> H1["taxonomy_checker"]
+    G2 --> H1
+    G1 --> H2["contract_checker"]
+    G2 --> H2
+    G1 --> H3["capabilities_checker"]
+    G2 --> H3
+    G1 --> H4["utility_checker"]
+    G2 --> H4
+    G1 --> H5["agent_checker"]
+    G2 --> H5
+    G1 --> H6["surface_checker"]
+    G2 --> H6
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I

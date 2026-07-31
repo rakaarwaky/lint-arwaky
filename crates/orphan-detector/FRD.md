@@ -16,11 +16,16 @@ flowchart TD
     D --> F1["ast_parser"]
     D --> F2["import_extractor"]
     D --> F3["dependency_graph"]
-    E1 --> G["Vec FilePath"]
-    E2 --> G
-    F1 --> G
-    F2 --> G
-    F3 --> G
+    E1 --> G1["Vec FileEntry"]
+    E2 --> G2["DashMap Path → String"]
+    F1 --> G3["DashMap Path → Tree"]
+    F2 --> G4["Vec ImportEntry"]
+    F3 --> G5["DiGraph"]
+    G1 --> H1["taxonomy_analyzer"]
+    G2 --> H1
+    G3 --> H1
+    G4 --> H1
+    G5 --> H1
     G --> H1["taxonomy_analyzer"]
     G --> H2["contract_analyzer"]
     G --> H3["capabilities_analyzer"]
