@@ -309,6 +309,23 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
     entries
 }
 
+/// Scan directory with ignored paths filter (matches shared signature).
+/// Returns FilePathList of source files.
+pub fn scan_directory_with_ignored(
+    path: &shared::common::taxonomy_path_vo::DirectoryPath,
+    ignored_paths: &[String],
+) -> Result<
+    shared::common::taxonomy_paths_vo::FilePathList,
+    shared::common::taxonomy_filesystem_error::FileSystemError,
+> {
+    let dir = std::path::Path::new(&path.value);
+    if !dir.exists() || !dir.is_dir() {
+        return Ok(shared::common::taxonomy_paths_vo::FilePathList { values: vec![] });
+    }
+    let files = collect_all_source_files(dir, ignored_paths);
+    Ok(shared::common::taxonomy_paths_vo::FilePathList { values: files })
+}
+
 /// Recursively scan directory for files, returning vector of file paths.
 /// Skips hidden directories and common heavy dependency/build directories.
 pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
@@ -382,6 +399,25 @@ pub fn read_file_with_cache<P: AsRef<Path>>(path: P) -> String {
         return content.value().clone();
     }
     std::fs::read_to_string(path).unwrap_or_default()
+}
+
+/// Read a file for linting. Returns:
+/// - Ok(Some(content)) if file is readable and within size limit
+/// - Ok(None) if file exceeds size limit (graceful skip)
+/// - Err(message) if file is unreadable
+pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
+    // Fast path: check global cache first
+    if let Some(content) = FILE_CACHE.get(path) {
+        return Ok(Some(content.value().clone()));
+    }
+    // Slow path: direct I/O with size check
+    let meta = std::fs::metadata(path).map_err(|e| format!("{}: {}", path, e))?;
+    if meta.len() > MAX_LINT_FILE_BYTES {
+        return Ok(None);
+    }
+    std::fs::read_to_string(path)
+        .map(Some)
+        .map_err(|e| format!("{}: {}", path, e))
 }
 
 // ─── Path Helpers ───────────────────────────────────────────

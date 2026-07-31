@@ -167,7 +167,7 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match shared::code_analysis::utility_file_reader::read_lintable_file(
+                match filesystem::utility_io::read_lintable_file(
                     &cargo_path.to_string_lossy(),
                 ) {
                     Ok(Some(cargo_content)) => {
@@ -198,7 +198,7 @@ impl CodeAnalysisOrchestrator {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or_default();
-                let c = match shared::code_analysis::utility_file_reader::read_lintable_file(file) {
+                let c = match filesystem::utility_io::read_lintable_file(file) {
                     Ok(Some(content)) => content,
                     Ok(None) => {
                         v.push(LintResult::new_arch(

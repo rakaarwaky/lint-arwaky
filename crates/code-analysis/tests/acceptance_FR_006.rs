@@ -1,7 +1,8 @@
 // PURPOSE: Acceptance test for FR-006: File Read Error Diagnostics (DIAG_IO)
 // Emit diagnostic when file cannot be read or exceeds size limit.
 
-use shared::code_analysis::utility_file_reader::{MAX_LINT_FILE_BYTES, read_lintable_file};
+use filesystem::utility_io::{read_lintable_file};
+pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
 /// FR-006: Max file size is 2 MiB
 #[test]

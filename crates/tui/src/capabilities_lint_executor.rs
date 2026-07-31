@@ -153,7 +153,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     .as_ref()
                     .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
-                let source_files = match shared::common::utility_file_handler::scan_directory(
+                let source_files = match filesystem::utility_io::scan_directory_with_ignored(
                     &dir_path,
                     ignored.values(),
                 ) {
@@ -310,7 +310,7 @@ impl ILintExecutorProtocol for LintExecutor {
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
         let source_files =
-            match shared::common::utility_file_handler::scan_directory(&dir_path, ignored.values())
+            match filesystem::utility_io::scan_directory_with_ignored(&dir_path, ignored.values())
             {
                 Ok(list) => list.values,
                 Err(_) => Vec::new(),

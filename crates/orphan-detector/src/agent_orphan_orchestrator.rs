@@ -96,7 +96,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             if let Ok(dir_path) =
                 shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
                 && let Ok(list) =
-                    shared::common::utility_file_handler::scan_directory(&dir_path, ignored)
+                    filesystem::utility_io::scan_directory_with_ignored(&dir_path, ignored)
             {
                 all_files = list.values.iter().map(|f| f.value.clone()).collect();
             }
