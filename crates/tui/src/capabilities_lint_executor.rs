@@ -47,6 +47,28 @@ pub struct LintExecutor {
 
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
+        // Populate file cache for faster reads
+        let root = shared::common::utility_file_handler::find_workspace_root(path)
+            .unwrap_or_else(|| std::path::PathBuf::from(path));
+        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(
+            root.to_string_lossy().to_string(),
+        )
+        .unwrap_or_default();
+        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
+            .unwrap_or_default();
+        let ignored = self
+            .config_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(&root_fp))
+            .unwrap_or_default();
+        if let Ok(file_list) = shared::common::utility_file_handler::scan_directory(
+            &dir_path,
+            ignored.values(),
+        ) {
+            let file_strs: Vec<String> = file_list.values.iter().map(|f| f.value.clone()).collect();
+            shared::code_analysis::utility_file_reader::populate_file_cache(&file_strs);
+        }
+
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
@@ -881,87 +903,138 @@ impl LintExecutor {
         self.run_legacy_scan(path)
     }
 
-    /// Legacy inline pipeline — kept as fallback only. All callers should use analysis_pipeline.
+    /// Parallel scan — runs all 6 linters concurrently via thread::scope.
     fn run_legacy_scan(&self, path: &str) -> LintExecutionResult {
-        let mut all_results = Vec::new();
+        let path_string = path.to_string();
 
-        // 1. AES code analysis
+        // Pre-read all source files into cache (read once, use everywhere)
+        let scan_root = shared::common::utility_file_handler::find_workspace_root(&path_string)
+            .unwrap_or_else(|| std::path::PathBuf::from(&path_string));
+        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(
+            scan_root.to_string_lossy().to_string(),
+        )
+        .unwrap_or_default();
+        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
+            .unwrap_or_default();
+        let ignored = self
+            .config_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(&root_fp))
+            .unwrap_or_default();
+        if let Ok(file_list) = shared::common::utility_file_handler::scan_directory(
+            &dir_path,
+            ignored.values(),
+        ) {
+            let file_strs: Vec<String> = file_list.values.iter().map(|f| f.value.clone()).collect();
+            shared::code_analysis::utility_file_reader::populate_file_cache(&file_strs);
+        }
+
+        // Pre-compute shared data before spawning threads
         let aes_fp =
-            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
-        let aes_results = self.code_analysis.run_code_analysis(&aes_fp);
-        all_results.extend(aes_results.values);
+            shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
+                .unwrap_or_default();
+        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
+            .unwrap_or_default();
+        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path_string.clone())
+            .unwrap_or_default();
+        let ignored = self
+            .config_orchestrator
+            .as_ref()
+            .map(|o| o.ignored_paths(&root_fp))
+            .unwrap_or_default();
+        let source_files = shared::common::utility_file_handler::scan_directory(
+            &dir_path,
+            ignored.values(),
+        )
+        .map(|list| list.values)
+        .unwrap_or_default();
+        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
 
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => {
-                return LintExecutionResult::failure(format!("Failed to create runtime: {}", e));
-            }
-        };
+        // Clone Arcs for thread ownership
+        let code_analysis = self.code_analysis.clone();
+        let naming = self.naming_orchestrator.clone();
+        let import = self.import_orchestrator.clone();
+        let external_lint = self.external_lint.clone();
+        let role = self.role_orchestrator.clone();
+        let orphan_agg = self.orphan_aggregate.clone();
 
-        // 2. Naming rules audit (AES101-102)
-        if let Some(ref naming) = self.naming_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let naming_results = rt.block_on(naming.run_audit(&path_obj)).unwrap_or_default();
-            all_results.extend(naming_results);
-        }
+        // Clone path_string for each thread
+        let path_string_n = path_string.clone();
+        let path_string_i = path_string.clone();
+        let path_string_e = path_string.clone();
+        let path_string_r = path_string.clone();
 
-        // 3. Import rules audit (AES201-205, cycles)
-        if let Some(ref import) = self.import_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let import_results = rt.block_on(import.run_audit(&path_obj)).unwrap_or_default();
-            all_results.extend(import_results);
-        }
+        std::thread::scope(|s| {
+            // 1. AES code analysis
+            let h1 = s.spawn(move || {
+                code_analysis.run_code_analysis(&aes_fp).values
+            });
 
-        // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
-        if let Some(ref external_lint) = self.external_lint {
-            let fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let ext_results = rt.block_on(external_lint.scan_all(&fp));
-            all_results.extend(ext_results.values);
-        }
+            // 2. Naming rules audit (AES101-102)
+            let h2 = s.spawn(move || {
+                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
+                naming.map(|n| {
+                    let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_n.clone())
+                        .unwrap_or_default();
+                    rt.block_on(n.run_audit(&p)).unwrap_or_default()
+                }).unwrap_or_default()
+            });
 
-        // 5. Role rules audit (AES401-406)
-        if let Some(ref role) = self.role_orchestrator {
-            let path_obj = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let role_results = rt.block_on(role.run_audit(&path_obj));
-            all_results.extend(role_results);
-        }
+            // 3. Import rules audit (AES201-205, cycles)
+            let h3 = s.spawn(move || {
+                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
+                import.map(|i| {
+                    let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_i.clone())
+                        .unwrap_or_default();
+                    rt.block_on(i.run_audit(&p)).unwrap_or_default()
+                }).unwrap_or_default()
+            });
 
-        // 6. Orphan detection (AES501-506)
-        if let Some(ref orphan_agg) = self.orphan_aggregate {
-            let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-                .unwrap_or_default();
-            let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path.to_string())
-                .unwrap_or_default();
-            let ignored = self
-                .config_orchestrator
-                .as_ref()
-                .map(|o| o.ignored_paths(&root_fp))
-                .unwrap_or_default();
-            let source_files = match shared::common::utility_file_handler::scan_directory(
-                &dir_path,
-                ignored.values(),
-            ) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
-            let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-            if !file_strs.is_empty() {
+            // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
+            let h4 = s.spawn(move || {
+                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
+                external_lint.map(|e| {
+                    let fp = shared::common::taxonomy_path_vo::FilePath::new(path_string_e.clone())
+                        .unwrap_or_default();
+                    rt.block_on(e.scan_all(&fp)).values
+                }).unwrap_or_default()
+            });
+
+            // 5. Role rules audit (AES401-406)
+            let h5 = s.spawn(move || {
+                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
+                role.map(|r| {
+                    let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_r.clone())
+                        .unwrap_or_default();
+                    rt.block_on(r.run_audit(&p))
+                }).unwrap_or_default()
+            });
+
+            // 6. Orphan detection (AES501-506)
+            let h6 = s.spawn(move || {
+                if file_strs.is_empty() {
+                    return Vec::new();
+                }
                 let files_vo =
                     shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
                         file_strs,
                     );
-                let orphan_results = orphan_agg.check_orphans(&files_vo, &root_fp);
-                all_results.extend(orphan_results);
-            }
-        }
+                orphan_agg.map(|o| o.check_orphans(&files_vo, &root_fp)).unwrap_or_default()
+            });
 
-        let count = all_results.len();
-        let results = LintResultList::new(all_results);
-        let output = self.format_results(&results);
-        LintExecutionResult::success(output, count)
+            // Collect all results
+            let mut all_results = Vec::new();
+            all_results.extend(h1.join().unwrap_or_default());
+            all_results.extend(h2.join().unwrap_or_default());
+            all_results.extend(h3.join().unwrap_or_default());
+            all_results.extend(h4.join().unwrap_or_default());
+            all_results.extend(h5.join().unwrap_or_default());
+            all_results.extend(h6.join().unwrap_or_default());
+
+            let count = all_results.len();
+            let results = LintResultList::new(all_results);
+            let output = self.format_results(&results);
+            LintExecutionResult::success(output, count)
+        })
     }
 }

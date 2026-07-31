@@ -1,0 +1,43 @@
+[package]
+name = "filesystem-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Centralized file I/O, AST parsing, and dependency graph construction for lint-arwaky."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# File walking (gitignore-aware, parallel)
+ignore = "0.4"
+
+# AST parsing
+tree-sitter = "0.25"
+tree-sitter-rust = "0.23"
+tree-sitter-python = "0.23"
+tree-sitter-typescript = "0.23"
+tree-sitter-javascript = "0.23"
+
+# Parallel processing
+rayon = "1.10"
+
+# Dependency graph
+petgraph = "0.6"
+
+# Concurrent collections
+dashmap = "6"
+
+# Path handling
+camino = "1"
+
+# Error handling
+anyhow = "1"
+
+# Shared types
+shared.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
