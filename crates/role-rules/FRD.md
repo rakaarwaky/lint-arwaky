@@ -2,93 +2,41 @@
 
 ## System Overview
 
-The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility, Root) as defined by the 7-layer AES architecture. The file dispatcher classifies files by their filename prefix and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
+The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility, Root) as defined by the 7-layer AES architecture. The file dispatcher classifies files by their filename prefix and dispatches to 6 layer-specific role checkers (AES401-AES406). Root layer files are skipped (pure DI wiring only).
 
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface CLI"] -->|input| B["Contract Agent"]
+    B --> C["Orchestrator"]
+    C --> D["FilesystemAggregate"]
+    D --> E["FileWalker"]
+    E --> F["Vec FilePath"]
+    F --> G["For each file"]
+    G --> H1["AES401 Taxonomy"]
+    G --> H2["AES402 Contract"]
+    G --> H3["AES403 Capabilities"]
+    G --> H4["AES404 Utility"]
+    G --> H5["AES405 Agent"]
+    G --> H6["AES406 Surface"]
+    H1 --> I["Violations"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    H6 --> I
+    I --> J["LintResultList"]
+    J --> C
+    C --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#e8f5e9,stroke:#388e3c
+    style E fill:#e8f5e9,stroke:#388e3c
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ROLE-RULES ARCHITECTURE                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │                                                                │
-│    ▼                                                                │
-│  Contract Agent (IRoleRunnerAggregate)                              │
-│    │                                                                │
-│    ▼                                                                │
-│  Role Orchestrator (agent layer)                                    │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FileWalker → UtilityIO                                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    └──► Capabilities (NO I/O — business logic only)                 │
-│              │                                                      │
-│              ├──► Taxonomy Checker (AES401)                          │
-│              ├──► Contract Checker (AES402)                          │
-│              ├──► Capabilities Checker (AES403)                      │
-│              ├──► Utility Checker (AES404)                           │
-│              ├──► Agent Checker (AES405)                             │
-│              └──► Surface Checker (AES406)                           │
-│                                                                     │
-│  Config: architecture configuration → layer rules, exceptions       │
-│  Shared: language detection, file classification utilities          │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**Supported languages:** Rust (.rs), Python (.py), TypeScript (.ts/.tsx), JavaScript (.js/.jsx)
-
-## Business Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ROLE-RULES BUSINESS FLOW                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │  user input: target path                                       │
-│    ▼                                                                │
-│  Contract Agent (IRoleRunnerAggregate)                              │
-│    │  delegates to orchestrator                                     │
-│    ▼                                                                │
-│  Role Orchestrator                                                  │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator → FileWalker → UtilityIO             │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    ├──► For each file:                                              │
-│    │    ├──► IFilesystemAggregate.read_file(path)                   │
-│    │    │         │                                                 │
-│    │    │         ▼                                                 │
-│    │    │    String (file content)                                  │
-│    │    │                                                           │
-│    │    └──► Role Capabilities (AES401-AES406)                      │
-│    │              │  receives: path, content, language              │
-│    │              │  returns: Vec<Violation>                        │
-│    │              │  ⚠️  NO I/O — business logic only               │
-│    │              ▼                                                 │
-│    │         Vec<Violation>                                         │
-│    │                                                                │
-│    └──► Aggregate violations → LintResultList                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-
-Data Flow:
-  Input:   target path → config
-  Process: walk → read → classify → check → aggregate
-  Output:  LintResultList (violations per file)
-```
-
-## Functional Requirements
-
 ### FR-001: File Collection and Classification
 
 - **Description**: Walk the target directory, collect source files, and classify each by its filename prefix to determine its AES layer.

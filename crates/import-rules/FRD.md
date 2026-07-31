@@ -4,94 +4,37 @@
 
 The import-rules crate enforces correct structural boundaries and unidirectional dependency flows across the 7-layer AES architecture. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
 
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface CLI"] -->|input| B["Contract Agent"]
+    B --> C["Orchestrator"]
+    C --> D["FilesystemAggregate"]
+    D --> E["FileWalker"]
+    E --> F["Vec FilePath"]
+    F --> G["For each file"]
+    G --> H1["AES201 Forbidden"]
+    G --> H2["AES202 Mandatory"]
+    G --> H3["AES203 Unused"]
+    G --> H4["AES204 Dummy"]
+    G --> H5["AES205 Cycle"]
+    H1 --> I["Violations"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    I --> J["LintResultList"]
+    J --> C
+    C --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#e8f5e9,stroke:#388e3c
+    style E fill:#e8f5e9,stroke:#388e3c
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                  IMPORT-RULES ARCHITECTURE                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │                                                                │
-│    ▼                                                                │
-│  Contract Agent (IImportRunnerAggregate)                            │
-│    │                                                                │
-│    ▼                                                                │
-│  Import Orchestrator (agent layer)                                  │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FileWalker → UtilityIO                                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    └──► Import Checkers (NO I/O — business logic only)              │
-│              │                                                      │
-│              ├──► Forbidden Checker (AES201)                         │
-│              ├──► Mandatory Checker (AES202)                         │
-│              ├──► Unused Checker (AES203)                            │
-│              ├──► Dummy Checker (AES204)                             │
-│              └──► Cycle Analyzer (AES205)                            │
-│                                                                     │
-│  Config: architecture configuration → forbidden, mandatory rules    │
-│  Shared: AST parsing, import resolution, barrel file handling       │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**Scope:** All `.rs`, `.py`, `.ts`, `.js`, `.tsx`, `.jsx` source files in the workspace. Layer detection is filename-prefix-based (`taxonomy_*`, `contract_*`, etc.). Files without a recognized prefix are skipped by layer-dependent rules (AES201, AES202) but still checked by layer-agnostic rules (AES203, AES204).
-
-**Parsing Strategy:** Rust files are parsed via the `syn` crate (full AST). Python and TypeScript files use comment-aware structured line parsing. All parsing is centralized in the shared AST parser layer (`utility_orphan_rust_parser.rs`, `utility_orphan_python_parser.rs`, `utility_orphan_ts_parser.rs`, `utility_orphan_parser_dispatch.rs`) — no checker performs its own regex-based extraction.
-
----
-
-## Business Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                   IMPORT-RULES BUSINESS FLOW                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │  user input: target path                                       │
-│    ▼                                                                │
-│  Contract Agent (IImportRunnerAggregate)                            │
-│    │  delegates to orchestrator                                     │
-│    ▼                                                                │
-│  Import Orchestrator                                                │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator                                      │
-│    │      → FileWalker (walk, workspace-aware)                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    ├──► For each file:                                              │
-│    │    ├──► IFilesystemAggregate.read_file(path)                   │
-│    │    │         │                                                 │
-│    │    │         ▼                                                 │
-│    │    │    String (file content)                                  │
-│    │    │                                                           │
-│    │    └──► Import Checkers (AES201-AES205)                        │
-│    │              │  receives: path, content, config                │
-│    │              │  returns: Vec<Violation>                        │
-│    │              │  ⚠️  NO I/O — business logic only               │
-│    │              ▼                                                 │
-│    │         Vec<Violation>                                         │
-│    │                                                                │
-│    └──► Aggregate violations → LintResultList                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-
-Data Flow:
-  Input:   target path → config (forbidden, mandatory, rules)
-  Process: walk → read → parse imports → check rules → aggregate
-  Output:  LintResultList (import violations per file)
-```
-
-## Functional Requirements
 
 ### FR-001: Layer Dependency Violation (AES201)
 

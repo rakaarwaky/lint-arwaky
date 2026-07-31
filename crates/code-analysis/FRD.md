@@ -4,88 +4,37 @@
 
 The code-analysis crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, duplicate blocks, and bypass annotations while guaranteeing zero tolerance for warning/error suppressions.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                  CODE-ANALYSIS ARCHITECTURE                         │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │                                                                │
-│    ▼                                                                │
-│  Contract Agent (ICodeAnalysisAggregate)                            │
-│    │                                                                │
-│    ▼                                                                │
-│  Code Analysis Orchestrator (agent layer)                           │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FileWalker → UtilityIO                                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    └──► Code Analyzers (NO I/O — business logic only)               │
-│              │                                                      │
-│              ├──► Max Line Checker (AES301)                          │
-│              ├──► Min Line Checker (AES302)                          │
-│              ├──► Mandatory Def Checker (AES303)                     │
-│              ├──► Bypass Checker (AES304)                            │
-│              └──► Code Duplication Analyzer (AES305)                 │
-│                                                                     │
-│  Config: architecture configuration → thresholds, forbidden patterns│
-│  Shared: file reader (2MiB limit), bypass detector, language mapper │
-└─────────────────────────────────────────────────────────────────────┘
-```
+### Architecture & Data Flow
 
-## Business Flow
+```mermaid
+flowchart TD
+    A["Surface CLI"] -->|input| B["Contract Agent"]
+    B --> C["Orchestrator"]
+    C --> D["FilesystemAggregate"]
+    D --> E["FileWalker"]
+    E --> F["Vec FilePath"]
+    F --> G["For each file"]
+    G --> H1["AES301 Max Lines"]
+    G --> H2["AES302 Min Lines"]
+    G --> H3["AES303 Mandatory Def"]
+    G --> H4["AES304 Bypass"]
+    G --> H5["AES305 Duplication"]
+    H1 --> I["Violations"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    I --> J["LintResultList"]
+    J --> C
+    C --> B
+    B -->|output| A
 
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#e8f5e9,stroke:#388e3c
+    style E fill:#e8f5e9,stroke:#388e3c
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                  CODE-ANALYSIS BUSINESS FLOW                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │  user input: target path                                       │
-│    ▼                                                                │
-│  Contract Agent (ICodeAnalysisAggregate)                            │
-│    │  delegates to orchestrator                                     │
-│    ▼                                                                │
-│  Code Analysis Orchestrator                                         │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator                                      │
-│    │      → FileWalker (walk, workspace-aware)                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    ├──► For each file:                                              │
-│    │    ├──► IFilesystemAggregate.read_lintable_file(path)          │
-│    │    │         │                                                 │
-│    │    │         ▼                                                 │
-│    │    │    Option<String> (content, 2MiB limit)                   │
-│    │    │                                                           │
-│    │    └──► Code Analyzers (AES301-AES305)                         │
-│    │              │  receives: path, content, config                │
-│    │              │  returns: Vec<Violation>                        │
-│    │              │  ⚠️  NO I/O — business logic only               │
-│    │              ▼                                                 │
-│    │         Vec<Violation>                                         │
-│    │                                                                │
-│    └──► Aggregate violations → LintResultList                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-
-Data Flow:
-  Input:   target path → config (thresholds, patterns)
-  Process: walk → read (with size limit) → analyze → aggregate
-  Output:  LintResultList (code quality violations per file)
-```
-
-## Functional Requirements
 
 ### FR-001: Maximum File Line Count (AES301)
 

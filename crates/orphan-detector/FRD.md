@@ -2,107 +2,41 @@
 
 ## System Overview
 
-The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned. The orchestrator dispatches to 6 layer-specific analyzers (taxonomy, contract, capabilities, utility, agent, surfaces) and produces lint violations.
+The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned.
 
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface CLI"] -->|input| B["Contract Agent"]
+    B --> C["Orchestrator"]
+    C --> D["FilesystemAggregate"]
+    D --> E["FileWalker + FileCache + ASTParser + Graph"]
+    E --> F["Vec FilePath + Imports + Graph"]
+    F --> G["For each layer"]
+    G --> H1["AES501 Taxonomy"]
+    G --> H2["AES502 Contract"]
+    G --> H3["AES503 Capabilities"]
+    G --> H4["AES504 Utility"]
+    G --> H5["AES505 Agent"]
+    G --> H6["AES506 Surface"]
+    H1 --> I["Violations"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    H6 --> I
+    I --> J["LintResultList"]
+    J --> C
+    C --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#e8f5e9,stroke:#388e3c
+    style E fill:#e8f5e9,stroke:#388e3c
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                  ORPHAN-DETECTOR ARCHITECTURE                       │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │                                                                │
-│    ▼                                                                │
-│  Contract Agent (IOrphanAggregate)                                  │
-│    │                                                                │
-│    ▼                                                                │
-│  Orphan Orchestrator (agent layer)                                  │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_files(root, ignored)          │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator                                      │
-│    │      → FileWalker (walk)                                       │
-│    │      → FileCache (DashMap)                                     │
-│    │      → ASTParser (tree-sitter)                                 │
-│    │      → ImportExtractor (use/import/require)                    │
-│    │      → DependencyGraph (petgraph)                              │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemResult { files, cache, imports, graph }           │
-│    │                                                                │
-│    └──► Layer Analyzers (NO I/O — business logic only)              │
-│              │                                                      │
-│              ├──► Taxonomy Analyzer (AES501)                         │
-│              ├──► Contract Analyzer (AES502)                         │
-│              ├──► Capabilities Analyzer (AES503)                     │
-│              ├──► Utility Analyzer (AES504)                          │
-│              ├──► Agent Analyzer (AES505)                            │
-│              └──► Surface Analyzer (AES506)                          │
-│                                                                     │
-│  Config: architecture configuration → exceptions, rules             │
-│  Shared: AST parsing, graph analysis, reachability tracing          │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-**Scope:** All `.rs`, `.py`, `.ts`, `.js` source files in the workspace. Naming convention validation is handled by the naming rules crate — orphan-detector assumes naming is already correct and focuses solely on reachability.
-
-**Parsing Strategy:** Rust files are parsed via the `syn` crate (full AST). Python and TypeScript files use comment-aware structured line parsing. All parsing is centralized in `utility_orphan_ast_parser.rs` — no analyzer performs its own regex-based extraction.
-
----
-
-## Business Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                  ORPHAN-DETECTOR BUSINESS FLOW                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │  user input: target path                                       │
-│    ▼                                                                │
-│  Contract Agent (IOrphanAggregate)                                  │
-│    │  delegates to orchestrator                                     │
-│    ▼                                                                │
-│  Orphan Orchestrator                                                │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_files(root, ignored)          │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator                                      │
-│    │      → FileWalker (walk)                                       │
-│    │      → FileCache (DashMap)                                     │
-│    │      → ASTParser (tree-sitter)                                 │
-│    │      → ImportExtractor (use/import/require)                    │
-│    │      → DependencyGraph (petgraph)                              │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemResult { files, cache, imports, graph }           │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.read_file(path)                        │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    String (file content)                                       │
-│    │                                                                │
-│    ├──► For each layer (taxonomy, contract, capabilities, ...):     │
-│    │    └──► Layer Analyzer                                         │
-│    │              │  receives: path, content, graph context         │
-│    │              │  returns: OrphanIndicatorResult                 │
-│    │              │  ⚠️  NO I/O — business logic only               │
-│    │              ▼                                                 │
-│    │         Vec<Violation>                                         │
-│    │                                                                │
-│    └──► Aggregate violations → LintResultList                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-
-Data Flow:
-  Input:   target path → config
-  Process: walk → parse → extract imports → build graph → trace → detect
-  Output:  LintResultList (orphan violations per file)
-```
-
-## Functional Requirements
-
 ### FR-001: AST-Based Import Graph Construction
 
 - **Description**: Build a bidirectional import graph from all workspace source files using AST parsing for Rust and structured parsing for Python/TypeScript, resolving cross-crate and cross-language imports.

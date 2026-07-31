@@ -4,87 +4,39 @@
 
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture. It validates that files and identifiers conform to structural and semantic naming patterns, preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    NAMING-RULES ARCHITECTURE                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │                                                                │
-│    ▼                                                                │
-│  Contract Agent (INamingRunnerAggregate)                            │
-│    │                                                                │
-│    ▼                                                                │
-│  Naming Orchestrator (agent layer)                                  │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FileWalker → UtilityIO                                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    └──► Capabilities (NO I/O — business logic only)                 │
-│              │                                                      │
-│              ├──► Naming Convention Checker (AES101)                 │
-│              │    - snake_case regex                                 │
-│              │    - min 3 words                                     │
-│              │    - unknown prefix detection                        │
-│              │                                                      │
-│              └──► Suffix/Prefix Checker (AES102)                    │
-│                   - allowed/forbidden suffix per layer              │
-│                   - strict suffix policy enforcement                │
-│                   - unknown suffix detection                        │
-│                                                                     │
-│  Config: architecture configuration → layer definitions, naming     │
-│  Shared: layer detection, stem/suffix extraction utilities          │
-└─────────────────────────────────────────────────────────────────────┘
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface CLI"] -->|input| B["Contract Agent"]
+    B --> C["Orchestrator"]
+    C --> D["FilesystemAggregate"]
+    D --> E["FileWalker"]
+    E --> F["Vec FilePath"]
+    F --> G["For each file"]
+    G --> H1["AES101 Convention"]
+    G --> H2["AES102 Suffix"]
+    H1 --> I["Violations"]
+    H2 --> I
+    I --> J["LintResultList"]
+    J --> C
+    C --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#e8f5e9,stroke:#388e3c
+    style E fill:#e8f5e9,stroke:#388e3c
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
 
-## Business Flow
+**Key Rules:**
+- **AES101**: snake_case regex, min 3 words, unknown prefix detection
+- **AES102**: allowed/forbidden suffix per layer, strict suffix policy
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                   NAMING-RULES BUSINESS FLOW                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Surface CLI                                                        │
-│    │  user input: target path                                       │
-│    ▼                                                                │
-│  Contract Agent (INamingRunnerAggregate)                            │
-│    │  delegates to orchestrator                                     │
-│    ▼                                                                │
-│  Naming Orchestrator                                                │
-│    │                                                                │
-│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    FilesystemOrchestrator                                      │
-│    │      → FileWalker (walk, workspace-aware)                      │
-│    │         │                                                      │
-│    │         ▼                                                      │
-│    │    Vec<FilePath> (all source files)                            │
-│    │                                                                │
-│    ├──► For each file:                                              │
-│    │    ├──► Extract filename stem, prefix, suffix                  │
-│    │    │                                                           │
-│    │    └──► Naming Capabilities                                    │
-│    │              │  receives: path, stem, prefix, suffix           │
-│    │              │  returns: Vec<Violation>                        │
-│    │              │  ⚠️  NO I/O — business logic only               │
-│    │              ▼                                                 │
-│    │         Vec<Violation>                                         │
-│    │                                                                │
-│    └──► Aggregate violations → LintResultList                      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+**Config:** architecture configuration → layer definitions, naming rules
+**Shared:** layer detection, stem/suffix extraction utilities
 
-Data Flow:
-  Input:   target path → config (naming rules, layer defs)
-  Process: walk → extract stem → check convention → check suffix
-  Output:  LintResultList (naming violations per file)
-```
 
 ## Functional Requirements
 
