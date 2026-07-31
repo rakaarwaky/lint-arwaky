@@ -21,11 +21,12 @@ Currently, rule crates (orphan-detector, import-rules, code-analysis, role-rules
 Surface CLI → Contract Agent → Rule Orchestrator → IFilesystemAggregate → FilesystemOrchestrator
                                          │                                        │
                                          ▼                                        ▼
-                                Rule Capabilities                          Filesystem Capabilities
-                              (business logic ONLY)                       (walk, parse, extract, graph)
+                                Rule Capabilities                          4 Filesystem Capabilities
+                              (business logic ONLY)                       (file_walker, ast_parser,
+                                                                           import_extractor, dependency_graph)
                                          │                                        │
                                          ▼                                        ▼
-                                    LintResult                            Filesystem Utility IO
+                                    LintResult                         utility_filesystem_io (cache, IO)
 ```
 
 ### Key Principles:
@@ -98,9 +99,9 @@ Create shared types for passing data from orchestrator to capabilities:
 
 /// Data bundle passed from orchestrator to capabilities.
 /// Capabilities use this instead of calling filesystem directly.
+/// Note: file_cache is a global static (utility), not passed via DTO.
 pub struct FilesystemContext<'a> {
     pub files: &'a [FileEntry],
-    pub file_cache: &'a DashMap<PathBuf, String>,
     pub imports: &'a [ImportEntry],
     pub graph: DependencyGraphSnapshot<'a>,
 }
@@ -256,31 +257,61 @@ Step 9: Verify 0 violations + full test pass
 
 ## 8. Aggregate Contract Changes
 
-### 8.1 Existing Methods (no change needed)
+### 8.1 Architecture Decision
+
+**4 Capabilities** (no FileCache — it's a utility):
+- `file_walker` — discover files
+- `ast_parser` — parse ASTs
+- `import_extractor` — extract imports
+- `dependency_graph` — build graph
+
+**FileCache** is a global static utility in `utility_filesystem_io`:
+- `cache_populate(files)` — populate cache
+- `cache_get(path)` — get cached content
+- `cache_contains(path)` — check if cached
+- `cache_memory_bytes()` — memory usage
+- `cache_clear()` — clear cache
+
+### 8.2 Aggregate Methods (IFilesystemAggregate)
 
 ```rust
+// Core pipeline
 fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
+fn timing(&self) -> &ScanTiming;
+
+// File Reading (via cache utility)
 fn read_file(&self, path: &Path) -> Option<String>;
 fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String>;
-fn get_file_content(&self, path: &PathBuf) -> Option<String>;
-fn has_file(&self, path: &PathBuf) -> bool;
+
+// File Discovery
 fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry>;
 fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath>;
 fn all_files(&self) -> &[FileEntry];
+
+// Import/Dependency
+fn imports_for(&self, path: &PathBuf) -> Vec<ImportEntry>;
+fn all_imports(&self) -> &[ImportEntry];
+fn depends_on(&self, from: &PathBuf, to: &PathBuf) -> bool;
+fn cycles(&self) -> Vec<Vec<PathBuf>>;
+fn orphan_files(&self) -> Vec<PathBuf>;
+
+// Path Queries
 fn path_exists(&self, path: &Path) -> bool;
 fn is_dir(&self, path: &Path) -> bool;
 fn should_ignore(&self, path: &str, ignored: &[String]) -> bool;
+
+// Workspace
 fn workspace_root(&self, start: &str) -> Option<PathBuf>;
 ```
 
-### 8.2 New Methods Needed
+### 8.3 Protocol Traits (contract_filesystem_protocol.rs)
 
 ```rust
-/// Read file content, returning empty string on error (safe version).
-fn read_file_safe(&self, path: &Path) -> String;
-
-/// List directory entries as (name, path, is_dir) tuples.
-fn list_directory(&self, path: &Path) -> Vec<(String, String, bool)>;
+// 4 capability protocols (no IFileCacheProtocol)
+pub trait IFileWalkerProtocol: Send + Sync { ... }
+pub trait IASTParserProtocol: Send + Sync { ... }
+pub trait IImportExtractorProtocol: Send + Sync { ... }
+pub trait IDependencyGraphProtocol: Send + Sync { ... }
 ```
 
 ## 9. Signature Patterns
@@ -368,18 +399,26 @@ fn test_orphan_detection() {
 - [ ] No circular dependencies
 - [ ] Performance benchmark shows 0 regression
 
-## 12. Estimated Effort
+## 12. Progress & Estimated Effort
 
+### Completed
+- [x] Filesystem crate: 4 capabilities + 1 agent + utility
+- [x] Aggregate contract: IFilesystemAggregate with 18 methods
+- [x] FileCache → global static utility (no struct, no impl)
+- [x] IFileCacheProtocol removed from contract
+- [x] FRD updated for all 5 rule crates
+- [x] Mermaid flowcharts show correct architecture
+
+### Remaining
 | Phase | Files | Complexity | Est. Time |
 |-------|-------|-----------|-----------|
-| DTOs | 2 | Low | 30 min |
-| orphan-detector | 6 | Medium | 2 hours |
-| import-rules | 5 | Low | 1 hour |
-| code-analysis | 1 | Low | 15 min |
-| role-rules | 2 | Low | 30 min |
-| naming-rules | 1 | Low | 15 min |
+| orphan-detector migration | 6 | Medium | 2 hours |
+| import-rules migration | 5 | Low | 1 hour |
+| code-analysis migration | 1 | Low | 15 min |
+| role-rules migration | 2 | Low | 30 min |
+| naming-rules migration | 1 | Low | 15 min |
 | Tests | 5+ | Medium | 1 hour |
-| **Total** | **22** | | **~5 hours** |
+| **Remaining** | **20** | | **~5 hours** |
 
 ## 13. Performance Comparison
 
