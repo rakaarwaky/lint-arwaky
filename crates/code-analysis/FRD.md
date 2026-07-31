@@ -15,13 +15,9 @@ flowchart TD
     E1 --> G1["Vec FileEntry"]
     G1 --> H1["max_line_checker"]
     G1 --> H2["min_line_checker"]
-    G2 --> H2
     G1 --> H3["mandatory_def_checker"]
-    G2 --> H3
     G1 --> H4["bypass_checker"]
-    G2 --> H4
     G1 --> H5["duplication_analyzer"]
-    G2 --> H5
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I

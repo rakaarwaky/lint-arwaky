@@ -15,20 +15,28 @@ flowchart TD
     D --> F1["ast_parser"]
     D --> F2["import_extractor"]
     D --> F3["dependency_graph"]
+    F1 --> F2
     E1 --> G1["Vec FileEntry"]
-    F1 --> G2["DashMap Path → Tree"]
-    F2 --> G3["Vec ImportEntry"]
-    F3 --> G4["DiGraph"]
+    F2 --> G2["Vec ImportEntry"]
+    F3 --> G3["DiGraph"]
     G1 --> H1["taxonomy_analyzer"]
+    G1 --> H2["contract_analyzer"]
+    G1 --> H3["capabilities_analyzer"]
+    G1 --> H4["utility_analyzer"]
+    G1 --> H5["agent_analyzer"]
+    G1 --> H6["surface_analyzer"]
     G2 --> H1
+    G2 --> H2
+    G2 --> H3
+    G2 --> H4
+    G2 --> H5
+    G2 --> H6
     G3 --> H1
-    G4 --> H1
-    G --> H1["taxonomy_analyzer"]
-    G --> H2["contract_analyzer"]
-    G --> H3["capabilities_analyzer"]
-    G --> H4["utility_analyzer"]
-    G --> H5["agent_analyzer"]
-    G --> H6["surface_analyzer"]
+    G3 --> H2
+    G3 --> H3
+    G3 --> H4
+    G3 --> H5
+    G3 --> H6
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -42,7 +50,7 @@ flowchart TD
 
     style A fill:#e1f5fe,stroke:#0288d1
     style D fill:#e8f5e9,stroke:#388e3c
-    style E fill:#e8f5e9,stroke:#388e3c
+    style E1 fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```

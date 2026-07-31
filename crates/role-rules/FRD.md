@@ -15,15 +15,10 @@ flowchart TD
     E1 --> G1["Vec FileEntry"]
     G1 --> H1["taxonomy_checker"]
     G1 --> H2["contract_checker"]
-    G2 --> H2
     G1 --> H3["capabilities_checker"]
-    G2 --> H3
     G1 --> H4["utility_checker"]
-    G2 --> H4
     G1 --> H5["agent_checker"]
-    G2 --> H5
     G1 --> H6["surface_checker"]
-    G2 --> H6
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I

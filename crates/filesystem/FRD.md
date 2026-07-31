@@ -7,7 +7,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │                    Filesystem Service                                │
-│  (capabilities layer — walk, parse, graph, cache)                   │
+│  (capabilities layer — walk, parse, graph, Extract)                  │
 ├──────────────┬──────────────┬──────────────┬────────────────────────┤
 │ FileWalker   │ FileParser   │ ImportExtractor│ DependencyGraph     │
 │ (ignore)     │ (tree-sitter)│ (tree-sitter) │ (petgraph+dashmap)  │
@@ -40,24 +40,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Permission denied: log warning, skip file, continue walk
 - **Error Handling**: Non-fatal — skip inaccessible files, return partial results
 
-### FR-002: Capabilties File Content Cache
-
-- **Description**: Read all discovered files into memory once. Subsequent reads serve from cache with zero I/O.
-- **Input**: `Vec<FileEntry>` from FR-001
-- **Output**: `FileCache` — `DashMap<PathBuf, String>`
-- **Business Rules**:
-  - Populates cache in parallel via `rayon::par_iter`
-  - Only reads files within size limit (2 MiB)
-  - Cache is immutable after population (no mutation after scan start)
-  - Thread-safe reads via `DashMap::get()`
-  - Memory budget: configurable max total bytes (default 512 MiB)
-- **Edge Cases**:
-  - File modified between walk and read: use read timestamp, skip if stale
-  - File deleted between walk and read: skip silently
-  - Cache full: stop populating, log warning, serve partial cache
-- **Error Handling**: Non-fatal — unreadable files excluded from cache
-
-### FR-003: Capabilties AST Parsing (tree-sitter)
+### FR-002: Capabilties AST Parsing (tree-sitter)
 
 - **Description**: Parse cached file contents into ASTs using tree-sitter. Parallel parsing via rayon.
 - **Input**: `FileCache` from FR-002
@@ -77,7 +60,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Tree-sitter grammar not available: fall back to regex-based extraction
 - **Error Handling**: Non-fatal — parse errors produce partial AST, don't block scan
 
-### FR-004: Capabilties Import/Dependency Extraction
+### FR-003: Capabilties Import/Dependency Extraction
 
 - **Description**: Extract import statements from ASTs. Normalize to absolute module paths.
 - **Input**: `ASTCache` from FR-003, language per file
@@ -95,7 +78,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Star imports (`use foo::*`): mark as wildcard, don't resolve individual items
 - **Error Handling**: Non-fatal — unresolvable imports logged, excluded from graph
 
-### FR-005: Capabilties Dependency Graph Construction
+### FR-004: Capabilties Dependency Graph Construction
 
 - **Description**: Build a directed graph of file-to-file dependencies from extracted imports.
 - **Input**: `Vec<ImportEntry>` from FR-004
@@ -116,7 +99,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Duplicate imports: single edge, deduplicated
 - **Error Handling**: Non-fatal — broken imports create unresolved edges
 
-### FR-006: Agents Filesystem Orchestrator
+### FR5-006: Agents Filesystem Orchestrator
 
 - **Description**: Single entry point that orchestrates FR-001 through FR-005. Returns a `FilesystemResult` containing everything rule crates need.
 - **Input**: Scan root path, config (ignored paths, extensions)
