@@ -4,11 +4,10 @@
 use shared::filesystem::{FileEntry, ImportEntry, Language};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::Arc;
 
 /// Dependency graph — directed graph of file-to-file import relationships.
 pub struct DependencyGraph {
-    graph: Arc<petgraph::graph::DiGraph<FileNode, ImportEdge>>,
+    graph: petgraph::graph::DiGraph<FileNode, ImportEdge>,
     /// Map from file path to node index.
     node_map: HashMap<PathBuf, petgraph::graph::NodeIndex>,
 }
@@ -32,7 +31,7 @@ use shared::filesystem::ImportType;
 impl DependencyGraph {
     pub fn new() -> Self {
         Self {
-            graph: Arc::new(petgraph::graph::DiGraph::new()),
+            graph: petgraph::graph::DiGraph::new(),
             node_map: HashMap::new(),
         }
     }
@@ -102,7 +101,7 @@ impl DependencyGraph {
             }
         }
 
-        self.graph = Arc::new(graph);
+        self.graph = graph;
         self.node_map = node_map;
     }
 
@@ -112,7 +111,7 @@ impl DependencyGraph {
             Some(idx) => *idx,
             None => return Vec::new(),
         };
-        petgraph::algo::neighbors(&self.graph, idx, petgraph::Direction::Incoming)
+        self.graph.neighbors_directed(idx, petgraph::Direction::Incoming)
             .map(|n| self.graph[n].path.clone())
             .collect()
     }
@@ -123,7 +122,7 @@ impl DependencyGraph {
             Some(idx) => *idx,
             None => return Vec::new(),
         };
-        petgraph::algo::neighbors(&self.graph, idx, petgraph::Direction::Outgoing)
+        self.graph.neighbors_directed(idx, petgraph::Direction::Outgoing)
             .map(|n| self.graph[n].path.clone())
             .collect()
     }

@@ -1,6 +1,10 @@
 // filesystem crate — centralized file I/O, AST parsing, and dependency graph
-// Taxonomy and contract types live in shared::filesystem
 
+pub mod capabilities_filesystem_service;
 pub mod utility_ast_parser;
+pub mod utility_dependency_graph;
 pub mod utility_file_cache;
 pub mod utility_file_walker;
+pub mod utility_import_extractor;
+
+pub use capabilities_filesystem_service::FilesystemService;

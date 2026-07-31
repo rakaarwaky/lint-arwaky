@@ -205,7 +205,7 @@ fn extract_string_literal(node: Node, content: &str) -> Option<String> {
 
 // ─── Generic helpers ───────────────────────────────────────
 
-fn text_of(node: Node, content: &str) -> &str {
+fn text_of<'a>(node: Node<'a>, content: &'a str) -> &'a str {
     &content[node.byte_range()]
 }
 

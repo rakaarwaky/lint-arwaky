@@ -5391,6 +5391,7 @@ dependencies = [
  "crossterm",
  "external-lint-lint-arwaky",
  "file-watch-lint-arwaky",
+ "filesystem-lint-arwaky",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
