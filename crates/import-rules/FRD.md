@@ -15,16 +15,20 @@ flowchart TD
     D --> F1["ast_parser"]
     D --> F2["import_extractor"]
     D --> F3["dependency_graph"]
+    F1 --> F2
     E1 --> G1["Vec FileEntry"]
-    F1 --> G2["DashMap Path → Tree"]
-    F2 --> G3["Vec ImportEntry"]
-    F3 --> G4["DiGraph"]
+    F2 --> G2["Vec ImportEntry"]
+    F3 --> G3["DiGraph"]
     G1 --> H1["forbidden_checker"]
     G1 --> H2["mandatory_checker"]
     G1 --> H3["unused_checker"]
     G1 --> H4["dummy_checker"]
-    G3 --> H5["cycle_analyzer"]
-    G4 --> H5
+    G2 --> H1
+    G2 --> H2
+    G2 --> H3
+    G2 --> H4
+    G2 --> H5["cycle_analyzer"]
+    G3 --> H5
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
