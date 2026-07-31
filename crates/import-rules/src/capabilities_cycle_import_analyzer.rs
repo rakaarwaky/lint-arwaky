@@ -1,16 +1,22 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use async_trait::async_trait;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 use shared::cli_commands::LintResult;
+use shared::common::taxonomy_definition_vo::LayerMapVO;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_name_vo::SymbolName;
+use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Severity};
 
-use shared::common::utility_layer_detector;
 use shared::config_system::ArchitectureConfig;
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_cycle_detector;
 use shared::import_rules::utility_import_module_parser;
-use shared::import_rules::{AesImportViolation, DependencyEdge, ICycleImportProtocol, ImportError};
-
-use shared::common::{LayerMapVO, LayerNameVO, LintMessage, SymbolName};
 
 use std::collections::HashMap;
 
@@ -79,9 +85,8 @@ impl DependencyCycleAnalyzer {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
-        let file_results: Vec<ScannedFileEdges> = files
-            .par_iter()
-            .filter_map(|file| {
+        let file_results: Vec<ScannedFileEdges> =
+            ParallelIterator::filter_map(IntoParallelRefIterator::par_iter(files), |file| {
                 let file_fp = FilePath::new(file.clone()).ok()?;
                 let basename = file_fp.basename();
                 if let Some(rule) = aes205_rule {

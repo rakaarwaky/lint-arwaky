@@ -10,7 +10,7 @@ The following issues were detected by `lint-arwaky-cli scan`:
 Lint Arwaky v1.11.0 — Scan Report
 Target: /home/raka/mcp-arwaky/lint-arwaky/crates/orphan-detector
 Total: 0 violations
-Tip: Scan a specific file for detailed violations:
+Tip: Scan specific files to get detailed violation messages:
   lint-arwaky-cli scan <file-path>
 ```
 
@@ -1014,11 +1014,13 @@ impl ArchOrphanAnalyzer {
         // When scanning modules/cli/, root_cli_main_entry.py in modules/ is still used as an
         // entry point, so surface files imported by it are not falsely flagged as orphans.
         let all_files = &context.all_workspace_files;
+
         let entry_points_vo = OrphanFileListVO::new(all_files.clone());
         let entry_points = self
             .deps
             .resolver
             .identify_entry_points(std::slice::from_ref(&entry_points_vo), &[configured_vo]);
+
         // Compute top_root early so alive_result can use absolute paths (matching
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)
@@ -1112,6 +1114,20 @@ impl ArchOrphanAnalyzer {
             return None;
         }
 
+        // Check if the corresponding AES rule is disabled in config.rules
+        let code = match layer_str.to_lowercase() {
+            s if s.contains(LAYER_TAXONOMY) => "AES501",
+            s if s.contains(LAYER_CONTRACT) => "AES502",
+            s if s.contains(LAYER_CAPABILITIES) => "AES503",
+            s if s.contains(LAYER_UTILITY) => "AES504",
+            s if s.contains(LAYER_AGENT) => "AES505",
+            s if s.contains(LAYER_SURFACES) => "AES506",
+            _ => return None,
+        };
+        if self.is_rule_disabled(code) {
+            return None;
+        }
+
         let layer_vo = LayerNameVO::new(&layer_str);
         let res = self._evaluate_layer(
             &abs_f_str,
@@ -1122,15 +1138,6 @@ impl ArchOrphanAnalyzer {
             top_root_str,
         );
         if res.is_orphan {
-            let code = match layer_str.to_lowercase() {
-                s if s.contains(LAYER_TAXONOMY) => "AES501",
-                s if s.contains(LAYER_CONTRACT) => "AES502",
-                s if s.contains(LAYER_CAPABILITIES) => "AES503",
-                s if s.contains(LAYER_UTILITY) => "AES504",
-                s if s.contains(LAYER_AGENT) => "AES505",
-                s if s.contains(LAYER_SURFACES) => "AES506",
-                _ => return None,
-            };
             return Some(self._make_result(f, &res.reason, res.severity, code));
         }
         None
@@ -1286,6 +1293,17 @@ impl ArchOrphanAnalyzer {
         entry_points.sort();
         entry_points.dedup();
         entry_points
+    }
+
+    /// Check if a specific AES rule code is disabled in the config.
+    /// Maps AES501-AES506 to their corresponding rules and checks enabled flag.
+    pub fn is_rule_disabled(&self, code: &str) -> bool {
+        self.config
+            .rules
+            .iter()
+            .find(|r| r.name.value.as_str() == code)
+            .map(|r| !r.enabled.value)
+            .unwrap_or(false)
     }
 }
 ```
@@ -1675,6 +1693,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         // Build search_files: combine scan-directory files with all workspace .rs files (cached).
         let search_files = self.cached_search_files(root_dir, all_files);
 
+        // Check 0: If any trait is re-exported via barrel files (__init__.py, mod.rs, index.ts),
+        // the contract is used as public API and should NOT be flagged as orphan.
+        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files) {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
         // Check 1: contracts not implemented by expected layer.
         // For each trait, check if it's implemented by the target layer.
         let unimplemented = Self::find_unimplemented_traits(&trait_names, search_files.as_slice());
@@ -1783,7 +1807,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     AesOrphanViolation::ContractOrphan {
                         suffix: suffix.clone(),
                         trait_name: trait_names.join(", "),
-                        target_layer: "surface/container",
+                        target_layer: "surface",
                         reason: Some(
                             format!(
                                 "Contract aggregate '{}' not called by any surface or container.",
@@ -1821,6 +1845,29 @@ impl ContractOrphanAnalyzer {
     fn content_contains_word(text: &str, word: &str) -> bool {
         text.split(|c: char| !c.is_alphanumeric() && c != '_')
             .any(|w| w == word)
+    }
+
+    /// Check if any trait name is re-exported via barrel files (__init__.py, mod.rs, index.ts).
+    /// Barrel re-exports indicate the contract is used as public API.
+    fn is_trait_re_exported_in_barrel(trait_names: &[String], search_files: &[String]) -> bool {
+        for cf in search_files {
+            let cb = file_basename(cf);
+
+            // Match barrel files: __init__.py, mod.rs, index.ts, index.js
+            let is_barrel =
+                cb == "__init__.py" || cb == "mod.rs" || cb == "index.ts" || cb == "index.js";
+            if !is_barrel {
+                continue;
+            }
+
+            let barrel_content = orphan_io::read_file_safe(cf);
+            for trait_name in trait_names {
+                if Self::content_contains_word(&barrel_content, trait_name) {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
@@ -2492,9 +2539,15 @@ impl OrphanGraphResolver {
                 if let Some(colon) = dep.find("::") {
                     dep = dep[..colon].to_string();
                 }
-                let is_known_local = module_to_file.contains_key(&dep)
-                    || (workspace_modules.contains(&dep) && !full_import.contains('.'))
-                    || matches!(dep.as_str(), "crate" | "self" | "super");
+                // Exclude workspace directory names from known_local check.
+                // These bare keys come from __init__.py / mod.rs parent-dir mappings
+                // (e.g., modules/__init__.py → key "modules"), not actual importable modules.
+                let is_workspace_dir = matches!(dep.as_str(), "crates" | "packages" | "modules");
+                let is_known_local = !is_workspace_dir
+                    && (module_to_file.contains_key(&dep)
+                        || (workspace_modules.contains(&dep) && !full_import.contains('.'))
+                        || matches!(dep.as_str(), "crate" | "self" | "super"));
+
                 if !is_known_local {
                     // Python dotted absolute paths (e.g., modules.cli.src, modules.shared.src.asset)
                     if full_import.contains('.') {
@@ -2552,20 +2605,11 @@ impl OrphanGraphResolver {
                         }
 
                         // Step 3: Always resolve individual names from `from X import (Y, Z)`
-                        // Limit search to current line to avoid matching "import" in comments
-                        let line_end = content[cap_end..]
-                            .find('\n')
-                            .map(|p| cap_end + p)
-                            .unwrap_or(content.len());
-                        if let Some(import_pos) = content[cap_end..line_end].find("import") {
+                        // Search for "import" in remaining content (may span multiple lines)
+                        if let Some(import_pos) = content[cap_end..].find("import") {
                             let stmt_start = cap_end + import_pos + 6; // skip "import"
-                            let stmt_end = content[stmt_start..]
-                                .find('\n')
-                                .map(|p| stmt_start + p)
-                                .unwrap_or(content.len());
-                            let stmt_slice = &content[stmt_start..stmt_end];
 
-                            let names: Vec<&str> = if stmt_slice.contains('(') {
+                            let names: Vec<&str> = {
                                 // Multi-line: collect from rest of content until ')'
                                 let after_paren = &content[stmt_start..];
                                 if let Some(close) = after_paren.find(')') {
@@ -2579,18 +2623,22 @@ impl OrphanGraphResolver {
                                         })
                                         .collect()
                                 } else {
-                                    vec![]
+                                    // Single-line: `import Y, Z` (no paren, search to end of line)
+                                    let stmt_end = after_paren
+                                        .find('\n')
+                                        .map(|p| stmt_start + p)
+                                        .unwrap_or(content.len());
+                                    let stmt_slice = &content[stmt_start..stmt_end];
+                                    stmt_slice
+                                        .split(',')
+                                        .map(|s| s.trim())
+                                        .filter(|s| {
+                                            !s.is_empty()
+                                                && s.chars()
+                                                    .all(|c| c.is_alphanumeric() || c == '_')
+                                        })
+                                        .collect()
                                 }
-                            } else {
-                                // Single-line: `import Y, Z`
-                                stmt_slice
-                                    .split(',')
-                                    .map(|s| s.trim())
-                                    .filter(|s| {
-                                        !s.is_empty()
-                                            && s.chars().all(|c| c.is_alphanumeric() || c == '_')
-                                    })
-                                    .collect()
                             };
 
                             for name in names {
@@ -3038,6 +3086,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         }
 
         // Not BFS-reachable — determine severity by category
+        // Message formatting is handled by Display impl in taxonomy_violation_orphan_vo.rs
         let severity = match category {
             "smart" => Severity::HIGH,
             "utility" => Severity::MEDIUM,
@@ -3045,25 +3094,12 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             _ => Severity::MEDIUM,
         };
 
-        let where_hint = match category {
-            "smart" => "entry point or container",
-            "utility" => "smart surface (command, controller, page, router)",
-            "passive" => "smart or utility surface",
-            _ => "the appropriate importer",
-        };
-
         OrphanIndicatorResult::new(
             true,
             AesOrphanViolation::SurfaceOrphan {
                 category,
                 stem: stem.clone(),
-                reason: Some(
-                    format!(
-                        "{} surface '{}' is not imported by any {}.",
-                        category, stem, where_hint
-                    )
-                    .into(),
-                ),
+                reason: None, // Display impl generates WHY/FIX from category
             }
             .to_string(),
             severity,
@@ -3092,7 +3128,7 @@ impl SurfacesOrphanAnalyzer {
     /// Surface category
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" | "router" | "entry" => "smart",
+            "command" | "controller" | "page" | "router" => "smart",
             "hook" | "store" | "action" | "screen" => "utility",
             "component" | "view" | "layout" => "passive",
             _ => "unknown",
@@ -8555,20 +8591,69 @@ impl fmt::Display for AesOrphanViolation {
                 stem,
                 reason,
             } => {
-                let (where_hint, fix_hint) = match *category {
-                    "smart" => ("entry point or router", "an entry point (root_*_entry.rs, cli_*, mcp_*) or router file"),
-                    "utility" => ("smart surface", "a smart surface (command, controller, page)"),
-                    "passive" => ("smart or utility surface", "a smart surface (command, controller, page) or utility surface (hook, store, action, screen, router)"),
-                    _ => ("the appropriate importer", "an appropriate importer file"),
+                let (why_line, fix_line) = match *category {
+                    "smart" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the {} surface '{}' is not imported by any entry point or container such as root_*_entry.py/rs/ts.",
+                                category, stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' at the entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to utility surface (_hook/_store/_action/_screen) or passive (surface _component/_view/_layout) if it is in the wrong role.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    "utility" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the {} surface '{}' is not imported by any smart surface (command, controller, page, router).",
+                                category, stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' by a smart surface (command, controller, page, router) or an entry point. If this surface is dead code, delete the file and its module declaration. Consider moving it to passive (surface _component/_view/_layout) if it is in the wrong role.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    "passive" => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the passive surface '{}' is not imported by any smart or utility surface.",
+                                stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' by a smart or utility surface. If this surface is dead code, delete the file and its module declaration.",
+                            stem
+                        );
+                        (why, fix)
+                    }
+                    _ => {
+                        let why = match reason.as_ref() {
+                            Some(r) => r.to_string(),
+                            None => format!(
+                                "the unknown surface '{}' is not imported by any appropriate importer.",
+                                stem
+                            ),
+                        };
+                        let fix = format!(
+                            "Import '{}' in an appropriate importer file. If this surface is dead code, delete the file and its module declaration.",
+                            stem
+                        );
+                        (why, fix)
+                    }
                 };
-                let why = match reason.as_ref() {
-                    Some(r) => r.to_string(),
-                    None => format!(
-                        "{} surface '{}' is not imported by any {}.",
-                        category, stem, where_hint
-                    ),
-                };
-                write!(f, "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: Import '{}' in {}. If this surface is dead code, remove the file and its module declaration from lib.rs.", category, stem, why, stem, fix_hint)
+                write!(
+                    f,
+                    "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? {}\nFIX: {}",
+                    category, stem, why_line, fix_line
+                )
             }
         }
     }

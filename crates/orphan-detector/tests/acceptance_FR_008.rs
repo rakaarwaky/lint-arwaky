@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test — AES505 Agent Orphan Checker.
+// PURPOSE: Acceptance test — FR-008 Agent Orphan Checker (AES505).
 // Requirement: Agent orchestrator files must be called by surface layer files or binary entry points.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
@@ -8,7 +8,7 @@ use std::fs;
 
 /// AES505: Agent aggregate called by a container is NOT orphan.
 #[test]
-fn aes505_agent_called_by_container_not_orphan() {
+fn fr008_agent_called_by_container_not_orphan() {
     let a = AgentOrphanAnalyzer::new();
     let dir = tempfile::tempdir().unwrap();
 
@@ -42,7 +42,7 @@ fn aes505_agent_called_by_container_not_orphan() {
 
 /// AES505: Agent aggregate NOT called by any surface/container IS orphan.
 #[test]
-fn aes505_agent_not_called_is_orphan() {
+fn fr008_agent_not_called_is_orphan() {
     let a = AgentOrphanAnalyzer::new();
     let dir = tempfile::tempdir().unwrap();
 

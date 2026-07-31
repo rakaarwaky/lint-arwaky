@@ -99,7 +99,9 @@ use shared::common::{
 
 use shared::cli_commands::LintResult;
 
-pub struct SeverityChecker;
+pub struct SeverityChecker {
+    pub _proto: Option<Box<dyn IMandatoryImportProtocol>>,
+}
 
 impl IUnusedImportProtocol for SeverityChecker {
     fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {

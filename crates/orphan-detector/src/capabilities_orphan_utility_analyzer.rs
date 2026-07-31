@@ -1,17 +1,21 @@
+// PURPOSE: UtilityOrphanAnalyzer — IUtilityOrphanProtocol for orphan utility detection.
+// AST-based: uses inbound_links from AST graph + parser dispatch for import checking.
+
+use crate::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::utility_orphan_parser_dispatch;
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
-
-use shared::common::{FilePath, Severity};
-
 use shared::common::utility_layer_detector;
+use shared::common::{FilePath, Severity};
 use shared::orphan_detector::{AesOrphanViolation, IUtilityOrphanProtocol};
 
-// Layers that are valid consumers of utility files
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
 
 // ─── Block 1: Struct Definition ───────────────────────────
+
 pub struct UtilityOrphanAnalyzer {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
+
 impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     fn is_utility_orphan(
         &self,
@@ -21,7 +25,6 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
-
         let module_name = match std::path::Path::new(fp)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -35,41 +38,30 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         let mut consumer_importers: Vec<String> = Vec::new();
         let mut utility_importers: Vec<String> = Vec::new();
 
-        // Phase 1: Check import graph for consumer-layer importers
+        // Phase 1: Check AST-built import graph
         if let Some(importers) = inbound_links.get_importers(fp) {
-            let external_importers: Vec<&String> = importers
-                .iter()
-                .filter(|importer| *importer != fp)
-                .collect();
-
-            for importer in external_importers {
+            for importer in importers.iter().filter(|i| *i != fp) {
                 let filename = utility_layer_detector::extract_filename(importer);
                 let is_consumer = utility_layer_detector::detect_layer_from_prefix(filename)
                     .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
                     .unwrap_or(false);
-
                 let stem = std::path::Path::new(importer)
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown")
                     .to_string();
-
                 if is_consumer {
                     consumer_importers.push(stem);
                 } else {
                     utility_importers.push(stem);
                 }
             }
-
             if !consumer_importers.is_empty() {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
         }
 
-        // Phase 2: Fallback — token-based matching across all files
-        let tokens = shared::orphan_detector::utility_orphan_detector::import_tokens(fp);
-
-        // Pre-filter: only check files from consumer layers
+        // Phase 2: AST-based fallback — parse consumer files and check imports
         let consumer_files: Vec<&String> = all_files
             .iter()
             .filter(|other_file| {
@@ -89,31 +81,20 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                 continue;
             }
 
-            let imported = self.check_import_pattern(&other_content, &module_name)
-                || tokens.iter().any(|token| {
-                    shared::orphan_detector::utility_orphan_detector::contains_delimited(
-                        &other_content,
-                        token,
-                    )
-                });
-
-            if imported {
+            if Self::is_module_imported(other_file, &other_content, &module_name) {
                 let stem = std::path::Path::new(other_file)
                     .file_stem()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown")
                     .to_string();
-
                 consumer_importers.push(stem);
             }
         }
 
-        // If imported by consumer layers — not dead
         if !consumer_importers.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // If only imported by other utilities — dead code
         if !utility_importers.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
@@ -133,7 +114,6 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             );
         }
 
-        // Not imported by anyone — orphan
         OrphanIndicatorResult::new(
             true,
             AesOrphanViolation::UtilityOrphan {
@@ -153,6 +133,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
         Self::new()
@@ -164,88 +145,24 @@ impl UtilityOrphanAnalyzer {
         Self {}
     }
 
-    pub fn check_import_pattern(&self, content: &str, module_name: &str) -> bool {
-        // Check for Rust use statements with the module name anywhere in the path
-        // This handles:
-        // - `use utility_target`
-        // - `use utility_target::`
-        // - `use crate::utility_target`
-        // - `use shared::utility_target`
-        // - `use shared::code_analysis::utility_target` (nested paths)
-        // - `use crate::code_analysis::utility_target` (nested paths)
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if trimmed.starts_with("use ")
-                || trimmed.starts_with("pub use ")
-                || trimmed.starts_with("pub(crate) use ")
-            {
-                // Check if module_name appears as a path segment
-                if self.path_contains_module(trimmed, module_name) {
-                    return true;
-                }
-            }
+    /// Check if a module is imported using AST parser dispatch.
+    /// Replaces check_import_pattern (string matching) and import_tokens (regex).
+    pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
+        match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+            FileParseResultVO::Rust(result) => result.imports.iter().any(|imp| {
+                imp.segments
+                    .iter()
+                    .any(|seg| seg == module_name || seg.starts_with(&format!("{}_", module_name)))
+            }),
+            FileParseResultVO::Python(result) => result.imports.iter().any(|imp| {
+                imp.raw_path.contains(module_name)
+                    || imp.segments.iter().any(|seg| seg == module_name)
+            }),
+            FileParseResultVO::TypeScript(result) => result.imports.iter().any(|imp| {
+                imp.raw_path.contains(module_name)
+                    || imp.segments.iter().any(|seg| seg == module_name)
+            }),
+            FileParseResultVO::Unsupported => false,
         }
-
-        // Check for inline fully qualified calls: module_name::function()
-        // Use line-by-line check to avoid false positives (e.g., "io::" matching "std::io::")
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if self.path_contains_module(trimmed, module_name) {
-                return true;
-            }
-        }
-
-        // Check for grouped imports: use { module_name, ... }
-        if content.contains(&format!("::{{{}}}", module_name))
-            || content.contains(&format!("::{{{},", module_name))
-            || content.contains(&format!(", {}::", module_name))
-            || content.contains(&format!(", {}}}", module_name))
-        {
-            return true;
-        }
-
-        // Check for Python imports
-        if content.contains(&format!("import {}", module_name))
-            || content.contains(&format!("from {} import", module_name))
-        {
-            return true;
-        }
-
-        // Check for JavaScript/TypeScript imports
-        if content.contains(&format!("from '{}'", module_name))
-            || content.contains(&format!("from \"{}\"", module_name))
-            || content.contains(&format!("require('{}')", module_name))
-            || content.contains(&format!("require(\"{}\")", module_name))
-        {
-            return true;
-        }
-
-        false
-    }
-
-    /// Check if a use statement path contains the module name as a segment.
-    fn path_contains_module(&self, use_statement: &str, module_name: &str) -> bool {
-        // Extract the path part after "use " or "pub use " etc.
-        let path = if let Some(pos) = use_statement.find("use ") {
-            &use_statement[pos + 4..]
-        } else {
-            return false;
-        };
-
-        // Remove trailing semicolon and braces
-        let path = path.trim_end_matches(';').trim();
-
-        // Handle grouped imports: use path::{A, B, C}
-        let path = if let Some(pos) = path.find("::{") {
-            &path[..pos]
-        } else {
-            path
-        };
-
-        // Split by :: and check if any segment matches the module name or prefix
-        let segments: Vec<&str> = path.split("::").collect();
-        segments
-            .iter()
-            .any(|seg| *seg == module_name || seg.starts_with(&format!("{}_", module_name)))
     }
 }

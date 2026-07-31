@@ -1,4 +1,4 @@
-// PURPOSE: FileDefinitionMap, GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap — analysis value objects for code structure
+// PURPOSE: GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap — analysis value objects for code structure
 // Re-export LintResultList so code_analysis contracts stay within their own domain.
 pub use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -10,22 +10,10 @@ use std::collections::HashSet;
 pub type FilePathSet = HashSet<FilePath>;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct FileDefinitionMap {
-    pub mapping: std::collections::HashMap<String, Vec<String>>,
-}
-
-impl FileDefinitionMap {
-    pub fn new(value: std::collections::HashMap<String, Vec<String>>) -> Self {
-        Self { mapping: value }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct GraphAnalysisContext {
     pub import_graph: ImportGraph,
     pub inbound_links: InboundLinkMap,
     pub inheritance_map: InheritanceMap,
-    pub file_definitions: FileDefinitionMap,
     /// All workspace files used to build the graph — needed for entry point detection
     /// across modules (FR-001). When scanning modules/cli/, this includes root_cli_main_entry.py
     /// from modules/ so surface files imported by it are not falsely flagged as orphans.
@@ -199,14 +187,12 @@ impl GraphAnalysisContext {
         import_graph: ImportGraph,
         inbound_links: InboundLinkMap,
         inheritance_map: InheritanceMap,
-        file_definitions: FileDefinitionMap,
         all_workspace_files: Vec<String>,
     ) -> Self {
         Self {
             import_graph,
             inbound_links,
             inheritance_map,
-            file_definitions,
             all_workspace_files,
         }
     }

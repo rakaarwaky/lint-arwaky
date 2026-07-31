@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test — AES504 Utility Orphan Checker.
+// PURPOSE: Acceptance test — FR-007 Utility Orphan Checker (AES504).
 // Requirement: Utility files must be wired into root containers or imported by capabilities/agents.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
@@ -20,7 +20,7 @@ fn make_inbound(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {
 
 /// AES504: Utility imported by a capabilities file is NOT orphan.
 #[test]
-fn aes504_utility_imported_by_capabilities_not_orphan() {
+fn fr007_utility_imported_by_capabilities_not_orphan() {
     let a = UtilityOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/orphan-detector/utility_orphan.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();
@@ -42,7 +42,7 @@ fn aes504_utility_imported_by_capabilities_not_orphan() {
 
 /// AES504: Utility with zero importers IS orphan.
 #[test]
-fn aes504_utility_with_no_importers_is_orphan() {
+fn fr007_utility_with_no_importers_is_orphan() {
     let a = UtilityOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/orphan-detector/utility_dead.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();
@@ -58,7 +58,7 @@ fn aes504_utility_with_no_importers_is_orphan() {
 
 /// AES504: Utility imported ONLY by other utilities IS dead code.
 #[test]
-fn aes504_utility_only_imported_by_utilities_is_dead_code() {
+fn fr007_utility_only_imported_by_utilities_is_dead_code() {
     let a = UtilityOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/orphan-detector/utility_inner.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();

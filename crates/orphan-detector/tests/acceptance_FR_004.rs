@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test — AES501 Taxonomy Orphan Checker.
+// PURPOSE: Acceptance test — FR-004 Taxonomy Orphan Checker (AES501).
 // Requirement: Taxonomy layer files must be reachable from contracts, capabilities, or orchestrators.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
@@ -20,7 +20,7 @@ fn make_inbound(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {
 
 /// AES501: Taxonomy file imported by a contract is NOT orphan.
 #[test]
-fn aes501_taxonomy_imported_by_contract_not_orphan() {
+fn fr004_taxonomy_imported_by_contract_not_orphan() {
     let a = TaxonomyOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/common/taxonomy_path_vo.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();
@@ -37,7 +37,7 @@ fn aes501_taxonomy_imported_by_contract_not_orphan() {
 
 /// AES501: Taxonomy file with zero importers IS orphan.
 #[test]
-fn aes501_taxonomy_with_no_importers_is_orphan() {
+fn fr004_taxonomy_with_no_importers_is_orphan() {
     let a = TaxonomyOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/common/taxonomy_dead_vo.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();
@@ -52,7 +52,7 @@ fn aes501_taxonomy_with_no_importers_is_orphan() {
 
 /// AES501: Taxonomy file imported only by another taxonomy file IS orphan.
 #[test]
-fn aes501_taxonomy_imported_only_by_taxonomy_is_orphan() {
+fn fr004_taxonomy_imported_only_by_taxonomy_is_orphan() {
     let a = TaxonomyOrphanAnalyzer::new();
     let f = FilePath::new("shared/src/common/taxonomy_inner_vo.rs".to_string()).unwrap();
     let root = FilePath::new("shared".to_string()).unwrap();

@@ -1,4 +1,14 @@
-// PURPOSE: Module declarations for import-rules (5 capabilities + 5 protocols)
+//! # import-rules-lint-arwaky
+//!
+//! Enforces unidirectional dependency flow and structural boundary rules
+//! across the 7-layer AES architecture (AES201–AES205).
+//!
+//! - **AES201**: Forbidden layer imports (unidirectional flow compliance).
+//! - **AES202**: Mandatory layer imports (contract & aggregate enforcement).
+//! - **AES203**: Unused import detection.
+//! - **AES204**: Dummy/stub import & function detection.
+//! - **AES205**: Circular dependency analysis (3-color DFS).
+
 pub mod agent_import_orchestrator;
 pub mod capabilities_cycle_import_analyzer;
 pub mod capabilities_dummy_import_checker;

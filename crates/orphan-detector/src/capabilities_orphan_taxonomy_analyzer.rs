@@ -1,14 +1,11 @@
-// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection
+// PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection.
+// AST-based: uses inbound_links from AST-built graph. No regex fallback.
+
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
-
-use shared::common::{FilePath, Severity};
-
-use shared::orphan_detector::{AesOrphanViolation, ITaxonomyOrphanProtocol};
-
 use shared::common::LayerDefinition;
+use shared::common::{FilePath, Severity};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use std::collections::{HashMap, HashSet};
-use std::sync::OnceLock;
+use shared::orphan_detector::{AesOrphanViolation, ITaxonomyOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -25,29 +22,22 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
-
         let suffix = match stem.rfind('_') {
             Some(pos) => &stem[pos + 1..],
             None => "",
         };
-
         let is_utility_or_helper = matches!(suffix, "utility" | "helper");
-
         let category = if is_utility_or_helper {
             "utility"
         } else {
             "taxonomy"
         };
 
-        // Taxonomy orphan = no file from other layers imports it.
-        // Other layers: contract, capabilities, agent, utility, surface, root, main, entry, container
+        // AST-built graph captures ALL imports including crate:: self-imports.
+        // No has_crate_self_import fallback needed.
         let importers = match inbound_links.get_importers(f.value()) {
             Some(v) => v,
             None => {
-                // Fallback: graph resolver may not catch crate:: imports within same crate
-                if Self::has_crate_self_import(f.value()) {
-                    return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-                }
                 return OrphanIndicatorResult::new(
                     true,
                     AesOrphanViolation::TaxonomyOrphan {
@@ -67,29 +57,20 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        // If importers list is empty or only has mod.rs, also check for crate:: self-imports
-        // The graph resolver may not track all crate:: imports within the same crate
-        let has_only_mod_or_taxonomy = importers.iter().all(|importer| {
-            let b = importer.rsplit('/').next().unwrap_or(importer);
-            b == "mod.rs" || b.starts_with("taxonomy_")
-        });
-        if (importers.is_empty() || has_only_mod_or_taxonomy)
-            && Self::has_crate_self_import(f.value())
-        {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Check if any importer is from another layer or non-taxonomy file
+        // Check if any importer is from another layer (not taxonomy, not barrel)
         let has_other_layer_importer = importers.iter().any(|importer| {
             let b = importer.rsplit('/').next().unwrap_or(importer);
-            if b == "mod.rs" || b == "__init__.py" || b == "index.ts" || b == "index.js" {
+            // Barrel files don't count as real consumers
+            if matches!(b, "mod.rs" | "__init__.py" | "index.ts" | "index.js") {
                 return false;
             }
+            // Same-layer imports don't count
             !b.starts_with("taxonomy_")
         });
-        let is_orphan = !has_other_layer_importer;
 
-        if is_orphan {
+        if has_other_layer_importer {
+            OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        } else {
             OrphanIndicatorResult::new(
                 true,
                 AesOrphanViolation::TaxonomyOrphan {
@@ -106,13 +87,11 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 .to_string(),
                 Severity::LOW,
             )
-        } else {
-            OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
         }
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
+// ─── Block 3: Constructors ────────────────────────────────
 
 impl Default for TaxonomyOrphanAnalyzer {
     fn default() -> Self {
@@ -123,73 +102,5 @@ impl Default for TaxonomyOrphanAnalyzer {
 impl TaxonomyOrphanAnalyzer {
     pub fn new() -> Self {
         Self {}
-    }
-
-    /// Cached: check if any source file in the same crate imports this module.
-    /// Uses a global cache to avoid re-scanning files for each taxonomy file.
-    fn has_crate_self_import(file_path: &str) -> bool {
-        let stem = std::path::Path::new(file_path)
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
-        if stem.is_empty() {
-            return false;
-        }
-
-        // Find the crate's src/ directory
-        let file_path_obj = std::path::Path::new(file_path);
-        let src_dir = if let Some(parent) = file_path_obj.parent() {
-            let mut current = parent.to_path_buf();
-            loop {
-                if current.ends_with("src") {
-                    break;
-                }
-                if !current.pop() {
-                    return false;
-                }
-            }
-            current
-        } else {
-            return false;
-        };
-
-        // Use a static cache: maps (src_dir, stem) -> has_import
-        static CACHE: OnceLock<std::sync::Mutex<HashMap<(String, String), bool>>> = OnceLock::new();
-        let cache = CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
-        let key = (src_dir.to_string_lossy().to_string(), stem.to_string());
-
-        if let Ok(guard) = cache.lock() {
-            if let Some(&result) = guard.get(&key) {
-                return result;
-            }
-        }
-
-        // Cache miss: scan files and build a set of all content
-        let all_files =
-            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&src_dir);
-        let mut importers: HashSet<String> = HashSet::new();
-        for f in &all_files {
-            if f == file_path {
-                continue;
-            }
-            let path = std::path::PathBuf::from(f);
-            if path.extension().is_some_and(|e| {
-                let ext = e.to_str().unwrap_or("");
-                matches!(ext, "rs" | "py" | "ts" | "js")
-            }) {
-                let content = shared::orphan_detector::utility_orphan_io::read_file_safe(f);
-                if shared::orphan_detector::utility_orphan_detector::contains_delimited(
-                        &content, stem,
-                    ) {
-                    importers.insert(f.clone());
-                }
-            }
-        }
-
-        let result = !importers.is_empty();
-        if let Ok(mut guard) = cache.lock() {
-            guard.insert(key, result);
-        }
-        result
     }
 }

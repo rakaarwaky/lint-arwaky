@@ -74,13 +74,14 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if !self.config.enabled.value {
             return Vec::new();
         }
-        // build_orphan_graph_context already calls _expand_workspace_files internally,
-        // so we pass the original files directly to avoid redundant directory scanning.
-        let context = self.build_orphan_graph_context(files, root_dir);
-        // Re-expand for _check_orphans_inner which needs the full file list
+        // Expand once — reused by both graph construction and inner checking.
         let all_workspace_files = self._expand_workspace_files(files, root_dir);
-        let file_vo = OrphanFileListVO::new(all_workspace_files);
-        self._check_orphans_inner(files, root_dir, &context, &file_vo)
+        let full_files_vo = OrphanFileListVO::new(all_workspace_files);
+        let context = self
+            .deps
+            .resolver
+            .build_graph_context(std::slice::from_ref(&full_files_vo), root_dir.value());
+        self._check_orphans_inner(files, root_dir, &context, &full_files_vo)
     }
 
     fn scan_orphans(
@@ -372,6 +373,20 @@ impl ArchOrphanAnalyzer {
             return None;
         }
 
+        // Check if the corresponding AES rule is disabled in config.rules
+        let code = match layer_str.to_lowercase() {
+            s if s.contains(LAYER_TAXONOMY) => "AES501",
+            s if s.contains(LAYER_CONTRACT) => "AES502",
+            s if s.contains(LAYER_CAPABILITIES) => "AES503",
+            s if s.contains(LAYER_UTILITY) => "AES504",
+            s if s.contains(LAYER_AGENT) => "AES505",
+            s if s.contains(LAYER_SURFACES) => "AES506",
+            _ => return None,
+        };
+        if self.is_rule_disabled(code) {
+            return None;
+        }
+
         let layer_vo = LayerNameVO::new(&layer_str);
         let res = self._evaluate_layer(
             &abs_f_str,
@@ -382,15 +397,6 @@ impl ArchOrphanAnalyzer {
             top_root_str,
         );
         if res.is_orphan {
-            let code = match layer_str.to_lowercase() {
-                s if s.contains(LAYER_TAXONOMY) => "AES501",
-                s if s.contains(LAYER_CONTRACT) => "AES502",
-                s if s.contains(LAYER_CAPABILITIES) => "AES503",
-                s if s.contains(LAYER_UTILITY) => "AES504",
-                s if s.contains(LAYER_AGENT) => "AES505",
-                s if s.contains(LAYER_SURFACES) => "AES506",
-                _ => return None,
-            };
             return Some(self._make_result(f, &res.reason, res.severity, code));
         }
         None
@@ -452,6 +458,10 @@ impl ArchOrphanAnalyzer {
             || f.ends_with("\\index.ts")
             || f.ends_with("/index.js")
             || f.ends_with("\\index.js")
+            || f.ends_with("/index.tsx")
+            || f.ends_with("\\index.tsx")
+            || f.ends_with("/index.jsx")
+            || f.ends_with("\\index.jsx")
         {
             return OrphanIndicatorResult::new(false, String::new(), Severity::HIGH);
         }
@@ -481,7 +491,6 @@ impl ArchOrphanAnalyzer {
             return self.deps.contract_analyzer.is_contract_orphan(
                 &fp,
                 &root,
-                &context.file_definitions,
                 &context.inheritance_map,
                 all_files,
             );
@@ -531,6 +540,7 @@ impl ArchOrphanAnalyzer {
             "_entry.py".into(),
             "_entry.ts".into(),
             "_entry.js".into(),
+            "root_".into(),
             "main.rs".into(),
             "lib.rs".into(),
             "main.py".into(),
@@ -546,5 +556,16 @@ impl ArchOrphanAnalyzer {
         entry_points.sort();
         entry_points.dedup();
         entry_points
+    }
+
+    /// Check if a specific AES rule code is disabled in the config.
+    /// Maps AES501-AES506 to their corresponding rules and checks enabled flag.
+    pub fn is_rule_disabled(&self, code: &str) -> bool {
+        self.config
+            .rules
+            .iter()
+            .find(|r| r.name.value.as_str() == code)
+            .map(|r| !r.enabled.value)
+            .unwrap_or(false)
     }
 }

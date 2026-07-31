@@ -1,4 +1,4 @@
-// PURPOSE: Acceptance test — AES506 Surface Orphan Checker.
+// PURPOSE: Acceptance test — FR-009 Surface Orphan Checker (AES506).
 // Requirement: Surface layer files must be registered in the routing system or called from main entries.
 
 use orphan_detector_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
@@ -10,7 +10,7 @@ use std::fs;
 
 /// AES506: Surface reachable from entry point is NOT orphan.
 #[test]
-fn aes506_reachable_surface_not_orphan() {
+fn fr009_reachable_surface_not_orphan() {
     let a = SurfacesOrphanAnalyzer::new();
     let f = FilePath::new("src/surface_scan_command.rs".to_string()).unwrap();
     let root = FilePath::new("src".to_string()).unwrap();
@@ -25,7 +25,7 @@ fn aes506_reachable_surface_not_orphan() {
 
 /// AES506: Surface NOT reachable from any entry IS orphan.
 #[test]
-fn aes506_unreachable_surface_is_orphan() {
+fn fr009_unreachable_surface_is_orphan() {
     let a = SurfacesOrphanAnalyzer::new();
     let dir = tempfile::tempdir().unwrap();
     let surface = dir.path().join("surface_dead_command.rs");

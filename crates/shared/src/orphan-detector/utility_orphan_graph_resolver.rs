@@ -10,8 +10,7 @@ pub fn build_crate_module_index(
     for (crate_name, src_dir) in crate_src_dirs {
         let mut module_map: HashMap<String, String> = HashMap::new();
         let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
-        let all_files =
-            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&canonical_src);
+        let all_files = super::utility_orphan_io::scan_directory_recursive(&canonical_src);
         for path_str in all_files {
             if !path_str.ends_with(".rs")
                 && !path_str.ends_with(".py")
@@ -31,18 +30,15 @@ pub fn build_crate_module_index(
             if stem.is_empty() {
                 continue;
             }
-            let rel_path = path
-                .strip_prefix(&canonical_src)
-                .unwrap_or(path);
+            let rel_path = path.strip_prefix(&canonical_src).unwrap_or(path);
             let rel_str = rel_path.with_extension("").to_string_lossy().to_string();
-            let normalized_rel =
-                shared::orphan_detector::utility_orphan_detector::normalize_module_path(
-                    &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
-                );
+            let normalized_rel = super::utility_orphan_detector::normalize_module_path(
+                &rel_str.replace(std::path::MAIN_SEPARATOR, "/"),
+            );
             module_map.insert(normalized_rel, path_str.clone());
             module_map.insert(stem.clone(), path_str.clone());
             module_map.insert(
-                shared::orphan_detector::utility_orphan_detector::normalize_module_component(&stem),
+                super::utility_orphan_detector::normalize_module_component(&stem),
                 path_str.clone(),
             );
             if stem == "mod" || stem == "__init__" || stem == "index" {
@@ -50,18 +46,14 @@ pub fn build_crate_module_index(
                     let parent = parent_dir.to_string_lossy().to_string();
                     module_map.insert(parent.clone(), path_str.clone());
                     module_map.insert(
-                        shared::orphan_detector::utility_orphan_detector::normalize_module_component(
-                            &parent,
-                        ),
+                        super::utility_orphan_detector::normalize_module_component(&parent),
                         path_str.clone(),
                     );
                 }
             }
         }
         let normalized_name =
-            shared::orphan_detector::utility_orphan_detector::normalize_module_component(
-                crate_name,
-            );
+            super::utility_orphan_detector::normalize_module_component(crate_name);
         index.insert(crate_name.clone(), module_map.clone());
         index.insert(normalized_name, module_map);
     }
@@ -77,8 +69,7 @@ pub fn resolve_workspace_module(
 ) -> Option<String> {
     let map = index.get(crate_name)?;
     let seg_str = segments.join("/");
-    let normalized =
-        shared::orphan_detector::utility_orphan_detector::normalize_module_path(&seg_str);
+    let normalized = super::utility_orphan_detector::normalize_module_path(&seg_str);
     if let Some(path) = map.get(&normalized) {
         if path != current_file {
             return Some(path.clone());
@@ -86,8 +77,7 @@ pub fn resolve_workspace_module(
     }
     for i in (1..segments.len()).rev() {
         let candidate = segments[..i].join("/");
-        let normalized =
-            shared::orphan_detector::utility_orphan_detector::normalize_module_path(&candidate);
+        let normalized = super::utility_orphan_detector::normalize_module_path(&candidate);
         if let Some(path) = map.get(&normalized) {
             if path != current_file {
                 return Some(path.clone());
@@ -187,7 +177,7 @@ pub fn resolve_ts_relative(
     ];
 
     for cand in &candidates {
-        if shared::orphan_detector::utility_orphan_io::is_file(cand) {
+        if super::utility_orphan_io::is_file(cand) {
             // Return RELATIVE path (matching graph convention)
             let rel = cand
                 .strip_prefix(workspace_root)

@@ -1,6 +1,6 @@
 [package]
 name = "orphan-detector-lint-arwaky"
-version = "1.11.0"
+version = "1.12.0"
 edition = "2021"
 description = "Unreachable/dead component detector covering AES501–AES506. Flags roles, capabilities, and surfaces that are never wired into an entry point."
 license = "MIT"
@@ -13,10 +13,10 @@ workspace = true
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-regex.workspace = true
-once_cell.workspace = true
 rayon.workspace = true
 shared.workspace = true
+syn = { version = "2", features = ["full", "visit", "parsing"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]
 tokio.workspace = true

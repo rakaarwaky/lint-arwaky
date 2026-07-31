@@ -31,7 +31,6 @@ pub use contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 pub use contract_line_protocol::ILineCheckerProtocol;
 
 // ── Taxonomy types ──
-pub use taxonomy_analysis_vo::FileDefinitionMap;
 pub use taxonomy_analysis_vo::GraphAnalysisContext;
 pub use taxonomy_analysis_vo::ImportGraph;
 pub use taxonomy_analysis_vo::InboundLinkMap;

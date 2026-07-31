@@ -2,7 +2,8 @@
 // Uses new protocol interfaces — no IAnalyzer, no IArchImportProtocol.
 
 use async_trait::async_trait;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -11,12 +12,15 @@ use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_sou
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
 use shared::config_system::ArchitectureConfig;
-use shared::import_rules::{
-    ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
-    IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol, DEFAULT_SKIP_DIRS,
-};
+use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_constant::DEFAULT_SKIP_DIRS;
 
-use shared::common::LayerMapVO;
+use shared::common::taxonomy_definition_vo::LayerMapVO;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -51,6 +55,11 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         }
 
         let files = self.collect_files(target);
+        eprintln!(
+            "ORCH_DEBUG: target={}, files={}",
+            target.value(),
+            files.values.len()
+        );
 
         let root_dir = shared::common::utility_file_handler::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
@@ -77,10 +86,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let deps = &self.deps;
         let layer_map = &self.layer_map;
 
-        let file_violations: Vec<LintResult> = files
-            .values
-            .par_iter()
-            .flat_map(|file| {
+        let file_violations: Vec<LintResult> =
+            ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
                 let mut local_results = Vec::new();
                 let content = match read_file_sync(file.value()) {
                     Ok(c) => c,

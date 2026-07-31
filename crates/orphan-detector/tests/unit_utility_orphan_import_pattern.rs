@@ -53,8 +53,7 @@ pub fn some_function() {
 }
 "#;
 
-    let analyzer = make_utility_analyzer();
-    let result = analyzer.check_import_pattern(content, "utility_target");
+    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_target");
 
     assert!(
         result,
@@ -73,8 +72,7 @@ pub fn some_function() {
 }
 "#;
 
-    let analyzer = make_utility_analyzer();
-    let result = analyzer.check_import_pattern(content, "utility_target");
+    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_target");
 
     assert!(
         result,
@@ -91,8 +89,7 @@ pub fn some_function() {
 }
 "#;
 
-    let analyzer = make_utility_analyzer();
-    let result = analyzer.check_import_pattern(content, "utility_target");
+    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_target");
 
     assert!(
         !result,

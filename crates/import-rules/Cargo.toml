@@ -1,6 +1,6 @@
 [package]
 name = "import-rules-lint-arwaky"
-version = "1.11.0"
+version = "1.12.0"
 edition = "2021"
 description = "Import-compliance checks covering AES201–AES205: dummy/unused/forbidden/mandatory imports, layer detection, and cross-layer cycle detection."
 license = "MIT"
@@ -14,8 +14,6 @@ workspace = true
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true
-once_cell.workspace = true
-regex.workspace = true
 shared.workspace = true
 tokio.workspace = true
 rayon.workspace = true

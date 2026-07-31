@@ -4,6 +4,8 @@ use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
 use crate::import_rules::utility_path_normalizer;
+use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::orphan_detector::utility_orphan_parser_dispatch;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -17,132 +19,41 @@ pub fn os_str_to_str(opt: Option<&std::ffi::OsStr>) -> &str {
     opt.and_then(|o| o.to_str()).map_or("", |s| s)
 }
 
-/// Parse import lines from file content.
-/// Handles: use, pub use, pub(crate) use, import, from, extern crate.
-/// Skips: #[cfg(...)] conditional blocks (test, feature, etc.).
-/// Handles multi-line use statements with braces and trailing commas.
-pub fn parse_import_lines_helper(content: &str) -> Vec<(LineNumber, LineContentVO)> {
+/// Parse import lines from file content using AST.
+/// Replaces regex/line-based parse_import_lines_helper.
+pub fn parse_import_lines_helper(
+    file_path: &str,
+    content: &str,
+) -> Vec<(LineNumber, LineContentVO)> {
     let mut result = Vec::new();
-    let lines: Vec<&str> = content.lines().collect();
-    let mut i = 0;
-    let mut in_cfg_block = false;
-    let mut cfg_brace_depth = 0;
-    while i < lines.len() {
-        let trimmed = lines[i].trim();
-
-        // Skip #[cfg(...)] attribute lines and their associated blocks
-        if trimmed.starts_with("#[cfg(") {
-            in_cfg_block = true;
-            cfg_brace_depth = 0;
-            i += 1;
-            continue;
-        }
-        if in_cfg_block {
-            for ch in trimmed.chars() {
-                match ch {
-                    '{' => cfg_brace_depth += 1,
-                    '}' => {
-                        cfg_brace_depth -= 1;
-                        if cfg_brace_depth <= 0 {
-                            in_cfg_block = false;
-                            break;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            i += 1;
-            continue;
-        }
-
-        if trimmed.starts_with("import ")
-            || trimmed.starts_with("from ")
-            || trimmed.starts_with("extern crate ")
-        {
-            result.push((
-                LineNumber::new((i + 1) as i64),
-                LineContentVO::new(lines[i].to_string()),
-            ));
-            i += 1;
-            continue;
-        }
-        if trimmed.starts_with("use ")
-            || trimmed.starts_with("pub use ")
-            || trimmed.starts_with("pub(crate) use ")
-        {
-            let mut combined = lines[i].to_string();
-            if combined.contains('{') && !combined.contains('}') {
-                let start = i;
-                i += 1;
-                while i < lines.len() {
-                    let part = lines[i].trim().to_string();
-                    combined.push_str(&format!(" {}", part));
-                    if part.contains('}') || combined.ends_with(';') {
-                        break;
-                    }
-                    i += 1;
-                }
-                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                combined = clean_trailing_commas(&combined);
+    match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+        FileParseResultVO::Rust(parse_result) => {
+            for imp in &parse_result.imports {
                 result.push((
-                    LineNumber::new((start + 1) as i64),
-                    LineContentVO::new(combined),
-                ));
-            } else if !combined.ends_with(';') {
-                while i + 1 < lines.len() {
-                    let next = lines[i + 1].trim();
-                    if next.starts_with("use ")
-                        || next.starts_with("pub use ")
-                        || next.starts_with("pub(crate) use ")
-                        || next.starts_with("#[cfg(")
-                        || next.is_empty()
-                    {
-                        break;
-                    }
-                    combined.push_str(&format!(" {}", next));
-                    if next.ends_with(';') {
-                        i += 1;
-                        break;
-                    }
-                    i += 1;
-                }
-                combined = combined.split_whitespace().collect::<Vec<&str>>().join(" ");
-                combined = clean_trailing_commas(&combined);
-                result.push((
-                    LineNumber::new((i + 1) as i64),
-                    LineContentVO::new(combined),
-                ));
-            } else {
-                result.push((
-                    LineNumber::new((i + 1) as i64),
-                    LineContentVO::new(combined),
+                    LineNumber::new(imp.line as i64),
+                    LineContentVO::new(imp.raw_path.clone()),
                 ));
             }
         }
-        i += 1;
+        FileParseResultVO::Python(parse_result) => {
+            for imp in &parse_result.imports {
+                result.push((
+                    LineNumber::new(imp.line as i64),
+                    LineContentVO::new(imp.raw_path.clone()),
+                ));
+            }
+        }
+        FileParseResultVO::TypeScript(parse_result) => {
+            for imp in &parse_result.imports {
+                result.push((
+                    LineNumber::new(imp.line as i64),
+                    LineContentVO::new(imp.raw_path.clone()),
+                ));
+            }
+        }
+        FileParseResultVO::Unsupported => {}
     }
     result
-}
-
-/// Clean trailing commas before closing braces in use statements.
-fn clean_trailing_commas(s: &str) -> String {
-    if let Some(brace_pos) = s.rfind('{') {
-        let after_brace = &s[brace_pos..];
-        if after_brace.ends_with('}') || after_brace.ends_with("};") {
-            let bytes = after_brace.as_bytes();
-            let mut end = bytes.len();
-            while end > 0 && (bytes[end - 1] == b'}' || bytes[end - 1] == b';') {
-                end -= 1;
-            }
-            let inner = &after_brace[..end];
-            if let Some(trimmed_inner) = inner.strip_suffix(',') {
-                let before = &s[..brace_pos];
-                let after = &after_brace[end..];
-                return format!("{before}{trimmed_inner}{after}");
-            }
-        }
-    }
-    s.to_string()
 }
 
 /// Parse a scope value (e.g. "contract(protocol)") into layer + suffix matches.
@@ -273,6 +184,9 @@ pub fn extract_module_from_line(line: &LineContentVO) -> Option<Identity> {
             return Some(Identity::new(module[..brace_pos].to_string()));
         }
         return Some(Identity::new(module));
+    }
+    if !trimmed.is_empty() {
+        return Some(Identity::new(trimmed.to_string()));
     }
     None
 }

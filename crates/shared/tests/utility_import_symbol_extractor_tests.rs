@@ -25,7 +25,7 @@ struct Config {
         Identity::new("serde::Deserialize"),
     );
 
-    let used = extract_used_symbols(content, &aliases);
+    let used = extract_used_symbols("test.rs", content, &aliases);
     assert!(
         used.contains(&Identity::new("Serialize")),
         "Serialize should always be considered used"
@@ -52,7 +52,7 @@ trait MyTrait {
         Identity::new("async_trait::async_trait"),
     );
 
-    let used = extract_used_symbols(content, &aliases);
+    let used = extract_used_symbols("test.rs", content, &aliases);
     assert!(
         used.contains(&Identity::new("async_trait")),
         "async_trait should always be considered used"
@@ -75,7 +75,7 @@ enum Color {
     aliases.insert(Identity::new("EnumIter"), Identity::new("strum::EnumIter"));
     aliases.insert(Identity::new("Display"), Identity::new("strum::Display"));
 
-    let used = extract_used_symbols(content, &aliases);
+    let used = extract_used_symbols("test.rs", content, &aliases);
     assert!(
         used.contains(&Identity::new("EnumIter")),
         "EnumIter should always be considered used"
@@ -101,7 +101,7 @@ enum Status {
     let mut aliases = HashMap::new();
     aliases.insert(Identity::new("AsRefStr"), Identity::new("strum::AsRefStr"));
 
-    let used = extract_used_symbols(content, &aliases);
+    let used = extract_used_symbols("test.rs", content, &aliases);
     assert!(
         used.contains(&Identity::new("AsRefStr")),
         "AsRefStr should always be considered used"
@@ -124,7 +124,7 @@ fn main() {
         Identity::new("std::collections::HashMap"),
     );
 
-    let used = extract_used_symbols(content, &aliases);
+    let used = extract_used_symbols("test.rs", content, &aliases);
     assert!(
         !used.contains(&Identity::new("HashMap")),
         "HashMap is genuinely unused"
@@ -132,31 +132,24 @@ fn main() {
 }
 
 #[test]
-fn is_name_used_returns_true_for_derive_macros() {
-    // is_name_used should short-circuit for all DERIVE_MACROS entries
-    // This list mirrors the private DERIVE_MACROS const in utility_import_symbol_extractor.rs
-    let derive_macros = &[
-        "async_trait",
-        "Serialize",
-        "Deserialize",
-        "Clone",
-        "Debug",
-        "Default",
-        "PartialEq",
-        "Eq",
-        "Hash",
-        "Ord",
-        "PartialOrd",
-        "Copy",
-        "EnumIter",
-        "Display",
-        "EnumString",
-        "AsRefStr",
+fn is_name_used_detects_identifiers_via_ast() {
+    // AST-based is_name_used detects identifiers in code
+    let test_cases = &[
+        (
+            "test.rs",
+            "Serialize",
+            "fn main() { let x = Serialize; }",
+            true,
+        ),
+        ("test.rs", "unused", "fn main() { let x = 42; }", false),
+        (
+            "test.rs",
+            "my_fn",
+            "fn my_fn() {} fn main() { my_fn(); }",
+            true,
+        ),
     ];
-    for &m in derive_macros {
-        assert!(
-            is_name_used(m, "fn main() {}", 0),
-            "{m} should be considered used via DERIVE_MACROS"
-        );
+    for &(file_path, name, content, expected) in test_cases {
+        assert_eq!(is_name_used(file_path, name, content, 0), expected);
     }
 }

@@ -110,14 +110,15 @@ fn fr005_self_edge_not_flagged_as_cross_layer() {
         "taxonomy".to_string(),
         "taxonomy".to_string(),
     )];
-    // Self-loops: the cycle detector may or may not flag these depending on
-    // normalization. The key requirement is no false positive for valid imports.
+    // Self-loops ARE cycles at graph level (3-color DFS detects A→A as back-edge),
+    // but the orchestrator filters them: _scan only adds edges when
+    // target_layer != file_layer. This test verifies graph-level behavior.
     let result = sut().detect_cycle_edges(&edges);
-    // Self-loop within same layer is technically a cycle in graph theory,
-    // but the _scan method only adds edges when target_layer != file_layer.
-    // So this tests the pure graph detector behavior.
-    // The important thing: the orchestrator won't create self-edges.
-    let _ = result; // No assertion on self-loops at graph level
+    // Graph detector flags self-loops — orchestrator filters them upstream.
+    assert!(
+        !result.is_empty(),
+        "FR-005: self-loop A→A should be detected as cycle at graph level"
+    );
 }
 
 /// FR-005: Empty graph produces no violations

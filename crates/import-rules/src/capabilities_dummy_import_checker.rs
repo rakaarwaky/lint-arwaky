@@ -1,14 +1,16 @@
 use shared::cli_commands::LintResult;
-use shared::common::{ContentString, FilePath, LanguageVO, Severity};
-
+use shared::common::taxonomy_definition_vo::LayerMapVO;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
+use shared::common::{
+    ContentString, FilePath, Identity, LanguageVO, LineNumber, LintMessage, Severity, SymbolName,
+};
+
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_dummy_detector;
 use shared::import_rules::utility_import_resolver;
-use shared::import_rules::{AesImportViolation, IDummyImportCheckerProtocol, ImportError};
-
-use shared::common::LayerMapVO;
-use shared::common::{Identity, LayerNameVO, LineNumber};
-use shared::common::{LintMessage, SymbolName};
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
@@ -141,6 +143,8 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         Ok(violations)
     }
 
+    /// Placeholder for future FR-011: layer-level contract intent checking.
+    /// Currently a no-op — contract intent violations are not yet implemented.
     fn check_layer_contract_intent(
         &self,
         _file: &FilePath,
@@ -365,7 +369,7 @@ impl DummyImportChecker {
             if has_taxonomy_import {
                 violations.push(LintResult::new_arch(file, dummy_function_line, "AES204", Severity::HIGH,
                     AesImportViolation::ImportIntentViolation {
-                        source_layer: LayerNameVO::new("surfaces"),
+                        source_layer: LayerNameVO::new(ctx.layer_name.clone()),
                         import_type: SymbolName::new("taxonomy"),
                         intent: SymbolName::new("Use taxonomy Value Objects in function signatures instead of primitives"),
                         reason: Some(LintMessage::new(

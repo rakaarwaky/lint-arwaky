@@ -8,16 +8,18 @@
 
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{FilePath, FilePathList, Severity};
-
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::utility_import_resolver;
-use shared::import_rules::utility_path_normalizer;
-use shared::import_rules::{AesImportViolation, IImportForbiddenProtocol, ImportError};
+use shared::common::{
+    FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage, Severity,
+};
 
-use shared::common::{Identity, LayerNameVO, LineContentVO, LineNumber, LintMessage};
-use shared::common::{LayerDefinition, LayerMapVO};
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
+use shared::import_rules::utility_import_resolver;
 use std::collections::HashSet;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -29,7 +31,6 @@ pub struct ArchImportForbiddenChecker;
 #[async_trait]
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity {
-        let _ = utility_path_normalizer::extract_layer_from_prefix("");
         Identity::new("AES201")
     }
 
@@ -65,7 +66,8 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                         Some(c) => c,
                         None => return Vec::new(),
                     };
-                let import_lines = utility_import_resolver::parse_import_lines_helper(&content);
+                let import_lines =
+                    utility_import_resolver::parse_import_lines_helper(&f_str, &content);
                 if import_lines.is_empty() {
                     return Vec::new();
                 }

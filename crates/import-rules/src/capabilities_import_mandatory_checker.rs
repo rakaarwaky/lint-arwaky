@@ -1,16 +1,18 @@
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{FilePath, FilePathList, Severity};
-
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::utility_import_resolver;
-use shared::import_rules::{AesImportViolation, IImportMandatoryProtocol, ImportError};
+use shared::common::{
+    FileContentVO, FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage,
+    Severity, SymbolName,
+};
 
-use shared::common::LineNumber;
-use shared::common::SymbolName;
-use shared::common::{FileContentVO, Identity, LayerNameVO, LineContentVO, LintMessage};
-use shared::common::{LayerDefinition, LayerMapVO};
+use shared::config_system::ArchitectureConfig;
+use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
+use shared::import_rules::utility_import_resolver;
 use std::collections::HashSet;
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
@@ -68,7 +70,10 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     };
                 let file_content = FileContentVO::new(content);
                 let import_lines: Vec<(LineNumber, LineContentVO)> =
-                    utility_import_resolver::parse_import_lines_helper(file_content.value());
+                    utility_import_resolver::parse_import_lines_helper(
+                        &f_str,
+                        file_content.value(),
+                    );
 
                 let mut local_violations = Vec::new();
                 let filename = utility_layer_detector::extract_filename(&f_str);

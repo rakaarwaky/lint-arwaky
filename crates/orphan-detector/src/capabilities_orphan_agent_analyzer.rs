@@ -1,11 +1,11 @@
-// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files
+// PURPOSE: AgentOrphanAnalyzer — IAgentOrphanProtocol for detecting orphan agent files.
+// AST-based: uses parser dispatch for aggregate trait extraction.
+
+use crate::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::utility_orphan_parser_dispatch;
 use shared::code_analysis::OrphanIndicatorResult;
 use shared::common::{FilePath, Severity};
-
 use shared::orphan_detector::{AesOrphanViolation, IAgentOrphanProtocol};
-
-use regex::Regex;
-use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -28,14 +28,13 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
             c => c,
         };
 
-        // Step 1: Find aggregate traits this agent implements
-        let aggregate_traits = Self::extract_aggregate_traits(&content);
+        // AST-based aggregate trait extraction
+        let aggregate_traits = Self::extract_aggregate_traits(fp, &content);
         if aggregate_traits.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // Bug 2 fix: agent is orphan only if ALL aggregates are uncalled (not ANY)
-        // Pre-filter candidate files (surfaces, containers, entries, mains) once
+        // Pre-filter candidate files (surfaces, containers, entries, mains)
         let candidates: Vec<&String> = all_files
             .iter()
             .filter(|cf| {
@@ -66,18 +65,17 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
             })
             .collect();
 
-        let mut any_called = false;
-        // Cache candidate file contents to avoid re-reading for each aggregate trait.
-        // Without this: N aggregates × M candidates = N×M read_file_safe calls.
-        // With cache: M reads total.
+        // Cache candidate file contents to avoid N×M re-reads
         let mut content_cache: std::collections::HashMap<&String, String> =
             std::collections::HashMap::new();
+
+        let mut any_called = false;
         'outer: for agg_name in &aggregate_traits {
             for cf in &candidates {
                 let c = content_cache.entry(cf).or_insert_with(|| {
                     shared::orphan_detector::utility_orphan_io::read_file_safe(cf)
                 });
-                if Self::content_contains_word(&c, agg_name) {
+                if Self::content_contains_word(c, agg_name) {
                     any_called = true;
                     break 'outer;
                 }
@@ -115,93 +113,26 @@ impl Default for AgentOrphanAnalyzer {
 }
 
 impl AgentOrphanAnalyzer {
-    /// Check if `text` contains `word` as a whole word (not substring).
-    fn content_contains_word(text: &str, word: &str) -> bool {
-        text.split(|c: char| !c.is_alphanumeric() && c != '_')
-            .any(|w| w == word)
-    }
     pub fn new() -> Self {
         Self {}
     }
 
-    /// Extract aggregate trait names from agent file content.
-    /// Looks for: impl IAggregateTrait for Struct, Box<dyn IAggregateTrait>, Arc<dyn IAggregateTrait>
-    fn extract_aggregate_traits(content: &str) -> Vec<String> {
-        let mut traits = Vec::new();
+    fn content_contains_word(text: &str, word: &str) -> bool {
+        text.split(|c: char| !c.is_alphanumeric() && c != '_')
+            .any(|w| w == word)
+    }
 
-        // Rust: impl ITrait for Struct (with optional generics: impl<T> Trait for Struct)
-        if let Some(re) = Self::re_impl_generic() {
-            for cap in re.captures_iter(content) {
-                let name = cap[1].to_string();
-                if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                    traits.push(name);
-                }
-            }
-        }
-
-        // Rust: Box<dyn ITrait> or Arc<dyn ITrait>
-        if let Some(re) = Self::re_dyn() {
-            for cap in re.captures_iter(content) {
-                let name = cap[1].to_string();
-                if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                    traits.push(name);
-                }
-            }
-        }
-
-        // Python: class Struct(ITrait):
-        if let Some(re) = Self::re_py_class() {
-            for cap in re.captures_iter(content) {
-                for part in cap[1].split(',') {
-                    let name = part.trim().to_string();
-                    if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                        traits.push(name);
-                    }
-                }
-            }
-        }
-
-        // JS/TS: class Struct implements IAggregateTrait
-        if let Some(re) = Self::re_ts_implements() {
-            for cap in re.captures_iter(content) {
-                let name = cap[1].to_string();
-                if name.contains("Aggregate") || name.ends_with("Aggregate") {
-                    traits.push(name);
-                }
-            }
-        }
-
+    /// Extract aggregate trait names using AST parser dispatch.
+    /// Replaces 4 regex patterns (re_impl_generic, re_dyn, re_py_class, re_ts_implements).
+    fn extract_aggregate_traits(file_path: &str, content: &str) -> Vec<String> {
+        let mut traits = match utility_orphan_parser_dispatch::parse_file(file_path, content) {
+            FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
+            FileParseResultVO::Python(result) => result.aggregate_names(),
+            FileParseResultVO::TypeScript(result) => result.aggregate_names(),
+            FileParseResultVO::Unsupported => Vec::new(),
+        };
         traits.sort();
         traits.dedup();
         traits
-    }
-
-    /// Cached regex for Rust impl with optional generics.
-    /// Handles nested angle brackets like `<T: Into<U>>` via balanced `<>` matching.
-    fn re_impl_generic() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        // Use `[^<>]*(?:<[^<>]*>[^<>]*)*` for one level of nested angle brackets.
-        RE.get_or_init(|| {
-            Regex::new(r"impl\s*(?:<[^<>]*(?:<[^<>]*>[^<>]*)*>)?\s+([A-Za-z0-9_]+)\s+for\s+").ok()
-        })
-        .as_ref()
-    }
-
-    fn re_dyn() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"(?:Box|Arc)<dyn\s+([A-Za-z0-9_]+)>").ok())
-            .as_ref()
-    }
-
-    fn re_py_class() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"class\s+\w+\(([^)]+)\)").ok())
-            .as_ref()
-    }
-
-    fn re_ts_implements() -> Option<&'static Regex> {
-        static RE: OnceLock<Option<Regex>> = OnceLock::new();
-        RE.get_or_init(|| Regex::new(r"class\s+\w+\s+implements\s+(\w+)").ok())
-            .as_ref()
     }
 }

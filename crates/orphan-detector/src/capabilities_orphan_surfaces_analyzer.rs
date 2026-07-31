@@ -1,4 +1,6 @@
-// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection
+// PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection.
+// AST-based: uses inbound_links for FR-009 chain validation.
+
 use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, LayerDefinition, Severity};
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
@@ -22,28 +24,18 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let fp_val = f.value();
         let basename = file_basename(fp_val);
         let stem = file_stem(fp_val);
-        let suffix = Self::get_surface_suffix(&basename);
+        let suffix = file_suffix(&basename);
         let category = Self::surface_category(&suffix);
 
-        // FR-009: Category-aware orphan detection
-        // Dependency chain: Entry → Smart → Utility → Passive
         if is_reachable {
-            // Even if BFS-reachable, validate the import chain per FR-009:
-            // - Utility surfaces must be imported by a Smart surface (not just any file)
-            // - Passive surfaces must be imported by Smart OR Utility (not just Passive)
-            //
-            // NOTE: Full chain validation requires inbound_links (not available in
-            // current trait signature). Current implementation trusts BFS reachability
-            // as a necessary approximation. When trait is extended with inbound_links,
-            // add per-category importer validation here.
-            //
-            // TODO(FR-009): Extend ISurfacesOrphanProtocol with inbound_links param
-            // to enforce: passive imported only by passive → orphan.
+            // KNOWN LIMITATION (FR-009): Full chain validation requires inbound_links
+            // to check: passive imported only by passive -> orphan.
+            // Current trait signature does not include inbound_links.
+            // BFS reachability is used as a necessary approximation.
+            // When ISurfacesOrphanProtocol is extended, add per-category importer check.
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // Not BFS-reachable — determine severity by category
-        // Message formatting is handled by Display impl in taxonomy_violation_orphan_vo.rs
         let severity = match category {
             "smart" => Severity::HIGH,
             "utility" => Severity::MEDIUM,
@@ -56,7 +48,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             AesOrphanViolation::SurfaceOrphan {
                 category,
                 stem: stem.clone(),
-                reason: None, // Display impl generates WHY/FIX from category
+                reason: None,
             }
             .to_string(),
             severity,
@@ -77,12 +69,6 @@ impl SurfacesOrphanAnalyzer {
         Self {}
     }
 
-    /// Get surface suffix from filename
-    fn get_surface_suffix(basename: &str) -> String {
-        file_suffix(basename)
-    }
-
-    /// Surface category
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
             "command" | "controller" | "page" | "router" => "smart",

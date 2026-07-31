@@ -3,7 +3,7 @@
 // Speed: ms
 
 use orphan_detector_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-use shared::code_analysis::{FileDefinitionMap, InheritanceMap};
+use shared::code_analysis::InheritanceMap;
 use shared::common::{FilePath, Severity};
 
 use shared::orphan_detector::IContractOrphanProtocol;
@@ -11,10 +11,6 @@ use std::collections::HashMap;
 
 fn analyzer() -> ContractOrphanAnalyzer {
     ContractOrphanAnalyzer::new()
-}
-
-fn empty_definitions() -> FileDefinitionMap {
-    FileDefinitionMap::new(HashMap::new())
 }
 
 fn empty_inheritance() -> InheritanceMap {
@@ -49,13 +45,7 @@ fn contract_protocol_with_implementation_is_not_orphan() {
         impl_path.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_contract_orphan(
-        &f,
-        &root,
-        &empty_definitions(),
-        &empty_inheritance(),
-        &all_files,
-    );
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
     assert!(!result.is_orphan);
 }
 
@@ -76,13 +66,7 @@ fn contract_protocol_without_implementation_is_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![contract_path.to_str().unwrap().to_string()];
 
-    let result = a.is_contract_orphan(
-        &f,
-        &root,
-        &empty_definitions(),
-        &empty_inheritance(),
-        &all_files,
-    );
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::MEDIUM);
 }
@@ -100,13 +84,7 @@ fn empty_contract_file_is_not_orphan() {
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();
     let all_files = vec![contract_path.to_str().unwrap().to_string()];
 
-    let result = a.is_contract_orphan(
-        &f,
-        &root,
-        &empty_definitions(),
-        &empty_inheritance(),
-        &all_files,
-    );
+    let result = a.is_contract_orphan(&f, &root, &empty_inheritance(), &all_files);
     assert!(!result.is_orphan);
 }
 

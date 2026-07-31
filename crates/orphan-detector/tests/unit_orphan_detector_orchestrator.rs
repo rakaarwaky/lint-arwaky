@@ -46,6 +46,50 @@ fn check_orphans_disabled_config_returns_empty() {
     assert!(results.is_empty());
 }
 
+// ─── Disabled per-rule returns empty for that rule ────────
+
+#[test]
+fn check_orphans_disabled_rule_returns_empty() {
+    use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+    use shared::common::{
+        taxonomy_common_vo::BooleanVO, taxonomy_definition_vo::NamingConfig,
+        taxonomy_error_vo::ErrorCode, taxonomy_layer_vo::LayerNameVO,
+        taxonomy_paths_vo::FilePathList,
+    };
+
+    // Config with AES505 (agent orphan) disabled
+    let config = ArchitectureConfig {
+        enabled: BooleanVO::new(true),
+        layers: std::collections::HashMap::new(),
+        rules: vec![shared::config_system::ArchitectureRule {
+            name: DescriptionVO::new("AES505"),
+            description: DescriptionVO::new(""),
+            rule_type: ErrorCode::raw("AES505"),
+            enabled: BooleanVO::new(false), // Disabled
+            scope: LayerNameVO::new("agent"),
+            exceptions: shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+            allowed: shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+            forbidden: shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+            mandatory: shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+            naming: shared::config_system::NamingRuleVO::default(),
+            code_analysis:
+                shared::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO::default(),
+            role: shared::config_system::RoleRuleVO::default(),
+            orphan: shared::config_system::taxonomy_config_vo::OrphanRuleVO {
+                check_orphan: BooleanVO::new(true), // Layer-level enabled, but rule disabled
+                ..Default::default()
+            },
+        }],
+        naming: NamingConfig::new(shared::common::taxonomy_common_vo::Count::new(3)),
+        ignored_paths: FilePathList { values: vec![] },
+        mandatory_class_definition: BooleanVO::new(false),
+    };
+
+    // Verify the is_rule_disabled helper works
+    let analyzer = build_analyzer(config);
+    assert!(analyzer.is_rule_disabled("AES505"));
+}
+
 // ─── Empty file list returns empty results ────────────────
 
 #[test]

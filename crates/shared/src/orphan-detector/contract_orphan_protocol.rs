@@ -1,5 +1,4 @@
 // PURPOSE: ITaxonomyOrphanProtocol + layer-specific orphan indicator protocols (agent, contract, capabilities, utility, surfaces)
-use crate::code_analysis::taxonomy_analysis_vo::FileDefinitionMap;
 use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
 use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
 use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
@@ -22,7 +21,6 @@ pub trait IContractOrphanProtocol: Send + Sync {
         &self,
         f: &FilePath,
         root_dir: &FilePath,
-        file_definitions: &FileDefinitionMap,
         inheritance_map: &InheritanceMap,
         all_files: &[String],
     ) -> OrphanIndicatorResult;
