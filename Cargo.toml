@@ -88,6 +88,7 @@ path = "crates/root_tui_main_entry.rs"
 
 [dependencies]
 shared.workspace = true
+filesystem.workspace = true
 naming_rules.workspace = true
 import_rules.workspace = true
 code_analysis.workspace = true

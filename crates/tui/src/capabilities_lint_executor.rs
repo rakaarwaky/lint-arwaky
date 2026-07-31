@@ -47,13 +47,9 @@ pub struct LintExecutor {
 
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
-        // Populate file cache for faster reads
-        let root = shared::common::utility_file_handler::find_workspace_root(path)
+        // Use filesystem service for walk + cache
+        let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
             .unwrap_or_else(|| std::path::PathBuf::from(path));
-        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(
-            root.to_string_lossy().to_string(),
-        )
-        .unwrap_or_default();
         let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
             .unwrap_or_default();
         let ignored = self
@@ -61,13 +57,10 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
-        if let Ok(file_list) = shared::common::utility_file_handler::scan_directory(
-            &dir_path,
-            ignored.values(),
-        ) {
-            let file_strs: Vec<String> = file_list.values.iter().map(|f| f.value.clone()).collect();
-            shared::code_analysis::utility_file_reader::populate_file_cache(&file_strs);
-        }
+        let ignored_strs: Vec<String> = ignored.values().iter().cloned().collect();
+
+        let fs_service = filesystem::FilesystemService::new();
+        let _fs_result = fs_service.scan(&scan_root, &ignored_strs);
 
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
@@ -907,13 +900,9 @@ impl LintExecutor {
     fn run_legacy_scan(&self, path: &str) -> LintExecutionResult {
         let path_string = path.to_string();
 
-        // Pre-read all source files into cache (read once, use everywhere)
+        // Use filesystem service: walk + cache + parse + graph in one call
         let scan_root = shared::common::utility_file_handler::find_workspace_root(&path_string)
             .unwrap_or_else(|| std::path::PathBuf::from(&path_string));
-        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(
-            scan_root.to_string_lossy().to_string(),
-        )
-        .unwrap_or_default();
         let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
             .unwrap_or_default();
         let ignored = self
@@ -921,34 +910,16 @@ impl LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
-        if let Ok(file_list) = shared::common::utility_file_handler::scan_directory(
-            &dir_path,
-            ignored.values(),
-        ) {
-            let file_strs: Vec<String> = file_list.values.iter().map(|f| f.value.clone()).collect();
-            shared::code_analysis::utility_file_reader::populate_file_cache(&file_strs);
-        }
+        let ignored_strs: Vec<String> = ignored.values().iter().cloned().collect();
 
-        // Pre-compute shared data before spawning threads
+        let fs_service = filesystem::FilesystemService::new();
+        let fs_result = fs_service.scan(&scan_root, &ignored_strs);
+
+        // Pre-compute shared data for linter threads
         let aes_fp =
             shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
                 .unwrap_or_default();
-        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
-            .unwrap_or_default();
-        let dir_path = shared::common::taxonomy_path_vo::DirectoryPath::new(path_string.clone())
-            .unwrap_or_default();
-        let ignored = self
-            .config_orchestrator
-            .as_ref()
-            .map(|o| o.ignored_paths(&root_fp))
-            .unwrap_or_default();
-        let source_files = shared::common::utility_file_handler::scan_directory(
-            &dir_path,
-            ignored.values(),
-        )
-        .map(|list| list.values)
-        .unwrap_or_default();
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        let file_strs: Vec<String> = fs_result.files.iter().map(|f| f.path.to_string_lossy().to_string()).collect();
 
         // Clone Arcs for thread ownership
         let code_analysis = self.code_analysis.clone();

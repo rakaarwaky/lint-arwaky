@@ -17,33 +17,6 @@ pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 /// Global file cache — populated once per scan, read by all linters.
 static FILE_CACHE: OnceLock<HashMap<String, String>> = OnceLock::new();
 
-/// Populate the file cache with pre-read file contents.
-/// Call once at scan start; subsequent `read_lintable_file` calls use cache.
-pub fn populate_file_cache(files: &[String]) {
-    use rayon::prelude::*;
-
-    let cache: HashMap<String, String> = files
-        .par_iter()
-        .filter_map(|path| {
-            let meta = std::fs::metadata(path).ok()?;
-            if meta.len() > MAX_LINT_FILE_BYTES {
-                return None;
-            }
-            let content = std::fs::read_to_string(path).ok()?;
-            Some((path.clone(), content))
-        })
-        .collect();
-
-    let _ = FILE_CACHE.set(cache);
-}
-
-/// Clear the file cache (call after scan completes).
-pub fn clear_file_cache() {
-    // OnceLock can't be cleared, but we can set a new empty one on next scan.
-    // For now, just let it expire when the process ends.
-    // In practice, each scan call repopulates.
-}
-
 /// Read a file for linting. Returns:
 /// - Ok(Some(content)) if file is readable and within size limit
 /// - Ok(None) if file exceeds size limit (graceful skip, not an error)

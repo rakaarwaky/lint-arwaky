@@ -26,7 +26,7 @@ impl IFileWalkerProtocol for FileWalker {
             .git_exclude(true)
             .threads(std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));
 
-        for pattern in ignored {
+        for _pattern in ignored {
             // Note: add_custom_ignore not available in ignore 0.4
             // Custom ignore patterns would need to be handled via .gitignore files
         }

@@ -17,7 +17,6 @@ pub struct FilesystemService {
     cache: FileCache,
     parser: ASTParser,
     graph: RwLock<DependencyGraph>,
-    last_result: RwLock<Option<FilesystemResult>>,
 }
 
 impl FilesystemService {
@@ -27,7 +26,6 @@ impl FilesystemService {
             cache: FileCache::new(),
             parser: ASTParser::new(),
             graph: RwLock::new(DependencyGraph::new()),
-            last_result: RwLock::new(None),
         }
     }
 

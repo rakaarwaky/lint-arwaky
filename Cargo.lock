@@ -2947,6 +2947,7 @@ dependencies = [
  "dirs",
  "external-lint-lint-arwaky",
  "file-watch-lint-arwaky",
+ "filesystem-lint-arwaky",
  "futures",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
