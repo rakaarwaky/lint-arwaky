@@ -23,7 +23,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
 
 ## Functional Requirements
 
-### FR-001: File Discovery (ignore-based walk)
+### FR-001: Capabilties File Discovery (ignore-based walk)
 
 - **Description**: Walk project directory tree using `ignore` crate (gitignore-aware, parallel walk). Produces a flat list of source files filtered by extension.
 - **Input**: Root path, ignored paths, allowed extensions
@@ -40,7 +40,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Permission denied: log warning, skip file, continue walk
 - **Error Handling**: Non-fatal — skip inaccessible files, return partial results
 
-### FR-002: File Content Cache
+### FR-002: Capabilties File Content Cache
 
 - **Description**: Read all discovered files into memory once. Subsequent reads serve from cache with zero I/O.
 - **Input**: `Vec<FileEntry>` from FR-001
@@ -57,7 +57,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Cache full: stop populating, log warning, serve partial cache
 - **Error Handling**: Non-fatal — unreadable files excluded from cache
 
-### FR-003: AST Parsing (tree-sitter)
+### FR-003: Capabilties AST Parsing (tree-sitter)
 
 - **Description**: Parse cached file contents into ASTs using tree-sitter. Parallel parsing via rayon.
 - **Input**: `FileCache` from FR-002
@@ -77,7 +77,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Tree-sitter grammar not available: fall back to regex-based extraction
 - **Error Handling**: Non-fatal — parse errors produce partial AST, don't block scan
 
-### FR-004: Import/Dependency Extraction
+### FR-004: Capabilties Import/Dependency Extraction
 
 - **Description**: Extract import statements from ASTs. Normalize to absolute module paths.
 - **Input**: `ASTCache` from FR-003, language per file
@@ -95,7 +95,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Star imports (`use foo::*`): mark as wildcard, don't resolve individual items
 - **Error Handling**: Non-fatal — unresolvable imports logged, excluded from graph
 
-### FR-005: Dependency Graph Construction
+### FR-005: Capabilties Dependency Graph Construction
 
 - **Description**: Build a directed graph of file-to-file dependencies from extracted imports.
 - **Input**: `Vec<ImportEntry>` from FR-004
@@ -106,18 +106,17 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Edge weight: import type (use/from/require/mod)
   - Parallel graph construction via `DashMap` → merge into `petgraph::DiGraph`
   - Supports queries:
+
     - `dependents(file)` → who imports this file?
     - `dependencies(file)` → what does this file import?
-    - `cycles()` → find circular dependencies
     - `reachable(from, to)` → is there a path?
-    - `orphan_files()` → files with no dependents (nothing imports them)
 - **Edge Cases**:
   - External dependencies (not in workspace): nodes created but marked external
   - Broken imports (file not found): edge created with `resolved = false`
   - Duplicate imports: single edge, deduplicated
 - **Error Handling**: Non-fatal — broken imports create unresolved edges
 
-### FR-006: FilesystemService Facade
+### FR-006: Agents Filesystem Orchestrator
 
 - **Description**: Single entry point that orchestrates FR-001 through FR-005. Returns a `FilesystemResult` containing everything rule crates need.
 - **Input**: Scan root path, config (ignored paths, extensions)
@@ -126,7 +125,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
   - Pipeline: walk → cache → parse → extract → graph (sequential stages, parallel within each stage)
   - Each stage logs timing for performance profiling
   - Result is immutable after construction (read-only queries only)
-  - Implements `IFilesystemServiceProtocol` trait for DI
+  - Implements `IFilesystemServiceAgregate` trait for DI
 - **Edge Cases**:
   - Empty project: return empty result, no error
   - Single file: still run full pipeline (consistency)
