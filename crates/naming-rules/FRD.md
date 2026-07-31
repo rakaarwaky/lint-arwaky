@@ -96,20 +96,21 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-| #  | Input Scenario                                                                    | Expected Output            | Rule   |
-| -- | --------------------------------------------------------------------------------- | -------------------------- | ------ |
-| 1  | Valid snake_case file, 3+ words, recognized layer prefix                          | No violation               | AES101 |
-| 2  | File with uppercase characters in stem                                           | AES101 — invalid snake_case | AES101 |
-| 3  | File with only 2 words (below minimum)                                           | AES101 — too few words     | AES101 |
-| 4  | File with hyphens instead of underscores                                         | AES101 — invalid separator | AES101 |
-| 5  | Barrel file (mod.rs, __init__.py, index.ts)                                      | No violation — exception   | excl   |
-| 6  | File with valid prefix but suffix not in layer allow-list                        | AES102 — suffix mismatch   | AES102 |
-| 7  | File with valid prefix and allowed suffix for that layer                          | No violation               | AES102 |
-| 8  | File with forbidden suffix for its layer (e.g. _helper on agent)                  | AES102 — forbidden suffix  | AES102 |
-| 9  | File with unrecognized prefix (not in layer definition)                           | AES000 — unknown prefix    | AES102 |
-| 10 | Valid file but min_words config set higher than word count                        | AES101 — below configured min | AES101 |
-| 11 | File with root layer and allowed root suffix                                      | No violation               | AES102 |
-| 12 | File in exception list for its layer                                              | No violation — exception   | excl   |
+
+| #  | Input Scenario                                                   | Expected Output                | Rule   |
+| ---- | ------------------------------------------------------------------ | -------------------------------- | -------- |
+| 1  | Valid snake_case file, 3+ words, recognized layer prefix         | No violation                   | AES101 |
+| 2  | File with uppercase characters in stem                           | AES101 — invalid snake_case   | AES101 |
+| 3  | File with only 2 words (below minimum)                           | AES101 — too few words        | AES101 |
+| 4  | File with hyphens instead of underscores                         | AES101 — invalid separator    | AES101 |
+| 5  | Barrel file (mod.rs,__init__.py, index.ts)                       | No violation — exception      | excl   |
+| 6  | File with valid prefix but suffix not in layer allow-list        | AES102 — suffix mismatch      | AES102 |
+| 7  | File with valid prefix and allowed suffix for that layer         | No violation                   | AES102 |
+| 8  | File with forbidden suffix for its layer (e.g. _helper on agent) | AES102 — forbidden suffix     | AES102 |
+| 9  | File with unrecognized prefix (not in layer definition)          | AES000 — unknown prefix       | AES102 |
+| 10 | Valid file but min_words config set higher than word count       | AES101 — below configured min | AES101 |
+| 11 | File with root layer and allowed root suffix                     | No violation                   | AES102 |
+| 12 | File in exception list for its layer                             | No violation — exception      | excl   |
 
 ## Assumptions & Constraints
 
