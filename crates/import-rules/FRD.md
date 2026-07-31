@@ -20,14 +20,11 @@ flowchart TD
     F2 --> G3["Vec ImportEntry"]
     F3 --> G4["DiGraph"]
     G1 --> H1["forbidden_checker"]
-    G2 --> H1
-    G3 --> H1
-    G4 --> H1
-    G --> H1["forbidden_checker"]
-    G --> H2["mandatory_checker"]
-    G --> H3["unused_checker"]
-    G --> H4["dummy_checker"]
-    G --> H5["cycle_analyzer"]
+    G1 --> H2["mandatory_checker"]
+    G1 --> H3["unused_checker"]
+    G1 --> H4["dummy_checker"]
+    G3 --> H5["cycle_analyzer"]
+    G4 --> H5
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
