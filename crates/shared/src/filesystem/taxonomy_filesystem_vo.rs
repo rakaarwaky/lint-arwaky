@@ -4,6 +4,9 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
+/// Maximum file size for linting (2 MiB).
+pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
+
 /// Supported programming languages for AST parsing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Language {

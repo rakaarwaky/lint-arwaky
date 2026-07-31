@@ -5,8 +5,6 @@ use shared::filesystem::IFileWalkerProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 
-/// Maximum file size for linting (2 MiB).
-const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
 pub struct FileWalker;
 
