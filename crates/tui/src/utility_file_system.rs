@@ -100,13 +100,13 @@ pub fn copy_text_to_clipboard(text: &str) -> bool {
     #[cfg(not(test))]
     {
         if let Ok(mut clipboard) = arboard::Clipboard::new()
-            && clipboard.set_text(text).is_ok() {
-                return true;
-            }
+            && clipboard.set_text(text).is_ok()
+        {
+            return true;
+        }
     }
 
     // Fallback to shell commands: xclip → wl-copy
-    
 
     std::process::Command::new("sh")
         .arg("-c")

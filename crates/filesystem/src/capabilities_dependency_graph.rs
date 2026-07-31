@@ -1,32 +1,16 @@
-// PURPOSE: Utility layer — dependency graph using petgraph + dashmap
+// PURPOSE: Capabilities layer — dependency graph construction (FR-005)
 // Build import graph, query dependents/dependencies, detect cycles.
 
-use shared::filesystem::{FileEntry, ImportEntry, Language};
+use shared::filesystem::{FileEntry, FileNodeVO, ImportEdgeVO, ImportEntry};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 /// Dependency graph — directed graph of file-to-file import relationships.
 pub struct DependencyGraph {
-    graph: petgraph::graph::DiGraph<FileNode, ImportEdge>,
+    graph: petgraph::graph::DiGraph<FileNodeVO, ImportEdgeVO>,
     /// Map from file path to node index.
     node_map: HashMap<PathBuf, petgraph::graph::NodeIndex>,
 }
-
-#[derive(Debug, Clone)]
-pub struct FileNode {
-    pub path: PathBuf,
-    pub language: Language,
-    pub is_external: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct ImportEdge {
-    pub import_type: ImportType,
-    pub raw_path: String,
-    pub resolved: bool,
-}
-
-use shared::filesystem::ImportType;
 
 impl DependencyGraph {
     pub fn new() -> Self {
@@ -43,7 +27,7 @@ impl DependencyGraph {
 
         // Add all files as nodes
         for file in files {
-            let idx = graph.add_node(FileNode {
+            let idx = graph.add_node(FileNodeVO {
                 path: file.path.clone(),
                 language: file.language,
                 is_external: false,
@@ -63,7 +47,7 @@ impl DependencyGraph {
                     *idx
                 } else {
                     // External or unresolved — add as external node
-                    let idx = graph.add_node(FileNode {
+                    let idx = graph.add_node(FileNodeVO {
                         path: resolved.clone(),
                         language: import.language,
                         is_external: true,
@@ -77,7 +61,7 @@ impl DependencyGraph {
                 if let Some(idx) = node_map.get(&path) {
                     *idx
                 } else {
-                    let idx = graph.add_node(FileNode {
+                    let idx = graph.add_node(FileNodeVO {
                         path: path.clone(),
                         language: import.language,
                         is_external: true,
@@ -92,7 +76,7 @@ impl DependencyGraph {
                 graph.add_edge(
                     source_idx,
                     target_idx,
-                    ImportEdge {
+                    ImportEdgeVO {
                         import_type: import.import_type,
                         raw_path: import.raw_path.clone(),
                         resolved: import.is_resolved,
@@ -111,7 +95,8 @@ impl DependencyGraph {
             Some(idx) => *idx,
             None => return Vec::new(),
         };
-        self.graph.neighbors_directed(idx, petgraph::Direction::Incoming)
+        self.graph
+            .neighbors_directed(idx, petgraph::Direction::Incoming)
             .map(|n| self.graph[n].path.clone())
             .collect()
     }
@@ -122,7 +107,8 @@ impl DependencyGraph {
             Some(idx) => *idx,
             None => return Vec::new(),
         };
-        self.graph.neighbors_directed(idx, petgraph::Direction::Outgoing)
+        self.graph
+            .neighbors_directed(idx, petgraph::Direction::Outgoing)
             .map(|n| self.graph[n].path.clone())
             .collect()
     }
@@ -132,7 +118,11 @@ impl DependencyGraph {
         let sccs = petgraph::algo::kosaraju_scc(&self.graph);
         sccs.into_iter()
             .filter(|scc| scc.len() > 1)
-            .map(|scc| scc.into_iter().map(|n| self.graph[n].path.clone()).collect())
+            .map(|scc| {
+                scc.into_iter()
+                    .map(|n| self.graph[n].path.clone())
+                    .collect()
+            })
             .collect()
     }
 

@@ -1,11 +1,21 @@
 // filesystem crate — centralized file I/O, AST parsing, and dependency graph
 
-pub mod capabilities_filesystem_service;
-pub mod utility_ast_parser;
-pub mod utility_dependency_graph;
-pub mod utility_file_cache;
-pub mod utility_file_walker;
-pub mod utility_import_extractor;
+// ── Capabilities (protocol implementations) ──
+pub mod capabilities_ast_parser;
+pub mod capabilities_dependency_graph;
+pub mod capabilities_file_cache;
+pub mod capabilities_file_walker;
+pub mod capabilities_import_extractor;
+
+// ── Agent (orchestration) ──
+pub mod agent_filesystem_orchestrator;
+
+// ── Utility (stateless helpers) ──
 pub mod utility_io;
 
-pub use capabilities_filesystem_service::FilesystemService;
+// ── Re-exports ──
+pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
+pub use capabilities_ast_parser::ASTParser;
+pub use capabilities_dependency_graph::DependencyGraph;
+pub use capabilities_file_cache::FileCache;
+pub use capabilities_file_walker::FileWalker;

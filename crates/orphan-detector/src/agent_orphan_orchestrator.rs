@@ -1,4 +1,4 @@
-use filesystem::utility_file_walker::walk_recursive;
+use filesystem::capabilities_file_walker::walk_recursive;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::{
     GraphAnalysisContext, ImportGraph, OrphanIndicatorResult, ReachabilityResult,
@@ -97,9 +97,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
                 && let Ok(list) =
                     shared::common::utility_file_handler::scan_directory(&dir_path, ignored)
-                {
-                    all_files = list.values.iter().map(|f| f.value.clone()).collect();
-                }
+            {
+                all_files = list.values.iter().map(|f| f.value.clone()).collect();
+            }
         } else if root_path.is_file() {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
@@ -196,10 +196,7 @@ impl ArchOrphanAnalyzer {
                     }
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        let workspace_files =
-                            walk_recursive(
-                                &src_dir,
-                            );
+                        let workspace_files = walk_recursive(&src_dir);
                         for f in workspace_files {
                             // Skip ignored paths (e.g. tests/, target/)
                             if shared::common::utility_file_handler::is_path_ignored(
@@ -225,8 +222,7 @@ impl ArchOrphanAnalyzer {
                     }
                 }
                 // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
-                let root_files =
-                    walk_recursive(&ws_path);
+                let root_files = walk_recursive(&ws_path);
                 for f in root_files {
                     // Skip ignored paths (e.g. tests/, target/)
                     if shared::common::utility_file_handler::is_path_ignored(

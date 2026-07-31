@@ -1,10 +1,11 @@
-// PURPOSE: Utility layer — AST parser using tree-sitter
+// PURPOSE: Capabilities layer — AST parsing via tree-sitter (FR-003)
+// Parse once, query many. Parallel parsing via rayon. — AST parser using tree-sitter
 // Parse once, query many. Parallel parsing via rayon.
 
-use shared::filesystem::IASTParserProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::*;
 use dashmap::DashMap;
 use rayon::prelude::*;
+use shared::filesystem::IASTParserProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -14,10 +15,16 @@ pub struct ASTParser {
 
 impl ASTParser {
     pub fn new() -> Self {
-        Self { asts: Arc::new(DashMap::new()) }
+        Self {
+            asts: Arc::new(DashMap::new()),
+        }
     }
 
-    pub fn parse_all(&self, files: &[FileEntry], cache: &(dyn Fn(&PathBuf) -> Option<String> + Send + Sync)) {
+    pub fn parse_all(
+        &self,
+        files: &[FileEntry],
+        cache: &(dyn Fn(&PathBuf) -> Option<String> + Send + Sync),
+    ) {
         let asts = self.asts.clone();
         files.par_iter().for_each(|entry| {
             let content = match cache(&entry.path) {
@@ -40,7 +47,9 @@ impl ASTParser {
 }
 
 impl Default for ASTParser {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IASTParserProtocol for ASTParser {

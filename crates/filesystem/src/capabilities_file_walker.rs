@@ -1,19 +1,23 @@
-// PURPOSE: Utility layer — file walker using `ignore` crate
+// PURPOSE: Capabilities layer — file discovery (FR-001)
+// Walks directory tree parallel, gitignore-aware, filters by extension. — file walker using `ignore` crate
 // Walks directory tree parallel, gitignore-aware, filters by extension.
 
 use shared::filesystem::IFileWalkerProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 
-
 pub struct FileWalker;
 
 impl FileWalker {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 }
 
 impl Default for FileWalker {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IFileWalkerProtocol for FileWalker {
@@ -24,7 +28,11 @@ impl IFileWalkerProtocol for FileWalker {
             .git_ignore(true)
             .git_global(true)
             .git_exclude(true)
-            .threads(std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));
+            .threads(
+                std::thread::available_parallelism()
+                    .map(|n| n.get())
+                    .unwrap_or(4),
+            );
 
         for _pattern in ignored {
             // Note: add_custom_ignore not available in ignore 0.4
@@ -79,12 +87,14 @@ impl IFileWalkerProtocol for FileWalker {
     }
 }
 
-
 /// Simple recursive walk — returns file paths as strings.
 /// Drop-in replacement for scan_directory_recursive.
 pub fn walk_recursive(dir: &std::path::Path) -> Vec<String> {
     let walker = FileWalker::new();
     let extensions = Language::extensions();
     let entries = walker.walk(&dir.to_path_buf(), &[], extensions);
-    entries.into_iter().map(|e| e.path.to_string_lossy().to_string()).collect()
+    entries
+        .into_iter()
+        .map(|e| e.path.to_string_lossy().to_string())
+        .collect()
 }

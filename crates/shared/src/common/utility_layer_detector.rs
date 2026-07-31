@@ -110,12 +110,13 @@ pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<Strin
         // Handle Rust module paths: "crate::features::payment_service::PaymentService"
         // → extract "payment_service" and detect layer from its suffix
         if last_part.contains("::")
-            && let Some(stem) = last_part.rsplit("::").next() {
-                // Check if this segment itself has a prefix (e.g., "contract_")
-                if let Some(layer) = detect_layer_from_prefix(stem) {
-                    return Some(layer);
-                }
+            && let Some(stem) = last_part.rsplit("::").next()
+        {
+            // Check if this segment itself has a prefix (e.g., "contract_")
+            if let Some(layer) = detect_layer_from_prefix(stem) {
+                return Some(layer);
             }
+        }
 
         // Handle Python/JS paths: "modules.shared.src.server.contract_protocol"
         // → extract filename, detect layer from prefix
@@ -210,12 +211,13 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
         for entry in entries.filter_map(|e| e.ok()) {
             if let Ok(metadata) = entry.metadata()
                 && metadata.is_file()
-                    && let Some(filename) = entry.file_name().to_str() {
-                        // Check if filename has a layer prefix
-                        if let Some(layer) = detect_layer_from_prefix(filename) {
-                            return Some(layer);
-                        }
-                    }
+                && let Some(filename) = entry.file_name().to_str()
+            {
+                // Check if filename has a layer prefix
+                if let Some(layer) = detect_layer_from_prefix(filename) {
+                    return Some(layer);
+                }
+            }
         }
     }
 

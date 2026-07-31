@@ -98,22 +98,23 @@ impl InboundLinkMap {
         // Try canonical path
         if result.is_none()
             && let Ok(canon) = std::fs::canonicalize(path)
-                && let Some(canon_str) = canon.to_str() {
-                    if let Some(v) = self.mapping.get(canon_str) {
+            && let Some(canon_str) = canon.to_str()
+        {
+            if let Some(v) = self.mapping.get(canon_str) {
+                result = Some(v);
+            }
+            // Try canonical with ./ prefix
+            let canon_with_prefix = format!("./{}", canon_str);
+            if let Some(v) = self.mapping.get(&canon_with_prefix) {
+                if let Some(existing) = result {
+                    if v.len() > existing.len() {
                         result = Some(v);
                     }
-                    // Try canonical with ./ prefix
-                    let canon_with_prefix = format!("./{}", canon_str);
-                    if let Some(v) = self.mapping.get(&canon_with_prefix) {
-                        if let Some(existing) = result {
-                            if v.len() > existing.len() {
-                                result = Some(v);
-                            }
-                        } else {
-                            result = Some(v);
-                        }
-                    }
+                } else {
+                    result = Some(v);
                 }
+            }
+        }
 
         // Try clean path (without ./ prefix)
         if result.is_none() {

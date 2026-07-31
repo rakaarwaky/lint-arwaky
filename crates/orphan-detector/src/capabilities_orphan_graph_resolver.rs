@@ -2,9 +2,9 @@
 // AST-based: uses parser dispatch for all import/mod/trait resolution.
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
-use filesystem::utility_file_walker::walk_recursive;
-use shared::common::utility_file_handler::read_file_safe;
+use filesystem::capabilities_file_walker::walk_recursive;
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
+use shared::common::utility_file_handler::read_file_safe;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
@@ -291,9 +291,7 @@ impl OrphanGraphResolver {
                                 )
                             {
                                 let resolved = resolved_path.to_string_lossy().to_string();
-                                if std::path::PathBuf::from(&resolved).is_file()
-                                    && resolved != *f
-                                {
+                                if std::path::PathBuf::from(&resolved).is_file() && resolved != *f {
                                     utility_orphan_graph_resolver::add_edge(
                                         &mut import_graph,
                                         &mut inbound_links,

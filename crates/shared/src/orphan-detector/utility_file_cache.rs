@@ -20,7 +20,8 @@ pub fn read_cached(path: &FilePath) -> ContentString {
         return ContentString::new(content.clone());
     }
 
-    let content = crate::code_analysis::utility_file_reader::get_cached(path.value()).unwrap_or_else(|| fs::read_to_string(path.value()).unwrap_or_default());
+    let content = crate::code_analysis::utility_file_reader::get_cached(path.value())
+        .unwrap_or_else(|| fs::read_to_string(path.value()).unwrap_or_default());
 
     if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
@@ -34,9 +35,10 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     if let Ok(read_dir) = fs::read_dir(dir_path.value()) {
         for entry in read_dir.flatten() {
             if let Some(s) = entry.path().to_str()
-                && let Ok(fp) = FilePath::new(s) {
-                    entries.push(fp);
-                }
+                && let Ok(fp) = FilePath::new(s)
+            {
+                entries.push(fp);
+            }
         }
     }
     entries

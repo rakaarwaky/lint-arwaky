@@ -43,8 +43,7 @@ pub fn read_file_safe<P: AsRef<Path>>(path: P) -> String {
 /// Check if a path has a source file extension.
 pub fn is_source_file(path: &Path) -> bool {
     matches!(
-        path.extension()
-            .and_then(|e| e.to_str()),
+        path.extension().and_then(|e| e.to_str()),
         Some("rs" | "py" | "ts" | "js" | "tsx" | "jsx")
     )
 }
@@ -65,11 +64,7 @@ fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
 }
 
 /// Walk directory recursively, collecting all source file paths (skipping ignored patterns).
-pub fn walk_directory(
-    dir: &Path,
-    files: &mut Vec<FilePath>,
-    ignored: &[String],
-) {
+pub fn walk_directory(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
     walk_directory_inner(&root, files, ignored, &mut visited);
@@ -100,12 +95,7 @@ fn walk_directory_inner(
                     }
                     if let Ok(target_meta) = target.metadata() {
                         if target_meta.is_dir() {
-                            walk_directory_inner(
-                                &target,
-                                files,
-                                ignored,
-                                visited,
-                            );
+                            walk_directory_inner(&target, files, ignored, visited);
                         } else if target_meta.is_file()
                             && target.starts_with(dir)
                             && is_source_file(&target)
@@ -138,13 +128,7 @@ pub fn walk_directory_with_extensions(
 ) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
     let mut visited = HashSet::<PathBuf>::new();
-    walk_directory_with_extensions_inner(
-        &root,
-        files,
-        ignored,
-        extensions,
-        &mut visited,
-    );
+    walk_directory_with_extensions_inner(&root, files, ignored, extensions, &mut visited);
 }
 
 fn walk_directory_with_extensions_inner(
@@ -174,15 +158,13 @@ fn walk_directory_with_extensions_inner(
                     if let Ok(target_meta) = target.metadata() {
                         if target_meta.is_dir() {
                             walk_directory_with_extensions_inner(
-                                &target,
-                                files,
-                                ignored,
-                                extensions,
-                                visited,
+                                &target, files, ignored, extensions, visited,
                             );
                         } else if target_meta.is_file()
                             && target.starts_with(dir)
-                            && target.extension().and_then(|e| e.to_str())
+                            && target
+                                .extension()
+                                .and_then(|e| e.to_str())
                                 .is_some_and(|ext| extensions.contains(&ext))
                         {
                             collect_source_file(&target, files);
@@ -197,7 +179,9 @@ fn walk_directory_with_extensions_inner(
                     continue;
                 }
                 walk_directory_with_extensions_inner(&path, files, ignored, extensions, visited);
-            } else if path.extension().and_then(|e| e.to_str())
+            } else if path
+                .extension()
+                .and_then(|e| e.to_str())
                 .is_some_and(|ext| extensions.contains(&ext))
             {
                 collect_source_file(&path, files);
@@ -359,4 +343,3 @@ fn _scan_directory_recursive(dir_path: &Path, files: &mut Vec<String>) {
         }
     }
 }
-

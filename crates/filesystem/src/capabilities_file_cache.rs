@@ -1,10 +1,11 @@
-// PURPOSE: Utility layer — file content cache with DashMap
+// PURPOSE: Capabilities layer — file content cache (FR-002)
+// Read once, serve from memory. Thread-safe parallel population. — file content cache with DashMap
 // Read once, serve from memory. Thread-safe parallel population.
 
-use shared::filesystem::IFileCacheProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::*;
 use dashmap::DashMap;
 use rayon::prelude::*;
+use shared::filesystem::IFileCacheProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -14,16 +15,23 @@ pub struct FileCache {
 
 impl FileCache {
     pub fn new() -> Self {
-        Self { cache: Arc::new(DashMap::new()) }
+        Self {
+            cache: Arc::new(DashMap::new()),
+        }
     }
 
     pub fn memory_bytes(&self) -> usize {
-        self.cache.iter().map(|e| e.key().as_os_str().len() + e.value().len()).sum()
+        self.cache
+            .iter()
+            .map(|e| e.key().as_os_str().len() + e.value().len())
+            .sum()
     }
 }
 
 impl Default for FileCache {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl IFileCacheProtocol for FileCache {

@@ -162,25 +162,26 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
             brace_depth = trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
             if brace_depth == 0 {
                 if let Some(open) = trimmed.find('{')
-                    && let Some(close) = trimmed.rfind('}') {
-                        let inner = &trimmed[open + 1..close];
-                        if inner.contains('(') && inner.contains(':') {
-                            let lower = inner.to_lowercase();
-                            let has_primitive = lower.contains(": string")
-                                || lower.contains(": number")
-                                || lower.contains(": any")
-                                || lower.contains(": string[]")
-                                || lower.contains(": number[]")
-                                || lower.contains("): string")
-                                || lower.contains("): number")
-                                || lower.contains("): any")
-                                || lower.contains("): string[]")
-                                || lower.contains("): number[]");
-                            if has_primitive {
-                                results.push((line_no, raw.to_string()));
-                            }
+                    && let Some(close) = trimmed.rfind('}')
+                {
+                    let inner = &trimmed[open + 1..close];
+                    if inner.contains('(') && inner.contains(':') {
+                        let lower = inner.to_lowercase();
+                        let has_primitive = lower.contains(": string")
+                            || lower.contains(": number")
+                            || lower.contains(": any")
+                            || lower.contains(": string[]")
+                            || lower.contains(": number[]")
+                            || lower.contains("): string")
+                            || lower.contains("): number")
+                            || lower.contains("): any")
+                            || lower.contains("): string[]")
+                            || lower.contains("): number[]");
+                        if has_primitive {
+                            results.push((line_no, raw.to_string()));
                         }
                     }
+                }
                 in_block = false;
             }
             continue;

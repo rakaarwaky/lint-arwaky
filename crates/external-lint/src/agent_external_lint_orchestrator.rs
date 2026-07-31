@@ -226,9 +226,10 @@ fn walk_up_find_config<T>(
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists()
                 && let Ok(content) = std::fs::read_to_string(&cfg_path)
-                    && let Some(result) = extract(&content) {
-                        return Some(result);
-                    }
+                && let Some(result) = extract(&content)
+            {
+                return Some(result);
+            }
         }
         current = dir.parent().filter(|&p| p != dir);
     }

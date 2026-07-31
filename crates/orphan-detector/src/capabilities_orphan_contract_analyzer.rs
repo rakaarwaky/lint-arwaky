@@ -296,9 +296,11 @@ impl ContractOrphanAnalyzer {
                 .unwrap_or_else(|_| root.clone());
         if let Ok(mut guard) = self.search_cache.lock() {
             if let Some(cache) = guard.as_ref()
-                && cache.root == top_root && cache.file_count == all_files.len() {
-                    return cache.files.clone();
-                }
+                && cache.root == top_root
+                && cache.file_count == all_files.len()
+            {
+                return cache.files.clone();
+            }
             let mut search_files: Vec<String> = all_files.to_vec();
             for ws_dir in &["crates", "packages", "modules"] {
                 let ws_path = top_root.join(ws_dir);

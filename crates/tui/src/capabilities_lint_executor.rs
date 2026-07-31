@@ -50,8 +50,8 @@ impl ILintExecutorProtocol for LintExecutor {
         // Use filesystem service for walk + cache
         let scan_root = shared::common::utility_file_handler::find_workspace_root(path)
             .unwrap_or_else(|| std::path::PathBuf::from(path));
-        let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path.to_string())
-            .unwrap_or_default();
+        let root_fp =
+            shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
         let ignored = self
             .config_orchestrator
             .as_ref()
@@ -59,7 +59,7 @@ impl ILintExecutorProtocol for LintExecutor {
             .unwrap_or_default();
         let ignored_strs: Vec<String> = ignored.values().iter().cloned().collect();
 
-        let fs_service = filesystem::FilesystemService::new();
+        let fs_service = filesystem::FilesystemOrchestrator::new();
         let _fs_result = fs_service.scan(&scan_root, &ignored_strs);
 
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
@@ -912,14 +912,17 @@ impl LintExecutor {
             .unwrap_or_default();
         let ignored_strs: Vec<String> = ignored.values().iter().cloned().collect();
 
-        let fs_service = filesystem::FilesystemService::new();
+        let fs_service = filesystem::FilesystemOrchestrator::new();
         let fs_result = fs_service.scan(&scan_root, &ignored_strs);
 
         // Pre-compute shared data for linter threads
-        let aes_fp =
-            shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
-                .unwrap_or_default();
-        let file_strs: Vec<String> = fs_result.files.iter().map(|f| f.path.to_string_lossy().to_string()).collect();
+        let aes_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
+            .unwrap_or_default();
+        let file_strs: Vec<String> = fs_result
+            .files
+            .iter()
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
 
         // Clone Arcs for thread ownership
         let code_analysis = self.code_analysis.clone();
@@ -937,48 +940,64 @@ impl LintExecutor {
 
         std::thread::scope(|s| {
             // 1. AES code analysis
-            let h1 = s.spawn(move || {
-                code_analysis.run_code_analysis(&aes_fp).values
-            });
+            let h1 = s.spawn(move || code_analysis.run_code_analysis(&aes_fp).values);
 
             // 2. Naming rules audit (AES101-102)
             let h2 = s.spawn(move || {
-                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
-                naming.map(|n| {
-                    let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_n.clone())
-                        .unwrap_or_default();
-                    rt.block_on(n.run_audit(&p)).unwrap_or_default()
-                }).unwrap_or_default()
+                let Ok(rt) = tokio::runtime::Runtime::new() else {
+                    return Vec::new();
+                };
+                naming
+                    .map(|n| {
+                        let p =
+                            shared::common::taxonomy_path_vo::FilePath::new(path_string_n.clone())
+                                .unwrap_or_default();
+                        rt.block_on(n.run_audit(&p)).unwrap_or_default()
+                    })
+                    .unwrap_or_default()
             });
 
             // 3. Import rules audit (AES201-205, cycles)
             let h3 = s.spawn(move || {
-                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
-                import.map(|i| {
-                    let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_i.clone())
-                        .unwrap_or_default();
-                    rt.block_on(i.run_audit(&p)).unwrap_or_default()
-                }).unwrap_or_default()
+                let Ok(rt) = tokio::runtime::Runtime::new() else {
+                    return Vec::new();
+                };
+                import
+                    .map(|i| {
+                        let p =
+                            shared::common::taxonomy_path_vo::FilePath::new(path_string_i.clone())
+                                .unwrap_or_default();
+                        rt.block_on(i.run_audit(&p)).unwrap_or_default()
+                    })
+                    .unwrap_or_default()
             });
 
             // 4. External linter adapters (Clippy, Ruff, ESLint, etc.)
             let h4 = s.spawn(move || {
-                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
-                external_lint.map(|e| {
-                    let fp = shared::common::taxonomy_path_vo::FilePath::new(path_string_e.clone())
-                        .unwrap_or_default();
-                    rt.block_on(e.scan_all(&fp)).values
-                }).unwrap_or_default()
+                let Ok(rt) = tokio::runtime::Runtime::new() else {
+                    return Vec::new();
+                };
+                external_lint
+                    .map(|e| {
+                        let fp =
+                            shared::common::taxonomy_path_vo::FilePath::new(path_string_e.clone())
+                                .unwrap_or_default();
+                        rt.block_on(e.scan_all(&fp)).values
+                    })
+                    .unwrap_or_default()
             });
 
             // 5. Role rules audit (AES401-406)
             let h5 = s.spawn(move || {
-                let Ok(rt) = tokio::runtime::Runtime::new() else { return Vec::new() };
+                let Ok(rt) = tokio::runtime::Runtime::new() else {
+                    return Vec::new();
+                };
                 role.map(|r| {
                     let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_r.clone())
                         .unwrap_or_default();
                     rt.block_on(r.run_audit(&p))
-                }).unwrap_or_default()
+                })
+                .unwrap_or_default()
             });
 
             // 6. Orphan detection (AES501-506)
@@ -990,7 +1009,9 @@ impl LintExecutor {
                     shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO::new(
                         file_strs,
                     );
-                orphan_agg.map(|o| o.check_orphans(&files_vo, &root_fp)).unwrap_or_default()
+                orphan_agg
+                    .map(|o| o.check_orphans(&files_vo, &root_fp))
+                    .unwrap_or_default()
             });
 
             // Collect all results

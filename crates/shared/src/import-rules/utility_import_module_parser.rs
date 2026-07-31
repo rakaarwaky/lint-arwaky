@@ -161,29 +161,28 @@ pub fn extract_import_modules_resolved(
                 if import_part.contains('{') {
                     // import { A, B } from './module'
                     if let Some(open) = import_part.find('{')
-                        && let Some(close) = import_part.find('}') {
-                            let inner = &import_part[open + 1..close];
-                            for name in inner.split(',') {
-                                let name = name.trim().split(" as ").last().unwrap_or("").trim();
-                                if name.is_empty() {
-                                    continue;
-                                }
-                                // Try barrel resolution
-                                if let Some(resolved) =
-                                    utility_import_resolver::resolve_barrel_import(
-                                        module, name, root_dir,
-                                    )
-                                {
-                                    resolved_modules.push((
-                                        SymbolName::new(module),
-                                        SymbolName::new(resolved.resolved_file),
-                                    ));
-                                } else {
-                                    resolved_modules
-                                        .push((SymbolName::new(module), SymbolName::new(module)));
-                                }
+                        && let Some(close) = import_part.find('}')
+                    {
+                        let inner = &import_part[open + 1..close];
+                        for name in inner.split(',') {
+                            let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                            if name.is_empty() {
+                                continue;
+                            }
+                            // Try barrel resolution
+                            if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
+                                module, name, root_dir,
+                            ) {
+                                resolved_modules.push((
+                                    SymbolName::new(module),
+                                    SymbolName::new(resolved.resolved_file),
+                                ));
+                            } else {
+                                resolved_modules
+                                    .push((SymbolName::new(module), SymbolName::new(module)));
                             }
                         }
+                    }
                 } else {
                     // import X from './module'
                     let name = import_part.trim();
@@ -207,45 +206,45 @@ pub fn extract_import_modules_resolved(
         }
 
         // ── JS: const { X } = require('./module'); ──
-        if trimmed.starts_with("const ") && trimmed.contains("require(")
-            && let Some(req_start) = trimmed.find("require(") {
-                let after = &trimmed[req_start + 8..];
-                if let Some(paren_end) = after.find(')') {
-                    let req_module = after[..paren_end]
-                        .trim_matches(|c: char| c == '\'' || c == '"' || c == '`')
-                        .trim_start_matches("./")
-                        .trim_start_matches("../");
+        if trimmed.starts_with("const ")
+            && trimmed.contains("require(")
+            && let Some(req_start) = trimmed.find("require(")
+        {
+            let after = &trimmed[req_start + 8..];
+            if let Some(paren_end) = after.find(')') {
+                let req_module = after[..paren_end]
+                    .trim_matches(|c: char| c == '\'' || c == '"' || c == '`')
+                    .trim_start_matches("./")
+                    .trim_start_matches("../");
 
-                    if let Some(eq_pos) = trimmed.find('=') {
-                        let left = trimmed[6..eq_pos].trim(); // after "const "
-                        if left.starts_with('{') && left.ends_with('}') {
-                            let inner = &left[1..left.len() - 1];
-                            for name in inner.split(',') {
-                                let name = name.trim().split(':').next_back().unwrap_or("").trim();
-                                if name.is_empty() {
-                                    continue;
-                                }
-                                // Try barrel resolution
-                                if let Some(resolved) =
-                                    utility_import_resolver::resolve_barrel_import(
-                                        req_module, name, root_dir,
-                                    )
-                                {
-                                    resolved_modules.push((
-                                        SymbolName::new(req_module),
-                                        SymbolName::new(resolved.resolved_file),
-                                    ));
-                                } else {
-                                    resolved_modules.push((
-                                        SymbolName::new(req_module),
-                                        SymbolName::new(req_module),
-                                    ));
-                                }
+                if let Some(eq_pos) = trimmed.find('=') {
+                    let left = trimmed[6..eq_pos].trim(); // after "const "
+                    if left.starts_with('{') && left.ends_with('}') {
+                        let inner = &left[1..left.len() - 1];
+                        for name in inner.split(',') {
+                            let name = name.trim().split(':').next_back().unwrap_or("").trim();
+                            if name.is_empty() {
+                                continue;
+                            }
+                            // Try barrel resolution
+                            if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
+                                req_module, name, root_dir,
+                            ) {
+                                resolved_modules.push((
+                                    SymbolName::new(req_module),
+                                    SymbolName::new(resolved.resolved_file),
+                                ));
+                            } else {
+                                resolved_modules.push((
+                                    SymbolName::new(req_module),
+                                    SymbolName::new(req_module),
+                                ));
                             }
                         }
                     }
                 }
             }
+        }
     }
 
     resolved_modules

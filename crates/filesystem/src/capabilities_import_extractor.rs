@@ -1,4 +1,5 @@
-// PURPOSE: Utility layer — extract imports from source files using tree-sitter
+// PURPOSE: Capabilities layer — import/dependency extraction (FR-004)
+// Supports Rust, Python, TypeScript, JavaScript import patterns. — extract imports from source files using tree-sitter
 // Supports Rust, Python, TypeScript, JavaScript import patterns.
 
 use shared::filesystem::{ImportEntry, ImportType, Language};
@@ -42,9 +43,11 @@ fn extract_from_node(
             // mod_declaration: `mod foo;` or `mod foo { ... }`
             if kind == "use_declaration" {
                 if let Some(path_str) = extract_use_path(node, content) {
-                    let is_pub = node
-                        .child_by_field_name("visibility")
-                        .map_or(false, |v| text_of(v, content) == "pub");
+                    let is_pub = {
+                        let mut c = node.walk();
+                        node.named_children(&mut c)
+                            .any(|ch| ch.kind() == "visibility_modifier")
+                    };
                     imports.push(ImportEntry {
                         source_file: source_file.clone(),
                         raw_path: path_str,
@@ -59,7 +62,7 @@ fn extract_from_node(
                         is_resolved: false,
                     });
                 }
-            } else if kind == "mod_declaration" {
+            } else if kind == "mod_item" {
                 if let Some(name) = child_by_field(node, content, "name") {
                     imports.push(ImportEntry {
                         source_file: source_file.clone(),
@@ -161,9 +164,56 @@ fn extract_from_node(
 // ─── Rust helpers ──────────────────────────────────────────
 
 fn extract_use_path(node: Node, content: &str) -> Option<String> {
-    let scoped = node.child_by_field_name("scoped_use")?;
-    let path = scoped.child_by_field_name("path")?;
-    Some(text_of(path, content).to_string())
+    // use_declaration → children: optional visibility_modifier, then scoped_identifier or use_as_clause
+    let mut cursor = node.walk();
+    let children: Vec<Node> = node.named_children(&mut cursor).collect();
+
+    // Find the first child that is not a visibility_modifier
+    let path_child = children
+        .iter()
+        .find(|ch| ch.kind() != "visibility_modifier")?;
+
+    // Handle use_as_clause: `use foo::Bar as Baz;` → extract path from use_as_clause
+    if path_child.kind() == "use_as_clause" {
+        let mut c2 = path_child.walk();
+        let inner = path_child.named_children(&mut c2).next()?;
+        let mut path_parts = Vec::new();
+        extract_scoped_path(inner, content, &mut path_parts);
+        return if path_parts.is_empty() {
+            None
+        } else {
+            Some(path_parts.join("::"))
+        };
+    }
+
+    let mut path_parts = Vec::new();
+    extract_scoped_path(*path_child, content, &mut path_parts);
+    if path_parts.is_empty() {
+        return None;
+    }
+    Some(path_parts.join("::"))
+}
+
+fn extract_scoped_path(node: Node, content: &str, parts: &mut Vec<String>) {
+    match node.kind() {
+        "scoped_identifier" => {
+            let mut cursor = node.walk();
+            let children: Vec<Node> = node.named_children(&mut cursor).collect();
+            if children.len() >= 2 {
+                extract_scoped_path(children[0], content, parts);
+                parts.push(text_of(*children.last().unwrap(), content).to_string());
+            } else if let Some(single) = children.first() {
+                parts.push(text_of(*single, content).to_string());
+            }
+        }
+        "identifier" | "crate" => {
+            let name = text_of(node, content).to_string();
+            if !name.is_empty() {
+                parts.push(name);
+            }
+        }
+        _ => {}
+    }
 }
 
 // ─── Python helpers ────────────────────────────────────────
@@ -199,8 +249,15 @@ fn extract_require_source(node: Node, content: &str) -> Option<String> {
 fn extract_string_literal(node: Node, content: &str) -> Option<String> {
     let text = text_of(node, content);
     // Strip quotes
-    let inner = text.strip_prefix('\'').or_else(|| text.strip_prefix('"')).or_else(|| text.strip_prefix('`'))?;
-    inner.strip_suffix('\'').or_else(|| inner.strip_suffix('"')).or_else(|| inner.strip_suffix('`')).map(|s| s.to_string())
+    let inner = text
+        .strip_prefix('\'')
+        .or_else(|| text.strip_prefix('"'))
+        .or_else(|| text.strip_prefix('`'))?;
+    inner
+        .strip_suffix('\'')
+        .or_else(|| inner.strip_suffix('"'))
+        .or_else(|| inner.strip_suffix('`'))
+        .map(|s| s.to_string())
 }
 
 // ─── Generic helpers ───────────────────────────────────────

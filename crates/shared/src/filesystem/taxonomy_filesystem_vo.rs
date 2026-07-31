@@ -120,3 +120,94 @@ pub struct ScanTiming {
     pub graph_ms: u64,
     pub total_ms: u64,
 }
+
+// ─── Graph Node / Edge VOs ────────────────────────────────
+
+/// Graph node representing a source file in the dependency graph.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileNodeVO {
+    /// Absolute path to the file.
+    pub path: PathBuf,
+    /// Detected language.
+    pub language: Language,
+    /// Whether the file is external to the workspace.
+    pub is_external: bool,
+}
+
+/// Graph edge representing an import relationship.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImportEdgeVO {
+    /// Type of import.
+    pub import_type: ImportType,
+    /// Raw import path as written in source.
+    pub raw_path: String,
+    /// Whether the import was resolved to a workspace file.
+    pub resolved: bool,
+}
+
+// ─── Cache / Memory Budget VOs ─────────────────────────────
+
+/// Memory budget for file cache and AST cache.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MemoryBudgetVO {
+    /// Maximum total bytes for file content cache (default 512 MiB).
+    pub max_file_cache_bytes: u64,
+    /// Maximum per-file size in bytes (default 2 MiB).
+    pub max_file_size_bytes: u64,
+}
+
+impl Default for MemoryBudgetVO {
+    fn default() -> Self {
+        Self {
+            max_file_cache_bytes: 512 * 1024 * 1024,
+            max_file_size_bytes: MAX_LINT_FILE_BYTES,
+        }
+    }
+}
+
+/// Cache statistics after population.
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct CacheStatsVO {
+    /// Number of files successfully cached.
+    pub cached_count: usize,
+    /// Number of files that failed to read.
+    pub failed_count: usize,
+    /// Total bytes cached.
+    pub total_bytes: u64,
+}
+
+/// Dependency graph statistics.
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct GraphStatsVO {
+    /// Total nodes (files) in the graph.
+    pub node_count: usize,
+    /// Total edges (imports) in the graph.
+    pub edge_count: usize,
+    /// Number of unresolved imports.
+    pub unresolved_count: usize,
+    /// Number of cycles detected.
+    pub cycle_count: usize,
+}
+
+// ─── Scan Config VO ────────────────────────────────────────
+
+/// Configuration for a filesystem scan.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanConfigVO {
+    /// Root directory to scan.
+    pub root: PathBuf,
+    /// Paths to ignore (gitignore patterns).
+    pub ignored_paths: Vec<String>,
+    /// Memory budget.
+    pub budget: MemoryBudgetVO,
+}
+
+impl Default for ScanConfigVO {
+    fn default() -> Self {
+        Self {
+            root: PathBuf::new(),
+            ignored_paths: Vec::new(),
+            budget: MemoryBudgetVO::default(),
+        }
+    }
+}

@@ -136,12 +136,13 @@ impl WorkspaceDetector {
             }
         } {
             if let Ok(ft) = entry.file_type().await
-                && ft.is_dir() {
-                    let sub = entry.path();
-                    if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
-                        results.push(fp);
-                    }
+                && ft.is_dir()
+            {
+                let sub = entry.path();
+                if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
+                    results.push(fp);
                 }
+            }
         }
         results
     }
@@ -162,23 +163,26 @@ impl WorkspaceDetector {
         }
 
         if let Some(parent) = root.parent()
-            && let Some(parent_name) = parent.file_name() {
-                let parent_str = parent_name.to_string_lossy();
-                if workspace_dirs.contains(&parent_str.as_ref())
-                    && let Ok(meta) = tokio::fs::metadata(root).await
-                        && meta.is_dir()
-                            && let Ok(fp) = FilePath::new(root.to_string_lossy().to_string()) {
-                                return vec![fp];
-                            }
+            && let Some(parent_name) = parent.file_name()
+        {
+            let parent_str = parent_name.to_string_lossy();
+            if workspace_dirs.contains(&parent_str.as_ref())
+                && let Ok(meta) = tokio::fs::metadata(root).await
+                && meta.is_dir()
+                && let Ok(fp) = FilePath::new(root.to_string_lossy().to_string())
+            {
+                return vec![fp];
             }
+        }
 
         let mut results = Vec::new();
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);
             if let Ok(meta) = tokio::fs::metadata(&dir_path).await
-                && meta.is_dir() {
-                    results.extend(Self::collect_subdirs(&dir_path).await);
-                }
+                && meta.is_dir()
+            {
+                results.extend(Self::collect_subdirs(&dir_path).await);
+            }
         }
         results
     }
