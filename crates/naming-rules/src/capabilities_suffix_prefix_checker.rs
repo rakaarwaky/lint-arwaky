@@ -90,8 +90,8 @@ impl SuffixPrefixChecker {
 
         let suffix = get_suffix(stem);
 
-        if let Some(suf) = &suffix {
-            if def.naming.forbidden_suffix.values.iter().any(|v| v == *suf) {
+        if let Some(suf) = &suffix
+            && def.naming.forbidden_suffix.values.iter().any(|v| v == *suf) {
                 let layer_display = _layer_name
                     .as_ref()
                     .map(|l| l.value().to_string())
@@ -113,7 +113,6 @@ impl SuffixPrefixChecker {
                     Severity::HIGH,
                 ));
             }
-        }
 
         if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
             let valid = match &suffix {

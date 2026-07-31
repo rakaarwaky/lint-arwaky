@@ -277,10 +277,10 @@ impl CodeAnalysisOrchestrator {
                     .and_then(|s| s.to_str())
                     .unwrap_or("");
                 let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
-                if let Some(rule) = aes305_rule {
-                    if rule.exceptions.values.contains(&file_name.to_string()) {
-                        continue;
-                    }
+                if let Some(rule) = aes305_rule
+                    && rule.exceptions.values.contains(&file_name.to_string())
+                {
+                    continue;
                 }
                 let msg = aes_violation.to_string();
                 violations.push(LintResult::new_arch(

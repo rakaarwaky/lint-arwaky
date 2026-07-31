@@ -31,15 +31,14 @@ pub fn detect_source_dir(project_root: &Path) -> std::path::PathBuf {
 fn has_source_files(dir: &Path) -> bool {
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
-            if let Some(name) = entry.file_name().to_str() {
-                if name.ends_with(".rs")
+            if let Some(name) = entry.file_name().to_str()
+                && (name.ends_with(".rs")
                     || name.ends_with(".py")
                     || name.ends_with(".ts")
-                    || name.ends_with(".js")
+                    || name.ends_with(".js"))
                 {
                     return true;
                 }
-            }
         }
     }
     false
@@ -56,16 +55,14 @@ pub fn collect_source_files(
         walk_source_files(root_dir, &mut files, ignored);
     } else if root_dir.is_file() {
         // Handle single file scan — include the file directly if it's a source file
-        if let Some(ext) = root_dir.extension().and_then(|e| e.to_str()) {
-            if is_source_file(ext) {
+        if let Some(ext) = root_dir.extension().and_then(|e| e.to_str())
+            && is_source_file(ext) {
                 let rel_path = root_dir.to_string_lossy();
-                if !is_path_ignored(&rel_path, ignored) {
-                    if let Ok(fp) = FilePath::new(rel_path.to_string()) {
+                if !is_path_ignored(&rel_path, ignored)
+                    && let Ok(fp) = FilePath::new(rel_path.to_string()) {
                         files.push(fp);
                     }
-                }
             }
-        }
     }
     files
 }

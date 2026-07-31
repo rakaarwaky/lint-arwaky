@@ -64,15 +64,15 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
                 if check_dir_containers(path, identifiers) {
                     return true;
                 }
-            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_container.rs")
+            } else if let Some(name) = path.file_name().and_then(|n| n.to_str())
+                && (name.ends_with("_container.rs")
                     || name.ends_with("_container.py")
                     || name.ends_with("_container.ts")
                     || name.ends_with("_container.js")
                     || name.ends_with("_entry.rs")
                     || name.ends_with("_entry.py")
                     || name.ends_with("_entry.ts")
-                    || name.ends_with("_entry.js")
+                    || name.ends_with("_entry.js"))
                 {
                     let fp = FilePath {
                         value: entry_path.value.clone(),
@@ -84,7 +84,6 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
                         }
                     }
                 }
-            }
         }
     }
     false
@@ -102,11 +101,10 @@ pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
                     continue;
                 }
                 collect_source_files(path, files);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                && matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
                     files.push(entry_path.value().to_string());
                 }
-            }
         }
     }
 }

@@ -160,8 +160,8 @@ pub fn extract_import_modules_resolved(
                 let import_part = &trimmed[7..from_pos]; // after "import "
                 if import_part.contains('{') {
                     // import { A, B } from './module'
-                    if let Some(open) = import_part.find('{') {
-                        if let Some(close) = import_part.find('}') {
+                    if let Some(open) = import_part.find('{')
+                        && let Some(close) = import_part.find('}') {
                             let inner = &import_part[open + 1..close];
                             for name in inner.split(',') {
                                 let name = name.trim().split(" as ").last().unwrap_or("").trim();
@@ -184,7 +184,6 @@ pub fn extract_import_modules_resolved(
                                 }
                             }
                         }
-                    }
                 } else {
                     // import X from './module'
                     let name = import_part.trim();
@@ -208,8 +207,8 @@ pub fn extract_import_modules_resolved(
         }
 
         // ── JS: const { X } = require('./module'); ──
-        if trimmed.starts_with("const ") && trimmed.contains("require(") {
-            if let Some(req_start) = trimmed.find("require(") {
+        if trimmed.starts_with("const ") && trimmed.contains("require(")
+            && let Some(req_start) = trimmed.find("require(") {
                 let after = &trimmed[req_start + 8..];
                 if let Some(paren_end) = after.find(')') {
                     let req_module = after[..paren_end]
@@ -247,7 +246,6 @@ pub fn extract_import_modules_resolved(
                     }
                 }
             }
-        }
     }
 
     resolved_modules

@@ -94,13 +94,11 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if root_path.is_dir() {
             if let Ok(dir_path) =
                 shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
-            {
-                if let Ok(list) =
+                && let Ok(list) =
                     shared::common::utility_file_handler::scan_directory(&dir_path, ignored)
                 {
                     all_files = list.values.iter().map(|f| f.value.clone()).collect();
                 }
-            }
         } else if root_path.is_file() {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");

@@ -120,12 +120,11 @@ pub fn resolve_cargo_working_dir(path: &FilePath) -> FilePath {
             return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());
         }
-        if let Some(grandparent) = parent.parent() {
-            if grandparent.join("Cargo.toml").exists() {
+        if let Some(grandparent) = parent.parent()
+            && grandparent.join("Cargo.toml").exists() {
                 return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
                     .unwrap_or_else(|_| path.clone());
             }
-        }
     }
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }
@@ -146,12 +145,11 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
             return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());
         }
-        if let Some(grandparent) = parent.parent() {
-            if grandparent.join("Cargo.lock").exists() {
+        if let Some(grandparent) = parent.parent()
+            && grandparent.join("Cargo.lock").exists() {
                 return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
                     .unwrap_or_else(|_| path.clone());
             }
-        }
     }
     FilePath::new(".".to_string()).unwrap_or_else(|_| path.clone())
 }

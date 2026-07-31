@@ -64,12 +64,11 @@ pub fn has_cargo_toml(path_str: &str) -> Option<String> {
         if crate::common::utility_file_handler::is_file_generic(parent.join("Cargo.toml")) {
             return Some(parent.to_string_lossy().replace('\\', "/"));
         }
-        if let Some(grandparent) = parent.parent() {
-            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.toml"))
+        if let Some(grandparent) = parent.parent()
+            && crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.toml"))
             {
                 return Some(grandparent.to_string_lossy().replace('\\', "/"));
             }
-        }
     }
     None
 }
@@ -86,12 +85,11 @@ pub fn has_cargo_lock(path_str: &str) -> Option<String> {
         if crate::common::utility_file_handler::is_file_generic(parent.join("Cargo.lock")) {
             return Some(parent.to_string_lossy().replace('\\', "/"));
         }
-        if let Some(grandparent) = parent.parent() {
-            if crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.lock"))
+        if let Some(grandparent) = parent.parent()
+            && crate::common::utility_file_handler::is_file_generic(grandparent.join("Cargo.lock"))
             {
                 return Some(grandparent.to_string_lossy().replace('\\', "/"));
             }
-        }
     }
     None
 }

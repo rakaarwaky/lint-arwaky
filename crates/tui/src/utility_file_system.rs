@@ -99,15 +99,16 @@ pub fn copy_text_to_clipboard(text: &str) -> bool {
     // Try arboard first
     #[cfg(not(test))]
     {
-        if let Ok(mut clipboard) = arboard::Clipboard::new() {
-            if clipboard.set_text(text).is_ok() {
+        if let Ok(mut clipboard) = arboard::Clipboard::new()
+            && clipboard.set_text(text).is_ok() {
                 return true;
             }
-        }
     }
 
     // Fallback to shell commands: xclip → wl-copy
-    let success = std::process::Command::new("sh")
+    
+
+    std::process::Command::new("sh")
         .arg("-c")
         .arg("xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null")
         .stdin(std::process::Stdio::piped())
@@ -119,7 +120,5 @@ pub fn copy_text_to_clipboard(text: &str) -> bool {
             child.wait()
         })
         .map(|status| status.success())
-        .unwrap_or(false);
-
-    success
+        .unwrap_or(false)
 }

@@ -96,11 +96,10 @@ impl TuiCommandSurface {
 
         loop {
             // --- Poll scan progress (non-blocking) ---
-            if state.scanning {
-                if let Some(ref rx) = scan_rx {
+            if state.scanning
+                && let Some(ref rx) = scan_rx {
                     self.tui_aggregate.poll_scan(state, rx);
                 }
-            }
 
             // --- Poll watch updates (non-blocking) ---
             if state.watching {
@@ -150,11 +149,10 @@ impl TuiCommandSurface {
 
                 // --- Intercept ActionScan: spawn background thread ---
                 if matches!(tui_event, TuiEvent::ActionScan) {
-                    if !state.scanning {
-                        if let Some(rx) = self.tui_aggregate.start_scan(state) {
+                    if !state.scanning
+                        && let Some(rx) = self.tui_aggregate.start_scan(state) {
                             scan_rx = Some(rx);
                         }
-                    }
                     // Ignore if already scanning
                 } else if state.scanning
                     && matches!(

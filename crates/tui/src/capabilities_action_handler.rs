@@ -322,12 +322,11 @@ impl ActionHandler {
     /// Navigate to the parent directory, clamped to the project root boundary.
     fn navigate_back(&self, state: &mut AppState) {
         let current = FilePath::new(state.current_dir.clone()).unwrap_or_default();
-        if let Some(parent) = utility_file_system::parent_directory(&current) {
-            if parent.value.starts_with(&state.project_root) {
+        if let Some(parent) = utility_file_system::parent_directory(&current)
+            && parent.value.starts_with(&state.project_root) {
                 state.current_dir = parent.value.clone();
                 self.load_directory(state, &state.current_dir.clone());
             }
-        }
     }
 
     /// Navigate into a directory or select a file (no preview loading).

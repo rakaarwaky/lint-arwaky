@@ -61,8 +61,8 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
     };
     if let Some(arch_val) = raw.get("architecture") {
         let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        if arch_json.get("layers").is_none() {
-            if let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
+        if arch_json.get("layers").is_none()
+            && let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut()) {
                 for (_rule_code, rule_val) in rules_obj.iter_mut() {
                     if let Some(layers) = rule_val.get_mut("layers") {
                         let layers = std::mem::take(layers);
@@ -71,7 +71,6 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                     }
                 }
             }
-        }
         let mut json = arch_json;
         fn remove_nulls(val: &mut serde_json::Value) {
             match val {
@@ -93,8 +92,8 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
         if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
             json["ignored_paths"] = serde_json::json!({"values": arr});
         }
-        if let Some(layers_obj) = json.get_mut("layers") {
-            if let Some(obj) = layers_obj.as_object_mut() {
+        if let Some(layers_obj) = json.get_mut("layers")
+            && let Some(obj) = layers_obj.as_object_mut() {
                 let mut suffix_updates: Vec<(
                     String,
                     Option<String>,
@@ -102,8 +101,8 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                     serde_json::Value,
                 )> = Vec::new();
                 for (layer_name, layer) in obj.iter() {
-                    if let Some(suffix_val) = layer.get("suffix") {
-                        if let Some(arr) = suffix_val.as_array() {
+                    if let Some(suffix_val) = layer.get("suffix")
+                        && let Some(arr) = suffix_val.as_array() {
                             let mut policy: Option<String> = None;
                             let mut allowed = serde_json::Value::Array(Vec::new());
                             let mut forbidden = serde_json::Value::Array(Vec::new());
@@ -129,28 +128,24 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                             }
                             suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
                         }
-                    }
                 }
                 for (name, policy, allowed, forbidden) in suffix_updates {
-                    if let Some(layer) = obj.get_mut(&name) {
-                        if let Some(layer_obj) = layer.as_object_mut() {
+                    if let Some(layer) = obj.get_mut(&name)
+                        && let Some(layer_obj) = layer.as_object_mut() {
                             if let Some(ref p) = policy {
                                 layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
                             }
                             layer_obj.insert("allowed_suffix".to_string(), allowed);
-                            if let Some(arr) = forbidden.as_array() {
-                                if !arr.is_empty() {
+                            if let Some(arr) = forbidden.as_array()
+                                && !arr.is_empty() {
                                     layer_obj.insert("forbidden_suffix".to_string(), forbidden);
                                 }
-                            }
                             layer_obj.remove("suffix");
                         }
-                    }
                 }
             }
-        }
-        if let Some(rules_obj) = json.get_mut("rules") {
-            if let Some(obj) = rules_obj.as_object_mut() {
+        if let Some(rules_obj) = json.get_mut("rules")
+            && let Some(obj) = rules_obj.as_object_mut() {
                 let mut flat = serde_json::Value::Array(Vec::new());
                 for (code, rule_val) in obj.iter() {
                     if let Some(rule_obj) = rule_val.as_object() {
@@ -195,11 +190,10 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                                     }
                                 }
                             }
-                            if !pushed {
-                                if let Some(arr) = flat.as_array_mut() {
+                            if !pushed
+                                && let Some(arr) = flat.as_array_mut() {
                                     arr.push(serde_json::Value::Object(base));
                                 }
-                            }
                         } else {
                             if let Some(arr) = flat.as_array_mut() {
                                 arr.push(serde_json::Value::Object(base));
@@ -209,7 +203,6 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                 }
                 *rules_obj = flat;
             }
-        }
         let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
             Ok(c) => c,
             Err(e) => {
@@ -221,8 +214,8 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                 ArchitectureConfig::default()
             }
         };
-        if config.ignored_paths.values.is_empty() {
-            if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
+        if config.ignored_paths.values.is_empty()
+            && let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
                 let paths: Vec<_> = arr
                     .iter()
                     .filter_map(|v| v.as_str())
@@ -232,7 +225,6 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                     config.ignored_paths = FilePathList::new(paths);
                 }
             }
-        }
         (config, warnings)
     } else {
         let mut config = ArchitectureConfig::default();

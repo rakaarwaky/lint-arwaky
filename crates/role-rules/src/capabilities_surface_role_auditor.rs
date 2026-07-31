@@ -159,11 +159,10 @@ impl SurfaceRoleChecker {
         if stem.starts_with("surface_") || stem.starts_with("surfaces_") {
             return true;
         }
-        if let Some(parent) = path_str.rsplit('/').nth(1) {
-            if parent == "surfaces" || parent == "surface" || parent == "cli_commands" {
+        if let Some(parent) = path_str.rsplit('/').nth(1)
+            && (parent == "surfaces" || parent == "surface" || parent == "cli_commands") {
                 return true;
             }
-        }
         false
     }
 
@@ -399,11 +398,10 @@ impl SurfaceRoleChecker {
             // If we exit an impl block, finalize
             if current_impl.is_some() {
                 let line_indent = raw_line.len() - raw_line.trim_start().len();
-                if !trimmed.is_empty() && trimmed != "}" && line_indent <= impl_indent {
-                    if let Some((_name, start)) = current_impl.take() {
+                if !trimmed.is_empty() && trimmed != "}" && line_indent <= impl_indent
+                    && let Some((_name, start)) = current_impl.take() {
                         self._add_impl_violations(&methods, "impl", start, violations);
                     }
-                }
             }
         }
         // Finalize any remaining impl block

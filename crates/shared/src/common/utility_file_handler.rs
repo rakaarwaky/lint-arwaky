@@ -24,11 +24,10 @@ pub fn is_ignored_dir(dir: &Path, ignored: &[String]) -> bool {
 
 /// Collect a single source file path into the output vector.
 pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
-    if let Some(path_str) = path.to_str() {
-        if let Ok(fp) = FilePath::new(path_str.to_string()) {
+    if let Some(path_str) = path.to_str()
+        && let Ok(fp) = FilePath::new(path_str.to_string()) {
             files.push(fp);
         }
-    }
 }
 
 /// Return true if `rel_path` should be skipped based on `ignored` patterns.
@@ -203,21 +202,18 @@ fn walk_source_files_inner(
             let path = entry.path();
 
             // At root level: only descend into workspace dirs (crates/packages/modules)
-            if dir == root {
-                if let Some(restrict) = workspace_restrict {
-                    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                        if path.is_dir() && !restrict.contains(name) {
+            if dir == root
+                && let Some(restrict) = workspace_restrict
+                    && let Some(name) = path.file_name().and_then(|n| n.to_str())
+                        && path.is_dir() && !restrict.contains(name) {
                             continue;
                         }
-                    }
-                }
-            }
 
             if is_ignored_dir(&path, ignored) {
                 continue;
             }
-            if let Ok(sym_meta) = std::fs::symlink_metadata(&path) {
-                if sym_meta.file_type().is_symlink() {
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&path)
+                && sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&path) {
                         // P4.1 fix: prevent symlink escape — skip targets outside root
                         if !target.starts_with(root) {
@@ -243,7 +239,6 @@ fn walk_source_files_inner(
                     }
                     continue;
                 }
-            }
             if path.is_dir() {
                 let dir_name = path
                     .file_name()
@@ -257,11 +252,10 @@ fn walk_source_files_inner(
                     continue;
                 }
                 walk_source_files_inner(&path, files, ignored, visited, root, workspace_restrict);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                if is_source_file(ext) {
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str())
+                && is_source_file(ext) {
                     collect_source_file(&path, files);
                 }
-            }
         }
     }
 }
@@ -291,21 +285,18 @@ fn walk_rs_files_inner(
             let p = entry.path();
 
             // At root level: only descend into workspace dirs (crates/packages/modules)
-            if dir == root {
-                if let Some(restrict) = workspace_restrict {
-                    if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                        if p.is_dir() && !restrict.contains(name) {
+            if dir == root
+                && let Some(restrict) = workspace_restrict
+                    && let Some(name) = p.file_name().and_then(|n| n.to_str())
+                        && p.is_dir() && !restrict.contains(name) {
                             continue;
                         }
-                    }
-                }
-            }
 
             if is_ignored_dir(&p, ignored) {
                 continue;
             }
-            if let Ok(sym_meta) = std::fs::symlink_metadata(&p) {
-                if sym_meta.file_type().is_symlink() {
+            if let Ok(sym_meta) = std::fs::symlink_metadata(&p)
+                && sym_meta.file_type().is_symlink() {
                     if let Ok(target) = std::fs::canonicalize(&p) {
                         if !target.starts_with(root) {
                             continue;
@@ -334,7 +325,6 @@ fn walk_rs_files_inner(
                     }
                     continue;
                 }
-            }
             if p.is_dir() {
                 // Use canonical path instead of inode (P2.1)
                 let canonical = std::fs::canonicalize(&p).unwrap_or_else(|_| p.to_path_buf());

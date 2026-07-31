@@ -35,11 +35,10 @@ fn walk_py_files_inner(dir: &Path, files: &mut Vec<FilePath>) {
                 if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
                     walk_py_files_inner(&path, files);
                 }
-            } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("py") {
-                if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+            } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("py")
+                && let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
                     files.push(fp);
                 }
-            }
         }
     }
 }

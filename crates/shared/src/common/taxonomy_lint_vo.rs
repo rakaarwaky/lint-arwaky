@@ -85,11 +85,10 @@ impl std::fmt::Display for Location {
         }
         if let Some(ref line) = self.line {
             let mut s = line.value.to_string();
-            if let Some(ref col) = self.column {
-                if col.value > 0 {
+            if let Some(ref col) = self.column
+                && col.value > 0 {
                     s = format!("{}:{}", line.value, col.value);
                 }
-            }
             parts.push(s);
         }
         let result = if parts.is_empty() {

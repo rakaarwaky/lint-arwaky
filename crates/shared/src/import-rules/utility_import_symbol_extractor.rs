@@ -23,11 +23,10 @@ pub fn extract_imported_aliases(file_path: &str, content: &str) -> HashMap<Ident
                 {
                     continue;
                 }
-                if let Some(last) = imp.last_segment() {
-                    if !last.is_empty() && last != "*" && last != "self" {
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty() && last != "*" && last != "self" {
                         aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                     }
-                }
             }
         }
         FileParseResultVO::Python(result) => {
@@ -35,20 +34,18 @@ pub fn extract_imported_aliases(file_path: &str, content: &str) -> HashMap<Ident
                 if imp.raw_path.starts_with("__future__") {
                     continue;
                 }
-                if let Some(last) = imp.last_segment() {
-                    if !last.is_empty() && last != "*" {
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty() && last != "*" {
                         aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                     }
-                }
             }
         }
         FileParseResultVO::TypeScript(result) => {
             for imp in &result.imports {
-                if let Some(last) = imp.last_segment() {
-                    if !last.is_empty() && last != "*" && last != "default" {
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty() && last != "*" && last != "default" {
                         aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                     }
-                }
             }
         }
         FileParseResultVO::Unsupported => {}
@@ -98,34 +95,30 @@ pub fn extract_exported_symbols(file_path: &str, content: &str) -> HashSet<Ident
     match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
-                if imp.is_reexport {
-                    if let Some(last) = imp.last_segment() {
-                        if !last.is_empty() && last != "*" {
+                if imp.is_reexport
+                    && let Some(last) = imp.last_segment()
+                        && !last.is_empty() && last != "*" {
                             exported.insert(Identity::new(last));
                         }
-                    }
-                }
             }
         }
         FileParseResultVO::Python(result) => {
             if file_path.ends_with("__init__.py") {
                 for imp in &result.imports {
-                    if let Some(last) = imp.last_segment() {
-                        if !last.is_empty() && last != "*" {
+                    if let Some(last) = imp.last_segment()
+                        && !last.is_empty() && last != "*" {
                             exported.insert(Identity::new(last));
                         }
-                    }
                 }
             }
         }
         FileParseResultVO::TypeScript(result) => {
             for imp in &result.imports {
                 if imp.is_reexport {
-                    if let Some(last) = imp.last_segment() {
-                        if !last.is_empty() && last != "*" {
+                    if let Some(last) = imp.last_segment()
+                        && !last.is_empty() && last != "*" {
                             exported.insert(Identity::new(last));
                         }
-                    }
                     if imp.is_glob {
                         exported.insert(Identity::new("*"));
                     }
@@ -147,20 +140,18 @@ pub fn extract_rust_js_imports(file_path: &str, content: &str) -> Vec<(SymbolNam
                 if imp.is_glob {
                     continue;
                 }
-                if let Some(last) = imp.last_segment() {
-                    if !last.is_empty() && last != "*" && last != "_" {
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty() && last != "*" && last != "_" {
                         imports.push((SymbolName::new(last), LineNumber::new(imp.line as i64)));
                     }
-                }
             }
         }
         FileParseResultVO::TypeScript(result) => {
             for imp in &result.imports {
-                if let Some(last) = imp.last_segment() {
-                    if !last.is_empty() && last != "*" && last != "default" {
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty() && last != "*" && last != "default" {
                         imports.push((SymbolName::new(last), LineNumber::new(imp.line as i64)));
                     }
-                }
             }
         }
         _ => {}

@@ -4,14 +4,16 @@
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement,
 //                 input scaling analysis, algorithmic comparison
 
-use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
+use orphan_detector_lint_arwaky::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher;
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::orphan_detector::contract_orphan_graph_resolver_protocol::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 // ─── Generators ───────────────────────────────────────────
 
@@ -52,7 +54,9 @@ fn generate_import_graph(file_count: usize) -> ImportGraph {
 // ─── 1. Graph Building — Scaling Analysis ────────────────
 
 fn bench_build_graph_context(c: &mut Criterion) {
-    let resolver = OrphanGraphResolver::new();
+    let parser_dispatcher: Arc<dyn shared::orphan_detector::IOrphanParserProtocol> =
+        Arc::new(OrphanParserDispatcher::new());
+    let resolver = OrphanGraphResolver::new(parser_dispatcher);
     let root = bench_root();
     let mut group = c.benchmark_group("build_graph_context");
     group.significance_level(0.05).confidence_level(0.95);
@@ -71,7 +75,9 @@ fn bench_build_graph_context(c: &mut Criterion) {
 // ─── 2. Entry Points — Scaling Analysis ──────────────────
 
 fn bench_identify_entry_points(c: &mut Criterion) {
-    let resolver = OrphanGraphResolver::new();
+    let parser_dispatcher: Arc<dyn shared::orphan_detector::IOrphanParserProtocol> =
+        Arc::new(OrphanParserDispatcher::new());
+    let resolver = OrphanGraphResolver::new(parser_dispatcher);
     let mut group = c.benchmark_group("identify_entry_points");
     group.significance_level(0.05).confidence_level(0.95);
 

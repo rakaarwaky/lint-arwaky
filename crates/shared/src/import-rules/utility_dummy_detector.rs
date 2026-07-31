@@ -137,13 +137,11 @@ pub fn symbol_used_real(
             continue;
         }
 
-        if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
-            if let Some(trait_name) = impl_trait_name(trimmed) {
-                if dummy_impl_traits.contains(&trait_name) {
+        if trimmed.starts_with("impl ") && trimmed.contains(" for ")
+            && let Some(trait_name) = impl_trait_name(trimmed)
+                && dummy_impl_traits.contains(&trait_name) {
                     continue;
                 }
-            }
-        }
 
         return true;
     }
@@ -385,8 +383,8 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
             .trim();
 
         if body.contains('{') {
-            if let Some(open) = body.find('{') {
-                if let Some(close) = body.rfind('}') {
+            if let Some(open) = body.find('{')
+                && let Some(close) = body.rfind('}') {
                     let inside = &body[open + 1..close];
                     for part in inside.split(',') {
                         if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
@@ -395,7 +393,6 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                         }
                     }
                 }
-            }
             continue;
         }
 
@@ -552,8 +549,8 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
         let trimmed = line.trim();
 
         if trimmed.starts_with("import ") && trimmed.contains('{') && trimmed.contains("from") {
-            if let Some(open) = trimmed.find('{') {
-                if let Some(close) = trimmed.find('}') {
+            if let Some(open) = trimmed.find('{')
+                && let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
                         let part = part.trim();
@@ -571,7 +568,6 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                         }
                     }
                 }
-            }
             continue;
         }
 
@@ -595,9 +591,9 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
             continue;
         }
 
-        if trimmed.starts_with("const ") && trimmed.contains("require(") && trimmed.contains('{') {
-            if let Some(open) = trimmed.find('{') {
-                if let Some(close) = trimmed.find('}') {
+        if trimmed.starts_with("const ") && trimmed.contains("require(") && trimmed.contains('{')
+            && let Some(open) = trimmed.find('{')
+                && let Some(close) = trimmed.find('}') {
                     let inside = &trimmed[open + 1..close];
                     for part in inside.split(',') {
                         let part = part.trim();
@@ -615,8 +611,6 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
                         }
                     }
                 }
-            }
-        }
     }
 
     symbols

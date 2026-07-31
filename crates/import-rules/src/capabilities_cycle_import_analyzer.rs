@@ -89,11 +89,10 @@ impl DependencyCycleAnalyzer {
             ParallelIterator::filter_map(IntoParallelRefIterator::par_iter(files), |file| {
                 let file_fp = FilePath::new(file.clone()).ok()?;
                 let basename = file_fp.basename();
-                if let Some(rule) = aes205_rule {
-                    if rule.exceptions.values.contains(&basename.to_string()) {
+                if let Some(rule) = aes205_rule
+                    && rule.exceptions.values.contains(&basename.to_string()) {
                         return None;
                     }
-                }
                 let content = shared::common::utility_file_handler::read_file_generic(file).ok()?;
 
                 let filename = utility_layer_detector::extract_filename(file);

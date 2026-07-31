@@ -90,29 +90,25 @@ impl CapabilitiesRoleChecker {
             let words: Vec<&str> = t.split_whitespace().collect();
 
             // detect struct
-            if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                if let Some(idx) = words.iter().position(|w| *w == "struct") {
-                    if let Some(name) = words.get(idx + 1) {
+            if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2
+                && let Some(idx) = words.iter().position(|w| *w == "struct")
+                    && let Some(name) = words.get(idx + 1) {
                         let name = name.trim_end_matches(';').trim_end_matches('{');
                         if !name.is_empty() && !name.starts_with('_') {
                             type_count += 1;
                             struct_names.push(name);
                         }
                     }
-                }
-            }
 
             // detect enum
-            if (t.starts_with("pub enum ") || t.starts_with("enum ")) && words.len() >= 2 {
-                if let Some(idx) = words.iter().position(|w| *w == "enum") {
-                    if let Some(name) = words.get(idx + 1) {
+            if (t.starts_with("pub enum ") || t.starts_with("enum ")) && words.len() >= 2
+                && let Some(idx) = words.iter().position(|w| *w == "enum")
+                    && let Some(name) = words.get(idx + 1) {
                         let name = name.trim_end_matches(';').trim_end_matches('{');
                         if !name.is_empty() && !name.starts_with('_') {
                             type_count += 1;
                         }
                     }
-                }
-            }
         }
 
         // ── RULE 1: max 3 types (struct + enum) ──────────────

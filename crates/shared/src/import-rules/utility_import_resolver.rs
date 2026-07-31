@@ -322,11 +322,10 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
 
     // 2. Try parent directory (for Rust paths ending with type name:
     //    "shared/import_rules/Type" → "shared/import_rules/")
-    if let Some(parent) = module_dir.parent() {
-        if let Some(found) = try_barrel_candidates(parent, &barrel_candidates) {
+    if let Some(parent) = module_dir.parent()
+        && let Some(found) = try_barrel_candidates(parent, &barrel_candidates) {
             return Some(found);
         }
-    }
 
     // 3. Try under crates/{crate}/src/ for Rust workspace paths
     //    e.g. "shared::import_rules" → "crates/shared/src/import-rules/mod.rs"
@@ -462,8 +461,8 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                 //                     "../types/index"  → "index"
                 let module_stem = extract_module_stem(module_clean);
 
-                if let Some(brace_start) = trimmed.find('{') {
-                    if let Some(brace_end) = trimmed.find('}') {
+                if let Some(brace_start) = trimmed.find('{')
+                    && let Some(brace_end) = trimmed.find('}') {
                         let inner = &trimmed[brace_start + 1..brace_end];
                         for part in inner.split(',') {
                             let part = part.trim();
@@ -474,7 +473,6 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                             reexports.insert(exported_name.to_string(), module_stem.clone());
                         }
                     }
-                }
             }
             continue;
         }
@@ -642,8 +640,8 @@ pub fn extract_symbol_names(line: &str) -> Vec<String> {
 
     // ── TS/JS: import { A, B } from './module' ──
     if trimmed.starts_with("import ") && trimmed.contains('{') {
-        if let Some(open) = trimmed.find('{') {
-            if let Some(close) = trimmed.find('}') {
+        if let Some(open) = trimmed.find('{')
+            && let Some(close) = trimmed.find('}') {
                 let inner = &trimmed[open + 1..close];
                 for part in inner.split(',') {
                     let name = part.trim().split(" as ").last().unwrap_or("").trim();
@@ -652,19 +650,17 @@ pub fn extract_symbol_names(line: &str) -> Vec<String> {
                     }
                 }
             }
-        }
         return names;
     }
 
     // ── TS/JS: import X from './module' ──
-    if trimmed.starts_with("import ") && trimmed.contains(" from ") {
-        if let Some(import_part) = trimmed.strip_prefix("import ") {
+    if trimmed.starts_with("import ") && trimmed.contains(" from ")
+        && let Some(import_part) = trimmed.strip_prefix("import ") {
             let name = import_part.split(" from ").next().unwrap_or("").trim();
             if !name.is_empty() && name != "default" && name != "*" {
                 names.push(name.to_string());
             }
         }
-    }
 
     names
 }

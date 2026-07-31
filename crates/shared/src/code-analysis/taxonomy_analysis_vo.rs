@@ -96,9 +96,9 @@ impl InboundLinkMap {
         }
 
         // Try canonical path
-        if result.is_none() {
-            if let Ok(canon) = std::fs::canonicalize(path) {
-                if let Some(canon_str) = canon.to_str() {
+        if result.is_none()
+            && let Ok(canon) = std::fs::canonicalize(path)
+                && let Some(canon_str) = canon.to_str() {
                     if let Some(v) = self.mapping.get(canon_str) {
                         result = Some(v);
                     }
@@ -114,8 +114,6 @@ impl InboundLinkMap {
                         }
                     }
                 }
-            }
-        }
 
         // Try clean path (without ./ prefix)
         if result.is_none() {

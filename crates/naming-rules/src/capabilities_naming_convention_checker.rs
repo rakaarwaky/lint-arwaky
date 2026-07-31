@@ -178,11 +178,10 @@ impl NamingConventionChecker {
             ));
         }
 
-        if let Some(def) = definition {
-            if def.exceptions.values.contains(&filename.to_string()) {
+        if let Some(def) = definition
+            && def.exceptions.values.contains(&filename.to_string()) {
                 return None;
             }
-        }
 
         if Self::naming_regex(min_words).is_none_or(|re| !re.is_match(stem)) {
             return Some(string_filename_result(

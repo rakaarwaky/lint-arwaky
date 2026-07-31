@@ -15,14 +15,14 @@ fn build_surface() -> LintArwakyMcpServer {
 
 fn new_runtime() -> tokio::runtime::Runtime {
     // #[expect(dead_code)] — consumed by bench functions below
-    let rt = match tokio::runtime::Builder::new_current_thread().build() {
+    
+    match tokio::runtime::Builder::new_current_thread().build() {
         Ok(rt) => rt,
         Err(_) => {
             eprintln!("failed to init tokio runtime");
             std::process::exit(1);
         }
-    };
-    rt
+    }
 }
 
 fn bench_version_command(c: &mut Criterion) {

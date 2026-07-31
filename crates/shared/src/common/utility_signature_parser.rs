@@ -161,8 +161,8 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
             in_block = true;
             brace_depth = trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
             if brace_depth == 0 {
-                if let Some(open) = trimmed.find('{') {
-                    if let Some(close) = trimmed.rfind('}') {
+                if let Some(open) = trimmed.find('{')
+                    && let Some(close) = trimmed.rfind('}') {
                         let inner = &trimmed[open + 1..close];
                         if inner.contains('(') && inner.contains(':') {
                             let lower = inner.to_lowercase();
@@ -181,7 +181,6 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
                             }
                         }
                     }
-                }
                 in_block = false;
             }
             continue;

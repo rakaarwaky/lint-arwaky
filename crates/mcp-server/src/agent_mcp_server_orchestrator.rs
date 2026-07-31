@@ -578,13 +578,12 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                                 });
                             let redact_secrets = |content: &str| -> String {
                                 let mut result = content.to_string();
-                                if result.contains("AKIA") {
-                                    if let Some(re) = AWS_KEY_RE.as_ref() {
+                                if result.contains("AKIA")
+                                    && let Some(re) = AWS_KEY_RE.as_ref() {
                                         result = re
                                             .replace_all(&result, "[REDACTED-AWS-KEY]")
                                             .to_string();
                                     }
-                                }
                                 // Redact very long base64-like strings
                                 if result.len() > 100 {
                                     let words: Vec<String> =
@@ -949,15 +948,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
 
                 // Extract score threshold via shared utility (project.thresholds.score or thresholds.score)
-                if score_threshold.is_none() {
-                    if let Some(t) =
+                if score_threshold.is_none()
+                    && let Some(t) =
                         shared::config_system::utility_config_parser::parse_score_threshold(
                             &source.raw_content,
                         )
                     {
                         score_threshold = Some(t);
                     }
-                }
             } else {
                 warnings.push(format!("No config data for {}", lang.as_str()));
             }

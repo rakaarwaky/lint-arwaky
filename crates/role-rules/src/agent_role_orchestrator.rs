@@ -174,11 +174,10 @@ impl RoleOrchestrator {
         let mut files = Vec::new();
         if path.is_dir() {
             walk_source_files(path, &mut files, &self.ignored_paths);
-        } else if path.is_file() {
-            if let Ok(p) = FilePath::new(path.to_string_lossy().to_string()) {
+        } else if path.is_file()
+            && let Ok(p) = FilePath::new(path.to_string_lossy().to_string()) {
                 files.push(p);
             }
-        }
         FilePathList::new(files)
     }
 }
