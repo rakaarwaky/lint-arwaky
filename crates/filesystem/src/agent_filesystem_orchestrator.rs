@@ -7,7 +7,7 @@ use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_file_cache::FileCache;
 use crate::capabilities_file_walker::FileWalker;
 use crate::capabilities_import_extractor;
-use crate::utility_io;
+use crate::utility_filesystem_io;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::*;
@@ -116,11 +116,11 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         // Check cache first, then fall back to disk
         self.cache
             .get(&path.to_path_buf())
-            .or_else(|| utility_io::read_file(path).ok())
+            .or_else(|| utility_filesystem_io::read_file(path).ok())
     }
 
     fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String> {
-        utility_io::read_lintable_file(path)
+        utility_filesystem_io::read_lintable_file(path)
     }
 
     fn get_file_content(&self, path: &PathBuf) -> Option<String> {
@@ -140,7 +140,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath> {
         let mut files = Vec::new();
-        utility_io::walk_source_files(root, &mut files, ignored);
+        utility_filesystem_io::walk_source_files(root, &mut files, ignored);
         files
     }
 
@@ -173,21 +173,21 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     // ── Path Queries ──────────────────────────────────────────
 
     fn path_exists(&self, path: &Path) -> bool {
-        utility_io::path_exists(path)
+        utility_filesystem_io::path_exists(path)
     }
 
     fn is_dir(&self, path: &Path) -> bool {
-        utility_io::is_dir(path)
+        utility_filesystem_io::is_dir(path)
     }
 
     fn should_ignore(&self, path: &str, ignored: &[String]) -> bool {
-        utility_io::is_path_ignored(path, ignored)
+        utility_filesystem_io::is_path_ignored(path, ignored)
     }
 
     // ── Workspace ─────────────────────────────────────────────
 
     fn workspace_root(&self, start: &str) -> Option<PathBuf> {
-        utility_io::find_workspace_root(start)
+        utility_filesystem_io::find_workspace_root(start)
     }
 }
 

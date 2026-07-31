@@ -50,7 +50,7 @@ exit 0
 ",
             exe_str
         );
-        filesystem::utility_io::write_file(&hook_path, &hook_content).map_err(|e| {
+        filesystem::utility_filesystem_io::write_file(&hook_path, &hook_content).map_err(|e| {
             shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
                 "Failed to write hook: {}",
                 e
@@ -74,7 +74,7 @@ exit 0
             return Ok(SuccessStatus::new(false));
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
-        if filesystem::utility_io::path_exists(&hook_path) {
+        if filesystem::utility_filesystem_io::path_exists(&hook_path) {
             git_io::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to remove hook: {}", e),
@@ -98,6 +98,6 @@ impl GitHookAdapter {
 
     fn is_git_repo(&self) -> bool {
         let git = self.git_dir();
-        filesystem::utility_io::is_dir(&git)
+        filesystem::utility_filesystem_io::is_dir(&git)
     }
 }

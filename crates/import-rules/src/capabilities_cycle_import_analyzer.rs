@@ -94,7 +94,7 @@ impl DependencyCycleAnalyzer {
                 {
                     return None;
                 }
-                let content = filesystem::utility_io::read_file(file).ok()?;
+                let content = filesystem::utility_filesystem_io::read_file(file).ok()?;
 
                 let filename = utility_layer_detector::extract_filename(file);
                 let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {

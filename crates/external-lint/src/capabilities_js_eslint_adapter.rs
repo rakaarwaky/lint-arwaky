@@ -46,7 +46,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if filesystem::utility_io::is_file(Path::new(path_str))
+        if filesystem::utility_filesystem_io::is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")

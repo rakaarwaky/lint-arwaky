@@ -5,21 +5,41 @@
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer architecture. It validates that files and identifiers conform to structural and semantic naming patterns, preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                  The naming analysis orchestrator             │
-│  (agent layer — walks files, delegates to checkers)          │
-├──────────────────────┬───────────────────────────────────────┤
-│ The naming           │ The suffix/prefix checker             │
-│ convention checker   │                                      │
-│ (AES101)             │ (AES102)                              │
-│ - snake_case regex   │ - allowed/forbidden suffix per layer  │
-│ - min 3 words        │ - strict suffix policy enforcement    │
-│ - unknown prefix     │ - unknown suffix detection            │
-├──────────────────────┴───────────────────────────────────────┤
-│ Shared utilities: layer detection, stem/suffix extraction    │
-│ Config: the architecture configuration → layer definitions,  │
-│ naming rules                                                 │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                    NAMING-RULES ARCHITECTURE                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │                                                                │
+│    ▼                                                                │
+│  Contract Agent (INamingRunnerAggregate)                            │
+│    │                                                                │
+│    ▼                                                                │
+│  Naming Orchestrator (agent layer)                                  │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FileWalker → UtilityIO                                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    └──► Capabilities (NO I/O — business logic only)                 │
+│              │                                                      │
+│              ├──► Naming Convention Checker (AES101)                 │
+│              │    - snake_case regex                                 │
+│              │    - min 3 words                                     │
+│              │    - unknown prefix detection                        │
+│              │                                                      │
+│              └──► Suffix/Prefix Checker (AES102)                    │
+│                   - allowed/forbidden suffix per layer              │
+│                   - strict suffix policy enforcement                │
+│                   - unknown suffix detection                        │
+│                                                                     │
+│  Config: architecture configuration → layer definitions, naming     │
+│  Shared: layer detection, stem/suffix extraction utilities          │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Business Flow

@@ -2,7 +2,7 @@
 // Single entry point for rule crates to access filesystem capabilities.
 //
 // Rule crates MUST only use filesystem through this aggregate trait.
-// Direct calls to filesystem::utility_io are allowed during migration
+// Direct calls to filesystem::utility_filesystem_io are allowed during migration
 // but will be removed once all crates use the aggregate.
 
 use super::taxonomy_filesystem_vo::*;

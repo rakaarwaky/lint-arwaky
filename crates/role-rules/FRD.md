@@ -5,18 +5,38 @@
 The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility, Root) as defined by the 7-layer AES architecture. The file dispatcher classifies files by their filename prefix and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
 
 ```
-Target Path
-    │
-    ▼
-┌──────────────────┐
-│ Role Dispatcher  │  ← role enforcement aggregate trait
-│ (file dispatch)  │
-└──┬──┬──┬──┬──┬───┘
-   │  │  │  │  │
-   ▼  ▼  ▼  ▼  ▼
- Taxonomy Contract Capabilities Utility Agent Surface
- Checker  Checker   Checker     Checker  Checker Checker
-(AES401) (AES402)  (AES403)    (AES404) (AES405)(AES406)
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ROLE-RULES ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │                                                                │
+│    ▼                                                                │
+│  Contract Agent (IRoleRunnerAggregate)                              │
+│    │                                                                │
+│    ▼                                                                │
+│  Role Orchestrator (agent layer)                                    │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FileWalker → UtilityIO                                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    └──► Capabilities (NO I/O — business logic only)                 │
+│              │                                                      │
+│              ├──► Taxonomy Checker (AES401)                          │
+│              ├──► Contract Checker (AES402)                          │
+│              ├──► Capabilities Checker (AES403)                      │
+│              ├──► Utility Checker (AES404)                           │
+│              ├──► Agent Checker (AES405)                             │
+│              └──► Surface Checker (AES406)                           │
+│                                                                     │
+│  Config: architecture configuration → layer rules, exceptions       │
+│  Shared: language detection, file classification utilities          │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Supported languages:** Rust (.rs), Python (.py), TypeScript (.ts/.tsx), JavaScript (.js/.jsx)

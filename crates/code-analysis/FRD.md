@@ -5,21 +5,37 @@
 The code-analysis crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, duplicate blocks, and bypass annotations while guaranteeing zero tolerance for warning/error suppressions.
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                   The code analysis orchestrator                         │
-│  (agent layer — collects files, runs checks, formats reports)            │
-├──────────┬──────────┬──────────┬──────────┬──────────┬─────────────────┤
-│ Arch.    │ Mandatory│ Bypass   │ Dead     │ Code     │ Cargo.toml      │
-│ Line     │ Def.     │ Checker  │ Inher.   │ Dupl.    │ Bypass          │
-│ Checker  │ Checker  │ AES304   │ Checker  │ Analyzer │ Checker         │
-│ AES301/  │ AES303   │          │ AES303   │ AES305   │ AES304          │
-│ AES302   │          │          │          │          │                 │
-├──────────┴──────────┴──────────┴──────────┴──────────┴─────────────────┤
-│ Shared utilities: file reader, bypass detector, language mapper,         │
-│ column index, compliance score, code duplication detector                │
-│ Config: the architecture configuration → per-rule thresholds,            │
-│ forbidden patterns                                                      │
-└──────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                  CODE-ANALYSIS ARCHITECTURE                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │                                                                │
+│    ▼                                                                │
+│  Contract Agent (ICodeAnalysisAggregate)                            │
+│    │                                                                │
+│    ▼                                                                │
+│  Code Analysis Orchestrator (agent layer)                           │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FileWalker → UtilityIO                                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    └──► Code Analyzers (NO I/O — business logic only)               │
+│              │                                                      │
+│              ├──► Max Line Checker (AES301)                          │
+│              ├──► Min Line Checker (AES302)                          │
+│              ├──► Mandatory Def Checker (AES303)                     │
+│              ├──► Bypass Checker (AES304)                            │
+│              └──► Code Duplication Analyzer (AES305)                 │
+│                                                                     │
+│  Config: architecture configuration → thresholds, forbidden patterns│
+│  Shared: file reader (2MiB limit), bypass detector, language mapper │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Business Flow

@@ -5,26 +5,43 @@
 The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned. The orchestrator dispatches to 6 layer-specific analyzers (taxonomy, contract, capabilities, utility, agent, surfaces) and produces lint violations.
 
 ```
-Entry Points ( *_entry.*, *_container.*)
-        │
-        ▼
-┌─────────────────────┐
-│ Orphan Orchestrator │  ← orphan detection aggregate trait
-│ (orchestrator)      │
-└────┬────┬────┬──────┘
-     │    │    │
-     ▼    ▼    ▼
-  Taxonomy  Contract  Capabilities  Utility  Agent  Surfaces
-  Analyzer  Analyzer  Analyzer      Analyzer Analyzer Analyzer
-     │         │           │           │        │        │
-     └─────────┴───────────┴───────────┴────────┴────────┘
-                              │
-                              ▼
-                   ┌─────────────────────┐
-                   │   AST Parser Layer  │  ← syn (Rust), structured (Python/TS)
-                   │  (utility_orphan_   │
-                   │   ast_parser.rs)    │
-                   └─────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                  ORPHAN-DETECTOR ARCHITECTURE                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │                                                                │
+│    ▼                                                                │
+│  Contract Agent (IOrphanAggregate)                                  │
+│    │                                                                │
+│    ▼                                                                │
+│  Orphan Orchestrator (agent layer)                                  │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_files(root, ignored)          │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator                                      │
+│    │      → FileWalker (walk)                                       │
+│    │      → FileCache (DashMap)                                     │
+│    │      → ASTParser (tree-sitter)                                 │
+│    │      → ImportExtractor (use/import/require)                    │
+│    │      → DependencyGraph (petgraph)                              │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemResult { files, cache, imports, graph }           │
+│    │                                                                │
+│    └──► Layer Analyzers (NO I/O — business logic only)              │
+│              │                                                      │
+│              ├──► Taxonomy Analyzer (AES501)                         │
+│              ├──► Contract Analyzer (AES502)                         │
+│              ├──► Capabilities Analyzer (AES503)                     │
+│              ├──► Utility Analyzer (AES504)                          │
+│              ├──► Agent Analyzer (AES505)                            │
+│              └──► Surface Analyzer (AES506)                          │
+│                                                                     │
+│  Config: architecture configuration → exceptions, rules             │
+│  Shared: AST parsing, graph analysis, reachability tracing          │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Scope:** All `.rs`, `.py`, `.ts`, `.js` source files in the workspace. Naming convention validation is handled by the naming rules crate — orphan-detector assumes naming is already correct and focuses solely on reachability.

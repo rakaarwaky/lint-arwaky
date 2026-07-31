@@ -195,10 +195,10 @@ impl LintFixProcessor {
     }
 
     fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> bool {
-        if !filesystem::utility_io::path_exists(file_path) {
+        if !filesystem::utility_filesystem_io::path_exists(file_path) {
             return false;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok() {
+        let content = match filesystem::utility_filesystem_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return false,
         };
@@ -255,14 +255,14 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        filesystem::utility_io::write_file(file_path, result).is_ok()
+        filesystem::utility_filesystem_io::write_file(file_path, result).is_ok()
     }
 
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> bool {
-        if !filesystem::utility_io::path_exists(file_path) {
+        if !filesystem::utility_filesystem_io::path_exists(file_path) {
             return false;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok() {
+        let content = match filesystem::utility_filesystem_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return false,
         };
@@ -290,7 +290,7 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        filesystem::utility_io::write_file(file_path, result).is_ok()
+        filesystem::utility_filesystem_io::write_file(file_path, result).is_ok()
     }
 
     fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
@@ -304,10 +304,10 @@ impl LintFixProcessor {
     }
 
     fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> usize {
-        if !filesystem::utility_io::path_exists(file_path) {
+        if !filesystem::utility_filesystem_io::path_exists(file_path) {
             return 0;
         }
-        let content = match filesystem::utility_io::read_file(file_path).ok() {
+        let content = match filesystem::utility_filesystem_io::read_file(file_path).ok() {
             Some(c) => c,
             None => return 0,
         };
@@ -316,7 +316,7 @@ impl LintFixProcessor {
         }
         let new_content = content.replace(old_name, new_name);
         if new_content != content
-            && filesystem::utility_io::write_file(file_path, &new_content).is_ok()
+            && filesystem::utility_filesystem_io::write_file(file_path, &new_content).is_ok()
         {
             return 1;
         }

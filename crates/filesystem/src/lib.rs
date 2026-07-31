@@ -11,7 +11,7 @@ pub mod capabilities_import_extractor;
 pub mod agent_filesystem_orchestrator;
 
 // ── Utility (stateless helpers) ──
-pub mod utility_io;
+pub mod utility_filesystem_io;
 
 // ── Re-exports ──
 pub use agent_filesystem_orchestrator::FilesystemOrchestrator;

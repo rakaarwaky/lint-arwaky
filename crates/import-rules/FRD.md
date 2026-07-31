@@ -5,30 +5,37 @@
 The import-rules crate enforces correct structural boundaries and unidirectional dependency flows across the 7-layer AES architecture. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
 
 ```
-Target (file or directory)
-        │
-        ▼
-┌─────────────────────────┐
-│  Import Orchestrator    │  ← IImportRunnerAggregate
-│  (agent layer)          │
-└──┬──┬──┬──┬──┬──────────┘
-   │  │  │  │  │
-   ▼  ▼  ▼  ▼  ▼
- AES201  AES202  AES203  AES204  AES205
- Forbidden Mandatory Unused  Dummy   Cycle
- Checker   Checker  Checker Checker Analyzer
-   │       │        │       │       │
-   └───────┴────────┴───────┴───────┘
-                    │
-                    ▼
-         ┌─────────────────────┐
-         │   AST Parser Layer  │  ← shared with orphan-detector
-         │  (utility_orphan_   │
-         │   rust_parser.rs,   │
-         │   python_parser.rs, │
-         │   ts_parser.rs,     │
-         │   parser_dispatch)  │
-         └─────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                  IMPORT-RULES ARCHITECTURE                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │                                                                │
+│    ▼                                                                │
+│  Contract Agent (IImportRunnerAggregate)                            │
+│    │                                                                │
+│    ▼                                                                │
+│  Import Orchestrator (agent layer)                                  │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FileWalker → UtilityIO                                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    └──► Import Checkers (NO I/O — business logic only)              │
+│              │                                                      │
+│              ├──► Forbidden Checker (AES201)                         │
+│              ├──► Mandatory Checker (AES202)                         │
+│              ├──► Unused Checker (AES203)                            │
+│              ├──► Dummy Checker (AES204)                             │
+│              └──► Cycle Analyzer (AES205)                            │
+│                                                                     │
+│  Config: architecture configuration → forbidden, mandatory rules    │
+│  Shared: AST parsing, import resolution, barrel file handling       │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 **Scope:** All `.rs`, `.py`, `.ts`, `.js`, `.tsx`, `.jsx` source files in the workspace. Layer detection is filename-prefix-based (`taxonomy_*`, `contract_*`, etc.). Files without a recognized prefix are skipped by layer-dependent rules (AES201, AES202) but still checked by layer-agnostic rules (AES203, AES204).

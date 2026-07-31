@@ -234,7 +234,7 @@ impl SurfaceRoleChecker {
         results: &mut LintResultList,
         code: &str,
     ) {
-        let content = match filesystem::utility_io::read_file(&f.value) {
+        let content = match filesystem::utility_filesystem_io::read_file(&f.value) {
             Ok(c) => c,
             Err(_) => return,
         };
@@ -312,7 +312,7 @@ impl SurfaceRoleChecker {
             return;
         }
 
-        let content = match filesystem::utility_io::read_file(&f.to_string()) {
+        let content = match filesystem::utility_filesystem_io::read_file(&f.to_string()) {
             Ok(c) => c,
             Err(_) => return,
         };

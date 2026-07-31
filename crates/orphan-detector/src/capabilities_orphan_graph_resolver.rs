@@ -3,7 +3,7 @@
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
 use filesystem::capabilities_file_walker::walk_recursive;
-use filesystem::utility_io::read_file_safe;
+use filesystem::utility_filesystem_io::read_file_safe;
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
@@ -146,7 +146,7 @@ impl OrphanGraphResolver {
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if ws_path.is_dir() {
-                let entries = filesystem::utility_io::scan_directory(&ws_path);
+                let entries = filesystem::utility_filesystem_io::scan_directory(&ws_path);
                 for (name, path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
@@ -187,7 +187,7 @@ impl OrphanGraphResolver {
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if ws_path.is_dir() {
-                let entries = filesystem::utility_io::scan_directory(&ws_path);
+                let entries = filesystem::utility_filesystem_io::scan_directory(&ws_path);
                 for (name, path_str, is_dir_entry) in entries {
                     if is_dir_entry {
                         continue;
@@ -537,7 +537,7 @@ impl OrphanGraphResolver {
                 normalized_crate
             };
             if let Some(src_dir) = ctx.crate_src_dirs.get(&lookup_name) {
-                let entries = filesystem::utility_io::scan_directory(src_dir);
+                let entries = filesystem::utility_filesystem_io::scan_directory(src_dir);
                 let module_name = segments.get(1).map(|s| s.as_str()).unwrap_or("");
                 for (_name, path_str, _is_dir) in entries {
                     let path = std::path::PathBuf::from(&path_str);

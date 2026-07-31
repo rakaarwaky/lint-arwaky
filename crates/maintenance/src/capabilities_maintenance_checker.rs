@@ -68,7 +68,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         let mut js_tools = vec![check_tool("node", &["--version"], false)];
         let eslint_local = "node_modules/.bin/eslint";
-        let eslint_status = if filesystem::utility_io::is_file(eslint_local) {
+        let eslint_status = if filesystem::utility_filesystem_io::is_file(eslint_local) {
             ToolStatus {
                 name: "eslint (local)".to_string(),
                 status: "OK".to_string(),
@@ -82,7 +82,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if filesystem::utility_io::is_file(prettier_local) {
+        let prettier_status = if filesystem::utility_filesystem_io::is_file(prettier_local) {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
@@ -96,7 +96,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(prettier_status);
 
         let tsc_local = "node_modules/.bin/tsc";
-        let tsc_status = if filesystem::utility_io::is_file(tsc_local) {
+        let tsc_status = if filesystem::utility_filesystem_io::is_file(tsc_local) {
             ToolStatus {
                 name: "tsc (local)".to_string(),
                 status: "OK".to_string(),

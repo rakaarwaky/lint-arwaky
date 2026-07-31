@@ -23,7 +23,7 @@ use shared::role_rules::{
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
 
-use filesystem::utility_io::{read_file, walk_source_files};
+use filesystem::utility_filesystem_io::{read_file, walk_source_files};
 use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;

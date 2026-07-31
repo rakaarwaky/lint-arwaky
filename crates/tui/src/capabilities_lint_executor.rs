@@ -49,7 +49,7 @@ pub struct LintExecutor {
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         // Use filesystem service for walk + cache
-        let scan_root = filesystem::utility_io::find_workspace_root(path)
+        let scan_root = filesystem::utility_filesystem_io::find_workspace_root(path)
             .unwrap_or_else(|| std::path::PathBuf::from(path));
         let root_fp =
             shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
@@ -140,7 +140,7 @@ impl ILintExecutorProtocol for LintExecutor {
         match &self.orphan_aggregate {
             Some(orphan_agg) => {
                 // Resolve workspace root like CLI does
-                let scan_root = filesystem::utility_io::find_workspace_root(path)
+                let scan_root = filesystem::utility_filesystem_io::find_workspace_root(path)
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| path.to_string());
                 let root_fp = shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
@@ -153,7 +153,7 @@ impl ILintExecutorProtocol for LintExecutor {
                     .as_ref()
                     .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
-                let source_files = match filesystem::utility_io::scan_directory_with_ignored(
+                let source_files = match filesystem::utility_filesystem_io::scan_directory_with_ignored(
                     &dir_path,
                     ignored.values(),
                 ) {
@@ -296,7 +296,7 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let scan_root = filesystem::utility_io::find_workspace_root(path)
+        let scan_root = filesystem::utility_filesystem_io::find_workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
@@ -309,7 +309,7 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
-        let source_files = match filesystem::utility_io::scan_directory_with_ignored(
+        let source_files = match filesystem::utility_filesystem_io::scan_directory_with_ignored(
             &dir_path,
             ignored.values(),
         ) {
@@ -903,7 +903,7 @@ impl LintExecutor {
         let path_string = path.to_string();
 
         // Use filesystem service: walk + cache + parse + graph in one call
-        let scan_root = filesystem::utility_io::find_workspace_root(&path_string)
+        let scan_root = filesystem::utility_filesystem_io::find_workspace_root(&path_string)
             .unwrap_or_else(|| std::path::PathBuf::from(&path_string));
         let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
             .unwrap_or_default();

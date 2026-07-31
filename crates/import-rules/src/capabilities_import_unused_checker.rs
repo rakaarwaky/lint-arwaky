@@ -16,7 +16,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content = filesystem::utility_io::read_file(path.value()).map_err(|_| {
+        let content = filesystem::utility_filesystem_io::read_file(path.value()).map_err(|_| {
             ImportError::module_resolution(
                 path.value().to_string(),
                 Some(ErrorMessage::new(

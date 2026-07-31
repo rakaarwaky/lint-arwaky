@@ -61,7 +61,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                     return Vec::new();
                 }
 
-                let content = match filesystem::utility_io::read_file(&f_str).ok() {
+                let content = match filesystem::utility_filesystem_io::read_file(&f_str).ok() {
                     Some(c) => c,
                     None => return Vec::new(),
                 };

@@ -7,7 +7,7 @@ use rayon::iter::ParallelIterator;
 use std::path::Path;
 use std::sync::Arc;
 
-use filesystem::utility_io::{path_exists, read_file, walk_source_files};
+use filesystem::utility_filesystem_io::{path_exists, read_file, walk_source_files};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
@@ -61,7 +61,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             files.values.len()
         );
 
-        let root_dir = filesystem::utility_io::find_workspace_root(target.value())
+        let root_dir = filesystem::utility_filesystem_io::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
