@@ -20,7 +20,7 @@ pub fn read_cached(path: &FilePath) -> ContentString {
         return ContentString::new(content.clone());
     }
 
-    let content = fs::read_to_string(path.value()).unwrap_or_default();
+    let content = crate::code_analysis::utility_file_reader::get_cached(path.value()).unwrap_or_else(|| fs::read_to_string(path.value()).unwrap_or_default());
 
     if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
