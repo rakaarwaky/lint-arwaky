@@ -1,23 +1,74 @@
 # Lint Arwaky
 
-> Autonomous code quality and architecture enforcement for AI agents and developers -- written in Rust.
+## The Last Code Quality Tool You Will Ever Need
 
-[![Rust 2021](https://img.shields.io/badge/rust-2021-orange.svg)](https://www.rust-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
-[![Architecture: AES](https://img.shields.io/badge/architecture-AES+Clean-green.svg)](ARCHITECTURE.md)
+Your codebase is not a draft. It is the product your team ships, the system your users depend on, and the asset your company builds on. Yet every day, silent architecture decay erodes it — dead imports, broken layer boundaries, orphan files, naming inconsistencies, and role violations that no one notices until they cause an outage or block a release.
+
+Lint Arwaky stops that decay before it starts.
+
+Built in Rust for speed, structured by the Agentic Engineering System specification, and designed to enforce architecture the way a compiler enforces syntax — Lint Arwaky does not ask you to care about code quality. It makes it impossible to ignore.
+
+---
+
+## Why This Exists
+
+Most linters catch syntax errors or style mistakes. They do not catch:
+
+- **Architecture drift.** Files living where they do not belong, breaking layer boundaries, or importing from crates they should never touch.
+- **Orphan code.** Files that no agent, module, or import can reach — dead weight silently growing in your repository.
+- **Role confusion.** Agents writing business logic, surfaces depending on lower layers, capabilities implementing protocols instead of orchestrating them.
+- **Import chaos.** Circular dependencies, forbidden imports, unused modules — the kind of dependency mess that makes refactoring terrifying.
+- **Naming decay.** Structs named with underscores, functions without verb prefixes, enums that read like variables.
+
+Lint Arwaky catches all of these. And it does so fast enough to run on every commit, in CI, and during development — without making developers wait.
+
+---
+
+## What You Get
+
+### Architecture Enforcement
+
+The AES specification defines seven strict layers. Lint Arwaky enforces them. If a surface module imports directly from the capabilities layer, it flags it. If an agent file contains business logic, it catches it. Your architecture is not a document no one reads — it is a live gate that blocks violations.
+
+### Multi-Language Coverage
+
+Rust crates, Python modules, TypeScript packages — Lint Arwaky scans all three. One tool. One configuration language. No more juggling linters per language or maintaining separate quality pipelines.
+
+### Orphan Detection
+
+It builds a dependency graph across your entire workspace and tells you exactly which files are unreachable. Not "maybe dead." Not "probably unused." It traces every import, every module reference, and returns the truth.
+
+### External Lint Integration
+
+Clippy, Ruff, ESLint, mypy, bandit — Lint Arwaky wraps them all into a single report with unified exit codes and threshold gates. You set the bar. The tool enforces it.
+
+### Auto-Fix
+
+For violations that have unambiguous solutions, Lint Arwaky does not just report — it fixes. With `--dry-run` you preview every change before it touches your files. Zero risk, maximum gain.
+
+### Git Hooks and CI Gates
+
+Install a pre-commit hook and never push architecture violations again. Configure `ci --threshold 0` and let your pipeline reject commits that break the contract. This is not a suggestion system. It is enforcement.
+
+---
+
+## How Fast Is It
+
+Rust compilation means cold starts under two seconds. Incremental builds mean subsequent scans are nearly instant. The gate pipeline runs format checks, builds once, runs clippy, then executes self-lint, tests, and AES code verification in parallel. The entire quality gate suite completes in roughly two minutes — fast enough to run on every pull request without friction.
+
+---
 
 ## Quick Start
 
 Two install options are available:
 
-### Option 1: Remote Install (fast -- no build, no clone)
+### Option 1: Remote Install (fast — no build, no clone)
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash
 ```
 
-The script downloads a **pre-built binary** from GitHub Releases. 
+The script downloads a **pre-built binary** from GitHub Releases.
 
 ### Option 2: Local Install (build from source)
 
@@ -36,9 +87,11 @@ lint-arwaky-cli version
 
 Clones the repository, runs `cargo build --release`, and installs binaries to `~/.cargo/bin`. Requires Rust 1.70+ and Cargo.
 
+---
+
 ## Architecture
 
-Lint Arwaky follows its own AES (Agentic Engineering System) specification -- a strict layered architecture with seven layers, organized into feature vertical slicing.
+Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into feature vertical slicing.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification
 
