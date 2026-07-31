@@ -33,6 +33,57 @@ Entry Points ( *_entry.*, *_container.*)
 
 ---
 
+## Business Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                  ORPHAN-DETECTOR BUSINESS FLOW                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │  user input: target path                                       │
+│    ▼                                                                │
+│  Contract Agent (IOrphanAggregate)                                  │
+│    │  delegates to orchestrator                                     │
+│    ▼                                                                │
+│  Orphan Orchestrator                                                │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_files(root, ignored)          │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator                                      │
+│    │      → FileWalker (walk)                                       │
+│    │      → FileCache (DashMap)                                     │
+│    │      → ASTParser (tree-sitter)                                 │
+│    │      → ImportExtractor (use/import/require)                    │
+│    │      → DependencyGraph (petgraph)                              │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemResult { files, cache, imports, graph }           │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.read_file(path)                        │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    String (file content)                                       │
+│    │                                                                │
+│    ├──► For each layer (taxonomy, contract, capabilities, ...):     │
+│    │    └──► Layer Analyzer                                         │
+│    │              │  receives: path, content, graph context         │
+│    │              │  returns: OrphanIndicatorResult                 │
+│    │              │  ⚠️  NO I/O — business logic only               │
+│    │              ▼                                                 │
+│    │         Vec<Violation>                                         │
+│    │                                                                │
+│    └──► Aggregate violations → LintResultList                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  Input:   target path → config
+  Process: walk → parse → extract imports → build graph → trace → detect
+  Output:  LintResultList (orphan violations per file)
+```
+
 ## Functional Requirements
 
 ### FR-001: AST-Based Import Graph Construction

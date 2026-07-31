@@ -37,6 +37,53 @@ Target (file or directory)
 
 ---
 
+## Business Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                   IMPORT-RULES BUSINESS FLOW                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │  user input: target path                                       │
+│    ▼                                                                │
+│  Contract Agent (IImportRunnerAggregate)                            │
+│    │  delegates to orchestrator                                     │
+│    ▼                                                                │
+│  Import Orchestrator                                                │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator                                      │
+│    │      → FileWalker (walk, workspace-aware)                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    ├──► For each file:                                              │
+│    │    ├──► IFilesystemAggregate.read_file(path)                   │
+│    │    │         │                                                 │
+│    │    │         ▼                                                 │
+│    │    │    String (file content)                                  │
+│    │    │                                                           │
+│    │    └──► Import Checkers (AES201-AES205)                        │
+│    │              │  receives: path, content, config                │
+│    │              │  returns: Vec<Violation>                        │
+│    │              │  ⚠️  NO I/O — business logic only               │
+│    │              ▼                                                 │
+│    │         Vec<Violation>                                         │
+│    │                                                                │
+│    └──► Aggregate violations → LintResultList                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  Input:   target path → config (forbidden, mandatory, rules)
+  Process: walk → read → parse imports → check rules → aggregate
+  Output:  LintResultList (import violations per file)
+```
+
 ## Functional Requirements
 
 ### FR-001: Layer Dependency Violation (AES201)

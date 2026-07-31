@@ -22,6 +22,50 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 └──────────────────────────────────────────────────────────────┘
 ```
 
+## Business Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                   NAMING-RULES BUSINESS FLOW                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │  user input: target path                                       │
+│    ▼                                                                │
+│  Contract Agent (INamingRunnerAggregate)                            │
+│    │  delegates to orchestrator                                     │
+│    ▼                                                                │
+│  Naming Orchestrator                                                │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator                                      │
+│    │      → FileWalker (walk, workspace-aware)                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    ├──► For each file:                                              │
+│    │    ├──► Extract filename stem, prefix, suffix                  │
+│    │    │                                                           │
+│    │    └──► Naming Capabilities                                    │
+│    │              │  receives: path, stem, prefix, suffix           │
+│    │              │  returns: Vec<Violation>                        │
+│    │              │  ⚠️  NO I/O — business logic only               │
+│    │              ▼                                                 │
+│    │         Vec<Violation>                                         │
+│    │                                                                │
+│    └──► Aggregate violations → LintResultList                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  Input:   target path → config (naming rules, layer defs)
+  Process: walk → extract stem → check convention → check suffix
+  Output:  LintResultList (naming violations per file)
+```
+
 ## Functional Requirements
 
 ### FR-001: Naming Convention Consistency (AES101)

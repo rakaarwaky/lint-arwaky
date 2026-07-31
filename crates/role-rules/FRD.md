@@ -21,6 +21,52 @@ Target Path
 
 **Supported languages:** Rust (.rs), Python (.py), TypeScript (.ts/.tsx), JavaScript (.js/.jsx)
 
+## Business Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ROLE-RULES BUSINESS FLOW                         │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │  user input: target path                                       │
+│    ▼                                                                │
+│  Contract Agent (IRoleRunnerAggregate)                              │
+│    │  delegates to orchestrator                                     │
+│    ▼                                                                │
+│  Role Orchestrator                                                  │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator → FileWalker → UtilityIO             │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    ├──► For each file:                                              │
+│    │    ├──► IFilesystemAggregate.read_file(path)                   │
+│    │    │         │                                                 │
+│    │    │         ▼                                                 │
+│    │    │    String (file content)                                  │
+│    │    │                                                           │
+│    │    └──► Role Capabilities (AES401-AES406)                      │
+│    │              │  receives: path, content, language              │
+│    │              │  returns: Vec<Violation>                        │
+│    │              │  ⚠️  NO I/O — business logic only               │
+│    │              ▼                                                 │
+│    │         Vec<Violation>                                         │
+│    │                                                                │
+│    └──► Aggregate violations → LintResultList                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  Input:   target path → config
+  Process: walk → read → classify → check → aggregate
+  Output:  LintResultList (violations per file)
+```
+
 ## Functional Requirements
 
 ### FR-001: File Collection and Classification

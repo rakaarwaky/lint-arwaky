@@ -22,6 +22,53 @@ The code-analysis crate enforces general code quality, formatting limits, and cl
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
+## Business Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                  CODE-ANALYSIS BUSINESS FLOW                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  Surface CLI                                                        │
+│    │  user input: target path                                       │
+│    ▼                                                                │
+│  Contract Agent (ICodeAnalysisAggregate)                            │
+│    │  delegates to orchestrator                                     │
+│    ▼                                                                │
+│  Code Analysis Orchestrator                                         │
+│    │                                                                │
+│    ├──► IFilesystemAggregate.discover_source_files(root, ignored)   │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    FilesystemOrchestrator                                      │
+│    │      → FileWalker (walk, workspace-aware)                      │
+│    │         │                                                      │
+│    │         ▼                                                      │
+│    │    Vec<FilePath> (all source files)                            │
+│    │                                                                │
+│    ├──► For each file:                                              │
+│    │    ├──► IFilesystemAggregate.read_lintable_file(path)          │
+│    │    │         │                                                 │
+│    │    │         ▼                                                 │
+│    │    │    Option<String> (content, 2MiB limit)                   │
+│    │    │                                                           │
+│    │    └──► Code Analyzers (AES301-AES305)                         │
+│    │              │  receives: path, content, config                │
+│    │              │  returns: Vec<Violation>                        │
+│    │              │  ⚠️  NO I/O — business logic only               │
+│    │              ▼                                                 │
+│    │         Vec<Violation>                                         │
+│    │                                                                │
+│    └──► Aggregate violations → LintResultList                      │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+
+Data Flow:
+  Input:   target path → config (thresholds, patterns)
+  Process: walk → read (with size limit) → analyze → aggregate
+  Output:  LintResultList (code quality violations per file)
+```
+
 ## Functional Requirements
 
 ### FR-001: Maximum File Line Count (AES301)
