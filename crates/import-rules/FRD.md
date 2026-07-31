@@ -12,7 +12,9 @@ flowchart TD
     B --> C["import_orchestrator"]
     C --> D["filesystem_aggregate"]
     D --> E["file_walker + file_cache"]
+    D --> F["ast_parser + import_extractor"]
     E --> G["Vec FilePath + content"]
+    F --> G
     G --> H1["forbidden_checker"]
     G --> H2["mandatory_checker"]
     G --> H3["unused_checker"]

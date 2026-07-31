@@ -12,7 +12,9 @@ flowchart TD
     B --> C["orphan_orchestrator"]
     C --> D["filesystem_aggregate"]
     D --> E["file_walker + file_cache"]
-    E --> G["Vec FilePath + content"]
+    D --> F["ast_parser + import_extractor + dependency_graph"]
+    E --> G["Vec FilePath + content + imports + graph"]
+    F --> G
     G --> H1["taxonomy_analyzer"]
     G --> H2["contract_analyzer"]
     G --> H3["capabilities_analyzer"]
