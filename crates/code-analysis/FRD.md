@@ -33,7 +33,9 @@ flowchart TD
     style E fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
-```### FR-001: Maximum File Line Count (AES301)
+```
+
+### FR-001: Maximum File Line Count (AES301)
 
 - **Description**: Source files must not exceed the maximum allowed line count to prevent bloated, unmaintainable files.
 - **Input**: Source file path + content
