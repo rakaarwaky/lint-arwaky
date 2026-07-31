@@ -109,13 +109,14 @@ impl<'ast> Visit<'ast> for IdentifierVisitor {
         if node.path().is_ident("derive")
             && let Ok(nested) = node.parse_args_with(
                 syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated,
-            ) {
-                for path in nested {
-                    if let Some(seg) = path.segments.last() {
-                        self.identifiers.push(seg.ident.to_string());
-                    }
+            )
+        {
+            for path in nested {
+                if let Some(seg) = path.segments.last() {
+                    self.identifiers.push(seg.ident.to_string());
                 }
             }
+        }
         syn::visit::visit_attribute(self, node);
     }
 }
@@ -247,13 +248,14 @@ fn is_fn_body_dummy(block: &syn::Block) -> bool {
         return true;
     }
     if stmts.len() == 1
-        && let syn::Stmt::Expr(syn::Expr::Macro(expr_macro), _) = &stmts[0] {
-            let macro_name = path_to_string(&expr_macro.mac.path);
-            return matches!(
-                macro_name.as_str(),
-                "todo" | "unimplemented" | "panic" | "unreachable"
-            );
-        }
+        && let syn::Stmt::Expr(syn::Expr::Macro(expr_macro), _) = &stmts[0]
+    {
+        let macro_name = path_to_string(&expr_macro.mac.path);
+        return matches!(
+            macro_name.as_str(),
+            "todo" | "unimplemented" | "panic" | "unreachable"
+        );
+    }
     false
 }
 
@@ -278,9 +280,10 @@ fn type_to_string(ty: &syn::Type) -> String {
 fn extract_path_attr(item_mod: &syn::ItemMod) -> Option<String> {
     for attr in &item_mod.attrs {
         if attr.path().is_ident("path")
-            && let Ok(lit) = attr.parse_args::<syn::LitStr>() {
-                return Some(lit.value());
-            }
+            && let Ok(lit) = attr.parse_args::<syn::LitStr>()
+        {
+            return Some(lit.value());
+        }
     }
     None
 }
