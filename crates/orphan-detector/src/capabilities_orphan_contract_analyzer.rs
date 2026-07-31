@@ -1,11 +1,11 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection.
 // AST-based: uses parser dispatch for trait extraction and impl detection.
 
+use filesystem::utility_io::read_file_safe;
 use shared::code_analysis::{InheritanceMap, OrphanIndicatorResult};
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
-use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
 use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
 use std::sync::Arc;
@@ -47,7 +47,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let suffix = file_suffix(fp);
-        let content = orphan_io::read_file_safe(fp);
+        let content = read_file_safe(fp);
         if content.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -203,7 +203,7 @@ impl ContractOrphanAnalyzer {
     /// Check if any file implements the given trait, using AST.
     fn has_trait_implementation(&self, search_files: &[String], trait_name: &str) -> bool {
         for cf in search_files {
-            let content = orphan_io::read_file_safe(cf);
+            let content = read_file_safe(cf);
             if content.is_empty() {
                 continue;
             }
@@ -253,7 +253,7 @@ impl ContractOrphanAnalyzer {
                 continue;
             }
 
-            let content = orphan_io::read_file_safe(cf);
+            let content = read_file_safe(cf);
             for trait_name in trait_names {
                 if Self::content_contains_word(&content, trait_name) {
                     return true;
@@ -274,7 +274,7 @@ impl ContractOrphanAnalyzer {
             if !is_barrel {
                 continue;
             }
-            let barrel_content = orphan_io::read_file_safe(cf);
+            let barrel_content = read_file_safe(cf);
             for trait_name in trait_names {
                 if Self::content_contains_word(&barrel_content, trait_name) {
                     return true;

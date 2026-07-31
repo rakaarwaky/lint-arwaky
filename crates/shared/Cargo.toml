@@ -24,6 +24,7 @@ tokio.workspace = true
 clap.workspace = true
 rmcp.workspace = true
 rayon.workspace = true
+dashmap = "6"
 schemars.workspace = true
 syn = { version = "2", features = ["full", "visit", "parsing"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }

@@ -38,9 +38,20 @@ impl FilesystemService {
         let files = self.walker.walk(root, ignored, extensions);
         timing.walk_ms = t.elapsed().as_millis() as u64;
 
-        // Stage 2: Cache
+        // Stage 2: Cache (local + global shared cache)
         let t = Instant::now();
         self.cache.populate(&files);
+
+        // Also populate the global shared cache so all linters benefit
+        let global_entries: Vec<(String, String)> = files
+            .iter()
+            .filter_map(|f| {
+                let content = self.cache.get(&f.path)?;
+                Some((f.path.to_string_lossy().to_string(), content))
+            })
+            .collect();
+        shared::code_analysis::utility_file_reader::populate_cache(&global_entries);
+
         timing.cache_ms = t.elapsed().as_millis() as u64;
 
         // Stage 3: Parse ASTs

@@ -3431,6 +3431,7 @@ name = "orphan-detector-lint-arwaky"
 version = "1.12.0"
 dependencies = [
  "criterion",
+ "filesystem-lint-arwaky",
  "proc-macro2",
  "rayon",
  "serde",
@@ -4574,6 +4575,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
+ "dashmap",
  "once_cell",
  "proc-macro2",
  "rayon",

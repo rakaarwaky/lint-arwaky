@@ -307,3 +307,56 @@ pub fn find_workspace_root(start: &str) -> Option<PathBuf> {
         }
     }
 }
+
+// ─── Directory Scanning ───────────────────────────────────
+
+/// Scan directory entries, returning vector of (file_name, file_path, is_dir) tuples.
+pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = dir_path.read_dir() {
+        for dir_entry in read_dir.flatten() {
+            if let Some(name) = dir_entry.file_name().to_str() {
+                let path = dir_entry.path();
+                let is_dir = path.is_dir();
+                entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
+            }
+        }
+    }
+    entries
+}
+
+/// Recursively scan directory for files, returning vector of file paths.
+/// Skips hidden directories and common heavy dependency/build directories.
+pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
+    let mut files = Vec::new();
+    _scan_directory_recursive(dir_path, &mut files);
+    files
+}
+
+fn _scan_directory_recursive(dir_path: &Path, files: &mut Vec<String>) {
+    if let Ok(entries) = std::fs::read_dir(dir_path) {
+        for dir_entry in entries.flatten() {
+            if let Some(name) = dir_entry.file_name().to_str() {
+                if name.starts_with('.') {
+                    continue;
+                }
+
+                let path = dir_entry.path();
+
+                if path.is_dir() {
+                    if matches!(
+                        name,
+                        "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                    ) {
+                        continue;
+                    }
+
+                    _scan_directory_recursive(&path, files);
+                } else if let Some(path_str) = path.to_str() {
+                    files.push(path_str.to_string());
+                }
+            }
+        }
+    }
+}
+
