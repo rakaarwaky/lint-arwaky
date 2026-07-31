@@ -53,7 +53,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
 
         let root_str = root_dir.value().to_string();
 
-        let file_violations: Vec<LintResult> = files
+        let mut file_violations: Vec<LintResult> = files
             .values
             .iter()
             .flat_map(|f| {
@@ -108,6 +108,9 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
             })
             .collect();
 
+        // Deduplicate violations by (file, line, code)
+        file_violations.dedup_by(|a, b| a.file == b.file && a.line == b.line && a.code == b.code);
+
         Ok(LintResultList::new(file_violations))
     }
 }
@@ -150,15 +153,9 @@ impl ArchImportMandatoryChecker {
             let layer_str: &str = layer.value();
 
             // ── Direct match (existing behavior) ──
-            let is_present_direct = if suffixes.is_empty() {
-                import_lines
-                    .iter()
-                    .any(|(_, l)| l.value().contains(layer_str))
-            } else {
-                import_lines.iter().any(|(_, l)| {
-                    utility_import_resolver::import_matches_scope(l, &layer, &suffixes)
-                })
-            };
+            let is_present_direct = import_lines
+                .iter()
+                .any(|(_, l)| utility_import_resolver::import_matches_scope(l, &layer, &suffixes));
 
             // ── Barrel resolution fallback ──
             let is_present = is_present_direct
@@ -171,9 +168,9 @@ impl ArchImportMandatoryChecker {
                 );
 
             if !is_present {
-                violations.push(LintResult::new_arch(
+                let v = LintResult::new_arch(
                     file,
-                    0,
+                    1,
                     "AES202",
                     Severity::HIGH,
                     AesImportViolation::MissingImport {
@@ -185,7 +182,10 @@ impl ArchImportMandatoryChecker {
                         ))),
                     }
                     .to_string(),
-                ));
+                );
+                if !violations.contains(&v) {
+                    violations.push(v);
+                }
             }
         }
     }
@@ -204,63 +204,80 @@ impl ArchImportMandatoryChecker {
         }
 
         for rule in &config.rules {
-            if rule.mandatory.values.is_empty() {
+            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
                 continue;
             }
-            let scope_identity = Identity::new(&rule.scope.value);
-            let Some((rule_layer_str, _rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename,
-                    &scope_identity,
-                )
-            else {
-                continue;
-            };
 
-            for required in &rule.mandatory.values {
-                let required_identity = Identity::new(required);
-                let (req_layer, req_suffixes) =
-                    utility_import_resolver::resolve_scope(&required_identity);
-                let req_layer_str = req_layer.value();
-
-                // ── Direct match ──
-                let is_present_direct = if req_suffixes.is_empty() {
-                    import_lines
-                        .iter()
-                        .any(|(_, l)| l.value().contains(req_layer_str))
-                } else {
-                    import_lines.iter().any(|(_, l)| {
-                        utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes)
-                    })
-                };
-
-                // ── Barrel resolution fallback ──
-                let is_present = is_present_direct
-                    || self._check_barrel_mandatory_imports(
-                        import_lines,
-                        &req_layer,
-                        &req_suffixes,
-                        req_layer_str,
-                        root_dir,
-                    );
-
-                if !is_present {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        0,
-                        "AES202",
-                        Severity::HIGH,
-                        AesImportViolation::MissingImport {
-                            source_layer: LayerNameVO::new(rule_layer_str.clone()),
-                            required: SymbolName::new(required.clone()),
-                            reason: Some(LintMessage::new(format!(
-                                "File '{}' in scope '{}' is missing required import '{}'.",
-                                basename, rule_layer_str, required
-                            ))),
-                        }
-                        .to_string(),
-                    ));
+            // 1. Direct rule mandatory
+            if !rule.mandatory.values.is_empty() {
+                let scope_identity = Identity::new(&rule.scope.value);
+                if let Some((rule_layer_str, _rule_suffixes)) =
+                    shared::common::utility_scope_matcher::file_belongs_to_scope(
+                        basename,
+                        &scope_identity,
+                    )
+                {
+                    for required in &rule.mandatory.values {
+                        self._check_single_scope_requirement(
+                            file,
+                            basename,
+                            &rule_layer_str,
+                            required,
+                            import_lines,
+                            root_dir,
+                            violations,
+                        );
+                    }
                 }
+            }
+        }
+    }
+
+    fn _check_single_scope_requirement(
+        &self,
+        file: &str,
+        basename: &str,
+        rule_layer_str: &str,
+        required: &str,
+        import_lines: &[(LineNumber, LineContentVO)],
+        root_dir: &str,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let required_identity = Identity::new(required);
+        let (req_layer, req_suffixes) = utility_import_resolver::resolve_scope(&required_identity);
+        let req_layer_str = req_layer.value();
+
+        let is_present_direct = import_lines.iter().any(|(_, l)| {
+            utility_import_resolver::import_matches_scope(l, &req_layer, &req_suffixes)
+        });
+
+        let is_present = is_present_direct
+            || self._check_barrel_mandatory_imports(
+                import_lines,
+                &req_layer,
+                &req_suffixes,
+                req_layer_str,
+                root_dir,
+            );
+
+        if !is_present {
+            let v = LintResult::new_arch(
+                file,
+                1,
+                "AES202",
+                Severity::HIGH,
+                AesImportViolation::MissingImport {
+                    source_layer: LayerNameVO::new(rule_layer_str.to_string()),
+                    required: SymbolName::new(required.to_string()),
+                    reason: Some(LintMessage::new(format!(
+                        "File '{}' in scope '{}' is missing required import '{}'.",
+                        basename, rule_layer_str, required
+                    ))),
+                }
+                .to_string(),
+            );
+            if !violations.contains(&v) {
+                violations.push(v);
             }
         }
     }
@@ -296,39 +313,48 @@ impl ArchImportMandatoryChecker {
         for (_, line) in import_lines {
             let line_val = line.value();
 
-            // Extract module path from the import line
-            let Some(module) = utility_import_resolver::extract_module_from_line(line) else {
+            // Extract module and symbol from raw_path (e.g. "shared::common::FilePath")
+            let (module_val, symbol_name): (String, String) = match line_val.rsplit_once("::") {
+                Some((m, s)) => (m.to_string(), s.to_string()),
+                None => {
+                    let symbols = utility_import_resolver::extract_symbol_names(line_val);
+                    let module = utility_import_resolver::extract_module_from_line(line);
+                    let mod_str = module
+                        .as_ref()
+                        .map(|m| m.value().to_string())
+                        .unwrap_or_default();
+                    if mod_str.is_empty() || symbols.is_empty() {
+                        continue;
+                    }
+                    let Some(first_sym) = symbols.into_iter().next() else {
+                        continue;
+                    };
+                    (mod_str, first_sym)
+                }
+            };
+
+            if symbol_name.is_empty() || symbol_name == "*" {
+                continue;
+            }
+
+            // Resolve symbol through barrel file to find original source file stem
+            let Some(resolved) =
+                utility_import_resolver::resolve_barrel_import(&module_val, &symbol_name, root_dir)
+            else {
                 continue;
             };
-            let module_val = module.value();
 
-            // Extract imported symbol names using shared utility (handles Python/Rust/TS/JS)
-            let symbols = utility_import_resolver::extract_symbol_names(line_val);
+            // ── Layer must match the required layer ──
+            if !resolved.matches_layer(layer_str) {
+                continue;
+            }
 
-            for symbol_name in &symbols {
-                // Resolve symbol through barrel file to find original source file stem
-                let Some(resolved) = utility_import_resolver::resolve_barrel_import(
-                    module_val,
-                    symbol_name,
-                    root_dir,
-                ) else {
-                    continue;
-                };
-
-                // ── Layer must match the required layer ──
-                if !resolved.matches_layer(layer_str) {
-                    continue;
-                }
-
-                // ── Suffix check (if required) ──
-                // e.g. required = "contract(protocol)" → layer="contract", suffixes=["protocol"]
-                // resolved file stem = "contract_connection_protocol" → contains "_protocol" ✅
-                if suffixes.is_empty() {
-                    return true;
-                }
-                if suffixes.iter().any(|s| resolved.has_suffix(s.value())) {
-                    return true;
-                }
+            // ── Suffix check (if required) ──
+            if suffixes.is_empty() {
+                return true;
+            }
+            if suffixes.iter().any(|s| resolved.has_suffix(s.value())) {
+                return true;
             }
         }
         false

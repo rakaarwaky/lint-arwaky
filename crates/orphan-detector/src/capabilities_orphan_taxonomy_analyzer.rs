@@ -57,16 +57,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        // Check if any importer is from another layer (not taxonomy, not barrel)
-        let has_other_layer_importer = importers.iter().any(|importer| {
-            let b = importer.rsplit('/').next().unwrap_or(importer);
-            // Barrel files don't count as real consumers
-            if matches!(b, "mod.rs" | "__init__.py" | "index.ts" | "index.js") {
-                return false;
-            }
-            // Same-layer imports don't count
-            !b.starts_with("taxonomy_")
-        });
+        let has_other_layer_importer = importers.iter().any(|importer| importer != f.value());
 
         if has_other_layer_importer {
             OrphanIndicatorResult::new(false, String::new(), Severity::LOW)

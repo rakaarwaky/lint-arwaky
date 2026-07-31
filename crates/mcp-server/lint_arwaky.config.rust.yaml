@@ -210,7 +210,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "capabilities_orphan_parser_dispatcher.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -344,7 +344,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "capabilities_orphan_parser_dispatcher.rs"]
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]

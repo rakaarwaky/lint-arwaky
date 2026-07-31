@@ -44,14 +44,6 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 unused.push(alias_str.to_string());
             }
         }
-        let rust_js_imports =
-            utility_import_symbol_extractor::extract_rust_js_imports(path.value(), &content);
-        for (name, _line_idx) in rust_js_imports {
-            let name_str = name.value();
-            if !utility_import_symbol_extractor::is_name_used(path.value(), name_str, &content, 0) {
-                unused.push(name_str.to_string());
-            }
-        }
         Ok(unused.into_iter().map(LintMessage::new).collect())
     }
 
@@ -67,6 +59,8 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(basename) {
             return Ok(Vec::new());
         }
+        // Single unified path: extract aliases (uses alias_name() for renames),
+        // check usage, check exports, produce one violation per unused import.
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases(file, content);
         let exported_symbols =
@@ -79,43 +73,61 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             if unused_import_is_future_import(content, alias_str) {
                 continue;
             }
-            if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
-                let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
-                    .value() as usize;
-                violations.push(LintResult::new_arch(
-                    file,
-                    line_num,
-                    "AES203",
-                    Severity::MEDIUM,
-                    AesImportViolation::FixUnusedImport {
-                        reason: Some(LintMessage::new(format!(
-                            "Import '{}' is declared but never used in this file.",
-                            alias_str
-                        ))),
-                    }
-                    .to_string(),
-                ));
+            if used_symbols.contains(alias) || exported_symbols.contains(alias) {
+                continue;
             }
-        }
-        let rust_js_imports =
-            utility_import_symbol_extractor::extract_rust_js_imports(file, content);
-        for (name, line_idx) in rust_js_imports {
-            let name_str = name.value().to_string();
-            if !utility_import_symbol_extractor::is_name_used(file, &name_str, content, 0) {
-                violations.push(LintResult::new_arch(
-                    file,
-                    line_idx.value() as usize,
-                    "AES203",
-                    Severity::MEDIUM,
-                    AesImportViolation::FixUnusedImport {
-                        reason: Some(LintMessage::new(format!(
-                            "Import '{}' is declared but never used in this file.",
-                            name_str
-                        ))),
-                    }
-                    .to_string(),
-                ));
+            // Text-based fallback: check if the alias name appears in non-import,
+            // non-comment lines. This catches implicit usage like trait method calls
+            // (e.g. `#[async_trait]`, `.par_iter()` enabled by `ParallelIterator`,
+            // `.init()` enabled by `SubscriberExt`).
+            let alias_in_body = content.lines().any(|l| {
+                let t = l.trim();
+                if t.is_empty()
+                    || t.starts_with("//")
+                    || t.starts_with("use ")
+                    || t.starts_with("pub use ")
+                    || t.starts_with("pub(crate) use ")
+                {
+                    return false;
+                }
+                t.contains(alias_str)
+            });
+            if alias_in_body {
+                continue;
             }
+            // Heuristic: skip imports that are likely traits used implicitly
+            // via method calls, derive macros, or macro invocations.
+            // The AST can't detect: `.par_iter()` (ParallelIterator),
+            // `#[async_trait]`, `.init()` (SubscriberInitExt), `writeln!` (Write), etc.
+            if let Some((raw_path, _)) = imported_aliases.get(alias) {
+                let rp = raw_path.value();
+                let is_likely_trait = rp.contains("prelude")
+                    || rp.contains("async_trait")
+                    || rp.ends_with("::io::Write")
+                    || alias_str.ends_with("Ext")
+                    || alias_str.ends_with("Iterator")
+                    || alias_str.ends_with("Stream")
+                    || alias_str == "Write";
+                if is_likely_trait {
+                    continue;
+                }
+            }
+            let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
+                .value() as usize;
+            let ast_line = imported_aliases.get(alias).map(|(_, l)| *l).unwrap_or(1);
+            violations.push(LintResult::new_arch(
+                file,
+                ast_line,
+                "AES203",
+                Severity::MEDIUM,
+                AesImportViolation::FixUnusedImport {
+                    reason: Some(LintMessage::new(format!(
+                        "Import '{}' is declared but never used in this file.",
+                        alias_str
+                    ))),
+                }
+                .to_string(),
+            ));
         }
         Ok(violations)
     }

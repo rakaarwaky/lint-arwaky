@@ -75,6 +75,20 @@ pub fn parse_rust(content: &str) -> RustParseResultVO {
 
 // ─── Block 2: Identifier Visitor ──────────────────────────
 
+fn extract_idents_from_stream(stream: proc_macro2::TokenStream, out: &mut Vec<String>) {
+    for tt in stream {
+        match tt {
+            proc_macro2::TokenTree::Ident(ident) => {
+                out.push(ident.to_string());
+            }
+            proc_macro2::TokenTree::Group(group) => {
+                extract_idents_from_stream(group.stream(), out);
+            }
+            _ => {}
+        }
+    }
+}
+
 struct IdentifierVisitor {
     identifiers: Vec<String>,
 }
@@ -118,6 +132,10 @@ impl<'ast> Visit<'ast> for IdentifierVisitor {
             }
         }
         syn::visit::visit_attribute(self, node);
+    }
+    fn visit_macro(&mut self, node: &'ast syn::Macro) {
+        extract_idents_from_stream(node.tokens.clone(), &mut self.identifiers);
+        syn::visit::visit_macro(self, node);
     }
 }
 
@@ -193,13 +211,9 @@ fn walk_use_tree(
             }
             full_path.push_str(&use_rename.ident.to_string());
             let segments: Vec<String> = full_path.split("::").map(String::from).collect();
-            result.imports.push(AstImportVO::new(
-                full_path,
-                segments,
-                is_reexport,
-                false,
-                line,
-            ));
+            let mut import = AstImportVO::new(full_path, segments, is_reexport, false, line);
+            import.rename = Some(use_rename.rename.to_string());
+            result.imports.push(import);
         }
     }
 }

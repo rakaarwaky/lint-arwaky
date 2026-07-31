@@ -12,7 +12,6 @@ pub mod utility_orphan_graph_resolver;
 pub mod utility_orphan_io;
 pub mod utility_orphan_path;
 pub mod utility_orphan_python_parser;
-pub mod utility_orphan_regex_patterns;
 pub mod utility_orphan_rust_parser;
 pub mod utility_orphan_ts_parser;
 pub mod utility_workspace_scanner;

@@ -13,6 +13,10 @@ pub struct AstImportVO {
     pub is_glob: bool,
     /// Line number (1-based) where this import appears
     pub line: usize,
+    /// Rename alias (e.g. `as foo` renames the import to `foo`).
+    /// When present, the code uses this name instead of `last_segment()`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rename: Option<String>,
 }
 
 impl AstImportVO {
@@ -29,7 +33,17 @@ impl AstImportVO {
             is_reexport,
             is_glob,
             line,
+            rename: None,
         }
+    }
+
+    /// Get the name the code uses to refer to this import.
+    /// For renamed imports (e.g. `use foo as bar`), returns the alias `bar`.
+    /// Otherwise returns the last segment (e.g. `FilePath` from `use foo::FilePath`).
+    pub fn alias_name(&self) -> &str {
+        self.rename
+            .as_deref()
+            .unwrap_or_else(|| self.segments.last().map(|s| s.as_str()).unwrap_or(""))
     }
 
     /// Get the last segment (typically the imported symbol name).

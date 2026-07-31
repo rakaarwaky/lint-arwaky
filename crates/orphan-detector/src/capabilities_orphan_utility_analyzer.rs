@@ -8,7 +8,16 @@ use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::{AesOrphanViolation, IOrphanParserProtocol, IUtilityOrphanProtocol};
 use std::sync::Arc;
 
-const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];
+const CONSUMER_LAYERS: &[&str] = &[
+    "capabilities",
+    "agent",
+    "surface",
+    "surfaces",
+    "root",
+    "contract",
+    "utility",
+    "taxonomy",
+];
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -151,13 +160,21 @@ impl UtilityOrphanAnalyzer {
 
     /// Check if a module is imported using AST parser dispatch.
     /// Replaces check_import_pattern (string matching) and import_tokens (regex).
+    /// Checks both `use` imports AND identifier usage (for fully-qualified paths
+    /// like `shared::common::utility_foo::bar()` that don't have a `use` statement).
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
         match FileParseResultVO::parse_path_content(file_path, content) {
-            FileParseResultVO::Rust(result) => result.imports.iter().any(|imp| {
-                imp.segments
-                    .iter()
-                    .any(|seg| seg == module_name || seg.starts_with(&format!("{}_", module_name)))
-            }),
+            FileParseResultVO::Rust(result) => {
+                // Check use-statement imports
+                let in_imports = result.imports.iter().any(|imp| {
+                    imp.segments.iter().any(|seg| {
+                        seg == module_name || seg.starts_with(&format!("{module_name}_"))
+                    })
+                });
+                // Also check identifier usage (fully-qualified paths without `use`)
+                let in_usage = result.used_identifiers.iter().any(|id| id == module_name);
+                in_imports || in_usage
+            }
             FileParseResultVO::Python(result) => result.imports.iter().any(|imp| {
                 imp.raw_path.contains(module_name)
                     || imp.segments.iter().any(|seg| seg == module_name)

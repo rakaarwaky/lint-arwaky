@@ -211,8 +211,16 @@ pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
 pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
     let first_part = alias.split('.').next().unwrap_or("");
     let pos_opt = content.lines().position(|l| {
-        l.trim().contains(&format!("import {}", alias))
-            || l.trim().contains(&format!("from {} import", first_part))
+        let t = l.trim();
+        // Rust: use path::alias; / use path::{..., alias, ...};
+        // Also handle "use ... as alias;"
+        let is_use =
+            t.starts_with("use ") || t.starts_with("pub use ") || t.starts_with("pub(crate) use ");
+        let alias_in_use = is_use && (t.contains(alias));
+        // Python: import X / from X import
+        let py_import = t.contains(&format!("import {alias}"))
+            || t.contains(&format!("from {first_part} import"));
+        alias_in_use || py_import
     });
     let line = match pos_opt {
         Some(p) => p + 1,

@@ -394,10 +394,22 @@ impl DummyImportChecker {
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             let is_skip = match lang {
-                LanguageVO::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
-                LanguageVO::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
+                LanguageVO::Rust => {
+                    trimmed.starts_with("//")
+                        || trimmed.starts_with("fn _use_")
+                        || trimmed.contains('"') // skip string literal definitions
+                }
+                LanguageVO::Python => {
+                    trimmed.starts_with("#")
+                        || trimmed.starts_with("def _use_")
+                        || trimmed.contains('"')
+                        || trimmed.contains('\'')
+                }
                 LanguageVO::JavaScript => {
-                    trimmed.starts_with("//") || trimmed.starts_with("function _use")
+                    trimmed.starts_with("//")
+                        || trimmed.starts_with("function _use")
+                        || trimmed.contains('"')
+                        || trimmed.contains('\'')
                 }
                 LanguageVO::Unknown => false,
             };
