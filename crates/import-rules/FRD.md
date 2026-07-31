@@ -319,98 +319,45 @@ flowchart TD
 ## Test Scenarios / QA Checklist
 
 ### AES201 — Forbidden Import
-
-
-| Test Case                   | Input                                                                                                | Expected Output                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| taxonomy imports contract   | `taxonomy_vo.rs` with `use contract_protocol::*`                                                     | AES201 CRITICAL violation                                     |
-| capabilities imports agent  | `capabilities_checker.rs` with `use agent_orchestrator::*`                                           | AES201 CRITICAL violation                                     |
-| valid unidirectional import | `capabilities_checker.rs` with `use taxonomy_vo::*`                                                  | No violation                                                  |
-| import inside comment       | `taxonomy_vo.rs` with `// use contract_protocol::*`                                                  | No violation (AST)                                            |
-| import inside string        | `taxonomy_vo.rs` with `let s = "use contract_protocol::*"`                                           | No violation (AST)                                            |
-| barrel resolution           | `from modules.shared.src.server import IFoo` where `__init__.py` re-exports from `contract_protocol` | AES201 CRITICAL (resolved to contract layer)                  |
-| scope pattern match         | `surface_component.rs` with `use capabilities_checker::*`                                            | AES201 CRITICAL (passive surface forbidden from capabilities) |
-| `#[cfg(test)]` import       | `taxonomy_vo.rs` with `#[cfg(test)] use contract_protocol::*`                                        | No violation (conditional block skipped)                      |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | File imports from forbidden layer | AES201 violation | AES201 |
+| 2  | File imports from allowed layer | No violation | pass |
+| 3  | File with no imports | No violation | pass |
 
 ### AES202 — Mandatory Import
-
-
-| Test Case                   | Input                                                                                              | Expected Output                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| missing contract import     | `capabilities_checker.rs` without protocol import                                                  | AES202 HIGH violation                                |
-| present contract import     | `capabilities_checker.rs` with `use contract_protocol::*`                                          | No violation                                         |
-| barrel resolution fallback  | `capabilities_checker.rs` with `from modules.shared.src.server import IFoo` (resolves to contract) | No violation                                         |
-| `__init__.py` skip          | `__init__.py` without mandatory imports                                                            | No violation (barrel file skipped)                   |
-| `contains()` false positive | `capabilities_checker.rs` with `use taxonomy_contract_vo::*` (contains "contract" but is taxonomy) | AES202 HIGH violation (segment match, not substring) |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | Capabilities file missing taxonomy import | AES202 violation | AES202 |
+| 2  | Capabilities file has taxonomy import | No violation | pass |
+| 3  | File in exception list | No violation — exception | excl |
 
 ### AES203 — Unused Import
-
-
-| Test Case             | Input                                                       | Expected Output                          |
-| ----------------------- | ------------------------------------------------------------- | ------------------------------------------ |
-| unused symbol         | File with`use foo::Bar;` but `Bar` never used               | AES203 MEDIUM violation                  |
-| used symbol           | File with`use foo::Bar;` and `Bar` referenced in code       | No violation                             |
-| used in comment only  | File with`use foo::Bar;` and `// Bar is great`              | AES203 MEDIUM violation (AST)            |
-| used in string only   | File with`use foo::Bar;` and `let s = "Bar"`                | AES203 MEDIUM violation (AST)            |
-| used in derive        | File with`use serde::Serialize;` and `#[derive(Serialize)]` | No violation (AST attribute parsing)     |
-| multi-line import     | `use foo::{\n  A,\n  B,\n}` with only `A` used              | AES203 for`B` only                       |
-| aliased import        | `use foo::Bar as Baz;` with `Baz` used                      | No violation                             |
-| barrel file skip      | `mod.rs` with `pub use foo::Bar;`                           | No violation (barrel file)               |
-| `__future__` skip     | `from __future__ import annotations`                        | No violation                             |
-| wildcard import       | `use foo::*;`                                               | AES203 MEDIUM violation                  |
-| `pub use` re-export   | `pub use foo::Bar;`                                         | No violation (re-export = public API)    |
-| `#[cfg(test)]` import | `#[cfg(test)] use foo::Bar;`                                | No violation (conditional block skipped) |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | Import declared but never referenced in code | AES203 violation | AES203 |
+| 2  | Import declared and used in code | No violation | pass |
+| 3  | Import used only in comments | AES203 violation | AES203 |
 
 ### AES204 — Dummy Import
-
-
-| Test Case            | Input                                                                  | Expected Output                          |
-| ---------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
-| dummy function       | File with`fn _use_imports() {}`                                        | AES204 HIGH violation                    |
-| empty trait impl     | File with`impl Trait for Struct {}` (all methods empty)                | AES204 HIGH violation                    |
-| partial trait impl   | File with`impl Trait for Struct { fn a() {} fn b() { real_logic() } }` | No violation (not all methods dummy)     |
-| import in dummy only | `use foo::Bar;` + `fn _use_imports() { Bar; }` (no other usage)        | AES204 HIGH violation                    |
-| import in real logic | `use foo::Bar;` + `fn real() { Bar; }`                                 | No violation                             |
-| taxonomy intent      | `use taxonomy_vo::Foo;` + `fn _use_imports() { Foo; }` (no real usage) | AES204 HIGH violation                    |
-| surface logic        | `surface_view.rs` with `lint_path(...)` call                           | AES204 MEDIUM violation                  |
-| barrel file skip     | `mod.rs` with `fn _use_imports() {}`                                   | No violation (barrel file)               |
-| inline comment usage | `use foo::Bar;` + `let x = 1; // Bar`                                  | AES204 HIGH (inline comment not counted) |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | Import path matches source file path exactly | AES204 violation | AES204 |
+| 2  | Import path differs from source file path | No violation | pass |
 
 ### AES205 — Circular Dependency
-
-
-| Test Case           | Input                                                                                  | Expected Output                           |
-| --------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------- |
-| direct cycle        | A imports B, B imports A                                                               | AES205 CRITICAL violation                 |
-| indirect cycle      | A imports B, B imports C, C imports A                                                  | AES205 CRITICAL violation                 |
-| no cycle            | A imports B, B imports C                                                               | No violation                              |
-| self-import         | A imports A                                                                            | No violation (ignored)                    |
-| barrel resolution   | A imports barrel, barrel re-exports from B, B imports A                                | AES205 CRITICAL (resolved through barrel) |
-| cross-crate         | `crate::contract_foo` in capabilities file, `crate::capabilities_bar` in contract file | AES205 CRITICAL                           |
-| same-crate internal | `crate::common::FilePath` in capabilities file                                         | No violation (not cross-layer)            |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | Two files importing each other | AES205 violation | AES205 |
+| 2  | Linear dependency chain | No violation | pass |
+| 3  | Self-import (file imports itself) | AES205 violation | AES205 |
 
 ### Configuration
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | Rule disabled in config | No violation for that rule | config |
+| 2  | File in exceptions list | No violation for that file | config |
 
-
-| Test Case       | Input                                                       | Expected Output      |
-| ----------------- | ------------------------------------------------------------- | ---------------------- |
-| config disabled | `architecture.enabled: false`                               | No violations        |
-| rule disabled   | `AES203.enabled: false`                                     | No AES203 violations |
-| exception file  | `exceptions: ["main.rs"]` + `main.rs` with forbidden import | No violation         |
-| ignored path    | `ignored_paths: ["/tests"]` + file in tests/                | No violation         |
-| scope rule      | `scope: "taxonomy(vo)"` + `taxonomy_foo_vo.rs`              | Rule applies         |
-| scope mismatch  | `scope: "taxonomy(vo)"` + `taxonomy_foo_entity.rs`          | Rule does not apply  |
-
-### Performance
-
-
-| Test Case              | Input                          | Expected Output                 |
-| ------------------------ | -------------------------------- | --------------------------------- |
-| 1,000 files            | Mixed Rust/Python/TS workspace | < 2 seconds                     |
-| 5,000 files            | Large workspace                | < 8 seconds                     |
-| AES203 with 50 imports | Single file with 50 imports    | < 100ms (AST, no dynamic regex) |
-
----
 
 ## Assumptions & Constraints
 

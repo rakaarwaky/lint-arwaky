@@ -180,28 +180,17 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-| #   | Input                                                    | Expected Output                                   | Rule        |
-| --- | -------------------------------------------------------- | ------------------------------------------------- | ----------- |
-| 1   | File with 1500 lines, max_lines=1000                     | AES301 — file exceeds max line count              | AES301      |
-| 2   | File with 5 lines, min_lines=10                          | AES302 — file below min line count                | AES302      |
-| 3   | File with 50 lines, no struct/enum/trait/class/interface | AES303 — mandatory definition missing             | AES303      |
-| 4   | `struct Foo;` with no following `impl` block             | AES303 — dead inheritance (unit struct)           | AES303      |
-| 5   | `struct Foo;` followed by `impl Foo { ... }`             | No violation (intentional placeholder)            | AES303 pass |
-| 6   | `class Foo: pass` (Python)                               | AES303 — dead inheritance (empty class)           | AES303      |
-| 7   | `class Foo {}` (TypeScript)                              | AES303 — dead inheritance (empty class)           | AES303      |
-| 8   | `let x = foo.unwrap();`                                  | AES304 — unwrap detected                          | AES304      |
-| 9   | `let x = foo.unwrap_or(default);`                        | No violation (safe variant)                       | AES304 pass |
-| 10  | `#[allow(dead_code)]`                                    | AES304 — allow attribute bypass                   | AES304      |
-| 11  | `// TODO: fix this later`                                | AES304 — bypass comment detected                  | AES304      |
-| 12  | `unwrap()` inside `#[cfg(test)]` block                   | No violation (test block skipped)                 | AES304 pass |
-| 13  | `unwrap()` inside a string literal                       | No violation (inside string)                      | AES304 pass |
-| 14  | `warnings = "allow"` in Cargo.toml `[lints.clippy]`      | AES304 — Cargo.toml clippy allow bypass           | AES304      |
-| 15  | File with 70% content shared across 2+ files             | AES305 — duplication exceeds 50% threshold        | AES305      |
-| 16  | File with 30% content shared across 2+ files             | No violation (below 50% threshold)                | AES305 pass |
-| 17  | Single file in workspace                                 | No duplication violation (no files to compare)    | AES305 pass |
-| 18  | File exceeding 2 MiB                                     | AES301 LOW — file skipped (exceeds lintable size) | AES301      |
-| 19  | File with read permission denied                         | DIAG_IO — file skipped with error reason          | DIAG_IO     |
-| 20  | `mod.rs` or `__init__.py`                                | No violation (barrel file exception)              | exception   |
+| #  | Scenario | Expected | Rule |
+| -- | -------- | -------- | ---- |
+| 1  | File exceeds max line limit | AES301 violation | AES301 |
+| 2  | File below min line limit | AES302 violation | AES302 |
+| 3  | File has class/function definitions | No violation | pass |
+| 4  | File missing mandatory definitions | AES303 violation | AES303 |
+| 5  | File contains #[allow(...)] or #[expect(...)] | AES304 violation | AES304 |
+| 6  | File contains duplicate code blocks | AES305 violation | AES305 |
+| 7  | File within all thresholds | No violation | pass |
+| 8  | File in exceptions list | No violation — exception | excl |
+
 
 ## Assumptions & Constraints
 

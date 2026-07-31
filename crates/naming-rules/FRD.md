@@ -96,21 +96,20 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-
-| #  | Input                                                                                  | Expected Output                                          | Rule        |
-| ---- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------- |
-| 1  | `capabilities_user_checker.rs`                                                         | No violation (valid 3-word snake_case with layer prefix) | AES101 pass |
-| 2  | `capabilities_UserChecker.rs`                                                          | AES101 — uppercase characters violate snake_case        | AES101      |
-| 3  | `capabilities_user.rs`                                                                 | AES101 — only 2 words (min is 3)                        | AES101      |
-| 4  | `capabilities-user-checker.rs`                                                         | AES101 — hyphens instead of underscores                 | AES101      |
-| 5  | `main.rs`                                                                              | No violation (barrel/entry exception)                    | exception   |
-| 6  | `mod.rs`                                                                               | No violation (barrel/entry exception)                    | exception   |
-| 7  | `capabilities_user_checker.rs` (taxonomy layer, suffix `_checker` not in allowed list) | AES102 — suffix mismatch                                | AES102      |
-| 8  | `taxonomy_user_vo.rs` (taxonomy layer, suffix `_vo` allowed)                           | No violation                                             | AES102 pass |
-| 9  | `agent_helper.rs` (agent layer, `_helper` is forbidden)                                | AES102 — forbidden suffix                               | AES102      |
-| 10 | `custom_foo_bar.rs` (prefix `custom` not in the layer prefix list)                     | AES000 — unknown prefix                                 | AES000      |
-| 11 | `capabilities_user_checker.rs` (min_words configured to 5)                             | AES101 — only 3 words, need 5                           | AES101      |
-| 12 | `root_container.rs` (root layer, suffix `_container` allowed)                          | No violation                                             | AES102 pass |
+| #  | Input Scenario                                                                    | Expected Output            | Rule   |
+| -- | --------------------------------------------------------------------------------- | -------------------------- | ------ |
+| 1  | Valid snake_case file, 3+ words, recognized layer prefix                          | No violation               | AES101 |
+| 2  | File with uppercase characters in stem                                           | AES101 — invalid snake_case | AES101 |
+| 3  | File with only 2 words (below minimum)                                           | AES101 — too few words     | AES101 |
+| 4  | File with hyphens instead of underscores                                         | AES101 — invalid separator | AES101 |
+| 5  | Barrel file (mod.rs, __init__.py, index.ts)                                      | No violation — exception   | excl   |
+| 6  | File with valid prefix but suffix not in layer allow-list                        | AES102 — suffix mismatch   | AES102 |
+| 7  | File with valid prefix and allowed suffix for that layer                          | No violation               | AES102 |
+| 8  | File with forbidden suffix for its layer (e.g. _helper on agent)                  | AES102 — forbidden suffix  | AES102 |
+| 9  | File with unrecognized prefix (not in layer definition)                           | AES000 — unknown prefix    | AES102 |
+| 10 | Valid file but min_words config set higher than word count                        | AES101 — below configured min | AES101 |
+| 11 | File with root layer and allowed root suffix                                      | No violation               | AES102 |
+| 12 | File in exception list for its layer                                              | No violation — exception   | excl   |
 
 ## Assumptions & Constraints
 
