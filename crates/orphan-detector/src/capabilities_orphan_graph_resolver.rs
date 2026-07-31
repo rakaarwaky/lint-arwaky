@@ -2,12 +2,12 @@
 // AST-based: uses parser dispatch for all import/mod/trait resolution.
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
-use crate::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::utility_orphan_graph_resolver;
-use crate::utility_orphan_parser_dispatch;
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
+use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
+use shared::orphan_detector::utility_orphan_graph_resolver;
 use shared::orphan_detector::utility_orphan_io;
+use shared::orphan_detector::utility_orphan_parser_dispatch;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
@@ -404,7 +404,7 @@ impl OrphanGraphResolver {
     fn resolve_rust_import(
         &self,
         current_file: &str,
-        imp: &crate::taxonomy_orphan_parse_result_vo::AstImportVO,
+        imp: &AstImportVO,
         module_to_file: &HashMap<String, Vec<String>>,
         workspace_modules: &HashSet<String>,
         crate_module_index: &HashMap<String, HashMap<String, String>>,
@@ -570,7 +570,7 @@ impl OrphanGraphResolver {
     fn resolve_python_import(
         &self,
         current_file: &str,
-        imp: &crate::taxonomy_orphan_parse_result_vo::AstImportVO,
+        imp: &AstImportVO,
         module_to_file: &HashMap<String, Vec<String>>,
         root_path: &std::path::Path,
         workspace_root: &str,
@@ -711,7 +711,7 @@ impl OrphanGraphResolver {
     fn resolve_ts_import(
         &self,
         current_file: &str,
-        imp: &crate::taxonomy_orphan_parse_result_vo::AstImportVO,
+        imp: &AstImportVO,
         module_to_file: &HashMap<String, Vec<String>>,
         root_path: &std::path::Path,
         import_graph: &mut HashMap<String, Vec<String>>,

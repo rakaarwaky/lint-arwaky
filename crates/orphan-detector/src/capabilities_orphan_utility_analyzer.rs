@@ -1,11 +1,11 @@
 // PURPOSE: UtilityOrphanAnalyzer — IUtilityOrphanProtocol for orphan utility detection.
 // AST-based: uses inbound_links from AST graph + parser dispatch for import checking.
 
-use crate::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::utility_orphan_parser_dispatch;
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, Severity};
+use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use shared::orphan_detector::utility_orphan_parser_dispatch;
 use shared::orphan_detector::{AesOrphanViolation, IUtilityOrphanProtocol};
 
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "root"];

@@ -670,3 +670,16 @@ pub fn extract_symbol_names(line: &str) -> Vec<String> {
 
     names
 }
+
+/// Check if a symbol is a Python `__future__` import.
+/// These affect parsing behavior, not runtime usage, and should be skipped
+/// by both unused-import and dummy-import checkers.
+pub fn is_future_import(content: &str, symbol: &str) -> bool {
+    content.lines().any(|line| {
+        let trimmed = line.trim();
+        trimmed.starts_with("from __future__ import ")
+            && (trimmed == format!("from __future__ import {}", symbol)
+                || trimmed.contains(format!(", {}", symbol).as_str())
+                || trimmed.contains(format!(" {},", symbol).as_str()))
+    })
+}

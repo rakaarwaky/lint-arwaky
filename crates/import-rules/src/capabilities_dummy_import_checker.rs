@@ -384,18 +384,11 @@ impl DummyImportChecker {
     fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
-        let mk = |c: &[char]| c.iter().collect::<String>();
         let logic_patterns = [
-            mk(&['l', 'i', 'n', 't', '_', 'p', 'a', 't', 'h', '(']),
-            mk(&[
-                'c', 'o', 'm', 'p', 'u', 't', 'e', '_', 's', 'c', 'o', 'r', 'e', '(',
-            ]),
-            mk(&[
-                'h', 'a', 's', '_', 'c', 'r', 'i', 't', 'i', 'c', 'a', 'l', '(',
-            ]),
-            mk(&[
-                'w', 'a', 'l', 'k', '_', 'r', 's', '_', 'f', 'i', 'l', 'e', 's', '(',
-            ]),
+            "lint_path(",
+            "compute_score(",
+            "has_critical(",
+            "walk_rs_files(",
         ];
 
         for (i, line) in lines.iter().enumerate() {
@@ -430,14 +423,8 @@ impl DummyImportChecker {
 }
 
 /// Check if any line matches `from __future__ import ...symbol...`.
-/// These are special Python constructs that affect parsing behavior and should not be
-/// flagged as dummy imports — they have no runtime symbol usage.
+/// Delegated to shared utility_import_resolver::is_future_import.
 fn is_future_import(lines: &[&str], symbol: &str) -> bool {
-    lines.iter().any(|line| {
-        let trimmed = line.trim();
-        trimmed.starts_with("from __future__ import ")
-            && (trimmed == format!("from __future__ import {}", symbol)
-                || trimmed.contains(format!(", {}", symbol).as_str())
-                || trimmed.contains(format!(" {},", symbol).as_str()))
-    })
+    let content = lines.join("\n");
+    utility_import_resolver::is_future_import(&content, symbol)
 }
