@@ -25,7 +25,7 @@ The filesystem crate centralizes all file I/O, AST parsing, and dependency graph
 
 ### FR-001: Capabilties File Discovery (ignore-based walk)
 
-- **Description**: Walk project directory tree using `ignore` crate (gitignore-aware, parallel walk). Produces a flat list of source files filtered by extension.
+- **Description**: Walk project directory tree (crates,packages,modules)using `ignore` crate (gitignore-aware, parallel walk). Produces a flat list of source files filtered by extension.
 - **Input**: Root path, ignored paths, allowed extensions
 - **Output**: `Vec<FileEntry>` — path, extension, size, last modified
 - **Business Rules**:
