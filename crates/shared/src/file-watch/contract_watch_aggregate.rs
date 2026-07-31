@@ -1,8 +1,8 @@
 // PURPOSE: IWatchAggregate — contract trait for watch operations used by surfaces
 use crate::common::taxonomy_common_error::ExitCode;
 use crate::file_watch::taxonomy_watch_config_vo::WatchConfig;
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 /// Aggregate that runs the file-watch loop.
 ///

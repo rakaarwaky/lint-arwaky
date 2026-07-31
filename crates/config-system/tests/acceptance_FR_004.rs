@@ -46,9 +46,11 @@ async fn us4_each_member_gets_own_config() {
 async fn us4_empty_workspace_returns_empty() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(ConfigContainer::new()
-        .orchestrator()
-        .discover_workspaces(&fp)
-        .await
-        .is_empty());
+    assert!(
+        ConfigContainer::new()
+            .orchestrator()
+            .discover_workspaces(&fp)
+            .await
+            .is_empty()
+    );
 }

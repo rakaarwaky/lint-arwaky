@@ -109,7 +109,10 @@ impl fmt::Display for AesImportViolation {
                     } else if src.starts_with("surfaces") {
                         "Surfaces are external I/O boundaries and must never bypass contract aggregates to depend on capabilities, agent internals, or utility.".to_string()
                     } else {
-                        format!("Layer '{}' must not depend on '{}' to maintain architectural boundaries.", source_layer, forbidden_layer)
+                        format!(
+                            "Layer '{}' must not depend on '{}' to maintain architectural boundaries.",
+                            source_layer, forbidden_layer
+                        )
                     }
                 };
                 let supplement = match reason.as_ref() {
@@ -157,16 +160,25 @@ impl fmt::Display for AesImportViolation {
                             src, required
                         )
                     } else if src.starts_with("contract") {
-                        format!("Layer '{}' must import '{}' to satisfy interface composition requirements.", src, required)
+                        format!(
+                            "Layer '{}' must import '{}' to satisfy interface composition requirements.",
+                            src, required
+                        )
                     } else if src.starts_with("agent") {
                         format!(
                             "Layer '{}' must import '{}' to wire all required dependencies.",
                             src, required
                         )
                     } else if src.starts_with("surfaces") {
-                        format!("Layer '{}' must import '{}' to properly delegate to the aggregate layer.", src, required)
+                        format!(
+                            "Layer '{}' must import '{}' to properly delegate to the aggregate layer.",
+                            src, required
+                        )
                     } else {
-                        format!("Layer '{}' must import '{}' to satisfy architectural contract requirements.", src, required)
+                        format!(
+                            "Layer '{}' must import '{}' to satisfy architectural contract requirements.",
+                            src, required
+                        )
                     }
                 };
                 let supplement = match reason.as_ref() {
@@ -225,9 +237,13 @@ impl fmt::Display for AesImportViolation {
                     Some(r) => format!("\n  Context: {}", r),
                     None => String::new(),
                 };
-                write!(f, "AES203 UNUSED_IMPORT: Unused import detected.\n\
+                write!(
+                    f,
+                    "AES203 UNUSED_IMPORT: Unused import detected.\n\
                         WHY? {}{}\n\
-                        FIX: Remove the unused import statement or use the imported symbol in this file.", default_why, supplement)
+                        FIX: Remove the unused import statement or use the imported symbol in this file.",
+                    default_why, supplement
+                )
             }
         }
     }

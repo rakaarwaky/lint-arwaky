@@ -18,10 +18,10 @@ use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 
 use shared::common::{FilePath, ScanError, Severity};
 
+use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
     canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
 };
-use shared::external_lint::IExternalLintExecutorProtocol;
 
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,

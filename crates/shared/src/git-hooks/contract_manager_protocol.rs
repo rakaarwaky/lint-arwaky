@@ -6,6 +6,6 @@ use crate::git_hooks::taxonomy_hook_error::GitHookError;
 
 pub trait IHookManagerProtocol: Send + Sync {
     fn install_pre_commit(&self, executable_path: &FilePath)
-        -> Result<SuccessStatus, GitHookError>;
+    -> Result<SuccessStatus, GitHookError>;
     fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError>;
 }

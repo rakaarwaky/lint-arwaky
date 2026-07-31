@@ -37,11 +37,13 @@ async fn read_config_finds_python_yaml_in_project_root() {
     )
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_reader()
-        .read_config(&fp, ConfigLanguage::Python)
-        .await
-        .unwrap()
-        .is_some());
+    assert!(
+        make_reader()
+            .read_config(&fp, ConfigLanguage::Python)
+            .await
+            .unwrap()
+            .is_some()
+    );
 }
 
 #[tokio::test]
@@ -72,22 +74,26 @@ async fn read_config_searches_parent_directories_up_to_depth_3() {
     let nested = tmp.path().join("a").join("b");
     fs::create_dir_all(&nested).unwrap();
     let fp = FilePath::new(nested.to_string_lossy().to_string()).unwrap();
-    assert!(make_reader()
-        .read_config(&fp, ConfigLanguage::Rust)
-        .await
-        .unwrap()
-        .is_some());
+    assert!(
+        make_reader()
+            .read_config(&fp, ConfigLanguage::Rust)
+            .await
+            .unwrap()
+            .is_some()
+    );
 }
 
 #[tokio::test]
 async fn read_config_returns_none_when_no_file_found() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_reader()
-        .read_config(&fp, ConfigLanguage::Rust)
-        .await
-        .unwrap()
-        .is_none());
+    assert!(
+        make_reader()
+            .read_config(&fp, ConfigLanguage::Rust)
+            .await
+            .unwrap()
+            .is_none()
+    );
 }
 
 #[tokio::test]
@@ -108,11 +114,13 @@ async fn list_config_files_finds_all_languages() {
 async fn list_config_files_returns_empty_when_none_exist() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_reader()
-        .list_config_files(&fp)
-        .await
-        .unwrap()
-        .is_empty());
+    assert!(
+        make_reader()
+            .list_config_files(&fp)
+            .await
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[tokio::test]

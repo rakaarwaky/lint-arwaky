@@ -1,8 +1,8 @@
 // PURPOSE: Unit tests for LintArwakyMcpServer — tool registration, get_info, health_check
 
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use rmcp::handler::server::wrapper::Parameters;
 use rmcp::ServerHandler;
+use rmcp::handler::server::wrapper::Parameters;
 use shared::mcp_server::IMcpServerAggregate;
 use shared::mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 use std::sync::Arc;

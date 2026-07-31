@@ -4,8 +4,8 @@
 // and delegates to IWatchAggregate.run() which blocks until interrupted.
 //
 // The atomic `running` flag coordinates graceful shutdown on Ctrl+C.
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use shared::common::{ExitCode, FilePath};
 

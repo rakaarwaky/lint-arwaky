@@ -2,7 +2,7 @@
 // Layer: Benchmark (performance validation).
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;

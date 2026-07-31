@@ -1,7 +1,7 @@
 // PURPOSE: Benchmark tests — performance regression for MCP server operations
 // Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
 use rmcp::handler::server::wrapper::Parameters;

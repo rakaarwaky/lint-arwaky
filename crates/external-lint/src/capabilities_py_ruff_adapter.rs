@@ -22,8 +22,8 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
     LocationList,
 };
-use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
 use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
 
 use std::sync::Arc;
 

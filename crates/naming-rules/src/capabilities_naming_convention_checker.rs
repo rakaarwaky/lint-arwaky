@@ -8,10 +8,10 @@ use shared::common::{FilePath, FilePathList, Severity};
 use shared::common::utility_layer_detector;
 use shared::common::{LayerMapVO, LayerNameVO, LintMessage};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::utility_naming_checker::get_stem;
-use shared::naming_rules::utility_naming_checker::string_filename_result;
 use shared::naming_rules::INamingConventionChecker;
 use shared::naming_rules::NamingViolation;
+use shared::naming_rules::utility_naming_checker::get_stem;
+use shared::naming_rules::utility_naming_checker::string_filename_result;
 use shared::naming_rules::{
     LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
 };

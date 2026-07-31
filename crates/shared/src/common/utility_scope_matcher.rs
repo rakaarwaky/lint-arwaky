@@ -98,7 +98,7 @@ pub fn extract_suffix(stem: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use crate::common::utility_scope_matcher::{
-        extract_file_stem, extract_layer_prefix, extract_suffix, file_belongs_to_scope, Identity,
+        Identity, extract_file_stem, extract_layer_prefix, extract_suffix, file_belongs_to_scope,
     };
 
     #[test]

@@ -1,9 +1,9 @@
 // PURPOSE: Stateless utility functions for code duplication analysis (AES305)
 // Extracted from capabilities_code_duplication_analyzer.rs — pure functions, no &self, no I/O
 
-use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::hash_map::DefaultHasher;
 
 use std::path::PathBuf;
 

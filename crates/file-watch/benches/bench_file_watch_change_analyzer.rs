@@ -2,7 +2,7 @@
 // Uses criterion. Register in Cargo.toml with harness = false.
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;

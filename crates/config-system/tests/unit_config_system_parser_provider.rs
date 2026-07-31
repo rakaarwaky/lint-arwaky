@@ -50,11 +50,13 @@ fn parse_yaml_config_invalid_yaml() {
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
     let result = make_parser().parse_yaml_config(&fp);
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .message
-        .value
-        .contains("Failed to deserialize YAML"));
+    assert!(
+        result
+            .unwrap_err()
+            .message
+            .value
+            .contains("Failed to deserialize YAML")
+    );
 }
 
 #[test]
@@ -124,11 +126,13 @@ fn parse_toml_config_invalid_toml() {
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
     let result = make_parser().parse_toml_config(&fp);
     assert!(result.is_err());
-    assert!(result
-        .unwrap_err()
-        .message
-        .value
-        .contains("Failed to parse TOML"));
+    assert!(
+        result
+            .unwrap_err()
+            .message
+            .value
+            .contains("Failed to parse TOML")
+    );
 }
 
 #[test]

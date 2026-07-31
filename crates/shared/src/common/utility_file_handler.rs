@@ -204,7 +204,7 @@ fn walk_source_files_inner(
 
             // At root level: only descend into workspace dirs (crates/packages/modules)
             if dir == root {
-                if let Some(ref restrict) = workspace_restrict {
+                if let Some(restrict) = workspace_restrict {
                     if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
                         if path.is_dir() && !restrict.contains(name) {
                             continue;
@@ -292,7 +292,7 @@ fn walk_rs_files_inner(
 
             // At root level: only descend into workspace dirs (crates/packages/modules)
             if dir == root {
-                if let Some(ref restrict) = workspace_restrict {
+                if let Some(restrict) = workspace_restrict {
                     if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
                         if p.is_dir() && !restrict.contains(name) {
                             continue;

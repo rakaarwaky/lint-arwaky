@@ -39,9 +39,11 @@ fn container_default_creates_valid_analyzer() {
     ]);
     let entries = analyzer.identify_orphan_entry_points(&files);
     assert!(entries.values.contains(&"src/main.rs".to_string()));
-    assert!(entries
-        .values
-        .contains(&"src/root_app_container.rs".to_string()));
+    assert!(
+        entries
+            .values
+            .contains(&"src/root_app_container.rs".to_string())
+    );
 }
 
 // ─── Graph context through container ──────────────────────
@@ -53,10 +55,11 @@ fn container_build_graph_context_returns_valid_structure() {
     let files = OrphanFileListVO::new(vec!["crates/orphan-detector/src/lib.rs".to_string()]);
     let root = FilePath::new("/tmp/project".to_string()).unwrap();
     let ctx = analyzer.build_orphan_graph_context(&files, &root);
-    assert!(ctx
-        .import_graph
-        .mapping
-        .contains_key("crates/orphan-detector/src/lib.rs"));
+    assert!(
+        ctx.import_graph
+            .mapping
+            .contains_key("crates/orphan-detector/src/lib.rs")
+    );
 }
 
 // ─── Multiple analyzer calls are independent ──────────────

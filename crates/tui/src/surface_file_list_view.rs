@@ -5,11 +5,11 @@
 //   - Directory names in blue bold
 //   - Selected item highlighted with dark gray background
 //   - Focus indicator on the panel border (cyan when focused, gray when not)
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
-use ratatui::Frame;
 use shared::tui::AesLayer;
 use shared::tui::{AppState, PanelFocus};
 

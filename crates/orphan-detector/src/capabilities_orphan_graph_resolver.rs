@@ -3,12 +3,12 @@
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
+use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_graph_resolver;
 use shared::orphan_detector::utility_orphan_io;
-use shared::orphan_detector::IOrphanGraphResolverProtocol;
-use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

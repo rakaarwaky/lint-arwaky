@@ -1,7 +1,7 @@
 // PURPOSE: Unit tests for CodeAnalysisOrchestrator — agent layer orchestration,
 // score calculation, critical check, report formatting.
 
-use code_analysis_lint_arwaky::{has_critical, CodeAnalysisContainer};
+use code_analysis_lint_arwaky::{CodeAnalysisContainer, has_critical};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{FilePath, Severity};

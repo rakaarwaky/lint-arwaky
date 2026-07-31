@@ -26,10 +26,12 @@ async fn load_project_config_uses_defaults_when_no_file() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_orchestrator().load_project_config(&fp).await;
     assert!(!result.warnings.is_empty());
-    assert!(result
-        .warnings
-        .iter()
-        .any(|w| w.contains("No config file found")));
+    assert!(
+        result
+            .warnings
+            .iter()
+            .any(|w| w.contains("No config file found"))
+    );
     assert_eq!(result.source.language, "rust");
 }
 
@@ -45,11 +47,13 @@ async fn load_project_config_reads_existing_yaml() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_orchestrator().load_project_config(&fp).await;
     assert_eq!(result.source.language, "rust");
-    assert!(result
-        .source
-        .path
-        .value
-        .contains("lint_arwaky.config.rust.yaml"));
+    assert!(
+        result
+            .source
+            .path
+            .value
+            .contains("lint_arwaky.config.rust.yaml")
+    );
 }
 
 #[tokio::test]
@@ -79,10 +83,12 @@ async fn load_config_for_language_injects_defaults_when_no_layers() {
     let result = make_orchestrator()
         .load_config_for_language(&fp, ConfigLanguage::Rust)
         .await;
-    assert!(result
-        .warnings
-        .iter()
-        .any(|w| w.contains("no architecture layers")));
+    assert!(
+        result
+            .warnings
+            .iter()
+            .any(|w| w.contains("no architecture layers"))
+    );
 }
 
 #[test]
@@ -133,10 +139,12 @@ async fn discover_workspaces_returns_members() {
 async fn discover_workspaces_returns_empty_for_non_workspace() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_orchestrator()
-        .discover_workspaces(&fp)
-        .await
-        .is_empty());
+    assert!(
+        make_orchestrator()
+            .discover_workspaces(&fp)
+            .await
+            .is_empty()
+    );
 }
 
 #[tokio::test]

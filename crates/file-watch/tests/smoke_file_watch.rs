@@ -1,8 +1,8 @@
 // PURPOSE: Smoke test — verify the file-watch crate boots and core types are functional.
 // Must complete in < 5 seconds.
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;

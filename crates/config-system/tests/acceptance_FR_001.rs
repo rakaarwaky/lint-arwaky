@@ -18,15 +18,19 @@ async fn us1_config_in_project_root_is_found() {
         .orchestrator()
         .load_project_config(&fp)
         .await;
-    assert!(result
-        .source
-        .path
-        .value
-        .contains("lint_arwaky.config.rust.yaml"));
-    assert!(!result
-        .warnings
-        .iter()
-        .any(|w| w.contains("No config file found")));
+    assert!(
+        result
+            .source
+            .path
+            .value
+            .contains("lint_arwaky.config.rust.yaml")
+    );
+    assert!(
+        !result
+            .warnings
+            .iter()
+            .any(|w| w.contains("No config file found"))
+    );
 }
 
 #[tokio::test]
@@ -44,11 +48,13 @@ async fn us1_config_in_parent_directory_is_found() {
         .orchestrator()
         .load_config_for_language(&fp, ConfigLanguage::Rust)
         .await;
-    assert!(result
-        .source
-        .path
-        .value
-        .contains("lint_arwaky.config.rust.yaml"));
+    assert!(
+        result
+            .source
+            .path
+            .value
+            .contains("lint_arwaky.config.rust.yaml")
+    );
 }
 
 use shared::config_system::ConfigLanguage;

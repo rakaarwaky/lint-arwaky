@@ -1,8 +1,8 @@
 // PURPOSE: FRD Requirement — Automatic re-trigger of linting pipeline on detected changes.
 // "Automatic re-trigger of the linting pipeline on detected changes."
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 
 use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;

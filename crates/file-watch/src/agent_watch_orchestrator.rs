@@ -12,8 +12,8 @@
 //
 // The event loop uses tokio::select! for cancellability — the sleep branch
 // allows checking the running flag every 100ms without blocking on recv().
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{ExitCode, FilePath};

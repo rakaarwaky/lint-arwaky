@@ -3,8 +3,8 @@
 // Provides a static method to check if help is active (is_active)
 // and a placeholder render_hint for future inline help hints.
 // The actual help content is rendered by PreviewView in HelpOverlay mode.
-use ratatui::layout::Rect;
 use ratatui::Frame;
+use ratatui::layout::Rect;
 use shared::tui::AppState;
 
 pub struct HelpScreen;

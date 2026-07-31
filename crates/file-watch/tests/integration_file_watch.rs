@@ -105,9 +105,11 @@ fn analyzer_dedup_then_filter_pipeline() {
     // Step 2: filter lintable
     let lintable = analyzer.filter_lintable(deduped);
     assert_eq!(lintable.len(), 2); // main.rs, lib.rs
-    assert!(lintable
-        .iter()
-        .all(|e| ChangeAnalyzer::is_lintable(&e.path)));
+    assert!(
+        lintable
+            .iter()
+            .all(|e| ChangeAnalyzer::is_lintable(&e.path))
+    );
 }
 
 // ─── Provider subscribe receives broadcast ──────────────────

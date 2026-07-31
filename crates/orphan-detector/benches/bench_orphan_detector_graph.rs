@@ -4,7 +4,7 @@
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement,
 //                 input scaling analysis, algorithmic comparison
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use orphan_detector_lint_arwaky::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use orphan_detector_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::code_analysis::taxonomy_analysis_vo::ImportGraph;

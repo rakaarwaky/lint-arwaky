@@ -8,8 +8,8 @@ use tui_lint_arwaky::agent_tui_orchestrator::TuiOrchestrator;
 use tui_lint_arwaky::capabilities_action_handler::ActionHandler;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
-fn linter(
-) -> Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate> {
+fn linter()
+-> Arc<dyn shared::code_analysis::contract_code_analysis_aggregate::ICodeAnalysisAggregate> {
     code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
         .code_analysis_linter()
 }

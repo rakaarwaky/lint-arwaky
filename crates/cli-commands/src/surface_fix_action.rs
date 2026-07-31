@@ -64,7 +64,10 @@ impl FixCommandsSurface {
             println!("Applying safe fixes to {}...", project_path.value);
         }
 
-        println!("Found {} violations before fix (AES301-305 only; other rules not included in count — #107 P1 #15)", results.len());
+        println!(
+            "Found {} violations before fix (AES301-305 only; other rules not included in count — #107 P1 #15)",
+            results.len()
+        );
 
         let fix_orch = (self.fix_orchestrator_factory)(dry_run);
         let fix_result = fix_orch.execute(&project_path);

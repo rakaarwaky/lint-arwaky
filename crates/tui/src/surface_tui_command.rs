@@ -7,15 +7,15 @@ use crate::surface_tree_view::TreeView;
 use crossterm::event;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, size as terminal_size, EnterAlternateScreen,
-    LeaveAlternateScreen,
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    size as terminal_size,
 };
+use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use ratatui::Terminal;
 use shared::tui::{AppState, ITuiAggregate, ScanUpdate, TuiEvent};
 
 use std::io::stdout;

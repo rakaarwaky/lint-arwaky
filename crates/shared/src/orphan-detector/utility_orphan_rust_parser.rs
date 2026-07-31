@@ -16,7 +16,7 @@ pub fn parse_rust(content: &str) -> RustParseResultVO {
             return RustParseResultVO {
                 parse_ok: false,
                 ..Default::default()
-            }
+            };
         }
     };
     let mut result = RustParseResultVO {

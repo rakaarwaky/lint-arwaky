@@ -15,9 +15,9 @@
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
 
 use shared::cli_commands::LintResult;
+use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::utility_language_detector::detect_language_info_from_source;
-use shared::common::Severity;
 use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
 
 use shared::common::SourceContentVO;

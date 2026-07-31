@@ -1,7 +1,8 @@
 use code_analysis_lint_arwaky::{
-    capabilities_check_bypass_checker::BypassChecker, capabilities_line_checker::ArchLineChecker,
+    CodeAnalysisOrchestrator, capabilities_check_bypass_checker::BypassChecker,
+    capabilities_line_checker::ArchLineChecker,
     capabilities_mandatory_definition_checker::MandatoryDefinitionChecker,
-    root_code_analysis_container::CodeAnalysisContainer, CodeAnalysisOrchestrator,
+    root_code_analysis_container::CodeAnalysisContainer,
 };
 use shared::code_analysis::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, IDeadInheritanceProtocol, ILineCheckerProtocol,

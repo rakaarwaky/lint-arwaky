@@ -5,7 +5,7 @@
 use code_analysis_lint_arwaky::{
     ArchLineChecker, BypassChecker, CodeDuplicationAnalyzer, MandatoryDefinitionChecker,
 };
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shared::code_analysis::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 use shared::code_analysis::contract_class_protocol::IMandatoryClassProtocol;
 use shared::code_analysis::contract_line_protocol::ILineCheckerProtocol;

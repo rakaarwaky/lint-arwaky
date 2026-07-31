@@ -25,14 +25,15 @@ fn build_graph_context_empty_files_returns_empty_graph() {
 fn build_graph_context_single_file_no_imports() {
     let r = resolver();
     let files = vec![OrphanFileListVO::new(vec![
-        "/tmp/project/src/lib.rs".to_string()
+        "/tmp/project/src/lib.rs".to_string(),
     ])];
     let ctx = r.build_graph_context(&files, "/tmp/project");
     // lib.rs should appear in the graph even with no imports
-    assert!(ctx
-        .import_graph
-        .mapping
-        .contains_key("/tmp/project/src/lib.rs"));
+    assert!(
+        ctx.import_graph
+            .mapping
+            .contains_key("/tmp/project/src/lib.rs")
+    );
 }
 
 // ─── identify_entry_points ────────────────────────────────
@@ -48,19 +49,27 @@ fn identify_entry_points_no_configured_patterns_uses_defaults() {
     ])];
     let result = r.identify_entry_points(&files, &[]);
     // main.rs, lib.rs, and *_container.rs should be entry points
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/main.rs".to_string()));
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/lib.rs".to_string()));
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/root_app_container.rs".to_string()));
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/main.rs".to_string())
+    );
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/lib.rs".to_string())
+    );
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/root_app_container.rs".to_string())
+    );
     // capabilities file should NOT be an entry point
-    assert!(!result
-        .values
-        .contains(&"/tmp/project/src/capabilities_foo_analyzer.rs".to_string()));
+    assert!(
+        !result
+            .values
+            .contains(&"/tmp/project/src/capabilities_foo_analyzer.rs".to_string())
+    );
 }
 
 #[test]
@@ -72,15 +81,19 @@ fn identify_entry_points_with_configured_patterns() {
         "/tmp/project/src/other.rs".to_string(),
     ])];
     let configured = vec![OrphanEntryPatternListVO::new(vec![
-        "custom_entry.rs".to_string()
+        "custom_entry.rs".to_string(),
     ])];
     let result = r.identify_entry_points(&files, &configured);
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/custom_entry.rs".to_string()));
-    assert!(!result
-        .values
-        .contains(&"/tmp/project/src/other.rs".to_string()));
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/custom_entry.rs".to_string())
+    );
+    assert!(
+        !result
+            .values
+            .contains(&"/tmp/project/src/other.rs".to_string())
+    );
 }
 
 #[test]
@@ -98,9 +111,11 @@ fn identify_entry_points_root_prefix_matched() {
         "/tmp/project/src/root_orphan_detector_container.rs".to_string(),
     ])];
     let result = r.identify_entry_points(&files, &[]);
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/root_orphan_detector_container.rs".to_string()));
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/root_orphan_detector_container.rs".to_string())
+    );
 }
 
 #[test]
@@ -111,12 +126,16 @@ fn identify_entry_points_index_files_matched() {
         "/tmp/project/src/index.js".to_string(),
     ])];
     let result = r.identify_entry_points(&files, &[]);
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/index.ts".to_string()));
-    assert!(result
-        .values
-        .contains(&"/tmp/project/src/index.js".to_string()));
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/index.ts".to_string())
+    );
+    assert!(
+        result
+            .values
+            .contains(&"/tmp/project/src/index.js".to_string())
+    );
 }
 
 // ─── Default trait ────────────────────────────────────────

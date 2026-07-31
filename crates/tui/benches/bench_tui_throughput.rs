@@ -2,7 +2,7 @@
 // Layer: Benchmark (performance validation).
 // Best practices: significance_level(0.05), sample_size(30+), avoid instantiation inside iter
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use shared::tui::taxonomy_state_vo::AppState;
 use shared::tui::taxonomy_tui_event::TuiEvent;
 use std::sync::Arc;

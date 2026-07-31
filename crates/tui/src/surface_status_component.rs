@@ -2,11 +2,11 @@
 //
 // Displays current status message, selected file name, and violation count.
 // Violation count is colored red when > 0, green when 0.
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use ratatui::Frame;
 use shared::tui::AppState;
 
 pub struct StatusComponent;

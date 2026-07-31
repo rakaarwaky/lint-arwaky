@@ -22,9 +22,11 @@ fn redact_aws_access_key_id() {
 fn redact_long_base64_string() {
     let secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop"; // 52 chars, all base64
     assert!(secret.len() >= 40);
-    assert!(secret
-        .chars()
-        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '=')));
+    assert!(
+        secret
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '='))
+    );
     // After redaction, the secret should be replaced with [REDACTED]
     let input = format!("token: {}", secret);
     let output = input.replacen(secret, "[REDACTED]", 1);
@@ -64,7 +66,9 @@ fn no_redaction_for_non_base64_long_string() {
     // But this path has no uppercase — let's use a truly non-base64 string
     let non_base64 = "this-has-dashes-and_underscores!and@special#chars";
     assert!(non_base64.len() >= 40);
-    assert!(!non_base64
-        .chars()
-        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '=')));
+    assert!(
+        !non_base64
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '/' | '+' | '='))
+    );
 }

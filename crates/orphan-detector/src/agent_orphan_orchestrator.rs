@@ -113,8 +113,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
                 all_files.push(root_dir.value().to_string());
             }
         } // Normalize all file paths to be relative to workspace root so that
-          // inbound_links (built by the graph resolver) and orphan analyzers
-          // use a consistent path format.
+        // inbound_links (built by the graph resolver) and orphan analyzers
+        // use a consistent path format.
         let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
             .unwrap_or_else(|| root_path.to_path_buf());
         let all_files: Vec<String> = all_files

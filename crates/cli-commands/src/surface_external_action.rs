@@ -7,7 +7,7 @@ use shared::common::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 
 use crate::surface_common_action;
-use crate::surface_output_component::{output_violations, ViolationItem};
+use crate::surface_output_component::{ViolationItem, output_violations};
 
 pub fn handle_scan_external(
     path: Option<FilePath>,

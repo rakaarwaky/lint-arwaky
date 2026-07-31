@@ -19,10 +19,10 @@ use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 
 use shared::common::{FilePath, Severity};
 
+use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::utility_external_lint::{
     default_working_dir, has_python_files, noop_apply_fix,
 };
-use shared::external_lint::IExternalLintExecutorProtocol;
 
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,

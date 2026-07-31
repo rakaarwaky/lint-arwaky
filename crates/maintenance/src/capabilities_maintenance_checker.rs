@@ -16,9 +16,9 @@ use shared::common::{Count, Score};
 //   7. doctor: check tool installations and config presence.
 
 use shared::common::utility_command_runner as proc_io;
-use shared::maintenance::utility_dependency_io as dep_io;
 use shared::maintenance::IMaintenanceCheckerProtocol;
 use shared::maintenance::MaintenanceStatsVO;
+use shared::maintenance::utility_dependency_io as dep_io;
 use shared::maintenance::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,

@@ -1,7 +1,7 @@
 [package]
 name = "maintenance-lint-arwaky"
 version = "1.11.0"
-edition = "2021"
+edition = "2024"
 description = "Maintenance operations: dep updates, audit sweeps, drift detection, and rule-codebook refreshes for the AES catalog."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"

@@ -1,5 +1,5 @@
 use crate::surface_common_action;
-use crate::surface_output_component::{output_violations, ViolationItem};
+use crate::surface_output_component::{ViolationItem, output_violations};
 use crate::utility_path_resolver::is_member_path;
 use shared::cli_commands::Format;
 use shared::common::{ExitCode, FilePath};
@@ -140,7 +140,7 @@ pub fn handle_scan_orphan(
     };
 
     // Apply filter by AES rule code
-    if let Some(ref filter_str) = filter {
+    if let Some(filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
         all_violations.retain(|v| v.code.code().contains(&filter_upper));
     }
@@ -182,7 +182,7 @@ fn scan_single_root(
         .map(ViolationItem::from_lint_result)
         .collect();
 
-    if let Some(ref filter_str) = filter {
+    if let Some(filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }

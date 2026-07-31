@@ -7,7 +7,7 @@ use shared::common::FilePath;
 use shared::common::LayerMapVO;
 use shared::config_system::IConfigOrchestratorAggregate;
 
-use crate::surface_output_component::{output_violations, ViolationItem};
+use crate::surface_output_component::{ViolationItem, output_violations};
 
 pub fn handle_scan_quality(
     path: Option<FilePath>,

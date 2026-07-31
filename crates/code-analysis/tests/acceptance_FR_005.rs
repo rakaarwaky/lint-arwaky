@@ -36,8 +36,14 @@ fn fr_005_duplicate_code_detected() {
 fn fr_005_min_duplicate_lines_respected() {
     // Only 3 shared lines with min_dup_lines=5 → no violation
     let entries = make_entries(vec![
-        ("file_a.rs", "fn a() {}\nfn b() {}\nfn c() {}\nfn unique_a() {}\nfn unique_a2() {}\nfn unique_a3() {}\nfn unique_a4() {}\nfn unique_a5() {}"),
-        ("file_b.rs", "fn a() {}\nfn b() {}\nfn c() {}\nfn unique_b() {}\nfn unique_b2() {}\nfn unique_b3() {}\nfn unique_b4() {}\nfn unique_b5() {}"),
+        (
+            "file_a.rs",
+            "fn a() {}\nfn b() {}\nfn c() {}\nfn unique_a() {}\nfn unique_a2() {}\nfn unique_a3() {}\nfn unique_a4() {}\nfn unique_a5() {}",
+        ),
+        (
+            "file_b.rs",
+            "fn a() {}\nfn b() {}\nfn c() {}\nfn unique_b() {}\nfn unique_b2() {}\nfn unique_b3() {}\nfn unique_b4() {}\nfn unique_b5() {}",
+        ),
     ]);
 
     let violations = analyzer().check_file_similarity_entries(&entries, 5, 50.0);

@@ -70,7 +70,9 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
             let target_agents = std::path::Path::new(".agents");
             match copy_dir_all(&xdg_agents, target_agents) {
                 Ok(count) => {
-                    println!("  .agents/ (prompts, rules, skills) — copied/overwritten {count} file(s) from XDG config");
+                    println!(
+                        "  .agents/ (prompts, rules, skills) — copied/overwritten {count} file(s) from XDG config"
+                    );
                 }
                 Err(e) => {
                     println!("  .agents/ — copy error: {e}");

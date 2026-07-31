@@ -35,10 +35,12 @@ fn main() {
     let _s: HashSet<i32> = HashSet::new();
 }
 "#;
-    assert!(sut()
-        .check_unused_imports("test.rs", content)
-        .unwrap()
-        .is_empty());
+    assert!(
+        sut()
+            .check_unused_imports("test.rs", content)
+            .unwrap()
+            .is_empty()
+    );
 }
 
 // ─── Unused Import Detection ──────────────────────────────
@@ -84,10 +86,12 @@ fn main() {
 
 #[test]
 fn empty_file_produces_no_violations() {
-    assert!(sut()
-        .check_unused_imports("empty.rs", "")
-        .unwrap()
-        .is_empty());
+    assert!(
+        sut()
+            .check_unused_imports("empty.rs", "")
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -97,10 +101,12 @@ fn main() {
     println!("hello world");
 }
 "#;
-    assert!(sut()
-        .check_unused_imports("no_imports.rs", content)
-        .unwrap()
-        .is_empty());
+    assert!(
+        sut()
+            .check_unused_imports("no_imports.rs", content)
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[test]

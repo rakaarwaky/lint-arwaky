@@ -7,12 +7,12 @@
 //   - HelpOverlay: keyboard shortcut reference
 //
 // Help content is embedded as a static string in help_text().
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
-use ratatui::Frame;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;

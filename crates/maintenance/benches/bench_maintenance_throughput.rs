@@ -2,7 +2,7 @@
 // Layer: Benchmark (criterion, runs at release gate / nightly).
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
     MaintenanceCommandsOrchestrator, MaintenanceDeps,
 };

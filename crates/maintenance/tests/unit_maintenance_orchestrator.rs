@@ -5,8 +5,8 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::{
     MaintenanceCommandsOrchestrator, MaintenanceDeps,
 };
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
-use shared::common::taxonomy_job_id_vo::JobId;
 use shared::common::FilePath;
+use shared::common::taxonomy_job_id_vo::JobId;
 use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggregate};
 
 use std::sync::Arc;

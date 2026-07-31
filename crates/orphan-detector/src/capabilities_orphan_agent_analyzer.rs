@@ -3,8 +3,8 @@
 
 use shared::code_analysis::OrphanIndicatorResult;
 use shared::common::{FilePath, Severity};
-use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::IOrphanParserProtocol;
+use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::{AesOrphanViolation, IAgentOrphanProtocol};
 use std::sync::Arc;
 
@@ -26,7 +26,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         let fp = f.value();
         let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
             c if c.is_empty() => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
             c => c,
         };

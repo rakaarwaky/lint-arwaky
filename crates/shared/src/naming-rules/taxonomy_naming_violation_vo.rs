@@ -43,7 +43,10 @@ impl fmt::Display for NamingViolation {
                 reason,
             } => {
                 let why = Option::unwrap_or_else(reason.as_ref().map(|r| r.to_string()), || {
-                    format!("The AES layer naming convention requires filenames to contain at least {} words separated by '{}' (e.g., prefix{}suffix). Each word must be lowercase alphanumeric. This pattern ensures every file's architectural layer (prefix) and role (suffix) is immediately identifiable — both for human readers and automated tooling.", min_words, separator, separator)
+                    format!(
+                        "The AES layer naming convention requires filenames to contain at least {} words separated by '{}' (e.g., prefix{}suffix). Each word must be lowercase alphanumeric. This pattern ensures every file's architectural layer (prefix) and role (suffix) is immediately identifiable — both for human readers and automated tooling.",
+                        min_words, separator, separator
+                    )
                 });
                 write!(
                     f,

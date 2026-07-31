@@ -43,8 +43,10 @@ fn merge_global_rule() {
     };
     let config = make_config(layers, vec![rule]);
     let (merged, _) = merge_config(&config);
-    assert!(merged[&LayerNameVO::new("agent")]
-        .forbidden
-        .values
-        .contains(&"capabilities".to_string()));
+    assert!(
+        merged[&LayerNameVO::new("agent")]
+            .forbidden
+            .values
+            .contains(&"capabilities".to_string())
+    );
 }

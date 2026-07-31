@@ -92,9 +92,11 @@ async fn test_orchestrator_run_audit_existing_dir() {
 
     // Results should be a Vec<LintResult> (possibly empty)
     let results = result.unwrap();
-    assert!(results
-        .iter()
-        .all(|r: &LintResult| !r.file.value.is_empty()));
+    assert!(
+        results
+            .iter()
+            .all(|r: &LintResult| !r.file.value.is_empty())
+    );
 }
 
 /// Test that NamingContainer can be created with default config.

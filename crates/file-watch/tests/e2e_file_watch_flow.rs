@@ -1,8 +1,8 @@
 // PURPOSE: E2E test — full watch → detect → analyze → lint lifecycle on a real temp directory.
 // Layer: Full pipeline, no internal mocks except the linter (external boundary).
 
-use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
 use std::time::Duration;
 
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
@@ -124,9 +124,11 @@ async fn e2e_analyze_and_filter_pipeline() {
     let lintable = analyzer.filter_lintable(deduped);
     // .rs and .md are lintable; .bin is not.
     assert_eq!(lintable.len(), 2);
-    assert!(lintable
-        .iter()
-        .all(|e| ChangeAnalyzer::is_lintable(&e.path)));
+    assert!(
+        lintable
+            .iter()
+            .all(|e| ChangeAnalyzer::is_lintable(&e.path))
+    );
 }
 
 // ─── E2E: orchestrator with immediate stop ──────────────────

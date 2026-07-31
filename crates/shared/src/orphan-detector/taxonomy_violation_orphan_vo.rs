@@ -56,7 +56,11 @@ impl fmt::Display for AesOrphanViolation {
                         format!("Taxonomy file '{}' is not imported by any file.", stem)
                     }
                 };
-                write!(f, "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in {}.", stem, why, stem, target_hint)
+                write!(
+                    f,
+                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in {}.",
+                    stem, why, stem, target_hint
+                )
             }
             AesOrphanViolation::ContractOrphan {
                 suffix,
@@ -72,8 +76,14 @@ impl fmt::Display for AesOrphanViolation {
                     ),
                 };
                 let fix = match suffix.as_str() {
-                    "protocol" => format!("Implement '{}' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.", trait_name),
-                    "aggregate" => format!("Import and use '{}' in a surface_* file or root_*_container.rs.", trait_name),
+                    "protocol" => format!(
+                        "Implement '{}' in a capabilities_* file, or wire it in agent_*_orchestrator.rs if already implemented.",
+                        trait_name
+                    ),
+                    "aggregate" => format!(
+                        "Import and use '{}' in a surface_* file or root_*_container.rs.",
+                        trait_name
+                    ),
                     _ => format!("Implement '{}' in the appropriate layer.", trait_name),
                 };
                 write!(
@@ -90,7 +100,11 @@ impl fmt::Display for AesOrphanViolation {
                         stem
                     ),
                 };
-                write!(f, "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs via `use {}::...;` and wire it into the container's constructor. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem, stem)
+                write!(
+                    f,
+                    "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs via `use {}::...;` and wire it into the container's constructor. If this file is obsolete, delete it and remove its module declaration from lib.rs.",
+                    stem, why, stem, stem
+                )
             }
             AesOrphanViolation::UtilityOrphan { stem, reason } => {
                 let why = match reason.as_ref() {
@@ -100,7 +114,11 @@ impl fmt::Display for AesOrphanViolation {
                         stem
                     ),
                 };
-                write!(f, "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality. Utility files must be consumed by other layers. If this file is obsolete, delete it and remove its module declaration from lib.rs.", stem, why, stem)
+                write!(
+                    f,
+                    "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality. Utility files must be consumed by other layers. If this file is obsolete, delete it and remove its module declaration from lib.rs.",
+                    stem, why, stem
+                )
             }
             AesOrphanViolation::UtilityDeadCode {
                 stem,
@@ -117,7 +135,11 @@ impl fmt::Display for AesOrphanViolation {
                         )
                     }
                 };
-                write!(f, "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality, or delete it if unused. Utility files must be consumed by higher layers, not just other utilities.", stem, why, stem)
+                write!(
+                    f,
+                    "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? {}\nFIX: Import '{}' in a capabilities_* file that needs its functionality, or delete it if unused. Utility files must be consumed by higher layers, not just other utilities.",
+                    stem, why, stem
+                )
             }
             AesOrphanViolation::AgentOrphan { agg_name, reason } => {
                 let why = match reason.as_ref() {
@@ -127,7 +149,11 @@ impl fmt::Display for AesOrphanViolation {
                         agg_name
                     ),
                 };
-                write!(f, "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs via `Arc<dyn {}>`. If the orchestrator is unused, delete it and remove its module declaration.", agg_name, why, agg_name, agg_name)
+                write!(
+                    f,
+                    "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs via `Arc<dyn {}>`. If the orchestrator is unused, delete it and remove its module declaration.",
+                    agg_name, why, agg_name, agg_name
+                )
             }
             AesOrphanViolation::SurfaceOrphan {
                 category,

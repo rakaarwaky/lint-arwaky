@@ -4,15 +4,15 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::Language as DetLang;
 use shared::common::{FilePath, Severity};
 
+use shared::common::AdapterName;
 use shared::common::utility_language_detector::{
     detect_language_info, detect_language_info_from_source,
 };
-use shared::common::AdapterName;
 use shared::common::{ColumnNumber, LineNumber};
 use shared::common::{ErrorCode, LayerDefinition, LintMessage, LocationList, SourceContentVO};
-use shared::role_rules::layer_surfaces;
 use shared::role_rules::AesRoleViolation;
 use shared::role_rules::ISurfaceRoleChecker;
+use shared::role_rules::layer_surfaces;
 
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
 //

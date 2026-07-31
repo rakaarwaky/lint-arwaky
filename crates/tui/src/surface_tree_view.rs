@@ -5,11 +5,11 @@
 // by depth, with the current (leaf) component highlighted in cyan.
 //
 // Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
+use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem};
-use ratatui::Frame;
 use shared::tui::{AppState, PanelFocus};
 use std::path::Path;
 

@@ -2,8 +2,8 @@
 
 use mcp_server_lint_arwaky::root_mcp_container::McpContainer;
 use mcp_server_lint_arwaky::surface_mcp_command::LintArwakyMcpServer;
-use rmcp::handler::server::wrapper::Parameters;
 use rmcp::ServerHandler;
+use rmcp::handler::server::wrapper::Parameters;
 use shared::mcp_server::{ExecuteCommandArgs, ListCommandsArgs};
 use std::sync::Arc;
 

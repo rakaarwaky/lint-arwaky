@@ -2,7 +2,7 @@
 // Requirement: Check 1000 files in < 2 seconds (FRD non-functional requirement).
 // Best practices: significance_level(0.05), sample_size(30+), throughput, scaling
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;

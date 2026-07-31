@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
-use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
+use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
 use shared::common::{BooleanVO, LintMessage};
 
 use shared::file_watch::{IWatchProviderProtocol, WatchConfig, WatchServiceError};

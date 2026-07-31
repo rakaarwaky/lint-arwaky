@@ -251,11 +251,7 @@ fn load_ignored_paths_from_config(
             .iter()
             .map(|fp| fp.value.clone())
             .collect();
-        if paths.is_empty() {
-            None
-        } else {
-            Some(paths)
-        }
+        if paths.is_empty() { None } else { Some(paths) }
     })
     .unwrap_or_default()
 }

@@ -9,7 +9,7 @@ use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::report_formatter::IReportFormatterAggregate;
 
-use crate::surface_output_component::{output_violations, ViolationItem};
+use crate::surface_output_component::{ViolationItem, output_violations};
 
 pub struct ScanOptions {
     pub path: Option<FilePath>,

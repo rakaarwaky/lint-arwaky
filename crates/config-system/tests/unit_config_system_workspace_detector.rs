@@ -166,10 +166,12 @@ async fn discover_members_under_modules_dir() {
 async fn discover_members_returns_empty_when_no_workspace_dirs() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_detector()
-        .discover_workspace_members(&fp)
-        .await
-        .is_empty());
+    assert!(
+        make_detector()
+            .discover_workspace_members(&fp)
+            .await
+            .is_empty()
+    );
 }
 
 #[tokio::test]

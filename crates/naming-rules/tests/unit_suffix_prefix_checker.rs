@@ -6,8 +6,8 @@ use shared::common::{FilePath, FilePathList, LayerDefinition, Severity};
 
 use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
-use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use shared::naming_rules::ISuffixPrefixChecker;
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use shared::naming_rules::{ADAPTER_NAME, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Unit Tests: Happy Path — Allowed Suffixes ──────────────────────

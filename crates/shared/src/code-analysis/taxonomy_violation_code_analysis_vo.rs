@@ -147,19 +147,29 @@ impl fmt::Display for AesCodeAnalysisViolation {
                 let wrap = "wrap";
                 let ex = "ex";
                 let pect = "pect";
-                let default_why = format!("Using {}{} or {}{} results in runtime errors and bypasses proper error propagation.", un, wrap, ex, pect);
+                let default_why = format!(
+                    "Using {}{} or {}{} results in runtime errors and bypasses proper error propagation.",
+                    un, wrap, ex, pect
+                );
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
-                write!(f, "AES304 UNWRAP_EXPECT: Forbidden {}{} or {}{} call detected.\n\
+                write!(
+                    f,
+                    "AES304 UNWRAP_EXPECT: Forbidden {}{} or {}{} call detected.\n\
                         WHY? {}\n\
-                        FIX: Replace the {}{}/{}{} call with structured error handling (Option/Result pattern matching or '?').", un, wrap, ex, pect, why, un, wrap, ex, pect)
+                        FIX: Replace the {}{}/{}{} call with structured error handling (Option/Result pattern matching or '?').",
+                    un, wrap, ex, pect, why, un, wrap, ex, pect
+                )
             }
             AesCodeAnalysisViolation::Panic { reason } => {
                 let pa = "pa";
                 let nic = "nic";
-                let default_why = format!("Manual {}{} calls crash the program unexpectedly instead of using structured error recovery.", pa, nic);
+                let default_why = format!(
+                    "Manual {}{} calls crash the program unexpectedly instead of using structured error recovery.",
+                    pa, nic
+                );
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
@@ -175,7 +185,10 @@ impl fmt::Display for AesCodeAnalysisViolation {
             AesCodeAnalysisViolation::Todo { reason } => {
                 let t = "to";
                 let d = "do";
-                let default_why = format!("{}{}!() placeholders represent incomplete code paths that can crash at runtime if reached unexpectedly.", t, d);
+                let default_why = format!(
+                    "{}{}!() placeholders represent incomplete code paths that can crash at runtime if reached unexpectedly.",
+                    t, d
+                );
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
@@ -192,7 +205,10 @@ impl fmt::Display for AesCodeAnalysisViolation {
                 let ui = "un";
                 let mp = "implement";
                 let ed = "ed";
-                let default_why = format!("{}{}{}!() claims a code path is unreachable, but when reached it crashes — violating the principle of fail-fast with clear error messages.", ui, mp, ed);
+                let default_why = format!(
+                    "{}{}{}!() claims a code path is unreachable, but when reached it crashes — violating the principle of fail-fast with clear error messages.",
+                    ui, mp, ed
+                );
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
@@ -215,20 +231,38 @@ impl fmt::Display for AesCodeAnalysisViolation {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
-                write!(f, "AES303 MANDATORY_DEFINITION: File is missing a {}, {}, or {} definition.\n\
+                write!(
+                    f,
+                    "AES303 MANDATORY_DEFINITION: File is missing a {}, {}, or {} definition.\n\
                         WHY? {}\n\
-                        FIX: Group functions into a {} or implement a {} that defines the module interface.", lang.struct_keyword(), lang.interface_kw(), lang.type_kw(), why, lang.struct_keyword(), lang.interface_kw())
+                        FIX: Group functions into a {} or implement a {} that defines the module interface.",
+                    lang.struct_keyword(),
+                    lang.interface_kw(),
+                    lang.type_kw(),
+                    why,
+                    lang.struct_keyword(),
+                    lang.interface_kw()
+                )
             }
             AesCodeAnalysisViolation::DeadInheritance { reason } => {
                 let lang = Language::Rust;
-                let default_why = format!("Empty {} implementation blocks do not add behavior and indicate dead or incomplete code.", lang.inherits_kw());
+                let default_why = format!(
+                    "Empty {} implementation blocks do not add behavior and indicate dead or incomplete code.",
+                    lang.inherits_kw()
+                );
                 let why = match reason {
                     Some(r) => r.to_string(),
                     None => default_why,
                 };
-                write!(f, "AES305 DEAD_INHERITANCE: Empty {}, class, or {} implementation block detected.\n\
+                write!(
+                    f,
+                    "AES305 DEAD_INHERITANCE: Empty {}, class, or {} implementation block detected.\n\
                         WHY? {}\n\
-                        FIX: Implement the necessary methods/fields or remove the empty definition block.", lang.struct_keyword(), lang.interface_kw(), why)
+                        FIX: Implement the necessary methods/fields or remove the empty definition block.",
+                    lang.struct_keyword(),
+                    lang.interface_kw(),
+                    why
+                )
             }
             AesCodeAnalysisViolation::CodeDuplication { reason } => {
                 let default_why = "Duplicate code blocks increase maintenance burden and indicate missing abstraction.".to_string();

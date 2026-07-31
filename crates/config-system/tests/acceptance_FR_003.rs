@@ -12,10 +12,12 @@ async fn us3_no_config_file_uses_defaults() {
         .load_project_config(&fp)
         .await;
     assert!(result.config.enabled.value);
-    assert!(result
-        .warnings
-        .iter()
-        .any(|w| w.contains("No config file found")));
+    assert!(
+        result
+            .warnings
+            .iter()
+            .any(|w| w.contains("No config file found"))
+    );
     assert_eq!(result.source.path.value, "embedded");
 }
 

@@ -80,7 +80,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
                 let results = self.code_analysis.run_code_analysis(&fp);
                 let count_before = results.len();
-                let output = format!("[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.", mode, path, count_before, path);
+                let output = format!(
+                    "[{}] Fix scan on {}\nViolations found: {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.",
+                    mode, path, count_before, path
+                );
                 LintExecutionResult {
                     output,
                     violation_count: count_before,
@@ -97,7 +100,15 @@ impl ILintExecutorProtocol for LintExecutor {
         let has_critical = self.code_analysis.check_critical(&results.values);
         let pass = score.value() >= flags.threshold as f64 && !has_critical.value();
         let status = if pass { "PASS" } else { "FAIL" };
-        let output = format!("CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}", path, score, flags.threshold, results.len(), has_critical.value(), status);
+        let output = format!(
+            "CI Report for {}\nScore: {:.1}/100 (threshold: {})\nViolations: {}\nCritical: {}\nStatus: {}",
+            path,
+            score,
+            flags.threshold,
+            results.len(),
+            has_critical.value(),
+            status
+        );
         if pass {
             LintExecutionResult::success(output, results.len())
         } else {
@@ -183,7 +194,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 LintExecutionResult::success(output, count)
             }
             _ => {
-                let output = format!("Orphan detection for {}\nUse CLI `lint-arwaky-cli orphan {}` for full orphan graph analysis.", path, path);
+                let output = format!(
+                    "Orphan detection for {}\nUse CLI `lint-arwaky-cli orphan {}` for full orphan graph analysis.",
+                    path, path
+                );
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -219,7 +233,17 @@ impl ILintExecutorProtocol for LintExecutor {
                 );
                 let security_count = security_results.len();
                 let output = if security_count == 0 {
-                    format!("Security scan for {}\n{} total lint results, none from security adapters (cargo-audit, bandit).\nAdapters scanned: {}", path, results.len(), ext_lint.adapter_names().iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", "))
+                    format!(
+                        "Security scan for {}\n{} total lint results, none from security adapters (cargo-audit, bandit).\nAdapters scanned: {}",
+                        path,
+                        results.len(),
+                        ext_lint
+                            .adapter_names()
+                            .iter()
+                            .map(|a| a.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )
                 } else {
                     let mut out = format!(
                         "Security scan for {}\nFound {} finding(s) from security adapters:\n\n",
@@ -246,7 +270,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 LintExecutionResult::success(output, security_count)
             }
             None => {
-                let output = format!("Security scan for {}\nUse CLI `lint-arwaky-cli security {}` for full vulnerability scan.", path, path);
+                let output = format!(
+                    "Security scan for {}\nUse CLI `lint-arwaky-cli security {}` for full vulnerability scan.",
+                    path, path
+                );
                 LintExecutionResult::success(output, 0)
             }
         }
@@ -333,7 +360,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 }
             }
             None => {
-                let output = format!("Dependency scan for {}\nUse CLI `lint-arwaky-cli dependencies {}` for full report.", path, path);
+                let output = format!(
+                    "Dependency scan for {}\nUse CLI `lint-arwaky-cli dependencies {}` for full report.",
+                    path, path
+                );
                 LintExecutionResult::success(output, 0)
             }
         }

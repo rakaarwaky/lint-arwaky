@@ -128,9 +128,11 @@ fn identify_orphan_entry_points_finds_main_and_lib() {
     let entries = analyzer.identify_orphan_entry_points(&files);
     assert!(entries.values.contains(&"src/main.rs".to_string()));
     assert!(entries.values.contains(&"src/lib.rs".to_string()));
-    assert!(!entries
-        .values
-        .contains(&"src/capabilities_foo.rs".to_string()));
+    assert!(
+        !entries
+            .values
+            .contains(&"src/capabilities_foo.rs".to_string())
+    );
 }
 
 // ─── Orphan file with no inbound links is flagged ──────────
