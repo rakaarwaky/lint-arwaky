@@ -78,3 +78,13 @@ impl IFileWalkerProtocol for FileWalker {
         entries
     }
 }
+
+
+/// Simple recursive walk — returns file paths as strings.
+/// Drop-in replacement for scan_directory_recursive.
+pub fn walk_recursive(dir: &std::path::Path) -> Vec<String> {
+    let walker = FileWalker::new();
+    let extensions = Language::extensions();
+    let entries = walker.walk(&dir.to_path_buf(), &[], extensions);
+    entries.into_iter().map(|e| e.path.to_string_lossy().to_string()).collect()
+}

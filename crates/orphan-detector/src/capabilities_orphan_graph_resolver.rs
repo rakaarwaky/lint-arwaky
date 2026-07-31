@@ -2,7 +2,8 @@
 // AST-based: uses parser dispatch for all import/mod/trait resolution.
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
-use filesystem::utility_io::{is_dir, is_file, read_file_safe, scan_directory, scan_directory_recursive};
+use filesystem::utility_file_walker::walk_recursive;
+use shared::common::utility_file_handler::read_file_safe;
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
@@ -144,8 +145,8 @@ impl OrphanGraphResolver {
         let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if is_dir(&ws_path) {
-                let entries = scan_directory(&ws_path);
+            if ws_path.is_dir() {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
                 for (name, path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
@@ -153,7 +154,7 @@ impl OrphanGraphResolver {
                     workspace_modules.insert(name.clone());
                     workspace_modules.insert(name.replace('-', "_"));
                     let src_dir = std::path::PathBuf::from(&path_str).join("src");
-                    if is_dir(&src_dir) {
+                    if src_dir.is_dir() {
                         crate_src_dirs.insert(name.clone(), src_dir.clone());
                         crate_src_dirs.insert(name.replace('-', "_"), src_dir);
                     }
@@ -170,7 +171,7 @@ impl OrphanGraphResolver {
         let root_path_obj = std::path::Path::new(&workspace_root);
 
         for src_dir in crate_src_dirs.values() {
-            let workspace_files = scan_directory_recursive(src_dir);
+            let workspace_files = walk_recursive(src_dir);
             for f in workspace_files {
                 let rel = std::path::Path::new(&f)
                     .strip_prefix(root_path_obj)
@@ -185,8 +186,8 @@ impl OrphanGraphResolver {
         // Scan root_*.rs files directly in workspace dirs
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if is_dir(&ws_path) {
-                let entries = scan_directory(&ws_path);
+            if ws_path.is_dir() {
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
                 for (name, path_str, is_dir_entry) in entries {
                     if is_dir_entry {
                         continue;
@@ -269,7 +270,7 @@ impl OrphanGraphResolver {
         for f in files {
             import_graph.entry(f.clone()).or_default();
             let content = read_file_safe(f);
-            if content.is_empty() && !is_file(&std::path::PathBuf::from(f)) {
+            if content.is_empty() && !std::path::PathBuf::from(f).is_file() {
                 continue;
             }
 
@@ -290,7 +291,7 @@ impl OrphanGraphResolver {
                                 )
                             {
                                 let resolved = resolved_path.to_string_lossy().to_string();
-                                if is_file(&std::path::PathBuf::from(&resolved))
+                                if std::path::PathBuf::from(&resolved).is_file()
                                     && resolved != *f
                                 {
                                     utility_orphan_graph_resolver::add_edge(
@@ -317,7 +318,7 @@ impl OrphanGraphResolver {
                                 } else {
                                     candidate.clone()
                                 };
-                                if is_file(&abs_candidate)
+                                if abs_candidate.is_file()
                                     && let Some(path_str) = candidate.to_str()
                                 {
                                     let resolved = path_str.to_string();
@@ -538,7 +539,7 @@ impl OrphanGraphResolver {
                 normalized_crate
             };
             if let Some(src_dir) = ctx.crate_src_dirs.get(&lookup_name) {
-                let entries = scan_directory(src_dir);
+                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(src_dir);
                 let module_name = segments.get(1).map(|s| s.as_str()).unwrap_or("");
                 for (_name, path_str, _is_dir) in entries {
                     let path = std::path::PathBuf::from(&path_str);
@@ -607,7 +608,7 @@ impl OrphanGraphResolver {
             if !module_part.is_empty() {
                 for ext in &[".py", ".rs", ".ts", ".js"] {
                     let candidate = base.join(format!("{}{}", module_part, ext));
-                    if is_file(&candidate) {
+                    if candidate.is_file() {
                         let cand_rel = candidate
                             .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())
@@ -625,7 +626,7 @@ impl OrphanGraphResolver {
                 }
                 let pkg_dir = base.join(module_part);
                 for marker in &["__init__.py", "mod.rs"] {
-                    if is_file(&pkg_dir.join(marker)) {
+                    if pkg_dir.join(marker).is_file() {
                         let cand_rel = pkg_dir
                             .join(marker)
                             .strip_prefix(ctx.root_path)
@@ -666,7 +667,7 @@ impl OrphanGraphResolver {
             let mut walk_ok = true;
             for seg in &segments {
                 walk_dir = walk_dir.join(seg);
-                if !is_dir(&walk_dir) {
+                if !walk_dir.is_dir() {
                     walk_ok = false;
                     break;
                 }
@@ -674,7 +675,7 @@ impl OrphanGraphResolver {
             if walk_ok {
                 for marker in &["__init__.py", "mod.rs", "index.ts", "index.js"] {
                     let candidate = walk_dir.join(marker);
-                    if is_file(&candidate) {
+                    if candidate.is_file() {
                         let cand_rel = candidate
                             .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())

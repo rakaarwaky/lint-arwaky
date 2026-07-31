@@ -1,3 +1,4 @@
+use filesystem::utility_file_walker::walk_recursive;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::{
     GraphAnalysisContext, ImportGraph, OrphanIndicatorResult, ReachabilityResult,
@@ -196,7 +197,7 @@ impl ArchOrphanAnalyzer {
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
                         let workspace_files =
-                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
+                            walk_recursive(
                                 &src_dir,
                             );
                         for f in workspace_files {
@@ -225,7 +226,7 @@ impl ArchOrphanAnalyzer {
                 }
                 // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
                 let root_files =
-                    shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&ws_path);
+                    walk_recursive(&ws_path);
                 for f in root_files {
                     // Skip ignored paths (e.g. tests/, target/)
                     if shared::common::utility_file_handler::is_path_ignored(
