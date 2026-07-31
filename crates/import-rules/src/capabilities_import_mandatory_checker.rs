@@ -64,7 +64,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                 }
 
                 let content =
-                    match shared::common::utility_file_handler::read_file_generic(&f_str).ok() {
+                    match filesystem::utility_io::read_file(&f_str).ok() {
                         Some(c) => c,
                         None => return Vec::new(),
                     };

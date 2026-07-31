@@ -16,7 +16,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content = shared::common::utility_file_handler::read_file_generic(path.value())
+        let content = filesystem::utility_io::read_file(path.value())
             .map_err(|_| {
                 ImportError::module_resolution(
                     path.value().to_string(),
@@ -99,7 +99,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             // via method calls, derive macros, or macro invocations.
             // The AST can't detect: `.par_iter()` (ParallelIterator),
             // `#[async_trait]`, `.init()` (SubscriberInitExt), `writeln!` (Write), etc.
-            if let Some((raw_path, _)) = imported_aliases.get(alias) {
+            if let Some(raw_path) = imported_aliases.get(alias) {
                 let rp = raw_path.value();
                 let is_likely_trait = rp.contains("prelude")
                     || rp.contains("async_trait")
@@ -114,7 +114,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             }
             let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;
-            let ast_line = imported_aliases.get(alias).map(|(_, l)| *l).unwrap_or(1);
+            let ast_line = utility_import_resolver::find_import_line_number(content, alias_str).value() as usize;
             violations.push(LintResult::new_arch(
                 file,
                 ast_line,

@@ -24,7 +24,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         all_files: &[String],
     ) -> OrphanIndicatorResult {
         let fp = f.value();
-        let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
+        let content = match filesystem::utility_io::read_file_safe(fp) {
             c if c.is_empty() => {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
@@ -63,7 +63,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
         // Pass 1: Word-boundary search across candidate files
         let is_referenced = candidates.iter().any(|cf| {
-            let candidate_content = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
+            let candidate_content = filesystem::utility_io::read_file_safe(cf);
             aggregate_traits
                 .iter()
                 .any(|t| Self::content_contains_word(&candidate_content, t))

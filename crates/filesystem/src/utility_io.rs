@@ -343,3 +343,8 @@ fn _scan_directory_recursive(dir_path: &Path, files: &mut Vec<String>) {
         }
     }
 }
+
+/// Write content to a file.
+pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
+    std::fs::write(path, contents)
+}

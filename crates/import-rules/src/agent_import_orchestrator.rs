@@ -61,7 +61,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             files.values.len()
         );
 
-        let root_dir = shared::common::utility_file_handler::find_workspace_root(target.value())
+        let root_dir = filesystem::utility_io::find_workspace_root(target.value())
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 

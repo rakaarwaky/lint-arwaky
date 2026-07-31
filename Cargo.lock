@@ -190,6 +190,7 @@ name = "auto-fix-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "criterion",
+ "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -505,6 +506,7 @@ dependencies = [
  "dirs",
  "external-lint-lint-arwaky",
  "file-watch-lint-arwaky",
+ "filesystem-lint-arwaky",
  "futures",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
@@ -1461,6 +1463,7 @@ version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
+ "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -2631,6 +2634,7 @@ version = "1.12.0"
 dependencies = [
  "async-trait",
  "criterion",
+ "filesystem-lint-arwaky",
  "rayon",
  "serde",
  "serde_json",
@@ -3042,6 +3046,7 @@ version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
+ "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -3757,6 +3762,7 @@ dependencies = [
  "async-trait",
  "criterion",
  "dirs",
+ "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -4214,6 +4220,7 @@ version = "1.11.0"
 dependencies = [
  "async-trait",
  "criterion",
+ "filesystem-lint-arwaky",
  "once_cell",
  "regex",
  "serde",

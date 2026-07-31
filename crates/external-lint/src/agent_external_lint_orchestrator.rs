@@ -21,7 +21,7 @@ use shared::cli_commands::LintResultList;
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
-use shared::common::utility_file_handler::is_path_ignored;
+use filesystem::utility_io::is_path_ignored;
 use shared::config_system::utility_config_parser::{
     parse_adapter_names_from_yaml, parse_config_yaml_with_warnings,
 };
@@ -60,7 +60,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.is_dir() {
-                    if shared::common::utility_file_handler::is_ignored_dir(&path, ignored) {
+                    if filesystem::utility_io::is_ignored_dir(&path, ignored) {
                         continue;
                     }
                     let name = match path.file_name().and_then(|n| n.to_str()) {

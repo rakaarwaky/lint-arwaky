@@ -11,20 +11,20 @@ pub struct FileAdapter;
 
 impl IFileAdapterProtocol for FileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
-        if !shared::common::utility_file_handler::path_exists(&path.value) {
+        if !filesystem::utility_io::path_exists(&path.value) {
             return None;
         }
-        shared::common::utility_file_handler::read_file_generic(&path.value)
+        filesystem::utility_io::read_file(&path.value)
             .ok()
             .map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
-        shared::common::utility_file_handler::write_file(&path.value, &content.value).is_ok()
+        filesystem::utility_io::write_file(&path.value, &content.value).is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {
-        shared::common::utility_file_handler::path_exists(&path.value)
+        filesystem::utility_io::path_exists(&path.value)
     }
 }
 
