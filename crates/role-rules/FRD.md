@@ -12,11 +12,8 @@ flowchart TD
     B --> C["role_orchestrator"]
     C --> D["filesystem_aggregate"]
     D --> E1["file_walker"]
-    D --> E2["file_cache"]
     E1 --> G1["Vec FileEntry"]
-    E2 --> G2["DashMap Path → String"]
     G1 --> H1["taxonomy_checker"]
-    G2 --> H1
     G1 --> H2["contract_checker"]
     G2 --> H2
     G1 --> H3["capabilities_checker"]
