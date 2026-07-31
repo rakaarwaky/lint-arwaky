@@ -11,8 +11,10 @@ flowchart TD
     A["Surface"] -->|input| B["code_analysis_aggregate"]
     B --> C["code_analysis_orchestrator"]
     C --> D["filesystem_aggregate"]
-    D --> E["file_walker"]
-    E --> G["Vec FilePath"]
+    D --> E1["file_walker"]
+    D --> E2["read_lintable_file"]
+    E1 --> G["Vec FilePath"]
+    E2 --> G
     G --> H1["max_line_checker"]
     G --> H2["min_line_checker"]
     G --> H3["mandatory_def_checker"]
@@ -30,7 +32,8 @@ flowchart TD
 
     style A fill:#e1f5fe,stroke:#0288d1
     style D fill:#e8f5e9,stroke:#388e3c
-    style E fill:#e8f5e9,stroke:#388e3c
+    style E1 fill:#e8f5e9,stroke:#388e3c
+    style E2 fill:#e8f5e9,stroke:#388e3c
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
