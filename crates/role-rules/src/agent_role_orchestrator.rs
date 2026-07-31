@@ -23,7 +23,7 @@ use shared::role_rules::{
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
 
-use shared::common::utility_file_handler::{read_file_sync, walk_source_files};
+use filesystem::utility_io::{read_file, walk_source_files};
 use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
@@ -85,7 +85,7 @@ impl RoleOrchestrator {
         }
 
         for file in files {
-            let content = read_file_sync(file).unwrap_or_default();
+            let content = read_file(file).unwrap_or_default();
             let filename = Path::new(file)
                 .file_name()
                 .and_then(|n| n.to_str())

@@ -8,7 +8,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_source_files};
+use filesystem::utility_io::{path_exists, read_file, walk_source_files};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 
 use shared::config_system::ArchitectureConfig;
@@ -89,7 +89,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let file_violations: Vec<LintResult> =
             ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
                 let mut local_results = Vec::new();
-                let content = match read_file_sync(file.value()) {
+                let content = match read_file(file.value()) {
                     Ok(c) => c,
                     Err(e) => {
                         eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
