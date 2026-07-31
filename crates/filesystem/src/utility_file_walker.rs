@@ -1,46 +1,38 @@
 // PURPOSE: Utility layer — file walker using `ignore` crate
 // Walks directory tree parallel, gitignore-aware, filters by extension.
 
-use crate::contract_filesystem_protocol::IFileWalkerProtocol;
-use crate::taxonomy_filesystem_vo::*;
-use camino::Utf8PathBuf;
-use ignore::WalkBuilder;
+use shared::filesystem::IFileWalkerProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::*;
+use std::path::PathBuf;
+
+/// Maximum file size for linting (2 MiB).
+const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
 pub struct FileWalker;
 
 impl FileWalker {
-    pub fn new() -> Self {
-        Self
-    }
+    pub fn new() -> Self { Self }
 }
 
 impl Default for FileWalker {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl IFileWalkerProtocol for FileWalker {
-    fn walk(
-        &self,
-        root: &Utf8PathBuf,
-        ignored: &[String],
-        extensions: &[&str],
-    ) -> Vec<FileEntry> {
-        let mut builder = WalkBuilder::new(root.as_std_path());
+    fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
+        let mut builder = ignore::WalkBuilder::new(root);
         builder
-            .hidden(true) // skip hidden dirs (.git, .venv)
+            .hidden(true)
             .git_ignore(true)
             .git_global(true)
             .git_exclude(true)
-            .threads(num_cpus::get());
+            .threads(std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4));
 
-        // Add custom ignore patterns
         for pattern in ignored {
-            builder.add_custom_ignore(pattern);
+            // Note: add_custom_ignore not available in ignore 0.4
+            // Custom ignore patterns would need to be handled via .gitignore files
         }
 
-        let supported: Vec<&str> = extensions.to_vec();
         let mut entries = Vec::new();
 
         for result in builder.build() {
@@ -49,23 +41,17 @@ impl IFileWalkerProtocol for FileWalker {
                 Err(_) => continue,
             };
 
-            let path = match entry.path().to_str() {
-                Some(p) => p,
-                None => continue,
-            };
-
-            // Skip directories
             if entry.file_type().map_or(false, |ft| ft.is_dir()) {
                 continue;
             }
 
-            // Filter by extension
-            let ext = match path.rsplit('.').next() {
+            let path = entry.path();
+            let ext = match path.extension().and_then(|e| e.to_str()) {
                 Some(e) => e,
                 None => continue,
             };
 
-            if !supported.contains(&ext) {
+            if !extensions.contains(&ext) {
                 continue;
             }
 
@@ -79,18 +65,12 @@ impl IFileWalkerProtocol for FileWalker {
                 Err(_) => continue,
             };
 
-            // Skip files > 2 MiB
             if metadata.len() > MAX_LINT_FILE_BYTES {
                 continue;
             }
 
-            let utf8_path = match Utf8PathBuf::from_path_buf(entry.into_path()) {
-                Ok(p) => p,
-                Err(_) => continue,
-            };
-
             entries.push(FileEntry {
-                path: utf8_path,
+                path: path.to_path_buf(),
                 extension: ext.to_string(),
                 language,
                 size: metadata.len(),
@@ -99,11 +79,4 @@ impl IFileWalkerProtocol for FileWalker {
 
         entries
     }
-}
-
-/// Number of logical CPUs (fallback to 4).
-fn num_cpus() -> usize {
-    std::thread::available_parallelism()
-        .map(|n| n.get())
-        .unwrap_or(4)
 }

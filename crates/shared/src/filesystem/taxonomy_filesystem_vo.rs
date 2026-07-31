@@ -1,8 +1,8 @@
-// PURPOSE: Taxonomy layer — value objects for filesystem operations
-// These are stable domain types shared across all crates.
+// PURPOSE: Taxonomy layer — filesystem domain value objects
+// Shared across all crates that need file I/O, parsing, or dependency graph types.
 
-use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 /// Supported programming languages for AST parsing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -29,13 +29,23 @@ impl Language {
     pub fn extensions() -> &'static [&'static str] {
         &["rs", "py", "ts", "tsx", "js", "jsx"]
     }
+
+    /// Human-readable name.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Rust => "rust",
+            Self::Python => "python",
+            Self::TypeScript => "typescript",
+            Self::JavaScript => "javascript",
+        }
+    }
 }
 
 /// A discovered source file with metadata.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileEntry {
     /// Absolute path to the file.
-    pub path: Utf8PathBuf,
+    pub path: PathBuf,
     /// File extension (without dot).
     pub extension: String,
     /// Detected language.
@@ -65,11 +75,11 @@ pub enum ImportType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImportEntry {
     /// File that contains the import.
-    pub source_file: Utf8PathBuf,
+    pub source_file: PathBuf,
     /// Raw import path (as written in source).
     pub raw_path: String,
     /// Resolved absolute module path (if resolvable).
-    pub resolved_path: Option<Utf8PathBuf>,
+    pub resolved_path: Option<PathBuf>,
     /// Type of import.
     pub import_type: ImportType,
     /// Language of the source file.
@@ -98,7 +108,7 @@ pub struct FilesystemResult {
 }
 
 /// Timing breakdown for scan stages.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ScanTiming {
     pub walk_ms: u64,
     pub cache_ms: u64,
