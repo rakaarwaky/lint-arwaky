@@ -13,10 +13,8 @@ pub mod taxonomy_violation_code_analysis_vo;
 pub mod utility_bypass_detector;
 pub mod utility_code_duplication_detector;
 pub mod utility_column_index;
-pub mod utility_file_reader;
 pub mod utility_language_mapper;
 pub mod utility_mandatory_checker;
-pub mod utility_target_resolver;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
