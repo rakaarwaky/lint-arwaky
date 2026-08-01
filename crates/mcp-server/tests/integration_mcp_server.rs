@@ -24,6 +24,7 @@ fn container_new_default_produces_all_dependencies() {
     assert!(Arc::strong_count(&container.external_lint) >= 1);
     assert!(Arc::strong_count(&container.role_orchestrator) >= 1);
     assert!(Arc::strong_count(&container.config_orchestrator) >= 1);
+    assert!(Arc::strong_count(&container.filesystem) >= 1);
 }
 
 // ─── Orchestrator from Container ─────────────────────────────────────

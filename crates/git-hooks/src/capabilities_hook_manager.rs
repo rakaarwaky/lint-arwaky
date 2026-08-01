@@ -55,10 +55,7 @@ impl IHookProtocol for HookManager {
         let content = match std::fs::read_to_string(config_path) {
             Ok(c) => c,
             Err(e) => {
-                return DescriptionVO::new(format!(
-                    "Failed to read config: {}",
-                    e
-                ));
+                return DescriptionVO::new(format!("Failed to read config: {}", e));
             }
         };
 
@@ -73,15 +70,13 @@ impl IHookProtocol for HookManager {
         // Get or create the ignored_paths list
         let ignored_paths = doc
             .as_mapping_mut()
-            .and_then(|m| m.get_mut(&serde_yaml_ng::Value::String("ignored_paths".to_string())))
+            .and_then(|m| m.get_mut(serde_yaml_ng::Value::String("ignored_paths".to_string())))
             .and_then(|v| v.as_sequence_mut());
 
         let ignored_paths = match ignored_paths {
             Some(p) => p,
             None => {
-                return DescriptionVO::new(
-                    "Config missing 'ignored_paths' key".to_string(),
-                );
+                return DescriptionVO::new("Config missing 'ignored_paths' key".to_string());
             }
         };
 
@@ -91,10 +86,7 @@ impl IHookProtocol for HookManager {
             let before_len = ignored_paths.len();
             ignored_paths.retain(|v| v != &rule_value);
             if ignored_paths.len() == before_len {
-                return DescriptionVO::new(format!(
-                    "'{}' not found in ignore list",
-                    request.rule
-                ));
+                return DescriptionVO::new(format!("'{}' not found in ignore list", request.rule));
             }
         } else {
             if ignored_paths.contains(&rule_value) {

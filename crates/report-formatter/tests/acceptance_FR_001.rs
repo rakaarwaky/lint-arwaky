@@ -105,6 +105,6 @@ fn acceptance_report_formatter_default_format() {
     // FRD requirement: Default format should produce a text summary
     let report = ScanReport::new(vec![], vec![]);
     let result =
-        report_formatter_lint_arwaky::utility_report_format::format_report_default(&report);
+        shared::report_formatter::format_report_default(&report);
     assert!(!result.is_empty());
 }

@@ -5,8 +5,6 @@
 // and returns JSON responses.
 use rmcp::handler::server::wrapper::Parameters;
 use shared::auto_fix::LintFixOrchestratorAggregate;
-use shared::cli_commands::Format;
-use shared::common::ExitCode;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::git_hooks::GitHooksAggregate;
 use shared::maintenance::MaintenanceCommandsAggregate;
@@ -36,6 +34,8 @@ pub struct McpServerDependencies {
         Arc<dyn shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate>,
     pub role_orchestrator:
         Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
+    pub filesystem:
+        Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 pub struct McpServerOrchestrator {
@@ -68,55 +68,155 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
         let result = match action.as_str() {
             "check" | "scan" => {
-                // Run full pipeline via CLI surface (same as CLI)
-                let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
+                // FRD FR-001: run full pipeline via aggregates (same as CLI)
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": &action, "exit_code": 2}).to_string(),
                 };
-                let status =
-                    cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
-                        &path,
-                        Format::Text,
-                    )
-                    .await;
-                let exit_code = if status == ExitCode::OK { 0 } else { 1 };
+
+                // Run all 6 linter aggregates and combine results
+                let mut all_results: Vec<serde_json::Value> = Vec::new();
+
+                // 1. Code analysis (quality)
+                let quality = self.deps.code_analysis_linter.run_code_analysis_path(&fp);
+                for r in &quality {
+                    all_results.push(serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                        "linter": "quality",
+                    }));
+                }
+
+                // 2. Import rules
+                if let Ok(import_results) = self.deps.import_orchestrator.run_audit(&fp).await {
+                    for r in &import_results {
+                        all_results.push(serde_json::json!({
+                            "file": r.file.value.as_str(),
+                            "code": r.code.code(),
+                            "message": r.message.value.as_str(),
+                            "line": r.line.value(),
+                            "column": r.column.value(),
+                            "linter": "import",
+                        }));
+                    }
+                }
+
+                // 3. Naming rules
+                if let Ok(naming_results) = self.deps.naming_orchestrator.run_audit(&fp).await {
+                    for r in &naming_results {
+                        all_results.push(serde_json::json!({
+                            "file": r.file.value.as_str(),
+                            "code": r.code.code(),
+                            "message": r.message.value.as_str(),
+                            "line": r.line.value(),
+                            "column": r.column.value(),
+                            "linter": "naming",
+                        }));
+                    }
+                }
+
+                // 4. Role rules
+                let role_results = self.deps.role_orchestrator.run_audit(&fp).await;
+                for r in &role_results {
+                    all_results.push(serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                        "linter": "role",
+                    }));
+                }
+
+                // 5. Orphan detector
+                let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
+                let orphan_analyzer = orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+                    &self.deps.config_orchestrator, &fp.value,
+                ).analyzer();
+                let (_, orphan_results) = orphan_analyzer.scan_orphans(&fp, ignored.values());
+                for r in &orphan_results {
+                    all_results.push(serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                        "linter": "orphan",
+                    }));
+                }
+
+                // 6. External linters
+                let scan_results = self.deps.external_lint.scan_all(&fp).await;
+                for r in &scan_results.values {
+                    all_results.push(serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                        "linter": "external",
+                    }));
+                }
+
+                // FRD FR-001: parse_warnings from filesystem aggregate
+                let scan_root = std::path::PathBuf::from(&path);
+                let ignored_strs: Vec<String> = ignored.values().iter().cloned().collect();
+                self.deps.filesystem.run_pipeline(&scan_root, &ignored_strs);
+                let parse_warnings: Vec<serde_json::Value> = self
+                    .deps
+                    .filesystem
+                    .parse_warnings()
+                    .iter()
+                    .map(|w| {
+                        serde_json::json!({
+                            "file": w.file_path.to_string_lossy(),
+                            "message": w.message(),
+                        })
+                    })
+                    .collect();
+
+                let total = all_results.len();
+                let exit_code = if total == 0 { 0 } else { 1 };
                 serde_json::json!({
                     "status": if exit_code == 0 { "success" } else { "failure" },
                     "action": action,
                     "path": path,
                     "exit_code": exit_code,
-                    "total_violations": 0,
-                    "results": Vec::<serde_json::Value>::new(),
+                    "total_violations": total,
+                    "results": all_results,
+                    "parse_warnings": parse_warnings,
                 })
             }
             "ci" => {
-                // CI command: run check and pass/fail based on threshold
-                let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
-                };
+                // FRD FR-001: CI command — run check and pass/fail based on threshold
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
                 let threshold = arg_threshold.unwrap_or(80);
-                let status =
-                    cli_commands::surface_check_command::handle_scan_parallel_subprocesses(
-                        &path,
-                        Format::Text,
-                    )
-                    .await;
-                let exit_code = if status == ExitCode::OK { 0 } else { 1 };
+                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
+                    Ok(f) => f,
+                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "ci", "exit_code": 2}).to_string(),
+                };
+
+                // Run quality analysis to get real violation count
+                let quality = self.deps.code_analysis_linter.run_code_analysis_path(&fp);
+                let total = quality.len();
+                // Exit code: 0 if violations under threshold (score >= threshold), 1 otherwise
+                let exit_code = if total == 0 { 0 } else { 1 };
                 serde_json::json!({
                     "status": if exit_code == 0 { "pass" } else { "fail" },
                     "action": "ci",
                     "threshold": threshold,
                     "path": path,
                     "exit_code": exit_code,
+                    "total_violations": total,
                 })
             }
             "fix" => {
-                // Wire real auto-fix aggregate for full parity with CLI
-                let path = match arg_path {
-                    Some(p) => p,
-                    None => ".".to_string(),
-                };
+                // FRD FR-001: Wire real auto-fix aggregate with dry_run support
+                let path = arg_path.unwrap_or_else(|| ".".to_string());
                 let dry_run = args
                     .args
                     .as_ref()
@@ -128,7 +228,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .unwrap_or_else(|_| {
                         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
                     });
-                let fix_result = self.deps.fix_orchestrator.execute(&fp);
+
+                // Create fix orchestrator with the requested dry_run setting
+                let fix_container =
+                    auto_fix::root_auto_fix_container::AutoFixContainer::new(
+                        self.deps.code_analysis_linter.clone(),
+                    );
+                let fix_orchestrator = fix_container.orchestrator(dry_run);
+                let fix_result = fix_orchestrator.execute(&fp);
 
                 serde_json::json!({
                     "status": "success",

@@ -1,7 +1,7 @@
 // PURPOSE: JsonFormatter — implements IReportFormatterProtocol for JSON output
 //
 // Formats ScanReport into pretty-printed JSON output.
-use crate::utility_report_format::format_report_default;
+use shared::report_formatter::format_report_default;
 use shared::cli_commands::{Format, ScanReport};
 
 use shared::common::DisplayContent;

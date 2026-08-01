@@ -83,8 +83,11 @@ async fn execute_command_scan_returns_success_with_report() {
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
     assert_eq!(parsed["status"], "success");
     assert_eq!(parsed["action"], "scan");
-    assert_eq!(parsed["total_violations"], 0);
+    // FRD FR-001: real violations from aggregates, not hardcoded zeros
+    assert!(parsed["total_violations"].is_number());
     assert!(parsed["results"].is_array());
+    // FRD FR-001: parse_warnings array present
+    assert!(parsed["parse_warnings"].is_array());
 }
 
 // ─── execute_command: scan defaults path to "." ──────────────────────

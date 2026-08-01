@@ -146,10 +146,7 @@ fn update_ignore_rule_remove_rule() {
 
 #[test]
 fn update_ignore_rule_add_duplicate_returns_already_present() {
-    let tmp_dir = std::env::temp_dir().join(format!(
-        "git_hooks_ignore_dup_{}",
-        std::process::id()
-    ));
+    let tmp_dir = std::env::temp_dir().join(format!("git_hooks_ignore_dup_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&tmp_dir);
     let config_path = tmp_dir.join("lint_arwaky.config.yaml");
     std::fs::write(&config_path, "ignored_paths:\n  - \"*.generated.rs\"\n").unwrap();
@@ -168,10 +165,7 @@ fn update_ignore_rule_add_duplicate_returns_already_present() {
 
 #[test]
 fn update_ignore_rule_remove_nonexistent_returns_not_found() {
-    let tmp_dir = std::env::temp_dir().join(format!(
-        "git_hooks_ignore_nf_{}",
-        std::process::id()
-    ));
+    let tmp_dir = std::env::temp_dir().join(format!("git_hooks_ignore_nf_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&tmp_dir);
     let config_path = tmp_dir.join("lint_arwaky.config.yaml");
     std::fs::write(&config_path, "ignored_paths:\n  - \"/target\"\n").unwrap();

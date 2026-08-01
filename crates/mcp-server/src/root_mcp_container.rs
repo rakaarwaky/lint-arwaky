@@ -30,7 +30,8 @@ pub struct McpContainer {
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
-    pub filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+    pub filesystem:
+        Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 impl McpContainer {
@@ -114,6 +115,11 @@ impl McpContainer {
         let setup_container = SetupContainer::new();
         let setup_orchestrator = setup_container.aggregate();
 
+        // Filesystem orchestrator — for parse_warnings in check/scan responses
+        let filesystem: Arc<
+            dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+        > = Arc::new(filesystem::FilesystemOrchestrator::new());
+
         Self {
             code_analysis_linter,
             import_orchestrator,
@@ -126,6 +132,7 @@ impl McpContainer {
             git_hooks_aggregate,
             maintenance_orchestrator,
             setup_orchestrator,
+            filesystem,
         }
     }
 }
