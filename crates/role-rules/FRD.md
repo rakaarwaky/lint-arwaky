@@ -36,6 +36,7 @@ flowchart TD
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
+
 ### FR-001: File Collection and Classification
 
 - **Description**: Walk the target directory, collect source files, and classify each by its filename prefix to determine its AES layer.
