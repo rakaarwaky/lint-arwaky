@@ -2,7 +2,8 @@
 // Layer: Capabilities (SurfaceRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::common::{ContentString, FileEntry};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use std::path::PathBuf;
 use shared::role_rules::ISurfaceRoleChecker;
 
 fn checker() -> SurfaceRoleChecker {
@@ -11,10 +12,17 @@ fn checker() -> SurfaceRoleChecker {
 
 fn make_file(path: &str, content: &str) -> FileEntry {
     let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
     FileEntry {
         path: PathBuf::from(path),
         extension: ext,
-        language: Language::Rust,
+        language,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,

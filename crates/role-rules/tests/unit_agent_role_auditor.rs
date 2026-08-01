@@ -12,10 +12,17 @@ fn checker() -> AgentRoleChecker {
 
 fn make_file(path: &str, content: &str) -> FileEntry {
     let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
     FileEntry {
         path: PathBuf::from(path),
         extension: ext,
-        language: Language::Rust,
+        language,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,

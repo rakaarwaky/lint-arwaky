@@ -203,3 +203,110 @@ impl RuffAdapter {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::common::ResponseData;
+    use shared::common::Severity;
+
+    fn make_adapter() -> RuffAdapter {
+        let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
+        RuffAdapter::new(executor, None)
+    }
+
+    struct EmptyLintExecutor;
+    #[async_trait::async_trait]
+    impl IExternalLintExecutorProtocol for EmptyLintExecutor {
+        async fn exec_cmd_scan(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: Option<AdapterName>,
+            _: &FilePath,
+        ) -> Result<ResponseData, LinterOperationError> {
+            Ok(ResponseData::default())
+        }
+        async fn exec_cmd_adapter(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: AdapterName,
+        ) -> Result<ResponseData, LinterOperationError> {
+            Ok(ResponseData::default())
+        }
+        async fn js_apply_fix(
+            &self,
+            _: &FilePath,
+            _: &str,
+            _: &str,
+        ) -> Result<ComplianceStatus, LinterOperationError> {
+            Ok(ComplianceStatus::new(false))
+        }
+    }
+
+    // ─── FRD-004: Ruff severity mapping per code ───
+
+    #[test]
+    fn e999_syntax_error_maps_to_critical() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("error", "E999"), Severity::CRITICAL);
+    }
+
+    #[test]
+    fn security_rules_map_to_critical() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "S105"), Severity::CRITICAL);
+        assert_eq!(adapter.map_severity("warning", "S602"), Severity::CRITICAL);
+        assert_eq!(adapter.map_severity("error", "S101"), Severity::CRITICAL);
+    }
+
+    #[test]
+    fn f8xx_undefined_name_maps_to_high() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "F821"), Severity::HIGH);
+        assert_eq!(adapter.map_severity("warning", "F811"), Severity::HIGH);
+    }
+
+    #[test]
+    fn b0xx_bugbear_maps_to_high() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "B006"), Severity::HIGH);
+        assert_eq!(adapter.map_severity("warning", "B007"), Severity::HIGH);
+    }
+
+    #[test]
+    fn f401_unused_import_maps_to_medium() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "F401"), Severity::MEDIUM);
+    }
+
+    #[test]
+    fn e1xx_indentation_maps_to_low() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "E111"), Severity::LOW);
+        assert_eq!(adapter.map_severity("warning", "E117"), Severity::LOW);
+    }
+
+    #[test]
+    fn e5xx_line_length_maps_to_low() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "E501"), Severity::LOW);
+    }
+
+    #[test]
+    fn w2xx_whitespace_maps_to_low() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "W291"), Severity::LOW);
+        assert_eq!(adapter.map_severity("warning", "W292"), Severity::LOW);
+    }
+
+    #[test]
+    fn unknown_code_defaults_to_medium() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("warning", "C999"), Severity::MEDIUM);
+        assert_eq!(adapter.map_severity("error", "XXXX"), Severity::MEDIUM);
+    }
+}

@@ -6,12 +6,19 @@ use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::path::PathBuf;
 use shared::role_rules::IUtilityRoleChecker;
 
-fn make_file(content: &str) -> FileEntry {
-    let path = "utility_helper.py";
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
     FileEntry {
         path: PathBuf::from(path),
-        extension: "py".to_string(),
-        language: Language::Python,
+        extension: ext,
+        language,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,
@@ -30,7 +37,7 @@ fn py_class_in_comment_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -50,7 +57,7 @@ fn py_docstring_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -65,7 +72,7 @@ fn py_triple_single_docstring_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -88,7 +95,7 @@ def helper():
     pass
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -112,7 +119,7 @@ class GoodClass:
     pass
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -138,7 +145,7 @@ def multiply(a: int, b: int) -> int:
     return a * b
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.py", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 

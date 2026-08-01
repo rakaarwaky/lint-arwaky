@@ -104,10 +104,13 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         };
 
         for vuln in &parsed.vulnerabilities {
-            let severity = match vuln.severity.as_deref() {
+            // FR-004: cargo-audit severity — case-insensitive match.
+            // Tool outputs title-case ("Critical", "High", "Medium", "Low", "Unknown").
+            let severity = match vuln.severity.as_deref().map(str::to_lowercase).as_deref() {
                 Some("critical") => Severity::CRITICAL,
                 Some("high") => Severity::HIGH,
                 Some("medium") => Severity::MEDIUM,
+                Some("low") | Some("unknown") | None => Severity::LOW,
                 _ => Severity::LOW,
             };
 

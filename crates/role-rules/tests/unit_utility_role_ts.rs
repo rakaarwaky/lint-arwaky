@@ -6,12 +6,19 @@ use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::path::PathBuf;
 use shared::role_rules::IUtilityRoleChecker;
 
-fn make_file(content: &str) -> FileEntry {
-    let path = "utility_helper.ts";
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
     FileEntry {
         path: PathBuf::from(path),
-        extension: "ts".to_string(),
-        language: Language::TypeScript,
+        extension: ext,
+        language,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,
@@ -30,7 +37,7 @@ fn ts_class_in_comment_should_not_flag() {
 export function helper(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -52,7 +59,7 @@ const msg = "hello world";
 export function greet(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -75,7 +82,7 @@ export class BadUtility {
 export function helper(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -99,7 +106,7 @@ export interface BadInterface {
 export function helper(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -124,7 +131,7 @@ export enum BadEnum {
 export function helper(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -146,7 +153,7 @@ export type BadType = string | number;
 export function helper(): void {}
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -172,7 +179,7 @@ export function multiply(a: number, b: number): number {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 

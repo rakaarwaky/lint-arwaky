@@ -7,12 +7,19 @@ use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::path::PathBuf;
 use shared::role_rules::IUtilityRoleChecker;
 
-fn make_file(content: &str) -> FileEntry {
-    let path = "utility_value_object_generator.rs";
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
     FileEntry {
         path: PathBuf::from(path),
-        extension: "rs".to_string(),
-        language: Language::Rust,
+        extension: ext,
+        language,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,
@@ -60,7 +67,7 @@ macro_rules! primitive_value_object {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_value_object_generator.rs", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -89,7 +96,7 @@ pub fn some_function() -> String {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_value_object_generator.rs", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -119,7 +126,7 @@ pub fn some_function() -> String {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_value_object_generator.rs", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -148,7 +155,7 @@ pub fn some_function() -> String {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_value_object_generator.rs", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -176,7 +183,7 @@ pub fn multiply(a: i32, b: i32) -> i32 {
 }
 "#;
 
-    let source = make_file(content);
+    let source = make_file("utility_value_object_generator.rs", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 

@@ -102,6 +102,10 @@ impl ILinterAdapterProtocol for BanditAdapter {
                 .get("issue_severity")
                 .and_then(|v| v.as_str())
                 .unwrap_or("MEDIUM");
+            let issue_confidence = f
+                .get("issue_confidence")
+                .and_then(|v| v.as_str())
+                .unwrap_or("MEDIUM");
 
             let resolved = shared::common::utility_path_normalization::resolve_capabilities_path(
                 match FilePath::new(filename.to_string()) {
@@ -118,7 +122,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
                 code: ErrorCode::raw(test_id),
                 message: LintMessage::new(issue_text),
                 source: Some(self.name()),
-                severity: self.map_severity(issue_severity),
+                severity: self.map_severity(issue_severity, issue_confidence),
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
             });
@@ -151,12 +155,93 @@ impl BanditAdapter {
         }
     }
 
-    fn map_severity(&self, severity: &str) -> Severity {
-        match severity {
-            "HIGH" => Severity::HIGH,
-            "MEDIUM" => Severity::MEDIUM,
-            "LOW" => Severity::LOW,
+    fn map_severity(&self, severity: &str, confidence: &str) -> Severity {
+        // FR-004: Bandit severity — HIGH confidence + HIGH severity → CRITICAL.
+        match (severity, confidence) {
+            ("HIGH", "HIGH") => Severity::CRITICAL,
+            ("HIGH", _) => Severity::HIGH,
+            ("MEDIUM", _) => Severity::MEDIUM,
+            ("LOW", _) => Severity::LOW,
             _ => Severity::MEDIUM,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::common::ResponseData;
+    use shared::common::Severity;
+
+    fn make_adapter() -> BanditAdapter {
+        let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
+        BanditAdapter::new(executor, None)
+    }
+
+    struct EmptyLintExecutor;
+    #[async_trait::async_trait]
+    impl IExternalLintExecutorProtocol for EmptyLintExecutor {
+        async fn exec_cmd_scan(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: Option<AdapterName>,
+            _: &FilePath,
+        ) -> Result<ResponseData, LinterOperationError> {
+            Ok(ResponseData::default())
+        }
+        async fn exec_cmd_adapter(
+            &self,
+            _: Vec<String>,
+            _: FilePath,
+            _: f64,
+            _: AdapterName,
+        ) -> Result<ResponseData, LinterOperationError> {
+            Ok(ResponseData::default())
+        }
+        async fn js_apply_fix(
+            &self,
+            _: &FilePath,
+            _: &str,
+            _: &str,
+        ) -> Result<ComplianceStatus, LinterOperationError> {
+            Ok(ComplianceStatus::new(false))
+        }
+    }
+
+    // ─── FRD-004: Bandit severity mapping ───
+
+    #[test]
+    fn high_confidence_high_severity_maps_to_critical() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("HIGH", "HIGH"), Severity::CRITICAL);
+    }
+
+    #[test]
+    fn high_severity_low_confidence_maps_to_high() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("HIGH", "LOW"), Severity::HIGH);
+        assert_eq!(adapter.map_severity("HIGH", "MEDIUM"), Severity::HIGH);
+    }
+
+    #[test]
+    fn medium_severity_any_confidence_maps_to_medium() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("MEDIUM", "HIGH"), Severity::MEDIUM);
+        assert_eq!(adapter.map_severity("MEDIUM", "LOW"), Severity::MEDIUM);
+    }
+
+    #[test]
+    fn low_severity_any_confidence_maps_to_low() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("LOW", "HIGH"), Severity::LOW);
+        assert_eq!(adapter.map_severity("LOW", "LOW"), Severity::LOW);
+    }
+
+    #[test]
+    fn unknown_severity_defaults_to_medium() {
+        let adapter = make_adapter();
+        assert_eq!(adapter.map_severity("UNKNOWN", "HIGH"), Severity::MEDIUM);
     }
 }
