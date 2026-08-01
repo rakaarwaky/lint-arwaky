@@ -95,27 +95,7 @@ impl InboundLinkMap {
             }
         }
 
-        // Try canonical path
-        let canon = crate::filesystem::utility_filesystem_io::canonicalize_path(path);
-        if result.is_none()
-            && crate::filesystem::utility_filesystem_io::path_exists(path) && crate::filesystem::utility_filesystem_io::is_file(path)
-            && let Some(canon_str) = canon.to_str()
-        {
-            if let Some(v) = self.mapping.get(canon_str) {
-                result = Some(v);
-            }
-            // Try canonical with ./ prefix
-            let canon_with_prefix = format!("./{}", canon_str);
-            if let Some(v) = self.mapping.get(&canon_with_prefix) {
-                if let Some(existing) = result {
-                    if v.len() > existing.len() {
-                        result = Some(v);
-                    }
-                } else {
-                    result = Some(v);
-                }
-            }
-        }
+        // NOTE: callers should pass canonicalized paths for best matching
 
         // Try clean path (without ./ prefix)
         if result.is_none() {

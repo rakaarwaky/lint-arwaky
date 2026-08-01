@@ -224,7 +224,7 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
 
 #[cfg(test)]
 mod tests {
-    use super::{detect_layer_from_prefix, detect_module_layer, resolve_module_path_to_layer};
+    use crate::common::utility_layer_detector::{detect_layer_from_prefix, detect_module_layer, resolve_module_path_to_layer};
 
     #[test]
     fn test_detect_module_layer_with_prefix() {

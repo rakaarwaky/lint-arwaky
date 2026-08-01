@@ -212,7 +212,7 @@ impl RuffAdapter {
 
 #[cfg(test)]
 mod tests {
-    use super::RuffAdapter;
+    use crate::RuffAdapter;
     use shared::code_analysis::LinterOperationError;
     use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
     use shared::external_lint::IExternalLintExecutorProtocol;

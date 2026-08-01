@@ -1,7 +1,7 @@
 // PURPOSE: IOrphanParserProtocol — contract trait for language parser dispatching.
 // Pure trait definition: zero implementation, zero layer imports.
 
-use super::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 
 pub trait IOrphanParserProtocol: Send + Sync {
     /// Parse a file based on its extension, routing to the correct language parser.

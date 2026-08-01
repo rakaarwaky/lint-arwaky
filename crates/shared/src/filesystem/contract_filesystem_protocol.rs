@@ -2,7 +2,7 @@
 // Rule crates depend on these traits, not concrete implementations.
 // Updated for FR-001 through FR-004 with enriched types.
 
-use super::taxonomy_filesystem_vo::*;
+use crate::filesystem::taxonomy_filesystem_vo::{DefinitionEntry, FileEntry, FilesystemResult, ImplEntry, ImportEntry, Language};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 

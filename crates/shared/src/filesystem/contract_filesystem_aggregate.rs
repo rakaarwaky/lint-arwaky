@@ -2,7 +2,7 @@
 // Single entry point for rule crates to access filesystem capabilities.
 // Implements FR-005 consumer access pattern with granular accessor methods.
 
-use super::taxonomy_filesystem_vo::*;
+use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, FilesystemResult, ImportEntry, ParseWarning, ScanTiming};
 use crate::common::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 

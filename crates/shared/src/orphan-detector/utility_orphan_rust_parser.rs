@@ -1,7 +1,7 @@
 // PURPOSE: utility_orphan_rust_parser — Rust AST parsing via syn crate.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use super::taxonomy_orphan_parse_result_vo::{
+use crate::orphan_detector::taxonomy_orphan_parse_result_vo::{
     AstFnDefVO, AstImportVO, AstModDeclVO, AstStructDefVO, AstTraitDefVO, AstTraitImplVO,
     RustParseResultVO,
 };

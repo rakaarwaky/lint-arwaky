@@ -169,7 +169,7 @@ impl BanditAdapter {
 
 #[cfg(test)]
 mod tests {
-    use super::BanditAdapter;
+    use crate::BanditAdapter;
     use shared::code_analysis::LinterOperationError;
     use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
     use shared::external_lint::IExternalLintExecutorProtocol;
