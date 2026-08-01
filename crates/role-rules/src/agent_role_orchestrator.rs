@@ -1,30 +1,15 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 //
-// The role orchestrator is unique among the feature agents: it doesn't
-// just delegate to checkers — it first classifies each file by its
-// filename prefix (taxonomy_, contract_, capabilities_, etc.), then
-// dispatches to the corresponding layer-specific role checker.
-//
-// ALGORITHM:
-//   1. run_all_role_checks iterates files, extracts filename prefix (first underscore-segment).
-//   2. Matches prefix to layer (taxonomy, contract, utility, capabilities, agent,
-//      surfaces, root/lib/mod) and dispatches to the corresponding role checker.
-//   3. Each checker receives the SourceContentVO (file path + content + language) and
-//      returns violations via the violations Vec.
-//   4. Unknown prefixes are silently skipped (handled by other crates).
+// FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
+// No file I/O or AST parsing is performed internally.
 
-use async_trait::async_trait;
 use shared::cli_commands::LintResult;
-use shared::common::{FilePath, FilePathList};
-
-use shared::common::utility_language_detector::detect_language;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::{
     IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
-
-use filesystem::utility_filesystem_io::{read_file, walk_source_files};
-use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -47,13 +32,16 @@ pub struct RoleOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-#[async_trait]
+#[async_trait::async_trait]
 impl IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let files = self.collect_file_entries(target);
+        self.run_audit_with_entries(&files)
+    }
+
+    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, &mut results);
+        self.run_all_role_checks(files, &mut results);
         results
     }
 
@@ -79,106 +67,149 @@ impl RoleOrchestrator {
         }
     }
 
-    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
+    /// Run all role checks on pre-parsed FileEntry slices.
+    pub fn run_all_role_checks(&self, files: &[FileEntry], violations: &mut Vec<LintResult>) {
         if !self.config.enabled.value {
             return;
         }
 
         for file in files {
-            let content = read_file(file).unwrap_or_default();
-            let filename = Path::new(file)
-                .file_name()
+            if !file.parse_ok || file.content.is_empty() {
+                continue;
+            }
+
+            let path_str = file.path.to_string_lossy();
+            let filename = file.path.file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-
             let stem = Path::new(filename)
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or_default();
             let prefix = stem.split('_').next().unwrap_or_default();
 
-            let fp = match FilePath::new(file.to_string()) {
-                Ok(f) => f,
-                Err(_) => continue,
-            };
-            let content_vo = ContentString::new(content);
-            let language = detect_language(&fp).as_str().to_string();
-            let source_vo = SourceContentVO::new(fp, content_vo, &language);
+            // Skip barrel files
+            if filename == "mod.rs" || filename == "lib.rs" || filename == "main.rs"
+                || filename == "__init__.py" || filename == "index.ts" || filename == "index.js"
+            {
+                continue;
+            }
+
+            if self.is_ignored(&path_str) {
+                continue;
+            }
 
             match prefix {
                 "agent" => {
-                    self.deps
-                        .agent
-                        .check_agent_routing(&source_vo, "agent", violations);
+                    self.deps.agent.check_agent_routing(file, "agent", violations);
                 }
                 "root" => {}
                 "surfaces" | "surface" => {
-                    self.deps
-                        .surface
-                        .check_fn_count_limit(&source_vo, violations);
+                    self.deps.surface.check_fn_count_limit(file, violations);
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
                         || filename.contains("_page")
-                        || filename.contains("_entry");
+                        || filename.contains("_entry")
+                        || filename.contains("_router");
                     let is_utility = filename.contains("_hook")
                         || filename.contains("_store")
                         || filename.contains("_action")
-                        || filename.contains("_screen")
-                        || filename.contains("_router");
+                        || filename.contains("_screen");
                     if is_smart {
-                        self.deps
-                            .surface
-                            .check_smart_surface(&source_vo, violations);
+                        self.deps.surface.check_smart_surface(file, violations);
                     } else if is_utility {
-                        self.deps
-                            .surface
-                            .check_utility_surface(&source_vo, violations);
+                        self.deps.surface.check_utility_surface(file, violations);
                     } else {
-                        self.deps
-                            .surface
-                            .check_passive_surface(&source_vo, violations);
+                        self.deps.surface.check_passive_surface(file, violations);
                     }
                 }
                 "contract" => {
                     if filename.contains("_protocol") {
-                        violations.extend(self.deps.contract.check_protocol(&source_vo));
+                        violations.extend(self.deps.contract.check_protocol(file));
                     } else if filename.contains("_aggregate") {
-                        violations.extend(self.deps.contract.check_aggregate(&source_vo));
+                        violations.extend(self.deps.contract.check_aggregate(file));
                     }
                 }
                 "capabilities" | "capability" => {
-                    self.deps.capabilities.check_capability_routing(
-                        &source_vo,
-                        "capabilities",
-                        violations,
-                    );
+                    self.deps.capabilities.check_capability_routing(file, "capabilities", violations);
                 }
                 "utility" => {
-                    self.deps
-                        .utility
-                        .check_utility_convention(&source_vo, violations);
+                    self.deps.utility.check_utility_convention(file, violations);
                 }
                 "taxonomy" => {
-                    self.deps.taxonomy.check_entity(&source_vo, violations);
-                    self.deps.taxonomy.check_error(&source_vo, violations);
-                    self.deps.taxonomy.check_event(&source_vo, violations);
-                    self.deps.taxonomy.check_constant(&source_vo, violations);
+                    self.deps.taxonomy.check_entity(file, violations);
+                    self.deps.taxonomy.check_error(file, violations);
+                    self.deps.taxonomy.check_event(file, violations);
+                    self.deps.taxonomy.check_constant(file, violations);
                 }
                 _ => {}
             }
         }
     }
 
-    fn collect_files(&self, target: &FilePath) -> FilePathList {
+    fn collect_file_entries(&self, target: &FilePath) -> Vec<FileEntry> {
         let path = Path::new(target.value());
-        let mut files = Vec::new();
+        let mut entries = Vec::new();
         if path.is_dir() {
-            walk_source_files(path, &mut files, &self.ignored_paths);
+            self.walk_for_entries(path, &mut entries);
         } else if path.is_file()
-            && let Ok(p) = FilePath::new(path.to_string_lossy().to_string())
+            && let Ok(content) = std::fs::read_to_string(path)
         {
-            files.push(p);
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            let language = shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
+            if let Some(lang) = language {
+                entries.push(FileEntry {
+                    path: path.to_path_buf(),
+                    extension: ext.to_string(),
+                    language: lang,
+                    size: content.len() as u64,
+                    content,
+                    parse_ok: true,
+                    parse_metadata: None,
+                });
+            }
         }
-        FilePathList::new(files)
+        entries
+    }
+
+    fn walk_for_entries(&self, dir: &Path, entries: &mut Vec<FileEntry>) {
+        if let Ok(read_dir) = std::fs::read_dir(dir) {
+            for entry in read_dir.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if dir_name == "target" || dir_name == ".git" || dir_name == "node_modules" {
+                        continue;
+                    }
+                    if self.is_ignored(&path.to_string_lossy()) {
+                        continue;
+                    }
+                    self.walk_for_entries(&path, entries);
+                } else if path.is_file() {
+                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                    let language = shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
+                    if let Some(lang) = language
+                        && let Ok(content) = std::fs::read_to_string(&path)
+                    {
+                        entries.push(FileEntry {
+                            path: path.clone(),
+                            extension: ext.to_string(),
+                            language: lang,
+                            size: content.len() as u64,
+                            content,
+                            parse_ok: true,
+                            parse_metadata: None,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    fn is_ignored(&self, path: &str) -> bool {
+        let segments: Vec<&str> = path.split('/').collect();
+        self.ignored_paths.iter().any(|pattern| {
+            segments.contains(&pattern.as_str())
+        })
     }
 }

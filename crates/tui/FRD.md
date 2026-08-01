@@ -2,12 +2,11 @@
 
 ## System Overview
 
-
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Terminal"] -->|events| B["tui orchestrator"]
+    A["Surface"] -->|events| B["tui orchestrator"]
     B --> C{"event type"}
 
     C -->|"key / mouse"| D["action handler"]
@@ -67,7 +66,7 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
   - Layout proportions: Tree (20%) | File List (35%) | Preview (45%).
   - Header bar (1 row): shows "lint-arwaky TUI | Path: <current_dir> [q/Esc] Quit".
   - Shortcut bar (3 rows): key hints for available actions.
-  - Status bar (1 row): current status message (e.g., "Done: <path> | N violations").
+  - Status bar (1 row): current status message (e.g., "Done: <path></path> | N violations").
   - Path dialog overlay: shown on startup, user types project root or presses Tab for CWD.
 - **Edge Cases**:
   - Terminal smaller than 5 rows or 10 columns — mouse click handling disabled.
@@ -272,22 +271,23 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## API Contract
 
-| Operation                         | Input                               | Output                    | Purpose                                                                  |
-| ----------------------------------- | ----------------------------------- | ------------------------- | -------------------------------------------------------------------------- |
-| Run TUI                           | —                                   | Result                    | Initialize terminal, run event loop, restore terminal on exit.             |
-| Handle event                       | Application state, TUI event        | —                         | Delegate event to action handler.                                          |
-| Load directory                     | Application state, path             | —                         | Read directory, sort entries, reset selection.                             |
-| Load preview                       | Application state                   | —                         | Load file preview for selected entry.                                      |
-| Start scan                         | Application state                   | Channel receiver          | Start background scan thread, return progress channel.                     |
-| Poll scan                          | Application state, channel receiver | —                         | Poll scan progress and update state.                                       |
-| Run check                          | Path, flags                         | Execution result          | Run AES compliance check.                                                  |
-| Run scan action                    | Path                                | Execution result          | Run comprehensive multi-adapter scan.                                      |
-| Run fix                            | Path, flags                         | Execution result          | Auto-fix violations.                                                       |
-| Run CI                             | Path, flags                         | Execution result          | CI mode with threshold check.                                              |
-| Run doctor                         | —                                   | Execution result          | Environment diagnostics.                                                   |
-| List directory                     | Path                                | File entry list           | List directory entries.                                                    |
-| Read file preview                  | Path, max lines                     | Display content           | Read file with line numbers, truncate at max lines.                        |
-| Copy to clipboard                  | String                              | Boolean                   | Copy text via arboard or xclip/wl-copy fallback.                           |
+
+| Operation         | Input                               | Output           | Purpose                                                        |
+| ------------------- | ------------------------------------- | ------------------ | ---------------------------------------------------------------- |
+| Run TUI           | —                                  | Result           | Initialize terminal, run event loop, restore terminal on exit. |
+| Handle event      | Application state, TUI event        | —               | Delegate event to action handler.                              |
+| Load directory    | Application state, path             | —               | Read directory, sort entries, reset selection.                 |
+| Load preview      | Application state                   | —               | Load file preview for selected entry.                          |
+| Start scan        | Application state                   | Channel receiver | Start background scan thread, return progress channel.         |
+| Poll scan         | Application state, channel receiver | —               | Poll scan progress and update state.                           |
+| Run check         | Path, flags                         | Execution result | Run AES compliance check.                                      |
+| Run scan action   | Path                                | Execution result | Run comprehensive multi-adapter scan.                          |
+| Run fix           | Path, flags                         | Execution result | Auto-fix violations.                                           |
+| Run CI            | Path, flags                         | Execution result | CI mode with threshold check.                                  |
+| Run doctor        | —                                  | Execution result | Environment diagnostics.                                       |
+| List directory    | Path                                | File entry list  | List directory entries.                                        |
+| Read file preview | Path, max lines                     | Display content  | Read file with line numbers, truncate at max lines.            |
+| Copy to clipboard | String                              | Boolean          | Copy text via arboard or xclip/wl-copy fallback.               |
 
 ## Integration Points
 
@@ -314,28 +314,28 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## Test Scenarios / QA Checklist
 
-- [ ] TUI launches with 3-panel layout and correct proportions.
-- [ ] j/k navigation moves selection in file list.
-- [ ] h/l/Enter navigates directories and opens files.
-- [ ] Tab/BackTab cycles focus between panels.
-- [ ] All lint actions (c/s/f/t/o/ctrl+s/ctrl+d/ctrl+p) execute and display results.
-- [ ] Status bar updates with violation count after action.
-- [ ] scan runs in background with progress indicator; other actions blocked during scan.
-- [ ] Path dialog works on startup; Tab uses CWD; Enter validates path.
-- [ ] q/Esc quits and restores terminal to normal mode.
-- [ ] / search mode filters file list incrementally.
-- [ ] ? help overlay toggles correctly.
-- [ ] y copies preview to clipboard; Ctrl+Y saves to lint-results.txt.
-- [ ] Mouse click selects file in list and focuses FileList panel.
-- [ ] Mouse click on preview jumps to proportional scroll position.
-- [ ] Mouse scroll wheel scrolls focused panel.
-- [ ] Mouse drag on scrollbar scrubs through preview content.
-- [ ] Scroll position clamped to bounds (no overflow).
-- [ ] Home/End jump to top/bottom of content.
-- [ ] PageUp/PageDown scroll preview by 10 lines.
-- [ ] Terminal resize handled without crash.
-- [ ] doctor/init/install/etc. global actions execute and show results.
-- [ ] watch action shows "use CLI" message (not implemented in TUI).
+- [ ]  TUI launches with 3-panel layout and correct proportions.
+- [ ]  j/k navigation moves selection in file list.
+- [ ]  h/l/Enter navigates directories and opens files.
+- [ ]  Tab/BackTab cycles focus between panels.
+- [ ]  All lint actions (c/s/f/t/o/ctrl+s/ctrl+d/ctrl+p) execute and display results.
+- [ ]  Status bar updates with violation count after action.
+- [ ]  scan runs in background with progress indicator; other actions blocked during scan.
+- [ ]  Path dialog works on startup; Tab uses CWD; Enter validates path.
+- [ ]  q/Esc quits and restores terminal to normal mode.
+- [ ]  / search mode filters file list incrementally.
+- [ ]  ? help overlay toggles correctly.
+- [ ]  y copies preview to clipboard; Ctrl+Y saves to lint-results.txt.
+- [ ]  Mouse click selects file in list and focuses FileList panel.
+- [ ]  Mouse click on preview jumps to proportional scroll position.
+- [ ]  Mouse scroll wheel scrolls focused panel.
+- [ ]  Mouse drag on scrollbar scrubs through preview content.
+- [ ]  Scroll position clamped to bounds (no overflow).
+- [ ]  Home/End jump to top/bottom of content.
+- [ ]  PageUp/PageDown scroll preview by 10 lines.
+- [ ]  Terminal resize handled without crash.
+- [ ]  doctor/init/install/etc. global actions execute and show results.
+- [ ]  watch action shows "use CLI" message (not implemented in TUI).
 
 ## Assumptions & Constraints
 
@@ -349,8 +349,9 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## Glossary
 
+
 | Term              | Definition                                                                                               |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Panel Focus       | Which panel (Tree/FileList/Preview) receives keyboard input.                                             |
 | Preview Mode      | What content the Preview panel displays (file content, lint results, help overlay).                      |
 | Application State | Central state holding all TUI state (selection, scroll, focus, etc.).                                    |

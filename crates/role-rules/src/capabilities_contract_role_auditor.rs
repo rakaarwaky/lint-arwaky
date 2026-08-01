@@ -1,45 +1,40 @@
+// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
+//
+// ALGORITHM:
+//   Uses FileEntry from the filesystem crate. Detects primitive types in contract
+//   method signatures. Uses content line scanning for signature detection since
+//   ParseMetadata does not yet expose method parameter/return types.
+
 use shared::cli_commands::LintResult;
 use shared::common::{Language, LintMessage, Severity};
-
-use shared::common::utility_language_detector::detect_language_info_from_source;
+use shared::common::utility_language_detector::detect_language_info;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
 
-use shared::common::SourceContentVO;
-
-// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
-//
-// ALGORITHM:
-//   check_contract_primitive (protocol dispatch) — Detects primitive type employment
-//   in contract method signatures. Uses LanguageDetector to determine language, then
-//   delegates signature parsing to shared utility functions.
-
 // ─── Block 1: Struct Definition ───────────────────────────
-
 pub struct ContractRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IContractRoleChecker for ContractRoleChecker {
-    fn check_protocol(&self, source: &SourceContentVO) -> Vec<LintResult> {
+    fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult> {
         let mut violations = Vec::new();
-        self.check_contract_primitive(source, &mut violations);
+        self.check_contract_primitive(file, &mut violations);
         violations
     }
 
-    fn check_aggregate(&self, source: &SourceContentVO) -> Vec<LintResult> {
+    fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult> {
         let mut violations = Vec::new();
-        self.check_contract_primitive(source, &mut violations);
+        self.check_contract_primitive(file, &mut violations);
         violations
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl Default for ContractRoleChecker {
     fn default() -> Self {
         Self::new()
@@ -51,11 +46,14 @@ impl ContractRoleChecker {
         Self {}
     }
 
-    /// Detect primitive type usage in contract method signatures (AES402).
-    fn check_contract_primitive(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        let content = source.content.value();
-        let li = detect_language_info_from_source(source);
+    fn check_contract_primitive(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        let content = &file.content;
+        let fp = match shared::common::FilePath::new(path_str.to_string()) {
+            Ok(fp) => fp,
+            Err(_) => return,
+        };
+        let li = detect_language_info(&fp);
         let is_rs = li.is_rs;
         let is_py = li.is_py;
         let is_js = li.is_js;
@@ -86,11 +84,7 @@ impl ContractRoleChecker {
                 .with_language(lang)
                 .to_string();
                 violations.push(LintResult::new_arch(
-                    file,
-                    line_no,
-                    "AES402",
-                    Severity::HIGH,
-                    msg,
+                    &path_str, line_no, "AES402", Severity::HIGH, msg,
                 ));
             }
             return;
@@ -111,11 +105,7 @@ impl ContractRoleChecker {
                 .with_language(lang)
                 .to_string();
                 violations.push(LintResult::new_arch(
-                    file,
-                    line_no,
-                    "AES402",
-                    Severity::HIGH,
-                    msg,
+                    &path_str, line_no, "AES402", Severity::HIGH, msg,
                 ));
             }
             return;
@@ -135,11 +125,7 @@ impl ContractRoleChecker {
             .with_language(lang)
             .to_string();
             violations.push(LintResult::new_arch(
-                file,
-                line_no,
-                "AES402",
-                Severity::HIGH,
-                msg,
+                &path_str, line_no, "AES402", Severity::HIGH, msg,
             ));
         }
     }

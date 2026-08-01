@@ -15,9 +15,6 @@ const CONSUMER_LAYERS: &[&str] = &[
     "surface",
     "surfaces",
     "root",
-    "contract",
-    "utility",
-    "taxonomy",
 ];
 
 // ─── Block 1: Struct Definition ───────────────────────────

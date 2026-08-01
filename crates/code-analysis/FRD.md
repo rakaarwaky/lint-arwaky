@@ -202,15 +202,15 @@ flowchart TD
 ## API Contract
 
 
-| Operation                          | Input                                   | Output                        | Purpose                                                                |
-| ------------------------------------ | ----------------------------------------- | ------------------------------- | ------------------------------------------------------------------------ |
-| Line count check (AES301/AES302)   | File data from filesystem crate           | AES301/AES302 violations       | Check max/min file line counts                                        |
-| Definition check (AES303)          | File data from filesystem crate           | AES303 violations              | Verify file declares at least one primary symbol                       |
-| Dead inheritance check (AES303)    | File data from filesystem crate           | AES303 violations              | Detect empty unit structs and empty classes                             |
-| Bypass detection (AES304)          | File data from filesystem crate           | AES304 violations              | Detect forbidden tokens, attributes, and comment bypasses              |
-| Cargo.toml bypass check (AES304)   | File content, configuration               | AES304 violations              | Detect Cargo.toml clippy allow bypass                                  |
-| Duplication analysis (AES305)      | File data from filesystem crate           | Similarity violations          | File-level similarity analysis with sliding window                     |
-| Full code analysis                 | File data from filesystem crate, config   | Lint results                   | Run all code quality checks (AES301–AES305)                            |
+| Operation                        | Input                                   | Output                   | Purpose                                                   |
+| ---------------------------------- | ----------------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| Line count check (AES301/AES302) | File data from filesystem crate         | AES301/AES302 violations | Check max/min file line counts                            |
+| Definition check (AES303)        | File data from filesystem crate         | AES303 violations        | Verify file declares at least one primary symbol          |
+| Dead inheritance check (AES303)  | File data from filesystem crate         | AES303 violations        | Detect empty unit structs and empty classes               |
+| Bypass detection (AES304)        | File data from filesystem crate         | AES304 violations        | Detect forbidden tokens, attributes, and comment bypasses |
+| Cargo.toml bypass check (AES304) | File content, configuration             | AES304 violations        | Detect Cargo.toml clippy allow bypass                     |
+| Duplication analysis (AES305)    | File data from filesystem crate         | Similarity violations    | File-level similarity analysis with sliding window        |
+| Full code analysis               | File data from filesystem crate, config | Lint results             | Run all code quality checks (AES301–AES305)              |
 
 ---
 
@@ -368,7 +368,7 @@ flowchart TD
 | **Pre-processing**   | Removal of import lines, blank lines, and comment-only lines before duplication window comparison                   |
 | **Safe variant**     | `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass                                   |
 | **Severity levels**  | CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)                                      |
-| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to code-analysis.         |
+| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to code-analysis.               |
 
 ---
 
@@ -405,6 +405,7 @@ AES3XX:
   exclude_blank_lines: <bool>        # AES305 only
   exclude_comments: <bool>           # AES305 only
 ```
+
 ---
 
 ## Reference

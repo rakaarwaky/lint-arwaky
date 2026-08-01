@@ -1,8 +1,8 @@
-// PURPOSE: IContractRoleChecker — protocol trait for AES402: contract primitive type audits
+// PURPOSE: IContractRoleChecker — contract trait for AES402: contract primitive type audits
 use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::common::taxonomy_source_vo::SourceContentVO;
+use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 
 pub trait IContractRoleChecker: Send + Sync {
-    fn check_protocol(&self, source: &SourceContentVO) -> Vec<LintResult>;
-    fn check_aggregate(&self, source: &SourceContentVO) -> Vec<LintResult>;
+    fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult>;
+    fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult>;
 }
