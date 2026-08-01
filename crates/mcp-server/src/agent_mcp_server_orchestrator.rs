@@ -230,10 +230,9 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     });
 
                 // Create fix orchestrator with the requested dry_run setting
-                let fix_container =
-                    auto_fix::root_auto_fix_container::AutoFixContainer::new(
-                        self.deps.code_analysis_linter.clone(),
-                    );
+                let fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(
+                    self.deps.code_analysis_linter.clone(),
+                );
                 let fix_orchestrator = fix_container.orchestrator(dry_run);
                 let fix_result = fix_orchestrator.execute(&fp);
 

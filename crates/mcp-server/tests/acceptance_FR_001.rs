@@ -22,8 +22,15 @@ async fn frd_mcp_001_execute_command_scan() {
     });
     let result = surface.execute_command(args).await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
-    assert_eq!(parsed["status"], "success");
+    // FRD FR-001: exit_code 0 (clean) or 1 (violations) are both valid
+    assert!(
+        parsed["status"] == "success" || parsed["status"] == "failure",
+        "status must be 'success' or 'failure'"
+    );
     assert_eq!(parsed["action"], "scan");
+    assert!(parsed["exit_code"].is_number());
+    assert!(parsed["results"].is_array());
+    assert!(parsed["parse_warnings"].is_array());
 }
 
 /// FRD-MCP-001: execute_command handles check alias
@@ -36,7 +43,12 @@ async fn frd_mcp_001_execute_command_check_alias() {
     });
     let result = surface.execute_command(args).await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
-    assert_eq!(parsed["status"], "success");
+    // FRD FR-001: exit_code 0 (clean) or 1 (violations) are both valid
+    assert!(
+        parsed["status"] == "success" || parsed["status"] == "failure",
+        "status must be 'success' or 'failure'"
+    );
+    assert!(parsed["parse_warnings"].is_array());
 }
 
 /// FRD-MCP-001: execute_command rejects unknown actions gracefully

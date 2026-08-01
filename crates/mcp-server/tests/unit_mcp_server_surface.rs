@@ -111,6 +111,11 @@ async fn health_check_lists_expected_adapters() {
     assert!(names.contains(&"rustfmt"));
     assert!(names.contains(&"cargo-audit"));
     assert!(names.contains(&"ruff"));
+    // FRD FR-004: all 9 adapters
+    assert!(names.contains(&"clippy"));
+    assert!(names.contains(&"rustfmt"));
+    assert!(names.contains(&"cargo-audit"));
+    assert!(names.contains(&"ruff"));
     assert!(names.contains(&"mypy"));
     assert!(names.contains(&"bandit"));
     assert!(names.contains(&"eslint"));

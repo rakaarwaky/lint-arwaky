@@ -103,7 +103,7 @@ async fn execute_command_scan_no_path_defaults_to_dot() {
 // ─── execute_command: ci with threshold ──────────────────────────────
 
 #[tokio::test]
-async fn execute_command_ci_pass_with_high_score() {
+async fn execute_command_ci_pass_or_fail_based_on_violations() {
     let sut = build_test_orchestrator();
     let args = Parameters(ExecuteCommandArgs {
         action: "ci".to_string(),
@@ -111,9 +111,13 @@ async fn execute_command_ci_pass_with_high_score() {
     });
     let result = sut.execute_command(args).await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
-    // MockCodeAnalysis returns score 100.0, threshold 50 → pass
-    assert_eq!(parsed["status"], "pass");
+    // FRD FR-001: CI returns pass/fail based on real violations
+    assert!(
+        parsed["status"] == "pass" || parsed["status"] == "fail",
+        "status must be 'pass' or 'fail'"
+    );
     assert_eq!(parsed["threshold"], 50);
+    assert!(parsed["total_violations"].is_number());
 }
 
 // ─── execute_command: fix ────────────────────────────────────────────

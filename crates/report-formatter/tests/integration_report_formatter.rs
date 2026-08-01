@@ -9,16 +9,11 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::{Format, ScanReport};
-
 use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
-
 use std::sync::Arc;
 
 fn build_full_orchestrator() -> ReportFormatterOrchestrator {
-    let text = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
+    let text = Arc::new(TextFormatter::new());
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
@@ -50,7 +45,6 @@ fn full_format_pipeline_works() {
     let orch = build_full_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
-    // All formats should produce non-empty output
     let text_result = orch.format(&report, Format::Text);
     let json_result = orch.format(&report, Format::Json);
     let sarif_result = orch.format(&report, Format::Sarif);
@@ -66,15 +60,11 @@ fn full_format_pipeline_works() {
 
 #[test]
 fn all_formatters_accessible() {
-    let text = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
+    let text = Arc::new(TextFormatter::new());
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
 
-    // Verify all implement IReportFormatterProtocol
     let _: &dyn IReportFormatterProtocol = &*text;
     let _: &dyn IReportFormatterProtocol = &*json;
     let _: &dyn IReportFormatterProtocol = &*sarif;

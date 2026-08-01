@@ -80,9 +80,8 @@ impl CliContainer {
         let git_aggregate = git_container.aggregate();
 
         // Wire up report formatter capabilities → aggregate
-        let text_formatter: Arc<dyn IReportFormatterProtocol> = Arc::new(
-            report_formatter::TextFormatter::new(code_analysis_linter.clone()),
-        );
+        let text_formatter: Arc<dyn IReportFormatterProtocol> =
+            Arc::new(report_formatter::TextFormatter::new());
         let json_formatter: Arc<dyn IReportFormatterProtocol> =
             Arc::new(report_formatter::JsonFormatter::new());
         let sarif_formatter: Arc<dyn IReportFormatterProtocol> =
