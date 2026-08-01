@@ -7,12 +7,12 @@
 //   - HelpOverlay: keyboard shortcut reference
 //
 // Help content is embedded as a static string in help_text().
-use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
+use ratatui::Frame;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;
@@ -105,10 +105,9 @@ Actions (on selected file/folder):
   s       scan — multi-adapter scan
   f       fix — auto-fix
   t       ci — CI mode (threshold)
-  w       watch — file watch
+  w       watch — not supported (use CLI)
   o       orphan — dead code check
   Ctrl+S  security — vulnerability scan
-  Ctrl+D  duplicates — duplication
   Ctrl+P  dependencies — deps scan
 
 Setup:

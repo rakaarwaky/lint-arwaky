@@ -193,7 +193,6 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         return match key.code {
             KeyCode::Char('q') => TuiEvent::Quit,
             KeyCode::Char('s') => TuiEvent::ActionSecurity,
-            KeyCode::Char('d') => TuiEvent::ActionDuplicates,
             KeyCode::Char('p') => TuiEvent::ActionDependencies,
             KeyCode::Char('y') => TuiEvent::CopyToFile,
             _ => TuiEvent::None,

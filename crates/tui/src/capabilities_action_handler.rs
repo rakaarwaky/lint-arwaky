@@ -219,7 +219,6 @@ impl ActionHandler {
             TuiEvent::ActionCi => self.run_action(state, |lp, p, f| lp.ci(p, f)),
             TuiEvent::ActionOrphan => self.run_action(state, |lp, p, _f| lp.orphan(p)),
             TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
-            TuiEvent::ActionDuplicates => self.run_action(state, |lp, p, _f| lp.duplicates(p)),
             TuiEvent::ActionDependencies => self.run_action(state, |lp, p, _f| lp.dependencies(p)),
             // ---- Setup/global actions that don't need a selected path ----
             TuiEvent::ActionDoctor => self.run_action_no_path(state, |lp| lp.doctor()),
@@ -375,7 +374,8 @@ impl ActionHandler {
     pub fn load_preview(&self, state: &mut AppState) {
         if let Some(entry) = state.selected_entry() {
             if !entry.is_dir {
-                self.load_file_preview(state, &entry.full_path);
+                let path = entry.full_path.clone();
+                self.load_file_preview(state, &path);
             }
         }
     }
