@@ -176,34 +176,28 @@ impl RuffAdapter {
     fn map_severity(&self, _severity: &str, code: &str) -> Severity {
         // FR-004: Ruff severity mapping is code-based, not tool-severity-based.
         // Code format: e.g., "E501", "F401", "S105", "B006"
-        if code == "E999" {
-            Severity::CRITICAL // syntax error
-        } else if code.starts_with('S') {
-            Severity::CRITICAL // security rules (S1xx)
+        if code == "E999" || code.starts_with('S') {
+            Severity::CRITICAL // syntax error (E999) or security rules (S1xx)
         } else if code == "F401" {
             Severity::MEDIUM // unused import
-        } else if code.starts_with('F')
+        } else if (code.starts_with('F')
             && code.len() >= 3
-            && code[1..].parse::<u32>().is_ok_and(|n| (800..900).contains(&n))
+            && code[1..].parse::<u32>().is_ok_and(|n| (800..900).contains(&n)))
+            || (code.starts_with('B')
+                && code.len() >= 3
+                && code[1..].parse::<u32>().is_ok_and(|n| (1..100).contains(&n)))
         {
-            Severity::HIGH // F8xx: undefined name
-        } else if code.starts_with('B')
-            && code.len() >= 3
-            && code[1..].parse::<u32>().is_ok_and(|n| (1..100).contains(&n))
-        {
-            Severity::HIGH // B0xx: bugbear
-        } else if code.starts_with('E')
+            Severity::HIGH // F8xx: undefined name, B0xx: bugbear
+        } else if (code.starts_with('E')
             && code.len() >= 3
             && code[1..]
                 .parse::<u32>()
-                .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n))
+                .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n)))
+            || (code.starts_with('W')
+                && code.len() >= 3
+                && code[1..].parse::<u32>().is_ok_and(|n| (200..300).contains(&n)))
         {
-            Severity::LOW // E1xx: indentation, E5xx: line length
-        } else if code.starts_with('W')
-            && code.len() >= 3
-            && code[1..].parse::<u32>().is_ok_and(|n| (200..300).contains(&n))
-        {
-            Severity::LOW // W2xx: whitespace
+            Severity::LOW // E1xx: indentation, E5xx: line length, W2xx: whitespace
         } else {
             Severity::MEDIUM // default
         }
