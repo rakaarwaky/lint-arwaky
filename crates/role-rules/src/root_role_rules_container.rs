@@ -35,6 +35,7 @@ impl RoleContainer {
             surface: Arc::new(SurfaceRoleChecker::new()),
             agent: Arc::new(AgentRoleChecker::new()),
             utility: Arc::new(UtilityRoleChecker::new()),
+            filesystem: Arc::new(filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new()),
         };
         Self { deps, config }
     }
@@ -57,6 +58,7 @@ impl RoleContainer {
             surface: Arc::clone(&self.deps.surface),
             agent: Arc::clone(&self.deps.agent),
             utility: Arc::clone(&self.deps.utility),
+            filesystem: Arc::clone(&self.deps.filesystem),
         };
         Arc::new(RoleOrchestrator::new(deps, &self.config))
     }
