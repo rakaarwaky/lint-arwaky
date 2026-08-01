@@ -395,21 +395,13 @@ impl DummyImportChecker {
             let trimmed = line.trim();
             let is_skip = match lang {
                 LanguageVO::Rust => {
-                    trimmed.starts_with("//")
-                        || trimmed.starts_with("fn _use_")
-                        || trimmed.contains('"') // skip string literal definitions
+                    trimmed.starts_with("//") || trimmed.starts_with("fn _use_")
                 }
                 LanguageVO::Python => {
-                    trimmed.starts_with("#")
-                        || trimmed.starts_with("def _use_")
-                        || trimmed.contains('"')
-                        || trimmed.contains('\'')
+                    trimmed.starts_with("#") || trimmed.starts_with("def _use_")
                 }
                 LanguageVO::JavaScript => {
-                    trimmed.starts_with("//")
-                        || trimmed.starts_with("function _use")
-                        || trimmed.contains('"')
-                        || trimmed.contains('\'')
+                    trimmed.starts_with("//") || trimmed.starts_with("function _use")
                 }
                 LanguageVO::Unknown => false,
             };
@@ -417,7 +409,9 @@ impl DummyImportChecker {
                 continue;
             }
             for pattern in &logic_patterns {
-                if trimmed.contains(pattern) {
+                let is_string_lit = trimmed.contains(&format!("\"{}", pattern))
+                    || trimmed.contains(&format!("'{}", pattern));
+                if trimmed.contains(pattern) && !is_string_lit {
                     violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::MEDIUM,
                         AesImportViolation::ImportIntentViolation {
                             source_layer: LayerNameVO::new("surfaces"),

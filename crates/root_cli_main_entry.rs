@@ -13,6 +13,7 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_quality_action;
 use cli_commands::surface_role_action;
 use cli_commands::surface_setup_command;
+use cli_commands::surface_git_command;
 use cli_commands::surface_watch_command;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_common_error::ExitCode as DomainExitCode;
@@ -219,6 +220,25 @@ fn main() -> ExitCode {
                 watch_agg,
                 path.map(|p| FilePath::new(p).unwrap_or_default()),
             )
+        }
+        Commands::GitDiff { base, path, filter } => {
+            let git_container =
+                git_hooks::root_git_hooks_container::GitContainer::new_default();
+            let git_aggregate = git_container.aggregate();
+            let rt = match tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            {
+                Ok(r) => r,
+                Err(_) => return DomainExitCode::RUNTIME_ERROR.to_process_exit_code(),
+            };
+            rt.block_on(surface_git_command::handle_git_diff(
+                git_aggregate,
+                container.code_analysis_linter.clone(),
+                shared::common::taxonomy_git_vo::GitBranchName::new(&base),
+                path.as_deref(),
+                filter.as_deref(),
+            ))
         }
         Commands::InstallHook => {
             let git_hooks_container =

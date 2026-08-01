@@ -13,7 +13,7 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
         ("capabilities_", "capabilities"),
         ("utility_", "utility"),
         ("agent_", "agent"),
-        ("surface_", "surface"),
+        ("surface_", "surfaces"),
         ("root_", "root"),
     ];
 
