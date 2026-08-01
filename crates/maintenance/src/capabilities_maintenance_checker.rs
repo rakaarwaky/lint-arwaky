@@ -54,7 +54,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         // FR-005: Rust tools — all required
         let mut rust_tools = vec![check_tool("rustc", &["--version"], true)];
-        rust_tools.push(check_tool("cargo", &["--version"], true)];
+        rust_tools.push(check_tool("cargo", &["--version"], true));
         let mut clippy_status = check_tool("cargo", &["clippy", "--version"], true);
         clippy_status.name = "clippy".to_string();
         rust_tools.push(clippy_status);
