@@ -30,6 +30,7 @@ pub struct McpContainer {
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    pub filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 impl McpContainer {

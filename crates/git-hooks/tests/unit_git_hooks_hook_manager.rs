@@ -97,7 +97,7 @@ fn update_ignore_rule_add_rule() {
     let tmp_dir = std::env::temp_dir().join(format!("git_hooks_ignore_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&tmp_dir);
     let config_path = tmp_dir.join("lint_arwaky.config.yaml");
-    std::fs::write(&config_path, "# config").unwrap();
+    std::fs::write(&config_path, "ignored_paths:\n  - \"/target\"\n").unwrap();
 
     let manager = sut();
     let request = HookIgnoreUpdateVO::new(
@@ -109,6 +109,10 @@ fn update_ignore_rule_add_rule() {
     assert!(result.value().contains("Added"));
     assert!(result.value().contains("*.generated.rs"));
 
+    // Verify the rule was actually written to the file
+    let updated = std::fs::read_to_string(&config_path).unwrap();
+    assert!(updated.contains("*.generated.rs"));
+
     let _ = std::fs::remove_dir_all(&tmp_dir);
 }
 
@@ -117,7 +121,11 @@ fn update_ignore_rule_remove_rule() {
     let tmp_dir = std::env::temp_dir().join(format!("git_hooks_ignore_rm_{}", std::process::id()));
     let _ = std::fs::create_dir_all(&tmp_dir);
     let config_path = tmp_dir.join("lint_arwaky.config.yaml");
-    std::fs::write(&config_path, "# config").unwrap();
+    std::fs::write(
+        &config_path,
+        "ignored_paths:\n  - \"*.generated.rs\"\n  - \"/target\"\n",
+    )
+    .unwrap();
 
     let manager = sut();
     let request = HookIgnoreUpdateVO::new(
@@ -127,6 +135,55 @@ fn update_ignore_rule_remove_rule() {
     );
     let result = manager.update_ignore_rule(request);
     assert!(result.value().contains("Removed"));
+
+    // Verify the rule was actually removed from the file
+    let updated = std::fs::read_to_string(&config_path).unwrap();
+    assert!(!updated.contains("*.generated.rs"));
+    assert!(updated.contains("/target"));
+
+    let _ = std::fs::remove_dir_all(&tmp_dir);
+}
+
+#[test]
+fn update_ignore_rule_add_duplicate_returns_already_present() {
+    let tmp_dir = std::env::temp_dir().join(format!(
+        "git_hooks_ignore_dup_{}",
+        std::process::id()
+    ));
+    let _ = std::fs::create_dir_all(&tmp_dir);
+    let config_path = tmp_dir.join("lint_arwaky.config.yaml");
+    std::fs::write(&config_path, "ignored_paths:\n  - \"*.generated.rs\"\n").unwrap();
+
+    let manager = sut();
+    let request = HookIgnoreUpdateVO::new(
+        "*.generated.rs",
+        false,
+        config_path.to_str().unwrap().to_string(),
+    );
+    let result = manager.update_ignore_rule(request);
+    assert!(result.value().contains("already present"));
+
+    let _ = std::fs::remove_dir_all(&tmp_dir);
+}
+
+#[test]
+fn update_ignore_rule_remove_nonexistent_returns_not_found() {
+    let tmp_dir = std::env::temp_dir().join(format!(
+        "git_hooks_ignore_nf_{}",
+        std::process::id()
+    ));
+    let _ = std::fs::create_dir_all(&tmp_dir);
+    let config_path = tmp_dir.join("lint_arwaky.config.yaml");
+    std::fs::write(&config_path, "ignored_paths:\n  - \"/target\"\n").unwrap();
+
+    let manager = sut();
+    let request = HookIgnoreUpdateVO::new(
+        "*.nonexistent",
+        true,
+        config_path.to_str().unwrap().to_string(),
+    );
+    let result = manager.update_ignore_rule(request);
+    assert!(result.value().contains("not found"));
 
     let _ = std::fs::remove_dir_all(&tmp_dir);
 }
