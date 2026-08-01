@@ -27,20 +27,14 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
 }
 
 pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    let normalized_file = match Path::new(file_path)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
-    {
-        Ok(p) => p,
-        Err(_) => file_path.replace('\\', "/"),
-    };
-    let normalized_root = match Path::new(root_dir)
-        .canonicalize()
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
-    {
-        Ok(p) => p,
-        Err(_) => root_dir.trim_end_matches('/').replace('\\', "/"),
-    };
+    let normalized_file = crate::filesystem::utility_filesystem_io::canonicalize_path(file_path)
+        .to_string_lossy()
+        .replace('\\', "/");
+    let normalized_root = crate::filesystem::utility_filesystem_io::canonicalize_path(root_dir)
+        .to_string_lossy()
+        .replace('\\', "/")
+        .trim_end_matches('/')
+        .to_string();
 
     let file_path = Path::new(&normalized_file);
     let root_path = Path::new(&normalized_root);
