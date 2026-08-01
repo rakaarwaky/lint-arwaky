@@ -2,7 +2,6 @@ use shared::common::DescriptionVO;
 use shared::common::DirectoryPath;
 use shared::common::{EnvContentVO, McpConfigVO};
 use shared::project_setup::ISetupManagementProtocol;
-use shared::filesystem::utility_filesystem_io;
 use shared::project_setup::utility_setup_io as setup_io;
 use shared::project_setup::{McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError};
 
@@ -39,9 +38,8 @@ pub struct SetupManagementProcessor {
 impl ISetupManagementProtocol for SetupManagementProcessor {
     /// Generate .env content for the lint-arwaky environment.
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO {
-        let _ = utility_filesystem_io::create_dir_all(
-            &shared::common::taxonomy_path_vo::FilePath::new(home.value.clone())
-                .unwrap_or_default(),
+        let _ = self.filesystem.create_dir_all(
+            std::path::Path::new(&home.value),
         );
         let lines = [
             "# Lint Arwaky Environment Configuration".to_string(),

@@ -2,7 +2,7 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::Format;
-use shared::filesystem::utility_filesystem_io::is_member_path;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::FilePath;
 use shared::common::LayerMapVO;
 use shared::config_system::IConfigOrchestratorAggregate;
@@ -50,7 +50,7 @@ pub fn handle_scan_quality(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, &root, format, is_member_path(&root));
+    output_violations(&violations, &root, format, filesystem.is_member_path(&root));
     if violations.is_empty() {
         ExitCode::OK
     } else {

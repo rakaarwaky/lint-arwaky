@@ -54,7 +54,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
 
     let format = opts.format;
     let is_specific_member = opts.member.is_some()
-        || shared::filesystem::utility_filesystem_io::is_leaf_member_path(&root);
+        || filesystem::FilesystemOrchestrator::new().is_leaf_member_path(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {

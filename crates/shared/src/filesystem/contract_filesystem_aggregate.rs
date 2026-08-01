@@ -193,4 +193,37 @@ pub trait IFilesystemAggregate: Send + Sync {
 
     /// Remove directory recursively.
     fn remove_dir_all(&self, path: &Path) -> Result<(), std::io::Error>;
+
+    // ── Workspace Member Detection ─────────────────────────
+
+    /// Detect if a path is a single workspace member (crate/module/package).
+    fn is_member_path(&self, path: &str) -> bool;
+
+    /// Detect if a path is a leaf member (not a group of members).
+    fn is_leaf_member_path(&self, path: &str) -> bool;
+
+    // ── Source Detection ───────────────────────────────────
+
+    /// Detect source directory from project root (packages/, crates/, modules/).
+    fn detect_source_dir(&self, project_root: &Path) -> PathBuf;
+
+    /// Collect source files from a directory tree or single file.
+    fn collect_source_files(&self, root_dir: &Path, ignored: &[String]) -> Vec<FilePath>;
+
+    /// Recursively scan directory for files (non-source-aware, raw paths).
+    fn scan_directory_recursive(&self, dir: &Path) -> Vec<String>;
+
+    // ── Path Metadata Helpers ─────────────────────────────
+
+    /// Check if a path has a source file extension (.rs, .py, .ts, .js, .tsx, .jsx).
+    fn is_source_file(&self, path: &Path) -> bool;
+
+    /// Check if an extension string is a recognized source file extension.
+    fn is_source_ext(&self, ext: &str) -> bool;
+
+    /// Get file basename (filename without directory).
+    fn get_basename<'a>(&self, path: &'a str) -> &'a str;
+
+    /// Get parent directory path.
+    fn get_parent<'a>(&self, path: &'a str) -> &'a str;
 }

@@ -2,7 +2,7 @@ use shared::common::FilePath;
 use shared::config_system::{ConfigError, ConfigLanguage, ConfigSource, IConfigReaderProtocol};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
-use shared::config_system::utility_config_io as config_io;
+use shared::filesystem::utility_filesystem_io as fs_io;
 
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
 // XDG Base Directory Specification compliant config lookup
@@ -56,7 +56,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         }
                     }
                 }
-                match config_io::read_file_async(&candidate).await {
+                match fs_io::read_file_async(&candidate).await {
                     Ok(content) => {
                         return Ok(Some(ConfigSource::new(
                             language.as_str(),
@@ -101,7 +101,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
         ] {
             for filename in lang.config_file_names() {
                 let candidate = std::path::PathBuf::from(&project_root.value).join(filename);
-                match config_io::read_file_async(&candidate).await {
+                match fs_io::read_file_async(&candidate).await {
                     Ok(_content) => {
                         let path = FilePath::new(candidate.to_string_lossy().to_string()).map_err(
                             |e| {
@@ -185,7 +185,7 @@ impl ConfigYamlReader {
         }
 
         for path in &candidates {
-            match config_io::read_file_async(path).await {
+            match fs_io::read_file_async(path).await {
                 Ok(content) => {
                     return Ok(Some(ConfigSource::new(
                         language.as_str(),

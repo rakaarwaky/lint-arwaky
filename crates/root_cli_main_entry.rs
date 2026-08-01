@@ -151,6 +151,7 @@ fn main() -> ExitCode {
             format,
             container.multi_project_orchestrator.clone(),
             filter.clone(),
+            container.filesystem.clone(),
         ),
         Commands::ScanImport { path, format } => surface_import_action::handle_scan_import(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
@@ -158,6 +159,7 @@ fn main() -> ExitCode {
             container.import_orchestrator.clone(),
             container.report_formatter.clone(),
             filter.clone(),
+            container.filesystem.clone(),
         ),
         Commands::ScanNaming { path, format } => surface_naming_action::handle_scan_naming(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
@@ -165,6 +167,7 @@ fn main() -> ExitCode {
             container.naming_orchestrator.clone(),
             container.report_formatter.clone(),
             filter.clone(),
+            container.filesystem.clone(),
         ),
         Commands::ScanRole { path, format } => surface_role_action::handle_scan_role(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
@@ -172,6 +175,7 @@ fn main() -> ExitCode {
             container.role_orchestrator.clone(),
             container.report_formatter.clone(),
             filter.clone(),
+            container.filesystem.clone(),
         ),
         Commands::ScanExternal { path, format } => surface_external_action::handle_scan_external(
             path.map(|p| FilePath::new(p).unwrap_or_default()),
@@ -179,6 +183,7 @@ fn main() -> ExitCode {
             container.external_lint.clone(),
             container.report_formatter.clone(),
             filter.clone(),
+            container.filesystem.clone(),
         ),
         Commands::Security { path } => {
             let maintenance_container =

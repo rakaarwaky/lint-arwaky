@@ -2,7 +2,7 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::Format;
-use shared::filesystem::utility_filesystem_io::is_member_path;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 
@@ -15,6 +15,7 @@ pub fn handle_scan_external(
     external_lint: Arc<dyn IExternalLintAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
+    filesystem: std::sync::Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -49,7 +50,7 @@ pub fn handle_scan_external(
         &violations,
         &root_fp.value,
         format,
-        is_member_path(&root_fp.value),
+        filesystem.is_member_path(&root_fp.value),
     );
     if has_violations {
         ExitCode::POLICY_FAIL

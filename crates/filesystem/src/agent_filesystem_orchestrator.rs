@@ -578,4 +578,52 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn remove_dir_all(&self, path: &Path) -> Result<(), std::io::Error> {
         std::fs::remove_dir_all(path)
     }
+
+    // ── Workspace Member Detection ─────────────────────────
+
+    // ── Workspace Member Detection ─────────────────────────
+
+    fn is_member_path(&self, path: &str) -> bool {
+        utility_filesystem_io::is_member_path(path)
+    }
+
+    fn is_leaf_member_path(&self, path: &str) -> bool {
+        utility_filesystem_io::is_leaf_member_path(path)
+    }
+
+    // ── Source Detection ───────────────────────────────────
+
+    fn detect_source_dir(&self, project_root: &Path) -> PathBuf {
+        utility_filesystem_io::detect_source_dir(project_root)
+    }
+
+    fn collect_source_files(&self, root_dir: &Path, ignored: &[String]) -> Vec<FilePath> {
+        utility_filesystem_io::collect_source_files(
+            root_dir,
+            &DirectoryPath::new(root_dir.to_string_lossy().to_string()).unwrap_or_default(),
+            ignored,
+        )
+    }
+
+    fn scan_directory_recursive(&self, dir: &Path) -> Vec<String> {
+        utility_filesystem_io::scan_directory_recursive(dir)
+    }
+
+    // ── Path Metadata Helpers ─────────────────────────────
+
+    fn is_source_file(&self, path: &Path) -> bool {
+        utility_filesystem_io::is_source_file(path)
+    }
+
+    fn is_source_ext(&self, ext: &str) -> bool {
+        utility_filesystem_io::is_source_ext(ext)
+    }
+
+    fn get_basename<'a>(&self, path: &'a str) -> &'a str {
+        utility_filesystem_io::get_basename(path)
+    }
+
+    fn get_parent<'a>(&self, path: &'a str) -> &'a str {
+        utility_filesystem_io::get_parent(path)
+    }
 }

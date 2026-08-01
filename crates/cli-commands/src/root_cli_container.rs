@@ -31,9 +31,6 @@ pub struct CliContainer {
 
 impl CliContainer {
     pub fn new_default() -> Self {
-        // Ensure utility_path_resolver is reachable from entry point (AES504)
-        let _workspace_root = shared::filesystem::utility_filesystem_io::find_workspace_root(".");
-
         // Create config orchestrator — single source of truth for config
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.orchestrator();
@@ -41,6 +38,9 @@ impl CliContainer {
         // Filesystem orchestrator — shared across all containers
         let filesystem: Arc<dyn IFilesystemAggregate> =
             Arc::new(filesystem::FilesystemOrchestrator::new());
+
+        // Ensure utility_path_resolver is reachable from entry point (AES504)
+        let _workspace_root = filesystem.workspace_root(".");
 
         // All containers get config from orchestrator
         let code_analysis_linter =
