@@ -104,7 +104,7 @@ pub struct SeverityChecker {
 }
 
 impl IUnusedImportProtocol for SeverityChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {
+    fn find_unused_imports(&self, path: &FilePath, _content: &str) -> Result<Vec<LintMessage>, shared::import_rules::taxonomy_import_error::ImportError> {
         let content = std::fs::read_to_string(path.value()).unwrap_or_default();
         if content.is_empty() { return Ok(vec![]); }
         Ok(vec![LintMessage::new("scanned")])

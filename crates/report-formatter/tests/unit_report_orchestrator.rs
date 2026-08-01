@@ -9,17 +9,13 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::{Format, ScanReport};
-
 use shared::report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
     let text: Arc<
         dyn shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol,
-    > = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
+    > = Arc::new(TextFormatter::new());
     let json: Arc<
         dyn shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol,
     > = Arc::new(JsonFormatter::new());
@@ -64,7 +60,7 @@ fn orchestrator_routes_to_json_formatter() {
     let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Json);
-    assert!(result.value.contains("["));
+    assert!(result.value.contains("\"violations\""));
 }
 
 // ─── format: Routes to correct formatter (SARIF) ──

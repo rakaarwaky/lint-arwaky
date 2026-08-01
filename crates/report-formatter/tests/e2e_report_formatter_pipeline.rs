@@ -8,17 +8,14 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
+use shared::cli_commands::taxonomy_scan_report_vo::{DiagnosticSeverity, PipelineDiagnostic};
 use shared::cli_commands::{Format, LintResult, ScanReport};
-
 use shared::common::Severity;
 use shared::report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
-    let text = Arc::new(TextFormatter::new(
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter(),
-    ));
+    let text = Arc::new(TextFormatter::new());
     let json = Arc::new(JsonFormatter::new());
     let sarif = Arc::new(SarifFormatter::new());
     let junit = Arc::new(JunitFormatter::new());
@@ -34,11 +31,16 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
         "test.rs",
         10,
         5,
-        "TEST001",
+        "AES101",
         Severity::MEDIUM,
         "E2E test violation",
     )];
-    let report = ScanReport::new(results, vec![]);
+    let diagnostics = vec![PipelineDiagnostic::new(
+        "filesystem".to_string(),
+        "File skipped: parse error".to_string(),
+        DiagnosticSeverity::Warning,
+    )];
+    let report = ScanReport::new(results, diagnostics);
 
     (orch, report)
 }
@@ -49,7 +51,6 @@ fn build_full_pipeline() -> (ReportFormatterOrchestrator, ScanReport) {
 fn e2e_all_format_types_work_with_results() {
     let (orch, report) = build_full_pipeline();
 
-    // All formats should produce valid output
     let text_result = orch.format(&report, Format::Text);
     let json_result = orch.format(&report, Format::Json);
     let sarif_result = orch.format(&report, Format::Sarif);
@@ -61,15 +62,25 @@ fn e2e_all_format_types_work_with_results() {
     assert!(!junit_result.value.is_empty());
 }
 
-// ─── E2E: Report with diagnostics ──
+// ─── E2E: Report with diagnostics shows in all formats ──
 
 #[test]
 fn e2e_format_with_diagnostics() {
     let (orch, report) = build_full_pipeline();
 
-    // Format all types and verify they handle diagnostics correctly
-    let _text = orch.format(&report, Format::Text);
-    let _json = orch.format(&report, Format::Json);
+    let text = orch.format(&report, Format::Text);
+    let json = orch.format(&report, Format::Json);
+    let sarif = orch.format(&report, Format::Sarif);
+    let junit = orch.format(&report, Format::Junit);
+
+    // Text shows diagnostics section
+    assert!(text.value.contains("Diagnostics"));
+    // JSON shows diagnostics array
+    assert!(json.value.contains("\"diagnostics\""));
+    // SARIF includes PARSE_WARN
+    assert!(sarif.value.contains("PARSE_WARN"));
+    // JUnit includes skipped
+    assert!(junit.value.contains("<skipped"));
 }
 
 // ─── E2E: Empty report pipeline ──
@@ -78,10 +89,8 @@ fn e2e_format_with_diagnostics() {
 fn e2e_empty_report_pipeline() {
     let (orch, _report) = build_full_pipeline();
 
-    // Create empty report
     let empty_report = ScanReport::new(vec![], vec![]);
 
-    // All formats should handle empty reports gracefully
     let _text = orch.format(&empty_report, Format::Text);
     let _json = orch.format(&empty_report, Format::Json);
     let _sarif = orch.format(&empty_report, Format::Sarif);

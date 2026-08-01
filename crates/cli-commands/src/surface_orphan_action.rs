@@ -1,7 +1,7 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{ViolationItem, output_violations};
-use crate::utility_path_resolver::is_member_path;
 use shared::cli_commands::Format;
+use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
@@ -97,8 +97,9 @@ pub fn handle_scan_orphan(
         // Use absolute paths for correct strip_prefix comparison.
         let cwd = std::env::current_dir().unwrap_or_default();
         let ws_abs = cwd.join(&ws.path.value);
-        let ws_top_root =
-            shared::common::utility_file_handler::find_workspace_root(&ws_abs.to_string_lossy());
+        let ws_top_root = shared::filesystem::utility_filesystem_io::find_workspace_root(
+            &ws_abs.to_string_lossy(),
+        );
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
             ws_abs
                 .strip_prefix(top_root)
@@ -167,7 +168,7 @@ fn scan_single_root(
     filter: &Option<String>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
-    let lang = crate::utility_path_resolver::detect_language_from_path(root);
+    let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let orphan_analyzer =
         orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(

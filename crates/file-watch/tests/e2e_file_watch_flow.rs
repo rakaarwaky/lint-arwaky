@@ -42,6 +42,9 @@ impl ICodeAnalysisAggregate for RecordingLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(&self, _: &[shared::filesystem::FileEntry]) -> Vec<LintResult> {
+        vec![]
+    }
 }
 
 // ─── E2E: watch a temp dir, create a file, receive event ────

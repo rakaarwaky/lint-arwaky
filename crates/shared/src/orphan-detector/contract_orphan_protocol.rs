@@ -5,6 +5,7 @@ use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
 use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
+use std::collections::HashMap;
 
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     fn is_taxonomy_orphan(
@@ -23,6 +24,7 @@ pub trait IContractOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         inheritance_map: &InheritanceMap,
         all_files: &[String],
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult;
 }
 
@@ -42,6 +44,7 @@ pub trait IUtilityOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         all_files: &[String],
         inbound_links: &InboundLinkMap,
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult;
 }
 
@@ -51,6 +54,7 @@ pub trait IAgentOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         all_files: &[String],
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult;
 }
 

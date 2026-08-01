@@ -393,6 +393,10 @@ pub fn read_file(path: &str) -> Result<String, std::io::Error> {
 
 /// Read file content, returning empty string on error.
 pub fn read_file_safe(path: &str) -> String {
+    // Fast path: check global cache
+    if let Some(content) = crate::code_analysis::utility_file_reader::get_cached(path) {
+        return content;
+    }
     fs::read_to_string(path).unwrap_or_default()
 }
 

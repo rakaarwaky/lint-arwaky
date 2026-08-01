@@ -32,6 +32,14 @@ pub enum NamingViolation {
         allowed: Vec<String>,
         reason: Option<LintMessage>,
     },
+    /// AES102 — suffix belongs to a different layer's suffix set
+    /// Carries the expected layer, actual suffix, and the layer the suffix belongs to.
+    PrefixSuffixMismatch {
+        expected_layer: String,
+        actual_suffix: String,
+        suffix_layer: String,
+        reason: Option<LintMessage>,
+    },
 }
 
 impl fmt::Display for NamingViolation {
@@ -131,6 +139,39 @@ impl fmt::Display for NamingViolation {
                        then implement that trait in a capabilities_ file. \
                        Contract files must NOT contain implementation logic.",
                     layer_name, used_suffix, why, layer_name, allowed_str
+                )
+            }
+            Self::PrefixSuffixMismatch {
+                expected_layer,
+                actual_suffix,
+                suffix_layer,
+                reason,
+            } => {
+                let default_why = format!(
+                    "Suffix '{}' belongs to the '{}' layer's suffix set, but this file is in the '{}' layer. \
+                     Each layer has its own set of valid suffixes. Using a suffix from another layer \
+                     breaks the architectural boundary between layers.",
+                    actual_suffix, suffix_layer, expected_layer
+                );
+                let why = Option::unwrap_or(reason.as_ref().map(|r| r.to_string()), default_why);
+                write!(
+                    f,
+                    "AES102 PREFIX_SUFFIX_MISMATCH: File in layer '{}' uses suffix '{}' which belongs to the '{}' layer.\n\
+                    WHY? {}\n\
+                    FIX: \
+                     If this file implements domain types for the '{}' layer \
+                     → rename suffix to an allowed one for '{}'. \
+                     If this file contains shared interface definitions (traits, protocols) \
+                     → create a contract_ file with suffix 'protocol' or 'aggregate'. \
+                     If this file contains business logic \
+                     → move to the '{}' layer and use its allowed suffixes.",
+                    expected_layer,
+                    actual_suffix,
+                    suffix_layer,
+                    why,
+                    expected_layer,
+                    expected_layer,
+                    suffix_layer
                 )
             }
         }

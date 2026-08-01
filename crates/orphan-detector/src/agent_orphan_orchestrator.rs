@@ -10,6 +10,7 @@ use shared::config_system::ArchitectureConfig;
 use shared::orphan_detector::{IOrphanAggregate, IOrphanGraphResolverProtocol};
 
 use shared::orphan_detector::OrphanFileListVO;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
@@ -26,8 +27,8 @@ use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
-use std::collections::HashSet;
 use std::collections::VecDeque;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -43,6 +44,7 @@ pub struct ArchOrphanDeps {
     pub utility_analyzer: Arc<dyn IUtilityOrphanProtocol>,
     pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct ArchOrphanAnalyzer {
@@ -92,18 +94,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let root_path = std::path::Path::new(root_dir.value());
         let mut all_files = Vec::new();
         if root_path.is_dir() {
-            if let Ok(dir_path) =
-                shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
-                && let Ok(list) =
-                    shared::common::utility_file_handler::scan_directory(&dir_path, ignored)
-            {
-                all_files = list.values.iter().map(|f| f.value.clone()).collect();
-            }
+            let all_entries = self.deps.filesystem.discover_source_files(root_path, ignored);
+            all_files = all_entries.into_iter().map(|fp| fp.value).collect();
         } else if root_path.is_file() {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
-                && !shared::common::utility_file_handler::is_path_ignored(
+                && !self.deps.filesystem.should_ignore(
                     &root_path.to_string_lossy(),
                     ignored,
                 )
@@ -113,8 +110,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         } // Normalize all file paths to be relative to workspace root so that
         // inbound_links (built by the graph resolver) and orphan analyzers
         // use a consistent path format.
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            self.deps.filesystem.workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let all_files: Vec<String> = all_files
             .into_iter()
             .map(|f| {
@@ -153,6 +151,23 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // so file_vo is the same as files — no need to expand again.
         self._check_orphans_inner(files, root_dir, context, files)
     }
+    fn check_orphans_with_entries(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        context: &GraphAnalysisContext,
+    ) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+        let file_paths: Vec<String> = files
+            .iter()
+            .filter(|f| f.parse_ok)
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
+        let file_vo = OrphanFileListVO::new(file_paths);
+        let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
+        self._check_orphans_inner(&file_vo, &root_dir, context, &file_vo)
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
@@ -167,21 +182,23 @@ impl ArchOrphanAnalyzer {
         root_dir: &FilePath,
     ) -> Vec<String> {
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            self.deps.filesystem.workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let mut seen: HashSet<String> = files.values.iter().cloned().collect();
         let mut result: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = top_root.join(ws_dir);
-            if shared::orphan_detector::utility_orphan_io::is_dir(&ws_path) {
-                let entries = shared::orphan_detector::utility_orphan_io::scan_directory(&ws_path);
-                for (name, _path_str, is_dir_entry) in entries {
-                    if !is_dir_entry {
+            if self.deps.filesystem.is_dir(&ws_path) {
+                let entries = self.deps.filesystem.scan_directory(&ws_path);
+                for entry_path in entries {
+                    let name = entry_path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string();
+                    if !entry_path.is_dir() {
                         continue;
                     }
                     // Skip ignored workspace members (e.g. tests/, target/)
                     let member_dir = top_root.join(ws_dir).join(&name);
-                    if shared::common::utility_file_handler::is_ignored_dir(
+                    if self.deps.filesystem.is_ignored_dir(
                         &member_dir,
                         &self
                             .config
@@ -194,14 +211,12 @@ impl ArchOrphanAnalyzer {
                         continue;
                     }
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
-                    if shared::orphan_detector::utility_orphan_io::is_dir(&src_dir) {
-                        let workspace_files =
-                            shared::orphan_detector::utility_orphan_io::scan_directory_recursive(
-                                &src_dir,
-                            );
+                    if self.deps.filesystem.is_dir(&src_dir) {
+                        let workspace_entries = self.deps.filesystem.discover_files(&src_dir, &[]);
+                        let workspace_files: Vec<String> = workspace_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
                         for f in workspace_files {
                             // Skip ignored paths (e.g. tests/, target/)
-                            if shared::common::utility_file_handler::is_path_ignored(
+                            if self.deps.filesystem.should_ignore(
                                 &f,
                                 &self
                                     .config
@@ -224,11 +239,11 @@ impl ArchOrphanAnalyzer {
                     }
                 }
                 // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
-                let root_files =
-                    shared::orphan_detector::utility_orphan_io::scan_directory_recursive(&ws_path);
+                let root_entries = self.deps.filesystem.discover_files(&ws_path, &[]);
+                let root_files: Vec<String> = root_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
                 for f in root_files {
                     // Skip ignored paths (e.g. tests/, target/)
-                    if shared::common::utility_file_handler::is_path_ignored(
+                    if self.deps.filesystem.should_ignore(
                         &f,
                         &self
                             .config
@@ -282,8 +297,9 @@ impl ArchOrphanAnalyzer {
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::common::utility_file_handler::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            self.deps.filesystem.workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set
@@ -315,6 +331,19 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
+        // Pre-read all file contents into a map so capabilities don't do I/O.
+        let content_map: HashMap<String, String> = all_files
+            .iter()
+            .filter_map(|f| {
+                let c = self.deps.filesystem.read_file(std::path::Path::new(f)).unwrap_or_default();
+                if c.is_empty() {
+                    None
+                } else {
+                    Some((f.clone(), c))
+                }
+            })
+            .collect();
+
         files
             .values
             .par_iter()
@@ -326,6 +355,7 @@ impl ArchOrphanAnalyzer {
                     &layer_keys,
                     &all_files,
                     &top_root_str,
+                    &content_map,
                 )
             })
             .collect()
@@ -339,6 +369,7 @@ impl ArchOrphanAnalyzer {
         layer_keys: &[String],
         all_files: &[String],
         top_root_str: &str,
+        content_map: &HashMap<String, String>,
     ) -> Option<LintResult> {
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
@@ -393,6 +424,7 @@ impl ArchOrphanAnalyzer {
             &layer_vo,
             all_files,
             top_root_str,
+            content_map,
         );
         if res.is_orphan {
             return Some(self._make_result(f, &res.reason, res.severity, code));
@@ -447,6 +479,7 @@ impl ArchOrphanAnalyzer {
         layer_vo: &LayerNameVO,
         all_files: &[String],
         top_root: &str,
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
         // Barrel file exceptions — package markers and re-export files, not logic
         if f.ends_with("__init__.py")
@@ -491,6 +524,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 &context.inheritance_map,
                 all_files,
+                content_map,
             );
         }
 
@@ -508,6 +542,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 all_files,
                 &context.inbound_links,
+                content_map,
             );
         }
 
@@ -515,7 +550,7 @@ impl ArchOrphanAnalyzer {
             return self
                 .deps
                 .agent_analyzer
-                .is_agent_orphan(&fp, &root, all_files);
+                .is_agent_orphan(&fp, &root, all_files, content_map);
         }
 
         if layer_str.contains(LAYER_SURFACES) {

@@ -17,6 +17,7 @@ fn mcp_container_has_all_required_fields() {
         let _ = &_c.external_lint;
         let _ = &_c.role_orchestrator;
         let _ = &_c.config_orchestrator;
+        let _ = &_c.filesystem;
     }
     // If this compiles, all fields are public and accessible.
 }

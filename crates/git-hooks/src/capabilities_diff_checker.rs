@@ -35,19 +35,7 @@ impl IDiffProtocol for DiffChecker {
             .iter()
             .filter(|f| {
                 let ext = f.extension();
-                matches!(
-                    ext.as_str(),
-                    "rs" | "py"
-                        | "ts"
-                        | "js"
-                        | "jsx"
-                        | "tsx"
-                        | "md"
-                        | "toml"
-                        | "json"
-                        | "yaml"
-                        | "yml"
-                )
+                matches!(ext.as_str(), "rs" | "py" | "ts" | "js" | "jsx" | "tsx")
             })
             .cloned()
             .collect();

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // PURPOSE: Acceptance test — FR-008 Agent Orphan Checker (AES505).
 // Requirement: Agent orchestrator files must be called by surface layer files or binary entry points.
 
@@ -7,6 +8,13 @@ use shared::orphan_detector::IAgentOrphanProtocol;
 use std::fs;
 
 /// AES505: Agent aggregate called by a container is NOT orphan.
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files
+        .iter()
+        .filter_map(|f| std::fs::read_to_string(f).ok().map(|c| (f.clone(), c)))
+        .collect()
+}
+
 #[test]
 fn fr008_agent_called_by_container_not_orphan() {
     let a = AgentOrphanAnalyzer::default();
@@ -33,7 +41,7 @@ fn fr008_agent_called_by_container_not_orphan() {
         container.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_agent_orphan(&f, &root, &all);
+    let result = a.is_agent_orphan(&f, &root, &all, &build_content_map(&all));
     assert!(
         !result.is_orphan,
         "AES505 FAIL: agent called by container should not be orphan"
@@ -63,7 +71,7 @@ fn fr008_agent_not_called_is_orphan() {
         other.to_str().unwrap().to_string(),
     ];
 
-    let result = a.is_agent_orphan(&f, &root, &all);
+    let result = a.is_agent_orphan(&f, &root, &all, &build_content_map(&all));
     assert!(
         result.is_orphan,
         "AES505 FAIL: agent not called by any surface/container must be flagged"

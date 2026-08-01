@@ -1,33 +1,65 @@
 // PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
+//
+// ALGORITHM:
+//   Uses FileEntry from the filesystem crate. ParseMetadata (if available) provides
+//   structured type definitions. For primitive type scanning, falls back to content
+//   line scanning since ParseMetadata does not yet expose field-level type info.
+//   For constant purity, uses ParseMetadata struct/enum/trait/fn definitions to
+//   detect non-constant declarations.
+
 use shared::cli_commands::LintResult;
-use shared::common::{Language, LintMessage, Severity};
-
-use shared::common::utility_language_detector::detect_language_info_from_source;
+use shared::common::Severity;
+use shared::common::{LintMessage, SymbolName};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 use shared::role_rules::{AesRoleViolation, ITaxonomyRoleChecker};
-
-use shared::common::{SourceContentVO, SymbolName};
-
-use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
-    fn check_entity(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        self.check_entity_impl(source, violations);
+    fn check_entity(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if !Self::has_suffix(&file.path, "_entity") {
+            return;
+        }
+        Self::scan_primitives(file, violations);
     }
 
-    fn check_error(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        self.check_error_impl(source, violations);
+    fn check_error(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if !Self::has_suffix(&file.path, "_error") {
+            return;
+        }
+        Self::scan_primitives(file, violations);
     }
 
-    fn check_event(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        self.check_event_impl(source, violations);
+    fn check_event(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if !Self::has_suffix(&file.path, "_event") {
+            return;
+        }
+        Self::scan_primitives(file, violations);
     }
 
-    fn check_constant(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        self.check_constant_impl(source, violations);
+    fn check_constant(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let basename = file
+            .path
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap_or_default();
+        if !basename.ends_with("_constant.rs")
+            && !basename.ends_with("_constant.py")
+            && !basename.ends_with("_constant.ts")
+            && !basename.ends_with("_constant.js")
+        {
+            return;
+        }
+
+        // Use ParseMetadata if available for structured detection
+        if let Some(meta) = &file.parse_metadata {
+            Self::check_constant_with_metadata(file, meta, violations);
+        } else {
+            // Fallback: line-based scanning when no parse metadata
+            Self::check_constant_fallback(file, violations);
+        }
     }
 }
 
@@ -44,9 +76,34 @@ impl TaxonomyRoleChecker {
     }
 
     const RUST_PRIMITIVES: &'static [&'static str] = &[
-        "String", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128",
-        "usize", "f32", "f64", "bool", "char", "Vec<", "HashMap<", "Option<", "Result<", "Box<",
-        "Cell<", "RefCell<", "Arc<", "Mutex<", "Rc<",
+        "String",
+        "i8",
+        "i16",
+        "i32",
+        "i64",
+        "i128",
+        "isize",
+        "u8",
+        "u16",
+        "u32",
+        "u64",
+        "u128",
+        "usize",
+        "f32",
+        "f64",
+        "bool",
+        "char",
+        "Vec<",
+        "HashMap<",
+        "Option<",
+        "Result<",
+        "Box<",
+        "Cell<",
+        "RefCell<",
+        "Arc<",
+        "Mutex<",
+        "Rc<",
+        "BTreeMap<",
     ];
 
     const PY_PRIMITIVES: &'static [&'static str] = &[
@@ -90,18 +147,25 @@ impl TaxonomyRoleChecker {
         "symbol",
     ];
 
-    fn scan_primitives(source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        let content = source.content.value();
-        let li = detect_language_info_from_source(source);
-        let primitives: &[&str] = match li.lang {
-            Language::Rust => Self::RUST_PRIMITIVES,
-            Language::Python => Self::PY_PRIMITIVES,
-            Language::JavaScript | Language::TypeScript => Self::JS_PRIMITIVES,
-            _ => return,
+    fn scan_primitives(file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        let content = &file.content;
+        let primitives: &[&str] = match file.language {
+            shared::filesystem::taxonomy_filesystem_vo::Language::Rust => Self::RUST_PRIMITIVES,
+            shared::filesystem::taxonomy_filesystem_vo::Language::Python => Self::PY_PRIMITIVES,
+            shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+            | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
+                Self::JS_PRIMITIVES
+            }
         };
-        let is_rs = li.is_rs;
-        let is_py = li.is_py;
+        let is_rs = matches!(
+            file.language,
+            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+        );
+        let is_py = matches!(
+            file.language,
+            shared::filesystem::taxonomy_filesystem_vo::Language::Python
+        );
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
@@ -109,9 +173,6 @@ impl TaxonomyRoleChecker {
                 continue;
             }
             if t.starts_with("class ") || t.starts_with("pub struct ") || t.starts_with("struct ") {
-                continue;
-            }
-            if t.contains("pub(crate) value:") || t.trim_start().starts_with("pub value:") {
                 continue;
             }
             if t.starts_with("fn from(") || t.starts_with("fn visit_") {
@@ -139,11 +200,10 @@ impl TaxonomyRoleChecker {
             for p in primitives {
                 if p.ends_with('<') {
                     if type_candidate.starts_with(p) {
-                        let inner = match type_candidate.strip_prefix(p) {
-                            Some(s) => s,
-                            None => type_candidate,
-                        }
-                        .trim_end_matches('>');
+                        let inner = type_candidate
+                            .strip_prefix(p)
+                            .unwrap_or(type_candidate)
+                            .trim_end_matches('>');
                         let inner_trimmed = inner.trim();
                         if primitives.iter().any(|prim| {
                             let prim_clean = prim.trim_end_matches('<');
@@ -151,11 +211,11 @@ impl TaxonomyRoleChecker {
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
                             let lang = if is_rs {
-                                Language::Rust
+                                shared::common::Language::Rust
                             } else if is_py {
-                                Language::Python
+                                shared::common::Language::Python
                             } else {
-                                Language::JavaScript
+                                shared::common::Language::JavaScript
                             };
                             let msg = AesRoleViolation::PrimitiveUsage {
                                 primitive: SymbolName::new(primitive_clean),
@@ -163,14 +223,14 @@ impl TaxonomyRoleChecker {
                                     "Primitive type '{}' used on line {} of {}",
                                     primitive_clean,
                                     i + 1,
-                                    file
+                                    path_str
                                 ))),
                             }
                             .with_language(lang)
                             .to_string();
 
                             violations.push(LintResult::new_arch(
-                                file,
+                                &path_str,
                                 i + 1,
                                 "AES401",
                                 Severity::HIGH,
@@ -188,11 +248,11 @@ impl TaxonomyRoleChecker {
                 {
                     let primitive_clean = p.trim_end_matches('<');
                     let lang = if is_rs {
-                        Language::Rust
+                        shared::common::Language::Rust
                     } else if is_py {
-                        Language::Python
+                        shared::common::Language::Python
                     } else {
-                        Language::JavaScript
+                        shared::common::Language::JavaScript
                     };
                     let msg = AesRoleViolation::PrimitiveUsage {
                         primitive: SymbolName::new(primitive_clean),
@@ -200,14 +260,14 @@ impl TaxonomyRoleChecker {
                             "Primitive type '{}' used on line {} of {}",
                             primitive_clean,
                             i + 1,
-                            file
+                            path_str
                         ))),
                     }
                     .with_language(lang)
                     .to_string();
 
                     violations.push(LintResult::new_arch(
-                        file,
+                        &path_str,
                         i + 1,
                         "AES401",
                         Severity::HIGH,
@@ -219,37 +279,203 @@ impl TaxonomyRoleChecker {
         }
     }
 
-    fn check_entity_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_entity") {
-            return;
+    /// Check constant purity using structured ParseMetadata.
+    fn check_constant_with_metadata(
+        file: &FileEntry,
+        meta: &ParseMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let path_str = file.path.to_string_lossy();
+        match meta {
+            ParseMetadata::Rust(rust_meta) => {
+                // Struct definitions in constant file = violation
+                for name in &rust_meta.struct_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Struct '{}' found in constant file {}",
+                                name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Enum definitions in constant file = violation
+                for name in &rust_meta.enum_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Enum '{}' found in constant file {}",
+                                name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Trait definitions in constant file = violation
+                for name in &rust_meta.trait_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Trait '{}' found in constant file {}",
+                                name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Function definitions in constant file = violation
+                for fn_item in &rust_meta.function_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Impl blocks in constant file = violation
+                if !rust_meta.impl_blocks.is_empty() {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Impl block found in constant file {}",
+                                path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+            }
+            ParseMetadata::Python(py_meta) => {
+                // Class definitions in constant file = violation
+                for class in &py_meta.class_declarations {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Class '{}' found in constant file {}",
+                                class.name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Function definitions in constant file = violation
+                for fn_item in &py_meta.function_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+            }
+            ParseMetadata::TypeScript(ts_meta) | ParseMetadata::JavaScript(ts_meta) => {
+                // Class definitions in constant file = violation
+                for class in &ts_meta.class_declarations {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Class '{}' found in constant file {}",
+                                class.name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Interface definitions in constant file = violation
+                for name in &ts_meta.interface_declarations {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Interface '{}' found in constant file {}",
+                                name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Type alias definitions in constant file = violation
+                for name in &ts_meta.type_alias_declarations {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Type alias '{}' found in constant file {}",
+                                name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+                // Function definitions in constant file = violation
+                for fn_item in &ts_meta.function_definitions {
+                    violations.push(LintResult::new_arch(
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
+                        AesRoleViolation::ConstantPurity {
+                            reason: Some(LintMessage::new(format!(
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
+                            ))),
+                        }
+                        .to_string(),
+                    ));
+                }
+            }
         }
-        Self::scan_primitives(source, violations);
     }
 
-    fn check_error_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_error") {
-            return;
-        }
-        Self::scan_primitives(source, violations);
-    }
-
-    fn check_event_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        if !Self::has_suffix(source.file_path.value(), "_event") {
-            return;
-        }
-        Self::scan_primitives(source, violations);
-    }
-
-    fn check_constant_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
-        let file = source.file_path.value();
-        let basename = Path::new(file)
-            .file_name()
-            .and_then(|f| f.to_str())
-            .unwrap_or_default();
-        if !basename.ends_with("_constant.rs") && !basename.ends_with("_constant.py") {
-            return;
-        }
-        let content = source.content.value();
+    /// Fallback constant purity check via line scanning (no parse metadata).
+    fn check_constant_fallback(file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        let content = &file.content;
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
             if t.is_empty() || t.starts_with("//") || t.starts_with('#') || t.starts_with("#[") {
@@ -280,7 +506,7 @@ impl TaxonomyRoleChecker {
                 || t.starts_with("type ")
             {
                 violations.push(LintResult::new_arch(
-                    file,
+                    &path_str,
                     i + 1,
                     "AES401",
                     Severity::HIGH,
@@ -289,7 +515,7 @@ impl TaxonomyRoleChecker {
                             "Non-constant declaration '{}' found in constant file on line {} of {}",
                             t,
                             i + 1,
-                            file
+                            path_str
                         ))),
                     }
                     .to_string(),
@@ -298,8 +524,7 @@ impl TaxonomyRoleChecker {
         }
     }
 
-    fn has_suffix(file: &str, suffix: &str) -> bool {
-        let path = Path::new(file);
+    fn has_suffix(path: &std::path::Path, suffix: &str) -> bool {
         if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
             stem.ends_with(suffix)
         } else {

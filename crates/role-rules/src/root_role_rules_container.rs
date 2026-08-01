@@ -10,7 +10,7 @@ use crate::capabilities_contract_role_auditor::ContractRoleChecker;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
-use shared::common::FilePath;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -35,6 +35,9 @@ impl RoleContainer {
             surface: Arc::new(SurfaceRoleChecker::new()),
             agent: Arc::new(AgentRoleChecker::new()),
             utility: Arc::new(UtilityRoleChecker::new()),
+            filesystem: Arc::new(
+                filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new(),
+            ),
         };
         Self { deps, config }
     }
@@ -50,7 +53,6 @@ impl RoleContainer {
     }
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
-        // Clone each Arc individually — RoleCheckerDeps is not Clone
         let deps = RoleCheckerDeps {
             taxonomy: Arc::clone(&self.deps.taxonomy),
             contract: Arc::clone(&self.deps.contract),
@@ -58,6 +60,7 @@ impl RoleContainer {
             surface: Arc::clone(&self.deps.surface),
             agent: Arc::clone(&self.deps.agent),
             utility: Arc::clone(&self.deps.utility),
+            filesystem: Arc::clone(&self.deps.filesystem),
         };
         Arc::new(RoleOrchestrator::new(deps, &self.config))
     }

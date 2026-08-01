@@ -45,7 +45,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if shared::common::utility_file_handler::is_file_generic(Path::new(path_str))
+        if shared::filesystem::utility_filesystem_io::is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
@@ -96,7 +96,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                         file_str
                     )),
                     source: Some(self.name()),
-                    severity: Severity::LOW,
+                    severity: Severity::MEDIUM, // FR-004: Prettier diff → MEDIUM
                     enclosing_scope: Default::default(),
                     related_locations: Default::default(),
                 });

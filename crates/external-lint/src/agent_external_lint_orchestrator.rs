@@ -21,16 +21,20 @@ use shared::cli_commands::LintResultList;
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
-use shared::common::utility_file_handler::is_path_ignored;
+use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
+use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::config_system::utility_config_parser::{
-    parse_adapter_names_from_yaml, parse_config_yaml_with_warnings,
+    parse_adapter_entries_from_yaml, parse_config_yaml_with_warnings,
 };
 use shared::external_lint::IExternalLintAggregate;
+use shared::external_lint::IExternalLintSelectorProtocol;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -42,97 +46,40 @@ pub struct ExternalLintOrchestrator {
 #[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
     async fn scan_all(&self, path: &FilePath) -> LintResultList {
-        let mut has_rs = false;
-        let mut has_py = false;
-        let mut has_js = false;
-
-        fn detect_languages(
-            dir: &std::path::Path,
-            has_rs: &mut bool,
-            has_py: &mut bool,
-            has_js: &mut bool,
-            ignored: &[String],
-        ) -> std::io::Result<()> {
-            let entries = match std::fs::read_dir(dir) {
-                Ok(e) => e,
-                Err(_) => return Ok(()),
-            };
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    if shared::common::utility_file_handler::is_ignored_dir(&path, ignored) {
-                        continue;
-                    }
-                    let name = match path.file_name().and_then(|n| n.to_str()) {
-                        Some(n) => n,
-                        None => continue,
-                    };
-                    if !matches!(
-                        name,
-                        "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
-                    ) {
-                        let _ = detect_languages(&path, has_rs, has_py, has_js, ignored);
-                    }
-                } else if let Some(ext) = path.extension() {
-                    match ext.to_str() {
-                        Some("rs") => *has_rs = true,
-                        Some("py") => *has_py = true,
-                        Some("js" | "ts" | "jsx" | "tsx") => *has_js = true,
-                        _ => {}
-                    }
-                }
-                if *has_rs && *has_py && *has_js {
-                    break;
-                }
-            }
-            Ok(())
-        }
-
+        // FR-001: Detect project languages via filesystem crate's detect_languages().
+        // Lightweight walk (extension check only, no file reading or parsing).
         let root_path = std::path::Path::new(&path.value);
+        let (has_rs, has_py, has_js) =
+            Self::detect_languages_from_fs(&*self.deps.filesystem, root_path);
         let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js);
-        if root_path.is_file() {
-            if let Some(ext) = root_path.extension() {
-                match ext.to_str() {
-                    Some("rs") => has_rs = true,
-                    Some("py") => has_py = true,
-                    Some("js" | "ts" | "jsx" | "tsx") => has_js = true,
-                    _ => {}
-                }
-            }
+
+        // FR-002: Select adapters using the selector + config entries.
+        let selector = CapabilitiesExternalLintSelector::with_defaults();
+        let selected: Vec<String> = selector
+            .select_adapters(has_rs, has_py, has_js)
+            .iter()
+            .map(|a| a.value().to_string())
+            .collect();
+
+        // Parse config entries (with weight/timeout) and filter by enabled status
+        let config_entries: Vec<AdapterEntry> =
+            load_adapter_entries_from_config(root_path, has_rs, has_py, has_js);
+        let adapter_names: Vec<&str> = if config_entries.is_empty() {
+            selected.iter().map(|s| s.as_str()).collect()
         } else {
-            let _ = detect_languages(
-                root_path,
-                &mut has_rs,
-                &mut has_py,
-                &mut has_js,
-                &ignored_paths,
-            );
-        }
+            selected
+                .iter()
+                .filter(|name| config_entries.iter().any(|e| e.name.value() == **name))
+                .map(|s| s.as_str())
+                .collect()
+        };
 
-        let mut adapter_names = Vec::with_capacity(9);
-        if has_rs {
-            adapter_names.push("clippy");
-            adapter_names.push("rustfmt");
-            adapter_names.push("cargo-audit");
-        }
-        if has_py {
-            adapter_names.push("ruff");
-            adapter_names.push("mypy");
-            adapter_names.push("bandit");
-        }
-        if has_js {
-            adapter_names.push("eslint");
-            adapter_names.push("prettier");
-            adapter_names.push("tsc");
-        }
-
-        // Filter adapter_names by config's adapters section if a config YAML is found
-        if let Some(configured_adapters) =
-            load_configured_adapter_names(root_path, has_rs, has_py, has_js)
-                .filter(|a| !a.is_empty())
-        {
-            adapter_names.retain(|name| configured_adapters.iter().any(|a| a == name));
-        }
+        // Build a map of per-adapter config for timeout lookup
+        let config_map: HashMap<&str, &AdapterEntry> = config_entries
+            .iter()
+            .filter(|e| adapter_names.iter().any(|n| *n == e.name.value()))
+            .map(|e| (e.name.value(), e))
+            .collect();
 
         let mut futures = Vec::with_capacity(9);
         for name in &adapter_names {
@@ -140,7 +87,9 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();
                 let path_clone = path.clone();
                 let name_owned = name.to_string();
+                let timeout_secs = config_map.get(name).map(|e| e.timeout).unwrap_or(60.0);
                 futures.push(async move {
+                    let _ = timeout_secs; // timeout applied per-adapter if needed in future
                     match adapter.scan(&path_clone).await {
                         Ok(results) => Ok::<Vec<_>, String>(results.values),
                         Err(e) => {
@@ -173,7 +122,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             all.extend(values);
         }
         if !ignored_paths.is_empty() {
-            all.retain(|v| !is_path_ignored(&v.file.value, &ignored_paths));
+            all.retain(|v| !self.deps.filesystem.should_ignore(&v.file.value, &ignored_paths));
         }
         LintResultList::new(all)
     }
@@ -193,6 +142,26 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
+    }
+
+    /// Detect languages from file extensions using filesystem aggregate.
+    fn detect_languages_from_fs(
+        fs: &dyn IFilesystemAggregate,
+        root: &std::path::Path,
+    ) -> (bool, bool, bool) {
+        let files = fs.discover_files(root, &[]);
+        let mut has_rs = false;
+        let mut has_py = false;
+        let mut has_js = false;
+        for f in &files {
+            match f.extension.as_str() {
+                "rs" => has_rs = true,
+                "py" => has_py = true,
+                "ts" | "tsx" | "js" | "jsx" => has_js = true,
+                _ => {}
+            }
+        }
+        (has_rs, has_py, has_js)
     }
 }
 
@@ -225,7 +194,7 @@ fn walk_up_find_config<T>(
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists()
-                && let Ok(content) = std::fs::read_to_string(&cfg_path)
+                && let Ok(content) = filesystem::FilesystemOrchestrator::new().read_to_string(&cfg_path)
                 && let Some(result) = extract(&content)
             {
                 return Some(result);
@@ -255,18 +224,19 @@ fn load_ignored_paths_from_config(
     .unwrap_or_default()
 }
 
-fn load_configured_adapter_names(
+fn load_adapter_entries_from_config(
     root_path: &Path,
     has_rs: bool,
     has_py: bool,
     has_js: bool,
-) -> Option<Vec<String>> {
+) -> Vec<AdapterEntry> {
     walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
-        let adapters = parse_adapter_names_from_yaml(content);
-        if adapters.is_empty() {
+        let entries = parse_adapter_entries_from_yaml(content);
+        if entries.is_empty() {
             None
         } else {
-            Some(adapters)
+            Some(entries)
         }
     })
+    .unwrap_or_default()
 }

@@ -9,15 +9,12 @@ use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Import Alias Extraction (AST-based) ─────────
 
-pub fn extract_imported_aliases(
-    file_path: &str,
-    content: &str,
-) -> HashMap<Identity, (Identity, usize)> {
+pub fn extract_imported_aliases(file_path: &str, content: &str) -> HashMap<Identity, Identity> {
     let mut aliases = HashMap::new();
     match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
-                if imp.is_glob || imp.is_reexport {
+                if imp.is_glob {
                     continue;
                 }
                 if imp.raw_path.starts_with("crate::")
@@ -26,22 +23,17 @@ pub fn extract_imported_aliases(
                 {
                     continue;
                 }
-                if !imp.alias_name().is_empty()
-                    && imp.alias_name() != "*"
-                    && imp.alias_name() != "self"
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty()
+                    && last != "*"
+                    && last != "self"
                 {
-                    aliases.insert(
-                        Identity::new(imp.alias_name()),
-                        (Identity::new(imp.raw_path.clone()), imp.line),
-                    );
+                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                 }
             }
         }
         FileParseResultVO::Python(result) => {
             for imp in &result.imports {
-                if imp.is_reexport {
-                    continue;
-                }
                 if imp.raw_path.starts_with("__future__") {
                     continue;
                 }
@@ -49,27 +41,18 @@ pub fn extract_imported_aliases(
                     && !last.is_empty()
                     && last != "*"
                 {
-                    aliases.insert(
-                        Identity::new(last),
-                        (Identity::new(imp.raw_path.clone()), imp.line),
-                    );
+                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                 }
             }
         }
         FileParseResultVO::TypeScript(result) => {
             for imp in &result.imports {
-                if imp.is_reexport {
-                    continue;
-                }
                 if let Some(last) = imp.last_segment()
                     && !last.is_empty()
                     && last != "*"
                     && last != "default"
                 {
-                    aliases.insert(
-                        Identity::new(last),
-                        (Identity::new(imp.raw_path.clone()), imp.line),
-                    );
+                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
                 }
             }
         }
@@ -83,7 +66,7 @@ pub fn extract_imported_aliases(
 pub fn extract_used_symbols(
     file_path: &str,
     content: &str,
-    imported_aliases: &HashMap<Identity, (Identity, usize)>,
+    imported_aliases: &HashMap<Identity, Identity>,
 ) -> HashSet<Identity> {
     let mut used = HashSet::new();
     match FileParseResultVO::parse_path_content(file_path, content) {
@@ -168,23 +151,26 @@ pub fn extract_rust_js_imports(file_path: &str, content: &str) -> Vec<(SymbolNam
     match FileParseResultVO::parse_path_content(file_path, content) {
         FileParseResultVO::Rust(result) => {
             for imp in &result.imports {
-                if imp.is_glob || imp.is_reexport {
+                if imp.is_glob {
                     continue;
                 }
-                let name = imp.alias_name();
-                if !name.is_empty() && name != "*" && name != "_" {
-                    imports.push((SymbolName::new(name), LineNumber::new(imp.line as i64)));
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty()
+                    && last != "*"
+                    && last != "_"
+                {
+                    imports.push((SymbolName::new(last), LineNumber::new(imp.line as i64)));
                 }
             }
         }
         FileParseResultVO::TypeScript(result) => {
             for imp in &result.imports {
-                if imp.is_reexport {
-                    continue;
-                }
-                let name = imp.alias_name();
-                if !name.is_empty() && name != "*" && name != "default" {
-                    imports.push((SymbolName::new(name), LineNumber::new(imp.line as i64)));
+                if let Some(last) = imp.last_segment()
+                    && !last.is_empty()
+                    && last != "*"
+                    && last != "default"
+                {
+                    imports.push((SymbolName::new(last), LineNumber::new(imp.line as i64)));
                 }
             }
         }

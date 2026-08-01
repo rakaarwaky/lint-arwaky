@@ -4,12 +4,13 @@
 use async_trait::async_trait;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::utility_file_handler::{path_exists, read_file_sync, walk_source_files};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
+use shared::filesystem::utility_filesystem_io::{path_exists, read_file, walk_source_files};
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -55,28 +56,37 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         }
 
         let files = self.collect_files(target);
-        eprintln!(
-            "ORCH_DEBUG: target={}, files={}",
-            target.value(),
-            files.values.len()
-        );
 
-        let root_dir = shared::common::utility_file_handler::find_workspace_root(target.value())
-            .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
-            .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
+        let root_dir =
+            shared::filesystem::utility_filesystem_io::find_workspace_root(target.value())
+                .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+                .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
+
+        // Pre-read all file contents into a map so capabilities don't do I/O.
+        let content_map: HashMap<String, String> = files
+            .values
+            .iter()
+            .filter_map(|f| {
+                read_file(f.value())
+                    .ok()
+                    .map(|c| (f.value().to_string(), c))
+            })
+            .collect();
 
         let (mandatory_result, forbidden_result) = tokio::join!(
             self.deps.mandatory.run_mandatory_imports(
                 &self.config,
                 &self.layer_map,
                 &files,
-                &root_dir
+                &root_dir,
+                &content_map,
             ),
             self.deps.forbidden.check_forbidden_imports(
                 &self.config,
                 &self.layer_map,
                 &files,
-                &root_dir
+                &root_dir,
+                &content_map,
             ),
         );
         let mandatory_results = mandatory_result?;
@@ -89,10 +99,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let file_violations: Vec<LintResult> =
             ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
                 let mut local_results = Vec::new();
-                let content = match read_file_sync(file.value()) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        eprintln!("[warn] skipping unreadable file '{}': {}", file.value(), e);
+                let content = match content_map.get(file.value()) {
+                    Some(c) => c.clone(),
+                    None => {
                         return local_results;
                     }
                 };
@@ -119,7 +128,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let cycle_violations = self
             .deps
             .cycle
-            .check_cycles(&self.config, &self.layer_map, &files, &root_dir)
+            .check_cycles(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir,
+                &content_map,
+            )
             .await?;
         results.values.extend(cycle_violations);
         Ok(results.values)
@@ -127,6 +142,113 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
     fn name(&self) -> &str {
         "import-rules"
+    }
+
+    fn run_audit_with_entries(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+
+        // Build FilePathList and content_map from FileEntry
+        let file_paths: Vec<FilePath> = files
+            .iter()
+            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok())
+            .collect();
+        let file_list = FilePathList::new(file_paths);
+
+        let content_map: HashMap<String, String> = files
+            .iter()
+            .filter(|f| f.parse_ok)
+            .map(|f| (f.path.to_string_lossy().to_string(), f.content.clone()))
+            .collect();
+
+        let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
+        let mut results = Vec::new();
+
+        // Run async checks via tokio runtime
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mandatory_result = self
+                .deps
+                .mandatory
+                .run_mandatory_imports(
+                    &self.config,
+                    &self.layer_map,
+                    &file_list,
+                    &root_dir,
+                    &content_map,
+                )
+                .await;
+            let forbidden_result = self
+                .deps
+                .forbidden
+                .check_forbidden_imports(
+                    &self.config,
+                    &self.layer_map,
+                    &file_list,
+                    &root_dir,
+                    &content_map,
+                )
+                .await;
+            if let Ok(v) = mandatory_result {
+                results.extend(v.values);
+            }
+            if let Ok(v) = forbidden_result {
+                results.extend(v.values);
+            }
+
+            let cycle_result = self
+                .deps
+                .cycle
+                .check_cycles(
+                    &self.config,
+                    &self.layer_map,
+                    &file_list,
+                    &root_dir,
+                    &content_map,
+                )
+                .await;
+            if let Ok(v) = cycle_result {
+                results.extend(v);
+            }
+        });
+
+        // Sync checks via rayon
+        use rayon::prelude::*;
+        let sync_violations: Vec<LintResult> = file_list
+            .values
+            .par_iter()
+            .flat_map(|file| {
+                let mut local = Vec::new();
+                let content_str = match content_map.get(file.value()) {
+                    Some(c) => c.as_str(),
+                    None => return local,
+                };
+                if let Ok(v) = self
+                    .deps
+                    .unused
+                    .check_unused_imports(file.value(), content_str)
+                {
+                    local.extend(v);
+                }
+                let cs = ContentString::new(content_str.to_string());
+                if let Ok(v) =
+                    self.deps
+                        .dummy
+                        .check_all_dummy(file, &cs, &root_dir, &self.layer_map)
+                {
+                    local.extend(v);
+                }
+                local
+            })
+            .collect();
+        results.extend(sync_violations);
+
+        results
     }
 }
 

@@ -33,6 +33,7 @@ impl PreviewView {
         };
 
         let (title, content) = match state.preview_mode {
+            PreviewMode::FileContent => (" Preview ".to_string(), state.preview_text.clone()),
             PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview_text.clone()),
             PreviewMode::ActionOutput => {
                 (" Action Output ".to_string(), state.preview_text.clone())
@@ -104,10 +105,9 @@ Actions (on selected file/folder):
   s       scan — multi-adapter scan
   f       fix — auto-fix
   t       ci — CI mode (threshold)
-  w       watch — file watch
+  w       watch — not supported (use CLI)
   o       orphan — dead code check
   Ctrl+S  security — vulnerability scan
-  Ctrl+D  duplicates — duplication
   Ctrl+P  dependencies — deps scan
 
 Setup:

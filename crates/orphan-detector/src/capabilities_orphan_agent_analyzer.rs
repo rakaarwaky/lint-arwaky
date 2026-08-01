@@ -6,6 +6,7 @@ use shared::common::{FilePath, Severity};
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::{AesOrphanViolation, IAgentOrphanProtocol};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -22,9 +23,10 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         f: &FilePath,
         _root_dir: &FilePath,
         all_files: &[String],
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
-        let content = match shared::orphan_detector::utility_orphan_io::read_file_safe(fp) {
+        let content = match content_map.get(fp).cloned().unwrap_or_default() {
             c if c.is_empty() => {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
@@ -63,7 +65,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
         // Pass 1: Word-boundary search across candidate files
         let is_referenced = candidates.iter().any(|cf| {
-            let candidate_content = shared::orphan_detector::utility_orphan_io::read_file_safe(cf);
+            let candidate_content = content_map.get(&**cf).cloned().unwrap_or_default();
             aggregate_traits
                 .iter()
                 .any(|t| Self::content_contains_word(&candidate_content, t))

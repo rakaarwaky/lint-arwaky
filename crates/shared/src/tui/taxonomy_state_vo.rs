@@ -10,6 +10,7 @@ pub enum PanelFocus {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PreviewMode {
+    FileContent,
     LintResults,
     HelpOverlay,
     ActionOutput,

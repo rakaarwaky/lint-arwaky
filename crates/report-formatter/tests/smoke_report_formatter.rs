@@ -13,19 +13,15 @@ use std::sync::Arc;
 
 #[test]
 fn smoke_report_formatter_crate_boots_and_responds() {
-    let code_analysis =
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter();
-
-    // 2. Orchestrator instantiates
+    // 1. Orchestrator instantiates
     let orch = ReportFormatterOrchestrator::new(ReportFormatterDeps {
-        text: Arc::new(TextFormatter::new(code_analysis)),
+        text: Arc::new(TextFormatter::new()),
         json: Arc::new(JsonFormatter::new()),
         sarif: Arc::new(SarifFormatter::new()),
         junit: Arc::new(JunitFormatter::new()),
     });
 
-    // 3. Format method responds
+    // 2. Format method responds
     let report = shared::cli_commands::taxonomy_scan_report_vo::ScanReport::new(vec![], vec![]);
     let result = orch.format(
         &report,

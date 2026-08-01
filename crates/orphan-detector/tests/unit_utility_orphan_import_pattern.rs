@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // PURPOSE: Unit tests for UtilityOrphanAnalyzer — import pattern detection
 // TDD: Test that cross-crate imports are detected correctly
 
@@ -31,6 +32,10 @@ fn test_utility_imported_by_cross_crate_use_statement_should_not_flag_aes504() {
         &FilePath::new(".".to_string()).unwrap(),
         &all_files,
         &inbound_links,
+        &all_files
+            .iter()
+            .filter_map(|f| std::fs::read_to_string(f).ok().map(|c| (f.clone(), c)))
+            .collect::<std::collections::HashMap<String, String>>(),
     );
 
     // Should NOT be flagged as orphan because it's imported by a consumer layer

@@ -106,19 +106,30 @@ async fn health_check_lists_expected_adapters() {
         .iter()
         .map(|a| a["name"].as_str().unwrap())
         .collect();
+    // FRD FR-004: all 9 adapters
+    assert!(names.contains(&"clippy"));
+    assert!(names.contains(&"rustfmt"));
+    assert!(names.contains(&"cargo-audit"));
+    assert!(names.contains(&"ruff"));
+    // FRD FR-004: all 9 adapters
+    assert!(names.contains(&"clippy"));
+    assert!(names.contains(&"rustfmt"));
+    assert!(names.contains(&"cargo-audit"));
     assert!(names.contains(&"ruff"));
     assert!(names.contains(&"mypy"));
-    assert!(names.contains(&"clippy"));
-    assert!(names.contains(&"eslint"));
     assert!(names.contains(&"bandit"));
+    assert!(names.contains(&"eslint"));
+    assert!(names.contains(&"prettier"));
+    assert!(names.contains(&"tsc"));
 }
 
 #[tokio::test]
-async fn health_check_adapters_total_is_five() {
+async fn health_check_adapters_total_is_nine() {
     let sut = build_surface();
     let result = sut.health_check().await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
-    assert_eq!(parsed["adapters_total"], 5);
+    // FRD FR-004: exactly 9 adapters
+    assert_eq!(parsed["adapters_total"], 9);
 }
 
 // ─── Clone ───────────────────────────────────────────────────────────

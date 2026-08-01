@@ -2,12 +2,11 @@
 use async_trait::async_trait;
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ErrorMessage, FilePath, ScanError};
-
 use shared::common::{LayerMapVO, PatternList};
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
-
 use std::path::Path;
 use std::sync::Arc;
 
@@ -44,28 +43,23 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         );
         let files = shared::naming_rules::utility_file_filter::filter_source_files(&all_files);
 
-        let mut naming_results = LintResultList::new(Vec::new());
-        let mut suffix_results = LintResultList::new(Vec::new());
+        let results = self.run_checks(&files, target).await;
+        Ok(results)
+    }
 
-        let ((), ()) = tokio::join!(
-            self.deps.naming_convention_checker.check_file_naming(
-                self.deps.config.as_ref(),
-                self.deps.layer_map.as_ref(),
-                &files,
-                target,
-                &mut naming_results,
-            ),
-            self.deps.suffix_prefix_checker.check_domain_suffixes(
-                self.deps.config.as_ref(),
-                self.deps.layer_map.as_ref(),
-                &files,
-                target,
-                &mut suffix_results,
-            ),
-        );
+    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+        // Convert FileEntry paths to FilePathList for the checkers
+        let file_paths: Vec<FilePath> = files
+            .iter()
+            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok())
+            .collect();
+        let file_list = shared::common::FilePathList::new(file_paths);
+        let root = FilePath::new(".".to_string()).unwrap_or_default();
 
-        naming_results.values.extend(suffix_results.values);
-        Ok(naming_results.values)
+        // Block on async checkers
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(self.run_checks(&file_list, &root))
     }
 
     fn name(&self) -> &str {
@@ -89,8 +83,6 @@ impl NamingOrchestrator {
                     .to_string()
             })
             .collect();
-        // Default-excluded directories are skipped even without config `ignored_paths`.
-        // `tests` must never be linted (test scaffolding is not production code).
         if !values.iter().any(|v| v == "tests") {
             values.push("tests".to_string());
         }
@@ -99,5 +91,34 @@ impl NamingOrchestrator {
             deps,
             ignored_patterns,
         }
+    }
+
+    async fn run_checks(
+        &self,
+        files: &shared::common::FilePathList,
+        root_dir: &FilePath,
+    ) -> Vec<LintResult> {
+        let mut naming_results = LintResultList::new(Vec::new());
+        let mut suffix_results = LintResultList::new(Vec::new());
+
+        let ((), ()) = tokio::join!(
+            self.deps.naming_convention_checker.check_file_naming(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                files,
+                root_dir,
+                &mut naming_results,
+            ),
+            self.deps.suffix_prefix_checker.check_domain_suffixes(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                files,
+                root_dir,
+                &mut suffix_results,
+            ),
+        );
+
+        naming_results.values.extend(suffix_results.values);
+        naming_results.values
     }
 }

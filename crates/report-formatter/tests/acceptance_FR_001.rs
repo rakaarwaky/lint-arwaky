@@ -9,16 +9,12 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::{Format, ScanReport};
-
 use shared::report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 fn build_orchestrator() -> ReportFormatterOrchestrator {
-    let code_analysis =
-        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-            .code_analysis_linter();
     ReportFormatterOrchestrator::new(ReportFormatterDeps {
-        text: Arc::new(TextFormatter::new(code_analysis)),
+        text: Arc::new(TextFormatter::new()),
         json: Arc::new(JsonFormatter::new()),
         sarif: Arc::new(SarifFormatter::new()),
         junit: Arc::new(JunitFormatter::new()),
@@ -29,13 +25,11 @@ fn build_orchestrator() -> ReportFormatterOrchestrator {
 
 #[test]
 fn acceptance_report_formatter_text_is_readable() {
-    // FRD requirement: Text format should produce human-readable output
     let orch = build_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Text);
     assert!(!result.value.is_empty());
-    // Should contain readable text (not binary or encoded)
     assert!(result.value.is_ascii());
 }
 
@@ -43,20 +37,18 @@ fn acceptance_report_formatter_text_is_readable() {
 
 #[test]
 fn acceptance_report_formatter_json_is_valid() {
-    // FRD requirement: JSON format should produce valid JSON
     let orch = build_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
     let result = orch.format(&report, Format::Json);
-    assert!(result.value.contains("["));
-    assert!(result.value.contains("]"));
+    assert!(result.value.contains("\"violations\""));
+    assert!(result.value.contains("\"summary\""));
 }
 
 // ─── Acceptance: SARIF formatter produces SARIF 2.1.0 ──
 
 #[test]
 fn acceptance_report_formatter_sarif_schema() {
-    // FRD requirement: SARIF format should produce valid SARIF 2.1.0 JSON
     let orch = build_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
@@ -68,7 +60,6 @@ fn acceptance_report_formatter_sarif_schema() {
 
 #[test]
 fn acceptance_report_formatter_junit_xml() {
-    // FRD requirement: JUnit format should produce valid XML
     let orch = build_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
@@ -81,17 +72,14 @@ fn acceptance_report_formatter_junit_xml() {
 
 #[test]
 fn acceptance_report_formatter_routing_correct() {
-    // FRD requirement: Orchestrator must route to the correct formatter based on format enum
     let orch = build_orchestrator();
     let report = ScanReport::new(vec![], vec![]);
 
-    // Each format should produce distinct output
     let text = orch.format(&report, Format::Text).value;
     let json = orch.format(&report, Format::Json).value;
     let sarif = orch.format(&report, Format::Sarif).value;
     let junit = orch.format(&report, Format::Junit).value;
 
-    // Verify each format produces unique content
     assert_ne!(text, json);
     assert_ne!(text, sarif);
     assert_ne!(text, junit);
@@ -102,9 +90,7 @@ fn acceptance_report_formatter_routing_correct() {
 
 #[test]
 fn acceptance_report_formatter_default_format() {
-    // FRD requirement: Default format should produce a text summary
     let report = ScanReport::new(vec![], vec![]);
-    let result =
-        report_formatter_lint_arwaky::utility_report_format::format_report_default(&report);
+    let result = shared::report_formatter::format_report_default(&report);
     assert!(!result.is_empty());
 }

@@ -1,8 +1,8 @@
 use shared::common::ExitCode;
 use std::sync::Arc;
 
-use crate::utility_path_resolver::is_member_path;
 use shared::cli_commands::Format;
+use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::FilePath;
 use shared::role_rules::IRoleRunnerAggregate;
 

@@ -29,7 +29,9 @@ impl ShortcutComponent {
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
         let (row1, row2, row3) = match state.preview_mode {
-            PreviewMode::LintResults | PreviewMode::ActionOutput => context_sensitive_rows(state),
+            PreviewMode::LintResults | PreviewMode::ActionOutput | PreviewMode::FileContent => {
+                context_sensitive_rows(state)
+            }
             _ => default_rows(),
         };
 
@@ -73,7 +75,6 @@ fn default_rows() -> ShortcutRows {
         ],
         vec![
             ("^S", "security"),
-            ("^D", "duplicates"),
             ("^P", "deps"),
             ("y", "copy"),
             ("^Y", "save"),
@@ -102,7 +103,6 @@ fn context_sensitive_rows(_state: &AppState) -> ShortcutRows {
         ],
         vec![
             ("^S", "security"),
-            ("^D", "duplicates"),
             ("^P", "deps"),
             ("?", "help"),
             ("q", "quit"),

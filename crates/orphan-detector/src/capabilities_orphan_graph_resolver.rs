@@ -3,12 +3,12 @@
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_graph_resolver;
-use shared::orphan_detector::utility_orphan_io;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -28,19 +28,21 @@ struct PythonResolveCtx<'a> {
 
 pub struct OrphanGraphResolver {
     pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 impl Default for OrphanGraphResolver {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        Self::new(
+            Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
+        )
     }
 }
 
 impl OrphanGraphResolver {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
-        Self { parser_dispatcher }
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { parser_dispatcher, filesystem }
     }
 }
 
@@ -144,8 +146,8 @@ impl OrphanGraphResolver {
         let mut crate_src_dirs: HashMap<String, std::path::PathBuf> = HashMap::new();
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if utility_orphan_io::is_dir(&ws_path) {
-                let entries = utility_orphan_io::scan_directory(&ws_path);
+            if ws_path.is_dir() {
+                let entries = self.filesystem.scan_directory(&ws_path).into_iter().map(|p| (p.file_name().and_then(|n| n.to_str()).unwrap_or("" ).to_string(), p.to_string_lossy().to_string(), p.is_dir())).collect::<Vec<_>>();
                 for (name, path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
@@ -153,7 +155,7 @@ impl OrphanGraphResolver {
                     workspace_modules.insert(name.clone());
                     workspace_modules.insert(name.replace('-', "_"));
                     let src_dir = std::path::PathBuf::from(&path_str).join("src");
-                    if utility_orphan_io::is_dir(&src_dir) {
+                    if src_dir.is_dir() {
                         crate_src_dirs.insert(name.clone(), src_dir.clone());
                         crate_src_dirs.insert(name.replace('-', "_"), src_dir);
                     }
@@ -170,7 +172,8 @@ impl OrphanGraphResolver {
         let root_path_obj = std::path::Path::new(&workspace_root);
 
         for src_dir in crate_src_dirs.values() {
-            let workspace_files = utility_orphan_io::scan_directory_recursive(src_dir);
+            let ws_entries = self.filesystem.discover_files(src_dir, &[]);
+            let workspace_files: Vec<String> = ws_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
             for f in workspace_files {
                 let rel = std::path::Path::new(&f)
                     .strip_prefix(root_path_obj)
@@ -185,8 +188,8 @@ impl OrphanGraphResolver {
         // Scan root_*.rs files directly in workspace dirs
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
-            if utility_orphan_io::is_dir(&ws_path) {
-                let entries = utility_orphan_io::scan_directory(&ws_path);
+            if ws_path.is_dir() {
+                let entries = self.filesystem.scan_directory(&ws_path).into_iter().map(|p| (p.file_name().and_then(|n| n.to_str()).unwrap_or("" ).to_string(), p.to_string_lossy().to_string(), p.is_dir())).collect::<Vec<_>>();
                 for (name, path_str, is_dir_entry) in entries {
                     if is_dir_entry {
                         continue;
@@ -268,8 +271,8 @@ impl OrphanGraphResolver {
         // ─── AST-based file processing (replaces 7 regex passes) ───
         for f in files {
             import_graph.entry(f.clone()).or_default();
-            let content = utility_orphan_io::read_file_safe(f);
-            if content.is_empty() && !utility_orphan_io::is_file(&std::path::PathBuf::from(f)) {
+            let content = self.filesystem.read_file(std::path::Path::new(f)).unwrap_or_default();
+            if content.is_empty() && !std::path::PathBuf::from(f).is_file() {
                 continue;
             }
 
@@ -290,9 +293,7 @@ impl OrphanGraphResolver {
                                 )
                             {
                                 let resolved = resolved_path.to_string_lossy().to_string();
-                                if utility_orphan_io::is_file(&std::path::PathBuf::from(&resolved))
-                                    && resolved != *f
-                                {
+                                if std::path::PathBuf::from(&resolved).is_file() && resolved != *f {
                                     utility_orphan_graph_resolver::add_edge(
                                         &mut import_graph,
                                         &mut inbound_links,
@@ -317,7 +318,7 @@ impl OrphanGraphResolver {
                                 } else {
                                     candidate.clone()
                                 };
-                                if utility_orphan_io::is_file(&abs_candidate)
+                                if abs_candidate.is_file()
                                     && let Some(path_str) = candidate.to_str()
                                 {
                                     let resolved = path_str.to_string();
@@ -538,7 +539,7 @@ impl OrphanGraphResolver {
                 normalized_crate
             };
             if let Some(src_dir) = ctx.crate_src_dirs.get(&lookup_name) {
-                let entries = utility_orphan_io::scan_directory(src_dir);
+                let entries = shared::filesystem::utility_filesystem_io::scan_directory(src_dir);
                 let module_name = segments.get(1).map(|s| s.as_str()).unwrap_or("");
                 for (_name, path_str, _is_dir) in entries {
                     let path = std::path::PathBuf::from(&path_str);
@@ -607,7 +608,7 @@ impl OrphanGraphResolver {
             if !module_part.is_empty() {
                 for ext in &[".py", ".rs", ".ts", ".js"] {
                     let candidate = base.join(format!("{}{}", module_part, ext));
-                    if utility_orphan_io::is_file(&candidate) {
+                    if candidate.is_file() {
                         let cand_rel = candidate
                             .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())
@@ -625,7 +626,7 @@ impl OrphanGraphResolver {
                 }
                 let pkg_dir = base.join(module_part);
                 for marker in &["__init__.py", "mod.rs"] {
-                    if utility_orphan_io::is_file(&pkg_dir.join(marker)) {
+                    if pkg_dir.join(marker).is_file() {
                         let cand_rel = pkg_dir
                             .join(marker)
                             .strip_prefix(ctx.root_path)
@@ -666,7 +667,7 @@ impl OrphanGraphResolver {
             let mut walk_ok = true;
             for seg in &segments {
                 walk_dir = walk_dir.join(seg);
-                if !utility_orphan_io::is_dir(&walk_dir) {
+                if !walk_dir.is_dir() {
                     walk_ok = false;
                     break;
                 }
@@ -674,7 +675,7 @@ impl OrphanGraphResolver {
             if walk_ok {
                 for marker in &["__init__.py", "mod.rs", "index.ts", "index.js"] {
                     let candidate = walk_dir.join(marker);
-                    if utility_orphan_io::is_file(&candidate) {
+                    if candidate.is_file() {
                         let cand_rel = candidate
                             .strip_prefix(ctx.root_path)
                             .map(|p| p.to_string_lossy().to_string())

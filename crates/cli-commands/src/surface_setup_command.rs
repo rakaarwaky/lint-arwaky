@@ -7,6 +7,7 @@
 //
 // Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::ExitCode;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
@@ -50,10 +51,10 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
                 println!("  {doc} — not in XDG config, skipping");
                 continue;
             }
-            match std::fs::read_to_string(&xdg_src) {
+            match filesystem::FilesystemOrchestrator::new().read_to_string(&xdg_src) {
                 Ok(content) => {
                     if let Some(parent) = std::path::Path::new(doc).parent() {
-                        let _ = std::fs::create_dir_all(parent);
+                        let _ = filesystem::FilesystemOrchestrator::new().create_dir_all(parent);
                     }
                     match setup_orchestrator.write_config_file(doc, &content) {
                         Ok(_) => println!("  {doc} — copied/overwritten from XDG config"),
@@ -94,17 +95,16 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
 }
 
 fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<usize> {
-    std::fs::create_dir_all(dst)?;
+    filesystem::FilesystemOrchestrator::new().create_dir_all(dst)?;
     let mut count = 0;
-    for entry in std::fs::read_dir(src)? {
-        let entry = entry?;
-        let ty = entry.file_type()?;
-        let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
-        if ty.is_dir() {
+    let entries = filesystem::FilesystemOrchestrator::new().scan_directory(src);
+    for src_path in entries {
+        let file_name = src_path.file_name().unwrap_or_default();
+        let dst_path = dst.join(file_name);
+        if src_path.is_dir() {
             count += copy_dir_all(&src_path, &dst_path)?;
         } else {
-            std::fs::copy(&src_path, &dst_path)?;
+            filesystem::FilesystemOrchestrator::new().copy_file(&src_path, &dst_path)?;
             count += 1;
         }
     }

@@ -17,6 +17,7 @@
 //   4. Run duplication check using pre-read entries (AES305)
 //   5. Return aggregated LintResult list
 
+use rayon::prelude::*;
 use shared::cli_commands::{LintResult, LintResultList};
 
 use shared::code_analysis::{
@@ -91,6 +92,79 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             .map(|r| r.code_analysis.clone())
             .collect()
     }
+
+    /// Run analysis on pre-parsed file entries from the filesystem crate.
+    fn run_analysis_with_entries(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+        let mut violations: Vec<LintResult> = Vec::new();
+
+        // Parallel per-file processing using FileEntry content directly
+        let file_violations: Vec<Vec<LintResult>> = files
+            .par_iter()
+            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .map(|entry| {
+                let mut v = Vec::new();
+                let file = entry.path.to_string_lossy();
+                let filename = std::path::Path::new(file.as_ref())
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                let c = &entry.content;
+
+                // Layer-independent checks
+                self.deps
+                    .bypass_checker
+                    .check_bypass_comments(&file, c, &mut v);
+                self.deps
+                    .dead_inheritance_checker
+                    .check_dead_inheritance(&file, c, &mut v);
+
+                if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
+                    return v;
+                }
+
+                // Layer detection
+                let fname = extract_filename(&file);
+                let layer = match detect_layer_from_prefix(fname) {
+                    Some(l) => l,
+                    None => return v,
+                };
+                let keys = collect_layer_keys(&self.layer_map);
+                let layer = LayerNameVO::new(resolve_specialized_layer(&layer, &file, &keys));
+                let def = match get_layer_def(&layer.value, &self.config.layers) {
+                    Some(d) => d,
+                    None => return v,
+                };
+                if def.exceptions.values.contains(&fname.to_string()) {
+                    return v;
+                }
+
+                // Layer-dependent checks
+                self.deps
+                    .line_checker
+                    .check_line_counts(&file, Some(def), c, &mut v);
+                self.deps.class_checker.check_mandatory_class_definition(
+                    &file,
+                    Some(def),
+                    c,
+                    &mut v,
+                );
+
+                v
+            })
+            .collect();
+
+        for file_v in file_violations {
+            violations.extend(file_v);
+        }
+
+        violations
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
@@ -156,7 +230,6 @@ impl CodeAnalysisOrchestrator {
             return Vec::new();
         }
         let mut violations: Vec<LintResult> = Vec::new();
-        let mut entries: Vec<(String, String)> = Vec::new();
 
         // Scan Cargo.toml for workspace clippy allow bypass (AES304)
         let root_path = Path::new(root_dir);
@@ -167,7 +240,7 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match shared::code_analysis::utility_file_reader::read_lintable_file(
+                match shared::filesystem::utility_filesystem_io::read_lintable_file(
                     &cargo_path.to_string_lossy(),
                 ) {
                     Ok(Some(cargo_content)) => {
@@ -189,76 +262,86 @@ impl CodeAnalysisOrchestrator {
             }
         }
 
-        for file in files {
-            let filename = Path::new(file)
-                .file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or_default();
-            let c = match shared::code_analysis::utility_file_reader::read_lintable_file(file) {
-                Ok(Some(content)) => content,
-                Ok(None) => {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        0,
-                        "AES301",
-                        Severity::LOW,
-                        "File skipped: exceeds maximum lintable size (2 MiB)".to_string(),
-                    ));
-                    continue;
+        // Parallel per-file processing
+        let file_violations: Vec<Vec<LintResult>> = files
+            .par_iter()
+            .map(|file| {
+                let mut v = Vec::new();
+                let filename = Path::new(file)
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                let c = match shared::filesystem::utility_filesystem_io::read_lintable_file(file) {
+                    Ok(Some(content)) => content,
+                    Ok(None) => {
+                        v.push(LintResult::new_arch(
+                            file,
+                            0,
+                            "AES301",
+                            Severity::LOW,
+                            "File skipped: exceeds maximum lintable size (2 MiB)".to_string(),
+                        ));
+                        return v;
+                    }
+                    Err(e) => {
+                        v.push(LintResult::new_arch(
+                            file,
+                            0,
+                            "DIAG_IO",
+                            Severity::LOW,
+                            format!("File skipped: {}", e),
+                        ));
+                        return v;
+                    }
+                };
+
+                // Layer-independent checks (run on ALL files)
+                self.deps
+                    .bypass_checker
+                    .check_bypass_comments(file, &c, &mut v);
+                self.deps
+                    .dead_inheritance_checker
+                    .check_dead_inheritance(file, &c, &mut v);
+
+                if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
+                    return v;
                 }
-                Err(e) => {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        0,
-                        "DIAG_IO",
-                        Severity::LOW,
-                        format!("File skipped: {}", e),
-                    ));
-                    continue;
+
+                // Layer detection
+                let filename = extract_filename(file);
+                let layer = match detect_layer_from_prefix(filename) {
+                    Some(l) => l,
+                    None => return v,
+                };
+                let keys = collect_layer_keys(&self.layer_map);
+                let layer = LayerNameVO::new(resolve_specialized_layer(&layer, file, &keys));
+                let def = match get_layer_def(&layer.value, &self.config.layers) {
+                    Some(d) => d,
+                    None => return v,
+                };
+                if def.exceptions.values.contains(&filename.to_string()) {
+                    return v;
                 }
-            };
-            entries.push((file.clone(), c.clone()));
 
-            // Layer-independent checks (run on ALL files)
-            self.deps
-                .bypass_checker
-                .check_bypass_comments(file, &c, &mut violations);
-            self.deps
-                .dead_inheritance_checker
-                .check_dead_inheritance(file, &c, &mut violations);
+                // Layer-dependent checks (code-analysis only)
+                self.deps
+                    .line_checker
+                    .check_line_counts(file, Some(def), &c, &mut v);
 
-            if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
-                continue;
-            }
+                // Mandatory class definition check (AES303)
+                self.deps.class_checker.check_mandatory_class_definition(
+                    file,
+                    Some(def),
+                    &c,
+                    &mut v,
+                );
 
-            // Layer detection
-            let filename = extract_filename(file);
-            let layer = match detect_layer_from_prefix(filename) {
-                Some(l) => l,
-                None => continue,
-            };
-            let keys = collect_layer_keys(&self.layer_map);
-            let layer = LayerNameVO::new(resolve_specialized_layer(&layer, file, &keys));
-            let def = match get_layer_def(&layer.value, &self.config.layers) {
-                Some(d) => d,
-                None => continue,
-            };
-            if def.exceptions.values.contains(&filename.to_string()) {
-                continue;
-            }
+                v
+            })
+            .collect();
 
-            // Layer-dependent checks (code-analysis only)
-            self.deps
-                .line_checker
-                .check_line_counts(file, Some(def), &c, &mut violations);
-
-            // Mandatory class definition check (AES303)
-            self.deps.class_checker.check_mandatory_class_definition(
-                file,
-                Some(def),
-                &c,
-                &mut violations,
-            );
+        for file_v in file_violations {
+            violations.extend(file_v);
         }
 
         // AES305: File-level similarity check

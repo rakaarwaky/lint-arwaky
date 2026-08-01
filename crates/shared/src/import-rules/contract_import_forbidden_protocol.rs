@@ -8,9 +8,13 @@ use crate::import_rules::taxonomy_import_error::ImportError;
 use crate::taxonomy_definition_vo::LayerMapVO;
 use crate::taxonomy_layer_vo::Identity;
 use async_trait::async_trait;
+use std::collections::HashMap;
 
 /// For each file, verify its imports do not reach any layer listed in the `forbidden` set.
 /// Used by the import orchestrator as part of the AES201 gate.
+///
+/// `content_map` maps file path → file content. The orchestrator pre-reads files
+/// and passes the map so capabilities don't do I/O directly.
 #[async_trait]
 pub trait IImportForbiddenProtocol: Send + Sync {
     fn rule_name(&self) -> Identity;
@@ -20,5 +24,6 @@ pub trait IImportForbiddenProtocol: Send + Sync {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<LintResultList, ImportError>;
 }

@@ -1,11 +1,11 @@
-// PURPOSE: ICapabilitiesRoleChecker — protocol trait for AES403: capability routing bottlenecks and role audits
+// PURPOSE: ICapabilitiesRoleChecker — protocol trait for AES403: capability routing and role audits
 use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::common::taxonomy_source_vo::SourceContentVO;
+use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 
 pub trait ICapabilitiesRoleChecker: Send + Sync {
     fn check_capability_routing(
         &self,
-        source: &SourceContentVO,
+        file: &FileEntry,
         layer: &str,
         violations: &mut Vec<LintResult>,
     );

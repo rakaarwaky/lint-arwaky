@@ -4,20 +4,25 @@
 
 The file-watch crate provides a filesystem monitoring system that detects file changes in real time and automatically re-triggers the linting pipeline. It uses the `notify` crate (inotify on Linux) with `notify-debouncer-mini` to debounce rapid changes and avoid redundant processing.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                 the watch orchestrator               │
-│  ┌──────────────┐       ┌──────────────────────┐   │
-│  │  the notify   │──────▶│  the change analyzer  │   │
-│  │  provider     │ events│  (dedup + filter)     │   │
-│  └──────────────┘       └──────────────────────┘   │
-│                                    │                │
-│                                    ▼                │
-│                          ┌──────────────────┐       │
-│                          │ the lint pipeline │       │
-│                          │ (code analysis)   │       │
-│                          └──────────────────┘       │
-└─────────────────────────────────────────────────────┘
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["watch orchestrator"]
+    B --> C["notify provider"]
+    C -->|file events| D["change analyzer"]
+    D -->|deduped events| E{"lintable?"}
+
+    E -->|"yes"| F["lint pipeline"]
+    E -->|"no"| G["skip"]
+
+    F --> H["Lint Results"]
+    H --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style E fill:#fff3e0,stroke:#e65100
+    style H fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Functional Requirements
@@ -111,25 +116,25 @@ The file-watch crate provides a filesystem monitoring system that detects file c
 
 ## API Contract
 
-| Function                            | Input                                    | Output             | Description                                                              |
-| ----------------------------------- | ---------------------------------------- | ------------------ | ------------------------------------------------------------------------ |
-| the watch orchestrator run          | watch configuration, atomic running flag | exit code          | Synchronous entry: creates runtime if needed, delegates to async run.    |
-| the watch orchestrator async run    | watch configuration, atomic running flag | exit code          | Async event loop: initial lint, start watcher, process events, shutdown. |
-| the notify provider start           | watch configuration                      | result             | Create debouncer, register watch path, start receiving events.           |
-| the notify provider stop            | —                                        | result             | Drop debouncer to stop watching.                                         |
-| the notify provider subscribe       | —                                        | broadcast receiver | Subscribe to file change events.                                         |
-| the notify provider is available    | —                                        | boolean            | Check if watch feature is compiled in.                                   |
-| the change analyzer is lintable     | file path string                         | boolean            | Check if a file path has a lintable extension.                           |
-| the change analyzer analyze         | list of events                           | list of events     | Deduplicate events by path.                                              |
-| the change analyzer filter lintable | list of events                           | list of events     | Keep only events for lintable files.                                     |
+| Operation                        | Input                                    | Output             | Purpose                                                                 |
+| ----------------------------------- | ---------------------------------------- | ------------------ | ----------------------------------------------------------------------- |
+| Run watcher (sync)               | Watch config, atomic running flag        | Exit code          | Creates runtime if needed, delegates to async run.                      |
+| Run watcher (async)              | Watch config, atomic running flag        | Exit code          | Initial lint, start watcher, process events, shutdown.                  |
+| Start notify provider            | Watch config                             | Result             | Create debouncer, register watch path, start receiving events.          |
+| Stop notify provider             | —                                        | Result             | Drop debouncer to stop watching.                                        |
+| Subscribe to events               | —                                        | Broadcast receiver | Subscribe to file change events.                                        |
+| Check feature available          | —                                        | Boolean            | Check if watch feature is compiled in.                                  |
+| Check if lintable                 | File path                                | Boolean            | Check if a file path has a lintable extension.                          |
+| Analyze events                    | List of events                           | List of events     | Deduplicate events by path.                                             |
+| Filter lintable events           | List of events                           | List of events     | Keep only events for lintable files.                                    |
 
 ## Integration Points
 
 - **Internal**:
-  - The code analysis aggregate in the shared crate — lint pipeline for running analysis on changed files.
-  - The watch provider protocol in the shared crate — protocol interface for the notify provider.
-  - The change analyzer protocol in the shared crate — protocol interface for change analysis.
-  - The watch aggregate in the shared crate — aggregate trait for the orchestrator.
+  - Code analysis aggregate — lint pipeline for running analysis on changed files.
+  - Watch provider protocol — protocol interface for the notify provider.
+  - Change analyzer protocol — protocol interface for change analysis.
+  - Watch aggregate — aggregate trait for the orchestrator.
 - **External**:
   - `notify` crate — OS-level filesystem event monitoring (inotify on Linux).
   - `notify-debouncer-mini` — debouncing layer for rapid filesystem events.

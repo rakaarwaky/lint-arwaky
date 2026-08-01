@@ -17,24 +17,15 @@ ignored_rules: []
 ignored_paths:
   - "/target"
   - "/.git"
-  - "/.github"
-  - "/scratch"
   - "/node_modules"
-  - "/.opencode"
-  - "/.mimocode"
-  - "/scripts"
   - ".min.js"
   - ".min.css"
   - "/.dsc_cache"
   - "/tests"
-  - "/test-workspaces"
-  - "/mimocode"
   - "build.rs"
   - "/build.rs"
   - "**/build.rs"
-  - "/.agents"
   - "/benches"
-  - "/crates/mcp-server/benches"
   - "./output"
   - "/dist"
   - "/build"
@@ -546,7 +537,6 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "surface_mcp_command.rs", "bench_mcp_server.rs"]
       forbidden_bypass:
         [
           "#[allow(",

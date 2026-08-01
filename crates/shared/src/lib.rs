@@ -43,5 +43,5 @@ pub mod role_rules;
 #[path = "report-formatter/mod.rs"]
 pub mod report_formatter;
 
-#[path = "maintenance/mod.rs"]
+pub mod filesystem;
 pub mod maintenance;

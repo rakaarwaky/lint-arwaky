@@ -19,6 +19,13 @@ fn make_inbound(links: Vec<(&str, Vec<&str>)>) -> InboundLinkMap {
 }
 
 /// AES504: Utility imported by a capabilities file is NOT orphan.
+fn build_content_map(files: &[String]) -> HashMap<String, String> {
+    files
+        .iter()
+        .filter_map(|f| std::fs::read_to_string(f).ok().map(|c| (f.clone(), c)))
+        .collect()
+}
+
 #[test]
 fn fr007_utility_imported_by_capabilities_not_orphan() {
     let a = UtilityOrphanAnalyzer::default();
@@ -33,7 +40,7 @@ fn fr007_utility_imported_by_capabilities_not_orphan() {
         vec!["orphan-detector/src/capabilities_orphan_capabilities_analyzer.rs"],
     )]);
 
-    let result = a.is_utility_orphan(&f, &root, &all, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all, &inbound, &build_content_map(&all));
     assert!(
         !result.is_orphan,
         "AES504 FAIL: utility imported by capabilities should not be orphan"
@@ -49,7 +56,7 @@ fn fr007_utility_with_no_importers_is_orphan() {
     let all = vec!["shared/src/orphan-detector/utility_dead.rs".to_string()];
     let inbound = make_inbound(vec![]);
 
-    let result = a.is_utility_orphan(&f, &root, &all, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all, &inbound, &build_content_map(&all));
     assert!(
         result.is_orphan,
         "AES504 FAIL: utility with no importers must be flagged"
@@ -71,7 +78,7 @@ fn fr007_utility_only_imported_by_utilities_is_dead_code() {
         vec!["shared/src/orphan-detector/utility_outer.rs"],
     )]);
 
-    let result = a.is_utility_orphan(&f, &root, &all, &inbound);
+    let result = a.is_utility_orphan(&f, &root, &all, &inbound, &build_content_map(&all));
     assert!(
         result.is_orphan,
         "AES504 FAIL: utility only imported by utilities must be flagged as dead code"

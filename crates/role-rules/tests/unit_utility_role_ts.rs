@@ -2,16 +2,28 @@
 
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::cli_commands::LintResult;
-use shared::common::FilePath;
-use shared::common::{ContentString, SourceContentVO};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::role_rules::IUtilityRoleChecker;
+use std::path::PathBuf;
 
-fn make_ts_source(content: &str) -> SourceContentVO {
-    SourceContentVO::new(
-        FilePath::new("utility_helper.ts".to_string()).unwrap_or_default(),
-        ContentString::new(content.to_string()),
-        "ts",
-    )
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
+    FileEntry {
+        path: PathBuf::from(path),
+        extension: ext,
+        language,
+        size: content.len() as u64,
+        content: content.to_string(),
+        parse_ok: true,
+        parse_metadata: None,
+    }
 }
 
 // ─── TypeScript: class/interface/enum/type in comments → NO violation ──
@@ -25,7 +37,7 @@ fn ts_class_in_comment_should_not_flag() {
 export function helper(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -47,7 +59,7 @@ const msg = "hello world";
 export function greet(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -70,7 +82,7 @@ export class BadUtility {
 export function helper(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -94,7 +106,7 @@ export interface BadInterface {
 export function helper(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -119,7 +131,7 @@ export enum BadEnum {
 export function helper(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -141,7 +153,7 @@ export type BadType = string | number;
 export function helper(): void {}
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -167,7 +179,7 @@ export function multiply(a: number, b: number): number {
 }
 "#;
 
-    let source = make_ts_source(content);
+    let source = make_file("utility_helper.ts", content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 

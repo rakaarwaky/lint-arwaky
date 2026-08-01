@@ -136,6 +136,7 @@ pub struct PythonParseResultVO {
 pub struct TsParseResultVO {
     pub imports: Vec<AstImportVO>,
     pub class_implements: Vec<(String, Vec<String>)>,
+    pub interface_names: Vec<String>,
     pub functions: Vec<AstFnDefVO>,
     pub used_identifiers: Vec<String>,
     pub parse_ok: bool,
@@ -219,6 +220,11 @@ impl TsParseResultVO {
             .iter()
             .map(|(name, _)| name.clone())
             .collect()
+    }
+
+    pub fn trait_names(&self) -> Vec<String> {
+        // Interface names serve as contracts in TypeScript
+        self.interface_names.clone()
     }
 
     pub fn aggregate_names(&self) -> Vec<String> {

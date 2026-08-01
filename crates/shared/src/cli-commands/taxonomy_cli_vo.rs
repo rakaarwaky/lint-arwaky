@@ -144,6 +144,18 @@ pub enum Commands {
         path: Option<String>,
     },
 
+    /// Run AES analysis on git-changed files
+    GitDiff {
+        /// Git base branch to diff against
+        #[arg(long, default_value = "HEAD")]
+        base: String,
+        /// Path to scan
+        path: Option<String>,
+        /// Filter changed files by name
+        #[arg(long)]
+        filter: Option<String>,
+    },
+
     /// Install git pre-commit hook
     InstallHook,
 

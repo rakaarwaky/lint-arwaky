@@ -1,5 +1,6 @@
 // PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
 // and delegates output formatting to surface_output_component.
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::ExitCode;
 use std::sync::Arc;
 use tokio::process::Command;
@@ -52,8 +53,8 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member =
-        opts.member.is_some() || crate::utility_path_resolver::is_leaf_member_path(&root);
+    let is_specific_member = opts.member.is_some()
+        || shared::cli_commands::utility_path_resolver::is_leaf_member_path(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
@@ -150,7 +151,7 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         tokio::join!(p_quality, p_role, p_import, p_naming, p_orphan, p_external);
 
     let mut all: Vec<ViolationItem> = Vec::new();
-    let target_canonical = std::fs::canonicalize(path).ok();
+    let target_canonical = filesystem::FilesystemOrchestrator::new().canonicalize(std::path::Path::new(path)).ok();
     for out in [
         res_quality,
         res_role,
@@ -180,6 +181,46 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         }
     }
 
+    // Normalize relative paths to absolute before filtering.
+    // Orphan subprocess outputs paths relative to workspace top_root (e.g. "crates/foo/src/bar.rs")
+    // while quality/import/naming/role use absolute paths. Normalize all to absolute.
+    // Orphan paths are relative to the parent of the target directory (workspace top_root),
+    // so we try resolving against: CWD, target, parent-of-target, in order.
+    {
+        let cwd = std::env::current_dir().ok();
+        let target_parent = target_canonical.as_ref().and_then(|t| t.parent());
+        for v in &mut all {
+            if std::path::Path::new(&v.file.value).is_absolute() {
+                continue;
+            }
+            let rel = v.file.value.clone();
+            let file_path = std::path::Path::new(&rel);
+            // Try CWD first
+            if let Some(ref cwd) = cwd {
+                if let Ok(canon) = filesystem::FilesystemOrchestrator::new().canonicalize(&cwd.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                    continue;
+                }
+            }
+            // Try target directory
+            if let Some(ref target) = target_canonical {
+                if let Ok(canon) = filesystem::FilesystemOrchestrator::new().canonicalize(&target.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                    continue;
+                }
+            }
+            // Try parent of target (orphan paths are relative to workspace top_root)
+            if let Some(ref parent) = target_parent {
+                if let Ok(canon) = filesystem::FilesystemOrchestrator::new().canonicalize(&parent.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                }
+            }
+        }
+    }
+
     // Filter: only keep violations whose file path is within the target directory.
     // File paths from subprocesses may be relative to the workspace top_root
     // (found by find_workspace_root), not relative to CWD.
@@ -187,19 +228,19 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         all.retain(|v| {
             let file_path = std::path::Path::new(&v.file.value);
             // First try direct canonicalize
-            if let Ok(canonical) = std::fs::canonicalize(file_path) {
+            if let Ok(canonical) = filesystem::FilesystemOrchestrator::new().canonicalize(file_path) {
                 return canonical.starts_with(canonical_target);
             }
             // Try joining with CWD
             if let Ok(cwd) = std::env::current_dir() {
                 let joined = cwd.join(file_path);
-                let cwd_joined = std::fs::canonicalize(&joined).unwrap_or(joined);
+                let cwd_joined = filesystem::FilesystemOrchestrator::new().canonicalize(&joined).unwrap_or(joined);
                 if cwd_joined.starts_with(canonical_target) {
                     return true;
                 }
             }
             // Try joining with target directory (for paths relative to workspace top_root)
-            if let Ok(target_joined) = std::fs::canonicalize(canonical_target.join(file_path)) {
+            if let Ok(target_joined) = filesystem::FilesystemOrchestrator::new().canonicalize(&canonical_target.join(file_path)) {
                 return target_joined.starts_with(canonical_target);
             }
             false

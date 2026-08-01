@@ -1,183 +1,273 @@
-# FRD — import-rules (v1.12.0)
+# FRD — import-rules (v1.12.1)
 
 ## System Overview
 
-The import-rules crate enforces correct structural boundaries and unidirectional dependency flows across the 7-layer AES architecture. It prevents spaghetti architecture, circular dependencies, and dead/unused imports by validating every import statement against a predefined layer-hierarchy matrix.
+The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level.File system operations are handled by the external `filesystem` crate. The import-rules crate receives pre-parsed data from the filesystem crate via the filesystem aggregate trait, then delegates analysis to its internal checkers.All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
 
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["import_aggregate"]
+    B --> C["import_orchestrator"]
+
+    C -->|"request parse"| D["filesystem_aggregate\n(external crate)"]
+
+    subgraph FS ["filesystem crate (external)"]
+        D --> E1["file_walker"]
+        D --> F1["ast_parser"]
+        D --> F2["import_extractor"]
+        D --> F3["dependency_graph"]
+        F1 --> F2
+        E1 --> G1["File Data"]
+        F2 --> G2["Import Data"]
+        F3 --> G3["Dependency Graph"]
+    end
+
+    G1 -->|"return"| D
+    G2 -->|"return"| D
+    G3 -->|"return"| D
+    D -->|"file data\nimport data\ndependency graph"| C
+
+    C --> H1["forbidden_check"]
+    C --> H2["mandatory_check"]
+    C --> H3["unused_check"]
+    C --> H4["dummy_check"]
+    C --> H5["cycle_analysis"]
+    H1 --> I["Violations"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+    H6 --> I
+    I --> J["LintResult"]
+    J --> C
+    C --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style FS fill:#fff3e0,stroke:#e65100
+    style D fill:#fff3e0,stroke:#e65100
+    style I fill:#fce4ec,stroke:#c62828
+    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-Target (file or directory)
-        │
-        ▼
-┌─────────────────────────┐
-│  Import Orchestrator    │  ← IImportRunnerAggregate
-│  (agent layer)          │
-└──┬──┬──┬──┬──┬──────────┘
-   │  │  │  │  │
-   ▼  ▼  ▼  ▼  ▼
- AES201  AES202  AES203  AES204  AES205
- Forbidden Mandatory Unused  Dummy   Cycle
- Checker   Checker  Checker Checker Analyzer
-   │       │        │       │       │
-   └───────┴────────┴───────┴───────┘
-                    │
-                    ▼
-         ┌─────────────────────┐
-         │   AST Parser Layer  │  ← shared with orphan-detector
-         │  (utility_orphan_   │
-         │   rust_parser.rs,   │
-         │   python_parser.rs, │
-         │   ts_parser.rs,     │
-         │   parser_dispatch)  │
-         └─────────────────────┘
-```
-
-**Scope:** All `.rs`, `.py`, `.ts`, `.js`, `.tsx`, `.jsx` source files in the workspace. Layer detection is filename-prefix-based (`taxonomy_*`, `contract_*`, etc.). Files without a recognized prefix are skipped by layer-dependent rules (AES201, AES202) but still checked by layer-agnostic rules (AES203, AES204).
-
-**Parsing Strategy:** Rust files are parsed via the `syn` crate (full AST). Python and TypeScript files use comment-aware structured line parsing. All parsing is centralized in the shared AST parser layer (`utility_orphan_rust_parser.rs`, `utility_orphan_python_parser.rs`, `utility_orphan_ts_parser.rs`, `utility_orphan_parser_dispatch.rs`) — no checker performs its own regex-based extraction.
-
----
-
-## Functional Requirements
 
 ### FR-001: Layer Dependency Violation (AES201)
 
-- **Description**: Restricts imports based on the layer hierarchy. Lower layers must never import higher layers. Uses AST-based import extraction and barrel file resolution for accurate layer detection.
-- **Input**: Rust, Python, JS/TS source files, architecture configuration, layer map.
-- **Output**: List of AES201 CRITICAL diagnostics with file path, line number, source layer, forbidden layer, and allowed layers.
-- **Business Rules**:
-  - **Import extraction (AST)**:
-    - Rust: Extract `ItemUse` nodes via `syn` — handles `use`, `pub use`, `pub(crate) use`, grouped imports `use foo::{A, B}`, glob imports `use foo::*`, and multi-line imports.
-    - Python: Extract `from X import Y` and `import X` via structured parsing with comment/string awareness.
-    - TypeScript: Extract `import { X } from`, `import X from`, `import * as X from`, side-effect imports, and `export { X } from` re-exports via structured parsing.
-  - **Layer detection**: Detected from filename prefix of the importing file (`taxonomy_*` → taxonomy, `contract_*` → contract, etc.) and from the import target path segments.
-  - **Forbidden layer enforcement**:
-    - `taxonomy_` must not import `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`.
-    - `contract_` must not import `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`.
-    - `utility_` and `capabilities_` must not import each other directly.
-    - `capabilities_` must not import `agent_`, `surface_`, or other `capabilities_`.
-    - `agent_` must not import `surface_` or `capabilities_` directly.
-    - `surface_` must not import `capabilities_`, `agent_`, or `utility_` directly.
-  - **Barrel resolution**: When direct module-path matching fails (import through `__init__.py`, `mod.rs`, `index.ts` hides the original file name), resolve each imported symbol through the barrel file to detect the original source file and its layer prefix.
-  - **Scope-based rules**: Config-driven scope patterns (e.g., `taxonomy(vo)`, `contract(protocol)`, `surface(command|controller|page)`) enforce per-sub-layer forbidden/allowed rules.
-  - Whole-word segment matching is used for all layer detection (split on `:`, `.`, `/`, `\` — never substring `contains()`).
+- **Description**: Validates imports against the AES config-driven dependency matrix. Each layer/sub-layer has explicit `allowed`, `forbidden`, and `mandatory` rules defined in YAML configuration via a `conditions` array. All rules are per-scope, config-driven.
+- **Input**: File data, import data (from filesystem crate), architecture configuration (with `conditions` array), layer map.
+- **Output**:
+
+  - `allowed` match → pass (no diagnostic).
+  - `forbidden` match → AES201 **CRITICAL** diagnostic with file path, line number, source scope, forbidden layer, and allowed layers.
+- **Dependency Model (AES-DI)**:
+
+  AES uses **dependency injection** as the inter-layer wiring mechanism. Layers do not import each other directly; they import from **contract** (protocol/aggregate) and receive dependencies
+
+  ```
+                      ┌──────────────────────────────────┐
+                      │             root                  │
+                      │  (composition root / DI wiring)   │
+                      │  allowed: ALL layers              │
+                      └──────┬───────────────────────────┘
+                             │ wires
+                ┌────────────┼─────────────┐
+                ▼            ▼             ▼
+           ┌────────┐  ┌─────────┐  ┌──────────────┐
+           │surface │  │  agent  │  │ capabilities │
+           └───┬────┘  └────┬────┘  └──────┬───────┘
+               │            │              │
+               │  imports   │  imports     │  imports
+               ▼            ▼              ▼
+          ┌──────────────────────────────────────────┐
+          │      contract (protocol / aggregate)      │
+          └──────────────────┬───────────────────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │    taxonomy       │
+                    │ (vo / entity /   │
+                    │  error / event / │
+                    │  constant)       │
+                    └──────────────────┘
+
+           utility ←── flexible, imports taxonomy only
+                       imported BY capabilities, agent, surface
+  ```
+
+  **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (trait objects). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
+- **Per-Scope Rules**
+
+
+  | Scope                          | Allowed                                                    | Forbidden                                               | Mandatory                              |
+  | -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ---------------------------------------- |
+  | `taxonomy(vo)`                 | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                                     |
+  | `taxonomy(entity,error,event)` | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | taxonomy(vo\|constant)                 |
+  | `taxonomy(constant)`           | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                                     |
+  | `utility`                      | taxonomy                                                   | agent, surface, contract, capabilities, root            | —                                     |
+  | `contract(protocol)`           | taxonomy, contract                                         | agent, surface, capabilities, contract(aggregate), root | taxonomy                               |
+  | `contract(aggregate)`          | taxonomy, contract                                         | agent, surface, capabilities, root                      | taxonomy                               |
+  | `capabilities`                 | taxonomy, contract, utility                                | surface, agent, capabilities, root                      | taxonomy, contract(protocol)           |
+  | `agent(orchestrator)`          | taxonomy, contract(aggregate), contract(protocol), utility | surface, capabilities, root                             | taxonomy, contract(aggregate)          |
+  | `surface(command               | controller                                                 | page)`                                                  | taxonomy, contract(aggregate), utility |
+  | `surface(hook                  | store                                                      | action                                                  | screen                                 |
+  | `surface(component             | view                                                       | layout)`                                                | taxonomy                               |
+  | `root`                         | taxonomy, contract, capabilities, agent, surface           | —                                                      | —                                     |
+- **Key directional rules** (derived from config):
+
+  ```
+  capabilities → utility          ✅  (one-way)
+  utility → capabilities          ❌
+
+  surface(command) → utility      ✅  (one-way, command/controller/page only)
+  surface(hook) → utility         ❌
+  surface(component) → utility    ❌
+
+  agent → utility                 ✅
+  agent → capabilities            ❌  (via DI)
+
+  surface → agent                 ❌  (via DI)
+  surface → contract(aggregate)   ✅  (command/controller/page only)
+  surface → contract(protocol)    ❌
+
+  contract(protocol) → contract(aggregate)  ❌
+  contract(aggregate) → contract(protocol)  ✅
+  ```
+- **Enforcement model**: Whitelist + Blacklist hybrid.
+
+  - Target layer in `allowed` → **pass**.
+  - Target layer in `forbidden` → **AES201 CRITICAL**.
+- **Import extraction**: Performed by the filesystem crate via full AST parsing. import-rules receives pre-extracted import data.
+
+  - Rust: `ItemUse` nodes via `syn` — handles `use`, `pub use`, `pub(crate) use`, grouped imports `use foo::{A, B}`, glob imports `use foo::*`, and multi-line imports.
+  - Python: `from X import Y` and `import X` via full AST parser.
+  - TypeScript: `import { X } from`, `import X from`, `import * as X from`, side-effect imports, and `export { X } from` re-exports via full AST parser.
+- **Layer detection**: Detected from filename prefix of the importing file (`taxonomy_*` → taxonomy, `contract_*` → contract, etc.) and from the import target path segments. Whole-word segment matching (split on `:`, `.`, `/`, `\` — never substring `contains()`).
+- **Barrel resolution**: When direct module-path matching fails (import through `__init__.py`, `mod.rs`, `index.ts` hides the original file name), resolve each imported symbol through the barrel file to detect the original source file and its layer prefix (see FR-007).
+- **Scope matching**: Files are matched to `conditions` entries via filename prefix and suffix. Files matching multiple conditions are checked against **all** matched conditions.
 - **Edge Cases**:
+
   - Circular imports across layers are detected by AES205, not AES201.
   - Conditional imports (`#[cfg(...)]` blocks) are skipped during import extraction.
   - Barrel files (`mod.rs`, `lib.rs`, `main.rs`, `__init__.py`, `index.ts`) are skipped for scope-level checks.
-  - Imports inside comments or string literals are NOT extracted (AST guarantees this for Rust; comment-aware parsing for Python/TS).
-- **Error Handling**: Unreadable files are skipped with a warning. Files with unparseable content produce no violations (fail-safe). Parse failures produce empty import lists.
+  - Imports inside comments or string literals are NOT extracted (AST guarantees this).
+  - Files matching multiple scope conditions are checked against all matched conditions.
+- **Error Handling**: Unreadable files are skipped with `PARSE_WARN` warning (see FR-006). Files with unparseable content produce no violations (fail-safe). Parse failures produce empty import lists.
+
+---
 
 ### FR-002: Mandatory Layer Imports (AES202)
 
-- **Description**: Verifies that specific layers contain required imports as defined in the architecture configuration.
-- **Input**: Rust, Python, JS/TS source files, architecture configuration, layer map.
-- **Output**: List of AES202 HIGH diagnostics with file path, source layer, and required import.
+- **Description**: Verifies that specific scopes contain required imports as defined in the `mandatory` field of each `conditions` entry.
+- **Input**: File data, import data (from filesystem crate), architecture configuration, layer map.
+- **Output**: List of AES202 HIGH diagnostics with file path, source scope, and required import.
 - **Business Rules**:
-  - **Mandatory import checking**:
-    - For each file, check that at least one import targets each layer in the `mandatory` set defined in the layer definition or config rule.
-    - Direct match: check if any import line's module path segments match the required layer name.
-    - Scope match: check if any import line satisfies the required scope pattern (e.g., `contract(protocol)` requires an import matching `contract` layer with `_protocol` suffix).
-  - **Barrel resolution fallback**: When direct module-path matching fails, resolve each imported symbol through the barrel file to find the original source file and verify its layer matches the required layer.
-  - **Layer-specific defaults**:
-    - Capability files must import their corresponding contract protocol.
-    - Surface entries must import their container or aggregate.
-  - Files with empty `mandatory` config are skipped.
+
+  - For each file, match against `conditions` entries. For each matched condition with a non-null `mandatory` list, check that at least one import targets each required layer/scope.
+  - Direct match: check if any import line's module path segments match the required layer name.
+  - Scope match: check if any import satisfies the required scope pattern (e.g., `contract(protocol)` requires an import matching `contract` layer with `_protocol` suffix).
+  - Barrel resolution fallback: When direct module-path matching fails, resolve through barrel file (FR-007).
+  - Files with empty or null `mandatory` config are skipped.
   - `__init__.py` files are skipped for mandatory checks.
   - `mod.rs`, `lib.rs`, `main.rs` are skipped for scope-level mandatory checks.
-- **Edge Cases**: Files with multiple roles (e.g., a file that is both `capabilities` and `utility`) use the primary layer prefix. Files without a recognized prefix are skipped.
-- **Error Handling**: Unreadable files are skipped. Missing config defaults to no mandatory requirements.
+- **Edge Cases**: Files with multiple roles use the primary layer prefix. Files without a recognized prefix are skipped.
+- **Error Handling**: Unreadable files are skipped with `PARSE_WARN`. Missing config defaults to no mandatory requirements.
+
+---
 
 ### FR-003: Unused Import Detection (AES203)
 
-- **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for Rust and structured parsing for Python/TS.
-- **Input**: Rust, Python, JS/TS source files.
+- **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for all languages.
+- **Input**: File data, import data (from filesystem crate).
 - **Output**: List of AES203 MEDIUM diagnostics with file path, line number, and unused symbol name.
 - **Business Rules**:
-  - **Import extraction (AST)**:
-    - Rust: Extract all `ItemUse` nodes via `syn`. Each imported alias is recorded with its full path.
-    - Python: Extract `from X import Y` and `import X` aliases via structured parsing.
-    - TypeScript: Extract named imports, default imports, namespace imports, and re-exports via structured parsing.
-  - **Usage detection (AST for Rust)**:
-    - Walk the AST using `syn::visit::Visit` to collect all identifier references (`ExprPath`, `TypePath`, `PathSegment`).
+
+  - **Import extraction**: Performed by the filesystem crate via full AST parsing. import-rules receives pre-extracted import data with all aliases and full paths.
+
+    - Rust: All `ItemUse` nodes via `syn`. Each imported alias is recorded with its full path.
+    - Python: `from X import Y` and `import X` aliases via full AST parser.
+    - TypeScript: Named imports, default imports, namespace imports, and re-exports via full AST parser.
+  - **Usage detection (AST)**:
+
+    - Walk the AST to collect all identifier references.
     - An imported symbol is "used" if its name appears as an identifier reference anywhere in the file body (excluding the import statement itself).
-    - Usage inside `#[derive(...)]` attributes is detected via attribute parsing — no hardcoded `DERIVE_MACROS` whitelist needed.
-    - Usage inside macro invocations is detected if the macro is expanded (see FR-010).
-  - **Usage detection (structured for Python/TS)**:
-    - Strip comments and string literals, then search for whole-word matches of each imported alias in the remaining code.
-    - An imported symbol is "used" if it appears as a whole-word identifier outside import statements, comments, and strings.
+    - Usage inside `#[derive(...)]` attributes is detected via attribute parsing — no hardcoded whitelist.
+    - Usage inside macro invocations (non-derive) is **NOT tracked** in v1.12. Imported symbols that appear ONLY inside macro bodies are **exempt from AES203** (skip, not flag). Full macro expansion is planned for v2.0 (see FR-009).
   - **Exemptions**:
+
     - Barrel files (`__init__.py`, `mod.rs`, `lib.rs`, `main.rs`, `index.ts`, `index.js`) are skipped — re-exports are intentional public API.
     - `pub use` / `export { X } from` re-exports are treated as used (they define public API).
     - `__future__` imports (Python) are skipped — they affect parsing behavior, not runtime usage.
     - Wildcard imports (`use foo::*`, `export * from`) are flagged as unused (cannot verify individual symbol usage).
     - `#[cfg(...)]` conditional blocks are skipped during import extraction.
+    - Symbols appearing only inside macro bodies (non-derive) are exempt.
   - **Exported symbol detection**: Symbols exported via `__all__` (Python), `export { X }` (TS), or `pub use` (Rust) are treated as used.
 - **Edge Cases**:
-  - Multi-line imports (`use foo::{\n  A,\n  B,\n}`) are handled natively by AST.
+
+  - Multi-line imports are handled natively by AST.
   - Aliased imports (`use foo::Bar as Baz`) track the alias `Baz`, not the original `Bar`.
   - Imports used only in type annotations are counted as used.
-  - Imports used only in doc comments (`/// [`FilePath`]`) are NOT counted as used (AST does not parse doc comments as code).
-- **Error Handling**: Files that fail AST parsing fall back to structured line-based parsing. Unreadable files produce no violations.
+  - Imports used only in doc comments (`/// [`FilePath`]`) are NOT counted as used.
+- **Error Handling**: Files that fail AST parsing produce `PARSE_WARN` warning and no violations. Unreadable files produce no violations.
+
+---
 
 ### FR-004: Dummy Import Detection (AES204)
 
-- **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings.
-- **Input**: Rust, Python, JS/TS source files, layer map.
+- **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings. This rule specifically targets **AI-generated cheating patterns** where AI creates dummy functions to make imports appear "used" and circumvent AES203.
+- **Input**: File data, import data (from filesystem crate), layer map.
 - **Output**: List of AES204 HIGH diagnostics with file path, line number, dummy symbol name, and intent description.
 - **Business Rules**:
-  - **Dummy function detection (AST for Rust)**:
+
+  - **Dummy function detection (AST)**:
+
     - Rust: Extract `ItemFn` nodes via `syn`. Functions named `_use_*` or `dummy_*` are flagged.
-    - Python: Detect `def _use_*` and `def dummy_*` via structured parsing.
-    - TypeScript: Detect `function _use*`, `function dummy*`, `const _use*`, `const dummy*` via structured parsing.
-  - **Dummy trait implementation detection (AST for Rust)**:
+    - Python: Detect `def _use_*` and `def dummy_*` via AST.
+    - TypeScript: Detect `function _use*`, `function dummy*`, `const _use*`, `const dummy*` via AST.
+  - **Dummy trait implementation detection (AST)**:
+
     - Rust: Extract `ItemImpl` nodes via `syn`. Implementations where ALL method bodies are empty, `todo!()`, `unimplemented!()`, `panic!()`, or `unreachable!()` are flagged.
     - Detection uses AST body analysis, not line-by-line brace counting.
   - **Dummy import detection**:
+
     - Imported symbols that appear ONLY inside dummy function ranges (not in real logic) are flagged.
     - Symbol usage checking skips: import lines, comment lines, dummy function ranges, dummy trait impl ranges, `PhantomData` lines.
     - Whole-word matching is used (manual character boundary check, not regex `\b`).
-    - String-literal-only usage is detected and excluded (symbol appearing only inside `"..."` is not real usage).
+    - String-literal-only usage is detected and excluded.
   - **Taxonomy intent checking**:
+
     - If a file has dummy functions AND imports taxonomy VOs (`taxonomy_*`), but those VOs are used only inside dummy functions (not in real logic), flag as intent violation.
   - **Surface logic checking**:
+
     - Surface files must not call business logic functions directly (e.g., `lint_path(`, `compute_score(`, `has_critical(`, `walk_rs_files(`).
     - These must be delegated to the aggregate layer.
   - **Barrel file exemption**: Barrel files are skipped for all dummy checks.
   - **`__future__` import exemption**: Python `from __future__ import ...` is skipped.
+- **Relationship with AES203**: AES203 and AES204 are **independent rules without deduplication**.
+
+  - AES203 detects imports that are truly never referenced.
+  - AES204 detects imports that *appear* referenced but only inside dummy functions created to circumvent AES203.
+  - A single import may trigger **both** AES203 and AES204 if it is unused in real code AND its only "usage" is inside a dummy function. This is intentional — it signals that both the import and the dummy function should be removed.
 - **Edge Cases**:
+
   - Re-exports (`pub use`, `export { X } from`) are not flagged as dummy.
   - Trait implementations with at least one non-dummy method are not flagged.
-  - Multi-line function bodies are handled by AST (Rust) or brace/indent counting (Python/TS).
-- **Error Handling**: Files that fail AST parsing fall back to line-based detection. Unreadable files produce no violations.
+  - Multi-line function bodies are handled by AST.
+- **Error Handling**: Files that fail AST parsing produce `PARSE_WARN` warning and no violations. Unreadable files produce no violations.
 
-### FR-005: Forbidden Import Config Detection (AES201 — Config-Driven)
+---
 
-- **Description**: Detects imports that violate layer boundary rules defined in YAML configuration, using scope pattern matching.
-- **Input**: Rust, Python, JS/TS source files, architecture configuration with scope rules.
-- **Output**: List of AES201 CRITICAL diagnostics with file path, line number, source layer, forbidden layer, and allowed layers.
-- **Business Rules**:
-  - **Scope pattern matching**: Each config rule has a `scope` pattern (e.g., `taxonomy(vo)`, `contract(protocol)`, `surface(command|controller|page)`). Files are matched to rules via filename prefix and suffix.
-  - **Forbidden enforcement**: For each matched rule, check that no import targets a layer in the rule's `forbidden` list.
-  - **Allowed enforcement**: The diagnostic message includes the rule's `allowed` list for remediation guidance.
-  - **Exception handling**: Files whose basename appears in the rule's `exceptions` list are skipped.
-  - **Barrel resolution**: Same barrel resolution as FR-001 applies.
-  - **Layer detection from import**: Import target layer is detected from path segments using prefix matching (`contract_*` → contract), not substring matching.
-- **Edge Cases**:
-  - `mod.rs`, `lib.rs`, `main.rs` are skipped for scope-level checks.
-  - Files matching multiple scope rules are checked against all matched rules.
-  - Conditional imports (`#[cfg(...)]`) are skipped.
-- **Error Handling**: Missing config defaults to no scope rules. Unreadable files are skipped.
-
-### FR-006: Circular Dependency Detection (AES205)
+### FR-005: Circular Dependency Detection (AES205)
 
 - **Description**: Builds a dependency graph of imports across all workspace files and detects cycles using 3-color DFS.
-- **Input**: All workspace source files, architecture configuration, layer map.
+- **Input**: File data, import data, dependency graph (from filesystem crate), architecture configuration, layer map.
 - **Output**: List of AES205 CRITICAL diagnostics with cycle path description.
 - **Business Rules**:
-  - **Module extraction (AST-based)**:
-    - Rust: Extract `ItemUse` and `ItemMod` nodes via `syn` to build import edges.
-    - Python: Extract `from X import Y` and `import X` via structured parsing.
-    - TypeScript: Extract `import` and `export from` via structured parsing.
+
+  - **Module extraction**: Performed by the filesystem crate via full AST parsing. import-rules receives pre-built `DiGraph` with dependency edges.
+    - Rust: `ItemUse` and `ItemMod` nodes via `syn` to build import edges.
+    - Python: `from X import Y` and `import X` via AST.
+    - TypeScript: `import` and `export from` via AST.
   - **Barrel-aware resolution**: For imports through barrel files, resolve to the original source file so the dependency graph reflects actual file-to-file dependencies.
   - **Layer-level graph**: Import edges are normalized to layer-level edges (e.g., `capabilities → contract`). Cycle detection operates on the layer graph, not the file graph.
   - **Cycle detection algorithm**: 3-color DFS (White → Gray → Black). A Gray → Gray edge indicates a back edge (cycle). Cycle nodes are extracted via parent-chain traversal.
@@ -185,140 +275,77 @@ Target (file or directory)
   - **Direct cycles** (A → B → A) and **indirect cycles** (A → B → C → A) are both flagged.
   - **Cross-layer crate imports**: `crate::` and `lint_arwaky::` prefixed imports are resolved to their target layer. Non-cross-layer crate imports (e.g., `crate::common::FilePath` within the same crate) are skipped.
 - **Edge Cases**:
-  - Self-imports are ignored (a file importing itself does not create a cycle).
+
+  - **Self-imports are silently ignored** (a file importing itself does not create a cycle and produces no diagnostic).
   - Conditional cycles (imports inside `#[cfg(...)]` blocks) are not detected (conditional blocks are skipped).
   - Files without a recognized layer prefix are excluded from the layer graph.
-- **Error Handling**: Unreadable files are skipped. Files with unparseable content contribute no edges. The cycle detection algorithm itself is pure graph theory — no parsing errors possible.
+- **Error Handling**: Unreadable files are skipped with `PARSE_WARN`. Files with unparseable content contribute no edges. The cycle detection algorithm itself is pure graph theory — no parsing errors possible.
 
-### FR-007: AST Parser Layer (Shared)
-
-- **Description**: Centralized AST/structured parsing for all source files, shared between import-rules and orphan-detector. Replaces all regex-based extraction.
-- **Input**: File path and file content.
-- **Output**: Language-specific parse result (`RustParseResultVO`, `PythonParseResultVO`, `TsParseResultVO`).
-- **Business Rules**:
-  - **Rust**: Use `syn::parse_file()` to produce a full AST. Walk top-level items via pattern matching on `syn::Item` variants. Recursively walk `UseTree` nodes for nested/grouped imports. Extract `#[path = "..."]` attributes from `ItemMod`. Extract `ItemImpl` for trait implementations. Extract `ItemFn` for function definitions.
-  - **Python**: Strip comments and string literals line-by-line (quote-aware, escape-aware). Parse `from`/`import` statements and `class` declarations from cleaned lines. Handle multi-line parenthesized imports.
-  - **TypeScript/JavaScript**: Strip `//` and `/* */` comments (string-aware, template-literal-aware). Parse `import`/`export` statements and `class implements` declarations from cleaned lines.
-  - All parse results are typed structs (taxonomy VOs) — no string captures, no capture group indexing.
-  - Parse results include a `parse_ok` flag. When `false`, consumers should treat the file as having no extractable data (fail-safe).
-  - **Shared types** live in `taxonomy_orphan_parse_result_vo.rs` (taxonomy layer) — accessible by both import-rules and orphan-detector utilities.
-- **Edge Cases**:
-  - Rust files with syntax errors → `parse_ok = false`, empty result.
-  - Python files with unterminated strings → comment stripping is best-effort.
-  - TypeScript files with JSX → structured parsing handles `import`/`export` lines regardless of JSX content.
-  - Empty files → empty result, `parse_ok = true`.
-- **Error Handling**: `syn` parse errors are caught and produce `parse_ok = false`. No panics, no unwraps on parse results.
-
-### FR-008: Barrel File Resolution
-
-- **Description**: Resolve imports through barrel files (`__init__.py`, `mod.rs`, `index.ts`) to their original source files for accurate layer detection.
-- **Input**: Module path, symbol name, workspace root directory.
-- **Output**: `ResolvedImport` VO with original module, resolved file stem, resolved layer, and symbol name.
-- **Business Rules**:
-  - **Barrel file discovery**: For a given module path, search for barrel files in the resolved directory:
-    - Python: `__init__.py`
-    - Rust: `mod.rs`
-    - TypeScript/JavaScript: `index.ts`, `index.js`, `index.tsx`, `index.jsx`
-  - **Path conventions handled**:
-    - Python dotted paths: `modules.shared.src.server` → `modules/shared/src/server/__init__.py`
-    - Rust crate paths: `shared::import_rules` → `crates/shared/src/import-rules/mod.rs`
-    - TypeScript relative paths: `./services` → `services/index.ts`
-    - Hyphen/underscore normalization: Rust replaces `-` with `_` in module paths.
-  - **Re-export parsing**: Parse the barrel file content to build a `symbol → source_file_stem` mapping:
-    - Python: `from .contract_protocol import IFoo` → `{"IFoo": "contract_protocol"}`
-    - TypeScript: `export { Foo } from './foo-service'` → `{"Foo": "foo-service"}`
-    - Rust: `pub use auth::AuthOrchestrator` → `{"AuthOrchestrator": "auth"}`
-  - **Layer detection**: The resolved file stem is checked for layer prefix (`contract_*` → contract).
-  - **Suffix matching**: For scope patterns like `contract(protocol)`, the resolved file stem is checked for `_protocol` suffix.
-- **Edge Cases**:
-  - Nested barrel files (barrel importing from another barrel) are resolved one level deep.
-  - Symbols not found in the barrel file return `None` (caller falls back to direct matching).
-  - Barrel files that do not exist on disk return `None`.
-- **Error Handling**: File read errors return `None`. Unparseable barrel content returns an empty re-export map.
-
-### FR-009: Configuration-Driven Rule Suppression
-
-- **Description**: Suppress import rule violations based on architecture configuration.
-- **Input**: Architecture configuration, rule code, file basename.
-- **Output**: Suppression decision (skip or proceed).
-- **Business Rules**:
-  - If `config.enabled` is `false`, all import checks return empty immediately.
-  - If the specific rule (AES201–AES205) has `enabled: false`, skip that rule.
-  - If the file's basename appears in the rule's `exceptions` list, skip that file for that rule.
-  - If the file path matches any pattern in `config.ignored_paths`, skip that file.
-  - Default skip directories (`.git`, `node_modules`, `target`, `dist`, `build`, `.venv`, `__pycache__`, `tests`) are always excluded from file collection.
-- **Edge Cases**: Multiple suppression mechanisms are checked in order: global → rule → exception → path.
-- **Error Handling**: Missing configuration defaults to enabled (fail-open for detection).
-
-### FR-010: Macro-Generated Code Handling (Future)
-
-- **Description**: Detect imports and usage generated by declarative macros (`macro_rules!`) and procedural macros.
-- **Input**: File content with macro invocations.
-- **Output**: Additional import/usage entries.
-- **Business Rules**:
-  - **Current (v1.12)**: Macro-generated code is NOT detected. `syn` parses the source as-written; macro invocations appear as `ItemMacro` nodes, not as expanded items.
-  - **Derive macro handling**: For AES203, `#[derive(Serialize, Deserialize)]` usage is detected via AST attribute parsing — the derive macro names are extracted from the attribute, not from a hardcoded whitelist.
-  - **Future (v2.0)**: Integrate `cargo expand` or `rust-analyzer` expansion to capture macro-generated imports and usage.
-- **Edge Cases**: Files that rely heavily on macros for imports (e.g., `macro_rules! import_all { ... }`) will have incomplete import detection.
-- **Error Handling**: N/A for current version.
+---
 
 ---
 
 ## API Contract
 
 
-| Operation                   | Input                                   | Output                                 | Description                                   |
-| ----------------------------- | ----------------------------------------- | ---------------------------------------- | ----------------------------------------------- |
-| Run full import audit       | Target path (file or directory)         | `Result<Vec<LintResult>, ScanError>`   | Run all 5 checks (AES201–AES205) on target   |
-| Check forbidden imports     | Config, layer map, file list, root dir  | `Result<LintResultList, ImportError>`  | Check AES201 (layer hierarchy + config rules) |
-| Check mandatory imports     | Config, layer map, file list, root dir  | `Result<LintResultList, ImportError>`  | Check AES202 (required imports per layer)     |
-| Check unused imports        | File path, file content                 | `Result<Vec<LintResult>, ImportError>` | Check AES203 (unused symbols)                 |
-| Check dummy imports         | File path, content, root dir, layer map | `Result<Vec<LintResult>, ImportError>` | Check AES204 (dummy/stub code)                |
-| Check circular dependencies | Config, layer map, file list, root dir  | `Result<Vec<LintResult>, ImportError>` | Check AES205 (layer-level cycles)             |
-| Parse file (AST)            | File path, file content                 | `FileParseResultVO` (enum)             | Centralized AST/structured parsing dispatch   |
-| Resolve barrel import       | Module path, symbol name, root dir      | `Option<ResolvedImport>`               | Resolve import through barrel file            |
-| Detect cycle edges          | Dependency edges                        | `Vec<SymbolName>`                      | Pure graph cycle detection (3-color DFS)      |
-| Create DI container         | Architecture config                     | `ImportContainer`                      | Wire all checkers via dependency injection    |
-| Create DI from orchestrator | Config orchestrator, project root       | `ImportContainer`                      | Canonical DI from config orchestrator         |
+| Operation                          | Input                                                   | Output               | Purpose                                          |
+| ------------------------------------ | --------------------------------------------------------- | ---------------------- | -------------------------------------------------- |
+| Full import audit                  | Target path (file or directory)                         | Lint results         | Run all import checks (AES201–AES205)           |
+| Forbidden import check (AES201)    | File data, import data, configuration                   | CRITICAL violations  | Validate imports against layer dependency matrix |
+| Mandatory import check (AES202)    | File data, import data, configuration                   | HIGH violations      | Verify required imports per scope                |
+| Unused import check (AES203)       | File data, import data                                  | MEDIUM violations    | Detect symbols never referenced in code          |
+| Dummy import check (AES204)        | File data, import data, layer map                       | HIGH violations      | Detect stub code circumventing AES203            |
+| Circular dependency check (AES205) | File data, import data, dependency graph, configuration | CRITICAL violations  | Detect layer-level import cycles                 |
+| Barrel resolution                  | Module path, symbol name, root dir                      | Resolved import info | Resolve import through barrel re-export files    |
 
 ---
 
 ## Integration Points
 
-- **Internal**:
-  - The config system shared module — `ArchitectureConfig`, `ArchitectureRule`, `LayerDefinition`, `LayerMapVO` for rule configuration.
-  - The import rules contract module — `IImportRunnerAggregate`, `IImportForbiddenProtocol`, `IImportMandatoryProtocol`, `IUnusedImportProtocol`, `IDummyImportCheckerProtocol`, `ICycleImportProtocol`.
-  - The import rules taxonomy module — `AesImportViolation`, `DependencyEdge`, `ImportError`, `ResolvedImport`, `GraphColorVO`.
-  - The import rules utility module — `utility_import_resolver` (import line parsing, barrel resolution, scope matching), `utility_import_module_parser` (module extraction), `utility_import_symbol_extractor` (symbol extraction), `utility_dummy_detector` (dummy detection), `utility_cycle_detector` (cycle detection), `utility_path_normalizer` (path normalization).
-  - The common shared module — `FilePath`, `LineNumber`, `Severity`, `LintResult`, `LintMessage`, `Identity`, `SymbolName`, `LayerNameVO`, `LanguageVO`.
-  - The common utility module — `utility_file_handler` (file reading, directory walking), `utility_layer_detector` (layer detection from filename prefix), `utility_scope_matcher` (scope pattern matching).
-  - **AST parser utility** (shared with orphan-detector) — `utility_orphan_rust_parser`, `utility_orphan_python_parser`, `utility_orphan_ts_parser`, `utility_orphan_parser_dispatch`, `taxonomy_orphan_parse_result_vo`.
+- **Internal** (import-rules crate):
+
+  - The config system shared module — `ArchitectureConfig`, `ArchitectureRule`, `ArchitectureCondition`, `LayerDefinition`, `LayerMapVO` for rule configuration.
+  - The import rules contract module — aggregate and protocol traits for runner, forbidden, mandatory, unused, dummy, cycle, and purpose checks.
+  - The import rules taxonomy module — value objects for violations, errors, resolved imports, graph coloring, and import purpose.
+  - The import rules utility module — barrel resolution, scope matching, dummy detection, cycle detection, and path normalization.
+  - The common shared module — path, line number, severity, lint result, lint message, identity, symbol name, layer name, and language value objects.
 - **External**:
-  - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing.
+
+  - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
+    - File walking and discovery (`file_walker`).
+    - Full AST parsing for all languages (`ast_parser` — Rust via `syn`, Python/TS via tree-sitter).
+    - Import extraction from AST (`import_extractor`).
+    - Dependency graph construction (`dependency_graph`).
+    - Returns file data, import data, and dependency graph to the caller.
+    - Shared AST parser utilities: `utility_orphan_rust_parser`, `utility_orphan_python_parser`, `utility_orphan_ts_parser`, `utility_orphan_parser_dispatch`, `taxonomy_orphan_parse_result_vo`.
+  - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing (via filesystem crate).
+  - `tree-sitter` + `tree-sitter-python` + `tree-sitter-typescript` — Python/TS full AST parsing (via filesystem crate).
   - No network calls. No filesystem writes. Pure static analysis.
 
 ---
 
-## Non-functional Requirements (Detailed)
+## Non-functional Requirements
 
 - **Performance**:
+
   - Check 1,000 files in < 2 seconds (validated via criterion benchmark).
   - Check 5,000 files in < 8 seconds.
-  - AST parsing via `syn` adds ~0.1–0.3ms per file vs regex ~0.01ms, but eliminates multi-pass scanning and dynamic regex compilation. Net effect: comparable or faster for AES203 (single AST pass vs dynamic regex per file).
   - AES205 cycle detection is O(V + E) — linear in the number of layer-level edges.
   - File-level checks (AES203, AES204) are parallelized via `rayon` (`par_iter`).
-  - Mandatory and forbidden checks (AES201, AES202) run concurrently via `tokio::join!`.
+  - Mandatory and forbidden checks (AES201, AES202) run concurrently via `rayon::join`.
 - **Memory**:
+
   - O(n) where n = number of imports across all files.
   - AST parse results are not cached globally — each file is parsed once per check invocation.
   - Barrel file content is read on-demand (not pre-loaded).
 - **Accuracy**:
-  - Zero false positives for valid imports.
+
+  - **All languages WAJIB full AST.** No regex-based or line-based parsing is acceptable as a final implementation.
+  - **Zero false positives** for valid imports across all supported languages (Rust, Python, TypeScript/JavaScript).
   - AST parsing eliminates false positives from: matches inside comments, matches inside string literals, multi-line statement fragmentation, and dynamic regex failures.
-  - AES203 accuracy improvement: AST-based usage tracking eliminates the hardcoded `DERIVE_MACROS` whitelist (40+ entries) and the `is_rust_trait_import` heuristic.
-  - Remaining accuracy limitations: macro-generated code (see FR-010), Python/TS structured parsing (not full AST).
-- **Concurrency**: Thread-safe via `Arc<dyn Trait>` shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. Mandatory + forbidden checks run concurrently via `tokio::join!`.
-- **Configurability**: All behavior overridable via the architecture configuration YAML. Scope patterns, forbidden/allowed/mandatory lists, exceptions, and ignored paths are all config-driven. No hardcoded assumptions about project structure beyond workspace directory conventions (`crates/`, `packages/`, `modules/`).
+  - AES203 accuracy: AST-based usage tracking eliminates hardcoded whitelists and heuristics.
+  - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
+- **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
 
 ---
 
@@ -327,181 +354,134 @@ Target (file or directory)
 ### AES201 — Forbidden Import
 
 
-| Test Case                   | Input                                                                                                | Expected Output                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| taxonomy imports contract   | `taxonomy_vo.rs` with `use contract_protocol::*`                                                     | AES201 CRITICAL violation                                     |
-| capabilities imports agent  | `capabilities_checker.rs` with `use agent_orchestrator::*`                                           | AES201 CRITICAL violation                                     |
-| valid unidirectional import | `capabilities_checker.rs` with `use taxonomy_vo::*`                                                  | No violation                                                  |
-| import inside comment       | `taxonomy_vo.rs` with `// use contract_protocol::*`                                                  | No violation (AST)                                            |
-| import inside string        | `taxonomy_vo.rs` with `let s = "use contract_protocol::*"`                                           | No violation (AST)                                            |
-| barrel resolution           | `from modules.shared.src.server import IFoo` where `__init__.py` re-exports from `contract_protocol` | AES201 CRITICAL (resolved to contract layer)                  |
-| scope pattern match         | `surface_component.rs` with `use capabilities_checker::*`                                            | AES201 CRITICAL (passive surface forbidden from capabilities) |
-| `#[cfg(test)]` import       | `taxonomy_vo.rs` with `#[cfg(test)] use contract_protocol::*`                                        | No violation (conditional block skipped)                      |
+| #  | Scenario                                            | Expected                            | Rule   |
+| ---- | ----------------------------------------------------- | ------------------------------------- | -------- |
+| 1  | File imports from forbidden layer                   | AES201 CRITICAL                     | AES201 |
+| 2  | File imports from allowed layer                     | No violation                        | pass   |
+| 3  | File imports from layer not in allowed or forbidden | AES201 WARNING (grey area)          | AES201 |
+| 4  | File with no imports                                | No violation                        | pass   |
+| 5  | capabilities file imports utility                   | No violation (allowed)              | pass   |
+| 6  | utility file imports capabilities                   | AES201 CRITICAL (forbidden)         | AES201 |
+| 7  | surface(component) imports contract                 | AES201 CRITICAL (forbidden)         | AES201 |
+| 8  | surface(command) imports contract(aggregate)        | No violation (allowed)              | pass   |
+| 9  | agent imports capabilities                          | AES201 CRITICAL (forbidden, via DI) | AES201 |
+| 10 | contract(protocol) imports contract(aggregate)      | AES201 CRITICAL (forbidden)         | AES201 |
 
 ### AES202 — Mandatory Import
 
 
-| Test Case                   | Input                                                                                              | Expected Output                                      |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| missing contract import     | `capabilities_checker.rs` without protocol import                                                  | AES202 HIGH violation                                |
-| present contract import     | `capabilities_checker.rs` with `use contract_protocol::*`                                          | No violation                                         |
-| barrel resolution fallback  | `capabilities_checker.rs` with `from modules.shared.src.server import IFoo` (resolves to contract) | No violation                                         |
-| `__init__.py` skip          | `__init__.py` without mandatory imports                                                            | No violation (barrel file skipped)                   |
-| `contains()` false positive | `capabilities_checker.rs` with `use taxonomy_contract_vo::*` (contains "contract" but is taxonomy) | AES202 HIGH violation (segment match, not substring) |
+| # | Scenario                                                   | Expected                  | Rule   |
+| --- | ------------------------------------------------------------ | --------------------------- | -------- |
+| 1 | Capabilities file missing taxonomy import                  | AES202 violation          | AES202 |
+| 2 | Capabilities file missing contract(protocol) import        | AES202 violation          | AES202 |
+| 3 | Capabilities file has both taxonomy and contract(protocol) | No violation              | pass   |
+| 4 | File in exception list                                     | No violation — exception | excl   |
+| 5 | taxonomy(entity) missing taxonomy(vo) import               | AES202 violation          | AES202 |
 
 ### AES203 — Unused Import
 
 
-| Test Case             | Input                                                       | Expected Output                          |
-| ----------------------- | ------------------------------------------------------------- | ------------------------------------------ |
-| unused symbol         | File with`use foo::Bar;` but `Bar` never used               | AES203 MEDIUM violation                  |
-| used symbol           | File with`use foo::Bar;` and `Bar` referenced in code       | No violation                             |
-| used in comment only  | File with`use foo::Bar;` and `// Bar is great`              | AES203 MEDIUM violation (AST)            |
-| used in string only   | File with`use foo::Bar;` and `let s = "Bar"`                | AES203 MEDIUM violation (AST)            |
-| used in derive        | File with`use serde::Serialize;` and `#[derive(Serialize)]` | No violation (AST attribute parsing)     |
-| multi-line import     | `use foo::{\n  A,\n  B,\n}` with only `A` used              | AES203 for`B` only                       |
-| aliased import        | `use foo::Bar as Baz;` with `Baz` used                      | No violation                             |
-| barrel file skip      | `mod.rs` with `pub use foo::Bar;`                           | No violation (barrel file)               |
-| `__future__` skip     | `from __future__ import annotations`                        | No violation                             |
-| wildcard import       | `use foo::*;`                                               | AES203 MEDIUM violation                  |
-| `pub use` re-export   | `pub use foo::Bar;`                                         | No violation (re-export = public API)    |
-| `#[cfg(test)]` import | `#[cfg(test)] use foo::Bar;`                                | No violation (conditional block skipped) |
+| # | Scenario                                        | Expected                | Rule   |
+| --- | ------------------------------------------------- | ------------------------- | -------- |
+| 1 | Import declared but never referenced in code    | AES203 violation        | AES203 |
+| 2 | Import declared and used in code                | No violation            | pass   |
+| 3 | Import used only in comments                    | AES203 violation        | AES203 |
+| 4 | Import used only inside macro body (non-derive) | No violation (exempt)   | pass   |
+| 5 | Import used in`#[derive(...)]`                  | No violation (detected) | pass   |
 
 ### AES204 — Dummy Import
 
 
-| Test Case            | Input                                                                  | Expected Output                          |
-| ---------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
-| dummy function       | File with`fn _use_imports() {}`                                        | AES204 HIGH violation                    |
-| empty trait impl     | File with`impl Trait for Struct {}` (all methods empty)                | AES204 HIGH violation                    |
-| partial trait impl   | File with`impl Trait for Struct { fn a() {} fn b() { real_logic() } }` | No violation (not all methods dummy)     |
-| import in dummy only | `use foo::Bar;` + `fn _use_imports() { Bar; }` (no other usage)        | AES204 HIGH violation                    |
-| import in real logic | `use foo::Bar;` + `fn real() { Bar; }`                                 | No violation                             |
-| taxonomy intent      | `use taxonomy_vo::Foo;` + `fn _use_imports() { Foo; }` (no real usage) | AES204 HIGH violation                    |
-| surface logic        | `surface_view.rs` with `lint_path(...)` call                           | AES204 MEDIUM violation                  |
-| barrel file skip     | `mod.rs` with `fn _use_imports() {}`                                   | No violation (barrel file)               |
-| inline comment usage | `use foo::Bar;` + `let x = 1; // Bar`                                  | AES204 HIGH (inline comment not counted) |
+| #  | Scenario                                                                        | Expected                                | Rule   |
+| ---- | --------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
+| 1  | Function named`_use_serialization()` containing import reference                | AES204 violation (dummy function)       | AES204 |
+| 2  | Function named`dummy_helper()` containing import reference                      | AES204 violation (dummy function)       | AES204 |
+| 3  | Trait impl with all method bodies =`todo!()`                                    | AES204 violation (dummy impl)           | AES204 |
+| 4  | Trait impl with 1 real method + 1`todo!()` method                               | No violation (has real logic)           | pass   |
+| 5  | Import`Foo` only referenced inside `_use_foo()`, not in real logic              | AES204 violation (dummy import)         | AES204 |
+| 6  | Import`Bar` referenced in `_use_bar()` AND in real function                     | No violation (real usage exists)        | pass   |
+| 7  | `pub use` re-export                                                             | No violation (public API)               | pass   |
+| 8  | Taxonomy file has`_use_vo()` referencing taxonomy VO, VO not used in real logic | AES204 violation (taxonomy intent)      | AES204 |
+| 9  | Surface file calls`lint_path(` directly                                         | AES204 violation (surface logic bypass) | AES204 |
+| 10 | Barrel file (`mod.rs`) with re-exports                                          | No violation (exempt)                   | pass   |
 
 ### AES205 — Circular Dependency
 
 
-| Test Case           | Input                                                                                  | Expected Output                           |
-| --------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------- |
-| direct cycle        | A imports B, B imports A                                                               | AES205 CRITICAL violation                 |
-| indirect cycle      | A imports B, B imports C, C imports A                                                  | AES205 CRITICAL violation                 |
-| no cycle            | A imports B, B imports C                                                               | No violation                              |
-| self-import         | A imports A                                                                            | No violation (ignored)                    |
-| barrel resolution   | A imports barrel, barrel re-exports from B, B imports A                                | AES205 CRITICAL (resolved through barrel) |
-| cross-crate         | `crate::contract_foo` in capabilities file, `crate::capabilities_bar` in contract file | AES205 CRITICAL                           |
-| same-crate internal | `crate::common::FilePath` in capabilities file                                         | No violation (not cross-layer)            |
+| # | Scenario                          | Expected                        | Rule   |
+| --- | ----------------------------------- | --------------------------------- | -------- |
+| 1 | Two layers importing each other   | AES205 violation                | AES205 |
+| 2 | Linear dependency chain           | No violation                    | pass   |
+| 3 | Self-import (file imports itself) | No violation (silently ignored) | pass   |
+| 4 | Indirect cycle (A → B → C → A) | AES205 violation                | AES205 |
 
 ### Configuration
 
 
-| Test Case       | Input                                                       | Expected Output      |
-| ----------------- | ------------------------------------------------------------- | ---------------------- |
-| config disabled | `architecture.enabled: false`                               | No violations        |
-| rule disabled   | `AES203.enabled: false`                                     | No AES203 violations |
-| exception file  | `exceptions: ["main.rs"]` + `main.rs` with forbidden import | No violation         |
-| ignored path    | `ignored_paths: ["/tests"]` + file in tests/                | No violation         |
-| scope rule      | `scope: "taxonomy(vo)"` + `taxonomy_foo_vo.rs`              | Rule applies         |
-| scope mismatch  | `scope: "taxonomy(vo)"` + `taxonomy_foo_entity.rs`          | Rule does not apply  |
-
-### Performance
-
-
-| Test Case              | Input                          | Expected Output                 |
-| ------------------------ | -------------------------------- | --------------------------------- |
-| 1,000 files            | Mixed Rust/Python/TS workspace | < 2 seconds                     |
-| 5,000 files            | Large workspace                | < 8 seconds                     |
-| AES203 with 50 imports | Single file with 50 imports    | < 100ms (AST, no dynamic regex) |
+| # | Scenario                         | Expected                               | Rule   |
+| --- | ---------------------------------- | ---------------------------------------- | -------- |
+| 1 | Rule disabled in config          | No violation for that rule             | config |
+| 2 | File in exceptions list          | No violation for that file             | config |
+| 3 | File matches multiple conditions | Checked against all matched conditions | config |
 
 ---
 
 ## Assumptions & Constraints
 
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
-- Layer hierarchy is defined in config YAML and detected from filename prefixes.
+- Layer hierarchy is defined in config YAML and detected from filename prefixes (hardcoded AES convention).
 - Naming convention validation is handled by the naming rules crate; import-rules assumes filenames are correctly named.
-- Import resolution is language-specific: Rust via `syn` AST, Python/TS via structured line parsing.
+- All languages use full AST parsing (Rust via `syn`, Python/TS via tree-sitter), implemented in the external filesystem crate. No regex or line-based parsing in final implementation.
 - No network calls are required; all analysis is local filesystem.
 - Configuration is loaded once and reused across all checks in a scan.
-- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — imports and usage inside macros are invisible to the detector (see FR-010).
-- Python and TypeScript parsing is not full AST — it is comment-aware structured line parsing. This handles >95% of real-world import patterns but does not handle dynamically constructed imports (`importlib`, `require(variable)`).
-- Barrel file resolution is one level deep — nested barrel chains (barrel importing from another barrel) are not fully resolved.
+- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — imports and usage inside macros are invisible to the detector. Macro body exemption applies to AES203 (see FR-009).
+- Barrel file resolution is one level deep — nested barrel chains are not fully resolved.
+- AES203 and AES204 are independent and may both flag the same import (no deduplication).
+- File walking, AST parsing, import extraction, and dependency graph construction are handled by the external filesystem crate. import-rules receives pre-parsed data and performs analysis only.
 
 ---
 
 ## Glossary
 
 
-| Term                   | Definition                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| **AES**                | Agentic Engineering System — the 7-layer coding convention                                                        |
-| **Layer**              | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                           |
-| **Diagnostic**         | Violation report with file path, line, column, rule code, severity, and message                                    |
-| **Dummy Import**       | Import that exists only to suppress unused-import warnings, placed inside`_use_*` functions                        |
-| **Forbidden Import**   | Import that violates layer boundary rules defined in YAML configuration                                            |
-| **Mandatory Import**   | Import that a layer must contain per its architectural contract                                                    |
-| **Barrel file**        | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)                                           |
-| **AST**                | Abstract Syntax Tree — structured representation of source code produced by a parser                              |
-| **`syn`**              | Rust crate for parsing Rust source code into an AST                                                                |
-| **Structured parsing** | Comment-aware, string-aware line-by-line parsing (used for Python/TS where full AST is not available in pure Rust) |
-| **Parse result**       | Typed struct containing extracted imports, trait impls, struct defs, trait defs, and mod declarations              |
-| **`parse_ok`**         | Boolean flag on parse results indicating whether parsing succeeded                                                 |
-| **Re-export**          | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                         |
-| **Scope pattern**      | Config syntax like`taxonomy(vo)` or `surface(command                                                               |
-| **3-color DFS**        | Graph traversal algorithm (White/Gray/Black) used for cycle detection                                              |
-| **Dependency edge**    | A directed edge in the layer dependency graph (e.g.,`capabilities → contract`)                                    |
-| **ResolvedImport**     | VO carrying the result of barrel file resolution (original module, resolved file, resolved layer)                  |
-
----
-
-## Migration Notes (v1.11 → v1.12)
-
-
-| Component                                  | v1.11 (Regex/Line-based)                                                | v1.12 (AST)                                                                                      |
-| -------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `utility_import_symbol_extractor.rs`       | Dynamic regex`\b(A                                                      | B                                                                                                |
-| `utility_import_resolver.rs`               | Line-based`parse_import_lines_helper` (no comment/string awareness)     | AST`ItemUse` extraction (Rust) + comment-aware structured parsing (Python/TS)                    |
-| `utility_import_module_parser.rs`          | Line-based`extract_import_modules`                                      | AST-based module extraction via parser dispatch                                                  |
-| `utility_dummy_detector.rs`                | Line-based function detection + manual brace counting                   | AST`ItemFn` + `ItemImpl` extraction (Rust) + structured parsing (Python/TS)                      |
-| `utility_cycle_detector.rs`                | **No change** — pure graph theory (3-color DFS)                        | **No change**                                                                                    |
-| `utility_path_normalizer.rs`               | **No change** — path utilities                                         | **No change**                                                                                    |
-| `capabilities_import_forbidden_checker.rs` | Uses`parse_import_lines_helper` + `extract_layer_from_import`           | Uses AST parser dispatch + segment-based layer detection                                         |
-| `capabilities_import_mandatory_checker.rs` | Uses`contains()` for layer matching                                     | Uses segment-based matching + barrel resolution                                                  |
-| `capabilities_import_unused_checker.rs`    | Uses`extract_imported_aliases` + `extract_used_symbols` (dynamic regex) | Uses AST parser dispatch +`syn::visit` usage tracking                                            |
-| `capabilities_dummy_import_checker.rs`     | Uses`dummy_function_ranges` + `symbol_used_real` (line-based)           | Uses AST parser dispatch + AST body analysis                                                     |
-| `capabilities_cycle_import_analyzer.rs`    | Uses`extract_import_modules_resolved` (line-based)                      | Uses AST parser dispatch for module extraction                                                   |
-| `Cargo.toml`                               | `regex`, `once_cell`                                                    | `syn = { version = "2", features = ["full", "visit", "parsing"] }` (shared with orphan-detector) |
-
----
-
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- AST Parser (shared): `crates/orphan-detector/src/utility_orphan_rust_parser.rs`, `utility_orphan_python_parser.rs`, `utility_orphan_ts_parser.rs`, `utility_orphan_parser_dispatch.rs`
-- Taxonomy VOs (shared): `crates/orphan-detector/src/taxonomy_orphan_parse_result_vo.rs`
-- Import Resolver: `crates/shared/src/import-rules/utility_import_resolver.rs`
-- Cycle Detector: `crates/shared/src/import-rules/utility_cycle_detector.rs`
-- Dummy Detector: `crates/shared/src/import-rules/utility_dummy_detector.rs`
+| Term                 | Definition                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AES**              | Agentic Engineering System — the 7-layer coding convention                                                                                           |
+| **Layer**            | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                                                              |
+| **Diagnostic**       | Violation report with file path, line, column, rule code, severity, and message                                                                       |
+| **Dummy Import**     | Import that exists only to suppress unused-import warnings, placed inside`_use_*` functions. A pattern of AI-generated code cheating.                 |
+| **Forbidden Import** | Import that violates layer boundary rules defined in YAML configuration                                                                               |
+| **Mandatory Import** | Import that a scope must contain per its architectural contract                                                                                       |
+| **Barrel file**      | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)                                                                              |
+| **AST**              | Abstract Syntax Tree — structured representation of source code produced by a parser                                                                 |
+| **`syn`**            | Rust crate for parsing Rust source code into an AST                                                                                                   |
+| **tree-sitter**      | Incremental parsing library used for Python/TypeScript full AST parsing                                                                               |
+| **Filesystem crate** | External crate that handles file walking, AST parsing, import extraction, and dependency graph construction. Returns pre-parsed data to import-rules. |
+| **Parse result**     | Typed struct containing extracted imports, trait impls, struct defs, trait defs, and mod declarations                                                 |
+| **`parse_ok`**       | Boolean flag on parse results indicating whether parsing succeeded                                                                                    |
+| **`PARSE_WARN`**     | Warning diagnostic (non-AES code) emitted when a file fails to parse                                                                                  |
+| **Re-export**        | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                            |
+| **Scope pattern**    | Config syntax like`taxonomy(vo)` or `surface(command                                                                                                  |
+| **Conditions array** | YAML structure where each entry defines scope-specific`allowed`, `forbidden`, and `mandatory` rules                                                   |
+| **3-color DFS**      | Graph traversal algorithm (White/Gray/Black) used for cycle detection                                                                                 |
+| **Dependency edge**  | A directed edge in the layer dependency graph (e.g.,`capabilities → contract`)                                                                       |
+| **ResolvedImport**   | VO carrying the result of barrel file resolution (original module, resolved file, resolved layer)                                                     |
+| **Grey area**        | Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL                                                      |
+| **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via trait objects                                                 |
 
 ---
 
 ## Appendix A: YAML Configuration Schema
 
-The import-rules crate reads its configuration from `lint_arwaky.config.<language>.yaml` files. Below is the schema for the `architecture` section relevant to import rules.
-
 ### Top-Level Structure
 
 ```yaml
-ignored_paths:                   # Global path exclusions
+ignored_paths:
     - "/tests"
     - "/target"
 architecture:
-  enabled: true                    # Master switch for all architecture rules
-  rules:                           # Map of rule codes to their configurations
+  enabled: true
+  rules:
     AES201: { ... }
     AES202: { ... }
     AES203: { ... }
@@ -509,34 +489,25 @@ architecture:
     AES205: { ... }
 ```
 
-### Rule Configuration Schema
+### Rule Configuration Schema (AES201)
 
-Each rule (AES201–AES205) follows this schema:
+### Condition Entry Schema
 
 ```yaml
-AES201:
-  enabled: true                    # Enable/disable this specific rule
-  scope: "taxonomy"                # Scope pattern (layer prefix + optional sub-layer)
-  exceptions:                      # Filenames to skip (basename match)
-    - "main.rs"
-    - "lib.rs"
-    - "mod.rs"
-  allowed:                         # Layers this scope can import from
-    - "taxonomy"
-  forbidden:                       # Layers this scope cannot import from
-    - "agent"
-    - "surface"
-    - "contract"
-    - "utility"
-    - "capabilities"
-    - "root"
-  mandatory:                       # Required imports (null = none)
-    - "contract(protocol)"
+- scope: "<layer>(<sub-layer>|<sub-layer>)"   # Scope pattern
+  allowed: ["<layer>", ...]                    # Whitelist — pass
+  forbidden: ["<layer>", ...]                  # Blacklist — AES201 CRITICAL
+  mandatory: ["<layer>(<sub>)", ...] | null    # Required imports (AES202)
+
 ```
 
-### Scope Pattern Syntax
+**Enforcement model**: Whitelist + Blacklist hybrid.
 
-Scope patterns use parentheses to specify sub-layers:
+- Target in `allowed` → pass.
+- Target in `forbidden` → AES201 CRITICAL.
+- Target in neither → AES201 WARNING (grey area).
+
+### Scope Pattern Syntax
 
 
 | Pattern                        | Meaning                               |
@@ -551,102 +522,9 @@ Scope patterns use parentheses to specify sub-layers:
 | `surface(command               | controller                            |
 | `surface(hook                  | store                                 |
 | `surface(component             | view                                  |
+| `root`                         | Root / composition root               |
 
-### Layer Hierarchy (Default)
-
-```
-taxonomy (lowest)
-  └── contract
-       └── utility
-       └── capabilities
-            └── agent
-                 └── surface
-                      └── root (highest)
-```
-
-### Example: Minimal Config
-
-```yaml
-architecture:
-  enabled: true
-  rules:
-    AES201:
-      enabled: true
-      scope: "taxonomy"
-      exceptions: ["main.rs", "lib.rs"]
-      forbidden: ["contract", "utility", "capabilities", "agent", "surface", "root"]
-    AES202:
-      enabled: true
-      scope: "capabilities"
-      exceptions: ["main.rs"]
-      mandatory: ["contract(protocol)"]
-    AES203:
-      enabled: true
-      scope: "taxonomy"
-    AES204:
-      enabled: true
-      scope: "taxonomy"
-    AES205:
-      enabled: true
-      scope: "taxonomy"
-```
-
----
-
-## Appendix B: File Discovery Algorithm
-
-The file collection method of the import analysis orchestrator discovers source files for analysis.
-
-### Algorithm
-
-```
-collect_files(target_path):
-  if target_path is a file:
-    return [target_path]
-  if target_path is a directory:
-    return walk_dir(target_path)
-
-walk_dir(dir, is_subdir=false):
-  if is_subdir and is_ignored(dir):
-    return []
-  results = []
-  for entry in read_dir(dir):
-    if entry is a directory:
-      results.extend(walk_dir(entry, is_subdir=true))
-    else if entry is a file:
-      if is_ignored(entry):
-        continue
-      if entry.extension in ["rs", "py", "js", "ts", "jsx", "tsx"]:
-        results.append(entry)
-  return results
-```
-
-### Ignore Rules
-
-Files and directories are skipped if they match any of these criteria:
-
-1. **Config-level ignores**: Paths listed in `ignored_paths` in the YAML config
-2. **Default skip directories**: `.git`, `node_modules`, `target`, `dist`, `build`, `.venv`, `__pycache__`, `tests`
-3. **Hidden directories**: Any directory starting with `.` (e.g., `.github`, `.vscode`)
-4. **File extension**: Only files with extensions `rs`, `py`, `js`, `ts`, `jsx`, `tsx` are collected
-5. **Workspace restriction**: At root level, only `crates/`, `packages/`, `modules/` subdirectories are scanned (avoids walking test-workspaces, scripts, docs)
-6. **Symlink safety**: Symlink targets outside the workspace root are pruned to prevent path traversal
-
-### Language Detection
-
-Language is determined by file extension:
-
-
-| Extension     | Language   |
-| --------------- | ------------ |
-| `.rs`         | Rust       |
-| `.py`         | Python     |
-| `.js`, `.jsx` | JavaScript |
-| `.ts`, `.tsx` | TypeScript |
-
-### Layer Detection
-
-After file collection, each file's architectural layer is detected from its filename prefix:
+### Layer Detection (Hardcoded Convention)
 
 
 | Filename Pattern    | Detected Layer |
@@ -656,7 +534,43 @@ After file collection, each file's architectural layer is detected from its file
 | `capabilities_*.rs` | capabilities   |
 | `utility_*.rs`      | utility        |
 | `agent_*.rs`        | agent          |
-| `surface_*.rs`      | surfaces       |
+| `surface_*.rs`      | surface        |
 | `root_*.rs`         | root           |
 
-Files without a recognized prefix are skipped by layer-dependent rules (AES201, AES202) but still checked by layer-agnostic rules (AES203, AES204).
+Files without a recognized prefix are skipped by layer rules
+
+---
+
+## Appendix B: File Discovery Algorithm
+
+File discovery is handled by the **filesystem crate** (external). The import-rules crate requests file discovery via `filesystem_aggregate` and receives pre-parsed results. The algorithm below documents the behavior of the filesystem crate's file walker for reference.
+
+### Ignore Rules
+
+Files and directories are skipped if they match any of these criteria:
+
+1. **Config-level ignores**: Paths listed in `ignored_paths` in the YAML config.
+2. **Default skip directories**: `.git`, `node_modules`, `target`, `dist`, `build`, `.venv`, `__pycache__`, `tests`.
+3. **Hidden directories**: Any directory starting with `.` (e.g., `.github`, `.vscode`).
+4. **File extension**: Only files with extensions `rs`, `py`, `js`, `ts`, `jsx`, `tsx` are collected.
+5. **Workspace restriction**: At root level, only `crates/`, `packages/`, `modules/` subdirectories are scanned.
+6. **Symlink safety**: Symlink targets outside the workspace root are pruned to prevent path traversal.
+
+### Language Detection
+
+
+| Extension     | Language   |
+| --------------- | ------------ |
+| `.rs`         | Rust       |
+| `.py`         | Python     |
+| `.js`, `.jsx` | JavaScript |
+| `.ts`, `.tsx` | TypeScript |
+
+---
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Filesystem crate
+- Shared crate

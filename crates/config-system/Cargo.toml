@@ -10,7 +10,8 @@ publish = true
 [lints]
 workspace = true
 
-[dependencies]  # (unchanged)
+[dependencies]
+filesystem.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 async-trait.workspace = true
@@ -18,6 +19,8 @@ serde_yaml_ng.workspace = true
 toml.workspace = true
 shared.workspace = true
 dirs.workspace = true
+dashmap = "6"
+rayon = { workspace = true }
 
 tokio = { workspace = true, features = ["rt", "macros", "fs"] }
 futures = "0.3"

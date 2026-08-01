@@ -62,6 +62,12 @@ impl ICodeAnalysisAggregate for MockLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(
+        &self,
+        _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<shared::cli_commands::LintResult> {
+        vec![]
+    }
 }
 
 fn make_violation(file: &str, line: usize, code: &str, msg: &str) -> LintResult {
@@ -191,7 +197,7 @@ fn fix_unused_import_removes_use_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(tmp.path()).unwrap();
     assert!(!content.contains("use std::io;"));
@@ -209,7 +215,7 @@ fn fix_unused_import_removes_python_import_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(tmp.path()).unwrap();
     assert!(!content.contains("import os"));
@@ -224,14 +230,14 @@ fn fix_unused_import_returns_false_for_non_import_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 #[test]
 fn fix_unused_import_returns_false_for_nonexistent_file() {
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import("/nonexistent/file.rs", LineNumber::new(1));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 #[test]
@@ -242,7 +248,7 @@ fn fix_unused_import_returns_false_for_line_zero() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import(tmp.path().to_str().unwrap(), LineNumber::new(0));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 #[test]
@@ -253,7 +259,7 @@ fn fix_unused_import_returns_false_for_out_of_bounds_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_unused_import(tmp.path().to_str().unwrap(), LineNumber::new(999));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 // ─── fix_bypass_comments ──────────────────────────────────
@@ -267,7 +273,7 @@ fn fix_bypass_removes_allow_attribute_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_bypass_comments(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(tmp.path()).unwrap();
     assert!(!content.contains("#[allow(unused)]"));
@@ -283,7 +289,7 @@ fn fix_bypass_removes_noqa_comment() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_bypass_comments(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 }
 
 #[test]
@@ -294,14 +300,14 @@ fn fix_bypass_returns_false_for_non_bypass_line() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_bypass_comments(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 #[test]
 fn fix_bypass_returns_false_for_nonexistent_file() {
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_bypass_comments("/nonexistent/file.rs", LineNumber::new(1));
-    assert!(!result);
+    assert!(!result.is_applied());
 }
 
 #[test]
@@ -312,7 +318,7 @@ fn fix_bypass_replaces_unwrap_with_expect() {
 
     let sut = sut_with_linter(MockLinter::empty());
     let result = sut.fix_bypass_comments(tmp.path().to_str().unwrap(), LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(tmp.path()).unwrap();
     assert!(content.contains("expect(\"safe\")"));

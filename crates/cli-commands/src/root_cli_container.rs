@@ -13,7 +13,7 @@ use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtoc
 use shared::role_rules::IRoleRunnerAggregate;
 
 // Ensure utility_path_resolver is reachable from entry point for AES504 orphan detection
-use crate::utility_path_resolver;
+use shared::cli_commands::utility_path_resolver;
 
 pub struct CliContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -80,9 +80,8 @@ impl CliContainer {
         let git_aggregate = git_container.aggregate();
 
         // Wire up report formatter capabilities → aggregate
-        let text_formatter: Arc<dyn IReportFormatterProtocol> = Arc::new(
-            report_formatter::TextFormatter::new(code_analysis_linter.clone()),
-        );
+        let text_formatter: Arc<dyn IReportFormatterProtocol> =
+            Arc::new(report_formatter::TextFormatter::new());
         let json_formatter: Arc<dyn IReportFormatterProtocol> =
             Arc::new(report_formatter::JsonFormatter::new());
         let sarif_formatter: Arc<dyn IReportFormatterProtocol> =

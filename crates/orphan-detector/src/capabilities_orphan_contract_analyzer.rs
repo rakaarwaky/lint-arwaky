@@ -5,9 +5,9 @@ use shared::code_analysis::{InheritanceMap, OrphanIndicatorResult};
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
-use shared::orphan_detector::utility_orphan_io as orphan_io;
 use shared::orphan_detector::utility_workspace_scanner::collect_source_files;
 use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -44,10 +44,11 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         root_dir: &FilePath,
         _inheritance_map: &InheritanceMap,
         all_files: &[String],
+        content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let suffix = file_suffix(fp);
-        let content = orphan_io::read_file_safe(fp);
+        let content = content_map.get(fp).cloned().unwrap_or_default();
         if content.is_empty() {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
@@ -61,12 +62,13 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         let search_files = self.cached_search_files(root_dir, all_files);
 
         // Check 0: Barrel re-export check
-        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files) {
+        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
         // Check 1: Implementation check via AST
-        let unimplemented = self.find_unimplemented_traits(&trait_names, search_files.as_slice());
+        let unimplemented =
+            self.find_unimplemented_traits(&trait_names, search_files.as_slice(), content_map);
         if !unimplemented.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
@@ -100,6 +102,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     "_container.ts",
                     "_container.js",
                 ],
+                content_map,
             )
         {
             return OrphanIndicatorResult::new(
@@ -134,6 +137,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                     "_container.ts",
                     "_container.js",
                 ],
+                content_map,
             )
         {
             return OrphanIndicatorResult::new(
@@ -182,7 +186,7 @@ impl ContractOrphanAnalyzer {
         match self.parser_dispatcher.parse_file(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
-            FileParseResultVO::TypeScript(result) => result.class_names(),
+            FileParseResultVO::TypeScript(result) => result.trait_names(),
             FileParseResultVO::Unsupported => Vec::new(),
         }
     }
@@ -192,18 +196,26 @@ impl ContractOrphanAnalyzer {
         &self,
         trait_names: &[String],
         search_files: &[String],
+        content_map: &HashMap<String, String>,
     ) -> Vec<String> {
         trait_names
             .iter()
-            .filter(|trait_name| !self.has_trait_implementation(search_files, trait_name))
+            .filter(|trait_name| {
+                !self.has_trait_implementation(search_files, trait_name, content_map)
+            })
             .cloned()
             .collect()
     }
 
     /// Check if any file implements the given trait, using AST.
-    fn has_trait_implementation(&self, search_files: &[String], trait_name: &str) -> bool {
+    fn has_trait_implementation(
+        &self,
+        search_files: &[String],
+        trait_name: &str,
+        content_map: &HashMap<String, String>,
+    ) -> bool {
         for cf in search_files {
-            let content = orphan_io::read_file_safe(cf);
+            let content = content_map.get(cf).cloned().unwrap_or_default();
             if content.is_empty() {
                 continue;
             }
@@ -244,6 +256,7 @@ impl ContractOrphanAnalyzer {
         search_files: &[String],
         prefix_patterns: &[&str],
         suffix_patterns: &[&str],
+        content_map: &HashMap<String, String>,
     ) -> bool {
         for cf in search_files {
             let cb = file_basename(cf);
@@ -253,7 +266,7 @@ impl ContractOrphanAnalyzer {
                 continue;
             }
 
-            let content = orphan_io::read_file_safe(cf);
+            let content = content_map.get(cf).cloned().unwrap_or_default();
             for trait_name in trait_names {
                 if Self::content_contains_word(&content, trait_name) {
                     return true;
@@ -264,7 +277,11 @@ impl ContractOrphanAnalyzer {
     }
 
     /// Check if any trait name is re-exported via barrel files.
-    fn is_trait_re_exported_in_barrel(trait_names: &[String], search_files: &[String]) -> bool {
+    fn is_trait_re_exported_in_barrel(
+        trait_names: &[String],
+        search_files: &[String],
+        content_map: &HashMap<String, String>,
+    ) -> bool {
         for cf in search_files {
             let cb = file_basename(cf);
             let is_barrel = matches!(
@@ -274,7 +291,7 @@ impl ContractOrphanAnalyzer {
             if !is_barrel {
                 continue;
             }
-            let barrel_content = orphan_io::read_file_safe(cf);
+            let barrel_content = content_map.get(cf).cloned().unwrap_or_default();
             for trait_name in trait_names {
                 if Self::content_contains_word(&barrel_content, trait_name) {
                     return true;

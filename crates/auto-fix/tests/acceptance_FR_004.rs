@@ -40,6 +40,12 @@ impl ICodeAnalysisAggregate for MockLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(
+        &self,
+        _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<shared::cli_commands::LintResult> {
+        vec![]
+    }
 }
 
 /// FRD-IDEMPOTENT-01: Unused import fix is idempotent.
@@ -56,7 +62,7 @@ fn frd_unused_import_fix_idempotent() {
 
     // First fix
     let r1 = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    assert!(r1);
+    assert!(r1.is_applied());
     let content1 = std::fs::read_to_string(&file_path).unwrap();
 
     // Second fix on same line — line 1 is now `use std::fs;` which is still an import
@@ -84,12 +90,15 @@ fn frd_bypass_fix_idempotent() {
 
     // First fix
     let r1 = sut.fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(r1);
+    assert!(r1.is_applied());
     let content1 = std::fs::read_to_string(&file_path).unwrap();
 
     // Second fix on same line — line 1 is now "fn main() {}" which is not a bypass
     let r2 = sut.fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(!r2, "Second fix on non-bypass line should return false");
+    assert!(
+        !r2.is_applied(),
+        "Second fix on non-bypass line should return Skipped"
+    );
 
     let content2 = std::fs::read_to_string(&file_path).unwrap();
     assert_eq!(content1, content2, "File must not change on second pass");
@@ -150,7 +159,7 @@ fn frd_fix_is_deterministic() {
     let fix = |tmp: &NamedTempFile| {
         let file_path = tmp.path().to_str().unwrap().to_string();
         let sut = LintFixProcessor::new(Arc::new(MockLinter { results: vec![] }));
-        sut.fix_unused_import(&file_path, LineNumber::new(1));
+        let _ = sut.fix_unused_import(&file_path, LineNumber::new(1));
         std::fs::read_to_string(tmp.path()).unwrap()
     };
 

@@ -20,7 +20,7 @@ use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenPr
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use shared::import_rules::utility_import_resolver;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -40,6 +40,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
+        content_map: &HashMap<String, String>,
     ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let root_dir_str = root_dir.to_string();
@@ -61,11 +62,10 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                     return Vec::new();
                 }
 
-                let content =
-                    match shared::common::utility_file_handler::read_file_generic(&f_str).ok() {
-                        Some(c) => c,
-                        None => return Vec::new(),
-                    };
+                let content = match content_map.get(&f_str) {
+                    Some(c) => c.clone(),
+                    None => return Vec::new(),
+                };
                 let import_lines =
                     utility_import_resolver::parse_import_lines_helper(&f_str, &content);
                 if import_lines.is_empty() {

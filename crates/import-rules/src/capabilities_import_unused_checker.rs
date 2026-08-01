@@ -2,7 +2,7 @@
 // AST-based: uses syn visitor for usage tracking. No dynamic regex. No DERIVE_MACROS whitelist.
 
 use shared::cli_commands::LintResult;
-use shared::common::{ErrorMessage, FilePath, LintMessage, Severity};
+use shared::common::{FilePath, LintMessage, Severity};
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
@@ -12,19 +12,14 @@ use shared::import_rules::utility_import_symbol_extractor;
 pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Result<Vec<LintMessage>, ImportError> {
+    fn find_unused_imports(
+        &self,
+        path: &FilePath,
+        content: &str,
+    ) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let content = shared::common::utility_file_handler::read_file_generic(path.value())
-            .map_err(|_| {
-                ImportError::module_resolution(
-                    path.value().to_string(),
-                    Some(ErrorMessage::new(
-                        "File could not be read for unused import analysis",
-                    )),
-                )
-            })?;
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases(path.value(), &content);
         let exported_symbols =
@@ -84,9 +79,16 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 let t = l.trim();
                 if t.is_empty()
                     || t.starts_with("//")
+                    || t.starts_with("#")
+                    // Rust: use / pub use / pub(crate) use
                     || t.starts_with("use ")
                     || t.starts_with("pub use ")
                     || t.starts_with("pub(crate) use ")
+                    // Python: import X / from X import Y
+                    || t.starts_with("import ")
+                    || t.starts_with("from ")
+                    // TypeScript: import ... / export ... from
+                    || t.starts_with("export ")
                 {
                     return false;
                 }
@@ -99,7 +101,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             // via method calls, derive macros, or macro invocations.
             // The AST can't detect: `.par_iter()` (ParallelIterator),
             // `#[async_trait]`, `.init()` (SubscriberInitExt), `writeln!` (Write), etc.
-            if let Some((raw_path, _)) = imported_aliases.get(alias) {
+            if let Some(raw_path) = imported_aliases.get(alias) {
                 let rp = raw_path.value();
                 let is_likely_trait = rp.contains("prelude")
                     || rp.contains("async_trait")
@@ -112,9 +114,10 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                     continue;
                 }
             }
-            let line_num = utility_import_resolver::find_import_line_number(content, alias_str)
+            let _line_num = utility_import_resolver::find_import_line_number(content, alias_str)
                 .value() as usize;
-            let ast_line = imported_aliases.get(alias).map(|(_, l)| *l).unwrap_or(1);
+            let ast_line = utility_import_resolver::find_import_line_number(content, alias_str)
+                .value() as usize;
             violations.push(LintResult::new_arch(
                 file,
                 ast_line,

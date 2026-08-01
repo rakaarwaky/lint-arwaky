@@ -59,7 +59,7 @@ use shared::cli_commands::LintResult;
 pub struct StubChecker;
 
 impl IUnusedImportProtocol for StubChecker {
-    fn find_unused_imports(&self, _p: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, _p: &FilePath, _content: &str) -> Vec<LintMessage> {
         todo!()
     }
     fn check_unused_imports(&self, _f: &str, _c: &str, _v: &mut Vec<LintResult>) {
@@ -99,7 +99,7 @@ use shared::cli_commands::LintResult;
 pub struct RealChecker;
 
 impl IUnusedImportProtocol for RealChecker {
-    fn find_unused_imports(&self, path: &FilePath) -> Vec<LintMessage> {
+    fn find_unused_imports(&self, path: &FilePath, _content: &str) -> Vec<LintMessage> {
         let content = std::fs::read_to_string(path.value()).unwrap_or_default();
         if content.is_empty() { return vec![]; }
         vec![LintMessage::new("found")]

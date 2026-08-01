@@ -43,6 +43,9 @@ impl ICodeAnalysisAggregate for CountingLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(&self, _: &[shared::filesystem::FileEntry]) -> Vec<LintResult> {
+        vec![]
+    }
 }
 
 #[test]

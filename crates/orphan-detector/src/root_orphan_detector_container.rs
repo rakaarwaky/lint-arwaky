@@ -3,6 +3,7 @@ use crate::capabilities_orphan_graph_resolver::OrphanGraphResolver;
 use crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher;
 use shared::common::FilePath;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::orphan_detector::{
     IOrphanAggregate, IOrphanGraphResolverProtocol, IOrphanParserProtocol,
@@ -35,8 +36,9 @@ impl OrphanContainer {
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let parser_dispatcher: Arc<dyn IOrphanParserProtocol> =
             Arc::new(OrphanParserDispatcher::new());
+        let fs_agg: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
         let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
-            Arc::new(OrphanGraphResolver::new(parser_dispatcher.clone()));
+            Arc::new(OrphanGraphResolver::new(parser_dispatcher.clone(), fs_agg.clone()));
 
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             ArchOrphanDeps {
@@ -67,6 +69,7 @@ impl OrphanContainer {
                 surfaces_analyzer: Arc::new(
                     crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),
                 ),
+                filesystem: fs_agg,
             },
             config,
         ));

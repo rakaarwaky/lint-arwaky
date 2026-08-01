@@ -1,10 +1,16 @@
 use async_trait::async_trait;
+use rayon::iter::IntoParallelIterator;
+use rayon::iter::ParallelIterator;
 use shared::common::FilePath;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct WorkspaceDetector;
+pub struct WorkspaceDetector {
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -13,8 +19,8 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
-        // Batch directory scan for config files in the given path (single syscall instead of up to 10)
-        if let Some(lang) = Self::check_dir_for_language(&path_buf) {
+        // Single-pass directory scan for marker files
+        if let Some(lang) = self.check_dir_for_language(&path_buf) {
             return lang;
         }
 
@@ -27,10 +33,10 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             }
         }
 
+        // Walk up to 5 parent directories if no marker found
         let mut current = path_buf;
         let mut depth = 0;
         while !current.as_os_str().is_empty() && depth < 5 {
-            // Check for workspace directory markers (modules, packages, crates) in parent chain
             if let Some(parent) = current.parent() {
                 match parent.file_name().and_then(|n| n.to_str()) {
                     Some("modules") => return WorkspaceType::Python,
@@ -39,7 +45,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
                     _ => {}
                 }
             }
-            if let Some(lang) = Self::check_dir_for_language(&current) {
+            if let Some(lang) = self.check_dir_for_language(&current) {
                 return lang;
             }
             if let Some(parent) = current.parent() {
@@ -57,12 +63,15 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let root = std::path::PathBuf::from(&path.value);
         ["crates", "packages", "modules"]
             .iter()
-            .any(|dir| shared::common::utility_file_handler::path_exists(root.join(dir)))
+            .any(|dir| self.filesystem.path_exists(&root.join(dir)))
     }
 
     async fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
         let root_path = std::path::Path::new(&root.value).to_path_buf();
-        Self::scan_workspace_dirs(&root_path).await
+        let fs = self.filesystem.clone();
+        tokio::task::spawn_blocking(move || Self::scan_workspace_dirs_sync(&root_path, &*fs))
+            .await
+            .unwrap_or_default()
     }
 }
 
@@ -76,16 +85,21 @@ impl Default for WorkspaceDetector {
 
 impl WorkspaceDetector {
     pub fn new() -> Self {
-        Self
+        Self {
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 
-    fn check_dir_for_language(dir: &std::path::Path) -> Option<WorkspaceType> {
-        let entries = std::fs::read_dir(dir).ok()?;
+    fn check_dir_for_language(&self, dir: &std::path::Path) -> Option<WorkspaceType> {
+        let entries = self.filesystem.scan_directory(dir);
+        if entries.is_empty() {
+            return None;
+        }
         let mut has_rust = false;
         let mut has_python = false;
         let mut has_typescript = false;
-        for entry in entries.flatten() {
-            let name = match entry.file_name().to_str() {
+        for entry in &entries {
+            let name = match entry.file_name().and_then(|n| n.to_str()) {
                 Some(n) => n.to_lowercase(),
                 None => continue,
             };
@@ -98,7 +112,6 @@ impl WorkspaceDetector {
                 _ => {}
             }
         }
-        // Priority: Rust > Python > TypeScript
         if has_rust {
             Some(WorkspaceType::Rust)
         } else if has_python {
@@ -110,44 +123,19 @@ impl WorkspaceDetector {
         }
     }
 
-    async fn collect_subdirs(dir: &std::path::Path) -> Vec<FilePath> {
-        let mut results = Vec::new();
-        let mut entries = match tokio::fs::read_dir(dir).await {
-            Ok(e) => e,
-            Err(e) => {
-                eprintln!(
-                    "Warning: Failed to read directory '{}': {}",
-                    dir.display(),
-                    e
-                );
-                return results;
-            }
-        };
-        while let Some(entry) = match entries.next_entry().await {
-            Ok(Some(e)) => Some(e),
-            Ok(None) => None,
-            Err(e) => {
-                eprintln!(
-                    "Warning: Failed to read directory entry in '{}': {}",
-                    dir.display(),
-                    e
-                );
-                None
-            }
-        } {
-            if let Ok(ft) = entry.file_type().await
-                && ft.is_dir()
-            {
-                let sub = entry.path();
-                if let Ok(fp) = FilePath::new(sub.to_string_lossy().to_string()) {
-                    results.push(fp);
-                }
-            }
-        }
-        results
+    fn collect_subdirs_sync(dir: &std::path::Path, fs: &dyn IFilesystemAggregate) -> Vec<FilePath> {
+        let entries = fs.scan_directory(dir);
+        entries
+            .into_iter()
+            .filter(|p| p.is_dir())
+            .filter_map(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+            .collect()
     }
 
-    async fn scan_workspace_dirs(root: &std::path::Path) -> Vec<FilePath> {
+    fn scan_workspace_dirs_sync(
+        root: &std::path::Path,
+        fs: &dyn IFilesystemAggregate,
+    ) -> Vec<FilePath> {
         let workspace_dirs = ["crates", "packages", "modules"];
 
         let is_root_workspace_dir = match root.file_name() {
@@ -159,7 +147,7 @@ impl WorkspaceDetector {
         };
 
         if is_root_workspace_dir {
-            return Self::collect_subdirs(root).await;
+            return Self::collect_subdirs_sync(root, fs);
         }
 
         if let Some(parent) = root.parent()
@@ -167,7 +155,7 @@ impl WorkspaceDetector {
         {
             let parent_str = parent_name.to_string_lossy();
             if workspace_dirs.contains(&parent_str.as_ref())
-                && let Ok(meta) = tokio::fs::metadata(root).await
+                && let Ok(meta) = fs.metadata(root)
                 && meta.is_dir()
                 && let Ok(fp) = FilePath::new(root.to_string_lossy().to_string())
             {
@@ -175,15 +163,24 @@ impl WorkspaceDetector {
             }
         }
 
-        let mut results = Vec::new();
+        let mut member_dirs: Vec<std::path::PathBuf> = Vec::new();
         for dir in &workspace_dirs {
             let dir_path = root.join(dir);
-            if let Ok(meta) = tokio::fs::metadata(&dir_path).await
+            if let Ok(meta) = fs.metadata(&dir_path)
                 && meta.is_dir()
             {
-                results.extend(Self::collect_subdirs(&dir_path).await);
+                let entries = fs.scan_directory(&dir_path);
+                for entry in entries {
+                    if entry.is_dir() {
+                        member_dirs.push(entry);
+                    }
+                }
             }
         }
-        results
+
+        member_dirs
+            .into_par_iter()
+            .filter_map(|path| FilePath::new(path.to_string_lossy().to_string()).ok())
+            .collect()
     }
 }

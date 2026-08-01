@@ -3,6 +3,7 @@
 // Zero business logic, zero utility functions — pure rendering.
 // Uses existing VOs from shared: ErrorCode, FilePath, LintMessage, Severity.
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::collections::BTreeMap;
 
 use shared::cli_commands::{Format, LintResult};
@@ -80,7 +81,10 @@ pub fn group_by_member<'a>(
         let member = if let Some(m) = force_member {
             m.to_string()
         } else {
-            crate::utility_path_resolver::extract_member_from_path(&v.file.value, root)
+            shared::cli_commands::utility_path_resolver::extract_member_from_path(
+                &v.file.value,
+                root,
+            )
         };
         grouped.entry(member).or_default().push(v);
     }
@@ -360,10 +364,10 @@ fn render_junit(grouped: &BTreeMap<String, Vec<&ViolationItem>>) {
 /// e.g. ("/home/raka/.../cli_commands/src/foo.py", "/home/raka/.../cli_commands") → "cli_commands/src/foo.py"
 fn make_relative(file_path: &str, target: &str) -> String {
     // Canonicalize both paths to handle absolute vs relative mismatch
-    let canon_file = std::fs::canonicalize(file_path)
+    let canon_file = filesystem::FilesystemOrchestrator::new().canonicalize(std::path::Path::new(file_path))
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| file_path.to_string());
-    let canon_target = std::fs::canonicalize(target)
+    let canon_target = filesystem::FilesystemOrchestrator::new().canonicalize(std::path::Path::new(target))
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| target.to_string());
 

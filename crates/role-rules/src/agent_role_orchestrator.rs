@@ -1,32 +1,19 @@
 // PURPOSE: RoleOrchestrator — dispatches files to correct role checker based on filename prefix
 //
-// The role orchestrator is unique among the feature agents: it doesn't
-// just delegate to checkers — it first classifies each file by its
-// filename prefix (taxonomy_, contract_, capabilities_, etc.), then
-// dispatches to the corresponding layer-specific role checker.
-//
-// ALGORITHM:
-//   1. run_all_role_checks iterates files, extracts filename prefix (first underscore-segment).
-//   2. Matches prefix to layer (taxonomy, contract, utility, capabilities, agent,
-//      surfaces, root/lib/mod) and dispatches to the corresponding role checker.
-//   3. Each checker receives the SourceContentVO (file path + content + language) and
-//      returns violations via the violations Vec.
-//   4. Unknown prefixes are silently skipped (handled by other crates).
+// FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
+// No file I/O or AST parsing is performed internally.
 
-use async_trait::async_trait;
 use shared::cli_commands::LintResult;
-use shared::common::{FilePath, FilePathList};
-
-use shared::common::utility_language_detector::detect_language;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::{
     IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
-
-use shared::common::utility_file_handler::{read_file_sync, walk_source_files};
-use shared::common::{ContentString, SourceContentVO};
 use std::path::Path;
 use std::sync::Arc;
+
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definitions ──────────────────────────
 
@@ -37,6 +24,7 @@ pub struct RoleCheckerDeps {
     pub surface: Arc<dyn ISurfaceRoleChecker>,
     pub agent: Arc<dyn IAgentRoleChecker>,
     pub utility: Arc<dyn IUtilityRoleChecker>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct RoleOrchestrator {
@@ -46,14 +34,16 @@ pub struct RoleOrchestrator {
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
-
-#[async_trait]
+#[async_trait::async_trait]
 impl IRoleRunnerAggregate for RoleOrchestrator {
     async fn run_audit(&self, target: &FilePath) -> Vec<LintResult> {
+        let files = self.collect_file_entries(target);
+        self.run_audit_with_entries(&files)
+    }
+
+    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         let mut results = Vec::new();
-        let files = self.collect_files(target);
-        let file_strings: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        self.run_all_role_checks(&file_strings, &mut results);
+        self.run_all_role_checks(files, &mut results);
         results
     }
 
@@ -63,7 +53,6 @@ impl IRoleRunnerAggregate for RoleOrchestrator {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
 impl RoleOrchestrator {
     pub fn new(deps: RoleCheckerDeps, config: &shared::config_system::ArchitectureConfig) -> Self {
         let ignored_paths: Vec<String> = config
@@ -79,106 +68,111 @@ impl RoleOrchestrator {
         }
     }
 
-    pub fn run_all_role_checks(&self, files: &[String], violations: &mut Vec<LintResult>) {
+    /// Run all role checks on pre-parsed FileEntry slices.
+    pub fn run_all_role_checks(&self, files: &[FileEntry], violations: &mut Vec<LintResult>) {
         if !self.config.enabled.value {
             return;
         }
 
         for file in files {
-            let content = read_file_sync(file).unwrap_or_default();
-            let filename = Path::new(file)
+            if !file.parse_ok || file.content.is_empty() {
+                continue;
+            }
+
+            let path_str = file.path.to_string_lossy();
+            let filename = file
+                .path
                 .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
-
             let stem = Path::new(filename)
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or_default();
             let prefix = stem.split('_').next().unwrap_or_default();
 
-            let fp = match FilePath::new(file.to_string()) {
-                Ok(f) => f,
-                Err(_) => continue,
-            };
-            let content_vo = ContentString::new(content);
-            let language = detect_language(&fp).as_str().to_string();
-            let source_vo = SourceContentVO::new(fp, content_vo, &language);
+            // Skip barrel files
+            if filename == "mod.rs"
+                || filename == "lib.rs"
+                || filename == "main.rs"
+                || filename == "__init__.py"
+                || filename == "index.ts"
+                || filename == "index.js"
+            {
+                continue;
+            }
+
+            if self.is_ignored(&path_str) {
+                continue;
+            }
 
             match prefix {
                 "agent" => {
                     self.deps
                         .agent
-                        .check_agent_routing(&source_vo, "agent", violations);
+                        .check_agent_routing(file, "agent", violations);
                 }
                 "root" => {}
                 "surfaces" | "surface" => {
-                    self.deps
-                        .surface
-                        .check_fn_count_limit(&source_vo, violations);
+                    self.deps.surface.check_fn_count_limit(file, violations);
                     let is_smart = filename.contains("_command")
                         || filename.contains("_controller")
                         || filename.contains("_page")
-                        || filename.contains("_entry");
+                        || filename.contains("_entry")
+                        || filename.contains("_router");
                     let is_utility = filename.contains("_hook")
                         || filename.contains("_store")
                         || filename.contains("_action")
-                        || filename.contains("_screen")
-                        || filename.contains("_router");
+                        || filename.contains("_screen");
                     if is_smart {
-                        self.deps
-                            .surface
-                            .check_smart_surface(&source_vo, violations);
+                        self.deps.surface.check_smart_surface(file, violations);
                     } else if is_utility {
-                        self.deps
-                            .surface
-                            .check_utility_surface(&source_vo, violations);
+                        self.deps.surface.check_utility_surface(file, violations);
                     } else {
-                        self.deps
-                            .surface
-                            .check_passive_surface(&source_vo, violations);
+                        self.deps.surface.check_passive_surface(file, violations);
                     }
                 }
                 "contract" => {
                     if filename.contains("_protocol") {
-                        violations.extend(self.deps.contract.check_protocol(&source_vo));
+                        violations.extend(self.deps.contract.check_protocol(file));
                     } else if filename.contains("_aggregate") {
-                        violations.extend(self.deps.contract.check_aggregate(&source_vo));
+                        violations.extend(self.deps.contract.check_aggregate(file));
                     }
                 }
                 "capabilities" | "capability" => {
                     self.deps.capabilities.check_capability_routing(
-                        &source_vo,
+                        file,
                         "capabilities",
                         violations,
                     );
                 }
                 "utility" => {
-                    self.deps
-                        .utility
-                        .check_utility_convention(&source_vo, violations);
+                    self.deps.utility.check_utility_convention(file, violations);
                 }
                 "taxonomy" => {
-                    self.deps.taxonomy.check_entity(&source_vo, violations);
-                    self.deps.taxonomy.check_error(&source_vo, violations);
-                    self.deps.taxonomy.check_event(&source_vo, violations);
-                    self.deps.taxonomy.check_constant(&source_vo, violations);
+                    self.deps.taxonomy.check_entity(file, violations);
+                    self.deps.taxonomy.check_error(file, violations);
+                    self.deps.taxonomy.check_event(file, violations);
+                    self.deps.taxonomy.check_constant(file, violations);
                 }
                 _ => {}
             }
         }
     }
 
-    fn collect_files(&self, target: &FilePath) -> FilePathList {
+    fn collect_file_entries(&self, target: &FilePath) -> Vec<FileEntry> {
         let path = Path::new(target.value());
-        let mut files = Vec::new();
-        if path.is_dir() {
-            walk_source_files(path, &mut files, &self.ignored_paths);
-        } else if path.is_file()
-            && let Ok(p) = FilePath::new(path.to_string_lossy().to_string())
-        {
-            files.push(p);
+        let mut entries = self
+            .deps
+            .filesystem
+            .discover_files(path, &self.ignored_paths);
+        for entry in &mut entries {
+            entry.parse_ok = true;
         }
-        FilePathList::new(files)
+        entries
+    }
+
+    fn is_ignored(&self, path: &str) -> bool {
+        shared::filesystem::utility_filesystem_io::is_path_ignored(path, &self.ignored_paths)
     }
 }

@@ -25,6 +25,7 @@ tracing-subscriber.workspace = true
 ctrlc.workspace = true
 tokio.workspace = true
 shared.workspace = true
+filesystem.workspace = true
 dirs.workspace = true
 import_rules.workspace = true
 naming_rules.workspace = true

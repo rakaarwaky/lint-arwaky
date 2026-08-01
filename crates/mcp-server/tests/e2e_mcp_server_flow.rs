@@ -24,10 +24,18 @@ async fn e2e_scan_current_directory_returns_compliance_report() {
     let result = surface.execute_command(args).await;
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
-    assert_eq!(parsed["status"], "success");
+    // FRD FR-001: exit_code 0 (clean) or 1 (violations) are both valid
+    assert!(
+        parsed["status"] == "success" || parsed["status"] == "failure",
+        "status must be 'success' or 'failure'"
+    );
     assert_eq!(parsed["action"], "scan");
     assert!(parsed["total_violations"].is_number());
     assert!(parsed["results"].is_array());
+    // FRD FR-001: parse_warnings array present
+    assert!(parsed["parse_warnings"].is_array());
+    // FRD FR-001: parse_warnings array present
+    assert!(parsed["parse_warnings"].is_array());
 }
 
 // ─── E2E: CI gate lifecycle ──────────────────────────────────────────
@@ -107,7 +115,9 @@ async fn e2e_health_check_reports_adapter_status() {
     let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
 
     assert!(parsed["version"].is_string());
-    assert_eq!(parsed["adapters_total"], 5);
+    // FRD FR-004: 9 adapters total
+    // FRD FR-004: 9 adapters total
+    assert_eq!(parsed["adapters_total"], 9);
 
     let adapters = parsed["adapters"].as_array().unwrap();
     for adapter in adapters {

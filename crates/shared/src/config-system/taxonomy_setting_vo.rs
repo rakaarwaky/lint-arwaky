@@ -77,10 +77,16 @@ pub struct AdapterEntry {
     pub status: AdapterStatus,
     #[serde(default = "default_weight")]
     pub weight: f64,
+    #[serde(default = "default_timeout")]
+    pub timeout: f64,
 }
 
 fn default_weight() -> f64 {
     1.0
+}
+
+fn default_timeout() -> f64 {
+    60.0
 }
 
 impl AdapterEntry {
@@ -89,6 +95,21 @@ impl AdapterEntry {
             name,
             status,
             weight,
+            timeout: 60.0,
+        }
+    }
+
+    pub fn with_timeout(
+        name: AdapterName,
+        status: AdapterStatus,
+        weight: f64,
+        timeout: f64,
+    ) -> Self {
+        Self {
+            name,
+            status,
+            weight,
+            timeout,
         }
     }
 

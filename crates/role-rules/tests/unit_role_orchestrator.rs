@@ -8,6 +8,8 @@ use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChec
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 // ─── Helper: build a minimal orchestrator with real checkers ─
@@ -21,6 +23,9 @@ fn build_orchestrator() -> RoleOrchestrator {
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
         utility: Arc::new(UtilityRoleChecker::new()),
+        filesystem: Arc::new(
+            filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new(),
+        ),
     };
     RoleOrchestrator::new(deps, &config)
 }
@@ -50,13 +55,40 @@ fn disabled_config_skips_all_checks() {
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
         utility: Arc::new(UtilityRoleChecker::new()),
+        filesystem: Arc::new(
+            filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new(),
+        ),
     };
     let orch = RoleOrchestrator::new(deps, &config);
 
-    let files: Vec<String> = vec![
-        "taxonomy_foo_vo.rs".to_string(),
-        "contract_bar_protocol.rs".to_string(),
-        "capabilities_baz_checker.rs".to_string(),
+    let files: Vec<FileEntry> = vec![
+        FileEntry {
+            path: PathBuf::from("taxonomy_foo_vo.rs"),
+            extension: "rs".to_string(),
+            language: Language::Rust,
+            size: 0,
+            content: String::new(),
+            parse_ok: true,
+            parse_metadata: None,
+        },
+        FileEntry {
+            path: PathBuf::from("contract_bar_protocol.rs"),
+            extension: "rs".to_string(),
+            language: Language::Rust,
+            size: 0,
+            content: String::new(),
+            parse_ok: true,
+            parse_metadata: None,
+        },
+        FileEntry {
+            path: PathBuf::from("capabilities_baz_checker.rs"),
+            extension: "rs".to_string(),
+            language: Language::Rust,
+            size: 0,
+            content: String::new(),
+            parse_ok: true,
+            parse_metadata: None,
+        },
     ];
     let mut violations = Vec::new();
     orch.run_all_role_checks(&files, &mut violations);

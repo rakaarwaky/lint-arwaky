@@ -1,13 +1,11 @@
 // PURPOSE: Verify that all public structs implement their required contract traits.
 // Layer: Contract verification — runs in ms, every PR.
-
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
 
 use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggregate};
-
 use shared::project_setup::IToolExecutorProtocol;
 
 // ─── MaintenanceChecker implements IMaintenanceCheckerProtocol ───
@@ -58,7 +56,6 @@ fn orchestrator_is_send_sync() {
 fn container_exposes_aggregate_as_trait_object() {
     let container = MaintenanceContainer::new();
     let orchestrator = container.orchestrator();
-    // Verify the Arc<dyn MaintenanceCommandsAggregate> is usable
     let _ref: &dyn MaintenanceCommandsAggregate = orchestrator.as_ref();
 }
 

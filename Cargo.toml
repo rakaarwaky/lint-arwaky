@@ -19,6 +19,7 @@ git_hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", vers
 external_lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "1.11.0" }
 mcp_server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.11.0" }
 orphan_detector = { package = "orphan-detector-lint-arwaky", path = "crates/orphan-detector", version = "1.11.0" }
+filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "1.11.0" }
 project_setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.11.0" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.11.0" }
 role_rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "1.11.0" }
@@ -87,6 +88,7 @@ path = "crates/root_tui_main_entry.rs"
 
 [dependencies]
 shared.workspace = true
+filesystem.workspace = true
 naming_rules.workspace = true
 import_rules.workspace = true
 code_analysis.workspace = true

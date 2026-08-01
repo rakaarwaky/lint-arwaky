@@ -36,10 +36,7 @@ fn bench_formatter_instantiation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    let _text = TextFormatter::new(
-                        code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-                            .code_analysis_linter(),
-                    );
+                    let _text = TextFormatter::new();
                     let _json = JsonFormatter::new();
                     let _sarif = SarifFormatter::new();
                     let _junit = JunitFormatter::new();
@@ -58,10 +55,7 @@ fn bench_text_format(c: &mut Criterion) {
         let results = generate_results(result_count);
         let report = ScanReport::new(results.clone(), Vec::new());
         group.throughput(Throughput::Elements(result_count as u64));
-        let text = TextFormatter::new(
-            code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
-                .code_analysis_linter(),
-        );
+        let text = TextFormatter::new();
         group.bench_with_input(
             BenchmarkId::new("results", result_count),
             &report,

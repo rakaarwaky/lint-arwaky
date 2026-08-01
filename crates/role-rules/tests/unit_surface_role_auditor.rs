@@ -2,17 +2,32 @@
 // Layer: Capabilities (SurfaceRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::common::{ContentString, SourceContentVO};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::role_rules::ISurfaceRoleChecker;
+use std::path::PathBuf;
 
 fn checker() -> SurfaceRoleChecker {
     SurfaceRoleChecker::new()
 }
 
-fn make_source(file: &str, content: &str) -> SourceContentVO {
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap();
-    let cs = ContentString::new(content.to_string());
-    SourceContentVO::new(fp, cs, "rust")
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    let language = match ext.as_str() {
+        "rs" => Language::Rust,
+        "py" => Language::Python,
+        "ts" | "tsx" => Language::TypeScript,
+        "js" | "jsx" => Language::JavaScript,
+        _ => Language::Rust,
+    };
+    FileEntry {
+        path: PathBuf::from(path),
+        extension: ext,
+        language,
+        size: content.len() as u64,
+        content: content.to_string(),
+        parse_ok: true,
+        parse_metadata: None,
+    }
 }
 
 // ─── check_fn_count_limit: Happy Path ────────────────
@@ -27,7 +42,7 @@ impl MySurface {
     pub fn handle_scan(&self) {}
 }
 "#;
-    let source = make_source("surface_my_surface.rs", content);
+    let source = make_file("surface_my_surface.rs", content);
     let mut violations = Vec::new();
     checker().check_fn_count_limit(&source, &mut violations);
     assert!(violations.is_empty());
@@ -40,7 +55,7 @@ fn surface_with_15_functions_passes() {
     for i in 0..15 {
         content.push_str(&format!("    pub fn handle_{:02}(&self) {{}}\n", i));
     }
-    let source = make_source("surface_boundary.rs", &content);
+    let source = make_file("surface_boundary.rs", &content);
     let mut violations = Vec::new();
     checker().check_fn_count_limit(&source, &mut violations);
     assert!(violations.is_empty());
@@ -55,7 +70,7 @@ fn surface_over_15_functions_flagged() {
     for i in 0..16 {
         content.push_str(&format!("    pub fn handle_{:02}(&self) {{}}\n", i));
     }
-    let source = make_source("surface_too_many.rs", &content);
+    let source = make_file("surface_too_many.rs", &content);
     let mut violations = Vec::new();
     checker().check_fn_count_limit(&source, &mut violations);
     assert_eq!(violations.len(), 1);
@@ -68,7 +83,7 @@ fn surface_with_many_functions_message_mentions_count() {
     for i in 0..30 {
         content.push_str(&format!("    pub fn handle_{:02}(&self) {{}}\n", i));
     }
-    let source = make_source("surface_excessive.rs", &content);
+    let source = make_file("surface_excessive.rs", &content);
     let mut violations = Vec::new();
     checker().check_fn_count_limit(&source, &mut violations);
     // Message may vary — just verify it's not empty
@@ -79,7 +94,7 @@ fn surface_with_many_functions_message_mentions_count() {
 
 #[test]
 fn check_smart_surface_no_violation() {
-    let source = make_source("surface_my_command.rs", "pub struct MyCommand;");
+    let source = make_file("surface_my_command.rs", "pub struct MyCommand;");
     let mut violations = Vec::new();
     checker().check_smart_surface(&source, &mut violations);
     assert!(violations.is_empty());
@@ -87,7 +102,7 @@ fn check_smart_surface_no_violation() {
 
 #[test]
 fn check_utility_surface_no_violation() {
-    let source = make_source("surface_my_hook.rs", "pub struct MyHook;");
+    let source = make_file("surface_my_hook.rs", "pub struct MyHook;");
     let mut violations = Vec::new();
     checker().check_utility_surface(&source, &mut violations);
     assert!(violations.is_empty());
@@ -95,7 +110,7 @@ fn check_utility_surface_no_violation() {
 
 #[test]
 fn check_passive_surface_no_violation() {
-    let source = make_source("surface_my_screen.rs", "pub struct MyScreen;");
+    let source = make_file("surface_my_screen.rs", "pub struct MyScreen;");
     let mut violations = Vec::new();
     checker().check_passive_surface(&source, &mut violations);
     assert!(violations.is_empty());
