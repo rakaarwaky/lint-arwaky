@@ -10,8 +10,10 @@ use shared::role_rules::{
     IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
 };
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
+
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definitions ──────────────────────────
 
@@ -22,6 +24,7 @@ pub struct RoleCheckerDeps {
     pub surface: Arc<dyn ISurfaceRoleChecker>,
     pub agent: Arc<dyn IAgentRoleChecker>,
     pub utility: Arc<dyn IUtilityRoleChecker>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct RoleOrchestrator {
@@ -161,9 +164,14 @@ impl RoleOrchestrator {
 
     fn collect_file_entries(&self, target: &FilePath) -> Vec<FileEntry> {
         let path = Path::new(target.value());
-        let mut entries = Vec::new();
         if path.is_dir() {
-            self.walk_for_entries(path, &mut entries);
+            let walker = filesystem::capabilities_file_walker::FileWalker::new();
+            let extensions = shared::filesystem::taxonomy_filesystem_vo::Language::extensions();
+            let mut entries = walker.walk(&path.to_path_buf(), &self.ignored_paths, extensions);
+            for entry in &mut entries {
+                entry.parse_ok = true;
+            }
+            entries
         } else if path.is_file()
             && let Ok(content) = std::fs::read_to_string(path)
         {
@@ -171,7 +179,7 @@ impl RoleOrchestrator {
             let language =
                 shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
             if let Some(lang) = language {
-                entries.push(FileEntry {
+                vec![FileEntry {
                     path: path.to_path_buf(),
                     extension: ext.to_string(),
                     language: lang,
@@ -179,44 +187,12 @@ impl RoleOrchestrator {
                     content,
                     parse_ok: true,
                     parse_metadata: None,
-                });
+                }]
+            } else {
+                Vec::new()
             }
-        }
-        entries
-    }
-
-    fn walk_for_entries(&self, dir: &Path, entries: &mut Vec<FileEntry>) {
-        if let Ok(read_dir) = std::fs::read_dir(dir) {
-            for entry in read_dir.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if dir_name == "target" || dir_name == ".git" || dir_name == "node_modules" {
-                        continue;
-                    }
-                    if self.is_ignored(&path.to_string_lossy()) {
-                        continue;
-                    }
-                    self.walk_for_entries(&path, entries);
-                } else if path.is_file() {
-                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                    let language =
-                        shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
-                    if let Some(lang) = language
-                        && let Ok(content) = std::fs::read_to_string(&path)
-                    {
-                        entries.push(FileEntry {
-                            path: path.clone(),
-                            extension: ext.to_string(),
-                            language: lang,
-                            size: content.len() as u64,
-                            content,
-                            parse_ok: true,
-                            parse_metadata: None,
-                        });
-                    }
-                }
-            }
+        } else {
+            Vec::new()
         }
     }
 
