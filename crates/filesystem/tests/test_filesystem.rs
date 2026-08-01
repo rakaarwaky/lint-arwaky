@@ -6,8 +6,8 @@ use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_file_walker::FileWalker;
 use filesystem_lint_arwaky::capabilities_import_extractor::ImportExtractor;
-use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
 use shared::filesystem::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 
@@ -56,7 +56,10 @@ fn fr001_walk_recursive_returns_paths() {
     let walker = FileWalker::new();
     let extensions = shared::filesystem::taxonomy_filesystem_vo::Language::extensions();
     let entries = walker.walk(&root, &[], extensions);
-    let paths: Vec<String> = entries.into_iter().map(|e| e.path.to_string_lossy().to_string()).collect();
+    let paths: Vec<String> = entries
+        .into_iter()
+        .map(|e| e.path.to_string_lossy().to_string())
+        .collect();
     assert!(!paths.is_empty());
     assert!(paths.iter().all(|p| p.ends_with(".rs")));
 }

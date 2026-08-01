@@ -56,7 +56,10 @@ fn generate_import_graph(file_count: usize) -> ImportGraph {
 fn bench_build_graph_context(c: &mut Criterion) {
     let parser_dispatcher: Arc<dyn shared::orphan_detector::IOrphanParserProtocol> =
         Arc::new(OrphanParserDispatcher::new());
-    let resolver = OrphanGraphResolver::new(parser_dispatcher, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let resolver = OrphanGraphResolver::new(
+        parser_dispatcher,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let root = bench_root();
     let mut group = c.benchmark_group("build_graph_context");
     group.significance_level(0.05).confidence_level(0.95);
@@ -77,7 +80,10 @@ fn bench_build_graph_context(c: &mut Criterion) {
 fn bench_identify_entry_points(c: &mut Criterion) {
     let parser_dispatcher: Arc<dyn shared::orphan_detector::IOrphanParserProtocol> =
         Arc::new(OrphanParserDispatcher::new());
-    let resolver = OrphanGraphResolver::new(parser_dispatcher, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let resolver = OrphanGraphResolver::new(
+        parser_dispatcher,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let mut group = c.benchmark_group("identify_entry_points");
     group.significance_level(0.05).confidence_level(0.95);
 

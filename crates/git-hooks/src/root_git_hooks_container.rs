@@ -1,10 +1,10 @@
 // PURPOSE: GitContainer — wiring for git-hooks feature (root layer, wiring only)
 // Wiring: HookManagementOrchestratorAggregate → GitHooksOrchestrator (agent layer)
 // Wiring: IHookManagerProtocol → GitHookAdapter (capabilities layer)
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 
 use std::sync::Arc;
-
 pub struct GitContainer {
     aggregate: Arc<dyn GitHooksAggregate>,
 }
@@ -30,10 +30,13 @@ impl GitContainer {
     }
 
     pub fn new_default() -> Self {
+        let filesystem: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
         let hook_adapter: Arc<dyn IHookManagerProtocol> =
             Arc::new(crate::capabilities_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
+                filesystem,
             ));
         Self::new(hook_adapter)
     }

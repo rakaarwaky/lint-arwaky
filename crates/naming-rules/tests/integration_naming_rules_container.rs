@@ -8,11 +8,11 @@ use naming_rules_lint_arwaky::{
     capabilities_suffix_prefix_checker::SuffixPrefixChecker,
     root_naming_rules_container::NamingContainer,
 };
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;
 use shared::common::LayerMapVO;
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 
 // ─── Integration Tests: DI Container Wiring ────────────────────────
@@ -22,7 +22,11 @@ use shared::naming_rules::INamingRunnerAggregate;
 fn test_container_wires_naming_convention_checker() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 
     // Should be able to access naming convention checker via protocol
     let _checker = container.naming_convention_checker();
@@ -37,7 +41,11 @@ fn test_container_wires_naming_convention_checker() {
 fn test_container_wires_suffix_prefix_checker() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 
     // Should be able to access suffix/prefix checker via protocol
     let _checker = container.suffix_prefix_checker();
@@ -51,7 +59,11 @@ fn test_container_wires_suffix_prefix_checker() {
 fn test_container_creates_orchestrator() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 
     // Should create orchestrator without panicking
     let orchestrator = container.orchestrator();
@@ -65,7 +77,11 @@ fn test_container_creates_orchestrator() {
 async fn test_orchestrator_run_audit_empty_path() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orchestrator = container.orchestrator();
 
     // Run audit on non-existent path — should return error
@@ -81,7 +97,11 @@ async fn test_orchestrator_run_audit_empty_path() {
 async fn test_orchestrator_run_audit_existing_dir() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orchestrator = container.orchestrator();
 
     // Run audit on current directory — should return Ok (may have violations or not)
@@ -107,7 +127,11 @@ fn test_default_container_creation() {
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
 
     // Should create container without panicking
-    let _container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let _container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 }
 
 /// Test that naming convention checker and suffix prefix checker work together.
@@ -141,7 +165,11 @@ async fn test_convention_and_suffix_checkers_work_together() {
 fn test_container_checkers_are_cloned() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 
     let convention_checker = container.naming_convention_checker().clone();
     let suffix_checker = container.suffix_prefix_checker().clone();
@@ -156,7 +184,11 @@ fn test_container_checkers_are_cloned() {
 fn test_orchestrator_name_returns_correct_value() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orchestrator = container.orchestrator();
 
     assert_eq!(orchestrator.name(), "naming-rules");
@@ -167,7 +199,11 @@ fn test_orchestrator_name_returns_correct_value() {
 async fn test_orchestrator_handles_no_source_files() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orchestrator = container.orchestrator();
 
     // Create a temp directory with no .rs files
@@ -189,7 +225,11 @@ async fn test_orchestrator_handles_no_source_files() {
 fn test_container_exposes_protocols() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 
     // Should be able to access both protocol implementations
     let _convention = container.naming_convention_checker();
@@ -202,7 +242,11 @@ fn test_container_exposes_protocols() {
 async fn test_orchestrator_filters_source_files() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = NamingContainer::new(
+        config,
+        layer_map,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orchestrator = container.orchestrator();
 
     // Run audit on current directory — should only process .rs, .py, .js, .ts files

@@ -173,6 +173,8 @@ impl RoleOrchestrator {
     }
 
     fn is_ignored(&self, path: &str) -> bool {
-        self.deps.filesystem.should_ignore(path, &self.ignored_paths)
+        self.deps
+            .filesystem
+            .should_ignore(path, &self.ignored_paths)
     }
 }

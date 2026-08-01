@@ -514,7 +514,9 @@ pub fn is_source_ext(ext: &str) -> bool {
 }
 
 /// Filter FilePathList to only include source files.
-pub fn filter_source_files(files: &crate::common::taxonomy_paths_vo::FilePathList) -> crate::common::taxonomy_paths_vo::FilePathList {
+pub fn filter_source_files(
+    files: &crate::common::taxonomy_paths_vo::FilePathList,
+) -> crate::common::taxonomy_paths_vo::FilePathList {
     let filtered: Vec<crate::common::taxonomy_path_vo::FilePath> = files
         .values
         .iter()

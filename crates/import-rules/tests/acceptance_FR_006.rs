@@ -161,7 +161,10 @@ async fn fr005_integration_real_files_cycle_detected() {
         "use crate::taxonomy_vo::V;\npub struct Checker;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr005_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr005_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -200,7 +203,10 @@ async fn fr005_integration_real_files_no_cycle() {
         "use crate::contract_protocol::Protocol;\npub struct Checker;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr005_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr005_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

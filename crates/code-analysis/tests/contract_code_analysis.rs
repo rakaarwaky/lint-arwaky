@@ -53,7 +53,9 @@ fn code_analysis_orchestrator_implements_code_analysis_aggregate() {
 
 #[test]
 fn code_analysis_container_exposes_aggregate() {
-    let container = CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ));
     let aggregate: std::sync::Arc<dyn ICodeAnalysisAggregate> = container.code_analysis_linter();
     let rules = aggregate.active_rules();
     assert!(rules.is_empty() || !rules.is_empty());

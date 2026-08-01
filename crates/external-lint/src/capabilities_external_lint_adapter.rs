@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use shared::code_analysis::LinterOperationError;
 use shared::common::{
@@ -12,13 +13,18 @@ use shared::external_lint::{
     IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
     IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };
-use shared::filesystem::utility_filesystem_io as ext_io;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
-pub struct ExternalLintUtilityAdapter;
+pub struct ExternalLintUtilityAdapter {
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 impl IExternalLintPathProtocol for ExternalLintUtilityAdapter {
     fn canonicalize_path(&self, path_str: &str) -> FilePath {
-        let p = ext_io::canonicalize_path(path_str);
+        let p = self
+            .filesystem
+            .canonicalize(std::path::Path::new(path_str))
+            .unwrap_or_else(|_| PathBuf::from(path_str));
         FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default()
     }
 
@@ -44,11 +50,12 @@ impl IExternalLintLanguageProtocol for ExternalLintUtilityAdapter {
     }
 
     fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool {
-        ext_io::has_python_files(std::path::Path::new(&dir.value))
+        self.filesystem
+            .has_python_files(std::path::Path::new(&dir.value))
     }
 
     fn is_in_path(&self, executable: &str) -> bool {
-        ext_io::is_executable_in_path(executable)
+        self.filesystem.is_executable_in_path(executable)
     }
 }
 
@@ -61,7 +68,7 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
         working_dir: &FilePath,
     ) -> PatternList {
         let wd = std::path::Path::new(&working_dir.value);
-        if ext_io::has_local_bin(wd, executable) {
+        if self.filesystem.has_local_bin(wd, executable) {
             let local_bin = wd.join("node_modules").join(".bin").join(executable);
             let mut cmd = vec![local_bin.to_string_lossy().to_string()];
             cmd.extend(args.values);
@@ -79,7 +86,10 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
 
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
         let path_str = &path.value;
-        let abs_path = ext_io::canonicalize_path(path_str);
+        let abs_path = self
+            .filesystem
+            .canonicalize(std::path::Path::new(path_str))
+            .unwrap_or_else(|_| PathBuf::from(path_str));
         let mut current = if abs_path.is_file() {
             abs_path
                 .parent()
@@ -89,7 +99,7 @@ impl IExternalLintJsProtocol for ExternalLintUtilityAdapter {
             abs_path.clone()
         };
         for _ in 0..10 {
-            if ext_io::has_config_file(&current) {
+            if self.filesystem.has_config_file(&current) {
                 return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
             }
             match current.parent() {
@@ -133,7 +143,7 @@ impl IExternalLintCargoProtocol for ExternalLintUtilityAdapter {
         if path_str.is_empty() {
             return path.clone();
         }
-        if let Some(resolved) = ext_io::has_cargo_toml(path_str) {
+        if let Some(resolved) = self.filesystem.has_cargo_toml(path_str) {
             return FilePath::new(resolved).unwrap_or_else(|_| path.clone());
         }
         FilePath::new("nonexistent_directory_for_cargo_toml".to_string()).unwrap_or_default()
@@ -144,7 +154,7 @@ impl IExternalLintCargoProtocol for ExternalLintUtilityAdapter {
         if path_str.is_empty() {
             return path.clone();
         }
-        if let Some(resolved) = ext_io::has_cargo_lock(path_str) {
+        if let Some(resolved) = self.filesystem.has_cargo_lock(path_str) {
             return FilePath::new(resolved).unwrap_or_else(|_| path.clone());
         }
         FilePath::new("nonexistent_directory_for_cargo_lock".to_string()).unwrap_or_default()
@@ -208,6 +218,12 @@ impl Default for ExternalLintUtilityAdapter {
 
 impl ExternalLintUtilityAdapter {
     pub fn new() -> Self {
-        Self
+        Self {
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
+    }
+
+    pub fn with_filesystem(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { filesystem }
     }
 }

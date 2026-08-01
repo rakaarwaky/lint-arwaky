@@ -26,6 +26,7 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage,
 };
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -33,6 +34,7 @@ use std::sync::Arc;
 
 pub struct PrettierAdapter {
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -45,7 +47,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = &path.value;
-        if shared::filesystem::utility_filesystem_io::is_file(Path::new(path_str))
+        if self.filesystem.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
@@ -117,6 +119,9 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
 impl PrettierAdapter {
     pub fn new(lint_executor: Arc<dyn IExternalLintExecutorProtocol>) -> Self {
-        Self { lint_executor }
+        Self {
+            lint_executor,
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 }

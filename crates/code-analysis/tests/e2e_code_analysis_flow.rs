@@ -21,7 +21,10 @@ fn setup_temp_project(files: Vec<(&str, &str)>) -> tempfile::TempDir {
 }
 
 fn make_aggregate() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
-    CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new())).code_analysis_linter()
+    CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ))
+    .code_analysis_linter()
 }
 
 // ─── E2E: Clean project produces zero violations ─────────────────────
@@ -107,7 +110,9 @@ impl Foo {
 "#;
     let dir = setup_temp_project(vec![("capabilities_foo.rs", code)]);
 
-    let container = CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ));
     let aggregate = container.code_analysis_linter();
 
     let root = FilePath::new(dir.path().to_str().unwrap().to_string()).unwrap();

@@ -1,9 +1,9 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
 use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
 use shared::common::FilePath;
+use shared::common::LayerMapVO;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::common::LayerMapVO;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
 use std::sync::Arc;
@@ -19,7 +19,11 @@ pub struct NamingContainer {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl NamingContainer {
-    pub fn new(config: Arc<ArchitectureConfig>, layer_map: Arc<LayerMapVO>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(
+        config: Arc<ArchitectureConfig>,
+        layer_map: Arc<LayerMapVO>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         let naming_convention_checker: Arc<dyn INamingConventionChecker> =
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker> =

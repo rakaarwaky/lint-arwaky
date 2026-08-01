@@ -7,6 +7,7 @@ use shared::project_setup::utility_setup_io as setup_io;
 use shared::project_setup::{McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError};
 
 use shared::common::SuccessStatus;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::project_setup::ISetupInstallerProtocol;
 use std::sync::Arc;
 
@@ -29,6 +30,7 @@ use std::collections::HashMap;
 /// Business logic for generating setup and configuration artifacts.
 pub struct SetupManagementProcessor {
     installer: Arc<dyn ISetupInstallerProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -223,7 +225,8 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         filename: &str,
         content: &str,
     ) -> Result<DescriptionVO, SetupError> {
-        shared::filesystem::utility_filesystem_io::write_file(filename, content)
+        self.filesystem
+            .write_string(std::path::Path::new(filename), content)
             .map_err(|e| SetupError::io(e.to_string()))?;
         Ok(DescriptionVO::new(format!(
             "wrote {} ({} bytes)",
@@ -249,7 +252,10 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
 impl SetupManagementProcessor {
     pub fn new(installer: Arc<dyn ISetupInstallerProtocol>) -> Self {
-        Self { installer }
+        Self {
+            installer,
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 
     /// Walk the directory tree (depth-limited) looking for source file extensions.

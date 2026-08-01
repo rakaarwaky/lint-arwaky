@@ -49,7 +49,8 @@ pub struct CodeAnalysisDeps {
     pub line_checker: Arc<dyn ILineCheckerProtocol>,
     pub class_checker: Arc<dyn IMandatoryClassProtocol>,
     pub duplication_checker: Arc<dyn ICodeMetricAnalyzerProtocol>,
-    pub filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+    pub filesystem:
+        Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 pub struct CodeAnalysisOrchestrator {
@@ -241,9 +242,11 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match self.deps.filesystem.read_lintable_file(
-                    &cargo_path.to_string_lossy(),
-                ) {
+                match self
+                    .deps
+                    .filesystem
+                    .read_lintable_file(&cargo_path.to_string_lossy())
+                {
                     Ok(Some(cargo_content)) => {
                         self.deps
                             .bypass_checker

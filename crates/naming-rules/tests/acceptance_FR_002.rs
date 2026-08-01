@@ -69,7 +69,11 @@ fn build_strict_container() -> NamingContainer {
         ..Default::default()
     };
     let layer_map = LayerMapVO::new(layers);
-    NamingContainer::new(Arc::new(config), Arc::new(layer_map), Arc::new(filesystem::FilesystemOrchestrator::new()))
+    NamingContainer::new(
+        Arc::new(config),
+        Arc::new(layer_map),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    )
 }
 
 async fn scan_file(filename: &str) -> Vec<shared::cli_commands::taxonomy_result_vo::LintResult> {

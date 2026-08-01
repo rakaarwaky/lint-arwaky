@@ -39,10 +39,10 @@ impl INamingRunnerAggregate for NamingOrchestrator {
             ));
         }
 
-        let file_paths = self.deps.filesystem.discover_source_files(
-            target_path,
-            &self.ignored_patterns.values,
-        );
+        let file_paths = self
+            .deps
+            .filesystem
+            .discover_source_files(target_path, &self.ignored_patterns.values);
         let files = shared::common::FilePathList::new(file_paths);
 
         let results = self.run_checks(&files, target).await;

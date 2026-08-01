@@ -7,7 +7,10 @@ use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{FilePath, Severity};
 
 fn orchestrator() -> std::sync::Arc<dyn ICodeAnalysisAggregate> {
-    CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new())).code_analysis_linter()
+    CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ))
+    .code_analysis_linter()
 }
 
 // ─── calc_score: Perfect score with no violations ────────────────────

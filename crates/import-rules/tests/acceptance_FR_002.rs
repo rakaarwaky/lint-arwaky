@@ -43,7 +43,10 @@ async fn fr002_capability_without_contract_emits_aes202() {
         "use std::collections::HashMap;\npub struct NoContract;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr002_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr002_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -67,7 +70,10 @@ pub struct WithContract;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(fr002_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr002_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -92,7 +98,10 @@ async fn fr002_diagnostic_includes_expected_import() {
         "pub struct Missing;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr002_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr002_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -119,7 +128,10 @@ async fn fr002_python_capability_without_contract_emits_aes202() {
         "import os\n\nclass NoContract:\n    pass\n",
     );
 
-    let container = ImportContainer::new_with_config(fr002_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr002_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -142,7 +154,10 @@ async fn fr002_typescript_capability_without_contract_emits_aes202() {
         "import { readFileSync } from 'fs';\nexport class Handler {}\n",
     );
 
-    let container = ImportContainer::new_with_config(fr002_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr002_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -174,7 +189,10 @@ async fn fr002_excepted_file_skips_check() {
         },
     );
 
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

@@ -79,7 +79,6 @@ impl IASTParserProtocol for ASTParser {
     }
 }
 
-
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl Default for ASTParser {
@@ -87,7 +86,6 @@ impl Default for ASTParser {
         Self::new()
     }
 }
-
 
 /// Extract language-specific metadata from a parsed AST.
 fn extract_metadata(tree: &tree_sitter::Tree, content: &str, language: Language) -> ParseMetadata {
@@ -233,15 +231,16 @@ fn extract_use_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     // For now, we extract names from the text if grouped
     let text = text_of(node, content);
     if let Some(brace_start) = text.find('{')
-        && let Some(brace_end) = text.find('}') {
-            let inner = &text[brace_start + 1..brace_end];
-            for part in inner.split(',') {
-                let name = part.split_whitespace().next().unwrap_or("");
-                if !name.is_empty() {
-                    names.push(name.to_string());
-                }
+        && let Some(brace_end) = text.find('}')
+    {
+        let inner = &text[brace_start + 1..brace_end];
+        for part in inner.split(',') {
+            let name = part.split_whitespace().next().unwrap_or("");
+            if !name.is_empty() {
+                names.push(name.to_string());
             }
         }
+    }
     names
 }
 /// Extract `#[path = "..."]` attribute from a mod_item.

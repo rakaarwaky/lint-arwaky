@@ -95,11 +95,7 @@ impl FilesystemOrchestrator {
                 continue;
             }
             let extractor = crate::capabilities_import_extractor::ImportExtractor;
-            let imports = extractor.extract(
-                &file.path,
-                &file.content,
-                file.language,
-            );
+            let imports = extractor.extract(&file.path, &file.content, file.language);
             all_imports.extend(imports);
         }
         timing.extract_ms = t.elapsed().as_millis() as u64;
@@ -526,6 +522,32 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn symlink_metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
         std::fs::symlink_metadata(path)
+    }
+
+    // ── Path Discovery Helpers ────────────────────────────────
+
+    fn has_python_files(&self, dir: &Path) -> bool {
+        utility_filesystem_io::has_python_files(dir)
+    }
+
+    fn has_config_file(&self, dir: &Path) -> bool {
+        utility_filesystem_io::has_config_file(dir)
+    }
+
+    fn has_cargo_toml(&self, path_str: &str) -> Option<String> {
+        utility_filesystem_io::has_cargo_toml(path_str)
+    }
+
+    fn has_cargo_lock(&self, path_str: &str) -> Option<String> {
+        utility_filesystem_io::has_cargo_lock(path_str)
+    }
+
+    fn is_executable_in_path(&self, executable: &str) -> bool {
+        utility_filesystem_io::is_executable_in_path(executable)
+    }
+
+    fn has_local_bin(&self, working_dir: &Path, executable: &str) -> bool {
+        utility_filesystem_io::has_local_bin(working_dir, executable)
     }
 
     // ── Write Operations (setup/hooks) ───────────────────────

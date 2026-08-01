@@ -5,6 +5,7 @@ use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;
 
@@ -16,6 +17,7 @@ pub fn handle_scan_orphan(
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -97,9 +99,7 @@ pub fn handle_scan_orphan(
         // Use absolute paths for correct strip_prefix comparison.
         let cwd = std::env::current_dir().unwrap_or_default();
         let ws_abs = cwd.join(&ws.path.value);
-        let ws_top_root = shared::filesystem::utility_filesystem_io::find_workspace_root(
-            &ws_abs.to_string_lossy(),
-        );
+        let ws_top_root = filesystem.workspace_root(&ws_abs.to_string_lossy());
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
             ws_abs
                 .strip_prefix(top_root)

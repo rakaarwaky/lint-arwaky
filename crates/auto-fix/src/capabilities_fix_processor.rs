@@ -215,21 +215,27 @@ impl IFixProtocol for LintFixProcessor {
 }
 
 // ─── Default FileAdapter (delegates to filesystem crate) ──
-struct DefaultFileAdapter;
+struct DefaultFileAdapter {
+    filesystem:
+        std::sync::Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+}
 
 impl IFileAdapterProtocol for DefaultFileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
-        shared::filesystem::utility_filesystem_io::read_file(&path.value)
-            .ok()
+        self.filesystem
+            .read_file(std::path::Path::new(&path.value))
             .map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
-        shared::filesystem::utility_filesystem_io::write_file(&path.value, &content.value).is_ok()
+        self.filesystem
+            .write_string(std::path::Path::new(&path.value), &content.value)
+            .is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {
-        shared::filesystem::utility_filesystem_io::path_exists(&path.value)
+        self.filesystem
+            .path_exists(std::path::Path::new(&path.value))
     }
 }
 
@@ -239,7 +245,9 @@ impl LintFixProcessor {
         Self {
             dry_run: false,
             linter,
-            file_adapter: Arc::new(DefaultFileAdapter),
+            file_adapter: Arc::new(DefaultFileAdapter {
+                filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+            }),
         }
     }
 
@@ -247,7 +255,9 @@ impl LintFixProcessor {
         Self {
             dry_run,
             linter,
-            file_adapter: Arc::new(DefaultFileAdapter),
+            file_adapter: Arc::new(DefaultFileAdapter {
+                filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+            }),
         }
     }
 

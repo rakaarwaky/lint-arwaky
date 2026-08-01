@@ -25,7 +25,6 @@ impl IFileWalkerProtocol for FileWalker {
     }
 }
 
-
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl Default for FileWalker {
@@ -33,8 +32,6 @@ impl Default for FileWalker {
         Self::new()
     }
 }
-
-
 
 impl FileWalker {
     /// Walk workspace directory tree, discover source files, read contents.

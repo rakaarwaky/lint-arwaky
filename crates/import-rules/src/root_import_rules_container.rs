@@ -13,7 +13,10 @@ pub struct ImportContainer {
 }
 
 impl ImportContainer {
-    pub fn new_with_config(config: ArchitectureConfig, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new_with_config(
+        config: ArchitectureConfig,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         Self { config, filesystem }
     }
 

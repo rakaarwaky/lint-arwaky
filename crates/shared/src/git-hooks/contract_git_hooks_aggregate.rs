@@ -1,8 +1,10 @@
 // PURPOSE: GitHooksAggregate — unified aggregate trait for git hooks orchestration
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
+use crate::common::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::git_hooks::contract_diff_protocol::IDiffProtocol;
 use crate::git_hooks::contract_hook_protocol::IHookProtocol;
+use crate::git_hooks::taxonomy_hook_error::GitHookError;
 use async_trait::async_trait;
 
 #[async_trait]
@@ -18,26 +20,30 @@ pub trait GitHooksAggregate: Send + Sync {
         self.diff_protocol().run_git_diff_check(path).await
     }
 
-    /// Install pre-commit hook
+    /// Install pre-commit hook (async)
     async fn install_hook(
         &self,
         executable_path: &FilePath,
-    ) -> Result<
-        crate::common::taxonomy_job_vo::SuccessStatus,
-        crate::git_hooks::taxonomy_hook_error::GitHookError,
-    > {
+    ) -> Result<SuccessStatus, GitHookError> {
         self.hook_protocol()
             .install_pre_commit(executable_path)
             .await
     }
 
-    /// Uninstall pre-commit hook
-    async fn uninstall_hook(
-        &self,
-    ) -> Result<
-        crate::common::taxonomy_job_vo::SuccessStatus,
-        crate::git_hooks::taxonomy_hook_error::GitHookError,
-    > {
+    /// Uninstall pre-commit hook (async)
+    async fn uninstall_hook(&self) -> Result<SuccessStatus, GitHookError> {
         self.hook_protocol().uninstall_pre_commit().await
+    }
+
+    /// Install pre-commit hook (sync convenience)
+    fn install_hook_sync(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
+        let rt = tokio::runtime::Handle::current();
+        rt.block_on(self.install_hook(executable_path))
+    }
+
+    /// Uninstall pre-commit hook (sync convenience)
+    fn uninstall_hook_sync(&self) -> Result<SuccessStatus, GitHookError> {
+        let rt = tokio::runtime::Handle::current();
+        rt.block_on(self.uninstall_hook())
     }
 }

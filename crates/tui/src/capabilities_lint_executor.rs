@@ -6,7 +6,7 @@ use shared::cli_commands::LintResultList;
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
-use shared::git_hooks::IHookManagerProtocol;
+use shared::git_hooks::GitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::maintenance::{DependencyReport, MaintenanceCommandsAggregate};
 
@@ -25,23 +25,24 @@ use std::sync::Arc;
 // with user-facing output formatting.
 
 use shared::auto_fix::LintFixOrchestratorAggregate;
-use shared::file_watch::{IChangeAnalyzerProtocol, IWatchProviderProtocol};
+use shared::file_watch::IWatchAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct LintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-    watch_provider: Option<Arc<dyn IWatchProviderProtocol>>,
+    watch_aggregate: Option<Arc<dyn IWatchAggregate>>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
     setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
     maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
-    hook_port: Option<Arc<dyn IHookManagerProtocol>>,
+    hook_port: Option<Arc<dyn GitHooksAggregate>>,
     config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -49,7 +50,9 @@ pub struct LintExecutor {
 impl ILintExecutorProtocol for LintExecutor {
     fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         // Use filesystem service for walk + cache
-        let scan_root = shared::filesystem::utility_filesystem_io::find_workspace_root(path)
+        let scan_root = self
+            .filesystem
+            .workspace_root(path)
             .unwrap_or_else(|| std::path::PathBuf::from(path));
         let root_fp =
             shared::common::taxonomy_path_vo::FilePath::new(path.to_string()).unwrap_or_default();
@@ -140,10 +143,11 @@ impl ILintExecutorProtocol for LintExecutor {
         match &self.orphan_aggregate {
             Some(orphan_agg) => {
                 // Resolve workspace root like CLI does
-                let scan_root =
-                    shared::filesystem::utility_filesystem_io::find_workspace_root(path)
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_else(|| path.to_string());
+                let scan_root = self
+                    .filesystem
+                    .workspace_root(path)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| path.to_string());
                 let root_fp = shared::common::taxonomy_path_vo::FilePath::new(scan_root.clone())
                     .unwrap_or_default();
                 let dir_path =
@@ -154,20 +158,14 @@ impl ILintExecutorProtocol for LintExecutor {
                     .as_ref()
                     .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
-                let source_files =
-                    match shared::filesystem::utility_filesystem_io::scan_directory_with_ignored(
-                        &dir_path,
-                        ignored.values(),
-                    ) {
-                        Ok(list) => list.values,
-                        Err(e) => {
-                            return LintExecutionResult::failure(format!(
-                                "Orphan detection for {}\nFailed to scan directory: {}",
-                                path, e
-                            ));
-                        }
-                    };
-                let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+                let source_files = self.filesystem.scan_directory_with_ignored(
+                    std::path::Path::new(&dir_path.value),
+                    ignored.values(),
+                );
+                let file_strs: Vec<String> = source_files
+                    .iter()
+                    .map(|f| f.to_string_lossy().to_string())
+                    .collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(
                         format!(
@@ -298,7 +296,9 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn duplicates(&self, path: &str) -> LintExecutionResult {
-        let scan_root = shared::filesystem::utility_filesystem_io::find_workspace_root(path)
+        let scan_root = self
+            .filesystem
+            .workspace_root(path)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|| path.to_string());
 
@@ -311,15 +311,13 @@ impl ILintExecutorProtocol for LintExecutor {
             .as_ref()
             .map(|o| o.ignored_paths(&root_fp))
             .unwrap_or_default();
-        let source_files =
-            match shared::filesystem::utility_filesystem_io::scan_directory_with_ignored(
-                &dir_path,
-                ignored.values(),
-            ) {
-                Ok(list) => list.values,
-                Err(_) => Vec::new(),
-            };
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
+        let source_files = self
+            .filesystem
+            .scan_directory_with_ignored(std::path::Path::new(&dir_path.value), ignored.values());
+        let file_strs: Vec<String> = source_files
+            .iter()
+            .map(|f| f.to_string_lossy().to_string())
+            .collect();
 
         let entries =
             shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
@@ -531,7 +529,8 @@ impl ILintExecutorProtocol for LintExecutor {
                     .unwrap_or_else(|_| "lint-arwaky-cli".to_string());
                 let exe_path = shared::common::taxonomy_path_vo::FilePath::new(exe_path_str)
                     .unwrap_or_default();
-                match hook.install_pre_commit(&exe_path) {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                match rt.block_on(hook.install_hook(&exe_path)) {
                     Ok(status) => {
                         if status.value {
                             LintExecutionResult::success("Git pre-commit hook installed successfully.".to_string(), 0)
@@ -548,22 +547,25 @@ impl ILintExecutorProtocol for LintExecutor {
 
     fn uninstall_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
-            Some(hook) => match hook.uninstall_pre_commit() {
-                Ok(status) => {
-                    if status.value {
-                        LintExecutionResult::success(
-                            "Git pre-commit hook removed successfully.".to_string(),
-                            0,
-                        )
-                    } else {
-                        LintExecutionResult::success("No git pre-commit hook found (not a git repo or hook already removed).".to_string(), 0)
+            Some(hook) => {
+                let rt = tokio::runtime::Runtime::new().unwrap();
+                match rt.block_on(hook.uninstall_hook()) {
+                    Ok(status) => {
+                        if status.value {
+                            LintExecutionResult::success(
+                                "Git pre-commit hook removed successfully.".to_string(),
+                                0,
+                            )
+                        } else {
+                            LintExecutionResult::success("No git pre-commit hook found (not a git repo or hook already removed).".to_string(), 0)
+                        }
                     }
+                    Err(e) => LintExecutionResult::failure(format!(
+                        "Git pre-commit hook removal failed.\nError: {}",
+                        e
+                    )),
                 }
-                Err(e) => LintExecutionResult::failure(format!(
-                    "Git pre-commit hook removal failed.\nError: {}",
-                    e
-                )),
-            },
+            }
             None => LintExecutionResult::success(
                 "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
                     .to_string(),
@@ -621,8 +623,8 @@ impl ILintExecutorProtocol for LintExecutor {
         );
 
         // Spawn background thread for file watching
-        let provider = match &self.watch_provider {
-            Some(p) => p.clone(),
+        let provider = match &self.watch_aggregate {
+            Some(agg) => agg.provider(),
             None => {
                 // No watch provider available — just return initial result
                 let (tx, rx) = std::sync::mpsc::channel();
@@ -645,6 +647,7 @@ impl ILintExecutorProtocol for LintExecutor {
         // Clone for the thread
         let code_analysis_thread = self.code_analysis.clone();
         let provider_thread = provider.clone();
+        let watch_agg = self.watch_aggregate.clone();
 
         std::thread::spawn(move || {
             // Create a tokio runtime for async watch operations
@@ -665,9 +668,10 @@ impl ILintExecutorProtocol for LintExecutor {
                 let mut rx_events = provider_thread.subscribe();
 
                 while let Ok(event) = rx_events.recv().await {
-                    if <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(
-                        &event.path,
-                    ) {
+                    if watch_agg
+                        .as_ref()
+                        .map_or(false, |a| a.is_lintable(&event.path))
+                    {
                         let event_fp = FilePath::new(&event.path).unwrap_or_default();
                         let lint_results = code_analysis_thread.run_code_analysis_path(&event_fp);
                         let lint_count = lint_results.len();
@@ -697,11 +701,11 @@ impl ILintExecutorProtocol for LintExecutor {
 impl LintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-        watch_provider: Option<Arc<dyn IWatchProviderProtocol>>,
+        watch_aggregate: Option<Arc<dyn IWatchAggregate>>,
     ) -> Self {
         Self {
             code_analysis,
-            watch_provider,
+            watch_aggregate,
             fix_orchestrator: None,
             setup_aggregate: None,
             maintenance: None,
@@ -712,6 +716,7 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
         }
     }
 
@@ -730,7 +735,7 @@ impl LintExecutor {
         self
     }
 
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn IHookManagerProtocol>) -> Self {
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn GitHooksAggregate>) -> Self {
         self.hook_port = Some(hook_port);
         self
     }
@@ -777,8 +782,8 @@ impl LintExecutor {
         self
     }
 
-    pub fn with_watch_provider(mut self, watch_provider: Arc<dyn IWatchProviderProtocol>) -> Self {
-        self.watch_provider = Some(watch_provider);
+    pub fn with_watch_aggregate(mut self, watch_aggregate: Arc<dyn IWatchAggregate>) -> Self {
+        self.watch_aggregate = Some(watch_aggregate);
         self
     }
 
@@ -906,9 +911,10 @@ impl LintExecutor {
         let path_string = path.to_string();
 
         // Use filesystem service: walk + cache + parse + graph in one call
-        let scan_root =
-            shared::filesystem::utility_filesystem_io::find_workspace_root(&path_string)
-                .unwrap_or_else(|| std::path::PathBuf::from(&path_string));
+        let scan_root = self
+            .filesystem
+            .workspace_root(&path_string)
+            .unwrap_or_else(|| std::path::PathBuf::from(&path_string));
         let root_fp = shared::common::taxonomy_path_vo::FilePath::new(path_string.clone())
             .unwrap_or_default();
         let ignored = self

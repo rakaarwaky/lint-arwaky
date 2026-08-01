@@ -152,6 +152,26 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Get symlink metadata (does not follow symlinks).
     fn symlink_metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error>;
 
+    // ── Path Discovery Helpers ────────────────────────────────
+
+    /// Check if directory contains Python source files.
+    fn has_python_files(&self, dir: &Path) -> bool;
+
+    /// Check if directory contains a config file (.eslintrc, .prettierrc, tsconfig.json, etc).
+    fn has_config_file(&self, dir: &Path) -> bool;
+
+    /// Find Cargo.toml in the given path. Returns path string if found.
+    fn has_cargo_toml(&self, path_str: &str) -> Option<String>;
+
+    /// Find Cargo.lock in the given path. Returns path string if found.
+    fn has_cargo_lock(&self, path_str: &str) -> Option<String>;
+
+    /// Check if an executable exists in PATH environment variable.
+    fn is_executable_in_path(&self, executable: &str) -> bool;
+
+    /// Check if an executable exists in local node_modules/.bin directory.
+    fn has_local_bin(&self, working_dir: &Path, executable: &str) -> bool;
+
     // ── Write Operations (setup/hooks) ───────────────────────
 
     /// Read file content to string.

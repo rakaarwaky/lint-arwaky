@@ -38,7 +38,11 @@ impl CodeAnalysisContainer {
         }
     }
 
-    pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new_with_config(
+        config: ArchitectureConfig,
+        layer_map: LayerMapVO,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         let bypass = config
             .rules

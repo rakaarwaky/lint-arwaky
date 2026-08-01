@@ -211,7 +211,10 @@ fn bench_full_orchestrator(c: &mut Criterion) {
         }
 
         let config = ArchitectureConfig::default();
-        let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+        let container = ImportContainer::new_with_config(
+            config,
+            std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+        );
         let orch = container.orchestrator();
         let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
         group.throughput(Throughput::Elements(file_count as u64));
@@ -262,7 +265,15 @@ fn bench_cycle_analyzer(c: &mut Criterion) {
         group.throughput(Throughput::Elements(file_count as u64));
 
         group.bench_with_input(BenchmarkId::new("scan", file_count), &files, |b, fls| {
-            b.iter(|| std::hint::black_box(analyzer.scan(&config, &layer_map, fls, &root, &std::collections::HashMap::new())))
+            b.iter(|| {
+                std::hint::black_box(analyzer.scan(
+                    &config,
+                    &layer_map,
+                    fls,
+                    &root,
+                    &std::collections::HashMap::new(),
+                ))
+            })
         });
     }
     group.finish();

@@ -283,7 +283,6 @@ impl IDependencyGraphProtocol for DependencyGraph {
     }
 }
 
-
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl Default for DependencyGraph {

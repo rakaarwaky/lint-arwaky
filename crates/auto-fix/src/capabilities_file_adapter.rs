@@ -1,30 +1,40 @@
 use shared::common::{ContentString, FilePath};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // PURPOSE: FileAdapter — capabilities layer for file I/O operations
 use shared::auto_fix::IFileAdapterProtocol;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct FileAdapter;
+pub struct FileAdapter {
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IFileAdapterProtocol for FileAdapter {
     fn read_file(&self, path: &FilePath) -> Option<ContentString> {
-        if !shared::filesystem::utility_filesystem_io::path_exists(&path.value) {
+        if !self
+            .filesystem
+            .path_exists(std::path::Path::new(&path.value))
+        {
             return None;
         }
-        shared::filesystem::utility_filesystem_io::read_file(&path.value)
-            .ok()
+        self.filesystem
+            .read_file(std::path::Path::new(&path.value))
             .map(ContentString::new)
     }
 
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
-        shared::filesystem::utility_filesystem_io::write_file(&path.value, &content.value).is_ok()
+        self.filesystem
+            .write_string(std::path::Path::new(&path.value), &content.value)
+            .is_ok()
     }
 
     fn path_exists(&self, path: &FilePath) -> bool {
-        shared::filesystem::utility_filesystem_io::path_exists(&path.value)
+        self.filesystem
+            .path_exists(std::path::Path::new(&path.value))
     }
 }
 
@@ -32,12 +42,12 @@ impl IFileAdapterProtocol for FileAdapter {
 
 impl Default for FileAdapter {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 }
 
 impl FileAdapter {
-    pub fn new() -> Self {
-        Self
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { filesystem }
     }
 }

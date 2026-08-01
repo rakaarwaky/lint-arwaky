@@ -20,8 +20,9 @@ impl TuiContainer {
         let orchestrator = config_container.orchestrator();
 
         // Filesystem orchestrator — shared across all containers
-        let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
-            Arc::new(filesystem::FilesystemOrchestrator::new());
+        let filesystem: Arc<
+            dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+        > = Arc::new(filesystem::FilesystemOrchestrator::new());
 
         // All containers get config from orchestrator
         let code_analysis_container =
@@ -40,11 +41,8 @@ impl TuiContainer {
         let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
         let setup_aggregate = setup_container.aggregate();
 
-        let hook_adapter: Arc<
-            dyn shared::git_hooks::contract_manager_protocol::IHookManagerProtocol,
-        > = Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
-            shared::common::taxonomy_path_vo::FilePath::new(".".to_string()).unwrap_or_default(),
-        ));
+        let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
+        let hook_aggregate = git_container.aggregate();
 
         let maintenance_container = MaintenanceContainer::new();
 
@@ -78,22 +76,20 @@ impl TuiContainer {
             );
 
         let file_watch_container = FileWatchContainer::new();
+        let watch_agg = file_watch_container.aggregate(code_analysis_aggregate.clone());
         let lint_executor = Arc::new(
-            LintExecutor::new(
-                code_analysis_aggregate,
-                Some(file_watch_container.provider()),
-            )
-            .with_fix(fix_orchestrator)
-            .with_setup(setup_aggregate)
-            .with_hook_port(hook_adapter)
-            .with_config(config_container.orchestrator())
-            .with_maintenance(maintenance_container.orchestrator())
-            .with_orphan(orphan_container.analyzer())
-            .with_external_lint(external_lint_container.aggregate())
-            .with_import_orchestrator(import_container.orchestrator())
-            .with_naming_orchestrator(naming_container.orchestrator())
-            .with_role_orchestrator(role_container.orchestrator())
-            .with_multi_project_orchestrator(config_container.orchestrator()),
+            LintExecutor::new(code_analysis_aggregate, Some(watch_agg))
+                .with_fix(fix_orchestrator)
+                .with_setup(setup_aggregate)
+                .with_hook_port(hook_aggregate)
+                .with_config(config_container.orchestrator())
+                .with_maintenance(maintenance_container.orchestrator())
+                .with_orphan(orphan_container.analyzer())
+                .with_external_lint(external_lint_container.aggregate())
+                .with_import_orchestrator(import_container.orchestrator())
+                .with_naming_orchestrator(naming_container.orchestrator())
+                .with_role_orchestrator(role_container.orchestrator())
+                .with_multi_project_orchestrator(config_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(lint_executor));

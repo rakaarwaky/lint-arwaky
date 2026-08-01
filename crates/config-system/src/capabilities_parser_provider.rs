@@ -1,12 +1,16 @@
 // PURPOSE: ConfigParserProvider — IConfigParserProtocol implementation for YAML and TOML config parsing
 use shared::common::FilePath;
 use shared::config_system::{ConfigError, ConfigKey, IConfigParserProtocol, ProjectConfig};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::common::ErrorMessage;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct ConfigParserProvider {}
+pub struct ConfigParserProvider {
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -14,12 +18,12 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match shared::filesystem::utility_filesystem_io::read_file(p) {
-            Ok(c) => c,
-            Err(e) => {
+        let content = match self.filesystem.read_file(std::path::Path::new(p)) {
+            Some(c) => c,
+            None => {
                 return Err(ConfigError {
                     key: ConfigKey::new("yaml.parse"),
-                    message: ErrorMessage::new(format!("Failed to read config: {}", e)),
+                    message: ErrorMessage::new(format!("Failed to read config: file not found")),
                     config_file: err_path,
                     ..Default::default()
                 });
@@ -37,12 +41,12 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match shared::filesystem::utility_filesystem_io::read_file(p) {
-            Ok(c) => c,
-            Err(e) => {
+        let content = match self.filesystem.read_file(std::path::Path::new(p)) {
+            Some(c) => c,
+            None => {
                 return Err(ConfigError {
                     key: ConfigKey::new("tool.lint-arwaky"),
-                    message: ErrorMessage::new(format!("Failed to read TOML: {}", e)),
+                    message: ErrorMessage::new(format!("Failed to read TOML: file not found")),
                     config_file: err_path,
                     ..Default::default()
                 });
@@ -93,6 +97,12 @@ impl Default for ConfigParserProvider {
 
 impl ConfigParserProvider {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
+    }
+
+    pub fn with_filesystem(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { filesystem }
     }
 }

@@ -33,7 +33,8 @@ pub fn handle_scan_quality(
     let layer_map = LayerMapVO::new(config.layers.clone());
     let container =
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::new_with_config(
-            config, layer_map,
+            config,
+            layer_map,
             std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
         );
     let linter = container.code_analysis_linter();

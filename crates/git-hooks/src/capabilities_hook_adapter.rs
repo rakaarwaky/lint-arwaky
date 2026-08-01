@@ -1,16 +1,19 @@
 use shared::common::{FilePath, SuccessStatus};
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::IHookManagerProtocol;
 use shared::git_hooks::utility_git_io as git_io;
 
 // PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 
 use shared::common::LintMessage;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct GitHookAdapter {
     root_dir: FilePath,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -50,13 +53,13 @@ exit 0
 ",
             exe_str
         );
-        shared::filesystem::utility_filesystem_io::write_file(&hook_path, &hook_content).map_err(
-            |e| {
+        self.filesystem
+            .write_string(&hook_path, &hook_content)
+            .map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to write hook: {}", e),
                 ))
-            },
-        )?;
+            })?;
         #[cfg(unix)]
         {
             git_io::set_permissions(&hook_path, 0o755).map_err(|e| {
@@ -75,7 +78,7 @@ exit 0
             return Ok(SuccessStatus::new(false));
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
-        if shared::filesystem::utility_filesystem_io::path_exists(&hook_path) {
+        if self.filesystem.path_exists(&hook_path) {
             git_io::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to remove hook: {}", e),
@@ -89,8 +92,11 @@ exit 0
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl GitHookAdapter {
-    pub fn new(root_dir: FilePath) -> Self {
-        Self { root_dir }
+    pub fn new(root_dir: FilePath, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self {
+            root_dir,
+            filesystem,
+        }
     }
 
     fn git_dir(&self) -> std::path::PathBuf {
@@ -99,6 +105,6 @@ impl GitHookAdapter {
 
     fn is_git_repo(&self) -> bool {
         let git = self.git_dir();
-        shared::filesystem::utility_filesystem_io::is_dir(&git)
+        self.filesystem.is_dir(&git)
     }
 }

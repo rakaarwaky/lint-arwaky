@@ -63,7 +63,10 @@ async fn fr001_taxonomy_importing_capabilities_emits_aes201() {
         "use crate::capabilities_checker::Checker;\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -84,7 +87,10 @@ async fn fr001_contract_importing_agent_emits_aes201() {
         "use crate::agent_orchestrator::Orch;\npub trait Bad {}\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -101,7 +107,10 @@ async fn fr001_valid_unidirectional_import_passes() {
     let dir = tempfile::tempdir().unwrap();
     write_file(dir.path(), "taxonomy_clean_vo.rs", "pub struct Clean;\n");
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -119,7 +128,10 @@ async fn fr001_diagnostic_includes_file_path() {
         "use crate::capabilities_y::Y;\npub struct X;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -146,7 +158,10 @@ async fn fr001_python_taxonomy_importing_capabilities_emits_aes201() {
         "from capabilities_checker import Checker\n\nclass V:\n    pass\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -169,7 +184,10 @@ async fn fr001_typescript_taxonomy_importing_agent_emits_aes201() {
         "import { Orchestrator } from '../agent/orchestrator';\nexport interface V {}\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -192,7 +210,10 @@ async fn fr001_cfg_test_import_not_flagged() {
         "#[cfg(test)]\nuse crate::capabilities_test_helper::Helper;\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -218,7 +239,10 @@ async fn fr001_cfg_feature_import_not_flagged() {
         "#[cfg(feature = \"testing\")]\nuse crate::capabilities_test_helper::Helper;\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(fr001_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        fr001_config(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -254,7 +278,10 @@ async fn fr001_excepted_file_skips_check() {
         },
     );
 
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

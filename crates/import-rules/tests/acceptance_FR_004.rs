@@ -29,7 +29,10 @@ pub struct DummyCap;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        ArchitectureConfig::default(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -69,7 +72,10 @@ impl IUnusedImportProtocol for StubChecker {
 "#,
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        ArchitectureConfig::default(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -114,7 +120,10 @@ impl IUnusedImportProtocol for RealChecker {
 "#,
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        ArchitectureConfig::default(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -141,7 +150,10 @@ async fn fr004_python_dummy_function_emits_aes204() {
         "from shared.taxonomy_path_vo import FilePath\n\ndef _use_mandatory_imports():\n    _ = FilePath('x')\n\ndef real_logic():\n    print('working')\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        ArchitectureConfig::default(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -164,7 +176,10 @@ async fn fr004_typescript_dummy_function_emits_aes204() {
         "function _useMandatoryImports(): void {\n    const x = 'dummy';\n}\n\nexport function realLogic(): void {\n    console.log('working');\n}\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        ArchitectureConfig::default(),
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

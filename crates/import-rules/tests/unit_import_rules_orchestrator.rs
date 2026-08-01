@@ -35,7 +35,10 @@ async fn disabled_config_returns_empty_results() {
     let _file = write_temp_rs(dir.path(), "taxonomy_x_vo.rs", "pub struct X;\n");
 
     let config = test_config(false);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -52,7 +55,10 @@ async fn disabled_config_returns_empty_results() {
 #[tokio::test]
 async fn nonexistent_target_returns_error() {
     let config = test_config(true);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
 
     let target = FilePath::new("/nonexistent/path/that/does/not/exist").unwrap();
@@ -69,7 +75,10 @@ async fn single_clean_file_passes() {
     let file = write_temp_rs(dir.path(), "taxonomy_clean_vo.rs", "pub struct Clean;\n");
 
     let config = test_config(true);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
 
     let result = orch.run_audit(&file).await.unwrap();
@@ -88,7 +97,10 @@ async fn directory_with_multiple_files_audited() {
     write_temp_rs(dir.path(), "taxonomy_b_vo.rs", "pub struct B;\n");
 
     let config = test_config(true);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -113,7 +125,10 @@ async fn target_dir_is_skipped() {
     write_temp_rs(dir.path(), "taxonomy_real_vo.rs", "pub struct Real;\n");
 
     let config = test_config(true);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -131,7 +146,10 @@ async fn target_dir_is_skipped() {
 #[tokio::test]
 async fn orchestrator_reports_correct_name() {
     let config = test_config(true);
-    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ImportContainer::new_with_config(
+        config,
+        std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let orch = container.orchestrator();
     assert_eq!(orch.name(), "import-rules");
 }

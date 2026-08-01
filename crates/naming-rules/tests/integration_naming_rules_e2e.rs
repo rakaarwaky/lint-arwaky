@@ -25,7 +25,11 @@ fn build_container() -> NamingContainer {
         ..Default::default()
     };
     let layer_map = LayerMapVO::new(layers);
-    NamingContainer::new(Arc::new(config), Arc::new(layer_map), Arc::new(filesystem::FilesystemOrchestrator::new()))
+    NamingContainer::new(
+        Arc::new(config),
+        Arc::new(layer_map),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    )
 }
 
 /// Create a tempdir and write empty files with the given filenames.

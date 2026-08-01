@@ -142,6 +142,7 @@ fn main() -> ExitCode {
                     container.multi_project_orchestrator.clone(),
                     container.report_formatter.clone(),
                     filter.clone(),
+                    container.filesystem.clone(),
                 )
             }
         }

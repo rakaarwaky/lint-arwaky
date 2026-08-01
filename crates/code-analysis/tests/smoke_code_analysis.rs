@@ -11,7 +11,9 @@ fn crate_boots_and_scans_without_panic() {
     let start = Instant::now();
 
     // 1. Construct container
-    let container = CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ));
 
     // 2. Get aggregate
     let aggregate = container.code_analysis_linter();
@@ -43,7 +45,9 @@ fn crate_boots_and_scans_without_panic() {
 fn orchestrator_boots_and_runs_self_lint() {
     let start = Instant::now();
 
-    let container = CodeAnalysisContainer::new(std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = CodeAnalysisContainer::new(std::sync::Arc::new(
+        filesystem::FilesystemOrchestrator::new(),
+    ));
     let aggregate = container.code_analysis_linter();
     let path = FilePath::new(".".to_string()).unwrap();
     let results = aggregate.run_code_analysis_path(&path);

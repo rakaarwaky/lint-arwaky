@@ -9,7 +9,6 @@ pub mod taxonomy_watch_message_vo;
 
 pub mod contract_action_handler_protocol;
 pub mod contract_lint_executor_protocol;
-pub mod contract_report_formatter_protocol;
 pub mod contract_tui_aggregate;
 
 pub mod utility_tui_io;
@@ -20,7 +19,6 @@ pub mod utility_tui_io;
 // ── Contract traits ──
 pub use contract_action_handler_protocol::IActionHandlerProtocol;
 pub use contract_lint_executor_protocol::ILintExecutorProtocol;
-pub use contract_report_formatter_protocol::IReportFormatterProtocol;
 pub use contract_tui_aggregate::ITuiAggregate;
 
 // ── Taxonomy types ──

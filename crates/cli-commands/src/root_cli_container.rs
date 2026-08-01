@@ -4,12 +4,12 @@ use std::sync::Arc;
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::GitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::role_rules::IRoleRunnerAggregate;
 
@@ -26,6 +26,7 @@ pub struct CliContainer {
     pub git_aggregate: Arc<dyn GitHooksAggregate>,
     pub multi_project_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub report_formatter: Arc<dyn IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 impl CliContainer {
@@ -69,7 +70,7 @@ impl CliContainer {
             naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
                 &multi_project_orchestrator,
                 ".",
-                filesystem,
+                filesystem.clone(),
             );
         let naming_orchestrator = naming_container.orchestrator();
 
@@ -116,6 +117,7 @@ impl CliContainer {
             git_aggregate,
             multi_project_orchestrator,
             report_formatter: report_formatter_agg,
+            filesystem,
         }
     }
 

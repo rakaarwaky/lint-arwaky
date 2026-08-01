@@ -49,7 +49,11 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         if !self.config.enabled.value {
             return Ok(Vec::new());
         }
-        if !self.deps.filesystem.path_exists(std::path::Path::new(target.value())) {
+        if !self
+            .deps
+            .filesystem
+            .path_exists(std::path::Path::new(target.value()))
+        {
             return Err(ScanError::new(
                 FilePath::new(target.value().to_string()).unwrap_or_default(),
                 ErrorMessage::new(format!("Target path does not exist: {}", target.value())),
@@ -58,17 +62,21 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
         let files = self.collect_files(target);
 
-        let root_dir =
-            self.deps.filesystem.workspace_root(target.value())
-                .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
-                .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
+        let root_dir = self
+            .deps
+            .filesystem
+            .workspace_root(target.value())
+            .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+            .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
         // Pre-read all file contents into a map so capabilities don't do I/O.
         let content_map: HashMap<String, String> = files
             .values
             .iter()
             .filter_map(|f| {
-                self.deps.filesystem.read_file(std::path::Path::new(f.value()))
+                self.deps
+                    .filesystem
+                    .read_file(std::path::Path::new(f.value()))
                     .map(|c| (f.value().to_string(), c))
             })
             .collect();
@@ -284,7 +292,11 @@ impl ImportOrchestrator {
                 }
             }
             let entries = self.deps.filesystem.discover_files(path, &ignored);
-            files.extend(entries.iter().filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok()));
+            files.extend(
+                entries
+                    .iter()
+                    .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok()),
+            );
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {
                 Ok(fp) => files.push(fp),

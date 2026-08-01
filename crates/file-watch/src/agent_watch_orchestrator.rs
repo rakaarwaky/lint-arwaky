@@ -47,6 +47,14 @@ impl IWatchAggregate for WatchOrchestrator {
             rt.block_on(self.run_async(config, running))
         }
     }
+
+    fn provider(&self) -> Arc<dyn IWatchProviderProtocol> {
+        self.provider.clone()
+    }
+
+    fn is_lintable(&self, path: &str) -> bool {
+        <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(path)
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
