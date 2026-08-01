@@ -1,4 +1,5 @@
 // filesystem crate — centralized file I/O, AST parsing, and dependency graph
+// Implements FR-001 through FR-005 from the filesystem FRD.
 
 // ── Capabilities (protocol implementations) ──
 pub mod capabilities_ast_parser;

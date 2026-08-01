@@ -231,7 +231,7 @@ pub struct ParseWarning {
 impl ParseWarning {
     /// Create a PARSE_WARN diagnostic message per FR-002.
     pub fn message(&self) -> String {
-        format!("File skipped: parse failure \u2014 {}", self.error_detail)
+        format!("File skipped: parse failure — {}", self.error_detail)
     }
 }
 

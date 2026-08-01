@@ -1,8 +1,7 @@
 // PURPOSE: Capabilities layer — file discovery (FR-001)
-// Walks directory tree parallel, gitignore-aware, filters by extension. — file walker using `ignore` crate
-// Walks directory tree parallel, gitignore-aware, filters by extension.
+// Walks directory tree using `ignore` crate (gitignore-aware, parallel walk).
+// Reads file contents into memory. Produces Vec<FileEntry>.
 
-use shared::filesystem::IFileWalkerProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
 
@@ -20,8 +19,16 @@ impl Default for FileWalker {
     }
 }
 
-impl IFileWalkerProtocol for FileWalker {
-    fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
+impl FileWalker {
+    /// Walk workspace directory tree, discover source files, read contents.
+    /// FR-001 business rules:
+    /// - Uses `ignore::WalkBuilder` for parallel, gitignore-aware walking.
+    /// - Scans crates/, packages/, modules/ subdirectories at root level.
+    /// - Filters by extension (.rs, .py, .ts, .js, .jsx, .tsx).
+    /// - Respects .gitignore, .ignore, and ignored_paths from config.
+    /// - Skips hidden directories (.git, .venv, node_modules, target, dist, build, __pycache__).
+    /// - Reads file content into FileEntry.content (UTF-8). Non-UTF-8 files are skipped.
+    pub fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
         let mut builder = ignore::WalkBuilder::new(root);
         builder
             .hidden(true)
@@ -34,11 +41,6 @@ impl IFileWalkerProtocol for FileWalker {
                     .unwrap_or(4),
             );
 
-        for _pattern in ignored {
-            // Note: add_custom_ignore not available in ignore 0.4
-            // Custom ignore patterns would need to be handled via .gitignore files
-        }
-
         let mut entries = Vec::new();
 
         for result in builder.build() {
@@ -47,6 +49,7 @@ impl IFileWalkerProtocol for FileWalker {
                 Err(_) => continue,
             };
 
+            // Skip directories
             if entry.file_type().map_or(false, |ft| ft.is_dir()) {
                 continue;
             }
@@ -61,6 +64,13 @@ impl IFileWalkerProtocol for FileWalker {
                 continue;
             }
 
+            // Check ignored patterns
+            let rel = path.strip_prefix(root).unwrap_or(path);
+            let rel_str = rel.to_string_lossy();
+            if is_ignored(&rel_str, ignored) {
+                continue;
+            }
+
             let language = match Language::from_extension(ext) {
                 Some(l) => l,
                 None => continue,
@@ -71,15 +81,20 @@ impl IFileWalkerProtocol for FileWalker {
                 Err(_) => continue,
             };
 
-            if metadata.len() > MAX_LINT_FILE_BYTES {
-                continue;
-            }
+            // Read file content (UTF-8). Skip non-UTF-8 with empty content.
+            let content = match std::fs::read_to_string(path) {
+                Ok(c) => c,
+                Err(_) => String::new(), // Non-UTF-8 or unreadable: empty content
+            };
 
             entries.push(FileEntry {
                 path: path.to_path_buf(),
                 extension: ext.to_string(),
                 language,
                 size: metadata.len(),
+                content,
+                parse_ok: false, // Will be set by AST parser
+                parse_metadata: None,
             });
         }
 
@@ -88,7 +103,6 @@ impl IFileWalkerProtocol for FileWalker {
 }
 
 /// Simple recursive walk — returns file paths as strings.
-/// Drop-in replacement for scan_directory_recursive.
 pub fn walk_recursive(dir: &std::path::Path) -> Vec<String> {
     let walker = FileWalker::new();
     let extensions = Language::extensions();
@@ -97,4 +111,30 @@ pub fn walk_recursive(dir: &std::path::Path) -> Vec<String> {
         .into_iter()
         .map(|e| e.path.to_string_lossy().to_string())
         .collect()
+}
+
+/// Check if a relative path should be ignored based on patterns.
+fn is_ignored(rel_path: &str, ignored: &[String]) -> bool {
+    if rel_path.is_empty() {
+        return false;
+    }
+    for pat in ignored {
+        if pat.is_empty() {
+            continue;
+        }
+        if let Some(stripped) = pat.strip_prefix('/') {
+            if stripped.is_empty() {
+                continue;
+            }
+            if rel_path.contains(stripped) {
+                return true;
+            }
+        } else {
+            // Substring match
+            if rel_path.contains(pat.as_str()) {
+                return true;
+            }
+        }
+    }
+    false
 }

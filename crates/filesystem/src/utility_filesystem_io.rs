@@ -704,6 +704,7 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
 
 // ─── File Content Cache (DashMap) ──────────────────────────
 // Global file cache — read once, serve from memory.
+// FR-001/FR-002: Cache populated from FileEntry.content after walk.
 
 use dashmap::DashMap;
 use rayon::prelude::*;
@@ -712,14 +713,12 @@ use std::sync::LazyLock;
 
 static FILE_CACHE: LazyLock<DashMap<PathBuf, String>> = LazyLock::new(DashMap::new);
 
-/// Populate cache from file entries (parallel read).
+/// Populate cache from file entries (uses content already in FileEntry).
 pub fn cache_populate(files: &[FileEntry]) {
     files.par_iter().for_each(|entry| {
-        let content = match std::fs::read_to_string(&entry.path) {
-            Ok(c) => c,
-            Err(_) => return,
-        };
-        FILE_CACHE.insert(entry.path.clone(), content);
+        if !entry.content.is_empty() {
+            FILE_CACHE.insert(entry.path.clone(), entry.content.clone());
+        }
     });
 }
 
