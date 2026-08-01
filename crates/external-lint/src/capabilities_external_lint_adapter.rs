@@ -6,13 +6,13 @@ use shared::common::{
     PatternList, ScanError, Timeout,
 };
 
-use shared::filesystem::utility_filesystem_io as ext_io;
 use shared::common::ResponseData;
 use shared::common::{DirectoryPath, FilePath};
 use shared::external_lint::{
     IExternalLintCargoProtocol, IExternalLintCommandProtocol, IExternalLintJsProtocol,
     IExternalLintLanguageProtocol, IExternalLintPathProtocol,
 };
+use shared::filesystem::utility_filesystem_io as ext_io;
 
 pub struct ExternalLintUtilityAdapter;
 

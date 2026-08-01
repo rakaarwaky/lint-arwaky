@@ -40,7 +40,10 @@ fn frd_fix_01_dry_run_no_changes() {
         stdout
     );
     let content = fs::read_to_string(src.join("lib.rs")).unwrap();
-    assert_eq!(content, "pub fn bad_name() {}\n", "dry-run must not modify files");
+    assert_eq!(
+        content, "pub fn bad_name() {}\n",
+        "dry-run must not modify files"
+    );
     fs::remove_dir_all(&tmp).ok();
 }
 
@@ -57,7 +60,9 @@ fn frd_fix_02_clean_project_reports_zero() {
         .expect("failed to run fix");
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        stdout.contains("0") || stdout.contains("all violations resolved") || stdout.contains("no violations"),
+        stdout.contains("0")
+            || stdout.contains("all violations resolved")
+            || stdout.contains("no violations"),
         "clean project should report 0 violations, got: {}",
         stdout
     );

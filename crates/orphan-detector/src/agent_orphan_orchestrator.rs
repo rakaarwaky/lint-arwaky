@@ -95,9 +95,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if root_path.is_dir() {
             if let Ok(dir_path) =
                 shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
-                && let Ok(list) = shared::filesystem::utility_filesystem_io::scan_directory_with_ignored(
-                    &dir_path, ignored,
-                )
+                && let Ok(list) =
+                    shared::filesystem::utility_filesystem_io::scan_directory_with_ignored(
+                        &dir_path, ignored,
+                    )
             {
                 all_files = list.values.iter().map(|f| f.value.clone()).collect();
             }
@@ -115,8 +116,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         } // Normalize all file paths to be relative to workspace root so that
         // inbound_links (built by the graph resolver) and orphan analyzers
         // use a consistent path format.
-        let top_root = shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let all_files: Vec<String> = all_files
             .into_iter()
             .map(|f| {
@@ -186,8 +188,9 @@ impl ArchOrphanAnalyzer {
         root_dir: &FilePath,
     ) -> Vec<String> {
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let mut seen: HashSet<String> = files.values.iter().cloned().collect();
         let mut result: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
@@ -297,8 +300,9 @@ impl ArchOrphanAnalyzer {
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root = shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
-            .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root =
+            shared::filesystem::utility_filesystem_io::find_workspace_root(root_dir.value())
+                .unwrap_or_else(|| root_path.to_path_buf());
         let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set

@@ -22,13 +22,13 @@ use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared::filesystem::utility_filesystem_io::is_path_ignored;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::config_system::utility_config_parser::{
     parse_adapter_entries_from_yaml, parse_config_yaml_with_warnings,
 };
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
+use shared::filesystem::utility_filesystem_io::is_path_ignored;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

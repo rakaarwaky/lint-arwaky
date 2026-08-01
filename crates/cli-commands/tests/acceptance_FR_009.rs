@@ -104,5 +104,8 @@ fn frd_mcp_06_unknown_client_falls_back() {
         "unknown client should still succeed with default format"
     );
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("mcpServers"), "must produce valid mcpServers JSON");
+    assert!(
+        stdout.contains("mcpServers"),
+        "must produce valid mcpServers JSON"
+    );
 }

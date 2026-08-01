@@ -5,6 +5,7 @@ use cli_commands::surface_ci_command;
 use cli_commands::surface_config_command;
 use cli_commands::surface_external_action;
 use cli_commands::surface_fix_action;
+use cli_commands::surface_git_command;
 use cli_commands::surface_import_action;
 use cli_commands::surface_maintenance_command;
 use cli_commands::surface_naming_action;
@@ -13,7 +14,6 @@ use cli_commands::surface_plugin_command;
 use cli_commands::surface_quality_action;
 use cli_commands::surface_role_action;
 use cli_commands::surface_setup_command;
-use cli_commands::surface_git_command;
 use cli_commands::surface_watch_command;
 use shared::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared::common::taxonomy_common_error::ExitCode as DomainExitCode;
@@ -222,8 +222,7 @@ fn main() -> ExitCode {
             )
         }
         Commands::GitDiff { base, path, filter } => {
-            let git_container =
-                git_hooks::root_git_hooks_container::GitContainer::new_default();
+            let git_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
             let git_aggregate = git_container.aggregate();
             let rt = match tokio::runtime::Builder::new_current_thread()
                 .enable_all()

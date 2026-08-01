@@ -11,6 +11,8 @@ use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DoctorResultVO {
     pub python_version: DescriptionVO,
+    pub rust_version: DescriptionVO,
+    pub node_version: DescriptionVO,
     pub is_installed: ComplianceStatus,
     pub config_found: FilePathList,
     pub adapter_statuses: HashMap<AdapterName, String>,
@@ -21,6 +23,8 @@ pub struct DoctorResultVO {
 impl DoctorResultVO {
     pub fn new(
         python_version: DescriptionVO,
+        rust_version: DescriptionVO,
+        node_version: DescriptionVO,
         is_installed: ComplianceStatus,
         config_found: FilePathList,
         adapter_statuses: HashMap<AdapterName, String>,
@@ -29,6 +33,8 @@ impl DoctorResultVO {
     ) -> Self {
         Self {
             python_version,
+            rust_version,
+            node_version,
             is_installed,
             config_found,
             adapter_statuses,
@@ -42,8 +48,11 @@ impl std::fmt::Display for DoctorResultVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "DoctorResult(healthy={}, python={})",
-            self.healthy.value, self.python_version.value
+            "DoctorResult(healthy={}, python={}, rust={}, node={})",
+            self.healthy.value,
+            self.python_version.value,
+            self.rust_version.value,
+            self.node_version.value
         )
     }
 }

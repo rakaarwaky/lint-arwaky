@@ -11,6 +11,8 @@ pub struct MaintenanceStatsVO {
     pub test_files: Count,
     pub test_ratio: Score,
     pub python_files: Count,
+    pub rust_files: Count,
+    pub js_files: Count,
 }
 
 impl MaintenanceStatsVO {
@@ -20,6 +22,8 @@ impl MaintenanceStatsVO {
         test_files: Count,
         test_ratio: Score,
         python_files: Count,
+        rust_files: Count,
+        js_files: Count,
     ) -> Self {
         Self {
             project_path,
@@ -27,6 +31,8 @@ impl MaintenanceStatsVO {
             test_files,
             test_ratio,
             python_files,
+            rust_files,
+            js_files,
         }
     }
 }

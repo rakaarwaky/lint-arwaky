@@ -8,9 +8,9 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::filesystem::utility_filesystem_io::{path_exists, read_file, walk_source_files};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
+use shared::filesystem::utility_filesystem_io::{path_exists, read_file, walk_source_files};
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -57,9 +57,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
         let files = self.collect_files(target);
 
-        let root_dir = shared::filesystem::utility_filesystem_io::find_workspace_root(target.value())
-            .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
-            .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
+        let root_dir =
+            shared::filesystem::utility_filesystem_io::find_workspace_root(target.value())
+                .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+                .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
         // Pre-read all file contents into a map so capabilities don't do I/O.
         let content_map: HashMap<String, String> = files

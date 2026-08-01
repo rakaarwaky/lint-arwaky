@@ -82,7 +82,8 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local) {
+        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local)
+        {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
