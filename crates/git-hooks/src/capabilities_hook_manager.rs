@@ -43,33 +43,135 @@ impl IHookProtocol for HookManager {
     }
 
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
-        if !shared::filesystem::utility_filesystem_io::path_exists(&request.config_path) {
-            return DescriptionVO::new(format!("Config file not found: {}", request.config_path));
+        let config_path = std::path::Path::new(&request.config_path);
+        if !config_path.exists() {
+            return DescriptionVO::new(format!(
+                "Config file not found: {}. Run lint-arwaky-cli init first.",
+                request.config_path
+            ));
         }
-        let verb = if request.remove { "Removed" } else { "Added" };
-        DescriptionVO::new(format!("{} '{}' from ignore list", verb, request.rule))
+
+        // Read YAML config
+        let content = match std::fs::read_to_string(config_path) {
+            Ok(c) => c,
+            Err(e) => {
+                return DescriptionVO::new(format!(
+                    "Failed to read config: {}",
+                    e
+                ));
+            }
+        };
+
+        // Parse as generic YAML value
+        let mut doc: serde_yaml_ng::Value = match serde_yaml_ng::from_str(&content) {
+            Ok(v) => v,
+            Err(e) => {
+                return DescriptionVO::new(format!("Failed to parse config YAML: {}", e));
+            }
+        };
+
+        // Get or create the ignored_paths list
+        let ignored_paths = doc
+            .as_mapping_mut()
+            .and_then(|m| m.get_mut(&serde_yaml_ng::Value::String("ignored_paths".to_string())))
+            .and_then(|v| v.as_sequence_mut());
+
+        let ignored_paths = match ignored_paths {
+            Some(p) => p,
+            None => {
+                return DescriptionVO::new(
+                    "Config missing 'ignored_paths' key".to_string(),
+                );
+            }
+        };
+
+        let rule_value = serde_yaml_ng::Value::String(request.rule.clone());
+
+        if request.remove {
+            let before_len = ignored_paths.len();
+            ignored_paths.retain(|v| v != &rule_value);
+            if ignored_paths.len() == before_len {
+                return DescriptionVO::new(format!(
+                    "'{}' not found in ignore list",
+                    request.rule
+                ));
+            }
+        } else {
+            if ignored_paths.contains(&rule_value) {
+                return DescriptionVO::new(format!(
+                    "'{}' already present in ignore list",
+                    request.rule
+                ));
+            }
+            ignored_paths.push(rule_value);
+        }
+
+        // Write back
+        match serde_yaml_ng::to_string(&doc) {
+            Ok(yaml_str) => {
+                if let Err(e) = std::fs::write(config_path, yaml_str) {
+                    return DescriptionVO::new(format!("Failed to write config: {}", e));
+                }
+                let verb = if request.remove { "Removed" } else { "Added" };
+                DescriptionVO::new(format!("{} '{}' from ignore list", verb, request.rule))
+            }
+            Err(e) => DescriptionVO::new(format!("Failed to serialize config: {}", e)),
+        }
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let both_exist = shared::filesystem::utility_filesystem_io::path_exists(path1)
-            && shared::filesystem::utility_filesystem_io::path_exists(path2);
-        let both_files = shared::filesystem::utility_filesystem_io::is_file(path1)
-            && shared::filesystem::utility_filesystem_io::is_file(path2);
-        let status = match (both_exist, both_files) {
-            (false, _) => {
-                if !shared::filesystem::utility_filesystem_io::path_exists(path1) {
-                    GitDiffStatus::MissingFirst
-                } else {
-                    GitDiffStatus::MissingSecond
-                }
-            }
-            (true, false) => GitDiffStatus::NotAFile,
-            (true, true) => GitDiffStatus::Unchanged,
+        let p1_exists = shared::filesystem::utility_filesystem_io::path_exists(path1);
+        let p2_exists = shared::filesystem::utility_filesystem_io::path_exists(path2);
+
+        // FR-005: Status determined by file existence
+        if !p1_exists && !p2_exists {
+            return GitDiffDataVO {
+                version1: GitDiffSideVO::new(path1.to_string(), 1.0),
+                version2: GitDiffSideVO::new(path2.to_string(), 1.0),
+                difference: 0.0,
+                status: GitDiffStatus::MissingFirst,
+            };
+        }
+        if !p1_exists {
+            return GitDiffDataVO {
+                version1: GitDiffSideVO::new(path1.to_string(), 1.0),
+                version2: GitDiffSideVO::new(path2.to_string(), 1.0),
+                difference: 0.0,
+                status: GitDiffStatus::MissingFirst,
+            };
+        }
+        if !p2_exists {
+            return GitDiffDataVO {
+                version1: GitDiffSideVO::new(path1.to_string(), 1.0),
+                version2: GitDiffSideVO::new(path2.to_string(), 1.0),
+                difference: 0.0,
+                status: GitDiffStatus::MissingSecond,
+            };
+        }
+
+        let p1_is_file = shared::filesystem::utility_filesystem_io::is_file(path1);
+        let p2_is_file = shared::filesystem::utility_filesystem_io::is_file(path2);
+
+        if !p1_is_file || !p2_is_file {
+            return GitDiffDataVO {
+                version1: GitDiffSideVO::new(path1.to_string(), 1.0),
+                version2: GitDiffSideVO::new(path2.to_string(), 1.0),
+                difference: 0.0,
+                status: GitDiffStatus::NotAFile,
+            };
+        }
+
+        // Both exist and are files — compute byte-level difference score
+        let (score, status) = match self.compute_diff_score(path1, path2) {
+            Ok(s) if s == 0.0 => (s, GitDiffStatus::Unchanged),
+            Ok(s) => (s, GitDiffStatus::Modified),
+            Err(_) => (1.0, GitDiffStatus::Modified), // read failure → assume changed
         };
+
         GitDiffDataVO {
             version1: GitDiffSideVO::new(path1.to_string(), 1.0),
             version2: GitDiffSideVO::new(path2.to_string(), 1.0),
-            difference: 0.0,
+            difference: score,
             status,
         }
     }
@@ -80,5 +182,26 @@ impl IHookProtocol for HookManager {
 impl HookManager {
     pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
         Self { hook_adapter }
+    }
+
+    /// Compute byte-level difference score between two files.
+    /// Score = 1.0 − (matching bytes / max file size).
+    /// Same file path → 0.0 (identical).
+    fn compute_diff_score(&self, path1: &str, path2: &str) -> Result<f64, std::io::Error> {
+        if path1 == path2 {
+            return Ok(0.0);
+        }
+        let bytes1 = std::fs::read(path1)?;
+        let bytes2 = std::fs::read(path2)?;
+        let max_size = bytes1.len().max(bytes2.len());
+        if max_size == 0 {
+            return Ok(0.0); // both empty
+        }
+        let matching = bytes1
+            .iter()
+            .zip(bytes2.iter())
+            .filter(|(a, b)| a == b)
+            .count();
+        Ok(1.0 - (matching as f64 / max_size as f64))
     }
 }
