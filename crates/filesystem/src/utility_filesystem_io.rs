@@ -742,3 +742,72 @@ pub fn cache_memory_bytes() -> usize {
 pub fn cache_clear() {
     FILE_CACHE.clear()
 }
+
+/// Detect which programming languages are present in a directory by walking
+/// the filesystem and checking file extensions (lightweight — no file reading
+/// or parsing). Returns `(has_rust, has_python, has_js)`.
+///
+/// - Rust: `.rs`
+/// - Python: `.py`
+/// - JS/TS: `.js`, `.jsx`, `.ts`, `.tsx`
+///
+/// Early-terminates once all three booleans are true. Follows symlinks within
+/// the workspace root (directory), skips symlinks pointing outside.
+/// Skips common non-source directories: `node_modules`, `target`, `.git`.
+pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
+    let mut has_rs = false;
+    let mut has_py = false;
+    let mut has_js = false;
+
+    fn walk_detect(
+        dir: &std::path::Path,
+        has_rs: &mut bool,
+        has_py: &mut bool,
+        has_js: &mut bool,
+    ) {
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => continue,
+                };
+                if matches!(
+                    name,
+                    "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
+                ) {
+                    continue;
+                }
+                walk_detect(&path, has_rs, has_py, has_js);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                match ext {
+                    "rs" => *has_rs = true,
+                    "py" => *has_py = true,
+                    "js" | "ts" | "jsx" | "tsx" => *has_js = true,
+                    _ => {}
+                }
+            }
+            if *has_rs && *has_py && *has_js {
+                return;
+            }
+        }
+    }
+
+    if root.is_file() {
+        if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
+            match ext {
+                "rs" => has_rs = true,
+                "py" => has_py = true,
+                "js" | "ts" | "jsx" | "tsx" => has_js = true,
+                _ => {}
+            }
+        }
+    } else {
+        walk_detect(root, &mut has_rs, &mut has_py, &mut has_js);
+    }
+    (has_rs, has_py, has_js)
+}

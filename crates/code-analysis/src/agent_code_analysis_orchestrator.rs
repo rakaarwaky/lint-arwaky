@@ -92,6 +92,66 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             .map(|r| r.code_analysis.clone())
             .collect()
     }
+
+    /// Run analysis on pre-parsed file entries from the filesystem crate.
+    fn run_analysis_with_entries(&self, files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry]) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+        let mut violations: Vec<LintResult> = Vec::new();
+
+        // Parallel per-file processing using FileEntry content directly
+        let file_violations: Vec<Vec<LintResult>> = files
+            .par_iter()
+            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .map(|entry| {
+                let mut v = Vec::new();
+                let file = entry.path.to_string_lossy();
+                let filename = std::path::Path::new(file.as_ref())
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                let c = &entry.content;
+
+                // Layer-independent checks
+                self.deps.bypass_checker.check_bypass_comments(&file, c, &mut v);
+                self.deps.dead_inheritance_checker.check_dead_inheritance(&file, c, &mut v);
+
+                if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
+                    return v;
+                }
+
+                // Layer detection
+                let fname = extract_filename(&file);
+                let layer = match detect_layer_from_prefix(fname) {
+                    Some(l) => l,
+                    None => return v,
+                };
+                let keys = collect_layer_keys(&self.layer_map);
+                let layer = LayerNameVO::new(resolve_specialized_layer(&layer, &file, &keys));
+                let def = match get_layer_def(&layer.value, &self.config.layers) {
+                    Some(d) => d,
+                    None => return v,
+                };
+                if def.exceptions.values.contains(&fname.to_string()) {
+                    return v;
+                }
+
+                // Layer-dependent checks
+                self.deps.line_checker.check_line_counts(&file, Some(def), c, &mut v);
+                self.deps.class_checker.check_mandatory_class_definition(&file, Some(def), c, &mut v);
+
+                v
+            })
+            .collect();
+
+        for file_v in file_violations {
+            violations.extend(file_v);
+        }
+
+        violations
+    }
+
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

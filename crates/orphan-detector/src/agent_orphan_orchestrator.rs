@@ -155,6 +155,24 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // so file_vo is the same as files — no need to expand again.
         self._check_orphans_inner(files, root_dir, context, files)
     }
+    fn check_orphans_with_entries(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        context: &GraphAnalysisContext,
+    ) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+        let file_paths: Vec<String> = files
+            .iter()
+            .filter(|f| f.parse_ok)
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
+        let file_vo = OrphanFileListVO::new(file_paths);
+        let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
+        self._check_orphans_inner(&file_vo, &root_dir, context, &file_vo)
+    }
+
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

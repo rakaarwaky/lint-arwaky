@@ -247,3 +247,63 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
         (config, warnings)
     }
 }
+
+/// Parse adapter entries from YAML, returning `Vec<AdapterEntry>` with name,
+/// status, weight, and timeout fields. Skips disabled adapters.
+///
+/// Supports the Appendix A YAML schema:
+/// ```yaml
+/// adapters:
+///   - name: "clippy"
+///     enabled: true
+///     weight: 1.0
+///     timeout: 120
+/// ```
+pub fn parse_adapter_entries_from_yaml(yaml_str: &str) -> Vec<crate::config_system::taxonomy_setting_vo::AdapterEntry> {
+    use crate::common::taxonomy_adapter_name_vo::AdapterName;
+    use crate::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus};
+    let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    let Some(adapters) = raw.get("adapters").and_then(|a| a.as_sequence()) else {
+        return Vec::new();
+    };
+    adapters
+        .iter()
+        .filter_map(|entry| {
+            let name = entry.get("name")?.as_str()?;
+            if name == "architecture" {
+                return None;
+            }
+            // Support both "status" (existing) and "enabled" (FRD Appendix A) fields
+            let enabled = entry
+                .get("enabled")
+                .and_then(|v| v.as_bool())
+                .or_else(|| {
+                    entry
+                        .get("status")
+                        .and_then(|s| s.as_str())
+                        .map(|s| s != "disabled")
+                })
+                .unwrap_or(true);
+            if !enabled {
+                return None;
+            }
+            let weight = entry
+                .get("weight")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(1.0);
+            let timeout = entry
+                .get("timeout")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(60.0);
+            Some(AdapterEntry::with_timeout(
+                AdapterName::raw(name.to_string()),
+                AdapterStatus::Enabled,
+                weight,
+                timeout,
+            ))
+        })
+        .collect()
+}
