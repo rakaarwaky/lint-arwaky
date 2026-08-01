@@ -1,8 +1,12 @@
-# FRD — orphan-detector (v1.12.0)
+# FRD — orphan-detector (v1.12.1)
+
+---
 
 ## System Overview
 
-The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds an import reachability graph starting from valid entry points (containers, binary entries, main files), then flags any source file that has been orphaned.
+The orphan-detector crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It receives a pre-built import reachability graph, definition maps, and implementation maps from the external filesystem crate, then performs layer-specific orphan analysis starting from valid entry points (containers, binary entries, main files).
+
+All file system operations are handled by the external `filesystem` crate. The orphan-detector crate receives a complete GraphAnalysisContext from the filesystem crate and performs analysis only. It does not perform file I/O, AST parsing, or graph construction directly.
 
 ### Architecture & Data Flow
 
@@ -10,33 +14,40 @@ The orphan-detector crate identifies dead, unused, or unreachable code component
 flowchart TD
     A["Surface"] -->|input| B["orphan_aggregate"]
     B --> C["orphan_orchestrator"]
-    C --> D["filesystem_aggregate"]
-    D --> E1["file_walker"]
-    D --> F1["ast_parser"]
-    D --> F2["import_extractor"]
-    D --> F3["dependency_graph"]
-    F1 --> F2
-    E1 --> G1["Vec FileEntry"]
-    F2 --> G2["Vec ImportEntry"]
-    F3 --> G3["DiGraph"]
-    G1 --> H1["taxonomy_analyzer"]
-    G1 --> H2["contract_analyzer"]
-    G1 --> H3["capabilities_analyzer"]
-    G1 --> H4["utility_analyzer"]
-    G1 --> H5["agent_analyzer"]
-    G1 --> H6["surface_analyzer"]
-    G2 --> H1
-    G2 --> H2
-    G2 --> H3
-    G2 --> H4
-    G2 --> H5
-    G2 --> H6
-    G3 --> H1
-    G3 --> H2
-    G3 --> H3
-    G3 --> H4
-    G3 --> H5
-    G3 --> H6
+
+    C -->|"request graph"| D["filesystem_aggregate\n(external crate)"]
+
+    subgraph FS ["filesystem crate (external)"]
+        D --> E1["file_walker"]
+        D --> F1["ast_parser"]
+        D --> F2["import_extractor"]
+        D --> F3["dependency_graph"]
+        D --> F4["definition_mapper"]
+        D --> F5["impl_mapper"]
+        F1 --> F2
+        E1 --> G1["Vec‹FileEntry›"]
+        F2 --> G2["Vec‹ImportEntry›"]
+        F3 --> G3["DiG M tionMap"]
+        F5 --> G5["ImplMap"]
+        G3 --> G6["ReverseLinkIndex"]
+    end
+
+    G1 -->|"return"| D
+    G2 -->|"return"| D
+    G3 -->|"return"| D
+    G4 -->|"return"| D
+    G5 -->|"return"| D
+    G6 -->|"return"| D
+
+    D -->|"GraphAnalysisContext"| C
+
+    C --> H1["taxonomy_analyzer"]
+    C --> H2["contract_analyzer"]
+    C --> H3["capabilities_analyzer"]
+    C --> H4["utility_analyzer"]
+    C --> H5["agent_analyzer"]
+    C --> H6["surface_analyzer"]
+
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -49,165 +60,226 @@ flowchart TD
     B -->|output| A
 
     style A fill:#e1f5fe,stroke:#0288d1
-    style D fill:#e8f5e9,stroke:#388e3c
-    style E1 fill:#e8f5e9,stroke:#388e3c
+    style FS fill:#fff3e0,stroke:#e65100
+    style D fill:#fff3e0,stroke:#e65100
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
 
-### FR-001: AST-Based Import Graph Construction
+---
 
-- **Description**: Build a bidirectional import graph from all workspace source files using AST parsing for Rust and structured parsing for Python/TypeScript, resolving cross-crate and cross-language imports.
-- **Input**: List of source file paths (`Vec<String>`) and workspace root directory.
-- **Output**: A graph analysis context containing the forward import graph, reverse link index, trait/class definition map, and implementation relationship map.
+## Functional Requirements
+
+### FR-001: Graph Context Reception and Validation
+
+- **Description**: Receive the pre-built `GraphAnalysisContext` from the external filesystem crate and validate its completeness before dispatching to analyzers.
+- **Input**: `GraphAnalysisContext` from filesystem crate containing:
+
+  - `Vec<FileEntry>` — all workspace source files (path + content + language + parse metadata + `parse_ok` flag).
+  - `Vec<ImportEntry>` — all extracted import edges.
+  - `DiGraph` — forward import graph (file → file edges).
+  - `ReverseLinkIndex` — reverse import map (file → list of importers).
+  - `DefinitionMap` — trait/class/struct/interface names mapped to their defining file.
+  - `ImplMap` — trait/interface names mapped to their implementor files.
+- **Output**: Validated `GraphAnalysisContext` ready for analysis, plus list of `PARSE_WARN` diagnostics for files with `parse_ok = false`.
 - **Business Rules**:
-  - Scan all `crates/`, `packages/`, `modules/` subdirectories recursively for source files.
-  - **Rust (AST via `syn`)**:
-    - Extract `ItemUse` nodes → import edges (handles `crate::`, `super::`, `self::`, grouped imports `use foo::{A, B}`, glob imports `use foo::*`, and `pub use` re-exports).
-    - Extract `ItemMod` nodes → module declaration edges (handles `#[path = "..."]` attributes and plain `mod foo;` declarations).
-    - Extract `ItemImpl` nodes → trait implementation relationships.
-    - Extract `ItemStruct` / `ItemTrait` nodes → definition map entries.
-  - **Python (structured parsing)**:
-    - Parse `from X import Y` and `import X` statements with comment/string awareness.
-    - Resolve relative imports (`from . import X`, `from ..module import Y`) by walking parent directories.
-    - Extract `class Foo(Bar):` → inheritance map entries.
-  - **TypeScript/JavaScript (structured parsing)**:
-    - Parse `import { X } from './path'`, `import X from './path'`, `import * as X from './path'`, and side-effect imports.
-    - Parse `export { X } from './path'` and `export * from './path'` as re-export edges.
-    - Resolve extensionless imports by trying `.ts`, `.js`, `.tsx`, `.jsx`, and `/index.*` candidates.
-    - Extract `class Foo implements Bar` → inheritance map entries.
-  - Expand file list to include all workspace source files for cross-crate import resolution.
-  - Build a crate module index for hyphen-aware cross-crate resolution (e.g., `lint-arwaky` → `lint_arwaky`).
-  - All paths in the graph are normalized to workspace-root-relative format.
+
+  - Validate that all required components are present (graph, maps, file list).
+  - Files with `parse_ok = false` are retained in the file list but flagged with `PARSE_WARN` warning diagnostic:
+    - Code: `PARSE_WARN` (not an AES code).
+    - Severity: `WARNING`.
+    - Message: `"File skipped: parse failure — {error_detail}"`.
+  - Files with `parse_ok = false` are treated as **orphan candidates** (fail-strict: cannot verify reachability without parse data).
+  - All paths in the graph are workspace-root-relative (normalized by filesystem crate).
+  - Barrel files are identified and tagged for downstream skipping (see FR-010).
 - **Edge Cases**:
-  - Files with circular imports form cycles in the graph but do not cause infinite loops (BFS with visited set).
-  - Files outside supported extensions are silently skipped.
-  - Rust files that fail `syn` parsing (syntax errors) produce an empty parse result — no edges contributed, but the file is still present in the graph as a node.
-  - Multi-line import statements (e.g., `use foo::{\n  A,\n  B,\n}`) are handled natively by AST.
-  - Macro-generated `impl` blocks are not visible to `syn` unless the file is pre-expanded (see FR-012).
-- **Error Handling**: Unreadable files are skipped with no error. Invalid paths produce no entry in the graph. Parse failures produce an empty result (fail-safe: file becomes a graph node with no edges).
+
+  - Empty workspace (zero files) → empty context, no violations.
+  - Filesystem crate returns error → propagate as `ScanError`, no analysis performed.
+  - Files with `parse_ok = false` → `PARSE_WARN` emitted, file flagged as orphan candidate.
+- **Error Handling**: Missing or incomplete graph components produce a `ScanError` with descriptive message. Individual file parse failures produce `PARSE_WARN` and orphan candidacy.
+
+---
 
 ### FR-002: Entry Point Discovery
 
 - **Description**: Identify valid entry points that anchor the reachability graph.
-- **Input**: List of file paths and optional configured entry point patterns from the architecture configuration.
+- **Input**: `Vec<FileEntry>` from `GraphAnalysisContext`, optional configured entry point patterns from architecture configuration.
 - **Output**: Set of entry point file paths.
 - **Business Rules**:
-  - Default entry point patterns: `*_container.*`, `*_entry.*`, `main.rs`, `lib.rs`, `main.py`, `__main__.py`, `main.ts`, `main.js`, `index.ts`, `index.js`.
-  - Files starting with `root_` are also treated as entry points.
-  - Merges configured additional entry point patterns from each layer definition in the architecture configuration.
-  - Pattern matching uses exact match, stem match, prefix match (`_container`), suffix match (`.rs`), and extension match — never substring `contains()` to prevent false positives (e.g., `germanic_utils` must not match `main`).
+
+  - Default entry point patterns
+
+    - `*_container.*`, `*_entry.*`
+    - Files starting with `root_`
+  - Merges configured additional entry point patterns from architecture configuration.
+  - Pattern matching uses **segment matching**: exact match, stem match, prefix match, suffix match, extension match — never substring `contains()` to prevent false positives (e.g., `germanic_utils` must not match `main`).
   - Deduplicates and sorts the final list.
-- **Edge Cases**: Workspace with zero entry points results in all files flagged as orphans. Workspace with entry points in non-standard locations requires config override.
-- **Error Handling**: Missing or inaccessible entry point files are excluded from the set.
+- **Edge Cases**:
+
+  - Workspace with zero entry points → all non-barrel files flagged as orphans.
+  - Workspace with entry points in non-standard locations → requires config override.
+- **Error Handling**: Missing or inaccessible entry point files (not in `Vec<FileEntry>`) are excluded from the set.
+
+---
 
 ### FR-003: Reachability Tracing
 
-- **Description**: Perform BFS from all entry points through the import graph to determine which files are transitively reachable ("alive").
-- **Input**: Entry point set (`Vec<String>`) and the forward import graph.
-- **Output**: `Vec<String>` of all reachable file paths.
+- **Description**: Perform BFS from all entry points through the forward import graph to determine which files are transitively reachable ("alive").
+- **Input**: Entry point set and the forward `DiGraph` from `GraphAnalysisContext`.
+- **Output**: `Vec<String>` of all reachable file paths (alive set).
 - **Business Rules**:
+
   - Uses breadth-first search with a visited tracker to avoid revisiting nodes.
-  - A file is "alive" if it is transitively reachable from any entry point.
-  - The alive set is used by capabilities, agent, and surfaces orphan analyzers.
-- **Edge Cases**: Isolated files with no imports from any entry point are flagged. Entry points that import nothing are valid (they are roots).
-- **Error Handling**: Cycles in the graph are handled by the visited set — no infinite loops.
+  - A file is "alive" if it is transitively reachable from any entry point via import edges.
+  - The alive set is used by capabilities, agent, and surface orphan analyzers.
+  - Files with `parse_ok = false` are NOT added to the alive set (cannot verify edges).
+- **Edge Cases**:
+
+  - Isolated files with no imports from any entry point → not in alive set → flagged by analyzers.
+  - Entry points that import nothing → valid (they are roots, alive by definition).
+  - Cycles in the graph → handled by visited set, no infinite loops.
+- **Error Handling**: Cycles handled by visited set. Missing graph nodes (file in file list but not in graph) → treated as unreachable.
+
+---
 
 ### FR-004: Taxonomy Orphan Detection (AES501)
 
 - **Description**: Check that taxonomy layer files (`taxonomy_*`) are imported by at least one file from any other layer.
-- **Input**: File path, root directory, reverse link map (AST-built).
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Input**: File path, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
-  - A taxonomy file is orphan if no contract, capabilities, agent, utility, or surface file imports it.
-  - Internal taxonomy-to-taxonomy imports do not count — at least one non-taxonomy importer is required.
+
+  - A taxonomy file is orphan if no contract, capabilities, agent, utility, or surface file imports it (via `ReverseLinkIndex`).
+  - Internal taxonomy-to-taxonomy imports do NOT count — at least one non-taxonomy importer is required.
   - Barrel files (`mod.rs`, `__init__.py`, `index.ts`) do not count as importers.
-  - The AST-built graph captures all `use crate::...` imports natively — no fallback scanning is needed.
-- **Edge Cases**: Taxonomy files imported only by other taxonomy files are flagged (no consumer outside taxonomy). Files with suffix `_utility` or `_helper` are categorized as "utility" for message purposes but follow the same detection logic.
-- **Error Handling**: Files with no detectable inbound links are treated as orphan candidates.
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Taxonomy files imported only by other taxonomy files → flagged (no consumer outside taxonomy).
+  - Taxonomy VO imported by a contract protocol → not orphan.
+- **Error Handling**: Files with no detectable inbound links in `ReverseLinkIndex` → orphan candidates.
+
+---
 
 ### FR-005: Contract Orphan Detection (AES502)
 
-- **Description**: Check that contract files have at least one implementation or consumer, using AST-based trait extraction and implementation detection.
-- **Input**: File path, root directory, definition map, inheritance map, all workspace files.
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Description**: Check that contract files have at least one implementation or consumer, using the `DefinitionMap` and `ImplMap` from the filesystem crate.
+- **Input**: File path, `DefinitionMap`, `ImplMap`, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
-  - **Trait extraction (AST)**:
-    - Rust: Extract `ItemTrait` names via `syn` (replaces regex `(?:pub\s+)?trait\s+([A-Za-z0-9_]+)`).
-    - Python: Extract class names from structured parsing.
-    - TypeScript: Extract interface names from structured parsing.
-  - **Implementation detection (AST)**:
-    - Rust: Check `ItemImpl` nodes where `trait_` field matches the target trait name (handles multi-line impls, generic impls `impl<T> Trait for Type`, and qualified paths `impl foo::Trait for Bar`).
-    - Python: Check `class_bases` from structured parsing.
-    - TypeScript: Check `class_implements` from structured parsing.
-  - **Protocol contracts** — Must be implemented by a capabilities file AND called by an agent, container, capabilities, or surface file.
-  - **Aggregate contracts** — Must be implemented by an agent file AND called by a surface or container file.
-  - **Barrel re-export check**: If any trait name appears in a barrel file (`mod.rs`, `__init__.py`, `index.ts`), the contract is considered used as public API and is not flagged.
-  - Whole-word matching is used for all identifier checks (split on non-alphanumeric boundaries).
-- **Edge Cases**: A protocol with an implementation but zero callers is still an orphan — the protocol must be both implemented AND called by the expected layers. Multi-line `impl` blocks are handled by AST natively.
-- **Error Handling**: Files that fail AST parsing fall back to empty trait list — not flagged as orphan (fail-safe).
+
+  - **Protocol contracts** (`_protocol` files):
+    - Must be implemented by at least one capabilities file (checked via `ImplMap`).
+    - Must be called/referenced by at least one agent, container, capabilities, or surface file (checked via `ReverseLinkIndex`).
+    - Both conditions must be satisfied. Implementation without callers → orphan. Callers without implementation → orphan.
+  - **Aggregate contracts** (`_aggregate` files):
+    - Must be implemented by at least one agent file (checked via `ImplMap`).
+    - Must be called/referenced by at least one surface or container file (checked via `ReverseLinkIndex`).
+  - **Barrel re-export check**: If any trait/interface name from the contract file appears in a barrel file's re-exports, the contract is considered used as public API and is NOT flagged.
+  - Whole-word matching is used for all identifier checks.
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Protocol with implementation but zero callers → orphan.
+  - Protocol with callers but no implementation → orphan.
+  - Aggregate re-exported in barrel → not orphan.
+  - Contract file with no traits/interfaces (e.g., only type aliases) → not orphan (nothing to check).
+- **Error Handling**: Files with `parse_ok = false` → orphan + `PARSE_WARN`. Files with empty `DefinitionMap` entries → not flagged (no traits to check).
+
+---
 
 ### FR-006: Capabilities Orphan Detection (AES503)
 
 - **Description**: Check that capability files are wired in a root container or reachable from entry points.
-- **Input**: File path, root directory, reachable file paths set.
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Input**: File path, alive set (from FR-003), `DefinitionMap` from `GraphAnalysisContext`.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
+
   - Capabilities use dependency injection (`Arc<T>` in Rust, DI containers in Python/TS).
-  - A capability is orphan if its struct/trait names do not appear in any container file AND the file is not transitively reachable.
-  - **Identifier extraction (AST)**:
-    - Rust: Extract `ItemStruct` and `ItemTrait` names via `syn`.
-    - Python: Extract class names from structured parsing.
-    - TypeScript: Extract class names from structured parsing.
-    - Additionally includes the file stem and its PascalCase variant.
-  - Container files are identified by suffix: `*_container.rs`, `*_container.py`, `*_container.ts`, `*_container.js`, `*_entry.*`.
-  - Capabilities should NOT directly import agent or other capability files (enforced by role-rules, not here).
-- **Edge Cases**: A capability imported only by other capabilities in a chain is alive if any link in the chain reaches a container.
-- **Error Handling**: Files with no struct/trait names detectable via AST are treated as potential orphans.
+  - A capability is orphan if:
+    1. Its struct/class names (from `DefinitionMap`) do not appear in any container file, AND
+    2. The file is not in the alive set (not transitively reachable from entry points).
+  - Container files are identified by suffix: `*_container.*`, `*_entry.*`.
+  - Additionally includes the file stem and its PascalCase variant as identifiers to search.
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Capability imported only by other capabilities in a chain → alive if any link in the chain reaches a container (BFS handles this).
+  - Capability with no struct/class names in `DefinitionMap` → treated as potential orphan.
+- **Error Handling**: Files with `parse_ok = false` → orphan + `PARSE_WARN`.
+
+---
 
 ### FR-007: Utility Orphan Detection (AES504)
 
-- **Description**: Check that utility files are imported by at least one consumer layer (agent, capability, surface, or root).
-- **Input**: File path, root directory, all workspace files, reverse link map (AST-built).
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Description**: Check that utility files are imported by at least one consumer layer (capabilities, agent, surface, or root).
+- **Input**: File path, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
-  - **Phase 1 (graph-based)**: Check AST-built inbound links. Classify each importer by layer prefix. If any consumer-layer importer exists → not orphan.
-  - **Phase 2 (AST-based fallback)**: For consumer-layer files not captured in the graph, parse them via AST and check if any import segment matches the utility module name.
-  - Utility-only import chains are flagged as dead code (utility importing utility does not count).
+
+  - Check `ReverseLinkIndex` for inbound links. Classify each importer by layer prefix.
   - Valid consumer layers: `capabilities`, `agent`, `surface`, `root`.
-- **Edge Cases**: Utility imported by another utility that is itself orphaned — the chain is dead. Utility files with suffix `_utility` or `_helper` in taxonomy layer are handled by taxonomy analyzer, not utility analyzer.
-- **Error Handling**: Unparseable files in Phase 2 are skipped. If both phases find no consumer → orphan.
+  - If any consumer-layer importer exists → not orphan.
+  - Utility-only import chains are flagged as dead code (utility importing utility does not count).
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Utility imported by another utility that is itself orphaned → the chain is dead → orphan.
+  - Utility imported by a capabilities file → not orphan.
+  - Utility with no inbound links → orphan.
+- **Error Handling**: Files with `parse_ok = false` → orphan + `PARSE_WARN`. If `ReverseLinkIndex` has no entry for the file → orphan.
+
+---
 
 ### FR-008: Agent Orphan Detection (AES505)
 
-- **Description**: Check that agent orchestrator files are called by surface layer files or binary entry points, using AST-based aggregate trait extraction.
-- **Input**: File path, root directory, all workspace files.
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Description**: Check that agent orchestrator files are called by surface layer files or binary entry points, using the `ImplMap` and `DefinitionMap` from the filesystem crate.
+- **Input**: File path, `ImplMap`, `DefinitionMap`, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
-  - **Aggregate extraction (AST)**:
-    - Rust: Extract `ItemImpl` nodes where the trait name contains "Aggregate" (via `syn`). Handles `impl IOrphanAggregate for ArchOrphanAnalyzer`, generic impls, and qualified paths.
-    - Python: Extract class base names containing "Aggregate" from structured parsing.
-    - TypeScript: Extract implemented interface names containing "Aggregate" from structured parsing.
-  - Check if any surface, entry, main, index, or container file references these aggregate names using whole-word matching.
-  - Candidate files are pre-filtered by filename pattern (surface_*, *_container.*, *_entry.*, main.*, lib.*, index.*, __main__.*) to avoid scanning all workspace files.
-  - Candidate file contents are cached to avoid N×M re-reads.
+
+  - Extract aggregate trait/interface names implemented by the agent file (from `ImplMap` — traits containing "Aggregate" in the name).
+  - Check if any surface, entry, main, index, or container file references these aggregate names (via `ReverseLinkIndex` and `DefinitionMap`).
+  - Candidate reference files are pre-filtered by filename pattern: `surface_*`, `*_container.*`, `*_entry.*`, `main.*`, `lib.*`, `index.*`, `__main__.*`.
+  - Agent is orphan only if **ALL** aggregates are uncalled (not ANY).
+  - Agent file with no aggregate implementation → not orphan (empty aggregate list → skip check).
   - Severity: HIGH — orphaned agent means entire feature behavior is unreachable.
-- **Edge Cases**: Agent file with no aggregate implementation returns not-orphan (empty aggregate list → skip check). Agent is orphan only if ALL aggregates are uncalled (not ANY).
-- **Error Handling**: Files that fail AST parsing produce an empty aggregate list → not flagged (fail-safe).
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Agent with 2 aggregates, 1 called and 1 uncalled → not orphan (not ALL uncalled).
+  - Agent with 2 aggregates, both uncalled → orphan.
+  - Agent with no aggregate impl → not orphan (skip).
+- **Error Handling**: Files with `parse_ok = false` → orphan + `PARSE_WARN`. Files with empty `ImplMap` entries → not flagged (no aggregates to check).
+
+---
 
 ### FR-009: Surface Orphan Detection (AES506)
 
 - **Description**: Check that surface files are reachable based on their group classification (Smart, Utility, Passive).
-- **Input**: File path, root directory, reachable file paths set, optional layer definition.
-- **Output**: An orphan indicator result with is_orphan flag, reason, and severity.
+- **Input**: File path, alive set (from FR-003), `ReverseLinkIndex` from `GraphAnalysisContext`, architecture configuration.
+- **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
-  - **Smart** (`_command`, `_controller`, `_page`, `_router`): Must be imported by entry point or container. Severity: HIGH.
-  - **Utility** (`_hook`, `_store`, `_action`, `_screen`): Must be imported by a Smart surface. Severity: MEDIUM.
-  - **Passive** (`_component`, `_view`, `_layout`): Must be imported by Smart OR Utility surface. Severity: LOW.
+
+  - **Surface classification by filename suffix** (configurable via YAML):
+
+    - **Smart**: `_command`, `_controller`, `_page`, `_router` — must be imported by entry point or container. Severity: HIGH.
+    - **Utility**: `_hook`, `_store`, `_action`, `_screen` — must be imported by a Smart surface. Severity: MEDIUM.
+    - **Passive**: `_component`, `_view`, `_layout`, and all other recognized surface suffixes — must be imported by Smart OR Utility surface. Severity: LOW.
   - Dependency chain: `Entry → Smart → Utility → Passive`.
-  - Detection uses BFS reachability from the AST-built import graph.
-- **Edge Cases**: A passive surface imported only by another passive surface is orphan. Smart surfaces bypass passive checks. Files with unclassifiable suffixes default to "unknown" category with MEDIUM severity.
-- **Error Handling**: Files with unclassifiable suffixes default to Passive group.
+  - Detection uses BFS reachability from the forward import graph and `ReverseLinkIndex`.
+  - Files with **unclassifiable suffixes** (not in Smart, Utility, or Passive lists) → **skipped** (no orphan check performed).
+  - Files with `parse_ok = false` → flagged as orphan (fail-strict) + `PARSE_WARN`.
+- **Edge Cases**:
+
+  - Passive surface imported only by another passive surface → orphan (must be imported by Smart or Utility).
+  - Smart surface not imported by any entry/container → orphan (HIGH).
+  - Utility surface not imported by any Smart surface → orphan (MEDIUM).
+  - Surface file with unclassifiable suffix → skipped entirely.
+- **Error Handling**: Files with `parse_ok = false` → orphan + `PARSE_WARN`. Unclassifiable suffix → skip (no violation, no error).
+
+---
 
 ### FR-010: Barrel File Exception Handling
 
@@ -215,121 +287,100 @@ flowchart TD
 - **Input**: File path.
 - **Output**: Skip signal (no violation produced).
 - **Business Rules**:
+
   - `__init__.py` — Python package marker.
   - `mod.rs` — Rust module re-export.
+  - `lib.rs` — Rust library root.
   - `index.ts` / `index.js` / `index.tsx` / `index.jsx` — TypeScript/JavaScript barrel files.
   - These files are package markers or re-export files, not logic.
   - Check is performed in the orchestrator before dispatching to any analyzer.
 - **Edge Cases**: A file named `mod.rs` inside a deeply nested module is still skipped.
-- **Error Handling**: N/A — simple filename suffix check.
-
-### FR-011: AST Parser Layer
-
-- **Description**: Centralized AST/structured parsing for all source files, replacing all regex-based extraction.
-- **Input**: File path and file content.
-- **Output**: Language-specific parse result (`RustParseResult`, `PythonParseResult`, `TsParseResult`).
-- **Business Rules**:
-  - **Rust**: Use `syn::parse_file()` to produce a full AST. Walk top-level items via pattern matching on `syn::Item` variants. Recursively walk `UseTree` nodes for nested/grouped imports. Extract `#[path = "..."]` attributes from `ItemMod`.
-  - **Python**: Strip comments and string literals line-by-line (quote-aware, escape-aware). Parse `from`/`import` statements and `class` declarations from cleaned lines.
-  - **TypeScript/JavaScript**: Strip `//` and `/* */` comments (string-aware, template-literal-aware). Parse `import`/`export` statements and `class implements` declarations from cleaned lines.
-  - All parse results are typed structs — no string captures, no capture group indexing.
-  - Parse results include a `parse_ok` flag. When `false`, consumers should treat the file as having no extractable data (fail-safe).
-- **Edge Cases**:
-  - Rust files with syntax errors → `parse_ok = false`, empty result.
-  - Python files with unterminated strings → comment stripping is best-effort.
-  - TypeScript files with JSX → structured parsing handles `import`/`export` lines regardless of JSX content.
-  - Empty files → empty result, `parse_ok = true`.
-- **Error Handling**: `syn` parse errors are caught and produce `parse_ok = false`. No panics, no unwraps on parse results.
-
-### FR-012: Macro-Generated Code Handling (Future)
-
-- **Description**: Detect trait implementations generated by declarative macros (`macro_rules!`) and procedural macros.
-- **Input**: File content with macro invocations.
-- **Output**: Additional trait implementation entries.
-- **Business Rules**:
-  - **Current (v1.12)**: Macro-generated impls are NOT detected. `syn` parses the source as-written; macro invocations appear as `ItemMacro` nodes, not as expanded `ItemImpl` nodes.
-  - **Future (v2.0)**: Integrate `cargo expand` or `rust-analyzer` expansion to capture macro-generated impls. This requires a build step and is not compatible with pure static analysis.
-- **Edge Cases**: Files that rely heavily on macros (e.g., `impl_via_macro!(Trait, Type)`) will have incomplete trait detection.
-- **Error Handling**: N/A for current version.
-
-### FR-013: Configuration-Driven Rule Suppression
-
-- **Description**: Suppress orphan violations based on architecture configuration.
-- **Input**: Architecture configuration, layer name, AES rule code.
-- **Output**: Suppression decision (skip or proceed).
-- **Business Rules**:
-  - If `config.enabled` is `false`, all orphan checks return empty immediately.
-  - If `layer_definition.orphan.check_orphan` is `false`, skip that layer.
-  - If the file's basename appears in `layer_definition.exceptions`, skip that file.
-  - If the AES rule code (AES501–AES506) is disabled in `config.rules`, skip that rule.
-  - If the file path matches any pattern in `config.ignored_paths`, skip that file.
-- **Edge Cases**: Multiple suppression mechanisms are checked in order: global → layer → exception → rule → path.
-- **Error Handling**: Missing configuration defaults to enabled (fail-open for detection).
-
----
+- **Error Handling**: N/A — simple filename check.
 
 ## API Contract
 
 
-| Function                           | Input                                                                 | Output                       | Description                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------- |
-| Build orphan graph context         | File list, root directory                                             | Graph analysis context       | Build full AST-based import graph for the workspace           |
-| Identify orphan entry points       | File list, configured patterns                                        | Set of entry point paths     | Discover all valid entry points                               |
-| Full orphan scan                   | File list, root directory                                             | Lint results                 | Full orphan scan with graph construction                      |
-| Orphan scan with context           | File list, root directory, pre-built graph                            | Lint results                 | Orphan scan with pre-built graph (avoids rebuild)             |
-| Scan orphans (directory)           | Root directory, ignored paths                                         | Graph context + lint results | Directory scan with file discovery, graph build, and analysis |
-| Check taxonomy orphan              | File path, root directory, layer definition, reverse link map         | Orphan indicator result      | Check single taxonomy file for orphan status                  |
-| Check contract orphan              | File path, root directory, definition map, inheritance map, all files | Orphan indicator result      | Check single contract file for orphan status                  |
-| Check capabilities orphan          | File path, root directory, reachable file set                         | Orphan indicator result      | Check single capabilities file for orphan status              |
-| Check utility orphan               | File path, root directory, all files, reverse link map                | Orphan indicator result      | Check single utility file for orphan status                   |
-| Check agent orphan                 | File path, root directory, all files                                  | Orphan indicator result      | Check single agent file for orphan status                     |
-| Check surface orphan               | File path, root directory, reachable file set, layer definition       | Orphan indicator result      | Check single surface file for orphan status                   |
-| Parse file (AST)                   | File path, file content                                               | File parse result (enum)     | Centralized AST/structured parsing dispatch                   |
-| Parse Rust file                    | File content                                                          | Rust parse result            | `syn`-based AST extraction                                    |
-| Parse Python file                  | File content                                                          | Python parse result          | Comment-aware structured extraction                           |
-| Parse TypeScript file              | File content                                                          | TypeScript parse result      | Comment-aware structured extraction                           |
-| Create default DI container        | —                                                                    | Orphan detection container   | Default dependency injection container                        |
-| Create DI container with config    | Architecture configuration                                            | Orphan detection container   | DI container with custom config                               |
-| Create DI from config orchestrator | Config orchestrator reference, root directory                         | Orphan detection container   | Canonical DI from config orchestrator                         |
+| Function                           | Input                                                    | Output                     | Description                                                                                       |
+| ------------------------------------ | ---------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Full orphan scan                   | Target path                                              | Lint results               | Request graph from filesystem crate, discover entry points, trace reachability, run all analyzers |
+| Orphan scan with context           | Pre-built`GraphAnalysisContext`                          | Lint results               | Orphan scan with pre-built context (avoids filesystem crate call)                                 |
+| Identify entry points              | `Vec<FileEntry>`, configured patterns                    | Set of entry point paths   | Discover all valid entry points                                                                   |
+| Trace reachability                 | Entry point set,`DiGraph`                                | Alive file set             | BFS from entry points through import graph                                                        |
+| Check taxonomy orphan              | File path,`ReverseLinkIndex`                             | Orphan indicator result    | AES501 — taxonomy file orphan check                                                              |
+| Check contract orphan              | File path,`DefinitionMap`, `ImplMap`, `ReverseLinkIndex` | Orphan indicator result    | AES502 — contract file orphan check                                                              |
+| Check capabilities orphan          | File path, alive set,`DefinitionMap`                     | Orphan indicator result    | AES503 — capabilities file orphan check                                                          |
+| Check utility orphan               | File path,`ReverseLinkIndex`                             | Orphan indicator result    | AES504 — utility file orphan check                                                               |
+| Check agent orphan                 | File path,`ImplMap`, `DefinitionMap`, `ReverseLinkIndex` | Orphan indicator result    | AES505 — agent file orphan check                                                                 |
+| Check surface orphan               | File path, alive set,`ReverseLinkIndex`, config          | Orphan indicator result    | AES506 — surface file orphan check                                                               |
+| Create default DI container        | —                                                       | Orphan detection container | Default dependency injection container                                                            |
+| Create DI container with config    | Architecture configuration                               | Orphan detection container | DI container with custom config                                                                   |
+| Create DI from config orchestrator | Config orchestrator reference, root directory            | Orphan detection container | Canonical DI from config orchestrator                                                             |
 
 ---
 
 ## Integration Points
 
-- **Internal**:
-  - The code analysis shared module — graph analysis context, import graph, reverse link map, orphan indicator result, and reachability result value objects.
+- **Internal** (orphan-detector crate):
+
   - The orphan detection aggregate contract — aggregate trait defining the public API surface.
   - The orphan detection protocol contracts — 6 layer-specific orphan indicator protocols.
-  - The orphan detection file I/O utility — file reading, scanning, directory checks.
   - The orphan detection filename utility — filename parsing (stem, suffix, basename).
-  - The orphan detection path utility — path resolution and ignore checking.
+  - The orphan detection path utility — path resolution and segment-based ignore checking.
   - The common layer detection utility — layer detection from filename prefix.
-  - The config system configuration value objects — architecture config for exceptions and rules.
+  - The config system configuration value objects — architecture config for exceptions, rules, and orphan toggles.
   - The lint result value objects — lint result, severity, and location types.
   - The config system orchestrator aggregate — config loading from orchestrator.
-  - **AST parser utility** (`utility_orphan_ast_parser`) — centralized parsing for all analyzers and graph resolver.
-  - **Graph resolver utility** (`utility_orphan_graph_resolver`) — edge management, workspace root detection, crate module index, TS relative import resolution.
+  - The graph analysis context value objects — `GraphAnalysisContext`, `OrphanIndicatorResult`, `ReachabilityResult`.
 - **External**:
-  - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing.
+
+  - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
+    - File walking and directory traversal (`file_walker`).
+    - Full AST parsing for all languages (`ast_parser` — Rust via `syn`, Python/TS via tree-sitter).
+    - Import extraction from AST (`import_extractor`).
+    - Dependency graph construction (`dependency_graph`).
+    - Trait/class/struct definition mapping (`definition_mapper`).
+    - Implementation relationship mapping (`impl_mapper`).
+    - Reverse link index construction.
+    - Returns `GraphAnalysisContext` to the caller.
+    - Files that cannot be read are excluded. Files that cannot be parsed are included with `parse_ok = false`.
   - No network calls. No filesystem writes. Pure static analysis.
 
 ---
 
-## Non-functional Requirements (Detailed)
+## Non-functional Requirements
 
 - **Performance**:
+
   - 1,000 files < 500ms; 5,000 files < 2s; 10,000 files < 5s.
-  - AST parsing via `syn` adds ~0.1–0.3ms per file vs regex ~0.01ms, but eliminates multi-pass scanning. Net effect: comparable or faster for graph construction (single pass vs 7 regex passes).
-  - Contract/agent analyzers cache parsed results per file to avoid re-parsing across multiple trait checks.
+  - Graph construction and parsing performed by filesystem crate (not counted in orphan-detector performance).
+  - Orphan analysis is O(V + E) for BFS reachability + O(n) per analyzer for map lookups.
+  - Contract/agent analyzers use `DefinitionMap` and `ImplMap` lookups (O(1) per trait) instead of re-parsing files.
 - **Memory**:
-  - Graph construction holds all edges in memory; for 10,000 files with average 10 imports each, peak memory < 50MB.
-  - AST parse results are not cached globally (only per-analyzer-session) to bound memory.
+
+  - `GraphAnalysisContext` holds all graph data in memory. For 10,000 files with average 10 imports each, peak memory < 50MB.
+  - Analyzers do not cache additional data beyond what `GraphAnalysisContext` provides.
 - **Accuracy**:
+
+  - **All languages WAJIB full AST.** No regex-based or line-based parsing is acceptable as a final implementation.
   - Zero false positives on transitively reachable code. A file is valid if it is transitively reachable from an entry point.
-  - AST parsing eliminates false positives from: matches inside comments, matches inside string literals, multi-line statement fragmentation, and regex capture group failures.
-  - Remaining false positive sources: path normalization mismatches (mitigated by workspace-root-relative normalization), macro-generated code (see FR-012).
-- **Concurrency**: Thread-safe via `Arc<dyn Trait>` shared ownership. File-level analysis is parallelized via `rayon` (`par_iter`). AST parsing is stateless and thread-safe.
-- **Configurability**: All behavior overridable via the architecture configuration. No hardcoded assumptions about project structure beyond workspace directory conventions (`crates/`, `packages/`, `modules/`).
+  - AST parsing eliminates false positives from: matches inside comments, matches inside string literals, multi-line statement fragmentation.
+  - Known limitation: macro-generated code (see FR-011). Macro-generated impls are invisible → potential false orphan flags.
+  - Parse failure → orphan (fail-strict). This eliminates false negatives at the cost of potential false positives for files with syntax errors.
+- **Concurrency**: Thread-safe via `Arc<dyn Trait>` shared ownership. File-level analysis is parallelized via `rayon` (`par_iter`). Graph analysis is read-only after construction.
+- **Configurability**:
+
+  - **Hardcoded conventions (permanent, by design)**:
+    - Layer detection from filename prefix (`taxonomy_*`, `contract_*`, `utility_*`, `capabilities_*`, `agent_*`, `surface_*`, `root_*`).
+    - Workspace directory structure (`crates/`, `packages/`, `modules/`).
+    - Barrel file names (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`).
+    - Default entry point patterns (`*_container.*`, `*_entry.*`, `main.*`, `lib.*`, `index.*`).
+  - **Configurable (via YAML)**:
+    - Additional entry point patterns.
+    - Per-layer orphan check toggle (`check_orphan`).
+    - Per-rule enable/disable (AES501–AES506).
+    - Per-layer exceptions.
+    - Ignored paths.
+    - Surface classification suffixes (Smart/Utility/Passive).
 
 ---
 
@@ -337,127 +388,217 @@ flowchart TD
 
 ### Core Detection
 
-- [ ]  Workspace with 100 files, 5 orphans across 3 layers — all 5 detected, 0 false positives.
-- [ ]  Circular imports between two capabilities — both reachable, neither flagged.
-- [ ]  Workspace with zero entry points — all non-barrel files flagged as orphans.
-- [ ]  Cross-crate imports (crate A imports from crate B) — graph resolves correctly.
-- [ ]  Configuration disabled — full orphan scan returns empty immediately.
+
+| # | Scenario                                            | Expected                                   | Rule   |
+| --- | ----------------------------------------------------- | -------------------------------------------- | -------- |
+| 1 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, 0 false positives          | all    |
+| 2 | Circular imports between two capabilities           | Both reachable, neither flagged            | pass   |
+| 3 | Workspace with zero entry points                    | All non-barrel files flagged as orphans    | all    |
+| 4 | Cross-crate imports (crate A imports from crate B)  | Graph resolves correctly                   | pass   |
+| 5 | Configuration disabled                              | Full orphan scan returns empty immediately | config |
+| 6 | File with`parse_ok = false`                         | Flagged as orphan + PARSE_WARN emitted     | all    |
 
 ### Barrel Files
 
-- [ ]  Python nested `__init__.py` packages — barrel files skipped, not flagged as orphan.
-- [ ]  TypeScript barrel `index.ts` re-exports — barrel files skipped.
-- [ ]  Rust `mod.rs` re-exports — barrel files skipped.
 
-### AST Parsing (Rust)
+| # | Scenario                               | Expected             | Rule |
+| --- | ---------------------------------------- | ---------------------- | ------ |
+| 1 | Python`__init__.py` package marker     | Skipped, not flagged | excl |
+| 2 | TypeScript barrel`index.ts` re-exports | Skipped, not flagged | excl |
+| 3 | Rust`mod.rs` re-exports                | Skipped, not flagged | excl |
+| 4 | Rust`lib.rs` library root              | Skipped, not flagged | excl |
 
-- [ ]  Multi-line `impl` block (`impl<T>\n  Trait\n  for\n  Type`) — trait implementation detected.
-- [ ]  Grouped import (`use foo::{A, B, C}`) — all three edges created.
-- [ ]  Glob import (`use foo::*`) — edge created to module root.
-- [ ]  `pub use` re-export — edge created with `is_reexport = true`.
-- [ ]  `#[path = "custom/path.rs"] mod foo;` — edge created to custom path.
-- [ ]  `pub(crate) mod foo;` — module declaration detected.
-- [ ]  Import inside doc comment (`/// use foo::bar;`) — NOT extracted.
-- [ ]  Import inside string literal (`let s = "use foo::bar";`) — NOT extracted.
-- [ ]  File with syntax error — `parse_ok = false`, no edges, no panic.
+### AES501 — Taxonomy Orphan
 
-### AST Parsing (Python)
 
-- [ ]  `from . import X` (relative, no module) — resolved to sibling file.
-- [ ]  `from ..module import Y` (parent relative) — resolved to parent directory.
-- [ ]  `from modules.cli.src import X` (dotted absolute) — resolved via directory walk.
-- [ ]  Comment line `# import foo` — NOT extracted.
-- [ ]  Inline comment `import foo  # comment` — `foo` extracted, comment stripped.
-- [ ]  String containing import `s = "import foo"` — NOT extracted.
+| # | Scenario                                            | Expected                          | Rule   |
+| --- | ----------------------------------------------------- | ----------------------------------- | -------- |
+| 1 | Taxonomy file imported by a contract file           | Not orphan                        | pass   |
+| 2 | Taxonomy file imported only by other taxonomy files | Orphan (no non-taxonomy consumer) | AES501 |
+| 3 | Taxonomy file with no inbound links                 | Orphan                            | AES501 |
+| 4 | Taxonomy file imported by capabilities file         | Not orphan                        | pass   |
 
-### AST Parsing (TypeScript)
+### AES502 — Contract Orphan
 
-- [ ]  `import { X } from './path'` — edge created.
-- [ ]  `import X from './path'` (default) — edge created.
-- [ ]  `import * as X from './path'` (namespace) — edge created with `is_glob = true`.
-- [ ]  `import './path'` (side-effect) — edge created.
-- [ ]  `export { X } from './path'` — edge created with `is_reexport = true`.
-- [ ]  `export * from './path'` — edge created with `is_reexport = true`, `is_glob = true`.
-- [ ]  Extensionless import `from './utils/helper'` — resolves `helper.ts`, `helper.js`, `helper/index.ts`.
-- [ ]  Block comment `/* import foo */` — NOT extracted.
-- [ ]  Template literal `` `import ${x}` `` — NOT extracted.
 
-### Layer-Specific Detection
+| # | Scenario                                          | Expected                      | Rule   |
+| --- | --------------------------------------------------- | ------------------------------- | -------- |
+| 1 | Protocol with implementation AND callers          | Not orphan                    | pass   |
+| 2 | Protocol with implementation but zero callers     | Orphan                        | AES502 |
+| 3 | Protocol with callers but no implementation       | Orphan                        | AES502 |
+| 4 | Aggregate re-exported in barrel file              | Not orphan (public API)       | pass   |
+| 5 | Aggregate implemented by agent, called by surface | Not orphan                    | pass   |
+| 6 | Contract file with no traits (only type aliases)  | Not orphan (nothing to check) | pass   |
 
-- [ ]  Contract protocol with implementation but zero callers — flagged as orphan (must be called by expected layer).
-- [ ]  Contract aggregate re-exported in barrel — NOT flagged.
-- [ ]  Agent file with no aggregate implementation — NOT flagged (empty list → skip).
-- [ ]  Agent file with aggregate not called by any surface — flagged as HIGH severity.
-- [ ]  Surface dependency chain: Smart → Utility → Passive — all alive. Remove Smart import — Utility + Passive flagged.
-- [ ]  Utility file imported only by other utilities — flagged as UTILITY_DEAD_CODE.
-- [ ]  Utility file imported by a capabilities file — NOT flagged.
-- [ ]  Taxonomy file imported only by other taxonomy files — flagged.
-- [ ]  Taxonomy file imported by a contract file — NOT flagged.
+### AES503 — Capabilities Orphan
+
+
+| # | Scenario                                                           | Expected                 | Rule   |
+| --- | -------------------------------------------------------------------- | -------------------------- | -------- |
+| 1 | Capability struct referenced in container file                     | Not orphan               | pass   |
+| 2 | Capability file transitively reachable from entry point            | Not orphan               | pass   |
+| 3 | Capability file not in alive set, not in any container             | Orphan                   | AES503 |
+| 4 | Capability imported by other capabilities, chain reaches container | Not orphan (chain alive) | pass   |
+
+### AES504 — Utility Orphan
+
+
+| # | Scenario                                 | Expected                           | Rule   |
+| --- | ------------------------------------------ | ------------------------------------ | -------- |
+| 1 | Utility imported by a capabilities file  | Not orphan                         | pass   |
+| 2 | Utility imported only by other utilities | Orphan (utility chain = dead code) | AES504 |
+| 3 | Utility with no inbound links            | Orphan                             | AES504 |
+| 4 | Utility imported by agent file           | Not orphan                         | pass   |
+
+### AES505 — Agent Orphan
+
+
+| # | Scenario                                                  | Expected                      | Rule   |
+| --- | ----------------------------------------------------------- | ------------------------------- | -------- |
+| 1 | Agent aggregate called by surface file                    | Not orphan                    | pass   |
+| 2 | Agent aggregate not called by any surface/entry/container | Orphan (HIGH)                 | AES505 |
+| 3 | Agent with no aggregate implementation                    | Not orphan (skip check)       | pass   |
+| 4 | Agent with 2 aggregates, 1 called, 1 uncalled             | Not orphan (not ALL uncalled) | pass   |
+| 5 | Agent with 2 aggregates, both uncalled                    | Orphan (HIGH)                 | AES505 |
+
+### AES506 — Surface Orphan
+
+
+| # | Scenario                                                          | Expected                                | Rule   |
+| --- | ------------------------------------------------------------------- | ----------------------------------------- | -------- |
+| 1 | Smart surface (`_command`) imported by entry point                | Not orphan                              | pass   |
+| 2 | Smart surface not imported by any entry/container                 | Orphan (HIGH)                           | AES506 |
+| 3 | Utility surface (`_hook`) imported by Smart surface               | Not orphan                              | pass   |
+| 4 | Utility surface not imported by any Smart surface                 | Orphan (MEDIUM)                         | AES506 |
+| 5 | Passive surface (`_component`) imported by Smart surface          | Not orphan                              | pass   |
+| 6 | Passive surface imported only by another Passive surface          | Orphan (LOW)                            | AES506 |
+| 7 | Dependency chain: Entry → Smart → Utility → Passive, all alive | No violations                           | pass   |
+| 8 | Remove Smart import → Utility + Passive flagged                  | Utility (MEDIUM) + Passive (LOW) orphan | AES506 |
+| 9 | Surface file with unclassifiable suffix                           | Skipped (no check)                      | skip   |
 
 ### Configuration
 
-- [ ]  Config with `check_orphan: false` for a layer — no violations for that layer.
-- [ ]  Config with exceptions list — excepted files produce no violations.
-- [ ]  Config with `ignored_paths` — excluded paths produce no violations.
-- [ ]  Config with AES501 disabled in rules — no taxonomy orphan violations.
+
+| # | Scenario                                | Expected                                     | Rule   |
+| --- | ----------------------------------------- | ---------------------------------------------- | -------- |
+| 1 | Config`check_orphan: false` for a layer | No violations for that layer                 | config |
+| 2 | Config with exceptions list             | Excepted files produce no violations         | config |
+| 3 | Config with`ignored_paths: ["tests"]`   | `tests/` segment files produce no violations | config |
+| 4 | Config with AES501 disabled             | No taxonomy orphan violations                | config |
+| 5 | Config with custom entry point patterns | Additional entry points recognized           | config |
 
 ### Performance
 
-- [ ]  10,000 file workspace completes in under 5 seconds.
-- [ ]  Contract analyzer with 50 traits × 500 files — completes in under 2 seconds (cached parsing).
+
+| # | Scenario                                      | Expected                                   | Rule |
+| --- | ----------------------------------------------- | -------------------------------------------- | ------ |
+| 1 | 10,000 file workspace                         | Completes in under 5 seconds               | perf |
+| 2 | Contract analyzer with 50 traits × 500 files | Completes in under 2 seconds (map lookups) | perf |
 
 ---
 
 ## Assumptions & Constraints
 
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
-- Naming convention validation is handled by the naming rules crate; orphan-detector assumes filenames are correctly named.
-- Entry points are identified by filename patterns, not by content analysis.
-- Import resolution is language-specific: Rust via `syn` AST, Python/TS via structured line parsing.
+- Naming convention validation is handled by the naming-rules crate; orphan-detector assumes filenames are correctly named.
+- Entry points are identified by filename patterns (configurable), not by content analysis.
+- All parsing and graph construction is performed by the external filesystem crate using full AST (Rust via `syn`, Python/TS via tree-sitter). No regex or line-based parsing in the final implementation.
 - No network calls are required; all analysis is local filesystem.
 - Configuration is loaded once and reused across all checks in a scan.
-- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — trait implementations inside macros are invisible to the detector (see FR-012).
-- Python and TypeScript parsing is not full AST — it is comment-aware structured line parsing. This handles >95% of real-world import patterns but does not handle dynamically constructed imports (`importlib`, `require(variable)`).
+- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — trait implementations inside macros are invisible to the detector (see FR-011).
+- Parse failure → orphan (fail-strict). Files with `parse_ok = false` are flagged as orphans because reachability cannot be verified.
+- Surface files with unclassifiable suffixes are skipped (no orphan check performed).
+- The crate receives a complete `GraphAnalysisContext` from the external filesystem crate. No file I/O, AST parsing, or graph construction is performed internally.
 
 ---
 
 ## Glossary
 
 
-| Term                   | Definition                                                                                                         |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| **Orphan**             | A source file not transitively reachable from any entry point                                                      |
-| **Entry point**        | A file that anchors the reachability graph (main, lib, container, entry)                                           |
-| **Barrel file**        | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)                                           |
-| **Alive file**         | A file reachable via BFS from any entry point through the import graph                                             |
-| **AES**                | Architecture Enforcement Standard — the 7-layer coding convention                                                 |
-| **DI**                 | Dependency Injection — wiring implementations to trait/interface contracts                                        |
-| **Inbound link**       | A file that imports the target file (reverse import edge)                                                          |
-| **AST**                | Abstract Syntax Tree — structured representation of source code produced by a parser                              |
-| **`syn`**              | Rust crate for parsing Rust source code into an AST                                                                |
-| **Structured parsing** | Comment-aware, string-aware line-by-line parsing (used for Python/TS where full AST is not available in pure Rust) |
-| **Parse result**       | Typed struct containing extracted imports, trait impls, struct defs, trait defs, and mod declarations              |
-| **`parse_ok`**         | Boolean flag on parse results indicating whether parsing succeeded                                                 |
-| **Re-export**          | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                         |
-| **Glob import**        | `use foo::*` (Rust) or `export * from` (TS) — imports all symbols from a module                                   |
-| **Crate module index** | Pre-computed map of normalized module paths to file paths for cross-crate resolution                               |
+| Term                     | Definition                                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AES**                  | Agentic Engineering System — the 7-layer coding convention                                                                                     |
+| **Orphan**               | A source file not transitively reachable from any entry point, or failing layer-specific consumer requirements                                  |
+| **Entry point**          | A file that anchors the reachability graph (main, lib, container, entry, root)                                                                  |
+| **Barrel file**          | A package marker or re-export file (`__init__.py`, `mod.rs`, `lib.rs`, `index.ts`)                                                              |
+| **Alive file**           | A file reachable via BFS from any entry point through the import graph                                                                          |
+| **DI**                   | Dependency Injection — wiring implementations to trait/interface contracts                                                                     |
+| **Inbound link**         | A file that imports the target file (reverse import edge)                                                                                       |
+| **AST**                  | Abstract Syntax Tree — structured representation of source code produced by a parser                                                           |
+| **GraphAnalysisContext** | Pre-built analysis context from filesystem crate containing file list, import graph, reverse link index, definition map, and implementation map |
+| **DefinitionMap**        | Map of trait/class/struct/interface names to their defining file                                                                                |
+| **ImplMap**              | Map of trait/interface names to their implementor files                                                                                         |
+| **ReverseLinkIndex**     | Map of file path to list of files that import it                                                                                                |
+| **`parse_ok`**           | Boolean flag on file entries indicating whether parsing succeeded                                                                               |
+| **`PARSE_WARN`**         | Warning diagnostic (non-AES code) emitted when a file fails to parse                                                                            |
+| **Re-export**            | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                      |
+| **Glob import**          | `use foo::*` (Rust) or `export * from` (TS) — imports all symbols from a module                                                                |
+| **Smart surface**        | Surface with`_command`, `_controller`, `_page`, `_router` suffix — may contain orchestration                                                   |
+| **Utility surface**      | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                                           |
+| **Passive surface**      | Surface with`_component`, `_view`, `_layout`, or other recognized suffix — presentation-only                                                   |
+| **Filesystem crate**     | External crate that handles file walking, AST parsing, graph construction, and mapping. Returns`GraphAnalysisContext` to orphan-detector.       |
+| **Segment matching**     | Path matching by splitting on`/` and comparing individual segments (not substring containment)                                                  |
 
 ---
 
-## Migration Notes (v1.11 → v1.12)
+## Appendix A: YAML Configuration Schema
+
+### Top-Level Structure
+
+```yaml
+architecture:
+  enabled: true
+  rules:
+    AES501: { ... }
+    AES502: { ... }
+    AES503: { ... }
+    AES504: { ... }
+    AES505: { ... }
+    AES506: { ... }
+  orphan:
+    entry_points:
+      - "*_container.*"
+      - "*_entry.*"
+      - "main.rs"
+      - "lib.rs"
+      - "main.py"
+      - "__main__.py"
+      - "main.ts"
+      - "main.js"
+      - "index.ts"
+      - "index.js"
+```
+
+### Per-Rule Configuration
+
+```yaml
+AES501:
+  enabled: true
+  exceptions: []
+
+AES502:
+  enabled: true
+  exceptions: []
+
+AES503:
+  enabled: true
+  exceptions: []
+
+AES504:
+  enabled: true
+  exceptions: []
+
+AES505:
+  enabled: true
+  exceptions: []
+
+AES506:
+  enabled: true
+  exceptions: []
+    # Files with suffix not in any list → skipped
+```
 
 
-| Component                                      | v1.11 (Regex)                                          | v1.12 (AST)                                                        |
-| ------------------------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------- |
-| `utility_orphan_regex_patterns.rs`             | 8 regex patterns, 14 bug fixes                         | **Deprecated** — empty module                                     |
-| `utility_orphan_ast_parser.rs`                 | Did not exist                                          | **New** — centralized AST/structured parser                       |
-| `capabilities_orphan_graph_resolver.rs`        | 7 regex passes, ~500 lines                             | 3 AST dispatch blocks, ~300 lines                                  |
-| `capabilities_orphan_contract_analyzer.rs`     | 4 regex + line-by-line scan                            | AST`ItemTrait` + `ItemImpl` extraction                             |
-| `capabilities_orphan_agent_analyzer.rs`        | 4 regex patterns                                       | AST`ItemImpl` + structured parsing                                 |
-| `capabilities_orphan_capabilities_analyzer.rs` | `extract_struct_names` / `extract_trait_names` (regex) | AST`ItemStruct` / `ItemTrait` extraction                           |
-| `capabilities_orphan_utility_analyzer.rs`      | `check_import_pattern` (string matching)               | AST import segment matching                                        |
-| `capabilities_orphan_taxonomy_analyzer.rs`     | `has_crate_self_import` fallback (60 lines)            | **Removed** — AST graph captures all imports                      |
-| `Cargo.toml`                                   | No`syn` dependency                                     | `syn = { version = "2", features = ["full", "visit", "parsing"] }` |
 
 ---
 
@@ -465,5 +606,4 @@ flowchart TD
 
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- AST Parser: `crates/orphan-detector/src/utility_orphan_ast_parser.rs`
-- Graph Resolver: `crates/orphan-detector/src/capabilities_orphan_graph_resolver.rs`
+- **Filesystem crate** (external): `
