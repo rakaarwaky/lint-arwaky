@@ -379,29 +379,27 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .unwrap_or_else(|_| {
                         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default()
                     });
-                let entries =
-                    shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
-                        std::slice::from_ref(&fp.value),
-                    );
+                let entries = self
+                    .deps
+                    .code_analysis_linter
+                    .collect_file_entries(std::slice::from_ref(&fp.value));
                 let min_dup_lines = 5; // minimum lines for a duplicate block
 
                 // Calculate total LOC before moving entries
                 let total_loc: usize = entries.iter().map(|(_, c)| c.lines().count()).sum();
 
                 // Scan for duplicates (consumes entries)
-                let blocks =
-                    shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
-                        entries,
-                        min_dup_lines,
-                    );
+                let blocks = self
+                    .deps
+                    .code_analysis_linter
+                    .scan_duplicate_blocks(entries, min_dup_lines);
 
                 // Build violation list
-                let violations =
-                    shared::code_analysis::utility_code_duplication_detector::build_violations(
-                        &blocks,
-                        total_loc,
-                        min_dup_lines,
-                    );
+                let violations = self.deps.code_analysis_linter.build_violations(
+                    &blocks,
+                    total_loc,
+                    min_dup_lines,
+                );
 
                 serde_json::json!({
                     "status": "success",

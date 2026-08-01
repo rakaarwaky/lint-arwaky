@@ -152,6 +152,11 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Get symlink metadata (does not follow symlinks).
     fn symlink_metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error>;
 
+    // ── Path Utilities ─────────────────────────────────────────
+
+    /// Extract file stem from path (filename without extension).
+    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str;
+
     // ── Path Discovery Helpers ────────────────────────────────
 
     /// Check if directory contains Python source files.

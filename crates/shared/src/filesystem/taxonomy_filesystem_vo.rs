@@ -1,6 +1,7 @@
 // PURPOSE: Taxonomy layer — filesystem domain value objects
 // Shared across all crates that need file I/O, parsing, or dependency graph types.
 
+pub use crate::common::taxonomy_language_vo::Language;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
@@ -12,42 +13,6 @@ pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 // ═══════════════════════════════════════════════════════════════
 
 /// Supported programming languages for AST parsing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Language {
-    Rust,
-    Python,
-    TypeScript,
-    JavaScript,
-}
-
-impl Language {
-    /// Detect language from file extension.
-    pub fn from_extension(ext: &str) -> Option<Self> {
-        match ext {
-            "rs" => Some(Self::Rust),
-            "py" => Some(Self::Python),
-            "ts" | "tsx" => Some(Self::TypeScript),
-            "js" | "jsx" => Some(Self::JavaScript),
-            _ => None,
-        }
-    }
-
-    /// All supported extensions.
-    pub fn extensions() -> &'static [&'static str] {
-        &["rs", "py", "ts", "tsx", "js", "jsx"]
-    }
-
-    /// Human-readable name.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Rust => "rust",
-            Self::Python => "python",
-            Self::TypeScript => "typescript",
-            Self::JavaScript => "javascript",
-        }
-    }
-}
-
 /// A discovered source file with metadata and optional parse results.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileEntry {
@@ -79,6 +44,7 @@ pub enum ParseMetadata {
     Python(PythonMetadata),
     TypeScript(TypeScriptMetadata),
     JavaScript(JavaScriptMetadata),
+    Unknown,
 }
 
 /// Rust-specific parse metadata.

@@ -53,7 +53,7 @@ impl IWatchAggregate for WatchOrchestrator {
     }
 
     fn is_lintable(&self, path: &str) -> bool {
-        <file_watch::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(path)
+        <crate::capabilities_change_analyzer::ChangeAnalyzer as IChangeAnalyzerProtocol>::is_lintable(path)
     }
 }
 

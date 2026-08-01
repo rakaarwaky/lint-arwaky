@@ -35,6 +35,7 @@ impl IImportExtractorProtocol for ImportExtractor {
             Language::Python => tree_sitter_python::LANGUAGE,
             Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
             Language::JavaScript => tree_sitter_javascript::LANGUAGE,
+            Language::Unknown => return, // cannot extract imports from unknown language
         };
         parser.set_language(&grammar.into()).ok();
         let tree = match parser.parse(content, None) {
@@ -80,8 +81,9 @@ impl ImportExtractor {
             Language::Rust => self.extract_rust_imports(node, content, source_file, imports),
             Language::Python => self.extract_python_imports(node, content, source_file, imports),
             Language::TypeScript | Language::JavaScript => {
-                self.extract_js_imports(node, content, source_file, language, imports)
+                self.extract_js_imports(node, content, source_file, imports)
             }
+            Language::Unknown => return, // cannot extract imports from unknown language
         }
 
         // Recurse into children

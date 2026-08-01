@@ -1,6 +1,8 @@
 // PURPOSE: AesCodeAnalysisViolation — violation messages for code quality rules (AES301-305)
 use std::fmt;
 
+pub use crate::common::taxonomy_language_vo::Language;
+
 use crate::common::taxonomy_message_vo::LintMessage;
 
 /// Identifiers treated as Rust-style word tokens (must match as a whole identifier).
@@ -21,58 +23,6 @@ pub enum ViolationKind {
     Todo,
     Unimplemented,
     BypassComment,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Language {
-    Rust,
-    JavaScript,
-    Python,
-    TypeScript,
-}
-
-impl Language {
-    pub fn from_adapter_name(name: &str) -> Self {
-        match name.to_lowercase().as_str() {
-            "clippy" | "rust" => Self::Rust,
-            "eslint" | "prettier" | "tsc" | "javascript" => Self::JavaScript,
-            "ruff" | "mypy" | "bandit" | "python" => Self::Python,
-            "typescript" => Self::TypeScript,
-            _ => Self::Rust,
-        }
-    }
-
-    pub fn struct_keyword(&self) -> &'static str {
-        match self {
-            Self::Rust => "struct",
-            Self::JavaScript | Self::TypeScript => "class/interface",
-            Self::Python => "class/Protocol",
-        }
-    }
-
-    pub fn type_kw(&self) -> &'static str {
-        match self {
-            Self::Rust => "type",
-            Self::JavaScript | Self::TypeScript => "interface/type",
-            Self::Python => "Protocol/type",
-        }
-    }
-
-    pub fn interface_kw(&self) -> &'static str {
-        match self {
-            Self::Rust => "trait",
-            Self::JavaScript | Self::TypeScript => "interface",
-            Self::Python => "Protocol",
-        }
-    }
-
-    pub fn inherits_kw(&self) -> &'static str {
-        match self {
-            Self::Rust => "implements",
-            Self::JavaScript | Self::TypeScript => "implements/extends",
-            Self::Python => "implements/inherits",
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

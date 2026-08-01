@@ -41,6 +41,7 @@ impl ASTParser {
                 Language::Python => tree_sitter_python::LANGUAGE,
                 Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
                 Language::JavaScript => tree_sitter_javascript::LANGUAGE,
+                Language::Unknown => tree_sitter_rust::LANGUAGE, // fallback
             };
 
             let mut parser = tree_sitter::Parser::new();
@@ -94,6 +95,7 @@ fn extract_metadata(tree: &tree_sitter::Tree, content: &str, language: Language)
         Language::Python => ParseMetadata::Python(extract_python_metadata(tree, content)),
         Language::TypeScript => ParseMetadata::TypeScript(extract_ts_metadata(tree, content)),
         Language::JavaScript => ParseMetadata::JavaScript(extract_ts_metadata(tree, content)),
+        Language::Unknown => ParseMetadata::Unknown, // cannot parse unknown language
     }
 }
 

@@ -524,6 +524,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         std::fs::symlink_metadata(path)
     }
 
+    // ── Path Utilities ─────────────────────────────────────────
+
+    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str {
+        utility_filesystem_io::get_file_stem(path)
+    }
+
     // ── Path Discovery Helpers ────────────────────────────────
 
     fn has_python_files(&self, dir: &Path) -> bool {

@@ -469,6 +469,7 @@ impl TaxonomyRoleChecker {
                     ));
                 }
             }
+            _ => {} // ParseMetadata::Unknown — skip
         }
     }
 

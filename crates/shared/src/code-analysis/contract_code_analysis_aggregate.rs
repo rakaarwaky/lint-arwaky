@@ -17,4 +17,24 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
     fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> DisplayContent;
     fn check_critical(&self, results: &[LintResult]) -> BooleanVO;
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO>;
+
+    // ── Code Duplication Detection ───────────────────────────
+
+    /// Collect file entries (path, content) for duplication analysis.
+    fn collect_file_entries(&self, files: &[String]) -> Vec<(std::path::PathBuf, String)>;
+
+    /// Scan for duplicate code blocks across files.
+    fn scan_duplicate_blocks(
+        &self,
+        entries: Vec<(std::path::PathBuf, String)>,
+        min_lines: usize,
+    ) -> Vec<Vec<(std::path::PathBuf, usize)>>;
+
+    /// Build violation results from detected duplicate blocks.
+    fn build_violations(
+        &self,
+        blocks: &[Vec<(std::path::PathBuf, usize)>],
+        total_loc: usize,
+        min_dup_lines: usize,
+    ) -> Vec<crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>;
 }

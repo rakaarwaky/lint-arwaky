@@ -319,19 +319,11 @@ impl ILintExecutorProtocol for LintExecutor {
             .map(|f| f.to_string_lossy().to_string())
             .collect();
 
-        let entries =
-            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(
-                &file_strs,
-            );
-        let blocks =
-            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
-                entries, 10,
-            );
-        let violations = shared::code_analysis::utility_code_duplication_detector::build_violations(
-            &blocks,
-            file_strs.len() * 100,
-            10,
-        );
+        let entries = self.code_analysis.collect_file_entries(&file_strs);
+        let blocks = self.code_analysis.scan_duplicate_blocks(entries, 10);
+        let violations = self
+            .code_analysis
+            .build_violations(&blocks, file_strs.len() * 100, 10);
         let count = violations.len();
         let mut output = format!(
             "Duplication detection for {}\nScanned {} files\n",
