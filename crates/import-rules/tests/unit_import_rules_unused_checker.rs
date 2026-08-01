@@ -210,5 +210,8 @@ fn find_unused_imports_empty_content_returns_empty() {
     let path = FilePath::new("/nonexistent/path/file.rs").unwrap();
     let result = sut().find_unused_imports(&path, "");
     assert!(result.is_ok(), "Empty content should return Ok");
-    assert!(result.unwrap().is_empty(), "Empty content should have no unused imports");
+    assert!(
+        result.unwrap().is_empty(),
+        "Empty content should have no unused imports"
+    );
 }

@@ -4,12 +4,12 @@
 // Skips conditional imports (`#[cfg(...)]`).
 
 use shared::filesystem::taxonomy_filesystem_vo::*;
-use std::path::PathBuf;
+use std::path::Path;
 use tree_sitter::{Node, Parser};
 
 /// Extract imports from a source file's content.
 /// Uses tree-sitter for AST-based extraction.
-pub fn extract_imports(path: &PathBuf, content: &str, language: Language) -> Vec<ImportEntry> {
+pub fn extract_imports(path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
     if content.is_empty() {
         return Vec::new();
     }
@@ -36,7 +36,7 @@ pub fn extract_imports(path: &PathBuf, content: &str, language: Language) -> Vec
 fn extract_from_node(
     node: Node,
     content: &str,
-    source_file: &PathBuf,
+    source_file: &Path,
     language: Language,
     imports: &mut Vec<ImportEntry>,
 ) {
@@ -76,7 +76,7 @@ fn extract_from_node(
 fn extract_rust_imports(
     node: Node,
     content: &str,
-    source_file: &PathBuf,
+    source_file: &Path,
     imports: &mut Vec<ImportEntry>,
 ) {
     let kind = node.kind();
@@ -101,7 +101,7 @@ fn extract_rust_imports(
             // Create one ImportEntry per name in grouped import
             for name in names {
                 imports.push(ImportEntry {
-                    source_file: source_file.clone(),
+                    source_file: source_file.to_path_buf(),
                     raw_path: name,
                     resolved_path: None,
                     import_type: if is_pub {
@@ -119,7 +119,7 @@ fn extract_rust_imports(
             }
         } else if let Some(path_str) = extract_use_path(node, content) {
             imports.push(ImportEntry {
-                source_file: source_file.clone(),
+                source_file: source_file.to_path_buf(),
                 raw_path: path_str,
                 resolved_path: None,
                 import_type: if is_pub {
@@ -135,21 +135,21 @@ fn extract_rust_imports(
                 is_wildcard: is_glob,
             });
         }
-    } else if kind == "mod_item" {
-        if let Some(name) = child_by_field(node, content, "name") {
-            imports.push(ImportEntry {
-                source_file: source_file.clone(),
-                raw_path: name,
-                resolved_path: None,
-                import_type: ImportType::Mod,
-                language: Language::Rust,
-                is_dynamic: false,
-                is_resolved: false,
-                symbols: Vec::new(),
-                is_reexport: false,
-                is_wildcard: false,
-            });
-        }
+    } else if kind == "mod_item"
+        && let Some(name) = child_by_field(node, content, "name")
+    {
+        imports.push(ImportEntry {
+            source_file: source_file.to_path_buf(),
+            raw_path: name,
+            resolved_path: None,
+            import_type: ImportType::Mod,
+            language: Language::Rust,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: Vec::new(),
+            is_reexport: false,
+            is_wildcard: false,
+        });
     }
 }
 
@@ -178,7 +178,7 @@ fn extract_grouped_use_names(node: Node, content: &str) -> Option<Vec<String>> {
     let names: Vec<String> = inner
         .split(',')
         .filter_map(|part| {
-            let name = part.trim().split_whitespace().next()?;
+            let name = part.split_whitespace().next()?;
             if name.is_empty() || name == "*" {
                 None
             } else {
@@ -186,11 +186,7 @@ fn extract_grouped_use_names(node: Node, content: &str) -> Option<Vec<String>> {
             }
         })
         .collect();
-    if names.is_empty() {
-        None
-    } else {
-        Some(names)
-    }
+    if names.is_empty() { None } else { Some(names) }
 }
 
 /// Extract the path from a use_declaration node.
@@ -244,7 +240,7 @@ fn extract_scoped_path(node: Node, content: &str) -> Option<String> {
 fn extract_python_imports(
     node: Node,
     content: &str,
-    source_file: &PathBuf,
+    source_file: &Path,
     imports: &mut Vec<ImportEntry>,
 ) {
     let kind = node.kind();
@@ -252,7 +248,7 @@ fn extract_python_imports(
     if kind == "import_statement" {
         if let Some(module) = extract_python_module(node, content) {
             imports.push(ImportEntry {
-                source_file: source_file.clone(),
+                source_file: source_file.to_path_buf(),
                 raw_path: module,
                 resolved_path: None,
                 import_type: ImportType::Import,
@@ -264,30 +260,26 @@ fn extract_python_imports(
                 is_wildcard: false,
             });
         }
-    } else if kind == "import_from_statement" {
-        if let Some(module) = child_by_field(node, content, "module_name") {
-            // Check for star import
-            let text = text_of(node, content);
-            let is_wildcard = text.contains("*");
-            let is_relative = module.starts_with('.') || module.starts_with("..");
+    } else if kind == "import_from_statement"
+        && let Some(module) = child_by_field(node, content, "module_name")
+    {
+        // Check for star import
+        let text = text_of(node, content);
+        let is_wildcard = text.contains("*");
+        let is_relative = module.starts_with('.') || module.starts_with("..");
 
-            imports.push(ImportEntry {
-                source_file: source_file.clone(),
-                raw_path: if is_relative {
-                    module.clone()
-                } else {
-                    module
-                },
-                resolved_path: None,
-                import_type: ImportType::ImportFrom,
-                language: Language::Python,
-                is_dynamic: false,
-                is_resolved: false,
-                symbols: extract_python_from_names(node, content),
-                is_reexport: false,
-                is_wildcard,
-            });
-        }
+        imports.push(ImportEntry {
+            source_file: source_file.to_path_buf(),
+            raw_path: if is_relative { module.clone() } else { module },
+            resolved_path: None,
+            import_type: ImportType::ImportFrom,
+            language: Language::Python,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: extract_python_from_names(node, content),
+            is_reexport: false,
+            is_wildcard,
+        });
     }
 }
 
@@ -319,7 +311,7 @@ fn extract_python_from_names(node: Node, content: &str) -> Vec<String> {
 fn extract_js_imports(
     node: Node,
     content: &str,
-    source_file: &PathBuf,
+    source_file: &Path,
     language: Language,
     imports: &mut Vec<ImportEntry>,
 ) {
@@ -331,7 +323,7 @@ fn extract_js_imports(
             let is_type = text.starts_with("import type");
 
             imports.push(ImportEntry {
-                source_file: source_file.clone(),
+                source_file: source_file.to_path_buf(),
                 raw_path: source,
                 resolved_path: None,
                 import_type: if is_type {
@@ -353,7 +345,7 @@ fn extract_js_imports(
             let is_wildcard = text.contains("export * from");
 
             imports.push(ImportEntry {
-                source_file: source_file.clone(),
+                source_file: source_file.to_path_buf(),
                 raw_path: source,
                 resolved_path: None,
                 import_type: ImportType::ReExport,
@@ -369,7 +361,7 @@ fn extract_js_imports(
         // require('bar')
         if let Some(source) = extract_require_source(node, content) {
             imports.push(ImportEntry {
-                source_file: source_file.clone(),
+                source_file: source_file.to_path_buf(),
                 raw_path: source,
                 resolved_path: None,
                 import_type: ImportType::Require,
@@ -380,6 +372,32 @@ fn extract_js_imports(
                 is_reexport: false,
                 is_wildcard: false,
             });
+        }
+    } else if kind == "lexical_declaration" || kind == "variable_declaration" {
+        // require() inside variable declarations: `const fs = require('fs')`
+        let mut cursor = node.walk();
+        for child in node.named_children(&mut cursor) {
+            if child.kind() == "variable_declarator" {
+                let mut c2 = child.walk();
+                for inner in child.named_children(&mut c2) {
+                    if inner.kind() == "call_expression"
+                        && let Some(source) = extract_require_source(inner, content)
+                    {
+                        imports.push(ImportEntry {
+                            source_file: source_file.to_path_buf(),
+                            raw_path: source,
+                            resolved_path: None,
+                            import_type: ImportType::Require,
+                            language,
+                            is_dynamic: false,
+                            is_resolved: false,
+                            symbols: Vec::new(),
+                            is_reexport: false,
+                            is_wildcard: false,
+                        });
+                    }
+                }
+            }
         }
     }
 }
@@ -412,6 +430,29 @@ fn extract_require_source(node: Node, content: &str) -> Option<String> {
     let text = text_of(node, content);
     if !text.contains("require") {
         return None;
+    }
+    // Look into arguments node for the string literal
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if child.kind() == "arguments" {
+            let mut c2 = child.walk();
+            for arg in child.named_children(&mut c2) {
+                match arg.kind() {
+                    "string" | "template_string" => {
+                        let text = text_of(arg, content);
+                        let stripped = text
+                            .trim_start_matches('\'')
+                            .trim_start_matches('\"')
+                            .trim_end_matches('\'')
+                            .trim_end_matches('\"');
+                        if !stripped.is_empty() {
+                            return Some(stripped.to_string());
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
     extract_js_string_source(node, content)
 }

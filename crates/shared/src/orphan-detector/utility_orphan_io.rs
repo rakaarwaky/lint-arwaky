@@ -10,7 +10,7 @@ pub fn read_file_safe(path: &str) -> String {
 pub fn read_file_with_diagnostic(path: &str) -> Result<String, String> {
     crate::code_analysis::utility_file_reader::get_cached(path).map_or_else(
         || std::fs::read_to_string(path).map_err(|err| format!("{}: {}", path, err)),
-        |c| Ok(c),
+        Ok,
     )
 }
 

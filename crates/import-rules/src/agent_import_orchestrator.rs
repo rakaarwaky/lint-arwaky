@@ -3,8 +3,8 @@
 
 use async_trait::async_trait;
 use rayon::iter::IntoParallelRefIterator;
-use std::collections::HashMap;
 use rayon::iter::ParallelIterator;
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -66,7 +66,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .values
             .iter()
             .filter_map(|f| {
-                read_file(f.value()).ok().map(|c| (f.value().to_string(), c))
+                read_file(f.value())
+                    .ok()
+                    .map(|c| (f.value().to_string(), c))
             })
             .collect();
 
@@ -125,7 +127,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let cycle_violations = self
             .deps
             .cycle
-            .check_cycles(&self.config, &self.layer_map, &files, &root_dir, &content_map)
+            .check_cycles(
+                &self.config,
+                &self.layer_map,
+                &files,
+                &root_dir,
+                &content_map,
+            )
             .await?;
         results.values.extend(cycle_violations);
         Ok(results.values)

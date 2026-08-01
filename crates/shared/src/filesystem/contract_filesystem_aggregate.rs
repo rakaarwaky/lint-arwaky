@@ -12,12 +12,16 @@ use std::path::{Path, PathBuf};
 /// Pipeline runs once (lazy: triggered on first accessor call).
 /// All accessors return references — zero-cost, no clone.
 /// Result is immutable after construction (read-only queries only).
+#[allow(clippy::ptr_arg)]
 pub trait IFilesystemAggregate: Send + Sync {
     // ── Pipeline Trigger ──────────────────────────────────────
 
     /// Run full pipeline: walk -> cache -> parse -> extract -> graph.
     /// Lazy: pipeline runs on first accessor call. Results cached internally.
     fn run_pipeline(&self, root: &PathBuf, ignored: &[String]);
+
+    /// Run full scan and return FilesystemResult (backward compat).
+    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
 
     // ── File Access (FR-001) ─────────────────────────────────
 

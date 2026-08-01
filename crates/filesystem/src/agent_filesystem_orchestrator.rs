@@ -14,7 +14,7 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::{OnceLock, RwLock, LazyLock};
+use std::sync::{LazyLock, OnceLock, RwLock};
 use std::time::Instant;
 
 // ═══════════════════════════════════════════════════════════════
@@ -94,8 +94,11 @@ impl FilesystemOrchestrator {
             if !file.parse_ok || file.content.is_empty() {
                 continue;
             }
-            let imports =
-                capabilities_import_extractor::extract_imports(&file.path, &file.content, file.language);
+            let imports = capabilities_import_extractor::extract_imports(
+                &file.path,
+                &file.content,
+                file.language,
+            );
             all_imports.extend(imports);
         }
         timing.extract_ms = t.elapsed().as_millis() as u64;
@@ -136,9 +139,7 @@ impl Default for FilesystemOrchestrator {
 }
 
 /// Extract definitions and implementations from parse metadata across all files.
-fn extract_definitions_and_impls(
-    files: &[FileEntry],
-) -> (Vec<DefinitionEntry>, Vec<ImplEntry>) {
+fn extract_definitions_and_impls(files: &[FileEntry]) -> (Vec<DefinitionEntry>, Vec<ImplEntry>) {
     let mut definitions = Vec::new();
     let mut implementations = Vec::new();
 
@@ -206,8 +207,7 @@ fn extract_definitions_and_impls(
                         }
                     }
                 }
-                ParseMetadata::TypeScript(ts_meta)
-                | ParseMetadata::JavaScript(ts_meta) => {
+                ParseMetadata::TypeScript(ts_meta) | ParseMetadata::JavaScript(ts_meta) => {
                     // Class definitions
                     for class in &ts_meta.class_declarations {
                         definitions.push(DefinitionEntry {
@@ -260,13 +260,25 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         }
     }
 
+    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult {
+        self.run_pipeline(root, ignored);
+        let cached = self.cached.get().unwrap();
+        FilesystemResult {
+            files: cached.files.clone(),
+            imports: cached.imports.clone(),
+            warnings: cached.warnings.clone(),
+            graph: GraphData::default(),
+            parsed_count: cached.files.iter().filter(|f| f.parse_ok).count(),
+            parse_errors: cached.files.iter().filter(|f| !f.parse_ok).count(),
+            unresolved_imports: cached.imports.iter().filter(|i| !i.is_resolved).count(),
+            timing: cached.timing.clone(),
+        }
+    }
+
     // ── File Access (FR-001) ─────────────────────────────────
 
     fn file_list(&self) -> &[FileEntry] {
-        self.cached
-            .get()
-            .map(|c| c.files.as_slice())
-            .unwrap_or(&[])
+        self.cached.get().map(|c| c.files.as_slice()).unwrap_or(&[])
     }
 
     // ── Parsed File Access (FR-002) ──────────────────────────
@@ -298,7 +310,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
         // Return reverse_links as the "dependency graph" for backward compat
-        static EMPTY: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        static EMPTY: LazyLock<HashMap<PathBuf, Vec<PathBuf>>> = LazyLock::new(HashMap::new);
         self.cached
             .get()
             .map(|c| &c.reverse_links)
@@ -306,7 +318,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn reverse_import_map(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        static EMPTY: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        static EMPTY: LazyLock<HashMap<PathBuf, Vec<PathBuf>>> = LazyLock::new(HashMap::new);
         self.cached
             .get()
             .map(|c| &c.reverse_links)
@@ -314,15 +326,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        static EMPTY: HashMap<String, Vec<PathBuf>> = HashMap::new();
-        self.cached
-            .get()
-            .map(|c| &c.definitions)
-            .unwrap_or(&EMPTY)
+        static EMPTY: LazyLock<HashMap<String, Vec<PathBuf>>> = LazyLock::new(HashMap::new);
+        self.cached.get().map(|c| &c.definitions).unwrap_or(&EMPTY)
     }
 
     fn trait_implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        static EMPTY: HashMap<String, Vec<PathBuf>> = HashMap::new();
+        static EMPTY: LazyLock<HashMap<String, Vec<PathBuf>>> = LazyLock::new(HashMap::new);
         self.cached
             .get()
             .map(|c| &c.implementations)
@@ -350,10 +359,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn read_file(&self, path: &Path) -> Option<String> {
         // Check cached files first
-        if let Some(cached) = self.cached.get() {
-            if let Some(entry) = cached.files.iter().find(|f| f.path == path) {
-                return Some(entry.content.clone());
-            }
+        if let Some(cached) = self.cached.get()
+            && let Some(entry) = cached.files.iter().find(|f| f.path == path)
+        {
+            return Some(entry.content.clone());
         }
         utility_filesystem_io::cache_get(&path.to_path_buf())
             .or_else(|| utility_filesystem_io::read_file(path).ok())
@@ -364,10 +373,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn get_file_content(&self, path: &PathBuf) -> Option<String> {
-        if let Some(cached) = self.cached.get() {
-            if let Some(entry) = cached.files.iter().find(|f| &f.path == path) {
-                return Some(entry.content.clone());
-            }
+        if let Some(cached) = self.cached.get()
+            && let Some(entry) = cached.files.iter().find(|f| &f.path == path)
+        {
+            return Some(entry.content.clone());
         }
         utility_filesystem_io::cache_get(path)
             .or_else(|| utility_filesystem_io::read_file(path).ok())
@@ -384,8 +393,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry> {
         let extensions = Language::extensions();
-        self.walker
-            .walk(&root.to_path_buf(), ignored, extensions)
+        self.walker.walk(&root.to_path_buf(), ignored, extensions)
     }
 
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath> {

@@ -12,7 +12,11 @@ use shared::import_rules::utility_import_symbol_extractor;
 pub struct UnusedImportRuleChecker;
 
 impl IUnusedImportProtocol for UnusedImportRuleChecker {
-    fn find_unused_imports(&self, path: &FilePath, content: &str) -> Result<Vec<LintMessage>, ImportError> {
+    fn find_unused_imports(
+        &self,
+        path: &FilePath,
+        content: &str,
+    ) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }

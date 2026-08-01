@@ -27,8 +27,8 @@ use shared::role_rules::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
-use std::collections::{HashMap, HashSet};
 use std::collections::VecDeque;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -95,8 +95,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if root_path.is_dir() {
             if let Ok(dir_path) =
                 shared::common::taxonomy_path_vo::DirectoryPath::new(root_dir.value().to_string())
-                && let Ok(list) =
-                    filesystem::utility_filesystem_io::scan_directory_with_ignored(&dir_path, ignored)
+                && let Ok(list) = filesystem::utility_filesystem_io::scan_directory_with_ignored(
+                    &dir_path, ignored,
+                )
             {
                 all_files = list.values.iter().map(|f| f.value.clone()).collect();
             }
@@ -104,7 +105,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
-                && !filesystem::utility_filesystem_io::is_path_ignored(&root_path.to_string_lossy(), ignored)
+                && !filesystem::utility_filesystem_io::is_path_ignored(
+                    &root_path.to_string_lossy(),
+                    ignored,
+                )
             {
                 all_files.push(root_dir.value().to_string());
             }
@@ -314,7 +318,11 @@ impl ArchOrphanAnalyzer {
             .iter()
             .filter_map(|f| {
                 let c = filesystem::utility_filesystem_io::read_file_safe(f);
-                if c.is_empty() { None } else { Some((f.clone(), c)) }
+                if c.is_empty() {
+                    None
+                } else {
+                    Some((f.clone(), c))
+                }
             })
             .collect();
 

@@ -50,7 +50,7 @@ impl FileWalker {
             };
 
             // Skip directories
-            if entry.file_type().map_or(false, |ft| ft.is_dir()) {
+            if entry.file_type().is_some_and(|ft| ft.is_dir()) {
                 continue;
             }
 
@@ -82,10 +82,7 @@ impl FileWalker {
             };
 
             // Read file content (UTF-8). Skip non-UTF-8 with empty content.
-            let content = match std::fs::read_to_string(path) {
-                Ok(c) => c,
-                Err(_) => String::new(), // Non-UTF-8 or unreadable: empty content
-            };
+            let content = std::fs::read_to_string(path).unwrap_or_default();
 
             entries.push(FileEntry {
                 path: path.to_path_buf(),

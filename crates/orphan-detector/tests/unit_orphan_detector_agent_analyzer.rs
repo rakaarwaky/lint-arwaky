@@ -15,9 +15,10 @@ fn analyzer() -> AgentOrphanAnalyzer {
 // ─── Happy path: agent aggregate called by container ──────
 
 fn build_content_map(files: &[String]) -> HashMap<String, String> {
-    files.iter().filter_map(|f| {
-        std::fs::read_to_string(f).ok().map(|c| (f.clone(), c))
-    }).collect()
+    files
+        .iter()
+        .filter_map(|f| std::fs::read_to_string(f).ok().map(|c| (f.clone(), c)))
+        .collect()
 }
 
 #[test]

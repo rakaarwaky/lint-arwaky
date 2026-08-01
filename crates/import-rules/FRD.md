@@ -99,20 +99,20 @@ flowchart TD
 - **Per-Scope Rules**
 
 
-  | Scope                                      | Allowed                                                    | Forbidden                                                                                | Mandatory                     |
-  | -------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------------------------- |
-  | `taxonomy(vo)`                             | taxonomy                                                   | agent, surface, contract, utility, capabilities, root                                    | —                            |
-  | `taxonomy(entity,error,event)`             | taxonomy                                                   | agent, surface, contract, utility, capabilities, root                                    | taxonomy(vo\|constant)        |
-  | `taxonomy(constant)`                       | taxonomy                                                   | agent, surface, contract, utility, capabilities, root                                    | —                            |
-  | `utility`                                  | taxonomy                                                   | agent, surface, contract, capabilities, root                                             | —                            |
-  | `contract(protocol)`                       | taxonomy, contract                                         | agent, surface, capabilities, contract(aggregate), root                                  | taxonomy                      |
-  | `contract(aggregate)`                      | taxonomy, contract                                         | agent, surface, capabilities, root                                                       | taxonomy                      |
-  | `capabilities`                             | taxonomy, contract, utility                                | surface, agent, capabilities, root                                                       | taxonomy, contract(protocol)  |
-  | `agent(orchestrator)`                      | taxonomy, contract(aggregate), contract(protocol), utility | surface, capabilities, root                                                              | taxonomy, contract(aggregate) |
-  | `surface(command|controller|page)`         | taxonomy, contract(aggregate), utility                     | agent, capabilities, contract(protocol), root                                            | —                            |
-  | `surface(hook|store|action|screen|router)` | taxonomy                                                   | agent, capabilities, contract(protocol), surface(command\|controller\|page\|entry), root | —                            |
-  | `surface(component|view|layout)`           | taxonomy                                                   | agent, contract, capabilities, surface(all other sub-layers), root                       | —                            |
-  | `root`                                     | taxonomy, contract, capabilities, agent, surface           | —                                                                                       | —                            |
+  | Scope                          | Allowed                                                    | Forbidden                                               | Mandatory                              |
+  | -------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ---------------------------------------- |
+  | `taxonomy(vo)`                 | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                                     |
+  | `taxonomy(entity,error,event)` | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | taxonomy(vo\|constant)                 |
+  | `taxonomy(constant)`           | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                                     |
+  | `utility`                      | taxonomy                                                   | agent, surface, contract, capabilities, root            | —                                     |
+  | `contract(protocol)`           | taxonomy, contract                                         | agent, surface, capabilities, contract(aggregate), root | taxonomy                               |
+  | `contract(aggregate)`          | taxonomy, contract                                         | agent, surface, capabilities, root                      | taxonomy                               |
+  | `capabilities`                 | taxonomy, contract, utility                                | surface, agent, capabilities, root                      | taxonomy, contract(protocol)           |
+  | `agent(orchestrator)`          | taxonomy, contract(aggregate), contract(protocol), utility | surface, capabilities, root                             | taxonomy, contract(aggregate)          |
+  | `surface(command               | controller                                                 | page)`                                                  | taxonomy, contract(aggregate), utility |
+  | `surface(hook                  | store                                                      | action                                                  | screen                                 |
+  | `surface(component             | view                                                       | layout)`                                                | taxonomy                               |
+  | `root`                         | taxonomy, contract, capabilities, agent, surface           | —                                                      | —                                     |
 - **Key directional rules** (derived from config):
 
   ```
@@ -283,22 +283,20 @@ flowchart TD
 
 ---
 
-
-
 ---
 
 ## API Contract
 
 
-| Operation                         | Input                                                                       | Output                         | Purpose                                        |
-| ---------------------------------- | ----------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------- |
-| Full import audit                 | Target path (file or directory)                                               | Lint results                    | Run all import checks (AES201–AES205)          |
-| Forbidden import check (AES201)   | File data, import data, configuration                                        | CRITICAL violations             | Validate imports against layer dependency matrix |
-| Mandatory import check (AES202)   | File data, import data, configuration                                        | HIGH violations                 | Verify required imports per scope              |
-| Unused import check (AES203)      | File data, import data                                                       | MEDIUM violations               | Detect symbols never referenced in code        |
-| Dummy import check (AES204)       | File data, import data, layer map                                            | HIGH violations                 | Detect stub code circumventing AES203          |
-| Circular dependency check (AES205)| File data, import data, dependency graph, configuration                     | CRITICAL violations             | Detect layer-level import cycles               |
-| Barrel resolution                 | Module path, symbol name, root dir                                          | Resolved import info            | Resolve import through barrel re-export files  |
+| Operation                          | Input                                                   | Output               | Purpose                                          |
+| ------------------------------------ | --------------------------------------------------------- | ---------------------- | -------------------------------------------------- |
+| Full import audit                  | Target path (file or directory)                         | Lint results         | Run all import checks (AES201–AES205)           |
+| Forbidden import check (AES201)    | File data, import data, configuration                   | CRITICAL violations  | Validate imports against layer dependency matrix |
+| Mandatory import check (AES202)    | File data, import data, configuration                   | HIGH violations      | Verify required imports per scope                |
+| Unused import check (AES203)       | File data, import data                                  | MEDIUM violations    | Detect symbols never referenced in code          |
+| Dummy import check (AES204)        | File data, import data, layer map                       | HIGH violations      | Detect stub code circumventing AES203            |
+| Circular dependency check (AES205) | File data, import data, dependency graph, configuration | CRITICAL violations  | Detect layer-level import cycles                 |
+| Barrel resolution                  | Module path, symbol name, root dir                      | Resolved import info | Resolve import through barrel re-export files    |
 
 ---
 
@@ -417,8 +415,6 @@ flowchart TD
 | 3 | Self-import (file imports itself) | No violation (silently ignored) | pass   |
 | 4 | Indirect cycle (A → B → C → A) | AES205 violation                | AES205 |
 
-
-
 ### Configuration
 
 
@@ -465,13 +461,13 @@ flowchart TD
 | **`parse_ok`**       | Boolean flag on parse results indicating whether parsing succeeded                                                                                    |
 | **`PARSE_WARN`**     | Warning diagnostic (non-AES code) emitted when a file fails to parse                                                                                  |
 | **Re-export**        | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                            |
-| **Scope pattern**    | Config syntax like`taxonomy(vo)` or `surface(command|controller|page)` to target specific sub-layers                                                  |
-| **Conditions array** | YAML structure where each entry defines scope-specific`allowed`, `forbidden`, and `mandatory` rules                                                    |
+| **Scope pattern**    | Config syntax like`taxonomy(vo)` or `surface(command                                                                                                  |
+| **Conditions array** | YAML structure where each entry defines scope-specific`allowed`, `forbidden`, and `mandatory` rules                                                   |
 | **3-color DFS**      | Graph traversal algorithm (White/Gray/Black) used for cycle detection                                                                                 |
 | **Dependency edge**  | A directed edge in the layer dependency graph (e.g.,`capabilities → contract`)                                                                       |
 | **ResolvedImport**   | VO carrying the result of barrel file resolution (original module, resolved file, resolved layer)                                                     |
 | **Grey area**        | Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL                                                      |
-| **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via trait objects                                               |
+| **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via trait objects                                                 |
 
 ---
 
@@ -514,19 +510,19 @@ architecture:
 ### Scope Pattern Syntax
 
 
-| Pattern                                    | Meaning                                          |
-| -------------------------------------------- | -------------------------------------------------- |
-| `taxonomy`                                 | All taxonomy files                               |
-| `taxonomy(vo)`                             | Only taxonomy value objects                      |
-| `taxonomy(entity,error,event)`             | Taxonomy entities, errors, and events            |
-| `contract(protocol)`                       | Only contract protocols                          |
-| `contract(aggregate)`                      | Only contract aggregates                         |
-| `capabilities`                             | All capability files                             |
-| `agent(orchestrator)`                      | Only agent orchestrators                         |
-| `surface(command|controller|page)`         | Surface command handlers, controllers, pages     |
-| `surface(hook|store|action|screen|router)` | Surface hooks, stores, actions, screens, routers |
-| `surface(component|view|layout)`           | Surface UI components, views, layouts            |
-| `root`                                     | Root / composition root                          |
+| Pattern                        | Meaning                               |
+| -------------------------------- | --------------------------------------- |
+| `taxonomy`                     | All taxonomy files                    |
+| `taxonomy(vo)`                 | Only taxonomy value objects           |
+| `taxonomy(entity,error,event)` | Taxonomy entities, errors, and events |
+| `contract(protocol)`           | Only contract protocols               |
+| `contract(aggregate)`          | Only contract aggregates              |
+| `capabilities`                 | All capability files                  |
+| `agent(orchestrator)`          | Only agent orchestrators              |
+| `surface(command               | controller                            |
+| `surface(hook                  | store                                 |
+| `surface(component             | view                                  |
+| `root`                         | Root / composition root               |
 
 ### Layer Detection (Hardcoded Convention)
 

@@ -145,10 +145,7 @@ impl DependencyGraph {
     /// Get files that import the given file (who depends on me).
     /// Uses ReverseLinkIndex for O(1) lookup.
     pub fn dependents(&self, path: &PathBuf) -> Vec<PathBuf> {
-        self.reverse_links
-            .get(path)
-            .cloned()
-            .unwrap_or_default()
+        self.reverse_links.get(path).cloned().unwrap_or_default()
     }
 
     /// Get files imported by the given file (what do I depend on).

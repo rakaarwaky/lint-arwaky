@@ -153,18 +153,19 @@ impl ILintExecutorProtocol for LintExecutor {
                     .as_ref()
                     .map(|o| o.ignored_paths(&root_fp))
                     .unwrap_or_default();
-                let source_files = match filesystem::utility_filesystem_io::scan_directory_with_ignored(
-                    &dir_path,
-                    ignored.values(),
-                ) {
-                    Ok(list) => list.values,
-                    Err(e) => {
-                        return LintExecutionResult::failure(format!(
-                            "Orphan detection for {}\nFailed to scan directory: {}",
-                            path, e
-                        ));
-                    }
-                };
+                let source_files =
+                    match filesystem::utility_filesystem_io::scan_directory_with_ignored(
+                        &dir_path,
+                        ignored.values(),
+                    ) {
+                        Ok(list) => list.values,
+                        Err(e) => {
+                            return LintExecutionResult::failure(format!(
+                                "Orphan detection for {}\nFailed to scan directory: {}",
+                                path, e
+                            ));
+                        }
+                    };
                 let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
                 if file_strs.is_empty() {
                     return LintExecutionResult::success(

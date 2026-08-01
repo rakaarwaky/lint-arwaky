@@ -4,22 +4,22 @@
 
 use super::taxonomy_filesystem_vo::*;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Protocol for walking the filesystem and discovering source files (FR-001).
 pub trait IFileWalkerProtocol: Send + Sync {
-    fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry>;
+    fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry>;
 }
 
 /// Protocol for AST parsing (FR-002).
 pub trait IASTParserProtocol: Send + Sync {
-    fn parse(&self, path: &PathBuf, content: &str, language: Language) -> Option<ParseMetadata>;
-    fn has_ast(&self, path: &PathBuf) -> bool;
+    fn parse(&self, path: &Path, content: &str, language: Language) -> Option<ParseMetadata>;
+    fn has_ast(&self, path: &Path) -> bool;
 }
 
 /// Protocol for extracting imports from source files (FR-003).
 pub trait IImportExtractorProtocol: Send + Sync {
-    fn extract(&self, path: &PathBuf, content: &str, language: Language) -> Vec<ImportEntry>;
+    fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry>;
 }
 
 /// Protocol for the dependency graph (FR-004).
@@ -31,10 +31,10 @@ pub trait IDependencyGraphProtocol: Send + Sync {
         definitions: &[DefinitionEntry],
         implementations: &[ImplEntry],
     );
-    fn dependents(&self, path: &PathBuf) -> Vec<PathBuf>;
-    fn dependencies(&self, path: &PathBuf) -> Vec<PathBuf>;
+    fn dependents(&self, path: &Path) -> Vec<PathBuf>;
+    fn dependencies(&self, path: &Path) -> Vec<PathBuf>;
     fn cycles(&self) -> Vec<Vec<PathBuf>>;
-    fn reachable(&self, from: &PathBuf, to: &PathBuf) -> bool;
+    fn reachable(&self, from: &Path, to: &Path) -> bool;
     fn orphan_files(&self) -> Vec<PathBuf>;
     fn all_files(&self) -> HashSet<PathBuf>;
     fn reverse_links(&self) -> &std::collections::HashMap<PathBuf, Vec<PathBuf>>;
@@ -44,6 +44,6 @@ pub trait IDependencyGraphProtocol: Send + Sync {
 
 /// Protocol for the filesystem service facade.
 pub trait IFilesystemServiceProtocol: Send + Sync {
-    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
+    fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult;
     fn graph(&self) -> &dyn IDependencyGraphProtocol;
 }

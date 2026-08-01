@@ -53,7 +53,13 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         content_map: &HashMap<String, String>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
-        let cycle_violations = self._scan(config, layer_map, &file_strs, &root_dir.to_string(), content_map);
+        let cycle_violations = self._scan(
+            config,
+            layer_map,
+            &file_strs,
+            &root_dir.to_string(),
+            content_map,
+        );
         Ok(cycle_violations)
     }
 

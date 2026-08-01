@@ -67,7 +67,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         }
 
         // Check 1: Implementation check via AST
-        let unimplemented = self.find_unimplemented_traits(&trait_names, search_files.as_slice(), content_map);
+        let unimplemented =
+            self.find_unimplemented_traits(&trait_names, search_files.as_slice(), content_map);
         if !unimplemented.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
@@ -199,13 +200,20 @@ impl ContractOrphanAnalyzer {
     ) -> Vec<String> {
         trait_names
             .iter()
-            .filter(|trait_name| !self.has_trait_implementation(search_files, trait_name, content_map))
+            .filter(|trait_name| {
+                !self.has_trait_implementation(search_files, trait_name, content_map)
+            })
             .cloned()
             .collect()
     }
 
     /// Check if any file implements the given trait, using AST.
-    fn has_trait_implementation(&self, search_files: &[String], trait_name: &str, content_map: &HashMap<String, String>) -> bool {
+    fn has_trait_implementation(
+        &self,
+        search_files: &[String],
+        trait_name: &str,
+        content_map: &HashMap<String, String>,
+    ) -> bool {
         for cf in search_files {
             let content = content_map.get(cf).cloned().unwrap_or_default();
             if content.is_empty() {
@@ -269,7 +277,11 @@ impl ContractOrphanAnalyzer {
     }
 
     /// Check if any trait name is re-exported via barrel files.
-    fn is_trait_re_exported_in_barrel(trait_names: &[String], search_files: &[String], content_map: &HashMap<String, String>) -> bool {
+    fn is_trait_re_exported_in_barrel(
+        trait_names: &[String],
+        search_files: &[String],
+        content_map: &HashMap<String, String>,
+    ) -> bool {
         for cf in search_files {
             let cb = file_basename(cf);
             let is_barrel = matches!(

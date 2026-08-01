@@ -43,15 +43,19 @@ impl ASTParser {
 
             match parser.parse(&entry.content, None) {
                 Some(tree) => {
-                    let metadata = extract_metadata(&tree, &entry.content, entry.language);
-                    entry.parse_metadata = Some(metadata);
-                    entry.parse_ok = true;
-                    // Store AST root for import extraction
-                    self.asts
-                        .insert(entry.path.clone(), tree.root_node().to_sexp());
+                    if tree.root_node().has_error() {
+                        // tree-sitter produced partial tree with errors
+                        entry.parse_ok = false;
+                    } else {
+                        let metadata = extract_metadata(&tree, &entry.content, entry.language);
+                        entry.parse_metadata = Some(metadata);
+                        entry.parse_ok = true;
+                        // Store AST root for import extraction
+                        self.asts
+                            .insert(entry.path.clone(), tree.root_node().to_sexp());
+                    }
                 }
                 None => {
-                    // tree-sitter produces partial tree on syntax error
                     entry.parse_ok = false;
                 }
             }
@@ -66,11 +70,7 @@ impl Default for ASTParser {
 }
 
 /// Extract language-specific metadata from a parsed AST.
-fn extract_metadata(
-    tree: &tree_sitter::Tree,
-    content: &str,
-    language: Language,
-) -> ParseMetadata {
+fn extract_metadata(tree: &tree_sitter::Tree, content: &str, language: Language) -> ParseMetadata {
     match language {
         Language::Rust => ParseMetadata::Rust(extract_rust_metadata(tree, content)),
         Language::Python => ParseMetadata::Python(extract_python_metadata(tree, content)),
@@ -126,7 +126,8 @@ fn extract_rust_metadata(tree: &tree_sitter::Tree, content: &str) -> RustMetadat
             "function_item" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
                 let has_body = node.child_by_field_name("body").is_some();
-                meta.function_definitions.push(RustFnItem { name, has_body });
+                meta.function_definitions
+                    .push(RustFnItem { name, has_body });
             }
             _ => {}
         }
@@ -208,30 +209,17 @@ fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String>
 /// Extract individual names from grouped use: `use foo::{A, B, C as D}`.
 fn extract_use_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut names = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        if child.kind() == "use_as_clause" {
-            // `as` alias — take the alias name
-            let mut c2 = child.walk();
-            for inner in child.named_children(&mut c2) {
-                if inner.kind() == "identifier" && names.is_empty() {
-                    // The last identifier is the alias
-                } else if inner.kind() == "identifier" {
-                    // The last identifier is the alias
-                }
-            }
-        }
-    }
+    let _cursor = node.walk();
     // For now, we extract names from the text if grouped
     let text = text_of(node, content);
-    if let Some(brace_start) = text.find('{') {
-        if let Some(brace_end) = text.find('}') {
-            let inner = &text[brace_start + 1..brace_end];
-            for part in inner.split(',') {
-                let name = part.trim().split_whitespace().next().unwrap_or("");
-                if !name.is_empty() {
-                    names.push(name.to_string());
-                }
+    if let Some(brace_start) = text.find('{')
+        && let Some(brace_end) = text.find('}')
+    {
+        let inner = &text[brace_start + 1..brace_end];
+        for part in inner.split(',') {
+            let name = part.split_whitespace().next().unwrap_or("");
+            if !name.is_empty() {
+                names.push(name.to_string());
             }
         }
     }
@@ -262,15 +250,13 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
     let text = text_of(node, content);
     let has_generics = text.contains("<");
 
-    // Try to extract trait name and implementor type
     let mut trait_name = None;
     let mut trait_path = None;
     let implementor_type;
 
     if let Some(for_pos) = text.find(" for ") {
-        // `impl Trait for Type` or `impl<T> Trait for Type`
         let before_for = text[..for_pos].trim();
-        let after_for = text[for_pos + 5..].trim().trim_end_matches('{').trim();
+        let after_for = text[for_pos + 5..].trim();
 
         // Extract trait from before_for (skip `impl<T>` generic part)
         if let Some(impl_end) = before_for.rfind('>') {
@@ -282,7 +268,14 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
             trait_path = Some(trait_part.to_string());
         }
 
-        implementor_type = after_for.to_string();
+        // Strip everything from first '{' or whitespace onward
+        implementor_type = after_for
+            .split_whitespace()
+            .next()
+            .unwrap_or("")
+            .trim_end_matches('{')
+            .trim()
+            .to_string();
     } else {
         // Inherent impl: `impl Type { ... }`
         let impl_part = text.strip_prefix("impl").unwrap_or(&text);
@@ -291,7 +284,13 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
         } else {
             impl_part.trim()
         };
-        implementor_type = impl_part.trim_end_matches('{').trim().to_string();
+        implementor_type = impl_part
+            .split_whitespace()
+            .next()
+            .unwrap_or("")
+            .trim_end_matches('{')
+            .trim()
+            .to_string();
     }
 
     RustImplItem {
@@ -324,12 +323,14 @@ fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> PythonMet
             "class_definition" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
                 let bases = extract_python_class_bases(node, content);
-                meta.class_declarations.push(PythonClassItem { name, bases });
+                meta.class_declarations
+                    .push(PythonClassItem { name, bases });
             }
             "function_definition" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
                 let has_body = node.child_by_field_name("body").is_some();
-                meta.function_definitions.push(PythonFnItem { name, has_body });
+                meta.function_definitions
+                    .push(PythonFnItem { name, has_body });
             }
             _ => {}
         }
@@ -341,7 +342,10 @@ fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> PythonMet
 /// Extract Python import module path from an import_statement node.
 fn extract_python_import_module(node: tree_sitter::Node, content: &str) -> Option<String> {
     let text = text_of(node, content);
-    text.strip_prefix("import ")?.split_whitespace().next().map(|s| s.to_string())
+    text.strip_prefix("import ")?
+        .split_whitespace()
+        .next()
+        .map(|s| s.to_string())
 }
 
 /// Extract Python class base classes.
@@ -384,7 +388,8 @@ fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScriptMet
             "class_declaration" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
                 let implements = extract_ts_implements(node, content);
-                meta.class_declarations.push(TSClassItem { name, implements });
+                meta.class_declarations
+                    .push(TSClassItem { name, implements });
             }
             "interface_declaration" => {
                 if let Some(name) = child_by_field(node, content, "name") {
@@ -442,8 +447,11 @@ fn extract_string_from_node(node: tree_sitter::Node, content: &str) -> Option<St
             "string" | "template_string" => {
                 let text = text_of(child, content);
                 // Strip quotes
-                let stripped = text.trim_start_matches('\'').trim_start_matches('"')
-                    .trim_end_matches('\'').trim_end_matches('"');
+                let stripped = text
+                    .trim_start_matches('\'')
+                    .trim_start_matches('"')
+                    .trim_end_matches('\'')
+                    .trim_end_matches('"');
                 if !stripped.is_empty() {
                     return Some(stripped.to_string());
                 }

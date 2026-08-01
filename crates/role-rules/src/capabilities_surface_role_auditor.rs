@@ -2,9 +2,9 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use shared::cli_commands::LintResult;
 
+use shared::common::SourceContentVO;
 use shared::common::utility_language_detector::detect_language_info_from_source;
 use shared::common::{LintMessage, Severity};
-use shared::common::{SourceContentVO};
 use shared::role_rules::AesRoleViolation;
 use shared::role_rules::ISurfaceRoleChecker;
 
@@ -24,16 +24,13 @@ const MAX_IF_DEPTH: usize = 3;
 const MAX_CONTROL_FLOW: usize = 3;
 
 // Regex patterns
-static PY_CLASS_RE: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^class\s+(\w+)").ok());
+static PY_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^class\s+(\w+)").ok());
 static PY_METHOD_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^(?:async\s+)?def\s+(\w+)\s*\(").ok());
-static JS_CLASS_RE: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^export\s+class\s+(\w+)").ok());
+static JS_CLASS_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^export\s+class\s+(\w+)").ok());
 static JS_METHOD_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^\s*(?:public|private|protected)?\s*(?:async\s+)?(\w+)\s*\(").ok());
-static IF_RE: Lazy<Option<Regex>> =
-    Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
+static IF_RE: Lazy<Option<Regex>> = Lazy::new(|| Regex::new(r"^\s*if\s+").ok());
 static RUST_IMPL_RE: Lazy<Option<Regex>> =
     Lazy::new(|| Regex::new(r"^\s*(?:pub\s+)?(?:unsafe\s+)?impl\s+").ok());
 static RUST_FN_RE: Lazy<Option<Regex>> =
@@ -46,35 +43,19 @@ pub struct SurfaceRoleChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(
-        &self,
-        _source: &SourceContentVO,
-        _violations: &mut Vec<LintResult>,
-    ) {
+    fn check_smart_surface(&self, _source: &SourceContentVO, _violations: &mut Vec<LintResult>) {
         // Smart surfaces are exempt from hierarchy/nesting/domain checks
     }
 
-    fn check_utility_surface(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_utility_surface(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         self._check_surface_impl(source, violations);
     }
 
-    fn check_passive_surface(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_passive_surface(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         self._check_surface_impl(source, violations);
     }
 
-    fn check_fn_count_limit(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn check_fn_count_limit(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
         let li = detect_language_info_from_source(source);
@@ -128,11 +109,7 @@ impl SurfaceRoleChecker {
 
     /// Main implementation for utility and passive surface checks.
     /// Receives content via SourceContentVO (no I/O).
-    fn _check_surface_impl(
-        &self,
-        source: &SourceContentVO,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn _check_surface_impl(&self, source: &SourceContentVO, violations: &mut Vec<LintResult>) {
         let content = source.content.value();
         let file = source.file_path.value();
         let lines: Vec<&str> = content.lines().collect();
@@ -157,11 +134,7 @@ impl SurfaceRoleChecker {
     }
 
     /// AES406: domain logic check — count control-flow statements.
-    fn _check_domain_logic(
-        &self,
-        content: &str,
-        violations: &mut Vec<String>,
-    ) {
+    fn _check_domain_logic(&self, content: &str, violations: &mut Vec<String>) {
         let control_flow_count = content
             .lines()
             .filter(|line| {
@@ -353,11 +326,7 @@ impl SurfaceRoleChecker {
     }
 
     /// JavaScript/TypeScript-specific passive check: detect classes and methods.
-    fn _check_javascript_passive(
-        &self,
-        lines: &[&str],
-        violations: &mut Vec<String>,
-    ) {
+    fn _check_javascript_passive(&self, lines: &[&str], violations: &mut Vec<String>) {
         let class_re = match &*JS_CLASS_RE {
             Some(r) => r,
             None => return,

@@ -456,10 +456,10 @@ fn workspace_restrict(root: &Path) -> Option<HashSet<String>> {
     }
     let mut set = HashSet::new();
     for entry in std::fs::read_dir(root).into_iter().flatten().flatten() {
-        if entry.file_type().map_or(false, |ft| ft.is_dir()) {
-            if let Some(name) = entry.file_name().to_str() {
-                set.insert(name.to_string());
-            }
+        if entry.file_type().is_ok_and(|ft| ft.is_dir())
+            && let Some(name) = entry.file_name().to_str()
+        {
+            set.insert(name.to_string());
         }
     }
     Some(set)
@@ -479,27 +479,27 @@ fn walk_source_files_inner(
             if is_ignored_dir(&path, ignored) {
                 continue;
             }
-            if let Ok(meta) = std::fs::symlink_metadata(&path) {
-                if meta.file_type().is_symlink() {
-                    if let Ok(target) = std::fs::canonicalize(&path) {
-                        if !target.starts_with(root) || !visited.insert(target.clone()) {
-                            continue;
-                        }
-                        if let Ok(tm) = target.metadata() {
-                            if tm.is_dir() {
-                                walk_source_files_inner(
-                                    &target, files, ignored, visited, root, restrict,
-                                );
-                            } else if tm.is_file()
-                                && target.starts_with(root)
-                                && is_source_file(&target)
-                            {
-                                collect_source_file(&target, files);
-                            }
+            if let Ok(meta) = std::fs::symlink_metadata(&path)
+                && meta.file_type().is_symlink()
+            {
+                if let Ok(target) = std::fs::canonicalize(&path) {
+                    if !target.starts_with(root) || !visited.insert(target.clone()) {
+                        continue;
+                    }
+                    if let Ok(tm) = target.metadata() {
+                        if tm.is_dir() {
+                            walk_source_files_inner(
+                                &target, files, ignored, visited, root, restrict,
+                            );
+                        } else if tm.is_file()
+                            && target.starts_with(root)
+                            && is_source_file(&target)
+                        {
+                            collect_source_file(&target, files);
                         }
                     }
-                    continue;
                 }
+                continue;
             }
             if path.is_dir() {
                 let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.to_path_buf());
@@ -507,14 +507,12 @@ fn walk_source_files_inner(
                     continue;
                 }
                 // Workspace restriction: only descend into allowed member dirs at root level
-                if dir == root {
-                    if let Some(r) = restrict {
-                        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                            if !r.contains(name) {
-                                continue;
-                            }
-                        }
-                    }
+                if dir == root
+                    && let Some(r) = restrict
+                    && let Some(name) = path.file_name().and_then(|n| n.to_str())
+                    && !r.contains(name)
+                {
+                    continue;
                 }
                 walk_source_files_inner(&path, files, ignored, visited, root, restrict);
             } else if is_source_file(&path) {
@@ -689,7 +687,7 @@ pub fn is_executable_in_path(executable: &str) -> bool {
         .split(':')
         .any(|dir| {
             let p = Path::new(dir).join(executable);
-            p.exists() && p.metadata().map_or(false, |m| m.is_file())
+            p.exists() && p.metadata().is_ok_and(|m| m.is_file())
         })
 }
 

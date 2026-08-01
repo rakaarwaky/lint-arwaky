@@ -165,8 +165,8 @@ impl WorkspaceDetector {
             let parent_str = parent_name.to_string_lossy();
             if workspace_dirs.contains(&parent_str.as_ref())
                 && let Ok(meta) = std::fs::metadata(root)
-                    && meta.is_dir()
-                        && let Ok(fp) = FilePath::new(root.to_string_lossy().to_string())
+                && meta.is_dir()
+                && let Ok(fp) = FilePath::new(root.to_string_lossy().to_string())
             {
                 return vec![fp];
             }
