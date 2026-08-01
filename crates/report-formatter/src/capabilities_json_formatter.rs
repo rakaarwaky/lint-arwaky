@@ -37,26 +37,33 @@ impl JsonFormatter {
         let mut med = 0;
         let mut low = 0;
 
-        let violations: Vec<JsonViolation> = report
-            .results
-            .iter()
-            .map(|r| {
-                match r.severity {
-                    shared::common::taxonomy_severity_vo::Severity::CRITICAL => crit += 1,
-                    shared::common::taxonomy_severity_vo::Severity::HIGH => high += 1,
-                    shared::common::taxonomy_severity_vo::Severity::MEDIUM => med += 1,
-                    shared::common::taxonomy_severity_vo::Severity::LOW => low += 1,
-                    _ => {}
-                }
-                JsonViolation {
-                    file: r.file.value.clone(),
-                    line: r.line.value(),
-                    code: r.code.to_string(),
-                    severity: r.severity.to_string(),
-                    message: r.message.value.clone(),
-                }
-            })
-            .collect();
+        // Separate AES violations from external lint results
+        let mut violations = Vec::new();
+        let mut external_results = Vec::new();
+
+        for r in &report.results {
+            let output = JsonViolation {
+                file: r.file.value.clone(),
+                line: r.line.value(),
+                code: r.code.to_string(),
+                severity: r.severity.to_string(),
+                message: r.message.value.clone(),
+            };
+
+            match r.severity {
+                shared::common::taxonomy_severity_vo::Severity::CRITICAL => crit += 1,
+                shared::common::taxonomy_severity_vo::Severity::HIGH => high += 1,
+                shared::common::taxonomy_severity_vo::Severity::MEDIUM => med += 1,
+                shared::common::taxonomy_severity_vo::Severity::LOW => low += 1,
+                _ => {}
+            }
+
+            if r.code.code().starts_with("AES") || r.code.code().starts_with("PARSE_") {
+                violations.push(output);
+            } else {
+                external_results.push(output);
+            }
+        }
 
         let diagnostics: Vec<JsonDiagnostic> = report
             .diagnostics
@@ -79,6 +86,7 @@ impl JsonFormatter {
 
         let dto = JsonReportDto {
             violations,
+            external_results,
             diagnostics,
             summary,
         };

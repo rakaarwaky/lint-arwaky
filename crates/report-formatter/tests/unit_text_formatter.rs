@@ -66,7 +66,7 @@ fn text_formatter_formats_diagnostics() {
     let report = ScanReport::new(vec![], diagnostics);
 
     let result = formatter.format(&report, Format::Text);
-    assert!(result.value.contains("DIAGNOSTICS"));
+    assert!(result.value.contains("Diagnostics:"));
     assert!(result.value.contains("File skipped: parse failure"));
 }
 
@@ -82,8 +82,8 @@ fn text_formatter_shows_severity_badges() {
     let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Text);
-    assert!(result.value.contains("[CRITICAL]"));
-    assert!(result.value.contains("[MEDIUM]"));
+    assert!(result.value.contains("[!!!]"));
+    assert!(result.value.contains("[!  ]"));
 }
 
 // ─── format: Violations breakdown ──
@@ -99,8 +99,7 @@ fn text_formatter_groups_violations_by_code() {
     let report = ScanReport::new(results, vec![]);
 
     let result = formatter.format(&report, Format::Text);
-    assert!(result.value.contains("SUMMARY"));
-    assert!(result.value.contains("Total Violations: 3"));
+    assert!(result.value.contains("Total violations: 3"));
 }
 
 // ─── format: Score displayed when present ──
@@ -112,7 +111,7 @@ fn text_formatter_shows_compliance_score() {
         .with_score(shared::common::taxonomy_common_vo::Score::new(85.0));
 
     let result = formatter.format(&report, Format::Text);
-    assert!(result.value.contains("Compliance Score: 85.0%"));
+    assert!(result.value.contains("Compliance score: 85.0/100"));
 }
 
 // ─── Default trait ──

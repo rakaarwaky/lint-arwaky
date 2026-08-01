@@ -42,7 +42,7 @@ fn test_text_formatter_empty() {
         score: None,
     };
     let content = formatter.format_text(&report);
-    assert!(content.value.contains("Clean report: 0 violations found."));
+    assert!(content.value.contains("AES Violations: 0"));
 }
 
 #[test]
@@ -51,10 +51,10 @@ fn test_text_formatter_full() {
     let report = sample_report();
     let content = formatter.format_text(&report);
 
-    assert!(content.value.contains("VIOLATIONS"));
+    assert!(content.value.contains("AES Violations"));
     assert!(content.value.contains("AES201"));
-    assert!(content.value.contains("DIAGNOSTICS"));
-    assert!(content.value.contains("Compliance Score: 85.0%"));
+    assert!(content.value.contains("Diagnostics"));
+    assert!(content.value.contains("Compliance score: 85.0/100"));
 }
 
 #[test]
@@ -92,11 +92,11 @@ fn test_sarif_formatter_structure() {
 fn test_junit_formatter_xml() {
     let formatter = JunitFormatter::new();
     let report = sample_report();
-    let content = formatter.format_junit(&report.results);
+    let content = formatter.format_junit_report(&report);
 
     assert!(content.value.contains("<testsuites"));
     assert!(content.value.contains("classname=\"AES201\""));
-    assert!(content.value.contains("<failure message=\"CRITICAL:"));
+    assert!(content.value.contains("<failure message=\"critical:"));
     assert!(
         content
             .value
@@ -126,7 +126,7 @@ fn test_orchestrator_routing() {
     let report = sample_report();
 
     let text_res = orchestrator.format(&report, Format::Text);
-    assert!(text_res.value.contains("LINT ARWAKY SCAN REPORT"));
+    assert!(text_res.value.contains("Lint Arwaky Report"));
 
     let json_res = orchestrator.format(&report, Format::Json);
     assert!(json_res.value.contains("\"violations\""));

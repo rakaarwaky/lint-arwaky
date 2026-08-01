@@ -42,7 +42,7 @@ impl TextFormatter {
 
         // ── Header ──
         out.push_str("Lint Arwaky Report\n");
-        out.push_str("═══════════════════════════════════════════\n\n");
+        out.push_str("===========================================\n\n");
 
         // ── Separate AES violations from external lint results ──
         let mut aes_violations = Vec::new();
@@ -57,7 +57,7 @@ impl TextFormatter {
 
         // ── AES Violations Section ──
         out.push_str(&format!("AES Violations: {}\n", aes_violations.len()));
-        out.push_str("───────────────────────────────────────────\n");
+        out.push_str("-------------------------------------------\n");
         if aes_violations.is_empty() {
             out.push_str("  None\n");
         } else {
@@ -102,7 +102,7 @@ impl TextFormatter {
             "External Lint Results: {}\n",
             external_results.len()
         ));
-        out.push_str("───────────────────────────────────────────\n");
+        out.push_str("-------------------------------------------\n");
         if external_results.is_empty() {
             out.push_str("  None\n");
         } else {
@@ -137,7 +137,7 @@ impl TextFormatter {
         // ── Diagnostics Section ──
         if !report.diagnostics.is_empty() {
             out.push_str(&format!("Diagnostics: {}\n", report.diagnostics.len()));
-            out.push_str("───────────────────────────────────────────\n");
+            out.push_str("-------------------------------------------\n");
             for d in &report.diagnostics {
                 let sev_label = match d.severity {
                     shared::cli_commands::taxonomy_scan_report_vo::DiagnosticSeverity::Warning => {
@@ -156,7 +156,7 @@ impl TextFormatter {
         }
 
         // ── Summary ──
-        out.push_str("═══════════════════════════════════════════\n");
+        out.push_str("===========================================\n");
         out.push_str(&format!("Total violations: {}\n", report.results.len()));
         if let Some(score) = &report.score {
             out.push_str(&format!("Compliance score: {:.1}/100\n", score.value()));
@@ -184,8 +184,8 @@ fn severity_badge(sev: &shared::common::taxonomy_severity_vo::Severity) -> &'sta
     }
 }
 
-fn group_by_code<'a>(
-    results: &[&'a shared::cli_commands::taxonomy_result_vo::LintResult],
+fn group_by_code(
+    results: &[&shared::cli_commands::taxonomy_result_vo::LintResult],
 ) -> Vec<(String, usize)> {
     let mut counts: std::collections::HashMap<String, usize> =
         std::collections::HashMap::with_capacity(20);
@@ -193,7 +193,7 @@ fn group_by_code<'a>(
         *counts.entry(r.code.code().to_string()).or_insert(0) += 1;
     }
     let mut sorted: Vec<_> = counts.into_iter().collect();
-    sorted.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted.sort_by_key(|b| std::cmp::Reverse(b.1));
     sorted
 }
 

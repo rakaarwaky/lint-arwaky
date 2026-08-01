@@ -42,13 +42,15 @@ impl JunitFormatter {
             })
             .count();
 
+        let skip_count = report.diagnostics.len();
+
         let mut xml = String::with_capacity(total_tests.saturating_mul(256));
         xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.push_str(&format!(
-            "<testsuites name=\"lint-arwaky\" tests=\"{total_tests}\" failures=\"{failure_count}\">\n"
+        "<testsuites name=\"lint-arwaky\" tests=\"{total_tests}\" failures=\"{failure_count}\" skipped=\"{skip_count}\">\n"
         ));
         xml.push_str(&format!(
-            "  <testsuite name=\"lint-arwaky\" tests=\"{total_tests}\" failures=\"{failure_count}\">\n"
+        "  <testsuite name=\"lint-arwaky\" tests=\"{total_tests}\" failures=\"{failure_count}\" skipped=\"{skip_count}\">\n"
         ));
 
         // 1. Violations

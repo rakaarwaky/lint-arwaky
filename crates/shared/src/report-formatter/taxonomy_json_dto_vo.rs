@@ -29,6 +29,7 @@ pub struct JsonSummary {
 #[derive(Serialize)]
 pub struct JsonReportDto {
     pub violations: Vec<JsonViolation>,
+    pub external_results: Vec<JsonViolation>,
     pub diagnostics: Vec<JsonDiagnostic>,
     pub summary: JsonSummary,
 }
