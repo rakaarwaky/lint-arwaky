@@ -1173,3 +1173,54 @@ pub fn cache_contains_str(path: &str) -> bool {
 pub fn cache_clear_str() {
     STRING_CACHE.clear();
 }
+
+
+// ─── File Metadata ────────────────────────────────────────
+
+/// Get file/directory metadata.
+pub fn metadata<P: AsRef<Path>>(path: P) -> std::io::Result<std::fs::Metadata> {
+    std::fs::metadata(path)
+}
+
+/// Check if path is a symlink.
+pub fn is_symlink<P: AsRef<Path>>(path: P) -> bool {
+    std::fs::symlink_metadata(path)
+        .map(|m| m.file_type().is_symlink())
+        .unwrap_or(false)
+}
+
+/// Set file permissions (Unix mode bits).
+pub fn set_permissions<P: AsRef<Path>>(path: P, mode: u32) -> std::io::Result<()> {
+    let mut perms = std::fs::metadata(&path)?.permissions();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        perms.set_mode(mode);
+    }
+    std::fs::set_permissions(path, perms)
+}
+
+/// Remove a file.
+pub fn remove_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+    std::fs::remove_file(path)
+}
+
+/// Read directory entries, returning Vec<FilePath>.
+pub fn read_dir_entries(dir_path: &FilePath) -> Vec<FilePath> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = std::fs::read_dir(dir_path.value()) {
+        for entry in read_dir.flatten() {
+            if let Some(path_str) = entry.path().to_str() {
+                if let Ok(fp) = FilePath::new(path_str.to_string()) {
+                    entries.push(fp);
+                }
+            }
+        }
+    }
+    entries
+}
+
+/// Read file content, returning empty string on error.
+pub fn read_file_safe_str(path: &str) -> String {
+    std::fs::read_to_string(path).unwrap_or_default()
+}

@@ -3,16 +3,16 @@
 
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::filesystem::utility_filesystem_io;
 use std::path::{Path, PathBuf};
 
 use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
 
 /// Canonicalize a path string, falling back to the original on error.
 pub fn canonicalize_path(path_str: &str) -> String {
-    match std::fs::canonicalize(path_str) {
-        Ok(p) => p.to_string_lossy().to_string(),
-        Err(_) => path_str.to_string(),
-    }
+    utility_filesystem_io::canonicalize_path(path_str)
+        .to_string_lossy()
+        .to_string()
 }
 
 /// Create a default `"."` working directory, falling back to the given path if it fails.
@@ -28,10 +28,10 @@ pub async fn noop_apply_fix() -> Result<ComplianceStatus, LinterOperationError> 
 /// Return true if the given path contains any Python (`.py`) files.
 pub fn has_python_files(path: &FilePath) -> bool {
     let p = std::path::Path::new(&path.value);
-    if !p.exists() {
+    if !utility_filesystem_io::path_exists(p) {
         return p.extension().map(|e| e == "py").unwrap_or(false);
     }
-    if p.is_file() {
+    if utility_filesystem_io::is_file(p) {
         return p.extension().map(|e| e == "py").unwrap_or(false);
     }
     has_py_in_dir(p)
@@ -43,7 +43,7 @@ fn has_py_in_dir(dir: &std::path::Path) -> bool {
     };
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.is_dir() {
+        if utility_filesystem_io::is_dir(&path) {
             if has_py_in_dir(&path) {
                 return true;
             }
@@ -66,7 +66,7 @@ pub fn resolve_js_cmd(
         .join("node_modules")
         .join(".bin")
         .join(executable);
-    if local_bin.exists() {
+    if utility_filesystem_io::path_exists(&local_bin) {
         let mut cmd = vec![local_bin.to_string_lossy().to_string()];
         cmd.extend(args);
         return Some(cmd);
@@ -77,31 +77,29 @@ pub fn resolve_js_cmd(
 /// Walk up from the given path to find the JS project root.
 pub fn resolve_js_working_dir(path: &FilePath) -> FilePath {
     let path_str = &path.value;
-    if let Ok(abs_path) = std::fs::canonicalize(path_str) {
-        let mut current = if abs_path.is_file() {
-            abs_path
-                .parent()
-                .map(|p| p.to_path_buf())
-                .unwrap_or_else(|| PathBuf::from("."))
-        } else {
-            abs_path.clone()
-        };
-        for _ in 0..10 {
-            if current.join("lint_arwaky.config.yaml").is_file()
-                || current.join("lint_arwaky.config.python.yaml").is_file()
-                || current.join("package.json").is_file()
-                || current.join(".git").is_dir()
-            {
-                return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
-            }
-            match current.parent() {
-                Some(parent) => current = parent.to_path_buf(),
-                None => break,
-            }
+    let abs_path = utility_filesystem_io::canonicalize_path(path_str);
+    let mut current = if utility_filesystem_io::is_file(&abs_path) {
+        abs_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("."))
+    } else {
+        abs_path.clone()
+    };
+    for _ in 0..10 {
+        if utility_filesystem_io::is_file(&current.join("lint_arwaky.config.yaml"))
+            || utility_filesystem_io::is_file(&current.join("lint_arwaky.config.python.yaml"))
+            || utility_filesystem_io::is_file(&current.join("package.json"))
+            || utility_filesystem_io::is_dir(&current.join(".git"))
+        {
+            return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
         }
-        return FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default();
+        match current.parent() {
+            Some(parent) => current = parent.to_path_buf(),
+            None => break,
+        }
     }
-    FilePath::new(".".to_string()).unwrap_or_default()
+    FilePath::new(current.to_string_lossy().to_string()).unwrap_or_default()
 }
 
 /// Find parent dir with Cargo.toml (for cargo fmt, cargo clippy).
@@ -111,17 +109,17 @@ pub fn resolve_cargo_working_dir(path: &FilePath) -> FilePath {
         return path.clone();
     }
     let current = Path::new(path_str);
-    if current.is_dir() {
-        if current.join("Cargo.toml").exists() {
+    if utility_filesystem_io::is_dir(current) {
+        if utility_filesystem_io::path_exists(&current.join("Cargo.toml")) {
             return path.clone();
         }
     } else if let Some(parent) = current.parent() {
-        if parent.join("Cargo.toml").exists() {
+        if utility_filesystem_io::path_exists(&parent.join("Cargo.toml")) {
             return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());
         }
         if let Some(grandparent) = parent.parent()
-            && grandparent.join("Cargo.toml").exists()
+            && utility_filesystem_io::path_exists(&grandparent.join("Cargo.toml"))
         {
             return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());
@@ -137,17 +135,17 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
         return path.clone();
     }
     let current = Path::new(path_str);
-    if current.is_dir() {
-        if current.join("Cargo.lock").exists() {
+    if utility_filesystem_io::is_dir(current) {
+        if utility_filesystem_io::path_exists(&current.join("Cargo.lock")) {
             return path.clone();
         }
     } else if let Some(parent) = current.parent() {
-        if parent.join("Cargo.lock").exists() {
+        if utility_filesystem_io::path_exists(&parent.join("Cargo.lock")) {
             return FilePath::new(parent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());
         }
         if let Some(grandparent) = parent.parent()
-            && grandparent.join("Cargo.lock").exists()
+            && utility_filesystem_io::path_exists(&grandparent.join("Cargo.lock"))
         {
             return FilePath::new(grandparent.to_string_lossy().replace('\\', "/"))
                 .unwrap_or_else(|_| path.clone());

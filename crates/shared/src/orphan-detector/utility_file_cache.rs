@@ -2,7 +2,7 @@
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
-use std::fs;
+
 use std::sync::{Mutex, OnceLock};
 
 const MAX_CACHE_ENTRIES: usize = 20_000;
@@ -21,7 +21,7 @@ pub fn read_cached(path: &FilePath) -> ContentString {
     }
 
     let content = crate::filesystem::utility_filesystem_io::cache_get_by_str(path.value())
-        .unwrap_or_else(|| fs::read_to_string(path.value()).unwrap_or_default());
+        .unwrap_or_else(|| crate::filesystem::utility_filesystem_io::read_file_safe(path.value()));
 
     if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
@@ -32,7 +32,7 @@ pub fn read_cached(path: &FilePath) -> ContentString {
 
 pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     let mut entries = Vec::new();
-    if let Ok(read_dir) = fs::read_dir(dir_path.value()) {
+    if let Ok(read_dir) = std::fs::read_dir(dir_path.value()) {
         for entry in read_dir.flatten() {
             if let Some(s) = entry.path().to_str()
                 && let Ok(fp) = FilePath::new(s)
@@ -45,7 +45,7 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
 }
 
 pub fn is_symlink(path: &FilePath) -> bool {
-    std::fs::symlink_metadata(path.value())
+    crate::filesystem::utility_filesystem_io::metadata(path.value())
         .map(|m| m.file_type().is_symlink())
         .unwrap_or(false)
 }

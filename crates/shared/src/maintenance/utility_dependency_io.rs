@@ -2,11 +2,11 @@
 // and running external analysis tools (cargo-audit, bandit).
 
 use crate::common::utility_command_runner;
-use std::fs;
+
 
 /// Read a file synchronously. Returns Ok(content) or Err(io::Error).
 pub fn read_dependency_file(path: &std::path::Path) -> Result<String, std::io::Error> {
-    fs::read_to_string(path)
+    crate::filesystem::utility_filesystem_io::read_file(path)
 }
 
 /// Execute an external command and return stdout/stderr/success status.

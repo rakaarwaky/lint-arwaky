@@ -9,10 +9,10 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
     let member_dirs = ["crates", "packages", "modules"];
     let mut current = start.to_path_buf();
     loop {
-        let has_cargo = current.join("Cargo.toml").exists();
-        let has_package_json = current.join("package.json").exists();
-        let has_pyproject = current.join("pyproject.toml").exists();
-        let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
+        let has_cargo = crate::filesystem::utility_filesystem_io::path_exists(&current.join("Cargo.toml"));
+        let has_package_json = crate::filesystem::utility_filesystem_io::path_exists(&current.join("package.json"));
+        let has_pyproject = crate::filesystem::utility_filesystem_io::path_exists(&current.join("pyproject.toml"));
+        let has_member_dir = member_dirs.iter().any(|d| crate::filesystem::utility_filesystem_io::is_dir(&current.join(d)));
 
         if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
             return Ok(current);
@@ -32,7 +32,7 @@ pub fn find_workspace_root(start: &std::path::Path) -> Result<std::path::PathBuf
 pub fn check_wired_in_container(workspace_root: &std::path::Path, identifiers: &[String]) -> bool {
     for dir_name in &["crates", "packages", "modules"] {
         let dir = workspace_root.join(dir_name);
-        if dir.is_dir() && check_dir_containers(&dir, identifiers) {
+        if crate::filesystem::utility_filesystem_io::is_dir(&dir) && check_dir_containers(&dir, identifiers) {
             return true;
         }
     }
@@ -44,7 +44,7 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
         let entries = utility_file_cache::read_dir(&fp);
         for entry_path in &entries {
             let path = std::path::Path::new(entry_path.value());
-            if path.is_dir() {
+            if crate::filesystem::utility_filesystem_io::is_dir(&path) {
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
                 if matches!(
@@ -95,7 +95,7 @@ pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
         let entries = utility_file_cache::read_dir(&fp);
         for entry_path in &entries {
             let path = std::path::Path::new(entry_path.value());
-            if path.is_dir() {
+            if crate::filesystem::utility_filesystem_io::is_dir(&path) {
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if name == "target" || name == ".git" || name == "node_modules" || name == "tests" {
                     continue;

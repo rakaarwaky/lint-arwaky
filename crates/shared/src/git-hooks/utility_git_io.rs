@@ -61,18 +61,16 @@ pub fn create_dir_all<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
 
 /// Get metadata for a file/directory.
 pub fn metadata<P: AsRef<Path>>(path: P) -> std::io::Result<std::fs::Metadata> {
-    std::fs::metadata(path)
+    crate::filesystem::utility_filesystem_io::metadata(path)
 }
 
 /// Set permissions on a file.
 #[cfg(unix)]
 pub fn set_permissions<P: AsRef<Path>>(path: P, mode: u32) -> std::io::Result<()> {
-    let mut perms = std::fs::metadata(&path)?.permissions();
-    perms.set_mode(mode);
-    std::fs::set_permissions(path, perms)
+    crate::filesystem::utility_filesystem_io::set_permissions(path, mode)
 }
 
 /// Remove a file.
 pub fn remove_file<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
-    std::fs::remove_file(path)
+    crate::filesystem::utility_filesystem_io::remove_file(path)
 }

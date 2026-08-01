@@ -151,7 +151,7 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
             continue;
         }
         let content = match crate::filesystem::utility_filesystem_io::cache_get_by_str(&fp.value)
-            .map_or_else(|| std::fs::read_to_string(&fp.value), Ok)
+            .map_or_else(|| crate::filesystem::utility_filesystem_io::read_file(&fp.value), Ok)
         {
             Ok(c) => c,
             Err(_) => continue,

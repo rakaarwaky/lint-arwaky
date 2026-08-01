@@ -3,7 +3,7 @@
 /// Write text content to a file at the given path.
 /// Returns Ok(()) on success, Err with OS error message on failure.
 pub fn write_text_to_file(path: &std::path::Path, text: &str) -> Result<(), String> {
-    std::fs::write(path, text).map_err(|e| format!("Failed to write file: {e}"))
+    crate::filesystem::utility_filesystem_io::write_file(path, text.as_bytes()).map_err(|e| format!("Failed to write file: {e}"))
 }
 
 /// Check if a binary is available in the system PATH.
@@ -22,7 +22,7 @@ pub fn is_binary_available(bin_name: &str) -> bool {
         .and_then(|exe| exe.parent().map(|p| p.to_path_buf()))
         .is_none_or(|dir| {
             let path = dir.join(bin_name);
-            path.exists() || find_in_path(bin_name)
+            crate::filesystem::utility_filesystem_io::path_exists(path) || find_in_path(bin_name)
         })
 }
 
@@ -30,7 +30,7 @@ fn find_in_path(bin_name: &str) -> bool {
     if let Some(paths) = std::env::var_os("PATH") {
         for dir in std::env::split_paths(&paths) {
             let path = dir.join(bin_name);
-            if path.exists() {
+            if crate::filesystem::utility_filesystem_io::path_exists(path) {
                 return true;
             }
         }

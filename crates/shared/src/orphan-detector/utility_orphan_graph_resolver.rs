@@ -9,7 +9,7 @@ pub fn build_crate_module_index(
     let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
     for (crate_name, src_dir) in crate_src_dirs {
         let mut module_map: HashMap<String, String> = HashMap::new();
-        let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
+        let canonical_src = crate::filesystem::utility_filesystem_io::canonicalize_path(&src_dir.to_string_lossy());
         let all_files = crate::filesystem::utility_filesystem_io::scan_directory_recursive(&canonical_src);
         for path_str in all_files {
             if !path_str.ends_with(".rs")
@@ -116,12 +116,12 @@ pub fn find_workspace_root(start_dir: &str) -> String {
         current = cwd.join(&current);
     }
     loop {
-        let has_manifest = current.join("Cargo.toml").exists()
-            || current.join("pyproject.toml").exists()
-            || current.join("package.json").exists();
-        let has_members = current.join("crates").exists()
-            || current.join("packages").exists()
-            || current.join("modules").exists();
+        let has_manifest = crate::filesystem::utility_filesystem_io::path_exists(&current.join("Cargo.toml"))
+            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("pyproject.toml"))
+            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("package.json"));
+        let has_members = crate::filesystem::utility_filesystem_io::path_exists(&current.join("crates"))
+            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("packages"))
+            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("modules"));
         if has_manifest && has_members {
             return current.to_string_lossy().to_string();
         }
