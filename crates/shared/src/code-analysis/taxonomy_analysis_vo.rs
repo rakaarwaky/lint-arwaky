@@ -96,8 +96,9 @@ impl InboundLinkMap {
         }
 
         // Try canonical path
+        let canon = crate::filesystem::utility_filesystem_io::canonicalize_path(path);
         if result.is_none()
-            && let Ok(canon) = std::fs::canonicalize(path)
+            && crate::filesystem::utility_filesystem_io::path_exists(path) && crate::filesystem::utility_filesystem_io::is_file(path)
             && let Some(canon_str) = canon.to_str()
         {
             if let Some(v) = self.mapping.get(canon_str) {

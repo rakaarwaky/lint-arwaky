@@ -30,14 +30,14 @@ Follow this exact sequence. **Do not skip steps.**
 Analyze code quality across these dimensions:
 
 
-| Dimension            | Focus                                                                                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Security**         | Injection risks, credential exposure, unsafe I/O, input validation, authentication/authorization gaps                                               |
-| **Performance**      | N+1 queries, unnecessary allocations, O(n²) algorithms, blocking calls in async context                                                            |
-| **Error Handling**   | Unwrap/expect usage, missing error propagation, swallowed errors, improper panic/unreachable                                                        |
-| **SOLID Principles** | Single responsibility (file > 15 functions?), open-closed (extend without modify), Liskov substitution, interface segregation, dependency inversion |
-| **Code Quality**     | Bypass patterns (AES304), unused imports (AES203), dummy imports (AES204), mandatory definitions (AES303)                                           |
-| **Maintainability**  | Code duplication (AES305), file size (AES301), min lines (AES302), naming clarity                                                                   |
+| Dimension            | Focus                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Security**         | Injection risks, credential exposure, unsafe I/O, input validation, authentication/authorization gaps |
+| **Performance**      | N+1 queries, unnecessary allocations, O(n²) algorithms, blocking calls in async context              |
+| **Error Handling**   | Unwrap/expect usage, missing error propagation, swallowed errors, improper panic/unreachable          |
+| **SOLID Principles** | Single responsibility, open-closed  Liskov substitution, interface segregation, dependency inversion |
+| **Code Quality**     | Bypass patterns , unused imports , dummy imports                                                      |
+| **Maintainability**  | Code duplication , file size , min lines , naming clarity, Dont repeat Yourself (DRY)                 |
 
 Prioritize **clarity, testability, and traceability**.
 
@@ -82,7 +82,12 @@ Write a concrete, actionable plan to `.agents/plans/todo-<feature-name>-tech-lea
 |---|----------|-------|----------------------|----------------|
 |   |          |       |                      |                |
 
-### Code Quality & AES Violations
+### Code Quality 
+| # | Severity | Issue | Location (File:Line) | Recommendation |
+|---|----------|-------|----------------------|----------------|
+|   |          |       |                      |                |
+
+### Maintainability
 | # | Severity | Issue | Location (File:Line) | Recommendation |
 |---|----------|-------|----------------------|----------------|
 |   |          |       |                      |                |
@@ -103,6 +108,6 @@ Use these levels consistently:
 
 | Level          | Meaning                                                                                             |
 | ---------------- | ----------------------------------------------------------------------------------------------------- |
-| 🔴**CRITICAL** | Security vulnerability, data leak, crash risk, or AES layer violation. Requires immediate fix.      |
+| 🔴**CRITICAL** | Security vulnerability, data leak, crash risk,violation. Requires immediate fix.                    |
 | 🟡**WARNING**  | Performance bottleneck, SOLID violation, poor error handling, or bypass pattern. Fix in this cycle. |
-| 🟢**INFO**     | Code style suggestion, minor refactoring, or nice-to-have. Can be deferred.                         |
+| 🟢**INFO**     | good but nice-to-have.                                                                             |

@@ -56,7 +56,7 @@ pub fn parse_output_lines(output: &str) -> Vec<String> {
 
 /// Create a directory (and all parent directories) for the given path.
 pub fn create_dir_all<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
-    std::fs::create_dir_all(path)
+    crate::filesystem::utility_filesystem_io::create_dir_all_generic(path)
 }
 
 /// Get metadata for a file/directory.

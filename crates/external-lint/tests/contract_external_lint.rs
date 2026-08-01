@@ -2,7 +2,11 @@
 // Contract tests confirm that concrete types satisfy their protocol traits
 // at compile time — no runtime behavior is exercised here.
 
-use external_lint_lint_arwaky::*;
+use external_lint_lint_arwaky::{
+    agent_external_lint_orchestrator, capabilities_external_lint_selector, BanditAdapter,
+    CargoAuditAdapter, ESLintAdapter, ExternalLintContainer, ExternalLintExecutor, MyPyAdapter,
+    PrettierAdapter, RuffAdapter, RustFmtAdapter, RustLinterAdapter, StdioClient, TSCAdapter,
+};
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::ICommandExecutorProtocol;
 use shared::external_lint::{

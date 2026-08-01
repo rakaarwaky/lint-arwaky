@@ -32,13 +32,9 @@ pub fn read_cached(path: &FilePath) -> ContentString {
 
 pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     let mut entries = Vec::new();
-    if let Ok(read_dir) = std::fs::read_dir(dir_path.value()) {
-        for entry in read_dir.flatten() {
-            if let Some(s) = entry.path().to_str()
-                && let Ok(fp) = FilePath::new(s)
-            {
-                entries.push(fp);
-            }
+    for entry_str in crate::filesystem::utility_filesystem_io::read_dir_generic(dir_path.value()) {
+        if let Ok(fp) = FilePath::new(entry_str) {
+            entries.push(fp);
         }
     }
     entries

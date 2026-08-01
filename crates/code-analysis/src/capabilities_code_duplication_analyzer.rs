@@ -15,6 +15,7 @@ use std::collections::hash_map::DefaultHasher;
 //   7. For each file, calculate what % of its windows are shared
 //   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -23,6 +24,7 @@ use std::sync::Arc;
 pub struct CodeDuplicationAnalyzer {
     /// P1.6 fix: carry injected config instead of calling default_aes_config()
     config: Arc<ArchitectureConfig>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -36,7 +38,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Some(p) => p.value.clone(),
             None => ".".to_string(),
         };
-        let src = shared::filesystem::utility_filesystem_io::detect_source_dir(
+        let src = self.filesystem.detect_source_dir(
             std::path::Path::new(&root),
         );
         // P1.6 fix: use injected config (self.config) instead of default_aes_config()
@@ -67,9 +69,8 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };
-        let source_files = shared::filesystem::utility_filesystem_io::collect_source_files(
+        let source_files = self.filesystem.collect_source_files(
             &src,
-            &dir_path,
             &ignored_vec,
         );
         let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
@@ -84,12 +85,16 @@ impl CodeDuplicationAnalyzer {
     pub fn new() -> Self {
         Self {
             config: Arc::new(ArchitectureConfig::default()),
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
         }
     }
 
     /// Create with an injected ArchitectureConfig (P1.6 fix).
     pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
-        Self { config }
+        Self {
+            config,
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 }
 

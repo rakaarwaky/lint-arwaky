@@ -132,6 +132,20 @@ impl FilesystemOrchestrator {
             });
         }
     }
+
+    // ── Async File I/O ─────────────────────────────────────
+
+    pub async fn read_file_async(&self, path: &Path) -> std::io::Result<String> {
+        tokio::fs::read_to_string(path).await
+    }
+
+    pub async fn read_text_within_canonical_root(
+        &self,
+        path: &Path,
+        canonical_root: &Path,
+    ) -> std::io::Result<String> {
+        utility_filesystem_io::read_text_within_canonical_root(path, canonical_root).await
+    }
 }
 
 impl Default for FilesystemOrchestrator {
@@ -626,4 +640,5 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn get_parent<'a>(&self, path: &'a str) -> &'a str {
         utility_filesystem_io::get_parent(path)
     }
+
 }

@@ -212,9 +212,11 @@ impl RuffAdapter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use shared::common::ResponseData;
-    use shared::common::Severity;
+    use super::RuffAdapter;
+    use shared::code_analysis::LinterOperationError;
+    use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
+    use shared::external_lint::IExternalLintExecutorProtocol;
+    use std::sync::Arc;
 
     fn make_adapter() -> RuffAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);

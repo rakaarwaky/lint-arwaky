@@ -1,7 +1,10 @@
 // PURPOSE: Unit tests for adapter constructors, name() methods, and
 // file-extension filtering logic (no subprocess execution).
 
-use external_lint_lint_arwaky::*;
+use external_lint_lint_arwaky::{
+    BanditAdapter, CargoAuditAdapter, ESLintAdapter, MyPyAdapter, PrettierAdapter, RuffAdapter,
+    RustFmtAdapter, RustLinterAdapter, TSCAdapter,
+};
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{
     AdapterName, FilePath, ICommandExecutorProtocol, PatternList, ResponseData, Timeout,

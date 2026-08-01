@@ -38,12 +38,9 @@ pub fn has_python_files(path: &FilePath) -> bool {
 }
 
 fn has_py_in_dir(dir: &std::path::Path) -> bool {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return false;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if utility_filesystem_io::is_dir(&path) {
+    for entry_path_str in crate::filesystem::utility_filesystem_io::read_dir_generic(dir) {
+        let path = std::path::PathBuf::from(&entry_path_str);
+        if crate::filesystem::utility_filesystem_io::is_dir(&path) {
             if has_py_in_dir(&path) {
                 return true;
             }

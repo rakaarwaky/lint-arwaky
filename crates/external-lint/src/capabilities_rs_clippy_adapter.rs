@@ -553,7 +553,7 @@ fn clippy_lint_group(lint_name: &str) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{clippy_lint_group, map_clippy_severity};
     use shared::common::Severity;
 
     // ─── FRD-004: Clippy severity mapping per lint group ───

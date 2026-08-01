@@ -1224,3 +1224,24 @@ pub fn read_dir_entries(dir_path: &FilePath) -> Vec<FilePath> {
 pub fn read_file_safe_str(path: &str) -> String {
     std::fs::read_to_string(path).unwrap_or_default()
 }
+
+
+// ─── Generic Read Dir ──────────────────────────────────────
+
+/// Read directory entries (generic, returns Vec<String> of path strings).
+pub fn read_dir_generic<P: AsRef<Path>>(dir: P) -> Vec<String> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = std::fs::read_dir(dir) {
+        for entry in read_dir.flatten() {
+            if let Some(path_str) = entry.path().to_str() {
+                entries.push(path_str.to_string());
+            }
+        }
+    }
+    entries
+}
+
+/// Generic create_dir_all (works with any AsRef<Path>).
+pub fn create_dir_all_generic<P: AsRef<Path>>(path: P) -> std::io::Result<()> {
+    std::fs::create_dir_all(path)
+}

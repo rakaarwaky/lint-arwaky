@@ -1,7 +1,7 @@
 // PURPOSE: Integration tests — DI container wiring, adapter registration,
 // and orchestrator composition using the real ExternalLintContainer.
 
-use external_lint_lint_arwaky::*;
+use external_lint_lint_arwaky::{agent_external_lint_orchestrator, ExternalLintContainer};
 use shared::common::AdapterName;
 use shared::external_lint::IExternalLintAggregate;
 use std::collections::HashMap;
