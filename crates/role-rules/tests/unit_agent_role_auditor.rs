@@ -2,18 +2,25 @@
 // Layer: Capabilities (AgentRoleChecker)
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
-use shared::common::FilePath;
-use shared::common::{ContentString, SourceContentVO};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use std::path::PathBuf;
 use shared::role_rules::IAgentRoleChecker;
 
 fn checker() -> AgentRoleChecker {
     AgentRoleChecker::new()
 }
 
-fn make_source(file: &str, content: &str) -> SourceContentVO {
-    let fp = FilePath::new(file.to_string()).unwrap();
-    let cs = ContentString::new(content.to_string());
-    SourceContentVO::new(fp, cs, "rust")
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    FileEntry {
+        path: PathBuf::from(path),
+        extension: ext,
+        language: Language::Rust,
+        size: content.len() as u64,
+        content: content.to_string(),
+        parse_ok: true,
+        parse_metadata: None,
+    }
 }
 
 // ─── check_agent_routing: Rust happy path ────────────
@@ -29,7 +36,7 @@ impl IRoleAggregate for MyOrchestrator {
     fn run(&self) {}
 }
 "#;
-    let source = make_source("agent_my_orchestrator.rs", content);
+    let source = make_file("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
     checker().check_agent_routing(&source, "agent", &mut violations);
     assert!(
@@ -51,7 +58,7 @@ impl InternalHelper {
     pub fn helper(&self) {}
 }
 "#;
-    let source = make_source("agent_my_orchestrator.rs", content);
+    let source = make_file("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
     checker().check_agent_routing(&source, "agent", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -63,7 +70,7 @@ impl InternalHelper {
 #[test]
 fn non_agent_layer_is_skipped() {
     let content = "no aggregate import at all";
-    let source = make_source("capabilities_foo.rs", content);
+    let source = make_file("capabilities_foo.rs", content);
     let mut violations = Vec::new();
     checker().check_agent_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -83,7 +90,7 @@ pub struct TypeD {}
 
 impl IRoleAggregate for TypeA {}
 "#;
-    let source = make_source("agent_my_orchestrator.rs", content);
+    let source = make_file("agent_my_orchestrator.rs", content);
     let mut violations = Vec::new();
     checker().check_agent_routing(&source, "agent", &mut violations);
     assert_eq!(violations.len(), 1);

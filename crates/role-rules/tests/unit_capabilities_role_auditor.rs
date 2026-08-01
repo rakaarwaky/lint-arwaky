@@ -6,17 +6,24 @@
 // - Rule 3: Max 3 type declarations per file
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
-use shared::common::{ContentString, SourceContentVO};
+use shared::common::{ContentString, FileEntry};
 use shared::role_rules::ICapabilitiesRoleChecker;
 
 fn checker() -> CapabilitiesRoleChecker {
     CapabilitiesRoleChecker::new()
 }
 
-fn make_source(file: &str, content: &str) -> SourceContentVO {
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(file.to_string()).unwrap();
-    let cs = ContentString::new(content.to_string());
-    SourceContentVO::new(fp, cs, "rust")
+fn make_file(path: &str, content: &str) -> FileEntry {
+    let ext = path.rsplit('.').next().unwrap_or("rs").to_string();
+    FileEntry {
+        path: PathBuf::from(path),
+        extension: ext,
+        language: Language::Rust,
+        size: content.len() as u64,
+        content: content.to_string(),
+        parse_ok: true,
+        parse_metadata: None,
+    }
 }
 
 // ─── check_capability_routing: Happy Path (Rust) ────
@@ -32,7 +39,7 @@ impl IAgentRoleChecker for MyChecker {
     fn check_container(&self, _s: &str, _v: &mut Vec<LintResult>) {}
 }
 "#;
-    let source = make_source("capabilities_my_checker.rs", content);
+    let source = make_file("capabilities_my_checker.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -47,7 +54,7 @@ pub struct MyChecker;
 
 impl IContractRoleChecker for MyChecker {}
 "#;
-    let source = make_source("capabilities_my_checker.rs", content);
+    let source = make_file("capabilities_my_checker.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -64,7 +71,7 @@ impl MyChecker {
     pub fn do_work(&self) {}
 }
 "#;
-    let source = make_source("capabilities_my_checker.rs", content);
+    let source = make_file("capabilities_my_checker.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -80,7 +87,7 @@ class MyChecker(SomeProtocol):
     def check_container(self, source, violations):
         pass
 "#;
-    let source = make_source("capabilities_my_checker.py", content);
+    let source = make_file("capabilities_my_checker.py", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -95,7 +102,7 @@ class MyChecker:
     def do_work(self):
         pass
 "#;
-    let source = make_source("capabilities_my_checker.py", content);
+    let source = make_file("capabilities_my_checker.py", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -111,7 +118,7 @@ export class MyChecker implements IAgentRoleChecker {
     checkContainer(source: string, violations: any[]) {}
 }
 "#;
-    let source = make_source("capabilities_my_checker.ts", content);
+    let source = make_file("capabilities_my_checker.ts", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -126,7 +133,7 @@ export class MyChecker {
     doWork() {}
 }
 "#;
-    let source = make_source("capabilities_my_checker.ts", content);
+    let source = make_file("capabilities_my_checker.ts", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -155,7 +162,7 @@ impl InternalCache {
     }
 }
 "#;
-    let source = make_source("capabilities_my_checker.rs", content);
+    let source = make_file("capabilities_my_checker.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());
@@ -183,7 +190,7 @@ struct HelperB {
     y: String,
 }
 "#;
-    let source = make_source("capabilities_helper.rs", content);
+    let source = make_file("capabilities_helper.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -212,7 +219,7 @@ enum C {
     Y,
 }
 "#;
-    let source = make_source("capabilities_too_many.rs", content);
+    let source = make_file("capabilities_too_many.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert_eq!(violations.len(), 1);
@@ -238,7 +245,7 @@ enum Status {
     Inactive,
 }
 "#;
-    let source = make_source("capabilities_exact_three.rs", content);
+    let source = make_file("capabilities_exact_three.rs", content);
     let mut violations = Vec::new();
     checker().check_capability_routing(&source, "capabilities", &mut violations);
     assert!(violations.is_empty());

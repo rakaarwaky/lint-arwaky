@@ -214,10 +214,36 @@ impl RustLinterAdapter {
 /// Extracts the lint group from the code string (e.g., `clippy::needless_return` → `style`)
 /// and maps it to the appropriate severity. For unknown lints, falls back to the compiler
 /// level (`error` → HIGH, `warning` → MEDIUM).
+/// Map Clippy lint group to lint-arwaky severity per FR-004.
+///
+/// Extracts the lint group from the code string (e.g., `clippy::needless_return` → `style`)
+/// and maps it to the appropriate severity. For unknown lints, falls back to the compiler
+/// level (`error` → HIGH, `warning` → MEDIUM).
 fn map_clippy_severity(code: &str, level: &str) -> Severity {
     let lint_name = code.strip_prefix("clippy::").unwrap_or(code);
+    let group = clippy_lint_group(lint_name);
+    match group {
+        "correctness" => Severity::CRITICAL,
+        "suspicious" | "perf" => Severity::HIGH,
+        "style" | "complexity" => Severity::MEDIUM,
+        "pedantic" | "nursery" | "restriction" => Severity::LOW,
+        _ => {
+            if level == "error" {
+                Severity::HIGH
+            } else {
+                Severity::MEDIUM
+            }
+        }
+    }
+}
+
+/// Determine the clippy lint group for a given lint name.
+///
+/// Checks groups in priority order: correctness → suspicious → style → complexity
+/// → perf → pedantic → nursery → restriction. First match wins.
+fn clippy_lint_group(lint_name: &str) -> &'static str {
     match lint_name {
-        // correctness lints → CRITICAL
+        // ── correctness ──
         "approx_constant"
         | "array_into_iter"
         | "assertions_on_constants"
@@ -264,20 +290,17 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "unused_io_amount"
         | "unused_variables"
         | "zero_divided_by_zero"
-        | "zero_literal" => Severity::CRITICAL,
-        // suspicious lints → HIGH
+        | "zero_literal" => "correctness",
+        // ── suspicious ──
         "almost_swapped"
-        | "approx_constant"
         | "clone_on_copy"
         | "crosspointer_transmute"
         | "decimal_literal_representation"
         | "deref_addrof"
-        | "drop_non_drop"
         | "extend_with_drain"
         | "float_cmp_const"
         | "for_kv_map"
         | "if_let_redundant_pattern_matching"
-        | "if_same_then_else"
         | "iter_cloned_collect"
         | "iter_next_slice"
         | "let_unit_value"
@@ -286,7 +309,6 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "match_on_vec_items"
         | "maybe_misuse_vec"
         | "mem_discriminant"
-        | "mem_replaceOptionwithNone"
         | "mem_replace_with_default"
         | "needless_borrow"
         | "needless_late_init"
@@ -296,7 +318,6 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "non_canonical_partial_ord"
         | "option_env_unwrap"
         | "option_map_unit_fn"
-        | "print_stdout"
         | "ptr_arg"
         | "redundant_closure"
         | "redundant_else"
@@ -307,34 +328,24 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "single_match"
         | "suspicious_arithmetic_impl"
         | "suspicious_assignment_formatting"
-        | "suspicious_else_formatting"
         | "suspicious_format"
-        | "suspicious_map"
-        | "suspicious_op_assign_impl"
         | "suspicious_op_ref"
         | "suspicious_recent_impl"
-        | "suspicious_splitn"
         | "suspicious_to_string"
-        | "suspicious_xor_used_as_pow"
         | "to_string_in_format"
-        | "transmute_float_to_int"
         | "transmute_int_to_char"
         | "transmute_int_to_float"
-        | "transmute_int_to_nonzero"
         | "transmute_num_to_bytes"
         | "transmute_ptr_to_ptr"
         | "transmute_reinterpret"
-        | "undocumented_unsafe_blocks"
         | "uninlined_format_args"
         | "unit_cmp"
         | "unnecessary_cast"
         | "unnecessary_operation"
-        | "unneeded_field_pattern"
         | "unstable_as_mut_slice"
         | "unstable_as_slice"
-        | "unused_io_amount"
-        | "unused_label" => Severity::HIGH,
-        // style lints → MEDIUM
+        | "unused_label" => "suspicious",
+        // ── style ──
         "bool_to_int_cast"
         | "bool_comparison"
         | "borrowed_box"
@@ -364,7 +375,6 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "into_iter_on_ref"
         | "is_digit_ascii_radix"
         | "iter_skip_next"
-        | "large_stack_arrays"
         | "len_without_is_empty"
         | "len_zero"
         | "let_and_return"
@@ -389,28 +399,20 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "option_map_or_none"
         | "or_fun_call"
         | "println_empty_string"
-        | "ptr_arg"
         | "question_mark"
-        | "redundant_field_names"
         | "redundant_pattern"
         | "redundant_pattern_matching"
         | "ref_option_ref"
-        | "regex_simple"
-        | "self_named_module_files"
         | "short_lifetimes"
         | "single_char_add_str"
         | "single_component_path_imports"
-        | "single_match"
         | "string_add"
         | "string_add_assign"
         | "string_to_string"
         | "struct_field_names"
-        | "suspicious_else_formatting"
         | "tabs_in_doc_comments"
         | "to_digit_is_some"
-        | "todo"
         | "try_err"
-        | "unnecessary_cast"
         | "unnecessary_closure"
         | "unnecessary_closure_to_method_calls"
         | "unnecessary_def_path"
@@ -418,35 +420,26 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "unnecessary_fallible_conversions"
         | "unnecessary_lazy_evaluations"
         | "unnecessary_literal_unwrap"
-        | "unnecessary_operation"
         | "unnecessary_unwrap"
         | "unrelated_pattern_in_binding_after_or"
         | "unused_async"
-        | "unused_io_amount"
         | "useless_attribute"
         | "useless_format"
         | "useless_vec"
         | "vec_init_then_push"
         | "verbose_bit_mask"
-        | "write_with_newline" => Severity::MEDIUM,
-        // complexity lints → MEDIUM
+        | "write_with_newline" => "style",
+        // ── complexity ──
         "bool_to_int_with_if"
         | "box_collection"
         | "box_vec"
         | "builtin_type_shadow"
         | "bytes_len_to_count"
-        | "clone_on_copy"
-        | "collapsible_match"
-        | "comparison_chain"
         | "cyclomatic_complexity"
         | "derive_hash_xor_eq"
-        | "derive_ord_xor_partial_ord"
-        | "derivable_impls"
         | "double_comparison"
         | "double_parens"
-        | "duration_subsec"
         | "explicit_counter_loop"
-        | "explicit_iter_loop"
         | "filter_map_identity"
         | "filter_map_next"
         | "find_map"
@@ -454,98 +447,48 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "flat_map_option"
         | "get_last_with_len"
         | "get_unwrap"
-        | "identity_op"
         | "if_let_else"
-        | "if_same_then_else"
         | "implicit_saturating_arithmetic"
-        | "inconsistent_digit_grouping"
         | "inefficient_to_string"
-        | "into_iter_on_ref"
-        | "iter_cloned_collect"
         | "iter_count"
         | "iter_next"
-        | "iter_skip_next"
-        | "manual_assert"
         | "manual_range"
-        | "manual_range_contains"
         | "manual_saturating_arithmetic"
         | "manual_str_add"
         | "map_clone"
         | "map_flatten"
         | "map_unwrap_or"
-        | "match_as_ref"
-        | "match_ref_pats"
-        | "match_single_binding"
-        | "needless_borrow"
-        | "needless_borrowed_reference"
-        | "needless_late_init"
-        | "needless_question_mark"
         | "needless_range_loop"
-        | "needless_return"
         | "needless_split_string"
         | "needless_update"
-        | "no_effect"
         | "nonminimal_bool"
         | "option_as_deref"
         | "option_filter_map"
-        | "option_map_or_none"
-        | "option_map_unit_fn"
-        | "or_fun_call"
         | "range_minus_one"
         | "range_plus_one"
-        | "redundant_closure"
-        | "redundant_closure_for_method_calls"
-        | "redundant_pattern_matching"
-        | "redundant_slicing"
         | "redundant_type_annotations"
         | "result_map_or_in_option"
         | "result_unit_err"
-        | "search_is_some"
-        | "single_char_pattern"
-        | "single_match"
         | "skip_collect_next_prev"
-        | "suspicious_arithmetic_impl"
-        | "to_digit_is_some"
-        | "to_string_in_format"
-        | "try_err"
         | "type_complexity"
-        | "unit_arg"
-        | "unnecessary_cast"
-        | "unnecessary_closure"
-        | "unnecessary_lazy_evaluations"
-        | "unnecessary_operation"
-        | "unneeded_field_pattern"
-        | "zero_divided_by_zero" => Severity::MEDIUM,
-        // perf lints → HIGH
+        | "unit_arg" => "complexity",
+        // ── perf ──
         "as_ptr_cast_mut"
-        | "bytes_count_to_len"
-        | "clone_on_ref_ptr"
-        | "collection_is_never_read"
-        | "iter_count"
-        | "large_stack_arrays"
         | "manual_clamp"
         | "manual_memcpy"
         | "manual_str_repeat"
         | "map_entry"
         | "needless_collect"
-        | "needless_pass_by_value"
         | "path_ends_with_ext"
-        | "single_char_pattern"
         | "string_extend_chars"
         | "trivial_regex_copy"
-        | "unnecessary_to_owned"
-        | "unstable_as_mut_slice"
-        | "unstable_as_slice"
-        | "useless_vec"
-        | "vec_init_then_push"
-        | "write_with_newline" => Severity::HIGH,
-        // pedantic lints → LOW
+        | "unnecessary_to_owned" => "perf",
+        // ── pedantic ──
         "must_use_candidate"
         | "module_name_repetitions"
         | "missing_errors_doc"
         | "missing_panics_doc"
         | "missing_safety_doc"
-        | "doc_markdown"
         | "cast_possible_truncation"
         | "cast_possible_wrap"
         | "cast_precision_loss"
@@ -556,48 +499,32 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "items_after_statements"
         | "manual_let_else"
         | "match_same_arms"
-        | "needless_pass_by_value"
         | "option_if_let_else"
-        | "redundant_else"
-        | "redundant_closure_for_method_calls"
         | "semicolon_if_nothing_returned"
         | "single_use_lifetimes"
         | "str_to_string"
-        | "string_add_assign"
-        | "string_to_string"
         | "suboptimal_flops"
-        | "wildcard_enum_match_arm" => Severity::LOW,
-        // nursery lints → LOW
-        "map_unwrap_or"
-        | "mutex_atomic"
-        | "needless_borrowed_reference"
-        | "option_if_let_else"
+        | "wildcard_enum_match_arm" => "pedantic",
+        // ── nursery ──
+        "mutex_atomic"
         | "recursive_type_alias"
         | "rest_pat_in_fully_bound_structs"
-        | "semicolon_if_nothing_returned"
-        | "unnecessary_lazy_evaluations"
-        | "unused_self" => Severity::LOW,
-        // restriction lints → LOW
-        | "print_stdout"
+        | "unused_self" => "nursery",
+        // ── restriction ──
+        "print_stdout"
         | "print_stderr"
         | "dbg_macro"
         | "exit"
         | "panic"
         | "unwrap_used"
         | "expect_used"
-        | "get_unwrap"
-        | "indexing_slicing"
         | "unimplemented"
         | "todo"
-        | "unreachable"
         | "missing_asserts_for_indexing"
         | "cast_lossless"
         | "checked_conversions"
         | "explicit_read_args"
         | "if_then_some_else_none"
-        | "redundant_type_annotations"
-        | "string_add"
-        | "string_to_string"
         | "try_unwrap"
         | "use_debug"
         | "verbose_file_reads"
@@ -607,41 +534,19 @@ fn map_clippy_severity(code: &str, level: &str) -> Severity {
         | "enum_glob_use"
         | "disallowed_types"
         | "as_conversions"
-        | "decimal_literal_representation"
         | "default_numeric_fallback"
         | "deref_by_slicing"
-        | "empty_enum_variants_with_braces"
-        | "fallible_impl_from"
         | "filetype_is_file"
-        | "from_over_into"
-        | "if_then_some_else_none"
-        | "impl_trait_in_params"
         | "infinite_iter"
         | "large_include_file"
-        | "lossless_float_literal"
         | "mixed_read_write_in_expression"
         | "multiple_inherent_impl"
         | "partial_pub_fields"
         | "pattern_type_mismatch"
         | "pub_use"
-        | "rest_pat_in_fully_bound_structs"
         | "same_name_method"
-        | "self_named_module_files"
-        | "string_add"
-        | "string_slice_chars"
-        | "suboptimal_flops"
-        | "suspicious_xor_used_as_pow"
-        | "try_unwrap"
-        | "undocumented_unsafe_blocks"
-        | "unneeded_field_pattern"
-        | "verbose_file_reads" => Severity::LOW,
-        // fallback: use compiler level
-        _ => {
-            if level == "error" {
-                Severity::HIGH
-            } else {
-                Severity::MEDIUM
-            }
-        }
+        | "string_slice_chars" => "restriction",
+        // ── unknown ──
+        _ => "unknown",
     }
 }

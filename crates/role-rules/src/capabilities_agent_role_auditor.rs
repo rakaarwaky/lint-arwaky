@@ -71,7 +71,7 @@ impl AgentRoleChecker {
                         &path_str, 0, "AES405", Severity::HIGH,
                         AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
-                            names: all_names.iter().map(|s| SymbolName::new(s)).collect(),
+                            names: all_names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (struct/enum) in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
@@ -108,7 +108,7 @@ impl AgentRoleChecker {
                         &path_str, 0, "AES405", Severity::HIGH,
                         AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
-                            names: names.iter().map(|s| SymbolName::new(s)).collect(),
+                            names: names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} classes in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
@@ -144,7 +144,7 @@ impl AgentRoleChecker {
                         &path_str, 0, "AES405", Severity::HIGH,
                         AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
-                            names: all_names.iter().map(|s| SymbolName::new(s)).collect(),
+                            names: all_names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
@@ -184,21 +184,21 @@ impl AgentRoleChecker {
                     if t.starts_with("#[cfg(test)]") { in_cfg_test = true; continue; }
                     if in_cfg_test { if t.starts_with('}') { in_cfg_test = false; } continue; }
                     let words: Vec<&str> = t.split_whitespace().collect();
-                    if (t.starts_with("pub struct ") || t.starts_with("struct ")) && words.len() >= 2 {
-                        if let Some(idx) = words.iter().position(|w| *w == "struct") {
-                            if let Some(name) = words.get(idx + 1) {
-                                let name = name.trim_end_matches(';').trim_end_matches('{');
-                                if !name.is_empty() && !name.starts_with('_') { type_names.push(name); struct_names.push(name); }
-                            }
-                        }
+                    if (t.starts_with("pub struct ") || t.starts_with("struct "))
+                        && words.len() >= 2
+                        && let Some(idx) = words.iter().position(|w| *w == "struct")
+                        && let Some(name) = words.get(idx + 1)
+                    {
+                        let name = name.trim_end_matches(';').trim_end_matches('{');
+                        if !name.is_empty() && !name.starts_with('_') { type_names.push(name); struct_names.push(name); }
                     }
-                    if (t.starts_with("pub enum ") || t.starts_with("enum ")) && words.len() >= 2 {
-                        if let Some(idx) = words.iter().position(|w| *w == "enum") {
-                            if let Some(name) = words.get(idx + 1) {
-                                let name = name.trim_end_matches(';').trim_end_matches('{');
-                                if !name.is_empty() && !name.starts_with('_') { type_names.push(name); }
-                            }
-                        }
+                    if (t.starts_with("pub enum ") || t.starts_with("enum "))
+                        && words.len() >= 2
+                        && let Some(idx) = words.iter().position(|w| *w == "enum")
+                        && let Some(name) = words.get(idx + 1)
+                    {
+                        let name = name.trim_end_matches(';').trim_end_matches('{');
+                        if !name.is_empty() && !name.starts_with('_') { type_names.push(name); }
                     }
                 }
                 if type_names.len() > 3 {
@@ -230,14 +230,15 @@ impl AgentRoleChecker {
             shared::filesystem::taxonomy_filesystem_vo::Language::Python => {
                 for l in &lines {
                     let t = l.trim();
-                    if t.starts_with("class ") {
-                        let after_class = &t[6..];
+                    if let Some(after_class) = t.strip_prefix("class ") {
                         let name = after_class.split(['(', ':', ' ']).next().unwrap_or("").trim();
                         if !name.is_empty() && !name.starts_with('_') { type_names.push(name); }
                         if let Some(start) = t.find('(') {
                             let after_paren = &t[start + 1..];
-                            if let Some(end) = after_paren.find(')') {
-                                if !after_paren[..end].trim().is_empty() { implementor_found = true; }
+                            if let Some(end) = after_paren.find(')')
+                                && !after_paren[..end].trim().is_empty()
+                            {
+                                implementor_found = true;
                             }
                         }
                     }

@@ -2,16 +2,21 @@
 
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::cli_commands::LintResult;
-use shared::common::FilePath;
-use shared::common::{ContentString, SourceContentVO};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use std::path::PathBuf;
 use shared::role_rules::IUtilityRoleChecker;
 
-fn make_py_source(content: &str) -> SourceContentVO {
-    SourceContentVO::new(
-        FilePath::new("utility_helper.py".to_string()).unwrap_or_default(),
-        ContentString::new(content.to_string()),
-        "py",
-    )
+fn make_file(content: &str) -> FileEntry {
+    let path = "utility_helper.py";
+    FileEntry {
+        path: PathBuf::from(path),
+        extension: "py".to_string(),
+        language: Language::Python,
+        size: content.len() as u64,
+        content: content.to_string(),
+        parse_ok: true,
+        parse_metadata: None,
+    }
 }
 
 // ─── Python: class/function in comments → NO violation ──
@@ -25,7 +30,7 @@ fn py_class_in_comment_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -45,7 +50,7 @@ fn py_docstring_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -60,7 +65,7 @@ fn py_triple_single_docstring_should_not_flag() {
 x = 1
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -83,7 +88,7 @@ def helper():
     pass
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -107,7 +112,7 @@ class GoodClass:
     pass
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
@@ -133,7 +138,7 @@ def multiply(a: int, b: int) -> int:
     return a * b
 "#;
 
-    let source = make_py_source(content);
+    let source = make_file(content);
     let checker = UtilityRoleChecker::new();
     let mut violations: Vec<LintResult> = Vec::new();
 
