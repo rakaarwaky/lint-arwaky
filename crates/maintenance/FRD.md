@@ -4,20 +4,29 @@
 
 The maintenance crate provides operational health and upkeep commands for the lint-arwaky system: environment diagnostics, toolchain verification, cache cleanup, tool updates, security scanning, dependency reporting, and project statistics. It is the ops-focused crate — it handles environment health, not code quality analysis.
 
-```
-┌──────────────────────────────────────────────────────┐
-│           the maintenance orchestrator                │
-│  ┌────────────────┐     ┌─────────────────────────┐  │
-│  │  doctor        │     │  the maintenance checker │  │
-│  │  stats         │     │  (toolchain diagnose,    │  │
-│  │  clean         │     │   security scan,         │  │
-│  │  update        │     │   dependency report)     │  │
-│  └────────────────┘     └─────────────────────────┘  │
-│                          ┌─────────────────────────┐  │
-│                          │  the tool executor       │  │
-│                          │  (subprocess execution)  │  │
-│                          └─────────────────────────┘  │
-└──────────────────────────────────────────────────────┘
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["maintenance orchestrator"]
+    B --> C{"action"}
+
+    C -->|"doctor / diagnose"| D["maintenance checker"]
+    C -->|"security / dependencies"| D
+    C -->|"stats / clean / update"| E["direct ops"]
+
+    D --> F["tool executor"]
+    F -->|subprocess| G["Tool Output"]
+    G --> D
+    D --> H["Maintenance Result"]
+    E --> H
+
+    H --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style H fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Functional Requirements
@@ -137,30 +146,24 @@ The maintenance crate provides operational health and upkeep commands for the li
 
 ## API Contract
 
-| Function                                           | Input           | Output                | Description                                                    |
-| -------------------------------------------------- | --------------- | --------------------- | -------------------------------------------------------------- |
-| the maintenance orchestrator doctor                | —               | doctor result         | Check environment health: tool installations, config presence. |
-| the maintenance orchestrator stats                 | project path    | maintenance stats     | Count Python files and test files, compute ratio.              |
-| the maintenance orchestrator clean                 | —               | ()                    | Remove cache directories from project tree.                    |
-| the maintenance orchestrator update                | —               | ()                    | Upgrade Python linter tools via pip.                           |
-| the maintenance orchestrator diagnose toolchain    | —               | toolchain diagnostics | Check Rust/Python/JS/VCS tool installations.                   |
-| the maintenance orchestrator run security scan     | project path    | security scan report  | Run cargo-audit or bandit for vulnerability scanning.          |
-| the maintenance orchestrator run dependency report | project path    | result                | Parse and list project dependencies.                           |
-| the maintenance orchestrator cancel                | job id          | ()                    | Cancel a running operation (currently no-op).                  |
-| the maintenance checker diagnose toolchain         | —               | toolchain diagnostics | Business logic for toolchain diagnostics.                      |
-| the maintenance checker run security scan          | project path    | security scan report  | Business logic for security scanning.                          |
-| the maintenance checker run dependency report      | project path    | result                | Business logic for dependency reporting.                       |
-| the tool executor run tool                         | tool name, args | tool output           | Run an external tool as subprocess.                            |
-| the tool executor tool exists                      | tool name       | boolean               | Check if a tool is available via`which`.                       |
+| Operation                     | Input           | Output                | Purpose                                                       |
+| ------------------------------- | --------------- | --------------------- | --------------------------------------------------------------- |
+| Doctor check                  | —               | Doctor result         | Check environment health: tool installations, config presence.  |
+| Project statistics            | project path    | Maintenance stats     | Count Python files and test files, compute ratio.               |
+| Cache cleanup                 | —               | —                     | Remove cache directories from project tree.                     |
+| Tool update                   | —               | —                     | Upgrade Python linter tools via pip.                            |
+| Toolchain diagnostics         | —               | Toolchain diagnostics | Check Rust/Python/JS/VCS tool installations.                    |
+| Security scan                 | project path    | Security scan report  | Run cargo-audit or bandit for vulnerability scanning.           |
+| Dependency report             | project path    | Dependency list       | Parse and list project dependencies.                            |
 
 ## Integration Points
 
 - **Internal**:
-  - The maintenance commands aggregate in the shared crate — aggregate trait the orchestrator implements.
-  - The maintenance checker protocol in the shared crate — protocol interface for checker capabilities.
-  - The tool executor protocol in the shared crate — protocol interface for subprocess execution.
-  - The command runner utility in the shared crate — shared command execution utilities.
-  - The dependency I/O utility in the shared crate — shared dependency file I/O utilities.
+  - Maintenance commands aggregate — aggregate trait the orchestrator implements.
+  - Maintenance checker protocol — protocol interface for checker capabilities.
+  - Tool executor protocol — protocol interface for subprocess execution.
+  - Command runner utility — shared command execution utilities.
+  - Dependency I/O utility — shared dependency file I/O utilities.
 - **External**:
   - `cargo audit --json` — Rust dependency vulnerability scanning.
   - `bandit -r --format json` — Python security vulnerability scanning.

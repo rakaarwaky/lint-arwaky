@@ -2,6 +2,35 @@
 
 ## System Overview
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["fix orchestrator"]
+    B --> C["lint pipeline"]
+    C --> D{"fixable?"}
+
+    D -->|"AES203 unused import"| E["unused import remover"]
+    D -->|"AES304 bypass"| F["bypass fixer"]
+    D -->|"AES101 naming"| G["symbol renamer"]
+    D -->|"other"| H["manual report"]
+
+    E --> I["Fix Result"]
+    F --> I
+    G --> I
+    H --> J["Non-fixable list"]
+
+    I --> B
+    J --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style D fill:#fff3e0,stroke:#e65100
+    style I fill:#f3e5f5,stroke:#7b1fa2
+    style J fill:#fce4ec,stroke:#c62828
+```
+
 The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from the analysis pipeline, filters violations by fixable error code, and writes corrected files back to disk.
 
 **Allowed operation classes (product policy — locked):**
@@ -99,24 +128,23 @@ Every fix attempt MUST return a **reason-coded outcome** (`Applied` / `Skipped(r
 
 ## API Contract
 
-| Function                                         | Input                  | Output                        | Description                                                        |
-| ------------------------------------------------ | ---------------------- | ----------------------------- | ------------------------------------------------------------------ |
-| The fix processor's execute method               | file path              | fix result                    | Run linter, filter fixable violations, apply fixes, return summary |
-| Apply bypass-comment fix                         | file path, line number | reason-coded outcome          | Remove or replace bypass comment at specified line                 |
-| Apply unused-import fix                          | file path, line number | reason-coded outcome          | Remove unused import at specified line                             |
-| The fix processor's non-fixable reporting method | violation list         | lint message list             | List violations requiring manual fix                               |
-| The fix orchestrator's run fix method            | file path              | fix result                    | Delegate to the fix protocol's execute method                      |
-| The fix orchestrator's manual report method      | violation list         | string list                   | Delegate to non-fixable reporting                                  |
-| The file adapter's read file method              | file path              | optional content              | Read file content                                                  |
-| The file adapter's write file method             | file path, content     | bool                          | Write content to file                                              |
-| The file adapter's path existence check          | file path              | bool                          | Check if file exists                                               |
-| The auto-fix container's orchestrator factory    | dry run flag           | shared orchestrator reference | Wire and return orchestrator                                       |
+| Operation                        | Input                  | Output                        | Purpose                                                             |
+| ----------------------------------- | ---------------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Execute fixes                     | File path              | Fix result                    | Run linter, filter fixable violations, apply fixes, return summary  |
+| Apply bypass fix                   | File path, line number | Reason-coded outcome          | Remove or replace bypass comment at specified line                  |
+| Apply unused-import fix           | File path, line number | Reason-coded outcome          | Remove unused import at specified line                              |
+| Report non-fixable violations     | Violation list         | Manual fix list               | List violations requiring manual fix                                |
+| Run fix (orchestrator)            | File path              | Fix result                    | Delegate to fix protocol's execute method                           |
+| Manual report (orchestrator)      | Violation list         | String list                   | Delegate to non-fixable reporting                                   |
+| Read file                          | File path              | Optional content              | Read file content                                                   |
+| Write file                         | File path, content     | Boolean                       | Write content to file                                               |
+| Check path exists                  | File path              | Boolean                       | Check if file exists                                                |
 
 ## Integration Points
 
 - **Internal**:
-  - The analysis crate: consumed via the analysis aggregate to run linting and obtain violations.
-  - The shared crate: VOs (`FilePath`, `LintResult`, `FixResult`, `ErrorCode`, `Count`), contracts (the fix protocol, the file adapter protocol, the fix orchestrator aggregate), events (fix applied events), utilities (the file handler utility, the symbol renaming utility).
+  - Analysis crate — consumed via the analysis aggregate to run linting and obtain violations.
+  - The shared crate: value objects, contracts (fix protocol, file adapter protocol, fix orchestrator aggregate), events (fix applied), and utilities (file handler, symbol renaming).
 - **External**:
   - Filesystem: reads and writes source files via the file handler utility.
 

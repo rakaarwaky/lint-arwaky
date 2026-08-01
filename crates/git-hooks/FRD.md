@@ -2,6 +2,35 @@
 
 ## System Overview
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["git hooks orchestrator"]
+    B --> C{"action"}
+
+    C -->|"check"| D["diff checker"]
+    C -->|"install"| E["hook manager"]
+    C -->|"uninstall"| E
+
+    D --> F["git diff"]
+    F --> G["changed files"]
+    G --> H["lint pipeline"]
+    H --> I["Lint Results"]
+
+    E --> J["hook script"]
+    J --> K["Success / Error"]
+
+    I --> B
+    K --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style I fill:#f3e5f5,stroke:#7b1fa2
+```
+
 The git-hooks crate implements a pre-commit hook system that enforces AES compliance before code enters the repository. It detects changed files via git diff, runs linting only on modified files, and blocks commits that violate AES rules. The crate follows the AES 7-layer architecture: the diff checker and hook manager (capabilities) implement the diff protocol and hook protocol, the git hook adapter (capabilities) implements the hook manager protocol for low-level hook file operations, the git hooks orchestrator (agent) composes the three protocols, and the git container (root) wires dependencies.
 
 ## Functional Requirements
@@ -129,30 +158,23 @@ The git-hooks crate implements a pre-commit hook system that enforces AES compli
 
 ## API Contract
 
-| Function                                                | Input                     | Output                           | Description                                |
-| ------------------------------------------------------- | ------------------------- | -------------------------------- | ------------------------------------------ |
-| The diff checker's run git diff check method            | project root              | lint result list                 | Run diff and collect changed files         |
-| The diff checker's get diff method                      | project root              | git diff result VO               | Get full diff result with lintable filter  |
-| The diff checker's get changed files method             | project root, base branch | file path list                   | Get files changed vs base branch           |
-| The diff checker's get default branch method            | project root              | branch name                      | Detect default branch name                 |
-| The git hook adapter's install pre-commit method        | executable path           | result (success status or error) | Write hook script to .git/hooks/pre-commit |
-| The git hook adapter's uninstall pre-commit method      | none                      | result (success status or error) | Remove hook script                         |
-| The hook manager's install pre-commit method            | executable path           | result (success status or error) | Delegate to hook adapter                   |
-| The hook manager's uninstall pre-commit method          | none                      | result (success status or error) | Delegate to hook adapter                   |
-| The hook manager's initialize config method             | path string               | description VO                   | Check/create config file                   |
-| The hook manager's update ignore rule method            | hook ignore update VO     | description VO                   | Add/remove ignore rule                     |
-| The hook manager's get diff data method                 | two file paths            | git diff data VO                 | Compare two file paths                     |
-| The git hooks orchestrator's run git hooks check method | project root              | lint result list                 | Run full git hooks check                   |
-| The git hooks orchestrator's install hook method        | executable path           | result (success status or error) | Install pre-commit hook                    |
-| The git hooks orchestrator's uninstall hook method      | none                      | result (success status or error) | Uninstall pre-commit hook                  |
-| The git container's constructor                         | hook manager reference    | git container                    | Wire and return container                  |
-| The git container's default factory                     | none                      | git container                    | Wire with default adapter                  |
+| Operation                          | Input                     | Output                         | Purpose                                    |
+| ------------------------------------ | ------------------------- | -------------------------------- | -------------------------------------------- |
+| Git hooks check                    | project root              | Lint results                    | Run diff and collect changed files          |
+| Get diff                            | project root              | Diff result with lintable filter| Get full diff result                        |
+| Get changed files                   | project root, base branch | File path list                  | Get files changed vs base branch            |
+| Get default branch                  | project root              | Branch name                     | Detect default branch name                  |
+| Install pre-commit hook            | executable path           | Success or error                | Write hook script to .git/hooks/pre-commit  |
+| Uninstall pre-commit hook          | —                         | Success or error                | Remove hook script                          |
+| Initialize config                   | path string               | Description                     | Check/create config file                    |
+| Update ignore rule                  | Ignore update info        | Description                     | Add/remove ignore rule                      |
+| Get diff data                       | Two file paths            | Diff data                       | Compare two file paths                      |
 
 ## Integration Points
 
 - **Internal**:
   - The CLI commands crate: lint result list and lint result for lint output.
-  - The shared crate: VOs (`FilePath`, `FilePathList`, `GitDiffResultVO`, `SuccessStatus`, `GitHookError`), contracts (the diff protocol, the hook protocol, the hook manager protocol, the git hooks aggregate), utilities (the git I/O utility for git command execution, the file handler utility for file operations).
+  - The shared crate: value objects, contracts (diff protocol, hook protocol, hook manager protocol, git hooks aggregate), and utilities (git I/O, file handler).
 - **External**:
   - `git` CLI: `diff --name-only`, `symbolic-ref`, `ls-files` for change detection.
   - Filesystem: `.git/hooks/` directory operations, config file read/write.

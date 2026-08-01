@@ -27,9 +27,10 @@ flowchart TD
         F1 --> F2
         E1 --> G1["Vec‹FileEntry›"]
         F2 --> G2["Vec‹ImportEntry›"]
-        F3 --> G3["DiG M tionMap"]
-        F5 --> G5["ImplMap"]
-        G3 --> G6["ReverseLinkIndex"]
+        G3 --> G3["Definitions"]
+        F4 --> G4["Definition Map"]
+        F5 --> G5["Implementations"]
+        G3 --> G6["Reverse Links"]
     end
 
     G1 -->|"return"| D
@@ -41,12 +42,12 @@ flowchart TD
 
     D -->|"GraphAnalysisContext"| C
 
-    C --> H1["taxonomy_analyzer"]
-    C --> H2["contract_analyzer"]
-    C --> H3["capabilities_analyzer"]
-    C --> H4["utility_analyzer"]
-    C --> H5["agent_analyzer"]
-    C --> H6["surface_analyzer"]
+    C --> H1["taxonomy_analysis"]
+    C --> H2["contract_analysis"]
+    C --> H3["capabilities_analysis"]
+    C --> H4["utility_analysis"]
+    C --> H5["agent_analysis"]
+    C --> H6["surface_analysis"]
 
     H1 --> I["Violations"]
     H2 --> I
@@ -75,12 +76,12 @@ flowchart TD
 - **Description**: Receive the pre-built `GraphAnalysisContext` from the external filesystem crate and validate its completeness before dispatching to analyzers.
 - **Input**: `GraphAnalysisContext` from filesystem crate containing:
 
-  - `Vec<FileEntry>` — all workspace source files (path + content + language + parse metadata + `parse_ok` flag).
-  - `Vec<ImportEntry>` — all extracted import edges.
-  - `DiGraph` — forward import graph (file → file edges).
-  - `ReverseLinkIndex` — reverse import map (file → list of importers).
-  - `DefinitionMap` — trait/class/struct/interface names mapped to their defining file.
-  - `ImplMap` — trait/interface names mapped to their implementor files.
+  - All workspace source files (path + content + language + parse metadata + `parse_ok` flag).
+  - All extracted import edges.
+  - Forward import graph (file → file edges).
+  - Reverse import map (file → list of importers).
+  - Trait/class/struct/interface names mapped to their defining file.
+  - Trait/interface names mapped to their implementor files.
 - **Output**: Validated `GraphAnalysisContext` ready for analysis, plus list of `PARSE_WARN` diagnostics for files with `parse_ok = false`.
 - **Business Rules**:
 
@@ -126,7 +127,7 @@ flowchart TD
 ### FR-003: Reachability Tracing
 
 - **Description**: Perform BFS from all entry points through the forward import graph to determine which files are transitively reachable ("alive").
-- **Input**: Entry point set and the forward `DiGraph` from `GraphAnalysisContext`.
+- **Input**: Entry point set and the forward import graph from the analysis context.
 - **Output**: `Vec<String>` of all reachable file paths (alive set).
 - **Business Rules**:
 
@@ -146,7 +147,7 @@ flowchart TD
 ### FR-004: Taxonomy Orphan Detection (AES501)
 
 - **Description**: Check that taxonomy layer files (`taxonomy_*`) are imported by at least one file from any other layer.
-- **Input**: File path, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Input**: File path, reverse link index from the analysis context.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
@@ -165,7 +166,7 @@ flowchart TD
 ### FR-005: Contract Orphan Detection (AES502)
 
 - **Description**: Check that contract files have at least one implementation or consumer, using the `DefinitionMap` and `ImplMap` from the filesystem crate.
-- **Input**: File path, `DefinitionMap`, `ImplMap`, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Input**: File path, definition map, implementation map, reverse link index from the analysis context.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
@@ -192,7 +193,7 @@ flowchart TD
 ### FR-006: Capabilities Orphan Detection (AES503)
 
 - **Description**: Check that capability files are wired in a root container or reachable from entry points.
-- **Input**: File path, alive set (from FR-003), `DefinitionMap` from `GraphAnalysisContext`.
+- **Input**: File path, alive set (from FR-003), definition map from the analysis context.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
@@ -214,7 +215,7 @@ flowchart TD
 ### FR-007: Utility Orphan Detection (AES504)
 
 - **Description**: Check that utility files are imported by at least one consumer layer (capabilities, agent, surface, or root).
-- **Input**: File path, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Input**: File path, reverse link index from the analysis context.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
@@ -235,7 +236,7 @@ flowchart TD
 ### FR-008: Agent Orphan Detection (AES505)
 
 - **Description**: Check that agent orchestrator files are called by surface layer files or binary entry points, using the `ImplMap` and `DefinitionMap` from the filesystem crate.
-- **Input**: File path, `ImplMap`, `DefinitionMap`, `ReverseLinkIndex` from `GraphAnalysisContext`.
+- **Input**: File path, implementation map, definition map, reverse link index from the analysis context.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
@@ -258,13 +259,13 @@ flowchart TD
 ### FR-009: Surface Orphan Detection (AES506)
 
 - **Description**: Check that surface files are reachable based on their group classification (Smart, Utility, Passive).
-- **Input**: File path, alive set (from FR-003), `ReverseLinkIndex` from `GraphAnalysisContext`, architecture configuration.
+- **Input**: File path, alive set (from FR-003), reverse link index from the analysis context, architecture configuration.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
 - **Business Rules**:
 
   - **Surface classification by filename suffix** (configurable via YAML):
 
-    - **Smart**: `_command`, `_controller`, `_page`, `_router` — must be imported by entry point or container. Severity: HIGH.
+    - **Smart**: `_command`, `_controller`, `_page`, `_entry`, `_router` — must be imported by entry point or container. Severity: HIGH.
     - **Utility**: `_hook`, `_store`, `_action`, `_screen` — must be imported by a Smart surface. Severity: MEDIUM.
     - **Passive**: `_component`, `_view`, `_layout`, and all other recognized surface suffixes — must be imported by Smart OR Utility surface. Severity: LOW.
   - Dependency chain: `Entry → Smart → Utility → Passive`.
@@ -300,21 +301,21 @@ flowchart TD
 ## API Contract
 
 
-| Function                           | Input                                                    | Output                     | Description                                                                                       |
-| ------------------------------------ | ---------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| Full orphan scan                   | Target path                                              | Lint results               | Request graph from filesystem crate, discover entry points, trace reachability, run all analyzers |
-| Orphan scan with context           | Pre-built`GraphAnalysisContext`                          | Lint results               | Orphan scan with pre-built context (avoids filesystem crate call)                                 |
-| Identify entry points              | `Vec<FileEntry>`, configured patterns                    | Set of entry point paths   | Discover all valid entry points                                                                   |
-| Trace reachability                 | Entry point set,`DiGraph`                                | Alive file set             | BFS from entry points through import graph                                                        |
-| Check taxonomy orphan              | File path,`ReverseLinkIndex`                             | Orphan indicator result    | AES501 — taxonomy file orphan check                                                              |
-| Check contract orphan              | File path,`DefinitionMap`, `ImplMap`, `ReverseLinkIndex` | Orphan indicator result    | AES502 — contract file orphan check                                                              |
-| Check capabilities orphan          | File path, alive set,`DefinitionMap`                     | Orphan indicator result    | AES503 — capabilities file orphan check                                                          |
-| Check utility orphan               | File path,`ReverseLinkIndex`                             | Orphan indicator result    | AES504 — utility file orphan check                                                               |
-| Check agent orphan                 | File path,`ImplMap`, `DefinitionMap`, `ReverseLinkIndex` | Orphan indicator result    | AES505 — agent file orphan check                                                                 |
-| Check surface orphan               | File path, alive set,`ReverseLinkIndex`, config          | Orphan indicator result    | AES506 — surface file orphan check                                                               |
-| Create default DI container        | —                                                       | Orphan detection container | Default dependency injection container                                                            |
-| Create DI container with config    | Architecture configuration                               | Orphan detection container | DI container with custom config                                                                   |
-| Create DI from config orchestrator | Config orchestrator reference, root directory            | Orphan detection container | Canonical DI from config orchestrator                                                             |
+| Function                           | Input                                                             | Output                     | Description                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| Full orphan scan                   | Target path                                                       | Lint results               | Request graph from filesystem crate, discover entry points, trace reachability, run all analyzers |
+| Orphan scan with context           | Pre-built analysis context                                        | Lint results               | Orphan scan with pre-built context (avoids filesystem crate call)                                 |
+| Identify entry points              | File list from analysis context, configured patterns              | Set of entry point paths   | Discover all valid entry points                                                                   |
+| Trace reachability                 | Entry point set, import graph                                     | Alive file set             | BFS from entry points through import graph                                                        |
+| Check taxonomy orphan              | File path, reverse link index                                     | Orphan indicator result    | AES501 — taxonomy file orphan check                                                              |
+| Check contract orphan              | File path, definition map, impl map, reverse link index           | Orphan indicator result    | AES502 — contract file orphan check                                                              |
+| Check capabilities orphan          | File path, alive set, definition map                              | Orphan indicator result    | AES503 — capabilities file orphan check                                                          |
+| Check utility orphan               | File path, reverse link index                                     | Orphan indicator result    | AES504 — utility file orphan check                                                               |
+| Check agent orphan                 | File path, implementation map, definition map, reverse link index | Orphan indicator result    | AES505 — agent file orphan check                                                                 |
+| Check surface orphan               | File path, alive set, reverse link index, config                  | Orphan indicator result    | AES506 — surface file orphan check                                                               |
+| Create default DI container        | —                                                                | Orphan detection container | Default dependency injection container                                                            |
+| Create DI container with config    | Architecture configuration                                        | Orphan detection container | DI container with custom config                                                                   |
+| Create DI from config orchestrator | Config orchestrator reference, root directory                     | Orphan detection container | Canonical DI from config orchestrator                                                             |
 
 ---
 
@@ -341,7 +342,7 @@ flowchart TD
     - Trait/class/struct definition mapping (`definition_mapper`).
     - Implementation relationship mapping (`impl_mapper`).
     - Reverse link index construction.
-    - Returns `GraphAnalysisContext` to the caller.
+    - Returns the pre-built analysis context to the caller.
     - Files that cannot be read are excluded. Files that cannot be parsed are included with `parse_ok = false`.
   - No network calls. No filesystem writes. Pure static analysis.
 
@@ -533,7 +534,7 @@ flowchart TD
 | **`PARSE_WARN`**         | Warning diagnostic (non-AES code) emitted when a file fails to parse                                                                            |
 | **Re-export**            | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                      |
 | **Glob import**          | `use foo::*` (Rust) or `export * from` (TS) — imports all symbols from a module                                                                |
-| **Smart surface**        | Surface with`_command`, `_controller`, `_page`, `_router` suffix — may contain orchestration                                                   |
+| **Smart surface**        | Surface with`_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration                                         |
 | **Utility surface**      | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                                           |
 | **Passive surface**      | Surface with`_component`, `_view`, `_layout`, or other recognized suffix — presentation-only                                                   |
 | **Filesystem crate**     | External crate that handles file walking, AST parsing, graph construction, and mapping. Returns`GraphAnalysisContext` to orphan-detector.       |
@@ -597,8 +598,6 @@ AES506:
   exceptions: []
     # Files with suffix not in any list → skipped
 ```
-
-
 
 ---
 

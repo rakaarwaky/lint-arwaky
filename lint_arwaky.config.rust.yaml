@@ -475,8 +475,8 @@ architecture:
       enabled: true
       scope:
         [
-          "surface(command|controller|page|entry)",
-          "surface(hook|store|action|screen|router)",
+          "surface(command|controller|page|router)",
+          "surface(hook|store|action|screen)",
           "surface(component|view|layout)",
         ]
       max_functions: 15

@@ -132,28 +132,27 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
 
 ## API Contract
 
-| Function                                                    | Input                         | Output                   | Description                                  |
-| ----------------------------------------------------------- | ----------------------------- | ------------------------ | -------------------------------------------- |
-| The setup orchestrator's generate MCP config method         | transport protocol            | MCP config VO            | Generate base MCP config                     |
-| The setup orchestrator's MCP config Claude method           | transport protocol            | MCP config VO            | Generate Claude Desktop MCP config           |
-| The setup orchestrator's MCP config Hermes method           | transport protocol            | MCP config VO            | Generate Hermes MCP config                   |
-| The setup orchestrator's MCP config VS Code method          | transport protocol            | MCP config VO            | Generate VS Code MCP config                  |
-| The setup orchestrator's generate env method                | transport protocol, home path | env content VO           | Generate .env file content                   |
-| The setup orchestrator's detect language method             | none                          | project language VO      | Detect primary project language              |
-| The setup orchestrator's detect languages method            | none                          | project languages VO     | Detect all project languages                 |
-| The setup orchestrator's get config template method         | language string               | static string reference  | Load embedded YAML config template           |
-| The setup orchestrator's write config file method           | filename, content             | write config result      | Write config file to disk                    |
-| The setup orchestrator's create global config dir method    | none                          | create config dir result | Create XDG config directory                  |
-| The setup orchestrator's install Python adapters method     | none                          | success status           | Install ruff, mypy, bandit via pip           |
-| The setup orchestrator's install JavaScript adapters method | sudo flag                     | success status           | Install eslint, prettier, typescript via npm |
-| The setup orchestrator's check HTTP method                  | transport URL VO              | success status           | Check HTTP endpoint (stub)                   |
-| The setup orchestrator's file exists method                 | path string                   | bool                     | Check if file exists                         |
-| The setup container's constructor                           | none                          | setup container          | Wire and return container                    |
+| Operation                           | Input                         | Output                   | Purpose                                    |
+| ------------------------------------- | ----------------------------- | ------------------------ | -------------------------------------------- |
+| Generate MCP config                 | transport protocol            | MCP config               | Generate base MCP config                    |
+| Generate Claude config              | transport protocol            | MCP config               | Generate Claude Desktop MCP config          |
+| Generate Hermes config              | transport protocol            | MCP config               | Generate Hermes MCP config                  |
+| Generate VS Code config             | transport protocol            | MCP config               | Generate VS Code MCP config                 |
+| Generate env file                   | transport protocol, home path | Environment content      | Generate .env file content                  |
+| Detect primary language             | —                             | Project language         | Detect primary project language             |
+| Detect all languages                | —                             | Project languages        | Detect all project languages                |
+| Get config template                 | language string               | Embedded config content  | Load embedded YAML config template          |
+| Write config file                   | filename, content             | Write result             | Write config file to disk                   |
+| Create global config directory      | —                             | Created directory path   | Create XDG config directory                 |
+| Install Python adapters             | —                             | Success status           | Install ruff, mypy, bandit via pip          |
+| Install JavaScript adapters         | sudo flag                     | Success status           | Install eslint, prettier, typescript via npm|
+| Check HTTP endpoint                 | transport URL                 | Success status           | Check HTTP endpoint (stub)                  |
+| Check file exists                   | path string                   | Boolean                  | Check if file exists                        |
 
 ## Integration Points
 
 - **Internal**:
-  - The shared crate: VOs (`McpConfigVO`, `EnvContentVO`, `ProjectLanguageVO`, `SuccessStatus`, `SetupError`), contracts (the setup management protocol, the setup installer protocol, the setup management aggregate), utilities (the filesystem checker utility, the setup I/O utility).
+  - The shared crate: value objects, contracts (setup management protocol, setup installer protocol, setup management aggregate), and utilities (filesystem checker, setup I/O).
 - **External**:
   - `pip` / `python3 -m pip`: Python package installation.
   - `npm`: JavaScript package installation.

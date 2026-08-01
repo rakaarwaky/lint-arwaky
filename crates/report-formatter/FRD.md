@@ -22,6 +22,32 @@
 └───────────────────────────────────────────────────────┘
 ```
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["report formatter"]
+    B --> C{"format type"}
+
+    C -->|"Text"| D["text formatter"]
+    C -->|"JSON"| E["json formatter"]
+    C -->|"SARIF"| F["sarif formatter"]
+    C -->|"JUnit"| G["junit formatter"]
+
+    D --> H["Display Content"]
+    E --> H
+    F --> H
+    G --> H
+
+    H --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style H fill:#f3e5f5,stroke:#7b1fa2
+```
+
 The report-formatter crate provides formatting capabilities for scan report output. It implements the report formatter protocol for each output format (text, JSON, SARIF, JUnit) and exposes the report formatter aggregate via the orchestrator for the surface layer to consume. The surface layer never formats output directly — it always delegates through the aggregate trait.
 
 ## Functional Requirements

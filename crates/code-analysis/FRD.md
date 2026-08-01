@@ -23,13 +23,13 @@ flowchart TD
     end
 
     G1 -->|"return"| D
-    D -->|"Vec‹FileEntry›\n(path + content)"| C
+    D -->|"file data\n(path + content)"| C
 
-    C --> H1["max_line_checker"]
-    C --> H2["min_line_checker"]
-    C --> H3["mandatory_def_checker"]
-    C --> H4["bypass_checker"]
-    C --> H5["duplication_analyzer"]
+    C --> H1["line_count_check"]
+    C --> H2["line_count_check"]
+    C --> H3["definition_check"]
+    C --> H4["bypass_detection"]
+    C --> H5["duplication_analysis"]
 
     H1 --> I["Violations"]
     H2 --> I
@@ -55,7 +55,7 @@ flowchart TD
 ### FR-001: Maximum File Line Count (AES301)
 
 - **Description**: Source files must not exceed the maximum allowed line count to prevent bloated, unmaintainable files.
-- **Input**: `Vec<FileEntry>` (path + content, from filesystem crate), architecture configuration.
+- **Input**: File data from filesystem crate (path + content), architecture configuration.
 - **Output**: AES301 diagnostic if line count exceeds maximum.
 - **Business Rules**:
 
@@ -78,7 +78,7 @@ flowchart TD
 ### FR-002: Minimum File Line Count (AES302)
 
 - **Description**: Source files must have minimum length to avoid empty placeholders and stub files.
-- **Input**: `Vec<FileEntry>` (path + content, from filesystem crate), architecture configuration.
+- **Input**: File data from filesystem crate (path + content), architecture configuration.
 - **Output**: AES302 diagnostic if line count is below minimum.
 - **Business Rules**:
 
@@ -98,7 +98,7 @@ flowchart TD
 ### FR-003: Mandatory Definitions & Dead Inheritance (AES303)
 
 - **Description**: Source files must declare at least one primary symbol (struct, enum, trait, class, interface, type) to prevent empty placeholder files. Additionally, declarations that exist but contain no real implementation (dead inheritance) are flagged.
-- **Input**: `Vec<FileEntry>` (path + content, from filesystem crate), architecture configuration.
+- **Input**: File data from filesystem crate (path + content), architecture configuration.
 - **Output**: AES303 diagnostic if no definition found, or if dead inheritance detected.
 - **Business Rules**:
 
@@ -131,7 +131,7 @@ flowchart TD
 ### FR-004: Bypass Detection (AES304)
 
 - **Description**: Detects and flags any attempt to suppress warnings/errors, panic, or use unsafe fallbacks in production code. All patterns are flagged regardless of whether they appear in code or comments. Patterns inside string literals are NOT flagged.
-- **Input**: `Vec<FileEntry>` (path + content, from filesystem crate), architecture configuration with forbidden bypass patterns.
+- **Input**: File data from filesystem crate (path + content), architecture configuration with forbidden bypass patterns.
 - **Output**: AES304 diagnostic for each bypass found (may emit multiple per file).
 - **Business Rules**:
 
@@ -170,7 +170,7 @@ flowchart TD
 ### FR-005: Duplicate Code Detection (AES305)
 
 - **Description**: Compares code blocks across all workspace files and flags files with excessive content overlap. Import lines, blank lines, and comment-only lines are excluded before comparison to avoid false positives from boilerplate.
-- **Input**: `Vec<FileEntry>` (path + content, from filesystem crate), architecture configuration.
+- **Input**: File data from filesystem crate (path + content), architecture configuration.
 - **Output**: AES305 diagnostic for files exceeding duplication threshold.
 - **Business Rules**:
 
@@ -202,18 +202,15 @@ flowchart TD
 ## API Contract
 
 
-| Function                                                         | Input                                             | Output                        | Description                                                               |
-| ------------------------------------------------------------------ | --------------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
-| The architecture line checker's line count check method          | `FileEntry`, definition, violations               | Mutates violations            | Check AES301 (max) and AES302 (min) line counts                           |
-| The mandatory definition checker's definition check method       | `FileEntry`, definition, violations               | Mutates violations            | Check AES303 — file must declare at least one primary symbol             |
-| The mandatory definition checker's dead inheritance check method | `FileEntry`, violations                           | Mutates violations            | Check AES303 — detect empty unit structs, empty classes                  |
-| The bypass checker's bypass detection method                     | `FileEntry`, violations                           | Mutates violations            | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
-| The bypass checker's Cargo.toml check method                     | content, violations                               | Mutates violations            | Check AES304 — detect Cargo.toml clippy allow bypass                     |
-| The code duplication analyzer's file similarity check method     | `Vec<FileEntry>`, min lines, threshold percentage | List of similarity violations | Check AES305 — file-level similarity analysis                            |
-| The code analysis orchestrator's main check runner               | config,`Vec<FileEntry>`, root directory           | List of lint results          | Request files from filesystem crate, run all AES301–305 checks           |
-| The code analysis orchestrator's report formatter                | results, project root                             | Formatted string              | Format compliance report                                                  |
-| Check for critical violations                                    | results                                           | Boolean                       | Check if any CRITICAL severity violations exist                           |
-| Calculate compliance score                                       | results                                           | Score value                   | Calculate compliance score                                                |
+| Operation                          | Input                                   | Output                        | Purpose                                                                |
+| ------------------------------------ | ----------------------------------------- | ------------------------------- | ------------------------------------------------------------------------ |
+| Line count check (AES301/AES302)   | File data from filesystem crate           | AES301/AES302 violations       | Check max/min file line counts                                        |
+| Definition check (AES303)          | File data from filesystem crate           | AES303 violations              | Verify file declares at least one primary symbol                       |
+| Dead inheritance check (AES303)    | File data from filesystem crate           | AES303 violations              | Detect empty unit structs and empty classes                             |
+| Bypass detection (AES304)          | File data from filesystem crate           | AES304 violations              | Detect forbidden tokens, attributes, and comment bypasses              |
+| Cargo.toml bypass check (AES304)   | File content, configuration               | AES304 violations              | Detect Cargo.toml clippy allow bypass                                  |
+| Duplication analysis (AES305)      | File data from filesystem crate           | Similarity violations          | File-level similarity analysis with sliding window                     |
+| Full code analysis                 | File data from filesystem crate, config   | Lint results                   | Run all code quality checks (AES301–AES305)                            |
 
 ---
 
@@ -234,7 +231,7 @@ flowchart TD
     - File reading with content loading.
     - File filtering by extension (`rs`, `py`, `js`, `ts`, `jsx`, `tsx`).
     - Ignore rules (config-level, default skip directories, hidden directories, symlink safety).
-    - Returns `Vec<FileEntry>` (path + content) to the caller.
+    - Returns file data (path + content) to the caller.
     - Files that cannot be read are excluded from the returned list.
   - No network calls. No filesystem writes. Pure static analysis.
 
@@ -348,7 +345,7 @@ flowchart TD
 ## Assumptions & Constraints
 
 - Rules are configurable via YAML (the architecture configuration); default thresholds apply when config values are absent.
-- The crate receives pre-read `Vec<FileEntry>` (path + content) from the external filesystem crate. No file I/O or AST parsing is performed internally.
+- The crate receives pre-read file data (path + content) from the external filesystem crate. No file I/O or AST parsing is performed internally.
 - Files that cannot be read by the filesystem crate are excluded from the returned list and not checked.
 - Duplicate detection uses hash-based window comparison on normalized lines (not AST-level). Import lines, blank lines, and comment-only lines are excluded before comparison.
 - Bypass detection is language-aware (Rust, Python, JavaScript, TypeScript each have language-specific patterns). All patterns are flagged in both code and comments. Patterns inside string literals are not flagged.
@@ -414,8 +411,8 @@ AES3XX:
 
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- **Filesystem crate** (external): `crates/filesystem/src/filesystem_aggregate.rs`, `file_walker.rs`
-- Bypass Detection Utility: `crates/shared/src/utility_bypass_detector.rs`
-- Duplication Detection Utility: `crates/shared/src/utility_duplication_detector.rs`
-- Language Mapping Utility: `crates/shared/src/utility_language_mapper.rs`
-- Compliance Score Utility: `crates/shared/src/utility_compliance_score.rs`
+- **Filesystem crate** (external): filesystem aggregate and file walker
+- Shared bypass detection utility
+- Shared duplication detection utility
+- Shared language mapping utility
+- Shared compliance score utility

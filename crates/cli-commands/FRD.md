@@ -4,6 +4,37 @@
 
 The cli-commands crate provides the unified command-line interface that drives the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers that parse CLI args and delegate all business logic to agent/orchestration layers. Report formatting is delegated to the report-formatter crate via the report formatter aggregate.
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["cli commands"]
+    B --> C{"command type"}
+
+    C -->|"check / scan / quality / import / naming / role / orphan / external"| D["linter aggregates"]
+    C -->|"ci"| E["ci threshold check"]
+    C -->|"fix"| F["auto-fix"]
+    C -->|"doctor / security / dependencies"| G["maintenance"]
+    C -->|"init / install / mcp-config / config-show"| H["project-setup"]
+    C -->|"install-hook / uninstall-hook / git-diff"| I["git-hooks"]
+    C -->|"watch"| J["file-watch"]
+    C -->|"adapters / version"| K["thin dispatch"]
+
+    D --> L["report formatter"]
+    E --> L
+    G --> L
+    I --> L
+
+    L --> M["Lint Results"]
+    M --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style M fill:#fce4ec,stroke:#c62828
+```
+
 **Exit Code Contract** (workspace standard — see root PRD):
 
 | Code | Meaning |

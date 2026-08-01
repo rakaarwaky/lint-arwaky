@@ -179,12 +179,12 @@ shared (foundation — no feature crate dependencies)
 ## Integration Points
 
 - **Internal**:
-  - The common module is the most widely imported module — used by every feature crate via shared taxonomy and common re-exports.
-  - The config system module provides configuration to orphan-detector, role-rules, and import-rules via the config loading aggregate.
-  - The code analysis module provides graph analysis types consumed by orphan-detector.
-  - The orphan detection contracts are implemented by the orphan-detector feature crate.
-  - The role enforcement contracts are implemented by the role-rules feature crate.
-  - The import rules contracts are implemented by the import-rules feature crate.
+  - Common module — most widely imported module, used by every feature crate.
+  - Config system module — provides configuration to rule crates via the config loading aggregate.
+  - Code analysis module — provides graph analysis types consumed by orphan-detector.
+  - Orphan detection contracts — implemented by the orphan-detector crate.
+  - Role enforcement contracts — implemented by the role-rules crate.
+  - Import rules contracts — implemented by the import-rules crate.
 - **External**: None — the shared crate has no external dependencies beyond standard library crates.
 
 ## Non-functional Requirements (Detailed)

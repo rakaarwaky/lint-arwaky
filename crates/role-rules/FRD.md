@@ -27,14 +27,14 @@ flowchart TD
     end
 
     G1 -->|"return"| D
-    D -->|"Vec‹FileEntry›\n(path + content +\nlanguage + parse metadata)"| C
+    D -->|"file data\n(path + content +\nlanguage + parse metadata)"| C
 
-    C -->|"classify by prefix"| H1["taxonomy_checker"]
-    C -->|"classify by prefix"| H2["contract_checker"]
-    C -->|"classify by prefix"| H3["capabilities_checker"]
-    C -->|"classify by prefix"| H4["utility_checker"]
-    C -->|"classify by prefix"| H5["agent_checker"]
-    C -->|"classify by prefix"| H6["surface_checker"]
+    C -->|"classify by prefix"| H1["taxonomy_check"]
+    C -->|"classify by prefix"| H2["contract_check"]
+    C -->|"classify by prefix"| H3["capabilities_check"]
+    C -->|"classify by prefix"| H4["utility_check"]
+    C -->|"classify by prefix"| H5["agent_check"]
+    C -->|"classify by prefix"| H6["surface_check"]
 
     H1 --> I["Violations"]
     H2 --> I
@@ -230,8 +230,8 @@ flowchart TD
 
   - **Surface classification by filename suffix** (configurable):
 
-    - **Smart**: `_command`, `_controller`, `_page`, `_entry` — may contain orchestration logic.
-    - **Utility**: `_hook`, `_store`, `_action`, `_screen`, `_router` — support smart surfaces.
+    - **Smart**: `_command`, `_controller`, `_page`, `_entry`, `_router` — may contain orchestration logic.
+    - **Utility**: `_hook`, `_store`, `_action`, `_screen` — support smart surfaces.
     - **Passive**: All other surface suffixes — presentation-only.
   - **Global check (all surfaces)**:
 
@@ -246,7 +246,7 @@ flowchart TD
 
     - Max `max_control_flow` (configurable, default 3) control-flow statements (`if`, `else`, `for`, `while`, `match`, `switch`, `try`, `except`, `catch`) per file.
     - Exceeding flagged as domain logic violation — surface files should delegate logic to lower layers.
-  - **Smart surface exemption**: Smart surfaces (`_command`, `_controller`, `_page`, `_entry`) are exempted from Passive + Utility checks (hierarchy, method length, nesting, domain logic) but still subject to the global function count limit.
+  - **Smart surface exemption**: Smart surfaces (`_command`, `_controller`, `_page`, `_entry`, `_router`) are exempted from Passive + Utility checks (hierarchy, method length, nesting, domain logic) but still subject to the global function count limit.
   - Detection via AST parse metadata: extract function declarations, method declarations, method body line spans, nesting depth, control-flow statement counts.
 - **Edge Cases**:
 
@@ -262,27 +262,15 @@ flowchart TD
 ## API Contract
 
 
-| Function                           | Input                                   | Output                     | Description                                                        |
-| ------------------------------------ | ----------------------------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| Run role enforcement audit         | Target file path                        | Lint results               | Request files from filesystem crate, classify, run all role checks |
-| Get auditor name                   | —                                      | String                     | Returns "role-rules"                                               |
-| Classify and dispatch files        | `Vec<FileEntry>`, lint result collector | —                         | Classify files by prefix, dispatch to layer checkers               |
-| Taxonomy entity primitive check    | `FileEntry`, lint result collector      | —                         | AES401 entity primitive check                                      |
-| Taxonomy error primitive check     | `FileEntry`, lint result collector      | —                         | AES401 error primitive check                                       |
-| Taxonomy event primitive check     | `FileEntry`, lint result collector      | —                         | AES401 event primitive check                                       |
-| Taxonomy constant purity check     | `FileEntry`, lint result collector      | —                         | AES401 constant purity check                                       |
-| Contract protocol primitive check  | `FileEntry`                             | Lint results               | AES402 protocol primitive check                                    |
-| Contract aggregate primitive check | `FileEntry`                             | Lint results               | AES402 aggregate primitive check                                   |
-| Capability composition check       | `FileEntry`, lint result collector      | —                         | AES403 capability composition check                                |
-| Utility purity check               | `FileEntry`, lint result collector      | —                         | AES404 utility purity check                                        |
-| Agent composition check            | `FileEntry`, lint result collector      | —                         | AES405 agent composition check                                     |
-| Surface global function count      | `FileEntry`, lint result collector      | —                         | AES406 global function count                                       |
-| Smart surface checks               | `FileEntry`, lint result collector      | —                         | AES406 smart surface checks (global limit only)                    |
-| Utility surface checks             | `FileEntry`, lint result collector      | —                         | AES406 utility surface checks                                      |
-| Passive surface checks             | `FileEntry`, lint result collector      | —                         | AES406 passive surface checks                                      |
-| Create DI container with config    | Architecture configuration              | Role enforcement container | DI container with config                                           |
-| Create DI from config orchestrator | Config orchestrator reference, root dir | Role enforcement container | Canonical DI from config orchestrator                              |
-| Expose orchestrator                | —                                      | Role runner aggregate      | Expose orchestrator as trait object                                |
+| Operation                         | Input                                    | Output                         | Purpose                                                                  |
+| ---------------------------------- | ------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
+| Full role audit                   | File data from filesystem crate            | Lint results                    | Classify files by layer prefix, run all role checks (AES401–AES406)      |
+| Taxonomy purity check             | Parsed file data                           | AES401 violations               | Detect raw primitives in taxonomy entity/error/event/constant files       |
+| Contract primitive check          | Parsed file data                           | AES402 violations               | Detect raw primitives in contract protocol/aggregate method signatures   |
+| Capability composition check      | Parsed file data                           | AES403 violations               | Verify protocol implementation and max type declarations                 |
+| Utility purity check              | Parsed file data                           | AES404 violations               | Verify utility files contain only stateless functions                    |
+| Agent composition check           | Parsed file data                           | AES405 violations               | Verify aggregate implementation and max type declarations                |
+| Surface role check                | Parsed file data, configuration            | AES406 violations               | Enforce Smart/Utility/Passive constraints per surface classification    |
 
 ---
 
@@ -303,7 +291,7 @@ flowchart TD
     - File walking and directory traversal (`file_walker`).
     - File reading with content loading.
     - Full AST parsing for all languages (`ast_parser`).
-    - Returns `Vec<FileEntry>` (path + content + language + parse metadata) to the caller.
+    - Returns file data (path + content + language + parse metadata) to the caller.
     - Files that cannot be read or parsed are excluded from the returned list.
   - No network calls. No filesystem writes. Pure static analysis.
 
@@ -442,8 +430,8 @@ flowchart TD
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **AES**              | Agentic Engineering System — the 7-layer coding convention                                                                            |
 | **Layer**            | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                                               |
-| **Smart surface**    | Surface with`_command`, `_controller`, `_page`, `_entry` suffix — may contain orchestration logic                                     |
-| **Utility surface**  | Surface with`_hook`, `_store`, `_action`, `_screen`, `_router` suffix — supports smart surfaces                                       |
+| **Smart surface**    | Surface with`_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration logic                                     |
+| **Utility surface**  | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                       |
 | **Passive surface**  | Any surface file not classified as Smart or Utility — presentation-only                                                               |
 | **Primitive type**   | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures                                                    |
 | **VO**               | Value Object — a typed wrapper around a primitive that replaces raw types in signatures                                               |

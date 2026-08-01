@@ -241,38 +241,35 @@ A state-driven 3-panel Ratatui terminal UI that provides real-time AES architect
 
 ## API Contract
 
-| Function                                       | Input                               | Output                    | Description                                                               |
-| ---------------------------------------------- | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------- |
-| the TUI command surface run                    | —                                   | result                    | Initialize terminal, run event loop, restore terminal on exit.            |
-| the TUI orchestrator handle event              | application state, TUI event        | ()                        | Delegate event to action handler.                                         |
-| the TUI orchestrator load directory            | application state, path             | ()                        | Delegate directory load to action handler.                                |
-| the TUI orchestrator load preview              | application state                   | ()                        | Delegate preview load to action handler.                                  |
-| the TUI orchestrator start scan                | application state                   | optional channel receiver | Start background scan thread, return progress channel.                    |
-| the TUI orchestrator poll scan                 | application state, channel receiver | ()                        | Poll scan progress and update state.                                      |
-| the action handler handle                      | application state, TUI event        | ()                        | Central event dispatch — maps every TUI event to a state mutation or I/O. |
-| the action handler load directory              | application state, path             | ()                        | Read directory, sort entries (dirs first), reset selection.               |
-| the action handler load preview                | application state                   | ()                        | Load file preview for selected entry if it's a file.                      |
-| the lint executor check                        | path, flags                         | lint execution result     | Run AES compliance check.                                                 |
-| the lint executor scan                         | path                                | lint execution result     | Run comprehensive multi-adapter scan.                                     |
-| the lint executor fix                          | path, flags                         | lint execution result     | Auto-fix violations.                                                      |
-| the lint executor ci                           | path, flags                         | lint execution result     | CI mode with threshold check.                                             |
-| the lint executor doctor                       | —                                   | lint execution result     | Environment diagnostics.                                                  |
-| the file system utility list directory         | path                                | list of file entries      | List directory entries (excluding hidden files).                          |
-| the file system utility read file preview      | path, max lines                     | display content           | Read file with line numbers, truncate at max_lines.                       |
-| the file system utility copy text to clipboard | string                              | boolean                   | Copy text via arboard or xclip/wl-copy fallback.                          |
+| Operation                         | Input                               | Output                    | Purpose                                                                  |
+| ----------------------------------- | ----------------------------------- | ------------------------- | -------------------------------------------------------------------------- |
+| Run TUI                           | —                                   | Result                    | Initialize terminal, run event loop, restore terminal on exit.             |
+| Handle event                       | Application state, TUI event        | —                         | Delegate event to action handler.                                          |
+| Load directory                     | Application state, path             | —                         | Read directory, sort entries, reset selection.                             |
+| Load preview                       | Application state                   | —                         | Load file preview for selected entry.                                      |
+| Start scan                         | Application state                   | Channel receiver          | Start background scan thread, return progress channel.                     |
+| Poll scan                          | Application state, channel receiver | —                         | Poll scan progress and update state.                                       |
+| Run check                          | Path, flags                         | Execution result          | Run AES compliance check.                                                  |
+| Run scan action                    | Path                                | Execution result          | Run comprehensive multi-adapter scan.                                      |
+| Run fix                            | Path, flags                         | Execution result          | Auto-fix violations.                                                       |
+| Run CI                             | Path, flags                         | Execution result          | CI mode with threshold check.                                              |
+| Run doctor                         | —                                   | Execution result          | Environment diagnostics.                                                   |
+| List directory                     | Path                                | File entry list           | List directory entries.                                                    |
+| Read file preview                  | Path, max lines                     | Display content           | Read file with line numbers, truncate at max lines.                        |
+| Copy to clipboard                  | String                              | Boolean                   | Copy text via arboard or xclip/wl-copy fallback.                           |
 
 ## Integration Points
 
 - **Internal**:
-  - The TUI aggregate in the shared crate — aggregate trait for TUI orchestration.
-  - The action handler protocol in the shared crate — protocol for the central state machine.
-  - The lint executor protocol in the shared crate — protocol for all lint action methods.
-  - The code analysis aggregate in the shared crate — core AES lint engine.
-  - The external lint aggregate in the shared crate — external linter integration.
-  - The maintenance commands aggregate in the shared crate — doctor/dependency commands.
-  - The config orchestrator aggregate in the shared crate — configuration management.
-  - The hook manager protocol in the shared crate — git hook install/uninstall.
-  - The analysis pipeline aggregate in the CLI commands crate — comprehensive scan pipeline.
+  - TUI aggregate — aggregate trait for TUI orchestration.
+  - Action handler protocol — protocol for the central state machine.
+  - Lint executor protocol — protocol for all lint action methods.
+  - Code analysis aggregate — core AES lint engine.
+  - External lint aggregate — external linter integration.
+  - Maintenance commands aggregate — doctor/dependency commands.
+  - Config orchestrator aggregate — configuration management.
+  - Hook manager protocol — git hook install/uninstall.
+  - Analysis pipeline aggregate in the CLI commands crate — comprehensive scan pipeline.
 - **External**:
   - `ratatui` — terminal UI rendering framework.
   - `crossterm` — terminal I/O, raw mode, mouse capture, alternate screen.

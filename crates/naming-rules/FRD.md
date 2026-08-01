@@ -19,14 +19,14 @@ flowchart TD
 
     subgraph FS ["filesystem crate (external)"]
         D --> E["file_walker"]
-        E --> G["Vec‹FilePath›"]
+        E --> G["File Paths"]
     end
 
     G -->|"return"| D
-    D -->|"Vec‹FilePath›"| C
+    D -->|"file paths"| C
 
-    C --> H1["naming_convention_checker"]
-    C --> H2["suffix_prefix_checker"]
+    C --> H1["naming_convention_check"]
+    C --> H2["suffix_prefix_check"]
 
     H1 --> I["Violations"]
     H2 --> I
@@ -49,7 +49,7 @@ flowchart TD
 ### FR-001: Naming Convention (AES101)
 
 - **Description**: Every file stem must be snake_case with at least N underscore-separated words in `prefix_concept_suffix` pattern. If the file has no recognized layer prefix, AES000 (unknown prefix) is emitted as a pre-condition failure.
-- **Input**: `Vec<FilePath>` (from filesystem crate), architecture configuration, layer map.
+- **Input**: File paths from filesystem crate, architecture configuration, layer map.
 - **Output**:
 
   - AES101 diagnostic if naming structure is invalid.
@@ -80,7 +80,7 @@ flowchart TD
 ### FR-002: Suffix/Prefix Validation (AES102)
 
 - **Description**: File suffix must align with the architectural layer indicated by its prefix, and file prefix must be consistent with its suffix. Forbidden suffixes from other layers are rejected. Prefix-suffix cross-validation ensures a file's layer identity is internally consistent.
-- **Input**: `Vec<FilePath>` (from filesystem crate), architecture configuration with per-layer suffix policies, layer map.
+- **Input**: File paths from filesystem crate, architecture configuration with per-layer suffix policies, layer map.
 - **Output**: AES102 diagnostic if suffix is forbidden, mismatches the layer's allowed list, or is inconsistent with the prefix.
 - **Business Rules**:
 
@@ -129,13 +129,11 @@ flowchart TD
 ## API Contract
 
 
-| Function                                                 | Input                                                      | Output                                 | Description                                                                                     |
-| ---------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| The naming convention checker's file naming check method | config, layer map,`Vec<FilePath>`, root directory, results | Mutates results                        | Scan all files; emit AES101/AES000 for naming structure violations                              |
-| The suffix/prefix checker's domain suffix check method   | config, layer map,`Vec<FilePath>`, root directory, results | Mutates results                        | Scan all files; emit AES102 for forbidden/mismatched suffixes and prefix-suffix inconsistencies |
-| The naming runner aggregate's audit method               | target file path                                           | Result with lint results or scan error | Request file list from filesystem crate, run both checkers                                      |
-| The naming convention checker's regex builder            | min words                                                  | Compiled regex                         | Build/cache regex for given min word count in`HashMap<u32, Regex>`                              |
-| The naming convention checker's config reader            | the architecture configuration                             | min words value                        | Extract min words with fallback to 3                                                            |
+| Operation                          | Input                                                      | Output                         | Purpose                                                                  |
+| ------------------------------------ | ------------------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
+| Full naming audit                  | File paths from filesystem crate                             | Lint results                    | Run both naming convention and suffix/prefix checks (AES101–AES102)      |
+| Naming convention check (AES101)   | File paths, configuration                                   | AES101/AES000 violations        | Validate snake_case structure and minimum word count                    |
+| Suffix/prefix check (AES102)       | File paths, configuration, layer map                        | AES102 violations               | Validate suffix matches layer policy and prefix-suffix consistency      |
 
 ---
 
@@ -144,16 +142,16 @@ flowchart TD
 - **Internal** (naming-rules crate):
 
   - The configuration system in the shared crate — reads architecture configuration YAML for layer definitions, naming rules, exceptions, ignored paths.
-  - The taxonomy definitions in the shared crate — layer map, layer definition, and layer name value objects for layer metadata.
-  - The layer detection utility in the shared crate — filename prefix detection and specialized layer resolution.
-  - The path value objects in the shared crate — barrel/entry-point detection.
+  - The taxonomy definitions in the shared crate — layer map and layer name value objects.
+  - The layer detection utility in the shared crate — filename prefix detection.
+  - The path value objects in the shared crate — barrel and entry-point detection.
 - **External**:
 
   - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
     - File walking and directory traversal (`file_walker`).
     - File filtering by extension (`rs`, `py`, `js`, `ts`, `jsx`, `tsx`).
     - Ignore rules (config-level, default skip directories, hidden directories, symlink safety).
-    - Returns `Vec<FilePath>` to the caller.
+    - Returns file paths to the caller.
   - No network calls. No filesystem writes. Pure static analysis.
 
 ---
@@ -222,7 +220,7 @@ flowchart TD
 - File naming follows AES conventions (`prefix_concept_suffix` pattern).
 - Exceptions are configurable per rule in the rule's `exceptions` list.
 - Ignored paths (`node_modules`, `.git`, `target`) are excluded from scanning by the filesystem crate.
-- The crate receives a pre-filtered `Vec<FilePath>` from the external filesystem crate. No file walking or directory traversal is performed internally.
+- The crate receives pre-filtered file paths from the external filesystem crate. No file walking or directory traversal is performed internally.
 - Layer detection is based on filename prefix (hardcoded AES convention: `taxonomy_*`, `contract_*`, `utility_*`, `capabilities_*`, `agent_*`, `surface_*`, `root_*`).
 - Naming validation is a prerequisite for import-rules layer detection. Files that fail naming validation may cause incorrect layer assignment in downstream crates.
 
@@ -242,7 +240,7 @@ flowchart TD
 | **Flexible suffix policy** | Layer allows any suffix EXCEPT those in the forbidden list.                                                                    |
 | **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                       |
 | **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                           |
-| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Returns`Vec<FilePath>` to naming-rules.     |
+| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Returns file paths to naming-rules.     |
 | **`PARSE_WARN`**           | Warning diagnostic (non-AES code) emitted when a file path is unreadable                                                       |
 
 ---

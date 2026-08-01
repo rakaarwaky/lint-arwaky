@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level.File system operations are handled by the external `filesystem` crate. The import-rules crate receives pre-parsed data  from the filesystem crate via `contract_filesystem_aggregate`, then delegates analysis to its internal checkers.All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
+The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level.File system operations are handled by the external `filesystem` crate. The import-rules crate receives pre-parsed data from the filesystem crate via the filesystem aggregate trait, then delegates analysis to its internal checkers.All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
 
 ### Architecture & Data Flow
 
@@ -19,21 +19,21 @@ flowchart TD
         D --> F2["import_extractor"]
         D --> F3["dependency_graph"]
         F1 --> F2
-        E1 --> G1["Vec‹File›"]
-        F2 --> G2["Vec‹Import›"]
-        F3 --> G3["DiGraph"]
+        E1 --> G1["File Data"]
+        F2 --> G2["Import Data"]
+        F3 --> G3["Dependency Graph"]
     end
 
     G1 -->|"return"| D
     G2 -->|"return"| D
     G3 -->|"return"| D
-    D -->|"Vec‹File›\nVec‹Import›\nDiGraph"| C
+    D -->|"file data\nimport data\ndependency graph"| C
 
-    C --> H1["forbidden_checker"]
-    C --> H2["mandatory_checker"]
-    C --> H3["unused_checker"]
-    C --> H4["dummy_checker"]
-    C --> H5["cycle_analyzer"]
+    C --> H1["forbidden_check"]
+    C --> H2["mandatory_check"]
+    C --> H3["unused_check"]
+    C --> H4["dummy_check"]
+    C --> H5["cycle_analysis"]
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -55,7 +55,7 @@ flowchart TD
 ### FR-001: Layer Dependency Violation (AES201)
 
 - **Description**: Validates imports against the AES config-driven dependency matrix. Each layer/sub-layer has explicit `allowed`, `forbidden`, and `mandatory` rules defined in YAML configuration via a `conditions` array. All rules are per-scope, config-driven.
-- **Input**: `Vec<File>`, `Vec<Import>` (from filesystem crate), architecture configuration (with `conditions` array), layer map.
+- **Input**: File data, import data (from filesystem crate), architecture configuration (with `conditions` array), layer map.
 - **Output**:
 
   - `allowed` match → pass (no diagnostic).
@@ -159,7 +159,7 @@ flowchart TD
 ### FR-002: Mandatory Layer Imports (AES202)
 
 - **Description**: Verifies that specific scopes contain required imports as defined in the `mandatory` field of each `conditions` entry.
-- **Input**: `Vec<FileEntry>`, `Vec<ImportEntry>` (from filesystem crate), architecture configuration, layer map.
+- **Input**: File data, import data (from filesystem crate), architecture configuration, layer map.
 - **Output**: List of AES202 HIGH diagnostics with file path, source scope, and required import.
 - **Business Rules**:
 
@@ -178,7 +178,7 @@ flowchart TD
 ### FR-003: Unused Import Detection (AES203)
 
 - **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for all languages.
-- **Input**: `Vec<FileEntry>`, `Vec<ImportEntry>` (from filesystem crate).
+- **Input**: File data, import data (from filesystem crate).
 - **Output**: List of AES203 MEDIUM diagnostics with file path, line number, and unused symbol name.
 - **Business Rules**:
 
@@ -215,7 +215,7 @@ flowchart TD
 ### FR-004: Dummy Import Detection (AES204)
 
 - **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings. This rule specifically targets **AI-generated cheating patterns** where AI creates dummy functions to make imports appear "used" and circumvent AES203.
-- **Input**: `Vec<FileEntry>`, `Vec<ImportEntry>` (from filesystem crate), layer map.
+- **Input**: File data, import data (from filesystem crate), layer map.
 - **Output**: List of AES204 HIGH diagnostics with file path, line number, dummy symbol name, and intent description.
 - **Business Rules**:
 
@@ -260,7 +260,7 @@ flowchart TD
 ### FR-005: Circular Dependency Detection (AES205)
 
 - **Description**: Builds a dependency graph of imports across all workspace files and detects cycles using 3-color DFS.
-- **Input**: `Vec<FileEntry>`, `Vec<ImportEntry>`, `DiGraph` (from filesystem crate), architecture configuration, layer map.
+- **Input**: File data, import data, dependency graph (from filesystem crate), architecture configuration, layer map.
 - **Output**: List of AES205 CRITICAL diagnostics with cycle path description.
 - **Business Rules**:
 
@@ -290,19 +290,15 @@ flowchart TD
 ## API Contract
 
 
-| Operation                   | Input                                                                       | Output                                                                 | Description                                 |
-| ----------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------- |
-| Run full import audit       | Target path (file or directory)                                             | `Result<Vec<LintResult>, ScanError>`                                   | Run all 5 checks (AES201–AES205) on target |
-| Check forbidden imports     | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, root dir            | `Result<LintResultList, ImportError>`                                  | Check AES201 (config-driven matrix)         |
-| Check mandatory imports     | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, root dir            | `Result<LintResultList, ImportError>`                                  | Check AES202 (required imports per scope)   |
-| Check unused imports        | `Vec<FileEntry>`, `Vec<ImportEntry>`                                        | `Result<Vec<LintResult>, ImportError>`                                 | Check AES203 (unused symbols)               |
-| Check dummy imports         | `Vec<FileEntry>`, `Vec<ImportEntry>`, root dir, layer map                   | `Result<Vec<LintResult>, ImportError>`                                 | Check AES204 (dummy/stub code)              |
-| Check circular dependencies | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, `DiGraph`, root dir | `Result<Vec<LintResult>, ImportError>`                                 | Check AES205 (layer-level cycles)           |
-| Request filesystem parse    | Target path                                                                 | `Result<(Vec<FileEntry>, Vec<ImportEntry>, DiGraph), FilesystemError>` | Request parse from filesystem crate         |
-| Resolve barrel import       | Module path, symbol name, root dir                                          | `Option<ResolvedImport>`                                               | Resolve import through barrel file          |
-| Detect cycle edges          | Dependency edges                                                            | `Vec<SymbolName>`                                                      | Pure graph cycle detection (3-color DFS)    |
-| Create DI container         | Architecture config                                                         | `ImportContainer`                                                      | Wire all checkers via dependency injection  |
-| Create DI from orchestrator | Config orchestrator, project root                                           | `ImportContainer`                                                      | Canonical DI from config orchestrator       |
+| Operation                         | Input                                                                       | Output                         | Purpose                                        |
+| ---------------------------------- | ----------------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------- |
+| Full import audit                 | Target path (file or directory)                                               | Lint results                    | Run all import checks (AES201–AES205)          |
+| Forbidden import check (AES201)   | File data, import data, configuration                                        | CRITICAL violations             | Validate imports against layer dependency matrix |
+| Mandatory import check (AES202)   | File data, import data, configuration                                        | HIGH violations                 | Verify required imports per scope              |
+| Unused import check (AES203)      | File data, import data                                                       | MEDIUM violations               | Detect symbols never referenced in code        |
+| Dummy import check (AES204)       | File data, import data, layer map                                            | HIGH violations                 | Detect stub code circumventing AES203          |
+| Circular dependency check (AES205)| File data, import data, dependency graph, configuration                     | CRITICAL violations             | Detect layer-level import cycles               |
+| Barrel resolution                 | Module path, symbol name, root dir                                          | Resolved import info            | Resolve import through barrel re-export files  |
 
 ---
 
@@ -311,10 +307,10 @@ flowchart TD
 - **Internal** (import-rules crate):
 
   - The config system shared module — `ArchitectureConfig`, `ArchitectureRule`, `ArchitectureCondition`, `LayerDefinition`, `LayerMapVO` for rule configuration.
-  - The import rules contract module — `IImportRunnerAggregate`, `IImportForbiddenProtocol`, `IImportMandatoryProtocol`, `IUnusedImportProtocol`, `IDummyImportCheckerProtocol`, `ICycleImportProtocol`, `IImportPurposeProtocol`.
-  - The import rules taxonomy module — `AesImportViolation`, `DependencyEdge`, `ImportError`, `ResolvedImport`, `GraphColorVO`, `ImportPurposeVO`.
-  - The import rules utility module — `utility_import_resolver` (barrel resolution, scope matching), `utility_dummy_detector` (dummy detection), `utility_cycle_detector` (cycle detection), `utility_path_normalizer` (path normalization).
-  - The common shared module — `FilePath`, `LineNumber`, `Severity`, `LintResult`, `LintMessage`, `Identity`, `SymbolName`, `LayerNameVO`, `LanguageVO`.
+  - The import rules contract module — aggregate and protocol traits for runner, forbidden, mandatory, unused, dummy, cycle, and purpose checks.
+  - The import rules taxonomy module — value objects for violations, errors, resolved imports, graph coloring, and import purpose.
+  - The import rules utility module — barrel resolution, scope matching, dummy detection, cycle detection, and path normalization.
+  - The common shared module — path, line number, severity, lint result, lint message, identity, symbol name, layer name, and language value objects.
 - **External**:
 
   - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
@@ -322,7 +318,7 @@ flowchart TD
     - Full AST parsing for all languages (`ast_parser` — Rust via `syn`, Python/TS via tree-sitter).
     - Import extraction from AST (`import_extractor`).
     - Dependency graph construction (`dependency_graph`).
-    - Returns `Vec<FileEntry>`, `Vec<ImportEntry>`, `DiGraph` to the caller.
+    - Returns file data, import data, and dependency graph to the caller.
     - Shared AST parser utilities: `utility_orphan_rust_parser`, `utility_orphan_python_parser`, `utility_orphan_ts_parser`, `utility_orphan_parser_dispatch`, `taxonomy_orphan_parse_result_vo`.
   - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing (via filesystem crate).
   - `tree-sitter` + `tree-sitter-python` + `tree-sitter-typescript` — Python/TS full AST parsing (via filesystem crate).
