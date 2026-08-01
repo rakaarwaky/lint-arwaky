@@ -242,3 +242,126 @@ async fn multiple_files_mixed_suffix_results() {
     .await;
     assert_eq!(results.len(), 1, "Only one file should violate");
 }
+
+// ─── Cross-Layer Suffix Validation (FR-002: PrefixSuffixMismatch) ─────
+
+fn strict_multi_layer() -> LayerMapVO {
+    let mut map = HashMap::new();
+
+    let taxonomy_def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec![
+                "vo".to_string(),
+                "entity".to_string(),
+                "error".to_string(),
+                "event".to_string(),
+                "constant".to_string(),
+            ]),
+            forbidden_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    map.insert(LayerNameVO::new("taxonomy"), taxonomy_def);
+
+    let contract_def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec!["protocol".to_string(), "aggregate".to_string()]),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    map.insert(LayerNameVO::new("contract"), contract_def);
+
+    let agent_def = LayerDefinition {
+        naming: NamingRuleVO {
+            suffix_policy: SuffixPolicyVO::new("strict".to_string()),
+            allowed_suffix: PatternList::new(vec!["orchestrator".to_string()]),
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    map.insert(LayerNameVO::new("agent"), agent_def);
+
+    LayerMapVO::new(map)
+}
+
+/// FR-002: taxonomy_user_protocol — suffix 'protocol' belongs to contract layer
+#[tokio::test]
+async fn cross_layer_taxonomy_protocol_fails_prefix_suffix_mismatch() {
+    let config = default_config();
+    let lm = strict_multi_layer();
+    let results = run_check(&["taxonomy_user_protocol.rs"], &config, &lm).await;
+    let aes102: Vec<_> = results
+        .values
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
+    assert!(
+        !aes102.is_empty(),
+        "taxonomy + contract suffix should produce AES102"
+    );
+}
+
+/// FR-002: contract_user_vo — suffix 'vo' belongs to taxonomy layer
+#[tokio::test]
+async fn cross_layer_contract_vo_fails_prefix_suffix_mismatch() {
+    let config = default_config();
+    let lm = strict_multi_layer();
+    let results = run_check(&["contract_user_vo.rs"], &config, &lm).await;
+    let aes102: Vec<_> = results
+        .values
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
+    assert!(
+        !aes102.is_empty(),
+        "contract + taxonomy suffix should produce AES102"
+    );
+}
+
+/// FR-002: taxonomy_user_orchestrator — suffix 'orchestrator' belongs to agent layer
+/// (also forbidden in taxonomy)
+#[tokio::test]
+async fn cross_layer_taxonomy_orchestrator_fails() {
+    let config = default_config();
+    let lm = strict_multi_layer();
+    let results = run_check(&["taxonomy_user_orchestrator.rs"], &config, &lm).await;
+    let aes102: Vec<_> = results
+        .values
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
+    assert!(
+        !aes102.is_empty(),
+        "taxonomy + agent suffix should produce AES102"
+    );
+}
+
+/// FR-002: agent_naming_vo — suffix 'vo' belongs to taxonomy layer
+#[tokio::test]
+async fn cross_layer_agent_vo_fails() {
+    let config = default_config();
+    let lm = strict_multi_layer();
+    let results = run_check(&["agent_naming_vo.rs"], &config, &lm).await;
+    let aes102: Vec<_> = results
+        .values
+        .iter()
+        .filter(|r| r.code.code() == "AES102")
+        .collect();
+    assert!(
+        !aes102.is_empty(),
+        "agent + taxonomy suffix should produce AES102"
+    );
+}
+
+/// FR-002: Same-layer suffix should NOT produce PrefixSuffixMismatch
+#[tokio::test]
+async fn same_layer_suffix_no_violation() {
+    let config = default_config();
+    let lm = strict_multi_layer();
+    let results = run_check(&["taxonomy_user_vo.rs"], &config, &lm).await;
+    assert!(results.is_empty(), "taxonomy + taxonomy suffix should pass");
+}

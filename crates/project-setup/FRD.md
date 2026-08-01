@@ -2,7 +2,6 @@
 
 ## System Overview
 
-
 ### Architecture & Data Flow
 
 ```mermaid
@@ -165,22 +164,23 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
 
 ## API Contract
 
-| Operation                           | Input                         | Output                   | Purpose                                    |
-| ------------------------------------- | ----------------------------- | ------------------------ | -------------------------------------------- |
-| Generate MCP config                 | transport protocol            | MCP config               | Generate base MCP config                    |
-| Generate Claude config              | transport protocol            | MCP config               | Generate Claude Desktop MCP config          |
-| Generate Hermes config              | transport protocol            | MCP config               | Generate Hermes MCP config                  |
-| Generate VS Code config             | transport protocol            | MCP config               | Generate VS Code MCP config                 |
-| Generate env file                   | transport protocol, home path | Environment content      | Generate .env file content                  |
-| Detect primary language             | —                             | Project language         | Detect primary project language             |
-| Detect all languages                | —                             | Project languages        | Detect all project languages                |
-| Get config template                 | language string               | Embedded config content  | Load embedded YAML config template          |
-| Write config file                   | filename, content             | Write result             | Write config file to disk                   |
-| Create global config directory      | —                             | Created directory path   | Create XDG config directory                 |
-| Install Python adapters             | —                             | Success status           | Install ruff, mypy, bandit via pip          |
-| Install JavaScript adapters         | sudo flag                     | Success status           | Install eslint, prettier, typescript via npm|
-| Check HTTP endpoint                 | transport URL                 | Success status           | Check HTTP endpoint (stub)                  |
-| Check file exists                   | path string                   | Boolean                  | Check if file exists                        |
+
+| Operation                      | Input                         | Output                  | Purpose                                      |
+| -------------------------------- | ------------------------------- | ------------------------- | ---------------------------------------------- |
+| Generate MCP config            | transport protocol            | MCP config              | Generate base MCP config                     |
+| Generate Claude config         | transport protocol            | MCP config              | Generate Claude Desktop MCP config           |
+| Generate Hermes config         | transport protocol            | MCP config              | Generate Hermes MCP config                   |
+| Generate VS Code config        | transport protocol            | MCP config              | Generate VS Code MCP config                  |
+| Generate env file              | transport protocol, home path | Environment content     | Generate .env file content                   |
+| Detect primary language        | —                            | Project language        | Detect primary project language              |
+| Detect all languages           | —                            | Project languages       | Detect all project languages                 |
+| Get config template            | language string               | Embedded config content | Load embedded YAML config template           |
+| Write config file              | filename, content             | Write result            | Write config file to disk                    |
+| Create global config directory | —                            | Created directory path  | Create XDG config directory                  |
+| Install Python adapters        | —                            | Success status          | Install ruff, mypy, bandit via pip           |
+| Install JavaScript adapters    | sudo flag                     | Success status          | Install eslint, prettier, typescript via npm |
+| Check HTTP endpoint            | transport URL                 | Success status          | Check HTTP endpoint (stub)                   |
+| Check file exists              | path string                   | Boolean                 | Check if file exists                         |
 
 ## Integration Points
 
@@ -203,26 +203,26 @@ The project-setup crate provides scaffolding facilities, doctor checks, and adap
 
 ## Test Scenarios / QA Checklist
 
-- [ ] MCP config for Claude contains `mcpServers` key with `lint-arwaky` entry.
-- [ ] MCP config for Hermes returns base config without wrapper.
-- [ ] MCP config for VS Code contains `mcp.servers` key.
-- [ ] Binary resolution finds `lint-arwaky-mcp` in `CARGO_HOME/bin`.
-- [ ] Binary resolution falls back to PATH when not in CARGO_HOME.
-- [ ] `.env` generation produces correct `PHANTOM_ROOT` value.
-- [ ] Language detection finds Rust when `Cargo.toml` exists.
-- [ ] Language detection finds Python when `pyproject.toml` exists.
-- [ ] Language detection finds JavaScript when `package.json` exists.
-- [ ] Language detection returns `["rust"]` for empty directory.
-- [ ] Language detection skips `target/`, `node_modules/`, `vendor/` directories.
-- [ ] Python adapter install calls pip with correct packages.
-- [ ] Python adapter install retries with `--break-system-packages` on failure.
-- [ ] JavaScript adapter install calls npm with correct packages.
-- [ ] JavaScript adapter install uses sudo when `sudo: true`.
-- [ ] Empty package list returns `Ok(())` without spawning processes.
-- [ ] Config template for unknown language defaults to Rust.
-- [ ] Config file writing returns byte count in description.
-- [ ] Global config directory creation creates `~/.config/lint-arwaky/`.
-- [ ] File existence check returns `true` for existing file, `false` for missing.
+- [ ]  MCP config for Claude contains `mcpServers` key with `lint-arwaky` entry.
+- [ ]  MCP config for Hermes returns base config without wrapper.
+- [ ]  MCP config for VS Code contains `mcp.servers` key.
+- [ ]  Binary resolution finds `lint-arwaky-mcp` in `CARGO_HOME/bin`.
+- [ ]  Binary resolution falls back to PATH when not in CARGO_HOME.
+- [ ]  `.env` generation produces correct `PHANTOM_ROOT` value.
+- [ ]  Language detection finds Rust when `Cargo.toml` exists.
+- [ ]  Language detection finds Python when `pyproject.toml` exists.
+- [ ]  Language detection finds JavaScript when `package.json` exists.
+- [ ]  Language detection returns `["rust"]` for empty directory.
+- [ ]  Language detection skips `target/`, `node_modules/`, `vendor/` directories.
+- [ ]  Python adapter install calls pip with correct packages.
+- [ ]  Python adapter install retries with `--break-system-packages` on failure.
+- [ ]  JavaScript adapter install calls npm with correct packages.
+- [ ]  JavaScript adapter install uses sudo when `sudo: true`.
+- [ ]  Empty package list returns `Ok(())` without spawning processes.
+- [ ]  Config template for unknown language defaults to Rust.
+- [ ]  Config file writing returns byte count in description.
+- [ ]  Global config directory creation creates `~/.config/lint-arwaky/`.
+- [ ]  File existence check returns `true` for existing file, `false` for missing.
 
 ## Assumptions & Constraints
 

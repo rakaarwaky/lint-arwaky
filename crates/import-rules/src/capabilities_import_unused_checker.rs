@@ -79,9 +79,16 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 let t = l.trim();
                 if t.is_empty()
                     || t.starts_with("//")
+                    || t.starts_with("#")
+                    // Rust: use / pub use / pub(crate) use
                     || t.starts_with("use ")
                     || t.starts_with("pub use ")
                     || t.starts_with("pub(crate) use ")
+                    // Python: import X / from X import Y
+                    || t.starts_with("import ")
+                    || t.starts_with("from ")
+                    // TypeScript: import ... / export ... from
+                    || t.starts_with("export ")
                 {
                     return false;
                 }
