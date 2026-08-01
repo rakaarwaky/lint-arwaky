@@ -7,8 +7,8 @@
 
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::ICapabilitiesRoleChecker;
+use std::path::PathBuf;
 
 fn checker() -> CapabilitiesRoleChecker {
     CapabilitiesRoleChecker::new()

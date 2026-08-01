@@ -3,8 +3,8 @@
 
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::ISurfaceRoleChecker;
+use std::path::PathBuf;
 
 fn checker() -> SurfaceRoleChecker {
     SurfaceRoleChecker::new()

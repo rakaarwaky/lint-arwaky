@@ -182,10 +182,14 @@ impl RuffAdapter {
             Severity::MEDIUM // unused import
         } else if (code.starts_with('F')
             && code.len() >= 3
-            && code[1..].parse::<u32>().is_ok_and(|n| (800..900).contains(&n)))
+            && code[1..]
+                .parse::<u32>()
+                .is_ok_and(|n| (800..900).contains(&n)))
             || (code.starts_with('B')
                 && code.len() >= 3
-                && code[1..].parse::<u32>().is_ok_and(|n| (1..100).contains(&n)))
+                && code[1..]
+                    .parse::<u32>()
+                    .is_ok_and(|n| (1..100).contains(&n)))
         {
             Severity::HIGH // F8xx: undefined name, B0xx: bugbear
         } else if (code.starts_with('E')
@@ -195,7 +199,9 @@ impl RuffAdapter {
                 .is_ok_and(|n| (100..200).contains(&n) || (500..600).contains(&n)))
             || (code.starts_with('W')
                 && code.len() >= 3
-                && code[1..].parse::<u32>().is_ok_and(|n| (200..300).contains(&n)))
+                && code[1..]
+                    .parse::<u32>()
+                    .is_ok_and(|n| (200..300).contains(&n)))
         {
             Severity::LOW // E1xx: indentation, E5xx: line length, W2xx: whitespace
         } else {

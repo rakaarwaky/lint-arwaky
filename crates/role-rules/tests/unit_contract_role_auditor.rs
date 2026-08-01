@@ -3,8 +3,8 @@
 
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::IContractRoleChecker;
+use std::path::PathBuf;
 
 fn checker() -> ContractRoleChecker {
     ContractRoleChecker::new()

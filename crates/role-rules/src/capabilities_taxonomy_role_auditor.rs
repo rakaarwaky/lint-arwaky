@@ -9,9 +9,9 @@
 
 use shared::cli_commands::LintResult;
 use shared::common::Severity;
+use shared::common::{LintMessage, SymbolName};
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 use shared::role_rules::{AesRoleViolation, ITaxonomyRoleChecker};
-use shared::common::{LintMessage, SymbolName};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}
@@ -40,7 +40,9 @@ impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
     }
 
     fn check_constant(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        let basename = file.path.file_name()
+        let basename = file
+            .path
+            .file_name()
             .and_then(|f| f.to_str())
             .unwrap_or_default();
         if !basename.ends_with("_constant.rs")
@@ -74,21 +76,75 @@ impl TaxonomyRoleChecker {
     }
 
     const RUST_PRIMITIVES: &'static [&'static str] = &[
-        "String", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128",
-        "usize", "f32", "f64", "bool", "char", "Vec<", "HashMap<", "Option<", "Result<", "Box<",
-        "Cell<", "RefCell<", "Arc<", "Mutex<", "Rc<", "BTreeMap<",
+        "String",
+        "i8",
+        "i16",
+        "i32",
+        "i64",
+        "i128",
+        "isize",
+        "u8",
+        "u16",
+        "u32",
+        "u64",
+        "u128",
+        "usize",
+        "f32",
+        "f64",
+        "bool",
+        "char",
+        "Vec<",
+        "HashMap<",
+        "Option<",
+        "Result<",
+        "Box<",
+        "Cell<",
+        "RefCell<",
+        "Arc<",
+        "Mutex<",
+        "Rc<",
+        "BTreeMap<",
     ];
 
     const PY_PRIMITIVES: &'static [&'static str] = &[
-        "str", "int", "float", "bool", "list", "dict", "tuple", "set",
-        "bytes", "None", "Any", "Optional", "Union", "List", "Dict",
-        "Tuple", "Set", "FrozenSet",
+        "str",
+        "int",
+        "float",
+        "bool",
+        "list",
+        "dict",
+        "tuple",
+        "set",
+        "bytes",
+        "None",
+        "Any",
+        "Optional",
+        "Union",
+        "List",
+        "Dict",
+        "Tuple",
+        "Set",
+        "FrozenSet",
     ];
 
     const JS_PRIMITIVES: &'static [&'static str] = &[
-        "string", "number", "boolean", "any", "object", "Array", "Record",
-        "Map", "Set", "Promise", "unknown", "never", "void", "null",
-        "undefined", "bigint", "symbol",
+        "string",
+        "number",
+        "boolean",
+        "any",
+        "object",
+        "Array",
+        "Record",
+        "Map",
+        "Set",
+        "Promise",
+        "unknown",
+        "never",
+        "void",
+        "null",
+        "undefined",
+        "bigint",
+        "symbol",
     ];
 
     fn scan_primitives(file: &FileEntry, violations: &mut Vec<LintResult>) {
@@ -98,10 +154,18 @@ impl TaxonomyRoleChecker {
             shared::filesystem::taxonomy_filesystem_vo::Language::Rust => Self::RUST_PRIMITIVES,
             shared::filesystem::taxonomy_filesystem_vo::Language::Python => Self::PY_PRIMITIVES,
             shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
-            | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => Self::JS_PRIMITIVES,
+            | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
+                Self::JS_PRIMITIVES
+            }
         };
-        let is_rs = matches!(file.language, shared::filesystem::taxonomy_filesystem_vo::Language::Rust);
-        let is_py = matches!(file.language, shared::filesystem::taxonomy_filesystem_vo::Language::Python);
+        let is_rs = matches!(
+            file.language,
+            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+        );
+        let is_py = matches!(
+            file.language,
+            shared::filesystem::taxonomy_filesystem_vo::Language::Python
+        );
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
@@ -136,7 +200,8 @@ impl TaxonomyRoleChecker {
             for p in primitives {
                 if p.ends_with('<') {
                     if type_candidate.starts_with(p) {
-                        let inner = type_candidate.strip_prefix(p)
+                        let inner = type_candidate
+                            .strip_prefix(p)
                             .unwrap_or(type_candidate)
                             .trim_end_matches('>');
                         let inner_trimmed = inner.trim();
@@ -156,7 +221,9 @@ impl TaxonomyRoleChecker {
                                 primitive: SymbolName::new(primitive_clean),
                                 reason: Some(LintMessage::new(format!(
                                     "Primitive type '{}' used on line {} of {}",
-                                    primitive_clean, i + 1, path_str
+                                    primitive_clean,
+                                    i + 1,
+                                    path_str
                                 ))),
                             }
                             .with_language(lang)
@@ -191,7 +258,9 @@ impl TaxonomyRoleChecker {
                         primitive: SymbolName::new(primitive_clean),
                         reason: Some(LintMessage::new(format!(
                             "Primitive type '{}' used on line {} of {}",
-                            primitive_clean, i + 1, path_str
+                            primitive_clean,
+                            i + 1,
+                            path_str
                         ))),
                     }
                     .with_language(lang)
@@ -222,56 +291,81 @@ impl TaxonomyRoleChecker {
                 // Struct definitions in constant file = violation
                 for name in &rust_meta.struct_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Struct '{}' found in constant file {}", name, path_str
+                                "Struct '{}' found in constant file {}",
+                                name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Enum definitions in constant file = violation
                 for name in &rust_meta.enum_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Enum '{}' found in constant file {}", name, path_str
+                                "Enum '{}' found in constant file {}",
+                                name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Trait definitions in constant file = violation
                 for name in &rust_meta.trait_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Trait '{}' found in constant file {}", name, path_str
+                                "Trait '{}' found in constant file {}",
+                                name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Function definitions in constant file = violation
                 for fn_item in &rust_meta.function_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}", fn_item.name, path_str
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Impl blocks in constant file = violation
                 if !rust_meta.impl_blocks.is_empty() {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Impl block found in constant file {}", path_str
+                                "Impl block found in constant file {}",
+                                path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
             }
@@ -279,23 +373,33 @@ impl TaxonomyRoleChecker {
                 // Class definitions in constant file = violation
                 for class in &py_meta.class_declarations {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Class '{}' found in constant file {}", class.name, path_str
+                                "Class '{}' found in constant file {}",
+                                class.name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Function definitions in constant file = violation
                 for fn_item in &py_meta.function_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}", fn_item.name, path_str
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
             }
@@ -303,45 +407,65 @@ impl TaxonomyRoleChecker {
                 // Class definitions in constant file = violation
                 for class in &ts_meta.class_declarations {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Class '{}' found in constant file {}", class.name, path_str
+                                "Class '{}' found in constant file {}",
+                                class.name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Interface definitions in constant file = violation
                 for name in &ts_meta.interface_declarations {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Interface '{}' found in constant file {}", name, path_str
+                                "Interface '{}' found in constant file {}",
+                                name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Type alias definitions in constant file = violation
                 for name in &ts_meta.type_alias_declarations {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Type alias '{}' found in constant file {}", name, path_str
+                                "Type alias '{}' found in constant file {}",
+                                name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
                 // Function definitions in constant file = violation
                 for fn_item in &ts_meta.function_definitions {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES401", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES401",
+                        Severity::HIGH,
                         AesRoleViolation::ConstantPurity {
                             reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}", fn_item.name, path_str
+                                "Function '{}' found in constant file {}",
+                                fn_item.name, path_str
                             ))),
-                        }.to_string(),
+                        }
+                        .to_string(),
                     ));
                 }
             }
@@ -360,24 +484,41 @@ impl TaxonomyRoleChecker {
             if t.starts_with("pub const ") || t.starts_with("pub static ") {
                 continue;
             }
-            if t.starts_with("use ") || t.starts_with("pub use ") || t.starts_with("pub(crate) use ") {
+            if t.starts_with("use ")
+                || t.starts_with("pub use ")
+                || t.starts_with("pub(crate) use ")
+            {
                 continue;
             }
-            if t.starts_with("pub struct ") || t.starts_with("struct ")
-                || t.starts_with("pub enum ") || t.starts_with("enum ")
-                || t.starts_with("pub fn ") || t.starts_with("fn ")
-                || t.starts_with("impl ") || t.starts_with("pub mod ") || t.starts_with("mod ")
-                || t.starts_with("pub trait ") || t.starts_with("trait ")
-                || t.starts_with("class ") || t.starts_with("pub type ") || t.starts_with("type ")
+            if t.starts_with("pub struct ")
+                || t.starts_with("struct ")
+                || t.starts_with("pub enum ")
+                || t.starts_with("enum ")
+                || t.starts_with("pub fn ")
+                || t.starts_with("fn ")
+                || t.starts_with("impl ")
+                || t.starts_with("pub mod ")
+                || t.starts_with("mod ")
+                || t.starts_with("pub trait ")
+                || t.starts_with("trait ")
+                || t.starts_with("class ")
+                || t.starts_with("pub type ")
+                || t.starts_with("type ")
             {
                 violations.push(LintResult::new_arch(
-                    &path_str, i + 1, "AES401", Severity::HIGH,
+                    &path_str,
+                    i + 1,
+                    "AES401",
+                    Severity::HIGH,
                     AesRoleViolation::ConstantPurity {
                         reason: Some(LintMessage::new(format!(
                             "Non-constant declaration '{}' found in constant file on line {} of {}",
-                            t, i + 1, path_str
+                            t,
+                            i + 1,
+                            path_str
                         ))),
-                    }.to_string(),
+                    }
+                    .to_string(),
                 ));
             }
         }

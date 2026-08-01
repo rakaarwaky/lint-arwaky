@@ -11,7 +11,9 @@
 use shared::cli_commands::LintResult;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata, RustMetadata, PythonMetadata, TypeScriptMetadata};
+use shared::filesystem::taxonomy_filesystem_vo::{
+    FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
+};
 use shared::role_rules::{AesRoleViolation, ISurfaceRoleChecker};
 
 const MAX_PUBLIC_METHODS: usize = 10;
@@ -35,8 +37,10 @@ impl ISurfaceRoleChecker for SurfaceRoleChecker {
 
         // Classify surface and run role-specific checks (exempt Smart surfaces)
         let basename = file.path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let is_smart = basename.ends_with("_command") || basename.ends_with("_controller")
-            || basename.ends_with("_page") || basename.ends_with("_entry")
+        let is_smart = basename.ends_with("_command")
+            || basename.ends_with("_controller")
+            || basename.ends_with("_page")
+            || basename.ends_with("_entry")
             || basename.ends_with("_router");
         if is_smart {
             return; // Smart surfaces exempt from Passive + Utility checks
@@ -64,16 +68,26 @@ impl SurfaceRoleChecker {
 
     // ── Function count check ──
 
-    fn _check_fn_count_metadata(&self, file: &FileEntry, meta: &ParseMetadata, violations: &mut Vec<LintResult>) {
+    fn _check_fn_count_metadata(
+        &self,
+        file: &FileEntry,
+        meta: &ParseMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
         let path_str = file.path.to_string_lossy();
         let fn_count = match meta {
             ParseMetadata::Rust(m) => m.function_definitions.len(),
             ParseMetadata::Python(m) => m.function_definitions.len(),
-            ParseMetadata::TypeScript(m) | ParseMetadata::JavaScript(m) => m.function_definitions.len(),
+            ParseMetadata::TypeScript(m) | ParseMetadata::JavaScript(m) => {
+                m.function_definitions.len()
+            }
         };
         if fn_count > 15 {
             violations.push(LintResult::new_arch(
-                &path_str, 0, "AES406", Severity::HIGH,
+                &path_str,
+                0,
+                "AES406",
+                Severity::HIGH,
                 AesRoleViolation::SurfaceRoleViolation {
                     reason: Some(LintMessage::new(format!(
                         "File {} has too many function declarations (exceeds 15): found {}",
@@ -96,11 +110,17 @@ impl SurfaceRoleChecker {
         let mut count = 0;
         for line in content.lines() {
             let trimmed = line.trim();
-            if !trimmed.starts_with("//") && !trimmed.starts_with('#') && trimmed.contains(fn_keyword) {
+            if !trimmed.starts_with("//")
+                && !trimmed.starts_with('#')
+                && trimmed.contains(fn_keyword)
+            {
                 count += 1;
                 if count > 15 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES406", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES406",
+                        Severity::HIGH,
                         AesRoleViolation::SurfaceRoleViolation {
                             reason: Some(LintMessage::new(format!(
                                 "File {} has too many function declarations (exceeds 15): found {}",
@@ -116,7 +136,12 @@ impl SurfaceRoleChecker {
 
     // ── Passive surface checks using ParseMetadata ──
 
-    fn _check_passive_with_metadata(&self, file: &FileEntry, meta: &ParseMetadata, violations: &mut Vec<LintResult>) {
+    fn _check_passive_with_metadata(
+        &self,
+        file: &FileEntry,
+        meta: &ParseMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
         let path_str = file.path.to_string_lossy();
         match meta {
             ParseMetadata::Rust(rust_meta) => {
@@ -131,14 +156,22 @@ impl SurfaceRoleChecker {
         }
     }
 
-    fn _check_rust_passive_metadata(&self, path_str: &str, meta: &RustMetadata, violations: &mut Vec<LintResult>) {
+    fn _check_rust_passive_metadata(
+        &self,
+        path_str: &str,
+        meta: &RustMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
         // Count public methods in impl blocks
         // ParseMetadata tracks impl blocks but not individual methods within them.
         // Use function_definitions count as a proxy for method count.
         let pub_fn_count = meta.function_definitions.len();
         if pub_fn_count > MAX_PUBLIC_METHODS {
             violations.push(LintResult::new_arch(
-                path_str, 0, "AES406", Severity::HIGH,
+                path_str,
+                0,
+                "AES406",
+                Severity::HIGH,
                 AesRoleViolation::SurfaceRoleViolation {
                     reason: Some(LintMessage::new(format!(
                         "Surface file '{}' has {} public methods (max {})",
@@ -149,13 +182,21 @@ impl SurfaceRoleChecker {
         }
     }
 
-    fn _check_python_passive_metadata(&self, path_str: &str, meta: &PythonMetadata, violations: &mut Vec<LintResult>) {
+    fn _check_python_passive_metadata(
+        &self,
+        path_str: &str,
+        meta: &PythonMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
         // Check method count per class
         // Method count per class is not available from ParseMetadata; use total function count as proxy.
         let fn_count = meta.function_definitions.len();
         if fn_count > MAX_PUBLIC_METHODS {
             violations.push(LintResult::new_arch(
-                path_str, 0, "AES406", Severity::HIGH,
+                path_str,
+                0,
+                "AES406",
+                Severity::HIGH,
                 AesRoleViolation::SurfaceRoleViolation {
                     reason: Some(LintMessage::new(format!(
                         "Surface file '{}' has {} functions (max {})",
@@ -166,11 +207,19 @@ impl SurfaceRoleChecker {
         }
     }
 
-    fn _check_ts_passive_metadata(&self, path_str: &str, meta: &TypeScriptMetadata, violations: &mut Vec<LintResult>) {
+    fn _check_ts_passive_metadata(
+        &self,
+        path_str: &str,
+        meta: &TypeScriptMetadata,
+        violations: &mut Vec<LintResult>,
+    ) {
         let fn_count = meta.function_definitions.len();
         if fn_count > MAX_PUBLIC_METHODS {
             violations.push(LintResult::new_arch(
-                path_str, 0, "AES406", Severity::HIGH,
+                path_str,
+                0,
+                "AES406",
+                Severity::HIGH,
                 AesRoleViolation::SurfaceRoleViolation {
                     reason: Some(LintMessage::new(format!(
                         "Surface file '{}' has {} functions (max {})",
@@ -186,15 +235,27 @@ impl SurfaceRoleChecker {
     fn _check_passive_fallback(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
-        let control_flow_count = content.lines().filter(|line| {
-            let t = line.trim();
-            t.starts_with("if ") || t.starts_with("else ") || t.starts_with("for ")
-                || t.starts_with("while ") || t.starts_with("match ") || t.starts_with("switch ")
-                || t.starts_with("try:") || t.starts_with("except") || t.starts_with("catch")
-        }).count();
+        let control_flow_count = content
+            .lines()
+            .filter(|line| {
+                let t = line.trim();
+                t.starts_with("if ")
+                    || t.starts_with("else ")
+                    || t.starts_with("for ")
+                    || t.starts_with("while ")
+                    || t.starts_with("match ")
+                    || t.starts_with("switch ")
+                    || t.starts_with("try:")
+                    || t.starts_with("except")
+                    || t.starts_with("catch")
+            })
+            .count();
         if control_flow_count > MAX_CONTROL_FLOW {
             violations.push(LintResult::new_arch(
-                &path_str, 0, "AES406", Severity::HIGH,
+                &path_str,
+                0,
+                "AES406",
+                Severity::HIGH,
                 AesRoleViolation::NoDomainLogic {
                     reason: Some(LintMessage::new(format!(
                         "Passive surface {} has {} control flow statements (max {})",

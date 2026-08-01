@@ -6,10 +6,5 @@ pub trait IAgentRoleChecker: Send + Sync {
     /// AES405: enforce agent type composition.
     /// Rule 1 — >= 1 struct must implement an aggregate trait.
     /// Rule 2 — max 3 types (struct + enum).
-    fn check_agent_routing(
-        &self,
-        file: &FileEntry,
-        layer: &str,
-        violations: &mut Vec<LintResult>,
-    );
+    fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>);
 }

@@ -94,7 +94,10 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     /// Run analysis on pre-parsed file entries from the filesystem crate.
-    fn run_analysis_with_entries(&self, files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry]) -> Vec<LintResult> {
+    fn run_analysis_with_entries(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
@@ -114,8 +117,12 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                 let c = &entry.content;
 
                 // Layer-independent checks
-                self.deps.bypass_checker.check_bypass_comments(&file, c, &mut v);
-                self.deps.dead_inheritance_checker.check_dead_inheritance(&file, c, &mut v);
+                self.deps
+                    .bypass_checker
+                    .check_bypass_comments(&file, c, &mut v);
+                self.deps
+                    .dead_inheritance_checker
+                    .check_dead_inheritance(&file, c, &mut v);
 
                 if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                     return v;
@@ -138,8 +145,15 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                 }
 
                 // Layer-dependent checks
-                self.deps.line_checker.check_line_counts(&file, Some(def), c, &mut v);
-                self.deps.class_checker.check_mandatory_class_definition(&file, Some(def), c, &mut v);
+                self.deps
+                    .line_checker
+                    .check_line_counts(&file, Some(def), c, &mut v);
+                self.deps.class_checker.check_mandatory_class_definition(
+                    &file,
+                    Some(def),
+                    c,
+                    &mut v,
+                );
 
                 v
             })
@@ -151,7 +165,6 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 
         violations
     }
-
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

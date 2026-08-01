@@ -6,13 +6,13 @@
 //   ParseMetadata does not yet expose method parameter/return types.
 
 use shared::cli_commands::LintResult;
-use shared::common::{Language, LintMessage, Severity};
 use shared::common::utility_language_detector::detect_language_info;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
+use shared::common::{Language, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
 
@@ -84,7 +84,11 @@ impl ContractRoleChecker {
                 .with_language(lang)
                 .to_string();
                 violations.push(LintResult::new_arch(
-                    &path_str, line_no, "AES402", Severity::HIGH, msg,
+                    &path_str,
+                    line_no,
+                    "AES402",
+                    Severity::HIGH,
+                    msg,
                 ));
             }
             return;
@@ -105,7 +109,11 @@ impl ContractRoleChecker {
                 .with_language(lang)
                 .to_string();
                 violations.push(LintResult::new_arch(
-                    &path_str, line_no, "AES402", Severity::HIGH, msg,
+                    &path_str,
+                    line_no,
+                    "AES402",
+                    Severity::HIGH,
+                    msg,
                 ));
             }
             return;
@@ -125,7 +133,11 @@ impl ContractRoleChecker {
             .with_language(lang)
             .to_string();
             violations.push(LintResult::new_arch(
-                &path_str, line_no, "AES402", Severity::HIGH, msg,
+                &path_str,
+                line_no,
+                "AES402",
+                Severity::HIGH,
+                msg,
             ));
         }
     }

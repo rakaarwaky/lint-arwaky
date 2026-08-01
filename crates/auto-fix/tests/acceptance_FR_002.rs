@@ -3,7 +3,7 @@
 // Scope: Python (ruff, mypy) and JavaScript/TypeScript (eslint), Rust (allow attrs).
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::IFixProtocol;
+use shared::auto_fix::{FixOutcome, IFixProtocol};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
@@ -57,7 +57,7 @@ fn frd_rust_allow_attribute_removed() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(!content.contains("#[allow"));
@@ -74,7 +74,7 @@ fn frd_python_noqa_comment_handled() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 }
 
 /// FRD-BYPASS-03: Python `# type: ignore` comment handled.
@@ -87,7 +87,7 @@ fn frd_python_type_ignore_handled() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 }
 
 /// FRD-BYPASS-04: `.unwrap()` replaced with `.expect("safe")`.
@@ -99,7 +99,7 @@ fn frd_rust_unwrap_replaced_with_expect() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(content.contains("expect(\"safe\")"));
@@ -116,7 +116,7 @@ fn frd_non_bypass_line_untouched() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(1));
-    assert!(!result, "Non-bypass line must not be modified");
+    assert!(!result.is_applied(), "Non-bypass line must not be modified");
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(content.contains("let x = 42;"));
@@ -134,7 +134,7 @@ fn frd_bypass_fix_preserves_surrounding_code() {
 
     let file_path = tmp.path().to_str().unwrap().to_string();
     let result = sut().fix_bypass_comments(&file_path, LineNumber::new(2));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(content.contains("fn setup()"));

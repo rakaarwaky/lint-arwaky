@@ -172,7 +172,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
         self._check_orphans_inner(&file_vo, &root_dir, context, &file_vo)
     }
-
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────

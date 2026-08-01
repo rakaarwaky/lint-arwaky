@@ -99,7 +99,12 @@ impl AdapterEntry {
         }
     }
 
-    pub fn with_timeout(name: AdapterName, status: AdapterStatus, weight: f64, timeout: f64) -> Self {
+    pub fn with_timeout(
+        name: AdapterName,
+        status: AdapterStatus,
+        weight: f64,
+        timeout: f64,
+    ) -> Self {
         Self {
             name,
             status,

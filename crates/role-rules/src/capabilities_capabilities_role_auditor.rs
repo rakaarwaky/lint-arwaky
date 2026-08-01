@@ -64,17 +64,26 @@ impl CapabilitiesRoleChecker {
         let path_str = file.path.to_string_lossy();
         match meta {
             ParseMetadata::Rust(rust_meta) => {
-                let type_count = rust_meta.struct_definitions.len() + rust_meta.enum_definitions.len();
-                let struct_names: Vec<&str> = rust_meta.struct_definitions.iter().map(|s| s.as_str()).collect();
+                let type_count =
+                    rust_meta.struct_definitions.len() + rust_meta.enum_definitions.len();
+                let struct_names: Vec<&str> = rust_meta
+                    .struct_definitions
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect();
 
                 // Rule 1: max 3 types
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
                         AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
-                                "Found {} types (struct + enum), max 3 allowed", type_count
+                                "Found {} types (struct + enum), max 3 allowed",
+                                type_count
                             ))),
                         },
                     ));
@@ -83,7 +92,8 @@ impl CapabilitiesRoleChecker {
 
                 // Rule 2: must have >= 1 struct implementor
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
-                    imp.trait_name.is_some() && struct_names.contains(&imp.implementor_type.as_str())
+                    imp.trait_name.is_some()
+                        && struct_names.contains(&imp.implementor_type.as_str())
                 });
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
@@ -99,15 +109,22 @@ impl CapabilitiesRoleChecker {
             }
             ParseMetadata::Python(py_meta) => {
                 let class_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta.class_declarations.iter().any(|c| !c.bases.is_empty());
+                let implementor_found = py_meta
+                    .class_declarations
+                    .iter()
+                    .any(|c| !c.bases.is_empty());
 
                 if class_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
                         AesRoleViolation::CapabilityTooManyTypes {
                             count: class_count,
                             reason: Some(LintMessage::new(format!(
-                                "Found {} classes, max 3 allowed", class_count
+                                "Found {} classes, max 3 allowed",
+                                class_count
                             ))),
                         },
                     ));
@@ -129,15 +146,22 @@ impl CapabilitiesRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta.class_declarations.iter().any(|c| !c.implements.is_empty());
+                let implementor_found = ts_meta
+                    .class_declarations
+                    .iter()
+                    .any(|c| !c.implements.is_empty());
 
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
                         AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
-                                "Found {} types (class/interface/enum), max 3 allowed", type_count
+                                "Found {} types (class/interface/enum), max 3 allowed",
+                                type_count
                             ))),
                         },
                     ));
@@ -172,8 +196,16 @@ impl CapabilitiesRoleChecker {
                 let mut in_cfg_test = false;
                 for l in &lines {
                     let t = l.trim();
-                    if t.starts_with("#[cfg(test)]") { in_cfg_test = true; continue; }
-                    if in_cfg_test { if t.starts_with('}') { in_cfg_test = false; } continue; }
+                    if t.starts_with("#[cfg(test)]") {
+                        in_cfg_test = true;
+                        continue;
+                    }
+                    if in_cfg_test {
+                        if t.starts_with('}') {
+                            in_cfg_test = false;
+                        }
+                        continue;
+                    }
                     let words: Vec<&str> = t.split_whitespace().collect();
                     if (t.starts_with("pub struct ") || t.starts_with("struct "))
                         && words.len() >= 2
@@ -192,15 +224,23 @@ impl CapabilitiesRoleChecker {
                         && let Some(name) = words.get(idx + 1)
                     {
                         let name = name.trim_end_matches(';').trim_end_matches('{');
-                        if !name.is_empty() && !name.starts_with('_') { type_count += 1; }
+                        if !name.is_empty() && !name.starts_with('_') {
+                            type_count += 1;
+                        }
                     }
                 }
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
                         AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
-                            reason: Some(LintMessage::new(format!("Found {} types (struct + enum), max 3 allowed", type_count))),
+                            reason: Some(LintMessage::new(format!(
+                                "Found {} types (struct + enum), max 3 allowed",
+                                type_count
+                            ))),
                         },
                     ));
                     return;
@@ -208,9 +248,10 @@ impl CapabilitiesRoleChecker {
                 let has_implementor = struct_names.iter().any(|s| {
                     lines.iter().any(|l| {
                         let t = l.trim();
-                        t.starts_with("impl ") && (t.contains(&format!("for {} ", s))
-                            || t.contains(&format!("for {}{{", s))
-                            || t.contains(&format!("for {} {{", s)))
+                        t.starts_with("impl ")
+                            && (t.contains(&format!("for {} ", s))
+                                || t.contains(&format!("for {}{{", s))
+                                || t.contains(&format!("for {} {{", s)))
                     })
                 });
                 if !has_implementor {
@@ -233,15 +274,26 @@ impl CapabilitiesRoleChecker {
                             let after_paren = &t[start + 1..];
                             if let Some(end) = after_paren.find(')') {
                                 let parents = after_paren[..end].trim();
-                                if !parents.is_empty() { implementor_found = true; }
+                                if !parents.is_empty() {
+                                    implementor_found = true;
+                                }
                             }
                         }
                     }
                 }
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
-                        AesRoleViolation::CapabilityTooManyTypes { count: type_count, reason: Some(LintMessage::new(format!("Found {} classes, max 3 allowed", type_count))) },
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
+                        AesRoleViolation::CapabilityTooManyTypes {
+                            count: type_count,
+                            reason: Some(LintMessage::new(format!(
+                                "Found {} classes, max 3 allowed",
+                                type_count
+                            ))),
+                        },
                     ));
                     return;
                 }
@@ -257,29 +309,57 @@ impl CapabilitiesRoleChecker {
             _ => {
                 for l in &lines {
                     let t = l.trim();
-                    let class_body = t.strip_prefix("export class ").or_else(|| t.strip_prefix("class "));
+                    let class_body = t
+                        .strip_prefix("export class ")
+                        .or_else(|| t.strip_prefix("class "));
                     if let Some(rest) = class_body {
                         type_count += 1;
-                        if rest.contains("implements ") { implementor_found = true; }
+                        if rest.contains("implements ") {
+                            implementor_found = true;
+                        }
                         continue;
                     }
-                    let iface_body = t.strip_prefix("export interface ").or_else(|| t.strip_prefix("interface "));
-                    if iface_body.is_some() { type_count += 1; continue; }
-                    let enum_body = t.strip_prefix("export enum ").or_else(|| t.strip_prefix("enum "));
-                    if enum_body.is_some() { type_count += 1; }
+                    let iface_body = t
+                        .strip_prefix("export interface ")
+                        .or_else(|| t.strip_prefix("interface "));
+                    if iface_body.is_some() {
+                        type_count += 1;
+                        continue;
+                    }
+                    let enum_body = t
+                        .strip_prefix("export enum ")
+                        .or_else(|| t.strip_prefix("enum "));
+                    if enum_body.is_some() {
+                        type_count += 1;
+                    }
                 }
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::HIGH,
-                        AesRoleViolation::CapabilityTooManyTypes { count: type_count, reason: Some(LintMessage::new(format!("Found {} types, max 3 allowed", type_count))) },
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::HIGH,
+                        AesRoleViolation::CapabilityTooManyTypes {
+                            count: type_count,
+                            reason: Some(LintMessage::new(format!(
+                                "Found {} types, max 3 allowed",
+                                type_count
+                            ))),
+                        },
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
-                        &path_str, 0, "AES403", Severity::MEDIUM,
+                        &path_str,
+                        0,
+                        "AES403",
+                        Severity::MEDIUM,
                         AesRoleViolation::CapabilityNoImplementor {
-                            reason: Some(LintMessage::new(format!("No class with 'implements' found in {}.", path_str))),
+                            reason: Some(LintMessage::new(format!(
+                                "No class with 'implements' found in {}.",
+                                path_str
+                            ))),
                         },
                     ));
                 }

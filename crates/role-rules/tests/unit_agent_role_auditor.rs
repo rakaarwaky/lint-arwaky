@@ -3,8 +3,8 @@
 
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::IAgentRoleChecker;
+use std::path::PathBuf;
 
 fn checker() -> AgentRoleChecker {
     AgentRoleChecker::new()

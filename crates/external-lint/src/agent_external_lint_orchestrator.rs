@@ -21,6 +21,7 @@ use shared::cli_commands::LintResultList;
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
+use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use filesystem::utility_filesystem_io::is_path_ignored;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::config_system::utility_config_parser::{
@@ -28,7 +29,6 @@ use shared::config_system::utility_config_parser::{
 };
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
-use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -86,10 +86,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();
                 let path_clone = path.clone();
                 let name_owned = name.to_string();
-                let timeout_secs = config_map
-                    .get(name)
-                    .map(|e| e.timeout)
-                    .unwrap_or(60.0);
+                let timeout_secs = config_map.get(name).map(|e| e.timeout).unwrap_or(60.0);
                 futures.push(async move {
                     let _ = timeout_secs; // timeout applied per-adapter if needed in future
                     match adapter.scan(&path_clone).await {

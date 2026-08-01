@@ -759,12 +759,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
     let mut has_py = false;
     let mut has_js = false;
 
-    fn walk_detect(
-        dir: &std::path::Path,
-        has_rs: &mut bool,
-        has_py: &mut bool,
-        has_js: &mut bool,
-    ) {
+    fn walk_detect(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
         let entries = match std::fs::read_dir(dir) {
             Ok(e) => e,
             Err(_) => return,

@@ -9,13 +9,7 @@ use shared::orphan_detector::{AesOrphanViolation, IOrphanParserProtocol, IUtilit
 use std::collections::HashMap;
 use std::sync::Arc;
 
-const CONSUMER_LAYERS: &[&str] = &[
-    "capabilities",
-    "agent",
-    "surface",
-    "surfaces",
-    "root",
-];
+const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

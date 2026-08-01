@@ -3,7 +3,7 @@
 // Scope: Rust, Python, JavaScript, and TypeScript.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::IFixProtocol;
+use shared::auto_fix::{FixOutcome, IFixProtocol};
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
@@ -58,7 +58,7 @@ fn frd_rust_unused_use_statement_removed() {
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(2));
     assert!(
-        result,
+        result.is_applied(),
         "AES203 fix should remove the unused `use std::io;` line"
     );
 
@@ -82,7 +82,7 @@ fn frd_python_unused_import_removed() {
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(1));
     assert!(
-        result,
+        result.is_applied(),
         "AES203 fix should remove the unused `import os` line"
     );
 
@@ -105,7 +105,7 @@ fn frd_typescript_unused_import_removed() {
     let sut = LintFixProcessor::new(Arc::new(MockLinter { results: vec![] }));
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(!content.contains("readFile"));
@@ -125,7 +125,7 @@ fn frd_non_import_line_never_removed() {
 
     // Line 1 is `fn main() {}` — not an import
     let result = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    assert!(!result, "Non-import line must not be removed");
+    assert!(!result.is_applied(), "Non-import line must not be removed");
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     assert!(content.contains("fn main()"));
@@ -147,7 +147,7 @@ fn frd_fix_preserves_code_functionality() {
     let sut = LintFixProcessor::new(Arc::new(MockLinter { results: vec![] }));
 
     let result = sut.fix_unused_import(&file_path, LineNumber::new(1));
-    assert!(result);
+    assert!(result.is_applied());
 
     let content = std::fs::read_to_string(&file_path).unwrap();
     // Remaining code must still be structurally valid

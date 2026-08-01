@@ -259,7 +259,9 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
 ///     weight: 1.0
 ///     timeout: 120
 /// ```
-pub fn parse_adapter_entries_from_yaml(yaml_str: &str) -> Vec<crate::config_system::taxonomy_setting_vo::AdapterEntry> {
+pub fn parse_adapter_entries_from_yaml(
+    yaml_str: &str,
+) -> Vec<crate::config_system::taxonomy_setting_vo::AdapterEntry> {
     use crate::common::taxonomy_adapter_name_vo::AdapterName;
     use crate::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus};
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
@@ -290,10 +292,7 @@ pub fn parse_adapter_entries_from_yaml(yaml_str: &str) -> Vec<crate::config_syst
             if !enabled {
                 return None;
             }
-            let weight = entry
-                .get("weight")
-                .and_then(|v| v.as_f64())
-                .unwrap_or(1.0);
+            let weight = entry.get("weight").and_then(|v| v.as_f64()).unwrap_or(1.0);
             let timeout = entry
                 .get("timeout")
                 .and_then(|v| v.as_f64())

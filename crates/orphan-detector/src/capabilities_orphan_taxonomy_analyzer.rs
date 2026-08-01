@@ -63,7 +63,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 return false; // self-import doesn't count
             }
             let imp_filename = shared::common::utility_layer_detector::extract_filename(importer);
-            let imp_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(imp_filename);
+            let imp_layer =
+                shared::common::utility_layer_detector::detect_layer_from_prefix(imp_filename);
             // Count as valid if the importer is NOT a taxonomy file
             imp_layer.as_deref() != Some("taxonomy")
         });

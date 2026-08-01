@@ -4,8 +4,8 @@
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::cli_commands::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::IUtilityRoleChecker;
+use std::path::PathBuf;
 
 fn make_file(path: &str, content: &str) -> FileEntry {
     let ext = path.rsplit('.').next().unwrap_or("rs").to_string();

@@ -5,11 +5,10 @@
 use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol, SkipReason,
 };
-use shared::auto_fix::utility_symbol_renamer;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::ICodeAnalysisAggregate;
 use shared::common::{
-    AdapterName, Count, DescriptionVO, ErrorCode, FilePath, LineNumber, LintMessage,
+    AdapterName, ContentString, Count, DescriptionVO, ErrorCode, FilePath, LineNumber, LintMessage,
 };
 
 use std::sync::Arc;
@@ -71,7 +70,6 @@ impl IFixProtocol for LintFixProcessor {
                         self.emit_fix_event_impl(&violation.file, "AES101", changes);
                     } else {
                         total_fixable -= 1;
-                        // AES101 skips/failures are not manual — they stay as-is
                     }
                 } else {
                     total_fixable -= 1;
@@ -216,13 +214,32 @@ impl IFixProtocol for LintFixProcessor {
     }
 }
 
+// ─── Default FileAdapter (delegates to filesystem crate) ──
+struct DefaultFileAdapter;
+
+impl IFileAdapterProtocol for DefaultFileAdapter {
+    fn read_file(&self, path: &FilePath) -> Option<ContentString> {
+        filesystem::utility_filesystem_io::read_file(&path.value)
+            .ok()
+            .map(ContentString::new)
+    }
+
+    fn write_file(&self, path: &FilePath, content: &ContentString) -> bool {
+        filesystem::utility_filesystem_io::write_file(&path.value, &content.value).is_ok()
+    }
+
+    fn path_exists(&self, path: &FilePath) -> bool {
+        filesystem::utility_filesystem_io::path_exists(&path.value)
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl LintFixProcessor {
     pub fn new(linter: Arc<dyn ICodeAnalysisAggregate>) -> Self {
         Self {
             dry_run: false,
             linter,
-            file_adapter: Arc::new(shared::auto_fix::contract_file_adapter_protocol::FileAdapterPlaceholder),
+            file_adapter: Arc::new(DefaultFileAdapter),
         }
     }
 
@@ -230,7 +247,7 @@ impl LintFixProcessor {
         Self {
             dry_run,
             linter,
-            file_adapter: Arc::new(shared::auto_fix::contract_file_adapter_protocol::FileAdapterPlaceholder),
+            file_adapter: Arc::new(DefaultFileAdapter),
         }
     }
 
@@ -263,12 +280,16 @@ impl LintFixProcessor {
     /// unwrap()/unwrap(); → replace with expect("safe").
     /// Skips: panic!/todo!/unimplemented!/unreachable! → UnsafeRemoval.
     fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> FixOutcome {
-        if !filesystem::utility_filesystem_io::path_exists(file_path) {
+        let fpath = match FilePath::new(file_path.to_string()) {
+            Ok(p) => p,
+            Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
+        };
+        if !self.file_adapter.path_exists(&fpath) {
             return FixOutcome::failed(FailReason::FileNotFound);
         }
-        let content = match filesystem::utility_filesystem_io::read_file(file_path) {
-            Ok(c) => c,
-            Err(_) => return FixOutcome::failed(FailReason::ReadError),
+        let content = match self.file_adapter.read_file(&fpath) {
+            Some(c) => c.value().to_string(),
+            None => return FixOutcome::failed(FailReason::ReadError),
         };
         let lines: Vec<&str> = content.lines().collect();
         if line == 0 || (line as usize) > lines.len() {
@@ -295,16 +316,14 @@ impl LintFixProcessor {
         let noqa_pattern = "noqa";
         let type_ignore = "type: ignore";
 
-        // Categorise: line-remove vs comment-remove vs unwrap-replace
         let is_allow_attr = trimmed.starts_with(&allow_attr);
         let is_comment_line =
-            trimmed.starts_with("//") || trimmed.starts_with("#") && !is_allow_attr;
+            trimmed.starts_with("//") || (trimmed.starts_with('#') && !is_allow_attr);
         let is_unwrap = trimmed == unwrap_call
             || trimmed.ends_with("unwrap();")
             || trimmed.ends_with("unwrap())")
             || trimmed.ends_with("unwrap()}");
 
-        // Check if target line contains ANY bypass pattern
         let has_bypass = is_allow_attr
             || is_unwrap
             || trimmed.contains(noqa_pattern)
@@ -329,21 +348,17 @@ impl LintFixProcessor {
                 if is_allow_attr {
                     continue;
                 }
-                // FR-002: // @ts-ignore, // @ts-expect-error, // eslint-disable,
-                //          // FIXME, // HACK, // XXX, // noqa, # noqa, # type: ignore
-                //          → remove comment from line (or entire line if pure comment)
-                if is_comment_line || trimmed.contains(noqa_pattern)
+                // FR-002: comment lines, noqa, type: ignore, FIXME, HACK, XXX
+                if is_comment_line
+                    || trimmed.contains(noqa_pattern)
                     || trimmed.contains(type_ignore)
                     || trimmed.contains("FIXME")
                     || trimmed.contains("HACK")
                     || trimmed.contains("XXX")
                 {
-                    // If line is purely a comment, remove it entirely
                     if is_comment_line {
                         continue;
                     }
-                    // If comment is inline with code, remove just the comment
-                    // For simplicity, we remove the whole line for comment-heavy patterns
                     continue;
                 }
                 // FR-002: unwrap()/unwrap(); → replace with expect("safe")
@@ -357,7 +372,10 @@ impl LintFixProcessor {
             result.push_str(l);
             result.push('\n');
         }
-        if filesystem::utility_filesystem_io::write_file(file_path, &result).is_ok() {
+        if self
+            .file_adapter
+            .write_file(&fpath, &ContentString::new(result))
+        {
             FixOutcome::applied(1)
         } else {
             FixOutcome::failed(FailReason::WriteError)
@@ -369,12 +387,16 @@ impl LintFixProcessor {
     /// Removes import lines (use/import/from/require()).
     /// Skips multi-line import blocks (unclosed { or trailing ,).
     fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> FixOutcome {
-        if !filesystem::utility_filesystem_io::path_exists(file_path) {
+        let fpath = match FilePath::new(file_path.to_string()) {
+            Ok(p) => p,
+            Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
+        };
+        if !self.file_adapter.path_exists(&fpath) {
             return FixOutcome::failed(FailReason::FileNotFound);
         }
-        let content = match filesystem::utility_filesystem_io::read_file(file_path) {
-            Ok(c) => c,
-            Err(_) => return FixOutcome::failed(FailReason::ReadError),
+        let content = match self.file_adapter.read_file(&fpath) {
+            Some(c) => c.value().to_string(),
+            None => return FixOutcome::failed(FailReason::ReadError),
         };
         let lines: Vec<&str> = content.lines().collect();
         if line == 0 || (line as usize) > lines.len() {
@@ -389,27 +411,26 @@ impl LintFixProcessor {
             return FixOutcome::skipped(SkipReason::NotAnImportLine);
         }
 
-        // FR-001: Multi-line import detection — check for unclosed { or trailing ,
-        // If the line contains an opening brace without a matching close on the same line,
-        // OR ends with a trailing comma, it's likely a multi-line import block.
+        // FR-001: Multi-line import detection
+        // Line has unclosed { → multi-line
         if target_line.contains('{') && !target_line.contains('}') {
             return FixOutcome::skipped(SkipReason::MultiLineImport);
         }
+        // Line ends with trailing comma → likely continuation
         if target_line.ends_with(',') {
-            // Check if next line continues the import (has } or is indented)
             if (target_idx + 1) < lines.len() {
                 let next_line = lines[target_idx + 1].trim();
-                if next_line.starts_with('}') || next_line.is_empty() || next_line.starts_with("use ") {
-                    // Might be the end of a block, but the comma suggests continuation
+                if next_line.starts_with('}')
+                    || next_line.is_empty()
+                    || next_line.starts_with("use ")
+                {
                     return FixOutcome::skipped(SkipReason::MultiLineImport);
                 }
             } else {
-                // Trailing comma on last line — definitely multi-line
                 return FixOutcome::skipped(SkipReason::MultiLineImport);
             }
         }
-        // Also check: if line before target ends with comma or has unclosed brace,
-        // this line is a continuation of a multi-line import
+        // Previous line has unclosed block → this is a continuation
         if target_idx > 0 {
             let prev_line = lines[target_idx - 1].trim();
             if prev_line.ends_with(',') || (prev_line.contains('{') && !prev_line.contains('}')) {
@@ -429,7 +450,10 @@ impl LintFixProcessor {
                 result.push('\n');
             }
         }
-        if filesystem::utility_filesystem_io::write_file(file_path, &result).is_ok() {
+        if self
+            .file_adapter
+            .write_file(&fpath, &ContentString::new(result))
+        {
             FixOutcome::applied(1)
         } else {
             FixOutcome::failed(FailReason::WriteError)
@@ -443,7 +467,6 @@ impl LintFixProcessor {
             ErrorCode::raw(error_code.to_string()),
             Count::new(changes as i64),
         );
-        // Event created for observability — consumers can subscribe via event bus
     }
 
     /// FR-003: Rename symbol — returns FixOutcome with actual change count.
@@ -452,18 +475,21 @@ impl LintFixProcessor {
     /// Returns `Applied` with the actual number of replacements, or
     /// `Skipped` / `Failed` with the appropriate reason.
     fn rename_symbol_impl(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
-        if !filesystem::utility_filesystem_io::path_exists(file_path) {
+        let fpath = match FilePath::new(file_path.to_string()) {
+            Ok(p) => p,
+            Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
+        };
+        if !self.file_adapter.path_exists(&fpath) {
             return FixOutcome::failed(FailReason::FileNotFound);
         }
-        let content = match filesystem::utility_filesystem_io::read_file(file_path) {
-            Ok(c) => c,
-            Err(_) => return FixOutcome::failed(FailReason::ReadError),
+        let content = match self.file_adapter.read_file(&fpath) {
+            Some(c) => c.value().to_string(),
+            None => return FixOutcome::failed(FailReason::ReadError),
         };
         if !content.contains(old_name) {
             return FixOutcome::skipped(SkipReason::SymbolNotFound);
         }
 
-        // Count occurrences before replacing
         let change_count = content.matches(old_name).count();
 
         if self.dry_run {
@@ -472,7 +498,10 @@ impl LintFixProcessor {
 
         let new_content = content.replace(old_name, new_name);
         if new_content != content {
-            if filesystem::utility_filesystem_io::write_file(file_path, &new_content).is_ok() {
+            if self
+                .file_adapter
+                .write_file(&fpath, &ContentString::new(new_content))
+            {
                 return FixOutcome::applied(change_count);
             }
             return FixOutcome::failed(FailReason::WriteError);

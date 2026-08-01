@@ -96,7 +96,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                         file_str
                     )),
                     source: Some(self.name()),
-                    severity: Severity::MEDIUM,  // FR-004: Prettier diff → MEDIUM
+                    severity: Severity::MEDIUM, // FR-004: Prettier diff → MEDIUM
                     enclosing_scope: Default::default(),
                     related_locations: Default::default(),
                 });

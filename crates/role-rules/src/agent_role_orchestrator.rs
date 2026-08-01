@@ -79,7 +79,9 @@ impl RoleOrchestrator {
             }
 
             let path_str = file.path.to_string_lossy();
-            let filename = file.path.file_name()
+            let filename = file
+                .path
+                .file_name()
                 .and_then(|n| n.to_str())
                 .unwrap_or_default();
             let stem = Path::new(filename)
@@ -89,8 +91,12 @@ impl RoleOrchestrator {
             let prefix = stem.split('_').next().unwrap_or_default();
 
             // Skip barrel files
-            if filename == "mod.rs" || filename == "lib.rs" || filename == "main.rs"
-                || filename == "__init__.py" || filename == "index.ts" || filename == "index.js"
+            if filename == "mod.rs"
+                || filename == "lib.rs"
+                || filename == "main.rs"
+                || filename == "__init__.py"
+                || filename == "index.ts"
+                || filename == "index.js"
             {
                 continue;
             }
@@ -101,7 +107,9 @@ impl RoleOrchestrator {
 
             match prefix {
                 "agent" => {
-                    self.deps.agent.check_agent_routing(file, "agent", violations);
+                    self.deps
+                        .agent
+                        .check_agent_routing(file, "agent", violations);
                 }
                 "root" => {}
                 "surfaces" | "surface" => {
@@ -131,7 +139,11 @@ impl RoleOrchestrator {
                     }
                 }
                 "capabilities" | "capability" => {
-                    self.deps.capabilities.check_capability_routing(file, "capabilities", violations);
+                    self.deps.capabilities.check_capability_routing(
+                        file,
+                        "capabilities",
+                        violations,
+                    );
                 }
                 "utility" => {
                     self.deps.utility.check_utility_convention(file, violations);
@@ -156,7 +168,8 @@ impl RoleOrchestrator {
             && let Ok(content) = std::fs::read_to_string(path)
         {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            let language = shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
+            let language =
+                shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
             if let Some(lang) = language {
                 entries.push(FileEntry {
                     path: path.to_path_buf(),
@@ -187,7 +200,8 @@ impl RoleOrchestrator {
                     self.walk_for_entries(&path, entries);
                 } else if path.is_file() {
                     let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                    let language = shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
+                    let language =
+                        shared::filesystem::taxonomy_filesystem_vo::Language::from_extension(ext);
                     if let Some(lang) = language
                         && let Ok(content) = std::fs::read_to_string(&path)
                     {
@@ -208,8 +222,8 @@ impl RoleOrchestrator {
 
     fn is_ignored(&self, path: &str) -> bool {
         let segments: Vec<&str> = path.split('/').collect();
-        self.ignored_paths.iter().any(|pattern| {
-            segments.contains(&pattern.as_str())
-        })
+        self.ignored_paths
+            .iter()
+            .any(|pattern| segments.contains(&pattern.as_str()))
     }
 }

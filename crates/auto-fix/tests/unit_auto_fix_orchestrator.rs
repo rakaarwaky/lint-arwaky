@@ -2,7 +2,7 @@
 // Covers: execute, run_fix, manual_report.
 
 use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
-use shared::auto_fix::{FixApplied, FixResult, IFixProtocol, LintFixOrchestratorAggregate};
+use shared::auto_fix::{FixApplied, FixOutcome, FixResult, IFixProtocol, LintFixOrchestratorAggregate};
 
 use shared::cli_commands::LintResult;
 use shared::common::{Count, LineNumber};
@@ -30,12 +30,12 @@ impl IFixProtocol for MockFixProtocol {
         )
     }
 
-    fn fix_bypass_comments(&self, _file_path: &str, _line: LineNumber) -> bool {
-        true
+    fn fix_bypass_comments(&self, _file_path: &str, _line: LineNumber) -> FixOutcome {
+        FixOutcome::applied(1)
     }
 
-    fn fix_unused_import(&self, _file_path: &str, _line: LineNumber) -> bool {
-        true
+    fn fix_unused_import(&self, _file_path: &str, _line: LineNumber) -> FixOutcome {
+        FixOutcome::applied(1)
     }
 
     fn emit_fix_event(&self, path: &FilePath, error_code: ErrorCode, changes: Count) -> FixApplied {
