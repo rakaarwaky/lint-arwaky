@@ -29,7 +29,22 @@ impl FileWalker {
     /// - Skips hidden directories (.git, .venv, node_modules, target, dist, build, __pycache__).
     /// - Reads file content into FileEntry.content (UTF-8). Non-UTF-8 files are skipped.
     pub fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
-        let mut builder = ignore::WalkBuilder::new(root);
+        let workspace_subdirs = ["crates", "packages", "modules"];
+        let found_subdirs: Vec<PathBuf> = workspace_subdirs
+            .iter()
+            .map(|s| root.join(s))
+            .filter(|p| p.is_dir())
+            .collect();
+
+        let mut builder = if !found_subdirs.is_empty() {
+            let mut b = ignore::WalkBuilder::new(&found_subdirs[0]);
+            for sub in &found_subdirs[1..] {
+                b.add(sub);
+            }
+            b
+        } else {
+            ignore::WalkBuilder::new(root)
+        };
         builder
             .hidden(true)
             .git_ignore(true)

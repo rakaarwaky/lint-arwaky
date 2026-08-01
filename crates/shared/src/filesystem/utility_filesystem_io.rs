@@ -65,8 +65,21 @@ pub fn collect_source_file(path: &Path, files: &mut Vec<FilePath>) {
 /// Walk directory recursively, collecting all source file paths (skipping ignored patterns).
 pub fn walk_directory(dir: &Path, files: &mut Vec<FilePath>, ignored: &[String]) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let workspace_subdirs = ["crates", "packages", "modules"];
+    let found_subdirs: Vec<PathBuf> = workspace_subdirs
+        .iter()
+        .map(|s| root.join(s))
+        .filter(|p| p.is_dir())
+        .collect();
+
     let mut visited = HashSet::<PathBuf>::new();
-    walk_directory_inner(&root, files, ignored, &mut visited);
+    if !found_subdirs.is_empty() {
+        for sub in found_subdirs {
+            walk_directory_inner(&sub, files, ignored, &mut visited);
+        }
+    } else {
+        walk_directory_inner(&root, files, ignored, &mut visited);
+    }
 }
 
 fn walk_directory_inner(
@@ -126,8 +139,21 @@ pub fn walk_directory_with_extensions(
     extensions: &[&str],
 ) {
     let root = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    let workspace_subdirs = ["crates", "packages", "modules"];
+    let found_subdirs: Vec<PathBuf> = workspace_subdirs
+        .iter()
+        .map(|s| root.join(s))
+        .filter(|p| p.is_dir())
+        .collect();
+
     let mut visited = HashSet::<PathBuf>::new();
-    walk_directory_with_extensions_inner(&root, files, ignored, extensions, &mut visited);
+    if !found_subdirs.is_empty() {
+        for sub in found_subdirs {
+            walk_directory_with_extensions_inner(&sub, files, ignored, extensions, &mut visited);
+        }
+    } else {
+        walk_directory_with_extensions_inner(&root, files, ignored, extensions, &mut visited);
+    }
 }
 
 fn walk_directory_with_extensions_inner(

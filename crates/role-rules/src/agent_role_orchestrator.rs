@@ -221,9 +221,6 @@ impl RoleOrchestrator {
     }
 
     fn is_ignored(&self, path: &str) -> bool {
-        let segments: Vec<&str> = path.split('/').collect();
-        self.ignored_paths
-            .iter()
-            .any(|pattern| segments.contains(&pattern.as_str()))
+        shared::filesystem::utility_filesystem_io::is_path_ignored(path, &self.ignored_paths)
     }
 }

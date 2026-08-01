@@ -22,6 +22,12 @@ pub fn parse_ts(content: &str) -> TsParseResultVO {
             parse_ts_import(trimmed, &mut result, line_num);
         } else if trimmed.starts_with("export ") && trimmed.contains(" from ") {
             parse_ts_export(trimmed, &mut result, line_num);
+        } else if let Some(rest) = trimmed.strip_prefix("export ") {
+            if let Some(iface_rest) = rest.strip_prefix("interface ") {
+                parse_ts_interface(iface_rest, &mut result);
+            } else if let Some(class_rest) = rest.strip_prefix("class ") {
+                parse_ts_class(class_rest, &mut result);
+            }
         } else if let Some(rest) = trimmed.strip_prefix("class ") {
             parse_ts_class(rest, &mut result);
         } else if trimmed.starts_with("function ") || trimmed.starts_with("async function ") {
@@ -131,6 +137,19 @@ fn parse_ts_class(rest: &str, result: &mut TsParseResultVO) {
         .filter(|s| !s.is_empty())
         .collect();
     result.class_implements.push((class_name, interfaces));
+}
+
+fn parse_ts_interface(rest: &str, result: &mut TsParseResultVO) {
+    let name = if let Some(brace_pos) = rest.find('{') {
+        rest[..brace_pos].trim().to_string()
+    } else if let Some(extends_pos) = rest.find(" extends ") {
+        rest[..extends_pos].trim().to_string()
+    } else {
+        rest.trim().to_string()
+    };
+    if !name.is_empty() {
+        result.interface_names.push(name);
+    }
 }
 
 // ─── Block 3: Helpers ─────────────────────────────────────

@@ -180,6 +180,46 @@ async fn run_all_linters_json(path: &str) -> Vec<ViolationItem> {
         }
     }
 
+    // Normalize relative paths to absolute before filtering.
+    // Orphan subprocess outputs paths relative to workspace top_root (e.g. "crates/foo/src/bar.rs")
+    // while quality/import/naming/role use absolute paths. Normalize all to absolute.
+    // Orphan paths are relative to the parent of the target directory (workspace top_root),
+    // so we try resolving against: CWD, target, parent-of-target, in order.
+    {
+        let cwd = std::env::current_dir().ok();
+        let target_parent = target_canonical.as_ref().and_then(|t| t.parent());
+        for v in &mut all {
+            if std::path::Path::new(&v.file.value).is_absolute() {
+                continue;
+            }
+            let rel = v.file.value.clone();
+            let file_path = std::path::Path::new(&rel);
+            // Try CWD first
+            if let Some(ref cwd) = cwd {
+                if let Ok(canon) = std::fs::canonicalize(cwd.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                    continue;
+                }
+            }
+            // Try target directory
+            if let Some(ref target) = target_canonical {
+                if let Ok(canon) = std::fs::canonicalize(target.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                    continue;
+                }
+            }
+            // Try parent of target (orphan paths are relative to workspace top_root)
+            if let Some(ref parent) = target_parent {
+                if let Ok(canon) = std::fs::canonicalize(parent.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                }
+            }
+        }
+    }
+
     // Filter: only keep violations whose file path is within the target directory.
     // File paths from subprocesses may be relative to the workspace top_root
     // (found by find_workspace_root), not relative to CWD.

@@ -186,7 +186,7 @@ impl ContractOrphanAnalyzer {
         match self.parser_dispatcher.parse_file(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
-            FileParseResultVO::TypeScript(result) => result.class_names(),
+            FileParseResultVO::TypeScript(result) => result.trait_names(),
             FileParseResultVO::Unsupported => Vec::new(),
         }
     }
