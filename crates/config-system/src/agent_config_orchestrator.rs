@@ -14,10 +14,13 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+
 pub struct ConfigOrchestratorDeps {
     pub workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,
     pub config_reader: Arc<dyn IConfigReaderProtocol>,
     pub validator: Arc<dyn IConfigValidatorProtocol>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct ConfigOrchestrator {
@@ -135,11 +138,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             for filename in language.config_file_names() {
                 let candidate = current.join(filename);
                 // FR-001: Reject symlinks pointing outside project root
-                if let Ok(meta) = std::fs::symlink_metadata(&candidate) {
+                if let Ok(meta) = self.deps.filesystem.symlink_metadata(&candidate) {
                     if meta.file_type().is_symlink() {
-                        if let Ok(canonical) = std::fs::canonicalize(&candidate) {
+                        if let Ok(canonical) = self.deps.filesystem.canonicalize(&candidate) {
                             let root_canonical =
-                                std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+                                self.deps.filesystem.canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
                             if !canonical.starts_with(&root_canonical) {
                                 eprintln!(
                                     "Warning: Symlink '{}' points outside project root, rejected.",
@@ -150,7 +153,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                         }
                     }
                 }
-                if let Ok(content) = std::fs::read_to_string(&candidate) {
+                if let Ok(content) = self.deps.filesystem.read_to_string(&candidate) {
                     config = Some(parse_config_yaml(&content));
                     break;
                 }

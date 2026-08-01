@@ -31,6 +31,7 @@ impl ConfigContainer {
                 workspace_detector,
                 config_reader: yaml_reader.clone(),
                 validator: validator.clone(),
+                filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
             })),
             reader: yaml_reader,
             parser: Arc::new(crate::capabilities_parser_provider::ConfigParserProvider::new()),

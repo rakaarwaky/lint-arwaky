@@ -2,9 +2,8 @@
 // AST-based: uses parser dispatch for all import/mod/trait resolution.
 // Replaces 7 regex passes with 3 language dispatch blocks.
 
-use filesystem::capabilities_file_walker::walk_recursive;
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
-use shared::filesystem::utility_filesystem_io::read_file_safe;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
@@ -29,19 +28,21 @@ struct PythonResolveCtx<'a> {
 
 pub struct OrphanGraphResolver {
     pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 impl Default for OrphanGraphResolver {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        Self::new(
+            Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
+        )
     }
 }
 
 impl OrphanGraphResolver {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
-        Self { parser_dispatcher }
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { parser_dispatcher, filesystem }
     }
 }
 
@@ -146,7 +147,7 @@ impl OrphanGraphResolver {
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if ws_path.is_dir() {
-                let entries = shared::filesystem::utility_filesystem_io::scan_directory(&ws_path);
+                let entries = self.filesystem.scan_directory(&ws_path).into_iter().map(|p| (p.file_name().and_then(|n| n.to_str()).unwrap_or("" ).to_string(), p.to_string_lossy().to_string(), p.is_dir())).collect::<Vec<_>>();
                 for (name, path_str, is_dir_entry) in entries {
                     if !is_dir_entry {
                         continue;
@@ -171,7 +172,8 @@ impl OrphanGraphResolver {
         let root_path_obj = std::path::Path::new(&workspace_root);
 
         for src_dir in crate_src_dirs.values() {
-            let workspace_files = walk_recursive(src_dir);
+            let ws_entries = self.filesystem.discover_files(src_dir, &[]);
+            let workspace_files: Vec<String> = ws_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
             for f in workspace_files {
                 let rel = std::path::Path::new(&f)
                     .strip_prefix(root_path_obj)
@@ -187,7 +189,7 @@ impl OrphanGraphResolver {
         for ws_dir in &["crates", "packages", "modules"] {
             let ws_path = root_path.join(ws_dir);
             if ws_path.is_dir() {
-                let entries = shared::filesystem::utility_filesystem_io::scan_directory(&ws_path);
+                let entries = self.filesystem.scan_directory(&ws_path).into_iter().map(|p| (p.file_name().and_then(|n| n.to_str()).unwrap_or("" ).to_string(), p.to_string_lossy().to_string(), p.is_dir())).collect::<Vec<_>>();
                 for (name, path_str, is_dir_entry) in entries {
                     if is_dir_entry {
                         continue;
@@ -269,7 +271,7 @@ impl OrphanGraphResolver {
         // ─── AST-based file processing (replaces 7 regex passes) ───
         for f in files {
             import_graph.entry(f.clone()).or_default();
-            let content = read_file_safe(f);
+            let content = self.filesystem.read_file(std::path::Path::new(f)).unwrap_or_default();
             if content.is_empty() && !std::path::PathBuf::from(f).is_file() {
                 continue;
             }

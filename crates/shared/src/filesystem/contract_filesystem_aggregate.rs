@@ -124,4 +124,49 @@ pub trait IFilesystemAggregate: Send + Sync {
 
     /// Find workspace root by walking up from start path.
     fn workspace_root(&self, start: &str) -> Option<PathBuf>;
+
+    // ── Directory Operations ─────────────────────────────────
+
+    /// List directory entries (non-recursive).
+    fn scan_directory(&self, dir: &Path) -> Vec<PathBuf>;
+
+    /// List directory entries with ignore filter.
+    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf>;
+
+    /// Check if directory should be ignored.
+    fn is_ignored_dir(&self, dir: &Path, ignored: &[String]) -> bool;
+
+    // ── Path Metadata ────────────────────────────────────────
+
+    /// Check if path is a file.
+    fn is_file(&self, path: &Path) -> bool;
+
+    /// Canonicalize path (resolve symlinks).
+    fn canonicalize(&self, path: &Path) -> Result<PathBuf, std::io::Error>;
+
+    /// Check if path is a symlink.
+    fn is_symlink(&self, path: &Path) -> bool;
+
+    /// Get file metadata.
+    fn metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error>;
+
+    /// Get symlink metadata (does not follow symlinks).
+    fn symlink_metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error>;
+
+    // ── Write Operations (setup/hooks) ───────────────────────
+
+    /// Read file content to string.
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+
+    /// Write string to file.
+    fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
+
+    /// Copy file from src to dst.
+    fn copy_file(&self, src: &Path, dst: &Path) -> Result<u64, std::io::Error>;
+
+    /// Create directory and all parents.
+    fn create_dir_all(&self, path: &Path) -> Result<(), std::io::Error>;
+
+    /// Remove directory recursively.
+    fn remove_dir_all(&self, path: &Path) -> Result<(), std::io::Error>;
 }

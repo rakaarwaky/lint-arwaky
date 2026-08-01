@@ -23,9 +23,14 @@ use shared::maintenance::{
     ToolStatus, ToolchainDiagnostics,
 };
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
+
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct MaintenanceChecker;
+pub struct MaintenanceChecker {
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -72,7 +77,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         // FR-005: JS tools — all optional; local node_modules/.bin/ preferred
         let mut js_tools = vec![check_tool("node", &["--version"], false)];
         let eslint_local = "node_modules/.bin/eslint";
-        let eslint_status = if shared::filesystem::utility_filesystem_io::is_file(eslint_local) {
+        let eslint_status = if self.filesystem.is_file(std::path::Path::new(eslint_local)) {
             ToolStatus {
                 name: "eslint (local)".to_string(),
                 status: "OK".to_string(),
@@ -86,7 +91,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local)
+        let prettier_status = if self.filesystem.is_file(std::path::Path::new(prettier_local))
         {
             ToolStatus {
                 name: "prettier (local)".to_string(),
@@ -101,7 +106,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(prettier_status);
 
         let tsc_local = "node_modules/.bin/tsc";
-        let tsc_status = if shared::filesystem::utility_filesystem_io::is_file(tsc_local) {
+        let tsc_status = if self.filesystem.is_file(std::path::Path::new(tsc_local)) {
             ToolStatus {
                 name: "tsc (local)".to_string(),
                 status: "OK".to_string(),
@@ -491,7 +496,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let mut py_files = Vec::new();
         let mut rs_files = Vec::new();
         let mut js_files = Vec::new();
-        Self::walk_dir(
+        self.walk_dir(
             root,
             &mut all_files,
             &mut py_files,
@@ -581,9 +586,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 ".tsc-cache",
             ];
             let mut found_dirs = Vec::new();
-            Self::find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
+            self.find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
             for entry in found_dirs {
-                let _ = std::fs::remove_dir_all(&entry);
+                let _ = self.filesystem.remove_dir_all(&std::path::Path::new(&entry));
             }
         }
     }
@@ -736,76 +741,72 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
 impl MaintenanceChecker {
     pub fn new() -> Self {
-        Self
+        Self { filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()) }
     }
 
     /// Walk directory tree, collecting all source files and per-language files.
     /// FR-002: Excludes target/, .git/, node_modules/, .venv/, __pycache__/, dist/, build/
-    fn walk_dir(
+    fn walk_dir(&self,
         dir: &std::path::Path,
         all_files: &mut Vec<std::path::PathBuf>,
         py_files: &mut Vec<std::path::PathBuf>,
         rs_files: &mut Vec<std::path::PathBuf>,
         js_files: &mut Vec<std::path::PathBuf>,
     ) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let name = path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or_default();
-                    if name != "target"
-                        && name != ".git"
-                        && name != "node_modules"
-                        && name != ".venv"
-                        && name != "__pycache__"
-                        && name != "dist"
-                        && name != "build"
-                    {
-                        Self::walk_dir(&path, all_files, py_files, rs_files, js_files);
+        let dir_entries = self.filesystem.scan_directory(dir);
+        for path in dir_entries {
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if name != "target"
+                    && name != ".git"
+                    && name != "node_modules"
+                    && name != ".venv"
+                    && name != "__pycache__"
+                    && name != "dist"
+                    && name != "build"
+                {
+                    self.walk_dir(&path, all_files, py_files, rs_files, js_files);
+                }
+            } else if path.is_file() {
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                match ext {
+                    "py" => {
+                        all_files.push(path.clone());
+                        py_files.push(path);
                     }
-                } else if path.is_file() {
-                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-                    match ext {
-                        "py" => {
-                            all_files.push(path.clone());
-                            py_files.push(path);
-                        }
-                        "rs" => {
-                            all_files.push(path.clone());
-                            rs_files.push(path);
-                        }
-                        "js" | "jsx" | "ts" | "tsx" => {
-                            all_files.push(path.clone());
-                            js_files.push(path);
-                        }
-                        _ => {}
+                    "rs" => {
+                        all_files.push(path.clone());
+                        rs_files.push(path);
                     }
+                    "js" | "jsx" | "ts" | "tsx" => {
+                        all_files.push(path.clone());
+                        js_files.push(path);
+                    }
+                    _ => {}
                 }
             }
         }
     }
 
-    fn find_cache_dirs(
+    fn find_cache_dirs(&self,
         dir: &std::path::Path,
         cache_names: &[&str],
         found_dirs: &mut Vec<std::path::PathBuf>,
     ) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    let name = path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or_default();
-                    if cache_names.contains(&name) {
-                        found_dirs.push(path.clone());
-                    } else if name != "target" && name != ".git" && name != "node_modules" {
-                        Self::find_cache_dirs(&path, cache_names, found_dirs);
-                    }
+        let dir_entries = self.filesystem.scan_directory(dir);
+        for path in dir_entries {
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if cache_names.contains(&name) {
+                    found_dirs.push(path.clone());
+                } else if name != "target" && name != ".git" && name != "node_modules" {
+                    self.find_cache_dirs(&path, cache_names, found_dirs);
                 }
             }
         }

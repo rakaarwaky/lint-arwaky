@@ -28,12 +28,13 @@ use shared::config_system::utility_config_parser::{
 };
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
-use shared::filesystem::utility_filesystem_io::is_path_ignored;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -49,7 +50,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         // Lightweight walk (extension check only, no file reading or parsing).
         let root_path = std::path::Path::new(&path.value);
         let (has_rs, has_py, has_js) =
-            shared::filesystem::utility_filesystem_io::detect_languages(root_path);
+            Self::detect_languages_from_fs(&*self.deps.filesystem, root_path);
         let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js);
 
         // FR-002: Select adapters using the selector + config entries.
@@ -121,7 +122,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             all.extend(values);
         }
         if !ignored_paths.is_empty() {
-            all.retain(|v| !is_path_ignored(&v.file.value, &ignored_paths));
+            all.retain(|v| !self.deps.filesystem.should_ignore(&v.file.value, &ignored_paths));
         }
         LintResultList::new(all)
     }
@@ -141,6 +142,26 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
+    }
+
+    /// Detect languages from file extensions using filesystem aggregate.
+    fn detect_languages_from_fs(
+        fs: &dyn IFilesystemAggregate,
+        root: &std::path::Path,
+    ) -> (bool, bool, bool) {
+        let files = fs.discover_files(root, &[]);
+        let mut has_rs = false;
+        let mut has_py = false;
+        let mut has_js = false;
+        for f in &files {
+            match f.extension.as_str() {
+                "rs" => has_rs = true,
+                "py" => has_py = true,
+                "ts" | "tsx" | "js" | "jsx" => has_js = true,
+                _ => {}
+            }
+        }
+        (has_rs, has_py, has_js)
     }
 }
 
@@ -173,7 +194,7 @@ fn walk_up_find_config<T>(
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists()
-                && let Ok(content) = std::fs::read_to_string(&cfg_path)
+                && let Ok(content) = filesystem::FilesystemOrchestrator::new().read_to_string(&cfg_path)
                 && let Some(result) = extract(&content)
             {
                 return Some(result);

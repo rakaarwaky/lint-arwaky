@@ -479,12 +479,11 @@ fn workspace_restrict(root: &Path) -> Option<HashSet<String>> {
     if !has_ws {
         return None;
     }
+    // Only allow workspace member directories — not test-workspaces, target, etc.
     let mut set = HashSet::new();
-    for entry in std::fs::read_dir(root).into_iter().flatten().flatten() {
-        if entry.file_type().is_ok_and(|ft| ft.is_dir())
-            && let Some(name) = entry.file_name().to_str()
-        {
-            set.insert(name.to_string());
+    for d in &WORKSPACE_DIRS {
+        if root.join(d).is_dir() {
+            set.insert(d.to_string());
         }
     }
     Some(set)

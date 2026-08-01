@@ -4,6 +4,7 @@ use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
 
 use shared::git_hooks::GitHookError;
 use shared::git_hooks::{GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
@@ -13,6 +14,7 @@ use shared::common::Identity;
 
 pub struct HookManager {
     hook_adapter: Arc<dyn IHookManagerProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -36,7 +38,7 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if shared::filesystem::utility_filesystem_io::path_exists(&config_file) {
+        if self.filesystem.path_exists(&std::path::Path::new(&config_file)) {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
@@ -52,7 +54,7 @@ impl IHookProtocol for HookManager {
         }
 
         // Read YAML config
-        let content = match std::fs::read_to_string(config_path) {
+        let content = match self.filesystem.read_to_string(config_path) {
             Ok(c) => c,
             Err(e) => {
                 return DescriptionVO::new(format!("Failed to read config: {}", e));
@@ -101,7 +103,7 @@ impl IHookProtocol for HookManager {
         // Write back
         match serde_yaml_ng::to_string(&doc) {
             Ok(yaml_str) => {
-                if let Err(e) = std::fs::write(config_path, yaml_str) {
+                if let Err(e) = self.filesystem.write_string(config_path, &yaml_str) {
                     return DescriptionVO::new(format!("Failed to write config: {}", e));
                 }
                 let verb = if request.remove { "Removed" } else { "Added" };
@@ -112,8 +114,8 @@ impl IHookProtocol for HookManager {
     }
 
     async fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let p1_exists = shared::filesystem::utility_filesystem_io::path_exists(path1);
-        let p2_exists = shared::filesystem::utility_filesystem_io::path_exists(path2);
+        let p1_exists = self.filesystem.path_exists(std::path::Path::new(path1));
+        let p2_exists = self.filesystem.path_exists(std::path::Path::new(path2));
 
         // FR-005: Status determined by file existence
         if !p1_exists && !p2_exists {
@@ -141,8 +143,8 @@ impl IHookProtocol for HookManager {
             };
         }
 
-        let p1_is_file = shared::filesystem::utility_filesystem_io::is_file(path1);
-        let p2_is_file = shared::filesystem::utility_filesystem_io::is_file(path2);
+        let p1_is_file = self.filesystem.is_file(std::path::Path::new(path1));
+        let p2_is_file = self.filesystem.is_file(std::path::Path::new(path2));
 
         if !p1_is_file || !p2_is_file {
             return GitDiffDataVO {
@@ -173,7 +175,10 @@ impl IHookProtocol for HookManager {
 
 impl HookManager {
     pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
-        Self { hook_adapter }
+        Self {
+            hook_adapter,
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 
     /// Compute byte-level difference score between two files.
@@ -183,8 +188,8 @@ impl HookManager {
         if path1 == path2 {
             return Ok(0.0);
         }
-        let bytes1 = std::fs::read(path1)?;
-        let bytes2 = std::fs::read(path2)?;
+        let bytes1 = self.filesystem.read_to_string(std::path::Path::new(path1)).map(|s| s.into_bytes()).unwrap_or_default();
+        let bytes2 = self.filesystem.read_to_string(std::path::Path::new(path2)).map(|s| s.into_bytes()).unwrap_or_default();
         let max_size = bytes1.len().max(bytes2.len());
         if max_size == 0 {
             return Ok(0.0); // both empty

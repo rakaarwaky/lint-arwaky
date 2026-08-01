@@ -23,7 +23,9 @@ fn build_orchestrator() -> RoleOrchestrator {
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
         utility: Arc::new(UtilityRoleChecker::new()),
-        filesystem: Arc::new(filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new()),
+        filesystem: Arc::new(
+            filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new(),
+        ),
     };
     RoleOrchestrator::new(deps, &config)
 }
@@ -53,7 +55,9 @@ fn disabled_config_skips_all_checks() {
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
         utility: Arc::new(UtilityRoleChecker::new()),
-        filesystem: Arc::new(filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new()),
+        filesystem: Arc::new(
+            filesystem::agent_filesystem_orchestrator::FilesystemOrchestrator::new(),
+        ),
     };
     let orch = RoleOrchestrator::new(deps, &config);
 

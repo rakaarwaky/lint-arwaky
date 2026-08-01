@@ -8,7 +8,7 @@ use crate::capabilities_ast_parser::ASTParser;
 use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_file_walker::FileWalker;
 use crate::capabilities_import_extractor;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use shared::filesystem::utility_filesystem_io;
@@ -450,5 +450,80 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn workspace_root(&self, start: &str) -> Option<PathBuf> {
         utility_filesystem_io::find_workspace_root(start)
+    }
+
+    // ── Directory Operations ─────────────────────────────────
+
+    fn scan_directory(&self, dir: &Path) -> Vec<PathBuf> {
+        let entries = utility_filesystem_io::scan_directory(dir);
+        entries
+            .into_iter()
+            .map(|(_, path_str, _)| PathBuf::from(path_str))
+            .collect()
+    }
+
+    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf> {
+        let dir_path = DirectoryPath::new(
+            dir.to_string_lossy().to_string(),
+        )
+        .unwrap_or_default();
+        match utility_filesystem_io::scan_directory_with_ignored(&dir_path, ignored) {
+            Ok(entries) => entries
+                .values
+                .into_iter()
+                .map(|fp| PathBuf::from(&fp.value))
+                .collect(),
+            Err(_) => Vec::new(),
+        }
+    }
+
+    fn is_ignored_dir(&self, dir: &Path, ignored: &[String]) -> bool {
+        utility_filesystem_io::is_ignored_dir(dir, ignored)
+    }
+
+    // ── Path Metadata ────────────────────────────────────────
+
+    fn is_file(&self, path: &Path) -> bool {
+        utility_filesystem_io::is_file(path)
+    }
+
+    fn canonicalize(&self, path: &Path) -> Result<PathBuf, std::io::Error> {
+        std::fs::canonicalize(path)
+    }
+
+    fn is_symlink(&self, path: &Path) -> bool {
+        std::fs::symlink_metadata(path)
+            .map(|m| m.file_type().is_symlink())
+            .unwrap_or(false)
+    }
+
+    fn metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
+        std::fs::metadata(path)
+    }
+
+    fn symlink_metadata(&self, path: &Path) -> Result<std::fs::Metadata, std::io::Error> {
+        std::fs::symlink_metadata(path)
+    }
+
+    // ── Write Operations (setup/hooks) ───────────────────────
+
+    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
+        std::fs::read_to_string(path)
+    }
+
+    fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
+        std::fs::write(path, content)
+    }
+
+    fn copy_file(&self, src: &Path, dst: &Path) -> Result<u64, std::io::Error> {
+        std::fs::copy(src, dst)
+    }
+
+    fn create_dir_all(&self, path: &Path) -> Result<(), std::io::Error> {
+        std::fs::create_dir_all(path)
+    }
+
+    fn remove_dir_all(&self, path: &Path) -> Result<(), std::io::Error> {
+        std::fs::remove_dir_all(path)
     }
 }

@@ -1,3 +1,5 @@
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+
 // PURPOSE: McpServerOrchestrator — agent that implements IMcpServerAggregate
 //
 // The MCP orchestrator is the AI-agent entry point. It delegates all scan
@@ -967,7 +969,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             .iter()
             .map(std::path::Path::new)
             .find(|p| p.exists())
-            .and_then(|p| std::fs::read_to_string(p).ok());
+            .and_then(|p| filesystem::FilesystemOrchestrator::new().read_to_string(p).ok());
         let content = match content {
             Some(c) => c,
             None => {
