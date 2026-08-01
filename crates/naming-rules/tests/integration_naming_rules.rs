@@ -54,7 +54,7 @@ fn build_test_config() -> ArchitectureConfig {
 fn build_container() -> NamingContainer {
     let config = build_test_config();
     let layer_map = LayerMapVO::new(config.layers.clone());
-    NamingContainer::new(Arc::new(config), Arc::new(layer_map))
+    NamingContainer::new(Arc::new(config), Arc::new(layer_map), Arc::new(filesystem::FilesystemOrchestrator::new()))
 }
 
 // ─── Container Wiring ─────────────────────────────────────
@@ -131,7 +131,7 @@ async fn full_pipeline_respects_ignored_paths() {
     let mut config = build_test_config();
     config.ignored_paths = FilePathList::new(vec![FilePath::new("target".to_string()).unwrap()]);
     let layer_map = LayerMapVO::new(config.layers.clone());
-    let container = NamingContainer::new(Arc::new(config), Arc::new(layer_map));
+    let container = NamingContainer::new(Arc::new(config), Arc::new(layer_map), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

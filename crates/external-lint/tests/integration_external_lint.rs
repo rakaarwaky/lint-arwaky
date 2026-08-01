@@ -78,6 +78,7 @@ fn orchestrator_with_empty_adapters_returns_empty_names() {
     let orchestrator = agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
         agent_external_lint_orchestrator::ExternalLintDeps {
             adapters: HashMap::new(),
+            filesystem: std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
         },
     );
     let names = orchestrator.adapter_names();
@@ -89,6 +90,7 @@ async fn orchestrator_with_no_adapters_returns_empty_results() {
     let orchestrator = agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
         agent_external_lint_orchestrator::ExternalLintDeps {
             adapters: HashMap::new(),
+            filesystem: std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
         },
     );
     let path = shared::common::taxonomy_path_vo::FilePath::new("/tmp".to_string()).unwrap();

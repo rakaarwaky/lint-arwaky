@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
-use shared::filesystem::utility_filesystem_io::{path_exists, read_file, walk_source_files};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -31,6 +31,7 @@ pub struct ImportOrchestratorDeps {
     pub unused: Arc<dyn IUnusedImportProtocol>,
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct ImportOrchestrator {
@@ -48,7 +49,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         if !self.config.enabled.value {
             return Ok(Vec::new());
         }
-        if !path_exists(target.value()) {
+        if !self.deps.filesystem.path_exists(std::path::Path::new(target.value())) {
             return Err(ScanError::new(
                 FilePath::new(target.value().to_string()).unwrap_or_default(),
                 ErrorMessage::new(format!("Target path does not exist: {}", target.value())),
@@ -58,7 +59,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let files = self.collect_files(target);
 
         let root_dir =
-            shared::filesystem::utility_filesystem_io::find_workspace_root(target.value())
+            self.deps.filesystem.workspace_root(target.value())
                 .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
                 .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
@@ -67,8 +68,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .values
             .iter()
             .filter_map(|f| {
-                read_file(f.value())
-                    .ok()
+                self.deps.filesystem.read_file(std::path::Path::new(f.value()))
                     .map(|c| (f.value().to_string(), c))
             })
             .collect();
@@ -283,7 +283,8 @@ impl ImportOrchestrator {
                     ignored.push(entry);
                 }
             }
-            walk_source_files(path, &mut files, &ignored);
+            let entries = self.deps.filesystem.discover_files(path, &ignored);
+            files.extend(entries.iter().filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok()));
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {
                 Ok(fp) => files.push(fp),

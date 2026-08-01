@@ -135,7 +135,7 @@ pub struct SeverityOrchestrator {
 "#,
     );
 
-    let container = ImportContainer::new_with_config(e2e_config());
+    let container = ImportContainer::new_with_config(e2e_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
@@ -179,7 +179,7 @@ pub struct Good;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(e2e_config());
+    let container = ImportContainer::new_with_config(e2e_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();
@@ -212,7 +212,7 @@ pub struct Messy;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(e2e_config());
+    let container = ImportContainer::new_with_config(e2e_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(src.to_string_lossy().to_string()).unwrap();

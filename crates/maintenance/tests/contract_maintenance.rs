@@ -63,7 +63,7 @@ fn container_exposes_aggregate_as_trait_object() {
 
 #[test]
 fn maintenance_checker_implements_default() {
-    let checker = MaintenanceChecker;
+    let checker = MaintenanceChecker::default();
     let _ = checker;
 }
 

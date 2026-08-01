@@ -17,6 +17,7 @@ fn make_orchestrator() -> ConfigOrchestrator {
         workspace_detector: Arc::new(WorkspaceDetector::new()),
         config_reader: Arc::new(ConfigYamlReader::new()),
         validator: Arc::new(ConfigRulesValidator::new()),
+        filesystem: std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
     })
 }
 

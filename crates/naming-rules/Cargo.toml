@@ -23,6 +23,7 @@ criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros"] }
 shared.workspace = true
+filesystem.workspace = true
 
 [[bench]]
 name = "bench_naming_rules_throughput"

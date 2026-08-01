@@ -10,7 +10,7 @@ async fn import_rules_boots_and_runs_audit() {
     let start = std::time::Instant::now();
 
     let config = ArchitectureConfig::default();
-    let container = ImportContainer::new_with_config(config);
+    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     // Audit the crate's own src directory
@@ -31,7 +31,7 @@ async fn import_rules_boots_and_runs_audit() {
 #[tokio::test]
 async fn container_wiring_does_not_panic() {
     let config = ArchitectureConfig::default();
-    let container = ImportContainer::new_with_config(config);
+    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     // All accessors must not panic
     let _ = container.orchestrator();

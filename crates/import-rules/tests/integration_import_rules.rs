@@ -71,7 +71,7 @@ fn write_temp_rs(dir: &std::path::Path, name: &str, content: &str) -> FilePath {
 
 #[test]
 fn container_creates_orchestrator() {
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     // Orchestrator accessor should return a valid Arc
     let _o = container.orchestrator();
@@ -120,7 +120,7 @@ impl IMandatoryImportProtocol for FooChecker {
 "#,
     );
 
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -149,7 +149,7 @@ async fn forbidden_import_detected_through_full_pipeline() {
         "use crate::capabilities_foo_checker::FooChecker;\n\npub struct Bad;\n",
     );
 
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -173,7 +173,7 @@ async fn unused_import_detected_through_full_pipeline() {
         "use std::collections::HashMap;\n\npub struct Unused;\n",
     );
 
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -205,7 +205,7 @@ pub struct DummyCap;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
@@ -239,7 +239,7 @@ pub struct Multi;
 "#,
     );
 
-    let container = ImportContainer::new_with_config(full_config());
+    let container = ImportContainer::new_with_config(full_config(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
 
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();

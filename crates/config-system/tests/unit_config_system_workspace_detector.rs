@@ -269,7 +269,7 @@ fn detect_unknown_for_file_not_in_workspace() {
 #[test]
 fn default_and_new_are_equivalent() {
     let a = WorkspaceDetector::new();
-    let b = WorkspaceDetector;
+    let b = WorkspaceDetector::new();
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

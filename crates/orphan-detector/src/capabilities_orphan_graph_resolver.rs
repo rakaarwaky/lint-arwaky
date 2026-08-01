@@ -5,13 +5,13 @@
 use shared::code_analysis::{GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
+use std::sync::Arc;
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_detector::utility_orphan_filename::file_stem;
 use shared::orphan_detector::utility_orphan_graph_resolver;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 struct RustResolveCtx<'a> {
     module_to_file: &'a HashMap<String, Vec<String>>,
@@ -579,10 +579,10 @@ impl OrphanGraphResolver {
                 normalized_crate
             };
             if let Some(src_dir) = ctx.crate_src_dirs.get(&lookup_name) {
-                let entries = shared::filesystem::utility_filesystem_io::scan_directory(src_dir);
+                let entries: Vec<std::path::PathBuf> = self.filesystem.scan_directory(src_dir);
                 let module_name = segments.get(1).map(|s| s.as_str()).unwrap_or("");
-                for (_name, path_str, _is_dir) in entries {
-                    let path = std::path::PathBuf::from(&path_str);
+                for path in entries {
+                    let path_str = path.to_string_lossy().to_string();
                     let stem = path
                         .file_stem()
                         .and_then(|s| s.to_str())

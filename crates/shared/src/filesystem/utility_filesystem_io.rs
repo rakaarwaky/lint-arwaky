@@ -513,6 +513,23 @@ pub fn is_source_ext(ext: &str) -> bool {
     matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
 }
 
+/// Filter FilePathList to only include source files.
+pub fn filter_source_files(files: &crate::common::taxonomy_paths_vo::FilePathList) -> crate::common::taxonomy_paths_vo::FilePathList {
+    let filtered: Vec<crate::common::taxonomy_path_vo::FilePath> = files
+        .values
+        .iter()
+        .filter(|f| {
+            let path = Path::new(&f.value);
+            path.extension()
+                .and_then(|e| e.to_str())
+                .map(|ext| is_source_ext(ext))
+                .unwrap_or(false)
+        })
+        .cloned()
+        .collect();
+    crate::common::taxonomy_paths_vo::FilePathList::new(filtered)
+}
+
 // ─── Workspace-aware Walking ────────────────────────────────
 
 /// Workspace-restricted directories.

@@ -21,7 +21,7 @@ async fn fr003_unused_import_emits_aes203() {
         "use std::collections::HashMap;\n\npub struct Unused;\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -48,7 +48,7 @@ pub struct Used {
 "#,
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -69,7 +69,7 @@ async fn fr003_diagnostic_includes_symbol_name() {
         "use std::collections::BTreeMap;\n\npub struct Sym;\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -96,7 +96,7 @@ async fn fr003_python_unused_import_emits_aes203() {
         "import os\nimport sys\n\ndef main():\n    print(os.getcwd())\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -117,7 +117,7 @@ async fn fr003_python_used_import_passes() {
         "import os\n\ndef main():\n    print(os.getcwd())\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -144,7 +144,7 @@ async fn fr003_typescript_unused_import_emits_aes203() {
         "import { readFileSync } from 'fs';\nimport { join } from 'path';\n\nexport const getData = () => readFileSync('x');\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -167,7 +167,7 @@ async fn fr003_cfg_test_import_not_flagged() {
         "#[cfg(test)]\nuse std::collections::HashMap;\n\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -192,7 +192,7 @@ async fn fr003_cfg_feature_import_not_flagged() {
         "#[cfg(feature = \"testing\")]\nuse std::collections::HashMap;\n\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();
@@ -221,7 +221,7 @@ async fn fr003_wildcard_import_not_tracked() {
         "use std::collections::*;\n\npub struct V;\n",
     );
 
-    let container = ImportContainer::new_with_config(ArchitectureConfig::default());
+    let container = ImportContainer::new_with_config(ArchitectureConfig::default(), std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     let target = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
     let results = orch.run_audit(&target).await.unwrap();

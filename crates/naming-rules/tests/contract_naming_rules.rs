@@ -70,7 +70,7 @@ fn container_exposes_checker_references() {
 
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
-    let container = NamingContainer::new(config, layer_map);
+    let container = NamingContainer::new(config, layer_map, Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     // Verify accessors return trait objects
     let _conv: &Arc<dyn INamingConventionChecker> = container.naming_convention_checker();

@@ -9,6 +9,7 @@ use shared::import_rules::IImportRunnerAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::role_rules::IRoleRunnerAggregate;
 
@@ -36,11 +37,16 @@ impl CliContainer {
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let multi_project_orchestrator = config_container.orchestrator();
 
+        // Filesystem orchestrator — shared across all containers
+        let filesystem: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
+
         // All containers get config from orchestrator
         let code_analysis_linter =
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::from_orchestrator(
                 &multi_project_orchestrator,
                 ".",
+                filesystem.clone(),
             )
             .code_analysis_linter();
 
@@ -48,6 +54,7 @@ impl CliContainer {
             import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
                 &multi_project_orchestrator,
                 ".",
+                filesystem.clone(),
             );
         let import_orchestrator = import_container.orchestrator();
 
@@ -62,6 +69,7 @@ impl CliContainer {
             naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
                 &multi_project_orchestrator,
                 ".",
+                filesystem,
             );
         let naming_orchestrator = naming_container.orchestrator();
 

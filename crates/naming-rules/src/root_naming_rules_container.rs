@@ -2,7 +2,7 @@
 use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
 use shared::common::FilePath;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
-
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::LayerMapVO;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
@@ -14,11 +14,12 @@ pub struct NamingContainer {
     suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
     config: Arc<ArchitectureConfig>,
     layer_map: Arc<LayerMapVO>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl NamingContainer {
-    pub fn new(config: Arc<ArchitectureConfig>, layer_map: Arc<LayerMapVO>) -> Self {
+    pub fn new(config: Arc<ArchitectureConfig>, layer_map: Arc<LayerMapVO>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let naming_convention_checker: Arc<dyn INamingConventionChecker> =
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker> =
@@ -28,6 +29,7 @@ impl NamingContainer {
             suffix_prefix_checker,
             config,
             layer_map,
+            filesystem,
         }
     }
 
@@ -35,11 +37,12 @@ impl NamingContainer {
     pub fn from_orchestrator(
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
+        filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = Arc::new(orchestrator.load_config_sync(&fp));
         let layer_map = Arc::new(LayerMapVO::new(config.layers.clone()));
-        Self::new(config, layer_map)
+        Self::new(config, layer_map, filesystem)
     }
 
     pub fn naming_convention_checker(&self) -> &Arc<dyn INamingConventionChecker> {
@@ -56,6 +59,7 @@ impl NamingContainer {
             suffix_prefix_checker: self.suffix_prefix_checker.clone(),
             config: self.config.clone(),
             layer_map: self.layer_map.clone(),
+            filesystem: self.filesystem.clone(),
         }))
     }
 }

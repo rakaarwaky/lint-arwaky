@@ -19,11 +19,16 @@ impl TuiContainer {
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let orchestrator = config_container.orchestrator();
 
+        // Filesystem orchestrator — shared across all containers
+        let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
+
         // All containers get config from orchestrator
         let code_analysis_container =
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             );
         let code_analysis_aggregate = code_analysis_container.code_analysis_linter();
 
@@ -56,6 +61,7 @@ impl TuiContainer {
             naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             );
 
         let role_container =
@@ -68,6 +74,7 @@ impl TuiContainer {
             import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             );
 
         let file_watch_container = FileWatchContainer::new();

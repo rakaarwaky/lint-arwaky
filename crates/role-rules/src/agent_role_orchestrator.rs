@@ -173,6 +173,6 @@ impl RoleOrchestrator {
     }
 
     fn is_ignored(&self, path: &str) -> bool {
-        shared::filesystem::utility_filesystem_io::is_path_ignored(path, &self.ignored_paths)
+        self.deps.filesystem.should_ignore(path, &self.ignored_paths)
     }
 }

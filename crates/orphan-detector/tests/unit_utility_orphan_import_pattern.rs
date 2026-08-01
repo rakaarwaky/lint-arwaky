@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 // PURPOSE: Unit tests for UtilityOrphanAnalyzer — import pattern detection
 // TDD: Test that cross-crate imports are detected correctly
 

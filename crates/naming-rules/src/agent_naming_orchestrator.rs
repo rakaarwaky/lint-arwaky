@@ -4,6 +4,7 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ErrorMessage, FilePath, ScanError};
 use shared::common::{LayerMapVO, PatternList};
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
@@ -17,6 +18,7 @@ pub struct NamingOrchestratorDeps {
     pub suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
     pub config: Arc<ArchitectureConfig>,
     pub layer_map: Arc<LayerMapVO>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 pub struct NamingOrchestrator {
@@ -37,11 +39,11 @@ impl INamingRunnerAggregate for NamingOrchestrator {
             ));
         }
 
-        let all_files = shared::naming_rules::utility_naming_filesystem::walk_recursive(
-            target,
-            Some(&self.ignored_patterns),
+        let file_paths = self.deps.filesystem.discover_source_files(
+            target_path,
+            &self.ignored_patterns.values,
         );
-        let files = shared::naming_rules::utility_file_filter::filter_source_files(&all_files);
+        let files = shared::common::FilePathList::new(file_paths);
 
         let results = self.run_checks(&files, target).await;
         Ok(results)

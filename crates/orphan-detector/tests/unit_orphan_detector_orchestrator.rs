@@ -26,6 +26,7 @@ fn build_analyzer(config: ArchitectureConfig) -> ArchOrphanAnalyzer {
             utility_analyzer: Arc::new(UtilityOrphanAnalyzer::default()),
             agent_analyzer: Arc::new(AgentOrphanAnalyzer::default()),
             surfaces_analyzer: Arc::new(SurfacesOrphanAnalyzer::new()),
+            filesystem: std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()),
         },
         config,
     )

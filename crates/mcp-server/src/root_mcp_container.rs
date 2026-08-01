@@ -59,11 +59,17 @@ impl McpContainer {
         let config_container = config_system::root_config_system_container::ConfigContainer::new();
         let orchestrator = config_container.orchestrator();
 
+        // Filesystem orchestrator — shared across all containers
+        let filesystem: Arc<
+            dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+        > = Arc::new(filesystem::FilesystemOrchestrator::new());
+
         // All containers get config from orchestrator
         let code_analysis_linter =
             code_analysis::root_code_analysis_container::CodeAnalysisContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             )
             .code_analysis_linter();
 
@@ -71,6 +77,7 @@ impl McpContainer {
             import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             );
         let import_orchestrator = import_container.orchestrator();
 
@@ -78,6 +85,7 @@ impl McpContainer {
             naming_rules::root_naming_rules_container::NamingContainer::from_orchestrator(
                 &orchestrator,
                 ".",
+                filesystem.clone(),
             );
         let naming_orchestrator = naming_container.orchestrator();
 
@@ -114,11 +122,6 @@ impl McpContainer {
         // Setup orchestrator (init, install, mcp-config)
         let setup_container = SetupContainer::new();
         let setup_orchestrator = setup_container.aggregate();
-
-        // Filesystem orchestrator — for parse_warnings in check/scan responses
-        let filesystem: Arc<
-            dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-        > = Arc::new(filesystem::FilesystemOrchestrator::new());
 
         Self {
             code_analysis_linter,

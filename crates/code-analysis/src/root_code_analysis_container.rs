@@ -12,6 +12,7 @@ use shared::common::FilePath;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
 use shared::common::LayerMapVO;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 pub struct CodeAnalysisContainer {
@@ -19,7 +20,7 @@ pub struct CodeAnalysisContainer {
 }
 
 impl CodeAnalysisContainer {
-    pub fn new() -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let config = ArchitectureConfig::default();
         let layer_map = LayerMapVO::new(std::collections::HashMap::new());
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
@@ -30,13 +31,14 @@ impl CodeAnalysisContainer {
             class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
             duplication_checker: Arc::new(CodeDuplicationAnalyzer::new())
                 as Arc<dyn ICodeMetricAnalyzerProtocol>,
+            filesystem,
         };
         Self {
             code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),
         }
     }
 
-    pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
+    pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
         let bypass = config
             .rules
@@ -53,6 +55,7 @@ impl CodeAnalysisContainer {
             line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
             class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
             duplication_checker: dup_checker as Arc<dyn ICodeMetricAnalyzerProtocol>,
+            filesystem,
         };
         Self {
             code_analysis_linter: Arc::new(CodeAnalysisOrchestrator::new(deps, config, layer_map)),
@@ -62,11 +65,12 @@ impl CodeAnalysisContainer {
     pub fn from_orchestrator(
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
+        filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = orchestrator.load_config_sync(&fp);
         let layer_map = LayerMapVO::new(config.layers.clone());
-        Self::new_with_config(config, layer_map)
+        Self::new_with_config(config, layer_map, filesystem)
     }
 
     pub fn code_analysis_linter(&self) -> Arc<dyn ICodeAnalysisAggregate> {
@@ -76,6 +80,6 @@ impl CodeAnalysisContainer {
 
 impl Default for CodeAnalysisContainer {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 }

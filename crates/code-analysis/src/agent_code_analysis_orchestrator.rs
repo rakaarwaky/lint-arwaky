@@ -49,6 +49,7 @@ pub struct CodeAnalysisDeps {
     pub line_checker: Arc<dyn ILineCheckerProtocol>,
     pub class_checker: Arc<dyn IMandatoryClassProtocol>,
     pub duplication_checker: Arc<dyn ICodeMetricAnalyzerProtocol>,
+    pub filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 pub struct CodeAnalysisOrchestrator {
@@ -240,7 +241,7 @@ impl CodeAnalysisOrchestrator {
         }
         for cargo_path in &cargo_candidates {
             if cargo_path.exists() {
-                match shared::filesystem::utility_filesystem_io::read_lintable_file(
+                match self.deps.filesystem.read_lintable_file(
                     &cargo_path.to_string_lossy(),
                 ) {
                     Ok(Some(cargo_content)) => {
@@ -271,7 +272,7 @@ impl CodeAnalysisOrchestrator {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or_default();
-                let c = match shared::filesystem::utility_filesystem_io::read_lintable_file(file) {
+                let c = match self.deps.filesystem.read_lintable_file(file) {
                     Ok(Some(content)) => content,
                     Ok(None) => {
                         v.push(LintResult::new_arch(

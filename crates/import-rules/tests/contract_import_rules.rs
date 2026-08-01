@@ -103,7 +103,7 @@ fn import_orchestrator_is_send_sync() {
 #[test]
 fn import_container_produces_aggregate_arc() {
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    let container = ImportContainer::new_with_config(config);
+    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     let _orchestrator: std::sync::Arc<dyn IImportRunnerAggregate> = container.orchestrator();
 }
@@ -133,7 +133,7 @@ fn dummy_checker_rule_name_is_aes204() {
 #[test]
 fn orchestrator_name_is_import_rules() {
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
-    let container = ImportContainer::new_with_config(config);
+    let container = ImportContainer::new_with_config(config, std::sync::Arc::new(filesystem::FilesystemOrchestrator::new()));
     let orch = container.orchestrator();
     assert_eq!(orch.name(), "import-rules");
 }
