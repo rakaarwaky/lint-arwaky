@@ -81,6 +81,7 @@ impl SurfaceRoleChecker {
             ParseMetadata::TypeScript(m) | ParseMetadata::JavaScript(m) => {
                 m.function_definitions.len()
             }
+            _ => 0, // ParseMetadata::Unknown
         };
         if fn_count > 15 {
             violations.push(LintResult::new_arch(
@@ -153,6 +154,7 @@ impl SurfaceRoleChecker {
             ParseMetadata::TypeScript(ts_meta) | ParseMetadata::JavaScript(ts_meta) => {
                 self._check_ts_passive_metadata(&path_str, ts_meta, violations);
             }
+            _ => {} // ParseMetadata::Unknown — skip
         }
     }
 

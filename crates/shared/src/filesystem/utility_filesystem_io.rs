@@ -908,3 +908,268 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
     }
     (has_rs, has_py, has_js)
 }
+
+// ─── Directory Mutation ────────────────────────────────────
+
+/// Create a directory and all missing parent directories.
+pub fn create_dir_all(path: &FilePath) -> Result<(), String> {
+    std::fs::create_dir_all(path.value()).map_err(|e| e.to_string())
+}
+
+/// Remove a directory and all its contents recursively.
+pub fn remove_dir_all(path: &FilePath) -> Result<(), String> {
+    std::fs::remove_dir_all(path.value()).map_err(|e| e.to_string())
+}
+
+/// Walk directory recursively collecting only `.py` files.
+/// Skips `target`, `.git`, `node_modules`, `.venv`.
+pub fn walk_py_files(dir: &FilePath) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    walk_py_files_inner(Path::new(dir.value()), &mut files);
+    files
+}
+
+fn walk_py_files_inner(dir: &Path, files: &mut Vec<FilePath>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if name != "target"
+                    && name != ".git"
+                    && name != "node_modules"
+                    && name != ".venv"
+                {
+                    walk_py_files_inner(&path, files);
+                }
+            } else if path.is_file()
+                && path.extension().and_then(|e| e.to_str()) == Some("py")
+                && let Ok(fp) = FilePath::new(path.to_string_lossy().to_string())
+            {
+                files.push(fp);
+            }
+        }
+    }
+}
+
+/// Find directories whose names match any of the given cache names.
+pub fn find_cache_dirs(dir: &FilePath, cache_names: &[&str]) -> Vec<FilePath> {
+    let mut found = Vec::new();
+    find_cache_dirs_inner(Path::new(dir.value()), cache_names, &mut found);
+    found
+}
+
+fn find_cache_dirs_inner(dir: &Path, cache_names: &[&str], found: &mut Vec<FilePath>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if cache_names.contains(&name) {
+                    if let Ok(fp) = FilePath::new(path.to_string_lossy().to_string()) {
+                        found.push(fp);
+                    }
+                } else if name != "target" && name != ".git" && name != "node_modules" {
+                    find_cache_dirs_inner(&path, cache_names, found);
+                }
+            }
+        }
+    }
+}
+
+// ─── Async File I/O ─────────────────────────────────────────
+
+/// Maximum config file size (1 MiB).
+pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20;
+
+/// Async read file to string.
+pub async fn read_file_async<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {
+    tokio::fs::read_to_string(path).await
+}
+
+/// Read a file within the canonical root, enforcing path confinement and max file size.
+pub async fn read_text_within_canonical_root<P: AsRef<Path>>(
+    path: P,
+    canonical_root: &Path,
+) -> std::io::Result<String> {
+    let path = path.as_ref();
+    let canonical_path = tokio::fs::canonicalize(path).await?;
+    if !canonical_path.starts_with(canonical_root) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "config path escapes allowed root",
+        ));
+    }
+    let meta = tokio::fs::metadata(&canonical_path).await?;
+    if !is_file(&canonical_path) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "config path is not a regular file",
+        ));
+    }
+    if meta.len() > MAX_CONFIG_FILE_SIZE {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "config file exceeds maximum allowed size",
+        ));
+    }
+    tokio::fs::read_to_string(&canonical_path).await
+}
+
+// ─── Target Resolution ──────────────────────────────────────
+
+/// Resolve target path: normalize "crates" to parent, keep "." as-is, etc.
+pub fn resolve_target(path: Option<String>) -> String {
+    match path {
+        Some(p) => p,
+        None => ".".to_string(),
+    }
+}
+
+/// Detect source directory from project root (packages/, crates/, modules/).
+/// If the path itself contains source files, return it directly.
+pub fn detect_source_dir(project_root: &Path) -> PathBuf {
+    if has_source_files(project_root) {
+        return project_root.to_path_buf();
+    }
+    for name in &["packages", "crates", "modules"] {
+        let candidate = project_root.join(name);
+        if candidate.is_dir() {
+            return candidate;
+        }
+    }
+    project_root.to_path_buf()
+}
+
+/// Check if a directory contains source files directly (not in subdirectories).
+fn has_source_files(dir: &Path) -> bool {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if let Some(name) = entry.file_name().to_str()
+                && (name.ends_with(".rs")
+                    || name.ends_with(".py")
+                    || name.ends_with(".ts")
+                    || name.ends_with(".js"))
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree or single file.
+pub fn collect_source_files(
+    root_dir: &Path,
+    _dir_path: &crate::common::taxonomy_path_vo::DirectoryPath,
+    ignored: &[String],
+) -> Vec<FilePath> {
+    let mut files = Vec::new();
+    if root_dir.is_dir() {
+        walk_source_files(root_dir, &mut files, ignored);
+    } else if root_dir.is_file() {
+        if let Some(ext) = root_dir.extension().and_then(|e| e.to_str())
+            && is_source_ext(ext)
+        {
+            let rel_path = root_dir.to_string_lossy();
+            if !is_path_ignored(&rel_path, ignored)
+                && let Ok(fp) = FilePath::new(rel_path.to_string())
+            {
+                files.push(fp);
+            }
+        }
+    }
+    files
+}
+
+// ─── Path Resolution (Member Detection) ─────────────────────
+
+/// Detect if a path is a member directory (not a workspace root).
+/// Returns true if the path is a single crate/module/package member:
+/// - Rust: Cargo.toml without [workspace]
+/// - Python: __init__.py or pyproject.toml present
+/// - TypeScript: package.json present
+pub fn is_member_path(path: &str) -> bool {
+    let p = Path::new(path);
+
+    // Rust: Cargo.toml without [workspace] means single crate member
+    let cargo_toml = p.join("Cargo.toml");
+    if cargo_toml.exists() {
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+            return !content.contains("[workspace]");
+        }
+        return true;
+    }
+
+    // Python: __init__.py or pyproject.toml means module member
+    if p.join("__init__.py").exists() || p.join("pyproject.toml").exists() {
+        return true;
+    }
+
+    // TypeScript: package.json means package member
+    if p.join("package.json").exists() {
+        return true;
+    }
+
+    false
+}
+
+/// Detect if a path is a leaf member directory (not a workspace root and not a group of members).
+/// A leaf member has a marker file AND does NOT contain subdirectories that are also members.
+/// Skips common source directories (src, lib, bin, tests, benches, examples) to avoid
+/// false negatives when a member src/ contains __init__.py.
+pub fn is_leaf_member_path(path: &str) -> bool {
+    if !is_member_path(path) {
+        return false;
+    }
+    let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
+    let p = Path::new(path);
+    if let Ok(entries) = std::fs::read_dir(p) {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                let dir_name = entry.file_name().to_string_lossy().to_string();
+                if skip_dirs.contains(&dir_name.as_str()) {
+                    continue;
+                }
+                let sub_path = entry.path();
+                if is_member_path(&sub_path.to_string_lossy()) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+// ─── String-based Cache (for code-analysis compatibility) ───
+// Separate from the PathBuf-based FILE_CACHE above.
+
+static STRING_CACHE: LazyLock<DashMap<String, String>> = LazyLock::new(DashMap::new);
+
+/// Populate the string-keyed file cache (for code-analysis compatibility).
+pub fn cache_populate_from_pairs(files: &[(String, String)]) {
+    for (path, content) in files {
+        STRING_CACHE.insert(path.clone(), content.clone());
+    }
+}
+
+/// Get cached file content by string path.
+pub fn cache_get_by_str(path: &str) -> Option<String> {
+    STRING_CACHE.get(path).map(|r| r.value().clone())
+}
+
+/// Check if a string path is in the string-keyed cache.
+pub fn cache_contains_str(path: &str) -> bool {
+    STRING_CACHE.contains_key(path)
+}
+
+/// Clear the string-keyed file cache.
+pub fn cache_clear_str() {
+    STRING_CACHE.clear();
+}

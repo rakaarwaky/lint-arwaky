@@ -122,6 +122,7 @@ impl UtilityRoleChecker {
                     ));
                 }
             }
+            _ => {} // ParseMetadata::Unknown — skip
         }
     }
 

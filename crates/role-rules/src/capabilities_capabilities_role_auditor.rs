@@ -179,6 +179,7 @@ impl CapabilitiesRoleChecker {
                     ));
                 }
             }
+            _ => {} // ParseMetadata::Unknown — skip
         }
     }
 

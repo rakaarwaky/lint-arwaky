@@ -242,6 +242,7 @@ fn extract_definitions_and_impls(files: &[FileEntry]) -> (Vec<DefinitionEntry>, 
                         });
                     }
                 }
+                _ => {} // ParseMetadata::Unknown — skip
             }
         }
     }

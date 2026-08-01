@@ -191,6 +191,7 @@ impl AgentRoleChecker {
                     ));
                 }
             }
+            _ => {} // ParseMetadata::Unknown — skip
         }
     }
 

@@ -1,38 +1,6 @@
-// PURPOSE: Config I/O utility — async file read and path confinement helpers
-use std::path::Path;
+// PURPOSE: Config I/O utility — re-export shim
+// All functions consolidated into filesystem::utility_filesystem_io
 
-pub const MAX_CONFIG_FILE_SIZE: u64 = 1 << 20; // 1 MiB
-
-/// Async read file to string.
-pub async fn read_file_async<P: AsRef<std::path::Path>>(path: P) -> std::io::Result<String> {
-    tokio::fs::read_to_string(path).await
-}
-
-/// Read a file within the canonical root, enforcing path confinement and max file size.
-pub async fn read_text_within_canonical_root<P: AsRef<Path>>(
-    path: P,
-    canonical_root: &Path,
-) -> std::io::Result<String> {
-    let path = path.as_ref();
-    let canonical_path = tokio::fs::canonicalize(path).await?;
-    if !canonical_path.starts_with(canonical_root) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::PermissionDenied,
-            "config path escapes allowed root",
-        ));
-    }
-    let meta = tokio::fs::metadata(&canonical_path).await?;
-    if !crate::filesystem::utility_filesystem_io::is_file(&canonical_path) {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "config path is not a regular file",
-        ));
-    }
-    if meta.len() > MAX_CONFIG_FILE_SIZE {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "config file exceeds maximum allowed size",
-        ));
-    }
-    tokio::fs::read_to_string(&canonical_path).await
-}
+pub use crate::filesystem::utility_filesystem_io::{
+    read_file_async, read_text_within_canonical_root, MAX_CONFIG_FILE_SIZE,
+};
